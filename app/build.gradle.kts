@@ -1,5 +1,5 @@
 // app/build.gradle.kts -- modulo app de MiMoo
-// Con AGP 9.x kotlin-android viene integrado, no se aplica aqui
+// AGP 9.x: kotlin-android integrado, kotlinOptions sustituido por kotlin.compilerOptions
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -42,8 +42,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     buildFeatures {
