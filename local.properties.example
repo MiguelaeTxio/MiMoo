@@ -1,0 +1,9 @@
+# local.properties -- NO versionar en git (ya en .gitignore)
+# Copiar este archivo a local.properties y rellenar los valores reales
+
+# SDK path (lo rellena Android Studio automaticamente)
+sdk.dir=/path/to/Android/sdk
+
+# YouTube Data API v3 key
+# Obtener en: https://console.cloud.google.com/
+YOUTUBE_API_KEY=TU_API_KEY_AQUI

@@ -1,0 +1,48 @@
+name: Build and Deploy APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Crear local.properties con API key
+        run: |
+          echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" \
+            >> local.properties
+
+      - name: Dar permisos a gradlew
+        run: chmod +x gradlew
+
+      - name: Compilar APK debug
+        run: ./gradlew assembleDebug
+
+      - name: Subir APK a PythonAnywhere
+        env:
+          PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Authorization: Token $PA_API_TOKEN" \
+            -F "content=@app/build/outputs/apk/debug/app-debug.apk" \
+            "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/files/path/home/MiguelAeTxio/ANDROID/MiMoo/apk/MiMoo.apk"
+
+      - name: Recargar webapp
+        env:
+          PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
+          WEBAPP_DOMAIN: ${{ secrets.WEBAPP_DOMAIN }}
+        run: |
+          curl -X POST \
+            -H "Authorization: Token $PA_API_TOKEN" \
+            "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/webapps/$WEBAPP_DOMAIN/reload/"
