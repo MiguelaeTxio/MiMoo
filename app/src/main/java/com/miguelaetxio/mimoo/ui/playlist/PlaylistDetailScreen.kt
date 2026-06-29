@@ -1,7 +1,6 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,7 +41,7 @@ fun PlaylistDetailScreen(
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val playlist by viewModel.editPlaylist.collectAsState()
-    val tracks by viewModel.playlistTracks.collectAsState()
+    val playlistTracks by viewModel.playlistTracks.collectAsState()
 
     LaunchedEffect(Unit) {
         val id = viewModel.playlists.value.firstOrNull()?.id ?: return@LaunchedEffect
@@ -68,7 +67,7 @@ fun PlaylistDetailScreen(
             )
         },
     ) { padding ->
-        if (tracks.isEmpty()) {
+        if (playlistTracks.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -83,7 +82,7 @@ fun PlaylistDetailScreen(
                     .fillMaxSize()
                     .padding(padding),
             ) {
-                itemsIndexed(tracks) { index, track ->
+                itemsIndexed(playlistTracks) { index, pt ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -96,16 +95,13 @@ fun PlaylistDetailScreen(
                             modifier = Modifier.padding(end = 8.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = track.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
+                        Text(
+                            text = "Track #${pt.trackId}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
                         IconButton(onClick = {
-                            playlist?.let {
-                                viewModel.removeTrack(it.id, track.id)
-                            }
+                            viewModel.removeTrack(pt)
                         }) {
                             Icon(
                                 Icons.Default.Delete,

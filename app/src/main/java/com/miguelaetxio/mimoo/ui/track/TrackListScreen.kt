@@ -63,8 +63,8 @@ fun TrackListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                val artistId = tracks.firstOrNull()?.artistId ?: -1L
-                onAddTrack(artistId)
+                val aid = tracks.firstOrNull()?.artistId ?: -1L
+                onAddTrack(aid)
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Añadir track")
             }
@@ -113,7 +113,7 @@ private fun TrackItem(track: Track, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
-                text = formatDuration(track.durationSeconds),
+                text = formatDuration(track.durationSeconds ?: 0),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -125,7 +125,7 @@ private fun TrackItem(track: Track, onClick: () -> Unit) {
 @Composable
 private fun DownloadStatusIcon(status: DownloadStatus) {
     val icon = when (status) {
-        DownloadStatus.DOWNLOADED -> Icons.Default.CheckCircle
+        DownloadStatus.DONE -> Icons.Default.CheckCircle
         DownloadStatus.DOWNLOADING -> Icons.Default.Download
         DownloadStatus.PENDING -> Icons.Default.HourglassEmpty
         DownloadStatus.ERROR -> Icons.Default.HourglassEmpty
@@ -134,10 +134,8 @@ private fun DownloadStatusIcon(status: DownloadStatus) {
         imageVector = icon,
         contentDescription = status.name,
         tint = when (status) {
-            DownloadStatus.DOWNLOADED ->
-                MaterialTheme.colorScheme.primary
-            DownloadStatus.ERROR ->
-                MaterialTheme.colorScheme.error
+            DownloadStatus.DONE -> MaterialTheme.colorScheme.primary
+            DownloadStatus.ERROR -> MaterialTheme.colorScheme.error
             else -> MaterialTheme.colorScheme.onSurfaceVariant
         },
     )

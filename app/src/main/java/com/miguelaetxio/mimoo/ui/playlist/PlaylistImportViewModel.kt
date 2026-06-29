@@ -89,8 +89,7 @@ class PlaylistImportViewModel @Inject constructor(
                         albumId = null,
                         durationSeconds = dto.durationSeconds,
                         downloadStatus = DownloadStatus.PENDING,
-                        localPath = null,
-                        thumbnailUrl = dto.thumbnailUrl,
+                        filePath = null,
                     )
                 )
             }

@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrack
-import com.miguelaetxio.mimoo.data.local.entity.Track
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
-import com.miguelaetxio.mimoo.data.local.repository.TrackRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +22,6 @@ import javax.inject.Inject
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val trackRepository: TrackRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -33,12 +30,21 @@ class PlaylistViewModel @Inject constructor(
 
     val playlists: StateFlow<List<Playlist>> = playlistRepository
         .getAll()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList(),
+        )
 
     private val _editPlaylist = MutableStateFlow<Playlist?>(null)
     val editPlaylist: StateFlow<Playlist?> = _editPlaylist
 
-    val playlistTracks: StateFlow<List<Track>> = if (playlistId > 0) {
+    /**
+     * PlaylistTrack entries for the active playlist (by position).
+     * ---
+     * Entradas PlaylistTrack de la playlist activa (por posición).
+     */
+    val playlistTracks: StateFlow<List<PlaylistTrack>> = if (playlistId > 0) {
         playlistRepository.getTracksForPlaylist(playlistId)
             .stateIn(
                 viewModelScope,
@@ -87,7 +93,11 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             val position = playlistTracks.value.size
             playlistRepository.addTrack(
-                PlaylistTrack(playlistId = pId, trackId = trackId, position = position)
+                PlaylistTrack(
+                    playlistId = pId,
+                    trackId = trackId,
+                    position = position,
+                )
             )
         }
     }
@@ -97,9 +107,9 @@ class PlaylistViewModel @Inject constructor(
      * ---
      * Elimina un track de la playlist.
      */
-    fun removeTrack(pId: Long, trackId: Long) {
+    fun removeTrack(playlistTrack: PlaylistTrack) {
         viewModelScope.launch {
-            playlistRepository.removeTrack(pId, trackId)
+            playlistRepository.removeTrack(playlistTrack)
         }
     }
 }

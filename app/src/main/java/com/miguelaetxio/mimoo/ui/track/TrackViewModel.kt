@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.local.entity.Track
 import com.miguelaetxio.mimoo.data.local.repository.TrackRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,8 +28,12 @@ class TrackViewModel @Inject constructor(
         savedStateHandle.get<Long>("artistId") ?: -1L
 
     val tracks: StateFlow<List<Track>> = repository
-        .getTracksByArtist(artistId)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .getByArtist(artistId)
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList(),
+        )
 
     private val _editTrack = MutableStateFlow<Track?>(null)
     val editTrack: StateFlow<Track?> = _editTrack

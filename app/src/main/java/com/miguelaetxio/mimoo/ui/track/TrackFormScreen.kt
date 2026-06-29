@@ -93,7 +93,9 @@ fun TrackFormScreen(
                 label = { Text("YouTube ID o URL") },
                 isError = inputError,
                 supportingText = {
-                    if (inputError) Text("ID de 11 caracteres o URL de YouTube válida")
+                    if (inputError) {
+                        Text("ID de 11 caracteres o URL de YouTube válida")
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -118,11 +120,10 @@ fun TrackFormScreen(
                         title = title.ifBlank { youtubeId },
                         artistId = editTrack?.artistId ?: -1L,
                         albumId = editTrack?.albumId,
-                        durationSeconds = editTrack?.durationSeconds ?: 0,
+                        durationSeconds = editTrack?.durationSeconds,
                         downloadStatus = editTrack?.downloadStatus
                             ?: DownloadStatus.PENDING,
-                        localPath = editTrack?.localPath,
-                        thumbnailUrl = editTrack?.thumbnailUrl,
+                        filePath = editTrack?.filePath,
                     )
                     viewModel.save(track)
                     onBack()
@@ -144,9 +145,9 @@ fun TrackFormScreen(
  */
 private fun extractYoutubeId(input: String): String? {
     val trimmed = input.trim()
-    if (trimmed.length == 11 && trimmed.matches(Regex("[A-Za-z0-9_-]+"))) {
-        return trimmed
-    }
+    if (trimmed.length == 11 &&
+        trimmed.matches(Regex("[A-Za-z0-9_-]+"))
+    ) return trimmed
     val urlRegex = Regex("""(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})""")
     return urlRegex.find(trimmed)?.groupValues?.get(1)
 }
