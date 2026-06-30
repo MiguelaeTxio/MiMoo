@@ -37,12 +37,3 @@ jobs:
             -H "Authorization: Token $PA_API_TOKEN" \
             -F "content=@app/build/outputs/apk/debug/app-debug.apk" \
             "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/files/path/home/MiguelAeTxio/ANDROID/MiMoo/apk/MiMoo.apk"
-
-      - name: Recargar webapp
-        env:
-          PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
-          WEBAPP_DOMAIN: ${{ secrets.WEBAPP_DOMAIN }}
-        run: |
-          curl -X POST \
-            -H "Authorization: Token $PA_API_TOKEN" \
-            "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/webapps/$WEBAPP_DOMAIN/reload/"
