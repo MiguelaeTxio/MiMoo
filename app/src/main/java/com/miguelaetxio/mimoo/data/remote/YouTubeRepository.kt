@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.remote
 
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,12 +24,28 @@ class YouTubeRepository @Inject constructor(
     /**
      * Searches videos by term and enriches results with duration via
      * videos.list (1 unit/call, batched up to 50).
+     * On HTTP error, wraps the exception with Google's real JSON error
+     * body (reason/message), since HttpException.message alone is
+     * uninformative ("HTTP 403") for diagnosing the actual cause.
      * ---
      * Busca vídeos por término y enriquece los resultados con
      * duración vía videos.list (1 unidad/llamada, batch hasta 50).
+     * En error HTTP, envuelve la excepción con el cuerpo JSON real de
+     * error de Google (reason/message), ya que HttpException.message
+     * por sí solo es poco informativo ("HTTP 403") para diagnosticar
+     * la causa real.
      */
     suspend fun search(query: String, apiKey: String): List<TrackDto> {
-        val response = apiService.search(query = query, apiKey = apiKey)
+        val response = try {
+            apiService.search(query = query, apiKey = apiKey)
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            throw RuntimeException(
+                "YouTube search.list HTTP ${e.code()}: " +
+                    (errorBody ?: e.message()),
+                e,
+            )
+        }
         val videoIds = response.items.mapNotNull { it.id.videoId }
         if (videoIds.isEmpty()) return emptyList()
 
