@@ -18,6 +18,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Configurar Python 3.11 (requerido por Chaquopy)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Crear local.properties con API key
         run: |
           echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" \

@@ -64,6 +64,13 @@ android {
 
 chaquopy {
     defaultConfig {
+        // Version fijada explicitamente: Chaquopy exige que buildPython
+        // (interprete de la maquina de build) coincida en version mayor
+        // con el interprete embebido en el APK. Sin esto, Chaquopy busca
+        // el Python por defecto (3.10) en el runner de GitHub Actions,
+        // que no lo garantiza preinstalado -> fallo
+        // "Couldn't find Python 3.10" (Build #18, S002-H02).
+        version = "3.11"
         // yt-dlp embebido para resolucion de streaming (Hito 01) y
         // descarga a Opus (Hito 02). Sustituye al plan original de
         // binario nativo standalone, inviable en Android sin Termux
