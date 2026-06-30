@@ -1,11 +1,25 @@
 // app/build.gradle.kts -- modulo app de MiMoo
 // AGP 9.x: kotlin-android integrado, kotlinOptions sustituido por kotlin.compilerOptions
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.chaquopy)
+}
+
+// local.properties no se auto-carga para claves personalizadas: AGP
+// solo garantiza propiedades reservadas (sdk.dir). Causa raiz del 403
+// "unregistered caller" del Build #21 (YOUTUBE_API_KEY llegaba vacia
+// porque project.findProperty no resolvia la clave del workflow).
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
 }
 
 android {
@@ -24,7 +38,7 @@ android {
         buildConfigField(
             "String",
             "YOUTUBE_API_KEY",
-            "\"${project.findProperty("YOUTUBE_API_KEY") ?: ""}\""
+            "\"${localProperties.getProperty("YOUTUBE_API_KEY") ?: ""}\""
         )
 
         ndk {
