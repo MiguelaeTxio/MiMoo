@@ -6,10 +6,14 @@ import javax.inject.Singleton
 
 /**
  * Repository for YouTube Data API v3 operations.
- * Implements full pagination and video batching (50/call).
+ * Replaces the previous playlist-import flow with free-text search,
+ * as of the S002-H02 refoundation (search → stream/download, no
+ * manual playlist import).
  * ---
  * Repositorio para operaciones de la YouTube Data API v3.
- * Implementa paginación completa y batching de videos (50/llamada).
+ * Sustituye el flujo previo de importación de playlist por búsqueda
+ * de texto libre, a raíz de la refundación S002-H02 (buscar →
+ * streaming/descarga, sin importación manual de playlist).
  */
 @Singleton
 class YouTubeRepository @Inject constructor(
@@ -17,41 +21,18 @@ class YouTubeRepository @Inject constructor(
 ) {
 
     /**
-     * Fetches all tracks from a YouTube playlist.
-     * Uses playlistItems.list (1u) + videos.list in batches of 50 (1u each).
+     * Searches videos by term and enriches results with duration via
+     * videos.list (1 unit/call, batched up to 50).
      * ---
-     * Obtiene todos los tracks de una playlist de YouTube.
-     * Usa playlistItems.list (1u) + videos.list en batches de 50 (1u cada uno).
+     * Busca vídeos por término y enriquece los resultados con
+     * duración vía videos.list (1 unidad/llamada, batch hasta 50).
      */
-    suspend fun fetchPlaylistItems(
-        playlistId: String,
-        apiKey: String,
-    ): List<TrackDto> {
-        val videoIds = mutableListOf<String>()
-        val titleMap = mutableMapOf<String, String>()
-        val thumbMap = mutableMapOf<String, String?>()
-        var pageToken: String? = null
+    suspend fun search(query: String, apiKey: String): List<TrackDto> {
+        val response = apiService.search(query = query, apiKey = apiKey)
+        val videoIds = response.items.mapNotNull { it.id.videoId }
+        if (videoIds.isEmpty()) return emptyList()
 
-        // Paginate through all playlist items
-        do {
-            val response = apiService.getPlaylistItems(
-                playlistId = playlistId,
-                pageToken = pageToken,
-                apiKey = apiKey,
-            )
-            for (item in response.items) {
-                val videoId = item.snippet.resourceId.videoId
-                videoIds.add(videoId)
-                titleMap[videoId] = item.snippet.title
-                thumbMap[videoId] = item.snippet.thumbnails?.high?.url
-                    ?: item.snippet.thumbnails?.medium?.url
-            }
-            pageToken = response.nextPageToken
-        } while (pageToken != null)
-
-        // Fetch video details in batches of 50
         val durationMap = mutableMapOf<String, Int>()
-        val channelMap = mutableMapOf<String, String>()
         videoIds.chunked(50).forEach { batch ->
             val videoResponse = apiService.getVideos(
                 ids = batch.joinToString(","),
@@ -59,17 +40,18 @@ class YouTubeRepository @Inject constructor(
             )
             for (video in videoResponse.items) {
                 durationMap[video.id] = parseDuration(video.contentDetails.duration)
-                channelMap[video.id] = video.snippet?.channelTitle ?: ""
             }
         }
 
-        return videoIds.map { id ->
+        return response.items.mapNotNull { item ->
+            val videoId = item.id.videoId ?: return@mapNotNull null
             TrackDto(
-                youtubeId = id,
-                title = titleMap[id] ?: id,
-                durationSeconds = durationMap[id] ?: 0,
-                thumbnailUrl = thumbMap[id],
-                channelTitle = channelMap[id] ?: "",
+                youtubeId = videoId,
+                title = item.snippet.title,
+                durationSeconds = durationMap[videoId] ?: 0,
+                thumbnailUrl = item.snippet.thumbnails?.high?.url
+                    ?: item.snippet.thumbnails?.medium?.url,
+                channelTitle = item.snippet.channelTitle,
             )
         }
     }

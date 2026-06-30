@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.chaquopy)
 }
 
 android {
@@ -25,6 +26,13 @@ android {
             "YOUTUBE_API_KEY",
             "\"${project.findProperty("YOUTUBE_API_KEY") ?: ""}\""
         )
+
+        ndk {
+            // Chaquopy requiere abiFilters explicito. Solo arm64-v8a:
+            // unico target real de dispositivo (ver decision tecnica
+            // de binarios nativos del Hito 02 original).
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 
     buildTypes {
@@ -51,6 +59,18 @@ android {
     buildFeatures {
         compose     = true
         buildConfig = true
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        // yt-dlp embebido para resolucion de streaming (Hito 01) y
+        // descarga a Opus (Hito 02). Sustituye al plan original de
+        // binario nativo standalone, inviable en Android sin Termux
+        // (decision corregida en S002-H02, ver mimoo-annex-v01).
+        pip {
+            install("yt-dlp")
+        }
     }
 }
 
@@ -86,6 +106,9 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
+
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.common)
 
     testImplementation(libs.junit)
     androidTestImplementation(composeBom)

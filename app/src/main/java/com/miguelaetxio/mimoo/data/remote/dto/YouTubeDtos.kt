@@ -8,23 +8,24 @@ import com.google.gson.annotations.SerializedName
  * DTOs para las respuestas de la YouTube Data API v3.
  */
 
-data class PlaylistItemsResponse(
-    @SerializedName("items") val items: List<PlaylistItem> = emptyList(),
+data class SearchListResponse(
+    @SerializedName("items") val items: List<SearchItem> = emptyList(),
     @SerializedName("nextPageToken") val nextPageToken: String? = null,
 )
 
-data class PlaylistItem(
-    @SerializedName("snippet") val snippet: PlaylistItemSnippet,
+data class SearchItem(
+    @SerializedName("id") val id: SearchItemId,
+    @SerializedName("snippet") val snippet: SearchItemSnippet,
 )
 
-data class PlaylistItemSnippet(
+data class SearchItemId(
+    @SerializedName("videoId") val videoId: String? = null,
+)
+
+data class SearchItemSnippet(
     @SerializedName("title") val title: String,
-    @SerializedName("resourceId") val resourceId: ResourceId,
+    @SerializedName("channelTitle") val channelTitle: String = "",
     @SerializedName("thumbnails") val thumbnails: Thumbnails? = null,
-)
-
-data class ResourceId(
-    @SerializedName("videoId") val videoId: String,
 )
 
 data class Thumbnails(
@@ -43,21 +44,16 @@ data class VideoListResponse(
 data class VideoItem(
     @SerializedName("id") val id: String,
     @SerializedName("contentDetails") val contentDetails: ContentDetails,
-    @SerializedName("snippet") val snippet: VideoSnippet? = null,
 )
 
 data class ContentDetails(
     @SerializedName("duration") val duration: String,
 )
 
-data class VideoSnippet(
-    @SerializedName("channelTitle") val channelTitle: String = "",
-)
-
 /**
- * Aggregated DTO returned by YouTubeRepository.
+ * Aggregated DTO returned by YouTubeRepository.search().
  * ---
- * DTO agregado devuelto por YouTubeRepository.
+ * DTO agregado devuelto por YouTubeRepository.search().
  */
 data class TrackDto(
     val youtubeId: String,
