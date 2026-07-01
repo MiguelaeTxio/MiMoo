@@ -8,6 +8,7 @@ import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import java.io.File
 
 /**
  * WorkManager worker that downloads a YouTube track as an Opus file
@@ -57,6 +58,27 @@ class DownloadWorker @AssistedInject constructor(
             )
             Result.success()
         } catch (e: Exception) {
+            // Write full stacktrace to /sdcard/MiMoo/debug_error.txt so
+            // it can be read directly from the device file manager.
+            // Escribe el stacktrace completo en /sdcard/MiMoo/debug_error.txt
+            // para leerlo directamente desde el gestor de archivos.
+            try {
+                val debugDir = File("/sdcard/MiMoo")
+                debugDir.mkdirs()
+                File(debugDir, "debug_error.txt").writeText(
+                    buildString {
+                        appendLine("youtubeId  : $youtubeId")
+                        appendLine("outputPath : $outputPath")
+                        appendLine("exception  : ${e::class.java.name}")
+                        appendLine("message    : ${e.message}")
+                        appendLine("--- stacktrace ---")
+                        appendLine(e.stackTraceToString())
+                    }
+                )
+            } catch (_: Exception) {
+                // If even the log write fails, swallow silently.
+                // Si incluso la escritura del log falla, ignorar.
+            }
             repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
             Result.failure()
         }
