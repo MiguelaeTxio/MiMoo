@@ -28,6 +28,11 @@ jobs:
           echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" \
             >> local.properties
 
+      - name: Restaurar keystore de debug fija
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/debug.keystore
+
       - name: Dar permisos a gradlew
         run: chmod +x gradlew
 
