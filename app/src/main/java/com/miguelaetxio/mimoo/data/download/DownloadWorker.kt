@@ -13,22 +13,24 @@ import java.io.File
 /**
  * WorkManager worker that downloads a YouTube track as an Opus file.
  *
- * Two-step pattern (avoids any storage permission on all API levels):
- *   1. yt-dlp downloads to a temp file in app cache dir (no permission).
+ * Two-step pattern (no storage permission needed on any API level):
+ *   1. yt-dlp downloads to a temp file in app cache dir using the
+ *      bundled ffmpeg binary from nativeLibraryDir.
  *   2. Kotlin copies the temp file to the SAF DocumentFile destination
  *      via ContentResolver.openOutputStream(), then deletes the temp.
  *
  * ---
  * Worker de WorkManager que descarga una pista de YouTube como Opus.
  *
- * Patron de dos pasos (evita cualquier permiso de almacenamiento):
- *   1. yt-dlp descarga a un archivo temporal en el cache dir de la app.
+ * Patron de dos pasos (sin permiso de almacenamiento en ninguna API):
+ *   1. yt-dlp descarga al cache dir de la app usando el binario ffmpeg
+ *      incluido en el APK (nativeLibraryDir/libffmpeg_bin.so).
  *   2. Kotlin copia el temporal al DocumentFile SAF de destino via
  *      ContentResolver.openOutputStream() y borra el temporal.
  *
  * Input Data keys:
  *   KEY_YOUTUBE_ID  — 11-char YouTube video ID
- *   KEY_TITLE       — sanitized track title (used as filename)
+ *   KEY_TITLE       — track title (used as filename)
  *   KEY_ARTIST      — channel title (used as artist dir name)
  */
 @HiltWorker
@@ -68,26 +70,42 @@ class DownloadWorker @AssistedInject constructor(
         val safeTitle = DownloadDirManager.sanitize(title)
         val outputFileName = "$safeTitle.opus"
 
-        // Temp file in app cache: no permission needed.
-        // Archivo temporal en cache de la app: sin permiso necesario.
-        val tempFile = File(applicationContext.cacheDir, "$youtubeId.opus")
+        // Temp file in app cache dir: no permission needed.
+        // Archivo temporal en cache dir de la app: sin permiso necesario.
+        val tempBase = File(applicationContext.cacheDir, youtubeId)
+
+        // ffmpeg binary is extracted by Android to nativeLibraryDir
+        // under the name libffmpeg_bin.so with execute permission.
+        // Android extrae el binario ffmpeg a nativeLibraryDir con el
+        // nombre libffmpeg_bin.so y permisos de ejecucion.
+        val ffmpegPath = File(
+            applicationContext.applicationInfo.nativeLibraryDir,
+            "libffmpeg_bin.so",
+        ).absolutePath
 
         repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
 
         return try {
-            // Step 1 — download to temp via yt-dlp + Chaquopy.
-            // Paso 1 — descargar al temporal via yt-dlp + Chaquopy.
-            runYtDlp(youtubeUrl, tempFile.absolutePath.removeSuffix(".opus"))
+            // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
+            // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
+            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegPath)
 
-            // Locate the actual output file: yt-dlp may append .opus itself.
-            // Localizar el archivo real: yt-dlp puede añadir .opus el mismo.
-            val actualTemp = if (tempFile.exists()) tempFile
-                             else File(applicationContext.cacheDir, "$youtubeId.opus.opus")
+            // yt-dlp appends .opus to the output template.
+            // yt-dlp añade .opus a la plantilla de salida.
+            val actualTemp = File("${tempBase.absolutePath}.opus")
+
+            if (!actualTemp.exists()) {
+                throw RuntimeException(
+                    "El archivo temporal no existe tras la descarga: ${actualTemp.absolutePath}"
+                )
+            }
 
             // Step 2 — copy to SAF destination via ContentResolver.
             // Paso 2 — copiar al destino SAF via ContentResolver.
             val outputDoc = trackDir.createFile("audio/opus", outputFileName)
-                ?: throw RuntimeException("No se pudo crear el archivo SAF: $outputFileName")
+                ?: throw RuntimeException(
+                    "No se pudo crear el archivo SAF: $outputFileName"
+                )
 
             applicationContext.contentResolver
                 .openOutputStream(outputDoc.uri)
@@ -103,8 +121,11 @@ class DownloadWorker @AssistedInject constructor(
             )
             Result.success()
         } catch (e: Exception) {
-            tempFile.delete()
-            File(applicationContext.cacheDir, "$youtubeId.opus.opus").delete()
+            // Clean up temp files.
+            // Limpiar archivos temporales.
+            File("${tempBase.absolutePath}.opus").delete()
+            tempBase.delete()
+
             // Write stacktrace to app private external dir (no permission needed).
             // Escribe stacktrace en directorio externo privado de la app.
             try {
@@ -112,34 +133,44 @@ class DownloadWorker @AssistedInject constructor(
                     ?: applicationContext.filesDir
                 File(debugDir, "debug_error.txt").writeText(
                     buildString {
-                        appendLine("youtubeId : $youtubeId")
-                        appendLine("title     : $title")
-                        appendLine("artist    : $artist")
-                        appendLine("exception : ${e::class.java.name}")
-                        appendLine("message   : ${e.message}")
+                        appendLine("youtubeId  : $youtubeId")
+                        appendLine("title      : $title")
+                        appendLine("artist     : $artist")
+                        appendLine("ffmpegPath : $ffmpegPath")
+                        appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
+                        appendLine("exception  : ${e::class.java.name}")
+                        appendLine("message    : ${e.message}")
                         appendLine("--- stacktrace ---")
                         appendLine(e.stackTraceToString())
                     }
                 )
             } catch (_: Exception) { }
+
             repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
             Result.failure()
         }
     }
 
     /**
-     * Invokes downloader.py via Chaquopy. outputBasePath must be a
-     * writable filesystem path WITHOUT the .opus extension (yt-dlp
-     * appends the container extension automatically).
+     * Invokes downloader.py via Chaquopy passing the ffmpeg binary path.
+     * outputBasePath must be WITHOUT the .opus extension.
      * ---
-     * Invoca downloader.py via Chaquopy. outputBasePath debe ser una
-     * ruta de sistema de archivos SIN la extension .opus (yt-dlp
-     * añade la extension del contenedor automaticamente).
+     * Invoca downloader.py via Chaquopy pasando la ruta del binario ffmpeg.
+     * outputBasePath debe ser SIN la extension .opus.
      */
-    private fun runYtDlp(youtubeUrl: String, outputBasePath: String) {
+    private fun runYtDlp(
+        youtubeUrl: String,
+        outputBasePath: String,
+        ffmpegPath: String,
+    ) {
         val py = com.chaquo.python.Python.getInstance()
         val downloader = py.getModule("downloader")
-        downloader.callAttr("download_audio", youtubeUrl, outputBasePath)
+        downloader.callAttr(
+            "download_audio",
+            youtubeUrl,
+            outputBasePath,
+            ffmpegPath,
+        )
     }
 }
 
