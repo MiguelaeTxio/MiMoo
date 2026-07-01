@@ -270,7 +270,7 @@ private fun LibraryTrackRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 32.dp, vertical = 8.dp),
+            .padding(start = 32.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
