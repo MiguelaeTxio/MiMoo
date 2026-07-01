@@ -126,24 +126,55 @@ class DownloadWorker @AssistedInject constructor(
             File("${tempBase.absolutePath}.opus").delete()
             tempBase.delete()
 
-            // Write stacktrace to app private external dir (no permission needed).
-            // Escribe stacktrace en directorio externo privado de la app.
+            // Write stacktrace via SAF to the root dir where we have
+            // write permission (chosen by the user via OpenDocumentTree).
+            // Falls back to app filesDir if SAF root is unavailable.
+            // ---
+            // Escribe el stacktrace via SAF en la carpeta raiz donde
+            // tenemos permiso de escritura (elegida por el usuario).
+            // Recurre a filesDir si el Uri SAF no esta disponible.
             try {
-                val debugDir = applicationContext.getExternalFilesDir(null)
-                    ?: applicationContext.filesDir
-                File(debugDir, "debug_error.txt").writeText(
-                    buildString {
-                        appendLine("youtubeId  : $youtubeId")
-                        appendLine("title      : $title")
-                        appendLine("artist     : $artist")
-                        appendLine("ffmpegPath : $ffmpegPath")
-                        appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
-                        appendLine("exception  : ${e::class.java.name}")
-                        appendLine("message    : ${e.message}")
-                        appendLine("--- stacktrace ---")
-                        appendLine(e.stackTraceToString())
+                val rootUri = storageManager.getRootUri()
+                if (rootUri != null) {
+                    val rootDoc = androidx.documentfile.provider.DocumentFile
+                        .fromTreeUri(applicationContext, rootUri)
+                    val debugFile = rootDoc
+                        ?.findFile("debug_error.txt")
+                        ?: rootDoc?.createFile("text/plain", "debug_error.txt")
+                    debugFile?.let { doc ->
+                        applicationContext.contentResolver
+                            .openOutputStream(doc.uri, "wt")
+                            ?.use { out ->
+                                out.write(
+                                    buildString {
+                                        appendLine("youtubeId   : $youtubeId")
+                                        appendLine("title       : $title")
+                                        appendLine("artist      : $artist")
+                                        appendLine("ffmpegPath  : $ffmpegPath")
+                                        appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
+                                        appendLine("exception   : ${e::class.java.name}")
+                                        appendLine("message     : ${e.message}")
+                                        appendLine("--- stacktrace ---")
+                                        appendLine(e.stackTraceToString())
+                                    }.toByteArray()
+                                )
+                            }
                     }
-                )
+                } else {
+                    // No SAF root yet: write to app internal filesDir.
+                    // Sin Uri SAF: escribir en filesDir interno de la app.
+                    File(applicationContext.filesDir, "debug_error.txt").writeText(
+                        buildString {
+                            appendLine("youtubeId   : $youtubeId")
+                            appendLine("ffmpegPath  : $ffmpegPath")
+                            appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
+                            appendLine("exception   : ${e::class.java.name}")
+                            appendLine("message     : ${e.message}")
+                            appendLine("--- stacktrace ---")
+                            appendLine(e.stackTraceToString())
+                        }
+                    )
+                }
             } catch (_: Exception) { }
 
             repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
@@ -173,4 +204,3 @@ class DownloadWorker @AssistedInject constructor(
         )
     }
 }
-
