@@ -22,8 +22,9 @@ class SearchResultTrackRepository @Inject constructor(
 ) {
     fun getAll(): Flow<List<SearchResultTrack>> = dao.getAll()
 
-    fun getByStatus(status: DownloadStatus): Flow<List<SearchResultTrack>> =
-        dao.getByStatus(status)
+    fun getByStatus(
+        status: DownloadStatus,
+    ): Flow<List<SearchResultTrack>> = dao.getByStatus(status)
 
     suspend fun getById(youtubeId: String): SearchResultTrack? =
         dao.getById(youtubeId)
@@ -32,4 +33,30 @@ class SearchResultTrackRepository @Inject constructor(
         dao.insertAll(tracks)
 
     suspend fun update(track: SearchResultTrack) = dao.update(track)
+
+    /**
+     * Updates only the downloadStatus column for the given track.
+     * Called by DownloadWorker at DOWNLOADING and ERROR transitions.
+     * ---
+     * Actualiza solo la columna downloadStatus para la pista indicada.
+     * Llamado por DownloadWorker en las transiciones a DOWNLOADING y
+     * ERROR.
+     */
+    suspend fun updateDownloadStatus(
+        youtubeId: String,
+        status: DownloadStatus,
+    ) = dao.updateDownloadStatus(youtubeId, status)
+
+    /**
+     * Persists the local file path and final status once a download
+     * job completes successfully.
+     * ---
+     * Persiste la ruta local del archivo y el estado final cuando un
+     * trabajo de descarga termina con éxito.
+     */
+    suspend fun updateDownloadResult(
+        youtubeId: String,
+        filePath: String,
+        status: DownloadStatus,
+    ) = dao.updateDownloadResult(youtubeId, filePath, status)
 }

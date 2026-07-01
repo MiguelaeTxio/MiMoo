@@ -30,8 +30,8 @@ android {
         applicationId = "com.miguelaetxio.mimoo"
         minSdk        = 26
         targetSdk     = 36
-        versionCode   = 1
-        versionName   = "0.1"
+        versionCode   = 2
+        versionName   = "0.2"
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
 
@@ -116,6 +116,11 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // WorkManager + HiltWorker (Hito 02: motor de descarga)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

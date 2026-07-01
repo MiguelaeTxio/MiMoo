@@ -2,7 +2,7 @@
 agp                = "9.2.0"
 kotlin             = "2.3.10"
 ksp                = "2.3.9"
-hilt                = "2.59.2"
+hilt               = "2.59.2"
 hiltNavigate       = "1.2.0"
 room               = "2.8.4"
 composeBom         = "2026.06.00"
@@ -16,6 +16,7 @@ coroutines         = "1.10.2"
 coil               = "2.7.0"
 chaquopy           = "17.0.0"
 media3             = "1.10.1"
+work               = "2.10.1"
 
 [libraries]
 androidx-core-ktx              = { group = "androidx.core",          name = "core-ktx",                   version.ref = "coreKtx" }
@@ -35,6 +36,8 @@ androidx-navigation-compose    = { group = "androidx.navigation",    name = "nav
 hilt-android                   = { group = "com.google.dagger",      name = "hilt-android",               version.ref = "hilt" }
 hilt-android-compiler          = { group = "com.google.dagger",      name = "hilt-android-compiler",      version.ref = "hilt" }
 hilt-navigation-compose        = { group = "androidx.hilt",          name = "hilt-navigation-compose",    version.ref = "hiltNavigate" }
+hilt-work                      = { group = "androidx.hilt",          name = "hilt-work",                  version.ref = "hiltNavigate" }
+hilt-work-compiler             = { group = "androidx.hilt",          name = "hilt-compiler",              version.ref = "hiltNavigate" }
 androidx-room-runtime          = { group = "androidx.room",          name = "room-runtime",               version.ref = "room" }
 androidx-room-ktx              = { group = "androidx.room",          name = "room-ktx",                   version.ref = "room" }
 androidx-room-compiler         = { group = "androidx.room",          name = "room-compiler",              version.ref = "room" }
@@ -48,6 +51,7 @@ androidx-junit                 = { group = "androidx.test.ext",      name = "jun
 androidx-espresso-core         = { group = "androidx.test.espresso", name = "espresso-core",              version = "3.6.1" }
 androidx-media3-exoplayer      = { group = "androidx.media3",        name = "media3-exoplayer",           version.ref = "media3" }
 androidx-media3-common         = { group = "androidx.media3",        name = "media3-common",              version.ref = "media3" }
+androidx-work-runtime-ktx      = { group = "androidx.work",          name = "work-runtime-ktx",           version.ref = "work" }
 
 [plugins]
 android-application  = { id = "com.android.application",             version.ref = "agp" }

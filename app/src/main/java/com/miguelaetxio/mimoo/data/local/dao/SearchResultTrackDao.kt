@@ -30,4 +30,39 @@ interface SearchResultTrackDao {
 
     @Delete
     suspend fun delete(track: SearchResultTrack)
+
+    /**
+     * Partial update: change only downloadStatus for a given track.
+     * More efficient than a full @Update when only state changes.
+     * ---
+     * Actualización parcial: cambia solo downloadStatus para una pista.
+     * Más eficiente que @Update completo cuando solo cambia el estado.
+     */
+    @Query(
+        "UPDATE search_result_tracks " +
+        "SET downloadStatus = :status " +
+        "WHERE youtubeId = :youtubeId"
+    )
+    suspend fun updateDownloadStatus(
+        youtubeId: String,
+        status: DownloadStatus,
+    )
+
+    /**
+     * Partial update: persists the local file path and final status
+     * (DONE or ERROR) once a download job completes.
+     * ---
+     * Actualización parcial: persiste la ruta local del archivo y el
+     * estado final (DONE o ERROR) cuando termina un trabajo de descarga.
+     */
+    @Query(
+        "UPDATE search_result_tracks " +
+        "SET filePath = :filePath, downloadStatus = :status " +
+        "WHERE youtubeId = :youtubeId"
+    )
+    suspend fun updateDownloadResult(
+        youtubeId: String,
+        filePath: String,
+        status: DownloadStatus,
+    )
 }
