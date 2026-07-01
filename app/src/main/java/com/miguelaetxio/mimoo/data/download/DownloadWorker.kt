@@ -58,13 +58,15 @@ class DownloadWorker @AssistedInject constructor(
             )
             Result.success()
         } catch (e: Exception) {
-            // Write full stacktrace to /sdcard/MiMoo/debug_error.txt so
-            // it can be read directly from the device file manager.
-            // Escribe el stacktrace completo en /sdcard/MiMoo/debug_error.txt
-            // para leerlo directamente desde el gestor de archivos.
+            // Write full stacktrace to the app's external files dir,
+            // which requires no permission on any API level.
+            // Path: /sdcard/Android/data/com.miguelaetxio.mimoo/files/debug_error.txt
+            // ---
+            // Escribe el stacktrace completo en el directorio externo
+            // privado de la app, que no requiere permiso en ninguna API.
             try {
-                val debugDir = File("/sdcard/MiMoo")
-                debugDir.mkdirs()
+                val debugDir = applicationContext.getExternalFilesDir(null)
+                    ?: File("/sdcard/MiMoo").also { it.mkdirs() }
                 File(debugDir, "debug_error.txt").writeText(
                     buildString {
                         appendLine("youtubeId  : $youtubeId")
