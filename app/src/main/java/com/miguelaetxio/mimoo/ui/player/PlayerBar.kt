@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,6 +50,19 @@ fun PlayerBar(
                     },
                 )
             }
+
+            if (state.queueSize > 1) {
+                IconButton(
+                    onClick = viewModel::playPrevious,
+                    enabled = state.queueIndex > 0,
+                ) {
+                    Icon(
+                        Icons.Filled.SkipPrevious,
+                        contentDescription = "Anterior",
+                    )
+                }
+            }
+
             IconButton(onClick = viewModel::togglePlayPause) {
                 Icon(
                     imageVector = if (state.isPlaying) {
@@ -61,6 +76,18 @@ fun PlayerBar(
                         "Reproducir"
                     },
                 )
+            }
+
+            if (state.queueSize > 1) {
+                IconButton(
+                    onClick = viewModel::playNext,
+                    enabled = state.queueIndex < state.queueSize - 1,
+                ) {
+                    Icon(
+                        Icons.Filled.SkipNext,
+                        contentDescription = "Siguiente",
+                    )
+                }
             }
         }
     }

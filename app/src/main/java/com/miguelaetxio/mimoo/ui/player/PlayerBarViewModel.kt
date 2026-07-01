@@ -17,4 +17,8 @@ class PlayerBarViewModel @Inject constructor(
     fun togglePlayPause() {
         if (state.value.isPlaying) playerManager.pause() else playerManager.resume()
     }
+
+    fun playNext() = playerManager.playNext()
+
+    fun playPrevious() = playerManager.playPrevious()
 }
