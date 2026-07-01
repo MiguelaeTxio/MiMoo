@@ -14,14 +14,17 @@ data class PlaybackState(
     val currentTitle: String? = null,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
+    val isLocal: Boolean = false,
 )
 
 /**
- * Wraps a single ExoPlayer instance for audio-only streaming playback
- * of URLs resolved by StreamResolver.
+ * Wraps a single ExoPlayer instance for audio-only playback, either
+ * from a local SAF file (downloaded track) or a streaming URL
+ * resolved by StreamResolver.
  * ---
- * Encapsula una única instancia de ExoPlayer para reproducción en
- * streaming de solo audio de URLs resueltas por StreamResolver.
+ * Encapsula una única instancia de ExoPlayer para reproducción de
+ * solo audio, ya sea desde un archivo SAF local (pista descargada)
+ * o una URL de streaming resuelta por StreamResolver.
  */
 @Singleton
 class PlayerManager @Inject constructor(
@@ -40,11 +43,27 @@ class PlayerManager @Inject constructor(
         })
     }
 
-    fun play(streamUrl: String, title: String) {
+    /**
+     * Plays the given URI. isLocal indicates whether the URI points
+     * to a local SAF file (content://) or a remote streaming URL,
+     * for UI purposes only — playback itself works identically for
+     * both, since ExoPlayer's DefaultDataSource resolves the scheme
+     * automatically.
+     * ---
+     * Reproduce la URI dada. isLocal indica si la URI apunta a un
+     * archivo SAF local (content://) o a una URL de streaming
+     * remota, solo con fines de UI — la reproducción en sí funciona
+     * igual para ambos casos, ya que DefaultDataSource de ExoPlayer
+     * resuelve el esquema automáticamente.
+     */
+    fun play(streamUrl: String, title: String, isLocal: Boolean = false) {
         player.setMediaItem(MediaItem.fromUri(streamUrl))
         player.prepare()
         player.play()
-        _state.value = _state.value.copy(currentTitle = title)
+        _state.value = _state.value.copy(
+            currentTitle = title,
+            isLocal = isLocal,
+        )
     }
 
     fun pause() = player.pause()

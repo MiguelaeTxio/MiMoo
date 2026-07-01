@@ -27,12 +27,27 @@ fun PlayerBar(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = title,
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = if (state.isLocal) {
+                        "Reproduciendo en local"
+                    } else {
+                        "Reproduciendo en streaming"
+                    },
+                    maxLines = 1,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (state.isLocal) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.tertiary
+                    },
+                )
+            }
             IconButton(onClick = viewModel::togglePlayPause) {
                 Icon(
                     imageVector = if (state.isPlaying) {
@@ -40,7 +55,11 @@ fun PlayerBar(
                     } else {
                         Icons.Filled.PlayArrow
                     },
-                    contentDescription = if (state.isPlaying) "Pausar" else "Reproducir",
+                    contentDescription = if (state.isPlaying) {
+                        "Pausar"
+                    } else {
+                        "Reproducir"
+                    },
                 )
             }
         }
