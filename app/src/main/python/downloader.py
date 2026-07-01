@@ -70,6 +70,20 @@ def download_audio(
                 "preferredquality": "0",
             }
         ],
+        # YouTube rejects download requests without a real browser
+        # User-Agent. Without this header, yt-dlp gets HTTP 403 when
+        # trying to fetch the audio stream data on Android/Chaquopy.
+        # ---
+        # YouTube rechaza peticiones de descarga sin un User-Agent de
+        # navegador real. Sin esta cabecera, yt-dlp recibe HTTP 403 al
+        # intentar descargar el stream de audio en Android/Chaquopy.
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Linux; Android 10; K) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Mobile Safari/537.36"
+            ),
+        },
         "quiet": True,
         "no_warnings": True,
     }
