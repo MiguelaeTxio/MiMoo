@@ -11,13 +11,16 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun MiMooNavGraph(navController: NavHostController) {
+fun MiMooNavGraph(
+    navController: NavHostController,
+    onOpenDrawer: () -> Unit,
+) {
     NavHost(
         navController = navController,
         startDestination = Screen.Search.route,
     ) {
         composable(Screen.Search.route) {
-            SearchScreen()
+            SearchScreen(onOpenDrawer = onOpenDrawer)
         }
     }
 }

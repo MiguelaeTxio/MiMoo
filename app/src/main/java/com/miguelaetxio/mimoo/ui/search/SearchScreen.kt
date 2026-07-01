@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -22,12 +23,20 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel(),
+    onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("MiMoo") })
+            TopAppBar(
+                title = { Text("MiMoo") },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                    }
+                },
+            )
         },
     ) { padding ->
         Column(
