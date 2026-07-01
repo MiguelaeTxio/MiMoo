@@ -75,6 +75,23 @@ android {
         compose     = true
         buildConfig = true
     }
+
+    packaging {
+        jniLibs {
+            // Force extraction of .so files to the filesystem so that
+            // libffmpeg_bin.so is accessible as a real file at
+            // applicationInfo.nativeLibraryDir and can be executed.
+            // Without this, Android 14+ loads .so from the APK zip
+            // directly (compressed) and File.exists() returns false.
+            // ---
+            // Forzar la extraccion de archivos .so al sistema de
+            // archivos para que libffmpeg_bin.so sea accesible como
+            // archivo real en nativeLibraryDir y pueda ejecutarse.
+            // Sin esto, Android 14+ los carga comprimidos del APK
+            // directamente y File.exists() devuelve false.
+            useLegacyPackaging = true
+        }
+    }
 }
 
 chaquopy {
