@@ -1,3 +1,4 @@
+
 // app/build.gradle.kts -- modulo app de MiMoo
 // AGP 9.x: kotlin-android integrado, kotlinOptions sustituido por kotlin.compilerOptions
 import java.util.Properties
@@ -122,6 +123,8 @@ dependencies {
     implementation(libs.hilt.work)
     ksp(libs.hilt.work.compiler)
 
+    implementation(libs.androidx.documentfile)
+
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
@@ -142,3 +145,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
+

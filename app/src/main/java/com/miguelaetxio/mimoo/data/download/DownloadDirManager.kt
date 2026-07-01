@@ -1,41 +1,39 @@
-// /home/MiguelAeTxio/ANDROID/MiMoo/app/src/main/java/com/miguelaetxio/mimoo/data/download/DownloadDirManager.kt
 package com.miguelaetxio.mimoo.data.download
 
-import java.io.File
+import android.content.Context
+import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 
 /**
- * Resolves and creates the local directory tree used to store
- * downloaded audio files, structured as /sdcard/MiMoo/{artist}/{album}/.
+ * Resolves and creates the SAF directory tree used to store downloaded
+ * audio files under the user-chosen root Uri.
+ *
+ * Structure: {rootUri}/{artist}/{album}/
+ *
+ * sanitize() is kept for FAT32-safe segment names.
  * ---
- * Resuelve y crea el árbol de directorios local usado para almacenar
- * los archivos de audio descargados, con estructura
- * /sdcard/MiMoo/{artista}/{album}/.
+ * Resuelve y crea el arbol de directorios SAF para almacenar archivos
+ * de audio descargados bajo el Uri raiz elegido por el usuario.
+ *
+ * Estructura: {rootUri}/{artista}/{album}/
+ *
+ * sanitize() se conserva para nombres de segmento seguros en FAT32.
  */
 object DownloadDirManager {
 
-    private const val ROOT_DIR_NAME = "MiMoo"
     private const val UNKNOWN_ALBUM_DIR_NAME = "_sin_album"
 
     /**
-     * Forbidden characters in FAT32 filesystems (used by external
-     * storage on most Android devices), plus control characters.
+     * Forbidden characters in FAT32 filesystems, plus control chars.
      * ---
-     * Caracteres prohibidos en sistemas de archivos FAT32 (usados por
-     * el almacenamiento externo en la mayoría de dispositivos
-     * Android), más caracteres de control.
+     * Caracteres prohibidos en FAT32, mas caracteres de control.
      */
     private val FORBIDDEN_CHARS_REGEX = Regex("[\\\\/:*?\"<>|\\x00-\\x1F]")
 
     /**
-     * Sanitizes a name so it is safe to use as a FAT32 directory
-     * segment: replaces forbidden characters, trims trailing dots
-     * and spaces, and falls back to a default value if the result
-     * is blank.
+     * Sanitizes a name so it is safe as a FAT32 directory segment.
      * ---
-     * Sanitiza un nombre para que sea seguro como segmento de
-     * directorio en FAT32: sustituye caracteres prohibidos, recorta
-     * puntos y espacios finales, y aplica un valor por defecto si el
-     * resultado queda vacío.
+     * Sanitiza un nombre para que sea seguro como segmento FAT32.
      */
     fun sanitize(name: String, fallback: String = "_"): String {
         val cleaned = name
@@ -46,29 +44,43 @@ object DownloadDirManager {
     }
 
     /**
-     * Returns the directory where tracks for the given artist/album
-     * pair must be stored, creating it (and any missing parent
-     * directories) if it does not exist yet. A null or blank album
-     * falls back to a fixed "_sin_album" subdirectory.
+     * Returns (creating if needed) the DocumentFile directory for the
+     * given artist/album pair under rootUri. Returns null if the root
+     * Uri is invalid or the directory cannot be created.
      * ---
-     * Devuelve el directorio donde deben almacenarse las pistas del
-     * par artista/álbum indicado, creándolo (junto con cualquier
-     * directorio padre que falte) si todavía no existe. Un álbum
-     * nulo o vacío recae en un subdirectorio fijo "_sin_album".
+     * Devuelve (creando si es necesario) el DocumentFile directorio
+     * para el par artista/album bajo rootUri. Devuelve null si el Uri
+     * raiz no es valido o el directorio no puede crearse.
+     *
+     * @param context   Application context for ContentResolver access.
+     * @param rootUri   SAF tree Uri returned by OpenDocumentTree.
+     * @param artist    Artist name (will be sanitized).
+     * @param album     Album name (will be sanitized); null -> "_sin_album".
      */
-    fun getTrackDir(externalStorageRoot: File, artist: String, album: String?): File {
-        val artistDirName = sanitize(artist)
-        val albumDirName = album
-            ?.let { sanitize(it) }
-            ?: UNKNOWN_ALBUM_DIR_NAME
+    fun getOrCreateTrackDir(
+        context: Context,
+        rootUri: Uri,
+        artist: String,
+        album: String?,
+    ): DocumentFile? {
+        val root = DocumentFile.fromTreeUri(context, rootUri)
+            ?: return null
 
-        val trackDir = File(
-            File(File(externalStorageRoot, ROOT_DIR_NAME), artistDirName),
-            albumDirName,
-        )
-        if (!trackDir.exists()) {
-            trackDir.mkdirs()
-        }
-        return trackDir
+        val artistDir = root.findOrCreate(sanitize(artist))
+            ?: return null
+
+        val albumName = album?.let { sanitize(it) } ?: UNKNOWN_ALBUM_DIR_NAME
+        return artistDir.findOrCreate(albumName)
     }
+
+    /**
+     * Finds an existing child directory by name or creates it if it
+     * does not exist. Returns null on failure.
+     * ---
+     * Busca un subdirectorio hijo por nombre o lo crea si no existe.
+     * Devuelve null en caso de fallo.
+     */
+    private fun DocumentFile.findOrCreate(name: String): DocumentFile? =
+        findFile(name) ?: createDirectory(name)
 }
+

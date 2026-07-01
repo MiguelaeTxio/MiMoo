@@ -5,7 +5,6 @@ import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.BuildConfig
-import com.miguelaetxio.mimoo.data.download.DownloadDirManager
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
@@ -42,10 +41,9 @@ data class SearchUiState(
  * Download state flow:
  *   search() inserts tracks into Room ->
  *   _currentYoutubeIds emits the new ID set ->
- *   resultFlow collects Room's Flow<List<SearchResultTrack>> filtered
- *   to the current search ->
+ *   resultFlow collects Room's Flow filtered to the current search ->
  *   DownloadWorker updates Room ->
- *   Room emits -> resultFlow re-emits -> UI recomposes automatically.
+ *   Room emits -> UI recomposes automatically.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -61,19 +59,9 @@ class SearchViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
-    // Holds the youtubeIds of the most recent search so resultFlow
-    // can filter Room's full table to only the current results.
-    // Contiene los youtubeIds de la ultima busqueda para que resultFlow
-    // filtre la tabla completa de Room a solo los resultados actuales.
     private val _currentYoutubeIds = MutableStateFlow<List<String>>(emptyList())
 
     init {
-        // Observe Room for the current search results. When Room emits
-        // (e.g. DownloadWorker updates downloadStatus), uiState.results
-        // updates automatically without a new network call.
-        // Observa Room para los resultados de la busqueda actual. Cuando
-        // Room emite (p.ej. DownloadWorker actualiza downloadStatus),
-        // uiState.results se actualiza automaticamente sin llamada de red.
         viewModelScope.launch {
             _currentYoutubeIds
                 .flatMapLatest { ids ->
@@ -121,8 +109,6 @@ class SearchViewModel @Inject constructor(
                     )
                 }
                 searchResultTrackRepository.cacheSearchResults(tracks)
-                // Emit the ordered ID list; resultFlow will pick it up.
-                // Emitir la lista ordenada de IDs; resultFlow la recoger.
                 _currentYoutubeIds.value = tracks.map { it.youtubeId }
                 _uiState.value = _uiState.value.copy(isSearching = false)
             } catch (e: Exception) {
@@ -144,9 +130,7 @@ class SearchViewModel @Inject constructor(
                 val streamUrl =
                     streamResolver.resolveAudioStreamUrl(track.youtubeUrl)
                 playerManager.play(streamUrl, track.title)
-                _uiState.value = _uiState.value.copy(
-                    isResolvingStream = false,
-                )
+                _uiState.value = _uiState.value.copy(isResolvingStream = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isResolvingStream = false,
@@ -158,29 +142,19 @@ class SearchViewModel @Inject constructor(
 
     /**
      * Enqueues a WorkManager download job for the given track.
-     * Uses DownloadDirManager.getTrackDir() to resolve the output
-     * directory, then appends the sanitized title as filename.
-     * externalStorageDirectory is the legacy public root
-     * (/sdcard), compatible with minSdk 26 and the existing
-     * WRITE_EXTERNAL_STORAGE permission declared in the Manifest.
+     * DownloadWorker resolves the SAF destination internally via
+     * StorageManager + DownloadDirManager.
      * ---
      * Encola un trabajo de descarga WorkManager para la pista dada.
-     * Usa DownloadDirManager.getTrackDir() para resolver el directorio
-     * de salida y añade el titulo sanitizado como nombre de archivo.
-     * externalStorageDirectory es la raiz publica legacy (/sdcard),
-     * compatible con minSdk 26 y el permiso WRITE_EXTERNAL_STORAGE
-     * declarado en el Manifest.
+     * DownloadWorker resuelve el destino SAF internamente via
+     * StorageManager + DownloadDirManager.
      */
     fun requestDownload(track: SearchResultTrack) {
-        @Suppress("DEPRECATION")
-        val storageRoot = Environment.getExternalStorageDirectory()
-        val trackDir = DownloadDirManager.getTrackDir(
-            externalStorageRoot = storageRoot,
+        downloadQueueManager.enqueue(
+            youtubeId = track.youtubeId,
+            title = track.title,
             artist = track.channelTitle,
-            album = null,
         )
-        val safeTitle = DownloadDirManager.sanitize(track.title)
-        val outputPath = "${trackDir.absolutePath}/$safeTitle"
-        downloadQueueManager.enqueue(track.youtubeId, outputPath)
     }
 }
+

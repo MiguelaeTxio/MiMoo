@@ -13,7 +13,7 @@ import javax.inject.Singleton
  * WorkManager. Each download is a OneTimeWorkRequest tagged with
  * the youtubeId so it can be cancelled individually.
  * ---
- * Singleton que encola y cancela trabajos de descarga de audio vía
+ * Singleton que encola y cancela trabajos de descarga de audio via
  * WorkManager. Cada descarga es un OneTimeWorkRequest etiquetado con
  * el youtubeId para poder cancelarla individualmente.
  */
@@ -26,16 +26,20 @@ class DownloadQueueManager @Inject constructor(
 
     /**
      * Enqueues a download job for the given YouTube video.
+     * DownloadWorker resolves the output path internally via SAF.
      * ---
-     * Encola un trabajo de descarga para el vídeo de YouTube indicado.
+     * Encola un trabajo de descarga para el video de YouTube indicado.
+     * DownloadWorker resuelve la ruta de salida internamente via SAF.
      *
-     * @param youtubeId   11-char YouTube video ID.
-     * @param outputPath  Absolute path where the .opus file will be written.
+     * @param youtubeId  11-char YouTube video ID.
+     * @param title      Track title (used as filename by DownloadWorker).
+     * @param artist     Artist/channel name (used as dir by DownloadWorker).
      */
-    fun enqueue(youtubeId: String, outputPath: String) {
+    fun enqueue(youtubeId: String, title: String, artist: String) {
         val inputData = Data.Builder()
             .putString(DownloadWorker.KEY_YOUTUBE_ID, youtubeId)
-            .putString(DownloadWorker.KEY_OUTPUT_PATH, outputPath)
+            .putString(DownloadWorker.KEY_TITLE, title)
+            .putString(DownloadWorker.KEY_ARTIST, artist)
             .build()
 
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()
@@ -49,7 +53,7 @@ class DownloadQueueManager @Inject constructor(
     /**
      * Cancels any in-progress or pending download for the given video.
      * ---
-     * Cancela cualquier descarga en curso o pendiente para el vídeo dado.
+     * Cancela cualquier descarga en curso o pendiente para el video dado.
      *
      * @param youtubeId  Tag used when the work request was enqueued.
      */
@@ -57,3 +61,4 @@ class DownloadQueueManager @Inject constructor(
         workManager.cancelAllWorkByTag(youtubeId)
     }
 }
+
