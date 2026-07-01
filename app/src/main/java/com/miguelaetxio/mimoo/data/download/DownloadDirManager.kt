@@ -21,7 +21,7 @@ import androidx.documentfile.provider.DocumentFile
  */
 object DownloadDirManager {
 
-    private const val UNKNOWN_ALBUM_DIR_NAME = "_sin_album"
+    private const val UNKNOWN_ALBUM_DIR_NAME = "Sencillos"
 
     /**
      * Forbidden characters in FAT32 filesystems, plus control chars.
@@ -55,7 +55,7 @@ object DownloadDirManager {
      * @param context   Application context for ContentResolver access.
      * @param rootUri   SAF tree Uri returned by OpenDocumentTree.
      * @param artist    Artist name (will be sanitized).
-     * @param album     Album name (will be sanitized); null -> "_sin_album".
+     * @param album     Album name (will be sanitized); null -> "Sencillos".
      */
     fun getOrCreateTrackDir(
         context: Context,
@@ -83,4 +83,3 @@ object DownloadDirManager {
     private fun DocumentFile.findOrCreate(name: String): DocumentFile? =
         findFile(name) ?: createDirectory(name)
 }
-

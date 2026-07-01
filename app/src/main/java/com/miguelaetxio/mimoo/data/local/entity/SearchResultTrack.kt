@@ -16,16 +16,24 @@ enum class DownloadStatus { PENDING, DOWNLOADING, DONE, ERROR }
  * A single audio track resolved from a YouTube search result.
  * Unlike the previous Artist/Album/Track CRUD model, this entity is
  * never filled in by hand: every field is populated from YouTube
- * metadata at search time. artistName/albumName are free-text labels
- * taken from the video's channel title, not foreign keys to a manual
- * catalog.
+ * metadata at search time. artist is a structured, queryable field
+ * (added in Hito 03 PASO 2) used for storage foldering and future
+ * Biblioteca grouping/sorting; it starts as a copy of channelTitle
+ * but is decoupled so a future manual edit (PASO 7) can diverge from
+ * it. album stays null until the MusicBrainz milestone or a manual
+ * edit exists — there is no automatic source for it yet.
  * ---
  * Una pista de audio resuelta a partir de un resultado de búsqueda de
  * YouTube. A diferencia del modelo CRUD anterior de Artist/Album/Track,
  * esta entidad nunca se rellena a mano: todos los campos proceden de
- * los metadatos de YouTube en el momento de la búsqueda. artistName
- * es una etiqueta de texto libre tomada del nombre del canal, no una
- * clave foránea a un catálogo manual.
+ * los metadatos de YouTube en el momento de la búsqueda. artist es un
+ * campo estructurado y consultable (añadido en el Hito 03 PASO 2) que
+ * se usa para la organización de carpetas y, en el futuro, para
+ * agrupar/ordenar en la Biblioteca; empieza como copia de
+ * channelTitle pero está desacoplado para que una futura edición
+ * manual (PASO 7) pueda divergir de él. album permanece null hasta
+ * que exista el hito de MusicBrainz o una edición manual — todavía no
+ * hay fuente automática para él.
  */
 @Entity(tableName = "search_result_tracks")
 data class SearchResultTrack(
@@ -37,6 +45,8 @@ data class SearchResultTrack(
     val filePath: String? = null,       // local .opus path once downloaded
     val downloadStatus: DownloadStatus = DownloadStatus.PENDING,
     val lastSearchedAt: Long = System.currentTimeMillis(),
+    val artist: String? = null,         // structured artist, PASO 2 H03
+    val album: String? = null,          // null until MusicBrainz/manual edit
 ) {
     val youtubeUrl: String get() = "https://youtu.be/$youtubeId"
 }

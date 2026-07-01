@@ -107,6 +107,7 @@ class SearchViewModel @Inject constructor(
                         channelTitle = dto.channelTitle,
                         durationSeconds = dto.durationSeconds,
                         thumbnailUrl = dto.thumbnailUrl,
+                        artist = dto.channelTitle,
                     )
                 }
                 searchResultTrackRepository.cacheSearchResults(tracks)
@@ -171,7 +172,7 @@ class SearchViewModel @Inject constructor(
         downloadQueueManager.enqueue(
             youtubeId = track.youtubeId,
             title = track.title,
-            artist = track.channelTitle,
+            artist = track.artist ?: track.channelTitle,
         )
     }
 }
