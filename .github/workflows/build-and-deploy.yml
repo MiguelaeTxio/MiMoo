@@ -33,6 +33,14 @@ jobs:
           mkdir -p ~/.android
           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/debug.keystore
 
+      - name: Verificar huella SHA-256 de la keystore restaurada
+        run: |
+          echo "Tamaño del archivo:"
+          ls -la ~/.android/debug.keystore
+          echo "Huella SHA-256 esperada: B2:42:42:E0:99:62:55:A4:66:B6:70:56:EF:5D:4D:05:72:2B:4A:1A:AD:5A:9D:31:D4:48:4F:7B:D8:C8:49:8D"
+          echo "Huella SHA-256 real:"
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep "SHA256:"
+
       - name: Dar permisos a gradlew
         run: chmod +x gradlew
 
