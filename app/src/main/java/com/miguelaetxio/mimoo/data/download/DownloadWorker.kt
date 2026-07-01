@@ -83,12 +83,25 @@ class DownloadWorker @AssistedInject constructor(
             "libffmpeg_bin.so",
         ).absolutePath
 
+        // yt-dlp looks for an executable named "ffmpeg" in ffmpeg_location.
+        // The native lib is named libffmpeg_bin.so, so we create a symlink
+        // named "ffmpeg" in cacheDir pointing to the real binary.
+        // ---
+        // yt-dlp busca un ejecutable llamado "ffmpeg" en ffmpeg_location.
+        // La lib nativa se llama libffmpeg_bin.so, por lo que creamos un
+        // symlink llamado "ffmpeg" en cacheDir apuntando al binario real.
+        val ffmpegDir = prepareFfmpeg(ffmpegPath)
+            ?: run {
+                repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
+                return Result.failure()
+            }
+
         repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
 
         return try {
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
-            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegPath)
+            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegDir)
 
             // yt-dlp appends .opus to the output template.
             // yt-dlp añade .opus a la plantilla de salida.
@@ -152,6 +165,7 @@ class DownloadWorker @AssistedInject constructor(
                                         appendLine("artist      : $artist")
                                         appendLine("ffmpegPath  : $ffmpegPath")
                                         appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
+                                        appendLine("ffmpegDir   : $ffmpegDir")
                                         appendLine("exception   : ${e::class.java.name}")
                                         appendLine("message     : ${e.message}")
                                         appendLine("--- stacktrace ---")
@@ -183,6 +197,36 @@ class DownloadWorker @AssistedInject constructor(
     }
 
     /**
+     * Creates a symlink named "ffmpeg" in cacheDir pointing to the
+     * real binary (libffmpeg_bin.so). yt-dlp requires the executable
+     * to be named exactly "ffmpeg" in the ffmpeg_location directory.
+     * Returns the directory path on success, null on failure.
+     * ---
+     * Crea un symlink llamado "ffmpeg" en cacheDir apuntando al
+     * binario real (libffmpeg_bin.so). yt-dlp requiere que el
+     * ejecutable se llame exactamente "ffmpeg" en ffmpeg_location.
+     * Devuelve la ruta del directorio en exito, null en fallo.
+     */
+    private fun prepareFfmpeg(ffmpegSoPath: String): String? {
+        return try {
+            val ffmpegLink = File(applicationContext.cacheDir, "ffmpeg")
+            if (!ffmpegLink.exists()) {
+                Runtime.getRuntime().exec(
+                    arrayOf("ln", "-sf", ffmpegSoPath, ffmpegLink.absolutePath)
+                ).waitFor()
+            }
+            // Ensure execute permission on the symlink target.
+            // Asegurar permiso de ejecucion en el destino del symlink.
+            Runtime.getRuntime().exec(
+                arrayOf("chmod", "755", ffmpegSoPath)
+            ).waitFor()
+            applicationContext.cacheDir.absolutePath
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
      * Invokes downloader.py via Chaquopy passing the ffmpeg binary path.
      * outputBasePath must be WITHOUT the .opus extension.
      * ---
@@ -204,3 +248,4 @@ class DownloadWorker @AssistedInject constructor(
         )
     }
 }
+
