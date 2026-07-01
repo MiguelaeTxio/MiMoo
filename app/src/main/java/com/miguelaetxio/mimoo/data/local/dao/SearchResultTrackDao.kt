@@ -65,4 +65,18 @@ interface SearchResultTrackDao {
         filePath: String,
         status: DownloadStatus,
     )
+
+    /**
+     * Partial update: sets the favorite flag for a given track
+     * (PASO 4, H03).
+     * ---
+     * Actualización parcial: fija el marcador de favorito para una
+     * pista (PASO 4, H03).
+     */
+    @Query(
+        "UPDATE search_result_tracks " +
+        "SET isFavorite = :isFavorite " +
+        "WHERE youtubeId = :youtubeId"
+    )
+    suspend fun updateFavorite(youtubeId: String, isFavorite: Boolean)
 }

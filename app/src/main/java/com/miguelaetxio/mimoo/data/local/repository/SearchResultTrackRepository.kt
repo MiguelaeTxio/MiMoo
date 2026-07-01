@@ -59,4 +59,12 @@ class SearchResultTrackRepository @Inject constructor(
         filePath: String,
         status: DownloadStatus,
     ) = dao.updateDownloadResult(youtubeId, filePath, status)
+
+    /**
+     * Sets the favorite flag for a given track (PASO 4, H03).
+     * ---
+     * Fija el marcador de favorito para una pista (PASO 4, H03).
+     */
+    suspend fun updateFavorite(youtubeId: String, isFavorite: Boolean) =
+        dao.updateFavorite(youtubeId, isFavorite)
 }

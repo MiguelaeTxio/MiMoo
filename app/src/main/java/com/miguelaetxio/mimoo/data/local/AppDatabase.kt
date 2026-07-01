@@ -12,7 +12,7 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
     entities = [
         SearchResultTrack::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -40,6 +40,29 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 db.execSQL(
                     "ALTER TABLE search_result_tracks ADD COLUMN album TEXT"
+                )
+            }
+        }
+
+        /**
+         * Adds isFavorite to search_result_tracks (PASO 4, H03).
+         * NOT NULL with DEFAULT 0: unlike artist/album, a missing
+         * favorite flag has one unambiguous correct value (not a
+         * favorite) rather than a real "unknown" state, so existing
+         * rows get a concrete default instead of NULL.
+         * ---
+         * Anade isFavorite a search_result_tracks (PASO 4, H03).
+         * NOT NULL con DEFAULT 0: a diferencia de artist/album, la
+         * ausencia de marcador de favorito tiene un valor correcto
+         * inequivoco (no es favorito) en vez de un "desconocido" real,
+         * asi que las filas existentes reciben un valor concreto en
+         * vez de NULL.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE search_result_tracks " +
+                        "ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0"
                 )
             }
         }
