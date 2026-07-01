@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -12,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +69,8 @@ fun SearchScreen(
                 items(uiState.results, key = { it.youtubeId }) { track ->
                     SearchResultRow(
                         track = track,
-                        onClick = { viewModel.playTrack(track) },
+                        onPlay = { viewModel.playTrack(track) },
+                        onDownload = { viewModel.requestDownload(track) },
                     )
                     HorizontalDivider()
                 }
@@ -81,7 +86,8 @@ fun SearchScreen(
 @Composable
 private fun SearchResultRow(
     track: SearchResultTrack,
-    onClick: () -> Unit,
+    onPlay: () -> Unit,
+    onDownload: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -97,8 +103,70 @@ private fun SearchResultRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = onClick) {
+
+        IconButton(onClick = onPlay) {
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
+        }
+
+        DownloadButton(
+            status = track.downloadStatus,
+            onDownload = onDownload,
+        )
+    }
+}
+
+/**
+ * Download action button that reflects the current DownloadStatus.
+ * PENDING  -> download icon, enabled.
+ * DOWNLOADING -> circular progress spinner, disabled.
+ * DONE     -> green check icon, disabled.
+ * ERROR    -> red error icon, enabled (tap to retry).
+ * ---
+ * Boton de descarga que refleja el DownloadStatus actual.
+ * PENDING      -> icono de descarga, habilitado.
+ * DOWNLOADING  -> spinner circular, deshabilitado.
+ * DONE         -> icono verde de exito, deshabilitado.
+ * ERROR        -> icono rojo de error, habilitado (pulsar para reintentar).
+ */
+@Composable
+private fun DownloadButton(
+    status: DownloadStatus,
+    onDownload: () -> Unit,
+) {
+    when (status) {
+        DownloadStatus.PENDING -> {
+            IconButton(onClick = onDownload) {
+                Icon(
+                    Icons.Filled.Download,
+                    contentDescription = "Descargar",
+                )
+            }
+        }
+        DownloadStatus.DOWNLOADING -> {
+            Box(
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
+        }
+        DownloadStatus.DONE -> {
+            IconButton(onClick = {}, enabled = false) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = "Descargado",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+        DownloadStatus.ERROR -> {
+            IconButton(onClick = onDownload) {
+                Icon(
+                    Icons.Filled.ErrorOutline,
+                    contentDescription = "Error — reintentar descarga",
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            }
         }
     }
 }
