@@ -4,10 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.miguelaetxio.mimoo.ui.library.LibraryScreen
 import com.miguelaetxio.mimoo.ui.search.SearchScreen
 
 sealed class Screen(val route: String) {
     object Search : Screen("search")
+    object Library : Screen("library")
 }
 
 @Composable
@@ -21,6 +23,9 @@ fun MiMooNavGraph(
     ) {
         composable(Screen.Search.route) {
             SearchScreen(onOpenDrawer = onOpenDrawer)
+        }
+        composable(Screen.Library.route) {
+            LibraryScreen(onOpenDrawer = onOpenDrawer)
         }
     }
 }

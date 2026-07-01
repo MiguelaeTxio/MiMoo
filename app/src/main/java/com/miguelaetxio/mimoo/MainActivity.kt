@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
@@ -28,9 +29,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.ui.navigation.MiMooNavGraph
+import com.miguelaetxio.mimoo.ui.navigation.Screen
 import com.miguelaetxio.mimoo.ui.player.PlayerBar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -76,6 +79,9 @@ class MainActivity : ComponentActivity() {
             )
             val scope = rememberCoroutineScope()
             val navController = rememberNavController()
+            val currentBackStackEntry by
+                navController.currentBackStackEntryAsState()
+            val currentRoute = currentBackStackEntry?.destination?.route
 
             MaterialTheme {
                 ModalNavigationDrawer(
@@ -95,8 +101,28 @@ class MainActivity : ComponentActivity() {
                                         contentDescription = null,
                                     )
                                 },
-                                selected = true,
+                                selected = currentRoute == Screen.Search.route,
                                 onClick = {
+                                    navController.navigate(
+                                        Screen.Search.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Biblioteca") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.LibraryMusic,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Library.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Library.route,
+                                    ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
                                 modifier = Modifier.padding(horizontal = 12.dp),
