@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.BuildConfig
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
@@ -120,7 +121,24 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Plays a track. If it was already downloaded (downloadStatus ==
+     * DONE and filePath is set), it plays directly from the local
+     * SAF file, skipping StreamResolver entirely. Otherwise, falls
+     * back to resolving a live streaming URL as before.
+     * ---
+     * Reproduce una pista. Si ya fue descargada (downloadStatus ==
+     * DONE y filePath está definido), reproduce directamente desde
+     * el archivo SAF local, sin pasar por StreamResolver. En caso
+     * contrario, resuelve una URL de streaming en vivo como antes.
+     */
     fun playTrack(track: SearchResultTrack) {
+        val localFilePath = track.filePath
+        if (track.downloadStatus == DownloadStatus.DONE && localFilePath != null) {
+            playerManager.play(localFilePath, track.title)
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isResolvingStream = true,
@@ -157,4 +175,3 @@ class SearchViewModel @Inject constructor(
         )
     }
 }
-
