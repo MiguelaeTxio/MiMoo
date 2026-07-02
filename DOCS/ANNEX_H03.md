@@ -119,12 +119,26 @@ de verificación.
 
 ## Incidencias Abiertas (sin resolver, no bloqueante, sin confirmación de vigencia)
 
-- Actualización de la APK fallaba con "conflicto con un paquete" pese
-  a keystore de debug fija (huella SHA-256 verificada) y
-  `versionCode` dinámico creciente. Ambas causas plausibles
-  corregidas sin que el síntoma desapareciera en su momento (S004).
-  No mencionado de nuevo desde entonces — no sacarlo salvo que Miguel
-  Ángel lo mencione él.
+- **Actualización de la APK falla siempre con "conflicto con un
+  paquete" — CONFIRMADO SISTEMÁTICO, no un caso puntual (2026-07-02).**
+  Se repite en cada una de las últimas 10-12 versiones de la app: el
+  ciclo real de Miguel Ángel es instalar → intentar actualizar en la
+  siguiente versión → falla → desinstalar → reinstalar limpio, y
+  vuelve a fallar en la versión siguiente. Esto **descarta** la
+  hipótesis anterior (keystore antigua residual de antes de fijar la
+  keystore de debug por secret): si fuera eso, una única reinstalación
+  limpia lo habría resuelto para siempre, y no es el caso. La keystore
+  de debug fija y el `versionCode` dinámico creciente ya están
+  verificados correctos en el workflow — la causa real sigue sin
+  identificar.
+  **Pista a investigar (aportada por Miguel Ángel, pendiente de
+  sesión):** a NewPipe le pasaba lo mismo hasta que en algún momento
+  lo resolvieron; revisar sus changelogs para ver qué cambiaron.
+  Hipótesis de partida: algo relacionado con confianza/registro del
+  desarrollador ante Google (Play Integrity, verificación de firma a
+  nivel de cuenta, etc.), a validar contra el changelog real antes de
+  asumir nada. **Deliberadamente pospuesto** — prioridad es terminar
+  la app (H05), no perseguir esto ahora.
 - 4 archivos físicos duplicados de prueba en `Canal IMAR/_sin_album`
   (3) y `Canal IMAR/Sencillos` (1) — Miguel Ángel prefiere borrarlos
   desde la app (PASO 5, ya disponible) en vez de a mano.
