@@ -18,9 +18,32 @@ data class MusicBrainzSearchResponse(
     @SerializedName("releases") val releases: List<MusicBrainzRelease> = emptyList(),
 )
 
+/**
+ * `artist-credit` and `date` are returned by the search endpoint
+ * (`/ws/2/release/?query=...`) directly, without needing `inc=` —
+ * unlike the release lookup endpoint (`lookupRelease`), which does
+ * need `inc=` for extra data. Verified against the official examples
+ * (musicbrainz.org/doc/MusicBrainz_API/Examples, 2026-07-02): a
+ * release JSON object carries `artist-credit: [{ name, ... }]` and
+ * `date: "YYYY-MM-DD"` (or a shorter partial date) at the top level.
+ * ---
+ * `artist-credit` y `date` los devuelve directamente el endpoint de
+ * búsqueda (`/ws/2/release/?query=...`), sin necesitar `inc=` — a
+ * diferencia del endpoint de lookup (`lookupRelease`), que sí lo
+ * necesita para datos extra. Verificado contra los ejemplos oficiales
+ * (musicbrainz.org/doc/MusicBrainz_API/Examples, 2026-07-02): un
+ * objeto release en JSON trae `artist-credit: [{ name, ... }]` y
+ * `date: "YYYY-MM-DD"` (o una fecha parcial más corta) a nivel raíz.
+ */
 data class MusicBrainzRelease(
     @SerializedName("id") val id: String,
     @SerializedName("title") val title: String? = null,
+    @SerializedName("artist-credit") val artistCredit: List<MusicBrainzArtistCredit> = emptyList(),
+    @SerializedName("date") val date: String? = null,
+)
+
+data class MusicBrainzArtistCredit(
+    @SerializedName("name") val name: String,
 )
 
 /**

@@ -21,17 +21,43 @@ data class AlbumTrackMatch(
 )
 
 /**
- * Searches a full album on MusicBrainz and matches each of its
- * tracks to a YouTube video by closest duration (Hito 05). No session
- * cache here, unlike CoverArtRepository — searching an album is a
- * deliberate, one-off user action, not something re-triggered on
- * every recomposition of a list.
+ * One MusicBrainz release candidate shown in the album picker (PASO
+ * 6d) before committing to fetch its tracklist. `coverArtUrl` is
+ * built directly, same as CoverArtRepository — no need for a second
+ * network call or JSON parse, Cover Art Archive 307-redirects on
+ * success and 404s otherwise, which Coil already handles as a normal
+ * image-load failure.
  * ---
- * Busca un álbum completo en MusicBrainz y empareja cada una de sus
- * pistas con un vídeo de YouTube por cercanía de duración (Hito 05).
- * Sin caché de sesión aquí, a diferencia de CoverArtRepository —
- * buscar un álbum es una acción deliberada y puntual del usuario, no
- * algo que se repita en cada recomposición de una lista.
+ * Un release candidato de MusicBrainz mostrado en el selector de
+ * álbum (PASO 6d) antes de comprometerse a pedir su tracklist.
+ * `coverArtUrl` se construye directamente, igual que en
+ * CoverArtRepository — no hace falta una segunda llamada de red ni
+ * parsear JSON, Cover Art Archive redirige (307) si hay éxito y
+ * devuelve 404 si no, que Coil ya trata como un fallo de carga de
+ * imagen normal.
+ */
+data class AlbumCandidate(
+    val mbid: String,
+    val title: String,
+    val artist: String?,
+    val year: String?,
+    val coverArtUrl: String,
+)
+
+/**
+ * Searches MusicBrainz release candidates for an artist/album query
+ * and, once one is chosen, matches its tracklist to YouTube videos by
+ * closest duration (Hito 05). No session cache here, unlike
+ * CoverArtRepository — searching an album is a deliberate, one-off
+ * user action, not something re-triggered on every recomposition of
+ * a list.
+ * ---
+ * Busca releases candidatos de MusicBrainz para una consulta de
+ * artista/álbum y, una vez elegido uno, empareja su tracklist con
+ * vídeos de YouTube por cercanía de duración (Hito 05). Sin caché de
+ * sesión aquí, a diferencia de CoverArtRepository — buscar un álbum
+ * es una acción deliberada y puntual del usuario, no algo que se
+ * repita en cada recomposición de una lista.
  */
 @Singleton
 class AlbumMatchRepository @Inject constructor(
@@ -46,7 +72,7 @@ class AlbumMatchRepository @Inject constructor(
          * fade edits between the studio recording and a given
          * YouTube upload) rather than validated against a corpus of
          * real albums — revisit with Miguel Ángel if PASO 6
-         * (verificación funcional) shows it's too strict or too
+         * (verificación funcional) shows it's too strict o too
          * loose in practice.
          * ---
          * Tolerancia para considerar un emparejamiento de duración
@@ -59,53 +85,76 @@ class AlbumMatchRepository @Inject constructor(
          * que es demasiado estricta o demasiado laxa en la práctica.
          */
         const val DURATION_TOLERANCE_SECONDS = 7
+
+        /**
+         * Cuántos releases candidatos se piden a MusicBrainz por
+         * búsqueda (PASO 6d). Petición explícita de Miguel Ángel:
+         * "las quince mejores coincidencias... diez, quince, veinte,
+         * según ocupen" — 20 es el límite superior de ese rango, y
+         * MusicBrainz ya devuelve los resultados ordenados por
+         * relevancia (motor Lucene), así que pedir de más no cambia
+         * cuáles son los mejores, solo cuántos se listan.
+         */
+        const val CANDIDATE_SEARCH_LIMIT = 20
     }
 
     /**
-     * Returns the album's tracklist, each entry matched to its best
-     * YouTube candidate if one was found within tolerance. Never
-     * throws for individual track match failures — a track search
-     * error or "no candidates" just yields matchedTrack = null for
-     * that entry, letting the rest of the album still be usable.
-     * Only a MusicBrainz search/lookup failure (no release found at
-     * all) propagates, since without a tracklist there is nothing to
-     * match.
+     * Returns up to CANDIDATE_SEARCH_LIMIT release candidates matching
+     * artist/album (PASO 6d) — the user picks one before any tracklist
+     * or YouTube lookup happens. Propagates on a genuine MusicBrainz
+     * failure (network/parsing); an empty result list is not an
+     * error, the caller shows "sin resultados".
      * ---
-     * Devuelve el tracklist del álbum, cada entrada emparejada con su
-     * mejor candidato de YouTube si se encontró uno dentro de
-     * tolerancia. Nunca lanza excepción por fallos de emparejamiento
-     * de una pista individual — un error de búsqueda o "sin
-     * candidatos" simplemente deja matchedTrack = null para esa
-     * entrada, dejando el resto del álbum utilizable. Solo un fallo
-     * de búsqueda/lookup en MusicBrainz (ningún release encontrado)
-     * se propaga, ya que sin tracklist no hay nada que emparejar.
+     * Devuelve hasta CANDIDATE_SEARCH_LIMIT releases candidatos que
+     * coinciden con artista/álbum (PASO 6d) — el usuario elige uno
+     * antes de que se consulte tracklist o YouTube. Propaga en un
+     * fallo real de MusicBrainz (red/parseo); una lista vacía no es un
+     * error, quien llama muestra "sin resultados".
      */
-    suspend fun matchAlbum(
+    suspend fun searchAlbumCandidates(
         artist: String?,
         album: String?,
-        youtubeApiKey: String,
-    ): List<AlbumTrackMatch> {
-        // PASO 6a: se acepta artista solo, album solo, o ambos -- caso
-        // real de musica clasica ("Novena Sinfonia" sin artista) donde
-        // exigir los dos campos hacia imposible la busqueda. La query
-        // de MusicBrainz se construye solo con las clausulas que
-        // aplican; con un unico resultado de MusicBrainz se toma
-        // firstOrNull() igual que antes (comportamiento sin cambios,
-        // no se introduce selector de release ambiguo sin confirmar
-        // con Miguel Angel el diseno de esa pantalla).
+    ): List<AlbumCandidate> {
         val queryClauses = buildList {
             if (!artist.isNullOrBlank()) add("artist:\"${escape(artist)}\"")
             if (!album.isNullOrBlank()) add("release:\"${escape(album)}\"")
         }
         val query = queryClauses.joinToString(" AND ")
-        val mbid = musicBrainzApiService.searchReleases(query = query)
+        return musicBrainzApiService
+            .searchReleases(query = query, limit = CANDIDATE_SEARCH_LIMIT)
             .releases
-            .firstOrNull()
-            ?.id
-            ?: throw NoSuchElementException(
-                "No se encontró ningún álbum para \"${listOfNotNull(artist, album).joinToString(" / ")}\" en MusicBrainz."
-            )
+            .map { release ->
+                AlbumCandidate(
+                    mbid = release.id,
+                    title = release.title ?: "(sin título)",
+                    artist = release.artistCredit.firstOrNull()?.name,
+                    year = release.date?.take(4)?.takeIf { it.length == 4 },
+                    coverArtUrl = "https://coverartarchive.org/release/${release.id}/front",
+                )
+            }
+    }
 
+    /**
+     * Returns the tracklist of the release already chosen by the user
+     * (PASO 6d), each entry matched to its best YouTube candidate if
+     * one was found within tolerance. Never throws for individual
+     * track match failures — a track search error or "no candidates"
+     * just yields matchedTrack = null for that entry, letting the rest
+     * of the album still be usable.
+     * ---
+     * Devuelve el tracklist del release ya elegido por el usuario
+     * (PASO 6d), cada entrada emparejada con su mejor candidato de
+     * YouTube si se encontró uno dentro de tolerancia. Nunca lanza
+     * excepción por fallos de emparejamiento de una pista individual —
+     * un error de búsqueda o "sin candidatos" simplemente deja
+     * matchedTrack = null para esa entrada, dejando el resto del álbum
+     * utilizable.
+     */
+    suspend fun matchAlbumTracks(
+        mbid: String,
+        artist: String?,
+        youtubeApiKey: String,
+    ): List<AlbumTrackMatch> {
         val tracklist = musicBrainzApiService.lookupRelease(mbid).media
             .flatMap { it.tracks }
             .sortedBy { it.position }

@@ -1,9 +1,14 @@
 package com.miguelaetxio.mimoo.ui.albumsearch
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Edit
@@ -14,9 +19,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
+import com.miguelaetxio.mimoo.data.remote.AlbumCandidate
 import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 
@@ -89,38 +97,68 @@ fun AlbumSearchScreen(
                 )
             }
 
-            if (uiState.matches.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                val matchedCount = uiState.matches.count { it.matchedTrack != null }
-                Text(
-                    "$matchedCount de ${uiState.matches.size} pistas emparejadas",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(uiState.matches, key = { it.position }) { match ->
-                        AlbumTrackMatchRow(
-                            match = match,
-                            downloadStatus = match.matchedTrack?.let {
-                                uiState.importedStatus[it.youtubeId]
-                            },
-                            onCorrect = { trackPendingManualMatch = match },
-                        )
-                        HorizontalDivider()
+            val selected = uiState.selectedCandidate
+            if (selected == null) {
+                // PASO 6d: lista de candidatos -- se muestra hasta que
+                // el usuario elige uno, nunca se salta directo al
+                // tracklist del primer resultado de MusicBrainz.
+                if (uiState.candidates.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(uiState.candidates, key = { it.mbid }) { candidate ->
+                            AlbumCandidateRow(
+                                candidate = candidate,
+                                onClick = { viewModel.selectCandidate(candidate) },
+                            )
+                            HorizontalDivider()
+                        }
                     }
                 }
+            } else {
+                Spacer(Modifier.height(12.dp))
+                SelectedAlbumHeader(
+                    candidate = selected,
+                    onBack = viewModel::backToCandidates,
+                )
 
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = viewModel::importAlbum,
-                    enabled = matchedCount > 0,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Importar álbum ($matchedCount pistas)")
+                if (uiState.isLoadingTracks) {
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
-                Spacer(Modifier.height(8.dp))
+
+                if (uiState.matches.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    val matchedCount = uiState.matches.count { it.matchedTrack != null }
+                    Text(
+                        "$matchedCount de ${uiState.matches.size} pistas emparejadas",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(uiState.matches, key = { it.position }) { match ->
+                            AlbumTrackMatchRow(
+                                match = match,
+                                downloadStatus = match.matchedTrack?.let {
+                                    uiState.importedStatus[it.youtubeId]
+                                },
+                                onCorrect = { trackPendingManualMatch = match },
+                            )
+                            HorizontalDivider()
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = viewModel::importAlbum,
+                        enabled = matchedCount > 0,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Importar álbum ($matchedCount pistas)")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
             }
         }
     }
@@ -169,6 +207,98 @@ fun AlbumSearchScreen(
             },
         )
     }
+}
+
+@Composable
+private fun AlbumCandidateRow(
+    candidate: AlbumCandidate,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CandidateCoverThumbnail(candidate.coverArtUrl, size = 48.dp)
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(candidate.title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = listOfNotNull(candidate.artist, candidate.year)
+                    .joinToString(" · ")
+                    .ifBlank { "Artista desconocido" },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectedAlbumHeader(
+    candidate: AlbumCandidate,
+    onBack: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) {
+            Icon(Icons.Filled.ArrowBack, contentDescription = "Cambiar álbum")
+        }
+        Spacer(Modifier.width(4.dp))
+        CandidateCoverThumbnail(candidate.coverArtUrl, size = 40.dp)
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(candidate.title, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = listOfNotNull(candidate.artist, candidate.year)
+                    .joinToString(" · ")
+                    .ifBlank { "Artista desconocido" },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/**
+ * Small square cover thumbnail for a MusicBrainz+Cover Art Archive
+ * URL, with a generic album icon fallback on 404/load failure — same
+ * fallback pattern as LibraryScreen's AlbumCoverThumbnail (PASO 6,
+ * H03), simplified here since there is no YouTube thumbnail to fall
+ * back to before a track has even been matched.
+ * ---
+ * Miniatura cuadrada de carátula para una URL de MusicBrainz+Cover
+ * Art Archive, con fallback a un icono genérico de álbum si falla la
+ * carga (404) — mismo patrón de fallback que AlbumCoverThumbnail de
+ * LibraryScreen (PASO 6, H03), simplificado aquí porque no hay
+ * miniatura de YouTube a la que recurrir antes de haber emparejado
+ * siquiera una pista.
+ */
+@Composable
+private fun CandidateCoverThumbnail(coverArtUrl: String, size: androidx.compose.ui.unit.Dp) {
+    val shape = RoundedCornerShape(4.dp)
+    SubcomposeAsyncImage(
+        model = coverArtUrl,
+        contentDescription = "Carátula del álbum",
+        modifier = Modifier.size(size).clip(shape),
+        error = {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Filled.Album,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(size / 2),
+                )
+            }
+        },
+    )
 }
 
 @Composable

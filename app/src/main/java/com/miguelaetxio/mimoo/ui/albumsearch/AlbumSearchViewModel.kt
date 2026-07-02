@@ -7,6 +7,7 @@ import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
+import com.miguelaetxio.mimoo.data.remote.AlbumCandidate
 import com.miguelaetxio.mimoo.data.remote.AlbumMatchRepository
 import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
 import com.miguelaetxio.mimoo.data.remote.YouTubeRepository
@@ -27,6 +28,12 @@ data class AlbumSearchUiState(
     val album: String = "",
     val isSearching: Boolean = false,
     val errorMessage: String? = null,
+    // PASO 6d: lista de releases candidatos (hasta 20) devueltos por
+    // MusicBrainz -- el usuario elige uno antes de pedir tracklist ni
+    // tocar YouTube. matches queda vacio hasta que hay seleccion.
+    val candidates: List<AlbumCandidate> = emptyList(),
+    val selectedCandidate: AlbumCandidate? = null,
+    val isLoadingTracks: Boolean = false,
     val matches: List<AlbumTrackMatch> = emptyList(),
     val manualSearchCandidates: List<TrackDto> = emptyList(),
     val isSearchingManualCandidates: Boolean = false,
@@ -105,18 +112,29 @@ class AlbumSearchViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isSearching = true,
                 errorMessage = null,
+                candidates = emptyList(),
+                selectedCandidate = null,
                 matches = emptyList(),
                 importedCount = null,
             )
             try {
-                val matches = albumMatchRepository.matchAlbum(
+                // PASO 6d: primero se lista, no se empareja de golpe --
+                // peticion explicita de Miguel Angel tras ver que un
+                // solo termino ("Beethoven", "Sinfonia") coincidia con
+                // demasiados releases distintos para asumir el primero
+                // sin mostrarselos.
+                val candidates = albumMatchRepository.searchAlbumCandidates(
                     artist = artist,
                     album = album,
-                    youtubeApiKey = BuildConfig.YOUTUBE_API_KEY,
                 )
                 _uiState.value = _uiState.value.copy(
                     isSearching = false,
-                    matches = matches,
+                    candidates = candidates,
+                    errorMessage = if (candidates.isEmpty()) {
+                        "No se encontraron álbumes para esa búsqueda."
+                    } else {
+                        null
+                    },
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -125,6 +143,58 @@ class AlbumSearchViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * User picked one candidate from the list (PASO 6d) — now, and
+     * only now, its tracklist is fetched and matched against YouTube.
+     * artist used for the YouTube per-track queries comes from the
+     * candidate's own artist-credit, not the raw search field: more
+     * reliable when the user searched by album title only (e.g.
+     * "Novena Sinfonía" without typing "Beethoven").
+     * ---
+     * El usuario eligió un candidato de la lista (PASO 6d) — solo
+     * ahora se pide su tracklist y se empareja con YouTube. El artista
+     * usado en las búsquedas de YouTube por pista viene del propio
+     * artist-credit del candidato, no del campo de búsqueda tal cual:
+     * más fiable cuando se buscó solo por título de álbum (p. ej.
+     * "Novena Sinfonía" sin escribir "Beethoven").
+     */
+    fun selectCandidate(candidate: AlbumCandidate) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                selectedCandidate = candidate,
+                isLoadingTracks = true,
+                errorMessage = null,
+                matches = emptyList(),
+                importedCount = null,
+            )
+            try {
+                val matches = albumMatchRepository.matchAlbumTracks(
+                    mbid = candidate.mbid,
+                    artist = candidate.artist,
+                    youtubeApiKey = BuildConfig.YOUTUBE_API_KEY,
+                )
+                _uiState.value = _uiState.value.copy(
+                    isLoadingTracks = false,
+                    matches = matches,
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoadingTracks = false,
+                    errorMessage = e.message ?: "Error al obtener el tracklist",
+                )
+            }
+        }
+    }
+
+    /** Returns from the tracklist view to the candidate list (PASO 6d). */
+    fun backToCandidates() {
+        _uiState.value = _uiState.value.copy(
+            selectedCandidate = null,
+            matches = emptyList(),
+            errorMessage = null,
+        )
     }
 
     /**
@@ -180,22 +250,27 @@ class AlbumSearchViewModel @Inject constructor(
 
     /**
      * Imports every matched track into search_result_tracks
-     * (PASO 5). artist/album are fixed to the searched values, not
-     * to matchedTrack.channelTitle, so the album groups correctly in
-     * Biblioteca regardless of which channel actually uploaded each
-     * video. Tracks left unmatched (matchedTrack == null) are simply
-     * excluded rather than blocking the rest of the import.
+     * (PASO 5). artist/album are fixed to the selected candidate's own
+     * values (PASO 6d), not to matchedTrack.channelTitle, so the album
+     * groups correctly in Biblioteca regardless of which channel
+     * actually uploaded each video. Tracks left unmatched
+     * (matchedTrack == null) are simply excluded rather than blocking
+     * the rest of the import.
      * ---
      * Importa cada pista emparejada a search_result_tracks (PASO 5).
-     * artist/album se fijan a los valores buscados, no a
-     * matchedTrack.channelTitle, para que el álbum se agrupe bien en
-     * Biblioteca sin importar qué canal subió cada vídeo. Las pistas
-     * sin emparejar (matchedTrack == null) simplemente se excluyen en
-     * vez de bloquear el resto de la importación.
+     * artist/album se fijan a los valores del candidato elegido (PASO
+     * 6d), no a matchedTrack.channelTitle, para que el álbum se agrupe
+     * bien en Biblioteca sin importar qué canal subió cada vídeo. Las
+     * pistas sin emparejar (matchedTrack == null) simplemente se
+     * excluyen en vez de bloquear el resto de la importación.
      */
     fun importAlbum() {
-        val artist = _uiState.value.artist.trim()
-        val album = _uiState.value.album.trim()
+        val selected = _uiState.value.selectedCandidate
+        // Fallback a los campos de texto solo por robustez -- en el
+        // flujo normal siempre hay selectedCandidate, porque matches
+        // no se puebla hasta selectCandidate().
+        val artist = selected?.artist ?: _uiState.value.artist.trim()
+        val album = selected?.title ?: _uiState.value.album.trim()
         val tracks = _uiState.value.matches.mapNotNull { match ->
             match.matchedTrack?.let { candidate ->
                 SearchResultTrack(
