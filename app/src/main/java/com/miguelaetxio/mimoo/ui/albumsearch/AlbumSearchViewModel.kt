@@ -57,9 +57,12 @@ class AlbumSearchViewModel @Inject constructor(
     }
 
     fun searchAlbum() {
-        val artist = _uiState.value.artist.trim()
-        val album = _uiState.value.album.trim()
-        if (artist.isEmpty() || album.isEmpty()) return
+        // PASO 6a: ya no se exigen ambos campos -- artista solo, album
+        // solo, o ambos son validos (caso real: obras clasicas donde
+        // solo se conoce el titulo, ej. "Novena Sinfonia" sin autor).
+        val artist = _uiState.value.artist.trim().ifBlank { null }
+        val album = _uiState.value.album.trim().ifBlank { null }
+        if (artist == null && album == null) return
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(

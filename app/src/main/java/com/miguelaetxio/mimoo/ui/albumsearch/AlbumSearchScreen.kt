@@ -64,7 +64,9 @@ fun AlbumSearchScreen(
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick = viewModel::searchAlbum,
-                enabled = uiState.artist.isNotBlank() && uiState.album.isNotBlank(),
+                // PASO 6a: se acepta artista o album sueltos (caso real:
+                // obras clasicas sin autor conocido de memoria).
+                enabled = uiState.artist.isNotBlank() || uiState.album.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Buscar álbum")

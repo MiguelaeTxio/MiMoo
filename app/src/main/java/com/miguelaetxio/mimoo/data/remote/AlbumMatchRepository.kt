@@ -81,17 +81,29 @@ class AlbumMatchRepository @Inject constructor(
      * se propaga, ya que sin tracklist no hay nada que emparejar.
      */
     suspend fun matchAlbum(
-        artist: String,
-        album: String,
+        artist: String?,
+        album: String?,
         youtubeApiKey: String,
     ): List<AlbumTrackMatch> {
-        val query = "artist:\"${escape(artist)}\" AND release:\"${escape(album)}\""
+        // PASO 6a: se acepta artista solo, album solo, o ambos -- caso
+        // real de musica clasica ("Novena Sinfonia" sin artista) donde
+        // exigir los dos campos hacia imposible la busqueda. La query
+        // de MusicBrainz se construye solo con las clausulas que
+        // aplican; con un unico resultado de MusicBrainz se toma
+        // firstOrNull() igual que antes (comportamiento sin cambios,
+        // no se introduce selector de release ambiguo sin confirmar
+        // con Miguel Angel el diseno de esa pantalla).
+        val queryClauses = buildList {
+            if (!artist.isNullOrBlank()) add("artist:\"${escape(artist)}\"")
+            if (!album.isNullOrBlank()) add("release:\"${escape(album)}\"")
+        }
+        val query = queryClauses.joinToString(" AND ")
         val mbid = musicBrainzApiService.searchReleases(query = query)
             .releases
             .firstOrNull()
             ?.id
             ?: throw NoSuchElementException(
-                "No se encontró el álbum \"$album\" de \"$artist\" en MusicBrainz."
+                "No se encontró ningún álbum para \"${listOfNotNull(artist, album).joinToString(" / ")}\" en MusicBrainz."
             )
 
         val tracklist = musicBrainzApiService.lookupRelease(mbid).media
@@ -100,9 +112,14 @@ class AlbumMatchRepository @Inject constructor(
 
         return tracklist.map { mbTrack ->
             val mbDurationSeconds = mbTrack.length?.let { it / 1000 }
+            val searchQuery = if (!artist.isNullOrBlank()) {
+                "$artist ${mbTrack.title}"
+            } else {
+                mbTrack.title
+            }
             val candidates = try {
                 youTubeRepository.search(
-                    query = "$artist ${mbTrack.title}",
+                    query = searchQuery,
                     apiKey = youtubeApiKey,
                 )
             } catch (e: Exception) {
