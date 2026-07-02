@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -40,6 +41,9 @@ fun LibraryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var trackPendingDelete by remember {
+        mutableStateOf<SearchResultTrack?>(null)
+    }
+    var trackPendingEdit by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
 
@@ -252,6 +256,7 @@ fun LibraryScreen(
                                 viewModel.toggleFavorite(item.track)
                             },
                             onDelete = { trackPendingDelete = item.track },
+                            onEdit = { trackPendingEdit = item.track },
                         )
                     }
                 }
@@ -280,6 +285,30 @@ fun LibraryScreen(
             dismissButton = {
                 TextButton(onClick = { trackPendingDelete = null }) {
                     Text("Cancelar")
+                }
+            },
+        )
+    }
+
+    trackPendingEdit?.let { track ->
+        EditMetadataDialog(
+            track = track,
+            onDismiss = { trackPendingEdit = null },
+            onSave = { title, artist, album ->
+                viewModel.editMetadata(track, title, artist, album)
+                trackPendingEdit = null
+            },
+        )
+    }
+
+    uiState.editMetadataError?.let { message ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissEditMetadataError,
+            title = { Text("No se pudo guardar") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissEditMetadataError) {
+                    Text("Entendido")
                 }
             },
         )
@@ -450,6 +479,7 @@ private fun LibraryTrackRow(
     onPlay: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -463,6 +493,12 @@ private fun LibraryTrackRow(
                 track.artist ?: track.channelTitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(onClick = onEdit) {
+            Icon(
+                Icons.Filled.Edit,
+                contentDescription = "Editar metadatos",
             )
         }
         IconButton(onClick = onToggleFavorite) {
@@ -495,4 +531,83 @@ private fun LibraryTrackRow(
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
         }
     }
+}
+
+/**
+ * Manual metadata edit dialog (PASO 7, H03). Album is edited as free
+ * text; an empty value maps to null (i.e. "Sencillos") on save,
+ * mirroring how DownloadDirManager and LibraryViewModel.recompute()
+ * already treat a missing album elsewhere in the app.
+ * ---
+ * Diálogo de edición manual de metadatos (PASO 7, H03). El álbum se
+ * edita como texto libre; un valor vacío se convierte en null (es
+ * decir, "Sencillos") al guardar, igual que ya trata
+ * DownloadDirManager y LibraryViewModel.recompute() la ausencia de
+ * álbum en el resto de la app.
+ */
+@Composable
+private fun EditMetadataDialog(
+    track: SearchResultTrack,
+    onDismiss: () -> Unit,
+    onSave: (title: String, artist: String, album: String) -> Unit,
+) {
+    var title by remember(track.youtubeId) { mutableStateOf(track.title) }
+    var artist by remember(track.youtubeId) {
+        mutableStateOf(track.artist ?: track.channelTitle)
+    }
+    var album by remember(track.youtubeId) { mutableStateOf(track.album ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar metadatos") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Título") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = artist,
+                    onValueChange = { artist = it },
+                    label = { Text("Artista") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = album,
+                    onValueChange = { album = it },
+                    label = { Text("Álbum (vacío = Sencillos)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (track.filePath != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Si cambias artista o álbum, el archivo se moverá " +
+                            "a la nueva carpeta.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(title, artist, album) },
+                enabled = title.isNotBlank() && artist.isNotBlank(),
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+    )
 }

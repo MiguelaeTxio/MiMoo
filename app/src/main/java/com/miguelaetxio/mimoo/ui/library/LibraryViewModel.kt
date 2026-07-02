@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
+import com.miguelaetxio.mimoo.data.library.TrackFileRelocator
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
@@ -44,6 +45,7 @@ data class LibraryUiState(
     val flatTracks: List<SearchResultTrack> = emptyList(),
     val grouped: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
     val isRefreshing: Boolean = false,
+    val editMetadataError: String? = null,
 )
 
 /**
@@ -74,6 +76,7 @@ class LibraryViewModel @Inject constructor(
     private val storageManager: StorageManager,
     private val libraryReconciler: LibraryReconciler,
     private val coverArtRepository: CoverArtRepository,
+    private val trackFileRelocator: TrackFileRelocator,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -176,6 +179,89 @@ class LibraryViewModel @Inject constructor(
                 repository.updateCoverArtForAlbum(artist, album, url)
             }
         }
+    }
+
+    /**
+     * Applies a manual metadata edit to a track (PASO 7, H03). Title
+     * always updates in place with no file move. Artist/album changes
+     * additionally relocate the physical .opus file to the new
+     * {artist}/{album}/ folder via TrackFileRelocator — applies
+     * equally to real, search-originated rows and to synthetic rows
+     * from LibraryReconciler, since both carry a real filePath once
+     * downloaded. If relocation is needed but fails (no root Uri, or
+     * the copy itself fails), the whole edit is aborted and neither
+     * Room nor the filesystem changes — surfaced via
+     * editMetadataError rather than silently keeping a stale filePath
+     * that playback would then fail to open.
+     * ---
+     * Aplica una edición manual de metadatos a una pista (PASO 7,
+     * H03). El título siempre se actualiza en el sitio sin mover el
+     * archivo. Los cambios de artista/álbum además reubican el
+     * archivo .opus físico a la nueva carpeta {artista}/{álbum}/ vía
+     * TrackFileRelocator — aplica igual a filas reales originadas de
+     * una búsqueda y a filas sintéticas de LibraryReconciler, ya que
+     * ambas llevan un filePath real una vez descargadas. Si hace
+     * falta reubicar pero falla (sin Uri raíz, o la copia en sí
+     * falla), toda la edición se aborta y ni Room ni el sistema de
+     * archivos cambian — se muestra vía editMetadataError en lugar de
+     * dejar en silencio un filePath obsoleto que la reproducción
+     * fallaría al abrir.
+     */
+    fun editMetadata(track: SearchResultTrack, newTitle: String, newArtist: String, newAlbumRaw: String) {
+        val trimmedTitle = newTitle.trim().ifBlank { track.title }
+        val trimmedArtist = newArtist.trim()
+            .ifBlank { track.artist ?: track.channelTitle }
+        val newAlbum = newAlbumRaw.trim().ifBlank { null }
+
+        val currentArtist = track.artist ?: track.channelTitle
+        val needsRelocation =
+            (trimmedArtist != currentArtist || newAlbum != track.album) &&
+                track.filePath != null
+
+        viewModelScope.launch {
+            var updatedFilePath = track.filePath
+
+            if (needsRelocation) {
+                val rootUri = storageManager.getRootUri()
+                if (rootUri == null) {
+                    _uiState.value = _uiState.value.copy(
+                        editMetadataError = "No se puede mover el archivo: " +
+                            "no hay carpeta de almacenamiento elegida.",
+                    )
+                    return@launch
+                }
+                val relocated = trackFileRelocator.relocate(
+                    context = context,
+                    sourceFilePath = track.filePath!!,
+                    rootUri = rootUri,
+                    newArtist = trimmedArtist,
+                    newAlbum = newAlbum,
+                    title = trimmedTitle,
+                )
+                if (relocated == null) {
+                    _uiState.value = _uiState.value.copy(
+                        editMetadataError = "No se pudo mover el archivo a la " +
+                            "nueva carpeta. La edición no se ha guardado.",
+                    )
+                    return@launch
+                }
+                updatedFilePath = relocated
+            }
+
+            repository.update(
+                track.copy(
+                    title = trimmedTitle,
+                    artist = trimmedArtist,
+                    album = newAlbum,
+                    filePath = updatedFilePath,
+                )
+            )
+        }
+    }
+
+    /** Dismisses a previously shown editMetadata error banner/dialog. */
+    fun dismissEditMetadataError() {
+        _uiState.value = _uiState.value.copy(editMetadataError = null)
     }
 
     /**
