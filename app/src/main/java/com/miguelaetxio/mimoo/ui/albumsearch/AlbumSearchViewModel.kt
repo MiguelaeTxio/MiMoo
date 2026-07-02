@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.ui.albumsearch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.BuildConfig
+import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.remote.AlbumMatchRepository
@@ -43,6 +44,7 @@ class AlbumSearchViewModel @Inject constructor(
     private val albumMatchRepository: AlbumMatchRepository,
     private val youTubeRepository: YouTubeRepository,
     private val searchResultTrackRepository: SearchResultTrackRepository,
+    private val downloadQueueManager: DownloadQueueManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AlbumSearchUiState())
@@ -176,6 +178,20 @@ class AlbumSearchViewModel @Inject constructor(
 
         viewModelScope.launch {
             searchResultTrackRepository.cacheSearchResults(tracks)
+            // PASO 6b Parte 1: autodescarga al importar (peticion
+            // explicita de producto -- la cuota diaria de YouTube Data
+            // API hace que no se quiera depender de rebuscar mas
+            // tarde). Mismo mecanismo que
+            // SearchViewModel.requestDownload(), alcance limitado a
+            // album importado -- no se generaliza a SearchScreen sin
+            // confirmar con Miguel Angel.
+            tracks.forEach { track ->
+                downloadQueueManager.enqueue(
+                    youtubeId = track.youtubeId,
+                    title = track.title,
+                    artist = track.artist ?: track.channelTitle,
+                )
+            }
             _uiState.value = _uiState.value.copy(importedCount = tracks.size)
         }
     }
