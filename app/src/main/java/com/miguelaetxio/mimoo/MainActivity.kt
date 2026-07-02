@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
@@ -192,6 +193,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Playlists.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Buscar álbum") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Album,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.AlbumSearch.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.AlbumSearch.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

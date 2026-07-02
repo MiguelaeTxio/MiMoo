@@ -1,7 +1,9 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseDetail
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzSearchResponse
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -27,4 +29,24 @@ interface MusicBrainzApiService {
         @Query("fmt") format: String = "json",
         @Query("limit") limit: Int = 1,
     ): MusicBrainzSearchResponse
+
+    /**
+     * Full release lookup with tracklist (Hito 05) — a second,
+     * separate call after searchReleases() has resolved the MBID.
+     * `inc=recordings` is what makes MusicBrainz include the tracklist
+     * in the response; without it the release comes back with no
+     * `media`/`tracks` at all.
+     * ---
+     * Lookup completo de un release con tracklist (Hito 05) — una
+     * segunda llamada, separada, tras haber resuelto el MBID con
+     * searchReleases(). `inc=recordings` es lo que hace que
+     * MusicBrainz incluya el tracklist en la respuesta; sin él el
+     * release vuelve sin `media`/`tracks` en absoluto.
+     */
+    @GET("release/{mbid}")
+    suspend fun lookupRelease(
+        @Path("mbid") mbid: String,
+        @Query("inc") inc: String = "recordings",
+        @Query("fmt") format: String = "json",
+    ): MusicBrainzReleaseDetail
 }

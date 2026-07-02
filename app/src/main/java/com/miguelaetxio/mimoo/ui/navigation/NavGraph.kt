@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.miguelaetxio.mimoo.ui.albumsearch.AlbumSearchScreen
 import com.miguelaetxio.mimoo.ui.library.LibraryScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistsScreen
@@ -18,6 +19,7 @@ sealed class Screen(val route: String) {
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
     }
+    object AlbumSearch : Screen("album_search")
 }
 
 @Composable
@@ -52,6 +54,9 @@ fun MiMooNavGraph(
             ),
         ) {
             PlaylistDetailScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.AlbumSearch.route) {
+            AlbumSearchScreen(onOpenDrawer = onOpenDrawer)
         }
     }
 }
