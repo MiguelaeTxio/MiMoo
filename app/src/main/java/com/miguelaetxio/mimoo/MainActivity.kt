@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
@@ -174,6 +175,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Library.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Listas") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.QueueMusic,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Playlists.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Playlists.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

@@ -2,14 +2,22 @@ package com.miguelaetxio.mimoo.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.miguelaetxio.mimoo.ui.library.LibraryScreen
+import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
+import com.miguelaetxio.mimoo.ui.playlist.PlaylistsScreen
 import com.miguelaetxio.mimoo.ui.search.SearchScreen
 
 sealed class Screen(val route: String) {
     object Search : Screen("search")
     object Library : Screen("library")
+    object Playlists : Screen("playlists")
+    object PlaylistDetail : Screen("playlist/{playlistId}") {
+        fun routeFor(playlistId: Long) = "playlist/$playlistId"
+    }
 }
 
 @Composable
@@ -26,6 +34,24 @@ fun MiMooNavGraph(
         }
         composable(Screen.Library.route) {
             LibraryScreen(onOpenDrawer = onOpenDrawer)
+        }
+        composable(Screen.Playlists.route) {
+            PlaylistsScreen(
+                onOpenDrawer = onOpenDrawer,
+                onOpenPlaylist = { playlistId ->
+                    navController.navigate(
+                        Screen.PlaylistDetail.routeFor(playlistId),
+                    )
+                },
+            )
+        }
+        composable(
+            Screen.PlaylistDetail.route,
+            arguments = listOf(
+                navArgument("playlistId") { type = NavType.LongType },
+            ),
+        ) {
+            PlaylistDetailScreen(onBack = { navController.popBackStack() })
         }
     }
 }

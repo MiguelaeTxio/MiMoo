@@ -1,0 +1,134 @@
+package com.miguelaetxio.mimoo.ui.playlist
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlaylistDetailScreen(
+    viewModel: PlaylistDetailViewModel = hiltViewModel(),
+    onBack: () -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Lista de reproducción") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = viewModel::playAll,
+                        enabled = uiState.tracks.any { it.filePath != null },
+                    ) {
+                        Icon(
+                            Icons.Filled.PlayArrow,
+                            contentDescription = "Reproducir todo",
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        if (uiState.tracks.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "Todavía no hay pistas en esta lista.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+                itemsIndexed(
+                    uiState.tracks,
+                    key = { _, track -> track.youtubeId },
+                ) { index, track ->
+                    PlaylistDetailTrackRow(
+                        track = track,
+                        isFirst = index == 0,
+                        isLast = index == uiState.tracks.lastIndex,
+                        onMoveUp = { viewModel.moveTrack(index, -1) },
+                        onMoveDown = { viewModel.moveTrack(index, 1) },
+                        onRemove = { viewModel.removeTrack(track.youtubeId) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistDetailTrackRow(
+    track: SearchResultTrack,
+    isFirst: Boolean,
+    isLast: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                Icon(
+                    Icons.Filled.KeyboardArrowUp,
+                    contentDescription = "Subir",
+                )
+            }
+            IconButton(onClick = onMoveDown, enabled = !isLast) {
+                Icon(
+                    Icons.Filled.KeyboardArrowDown,
+                    contentDescription = "Bajar",
+                )
+            }
+        }
+        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+            Text(track.title, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                track.artist ?: track.channelTitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (track.filePath == null) {
+                Text(
+                    "Sin descargar — no se incluye en \"Reproducir todo\"",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+        IconButton(onClick = onRemove) {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = "Quitar de la lista",
+                tint = MaterialTheme.colorScheme.error,
+            )
+        }
+    }
+}
