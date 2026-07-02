@@ -35,14 +35,25 @@ fun PlaylistDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = viewModel::playAll,
-                        enabled = uiState.tracks.any { it.filePath != null },
-                    ) {
-                        Icon(
-                            Icons.Filled.PlayArrow,
-                            contentDescription = "Reproducir todo",
-                        )
+                    if (uiState.isResolving) {
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    } else {
+                        IconButton(
+                            onClick = viewModel::playAll,
+                            enabled = uiState.tracks.isNotEmpty(),
+                        ) {
+                            Icon(
+                                Icons.Filled.PlayArrow,
+                                contentDescription = "Reproducir todo",
+                            )
+                        }
                     }
                 },
             )
@@ -76,6 +87,19 @@ fun PlaylistDetailScreen(
                 }
             }
         }
+    }
+
+    uiState.resolveError?.let { message ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissResolveError,
+            title = { Text("Reproducción parcial") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissResolveError) {
+                    Text("Entendido")
+                }
+            },
+        )
     }
 }
 
@@ -117,9 +141,9 @@ private fun PlaylistDetailTrackRow(
             )
             if (track.filePath == null) {
                 Text(
-                    "Sin descargar — no se incluye en \"Reproducir todo\"",
+                    "Sin descargar — se reproducirá en streaming",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

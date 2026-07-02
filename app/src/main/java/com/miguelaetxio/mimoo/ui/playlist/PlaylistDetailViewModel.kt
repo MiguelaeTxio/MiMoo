@@ -6,6 +6,7 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +16,8 @@ import javax.inject.Inject
 
 data class PlaylistDetailUiState(
     val tracks: List<SearchResultTrack> = emptyList(),
+    val isResolving: Boolean = false,
+    val resolveError: String? = null,
 )
 
 /**
@@ -43,6 +46,7 @@ data class PlaylistDetailUiState(
 class PlaylistDetailViewModel @Inject constructor(
     private val repository: PlaylistRepository,
     private val playerManager: PlayerManager,
+    private val streamResolver: StreamResolver,
     savedStateHandle: androidx.lifecycle.SavedStateHandle,
 ) : ViewModel() {
 
@@ -92,33 +96,68 @@ class PlaylistDetailViewModel @Inject constructor(
     }
 
     /**
-     * Plays the whole playlist in saved order. Unlike Biblioteca's
-     * playAlbum/playArtist (only ever downloaded tracks), a playlist
-     * can contain tracks with filePath == null (never downloaded,
-     * streaming-only search results) — those are skipped here rather
-     * than resolved to a stream URL, since StreamResolver's actual
-     * invocation flow lives in SearchViewModel and has not been read
-     * yet for this hito (see mimoo-annex-v04 PASO 5, still pending);
-     * wiring it in is left for that step rather than guessed now.
+     * Plays the whole playlist in saved order. Downloaded tracks
+     * (filePath != null) play locally; tracks that were never
+     * downloaded resolve a live stream URL via StreamResolver first
+     * — same call SearchViewModel.playTrack uses
+     * (streamResolver.resolveAudioStreamUrl(track.youtubeUrl)).
+     * Resolution runs sequentially and a track whose resolution fails
+     * is skipped rather than aborting the whole queue, since one dead
+     * link should not block playback of the rest of the playlist.
      * ---
-     * Reproduce la playlist completa en el orden guardado. A
-     * diferencia de playAlbum/playArtist de Biblioteca (solo pistas
-     * descargadas), una playlist puede contener pistas con
-     * filePath == null (nunca descargadas, resultados de búsqueda
-     * solo en streaming) — esas se omiten aquí en vez de resolverse a
-     * una URL de stream, ya que el flujo real de invocación de
-     * StreamResolver vive en SearchViewModel y todavía no se ha leído
-     * para este hito (ver mimoo-annex-v04 PASO 5, aún pendiente);
-     * conectarlo se deja para ese paso en vez de adivinarlo ahora.
+     * Reproduce la playlist completa en el orden guardado. Las pistas
+     * descargadas (filePath != null) reproducen en local; las que
+     * nunca se descargaron resuelven primero una URL de streaming en
+     * vivo vía StreamResolver — la misma llamada que usa
+     * SearchViewModel.playTrack
+     * (streamResolver.resolveAudioStreamUrl(track.youtubeUrl)). La
+     * resolución se ejecuta de forma secuencial y una pista cuya
+     * resolución falla se omite en vez de abortar toda la cola, ya
+     * que un enlace muerto no debería bloquear la reproducción del
+     * resto de la lista.
      */
     fun playAll() {
-        val items = _uiState.value.tracks.mapNotNull { track ->
-            track.filePath?.let { path ->
-                QueueItem(uri = path, title = track.title, isLocal = true)
+        val tracks = _uiState.value.tracks
+        if (tracks.isEmpty()) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isResolving = true,
+                resolveError = null,
+            )
+            var resolutionFailures = 0
+            val items = tracks.mapNotNull { track ->
+                val localPath = track.filePath
+                if (localPath != null) {
+                    QueueItem(uri = localPath, title = track.title, isLocal = true)
+                } else {
+                    try {
+                        val streamUrl =
+                            streamResolver.resolveAudioStreamUrl(track.youtubeUrl)
+                        QueueItem(uri = streamUrl, title = track.title, isLocal = false)
+                    } catch (e: Exception) {
+                        resolutionFailures++
+                        null
+                    }
+                }
+            }
+            _uiState.value = _uiState.value.copy(
+                isResolving = false,
+                resolveError = if (resolutionFailures > 0) {
+                    "No se pudieron resolver $resolutionFailures pista(s); " +
+                        "se reproduce el resto."
+                } else {
+                    null
+                },
+            )
+            if (items.isNotEmpty()) {
+                playerManager.playQueue(items)
             }
         }
-        if (items.isNotEmpty()) {
-            playerManager.playQueue(items)
-        }
+    }
+
+    /** Dismisses a previously shown resolve-error banner. */
+    fun dismissResolveError() {
+        _uiState.value = _uiState.value.copy(resolveError = null)
     }
 }

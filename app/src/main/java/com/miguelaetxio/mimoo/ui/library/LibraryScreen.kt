@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 
 private sealed class LibraryListItem {
     data class ArtistHeader(val artist: String) : LibraryListItem()
@@ -44,6 +46,9 @@ fun LibraryScreen(
         mutableStateOf<SearchResultTrack?>(null)
     }
     var trackPendingEdit by remember {
+        mutableStateOf<SearchResultTrack?>(null)
+    }
+    var trackPendingAddToPlaylist by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
 
@@ -257,6 +262,9 @@ fun LibraryScreen(
                             },
                             onDelete = { trackPendingDelete = item.track },
                             onEdit = { trackPendingEdit = item.track },
+                            onAddToPlaylist = {
+                                trackPendingAddToPlaylist = item.track
+                            },
                         )
                     }
                 }
@@ -311,6 +319,13 @@ fun LibraryScreen(
                     Text("Entendido")
                 }
             },
+        )
+    }
+
+    trackPendingAddToPlaylist?.let { track ->
+        AddToPlaylistDialog(
+            youtubeId = track.youtubeId,
+            onDismiss = { trackPendingAddToPlaylist = null },
         )
     }
 }
@@ -480,6 +495,7 @@ private fun LibraryTrackRow(
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
+    onAddToPlaylist: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -493,6 +509,12 @@ private fun LibraryTrackRow(
                 track.artist ?: track.channelTitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(onClick = onAddToPlaylist) {
+            Icon(
+                Icons.Filled.PlaylistAdd,
+                contentDescription = "Añadir a lista",
             )
         }
         IconButton(onClick = onEdit) {

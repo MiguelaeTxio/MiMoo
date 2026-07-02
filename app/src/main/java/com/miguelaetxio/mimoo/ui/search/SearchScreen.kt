@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +30,9 @@ fun SearchScreen(
     onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var trackPendingAddToPlaylist by remember {
+        mutableStateOf<SearchResultTrack?>(null)
+    }
 
     Scaffold(
         topBar = {
@@ -83,6 +88,7 @@ fun SearchScreen(
                         onPlay = { viewModel.playTrack(track) },
                         onDownload = { viewModel.requestDownload(track) },
                         onToggleFavorite = { viewModel.toggleFavorite(track) },
+                        onAddToPlaylist = { trackPendingAddToPlaylist = track },
                     )
                     HorizontalDivider()
                 }
@@ -93,6 +99,13 @@ fun SearchScreen(
             }
         }
     }
+
+    trackPendingAddToPlaylist?.let { track ->
+        AddToPlaylistDialog(
+            youtubeId = track.youtubeId,
+            onDismiss = { trackPendingAddToPlaylist = null },
+        )
+    }
 }
 
 @Composable
@@ -101,6 +114,7 @@ private fun SearchResultRow(
     onPlay: () -> Unit,
     onDownload: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onAddToPlaylist: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -114,6 +128,13 @@ private fun SearchResultRow(
                 "${track.channelTitle} · ${formatDuration(track.durationSeconds)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        IconButton(onClick = onAddToPlaylist) {
+            Icon(
+                Icons.Filled.PlaylistAdd,
+                contentDescription = "Añadir a lista",
             )
         }
 
