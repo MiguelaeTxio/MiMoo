@@ -101,52 +101,70 @@ quiere depender de volver a buscar en YouTube cada vez.
 
 ## Hoja de Ruta para la Siguiente Sesión
 
-**Los PASOS 1-5 ya están implementados — no repetirlos.** Esta
-sección sustituye al antiguo PASO 6 "Verificación funcional", que ha
-mutado en tres correcciones concretas surgidas de la prueba real.
+**Los PASOS 1-5 ya están implementados — no repetirlos. PASO 6a y
+PASO 6b (Partes 1 y 2) ya están implementados y pusheados en S002
+(2026-07-02, sesión NewFlow) — ver detalle en "COMPLETADAS EN S002"
+más abajo.** Queda 6c (verificación real) y un nuevo PASO 6d que se
+intercala antes de 6c por petición explícita de Miguel Ángel.
 
-### PASO 6a — Búsqueda de álbum: permitir artista solo, álbum solo, o ambos
+### PASO 6d — Selector de álbumes candidatos (HECHO — S002)
 
-- **Verificar contra el archivo real** `AlbumSearchScreen.kt`/
-  `AlbumSearchViewModel.kt` antes de tocarlos.
-- Quitar la exigencia de que ambos campos estén rellenos: el botón
-  "Buscar álbum" se habilita con al menos uno de los dos no vacío.
-- `AlbumMatchRepository.matchAlbum(artist: String?, album: String?, ...)`:
-  construir la query de MusicBrainz condicionalmente — si falta
-  `artist`, omitir `artist:"..."`; si falta `album`, omitir
-  `release:"..."`.
-- Con resultados ambiguos (típico en música clásica con múltiples
-  grabaciones), decidir con Miguel Ángel si se toma la primera
-  coincidencia o se muestra una lista de releases candidatas — no
-  asumir.
-- Ejemplo real de prueba a repetir: buscar "Novena Sinfonía" de
-  Beethoven sin artista.
+- Petición explícita de Miguel Ángel: buscar por un solo término
+  ("Beethoven", "Sinfonía") coincidía con demasiados releases
+  distintos en MusicBrainz como para importar el primero sin
+  mostrarlos — resolvía así la ambigüedad que 6a dejó pendiente de
+  decidir.
+- `AlbumMatchRepository.matchAlbum()` dividido en
+  `searchAlbumCandidates(artist, album)` (hasta 20 releases,
+  `AlbumCandidate` con mbid/title/artist/year/coverArtUrl) y
+  `matchAlbumTracks(mbid, artist, apiKey)` (lookup + emparejamiento
+  YouTube del release ya elegido).
+- `AlbumSearchScreen`: lista de candidatos con carátula (Cover Art
+  Archive vía Coil, fallback a icono genérico) hasta elegir uno;
+  entonces cabecera del álbum elegido (con botón para volver a la
+  lista) + tracklist + Importar, igual que antes.
+- `DOCS/MASTER_DOCUMENT.md` §4.5 (actualizarse en línea sobre APIs
+  externas) aplicado: campos `artist-credit`/`date` de MusicBrainz
+  verificados contra la documentación oficial antes de mapearlos en
+  el DTO.
 
-### PASO 6b — Bug crítico: pistas importadas invisibles
+### PASO 6c — Verificación funcional real (repetir, PENDIENTE)
 
-**Parte 1 — Descarga automática al importar.**
-- `AlbumSearchViewModel.importAlbum()`: además de
-  `cacheSearchResults()`, encolar la descarga real de cada pista vía
-  `DownloadQueueManager.enqueue(youtubeId, title, artist)` — mismo
-  mecanismo que `SearchViewModel.requestDownload()` (leer ese archivo
-  real antes de replicar la llamada).
-- Aclarar con Miguel Ángel si la autodescarga se extiende también a
-  `SearchScreen` normal (no solo álbumes importados) y si quiere
-  poder desactivarla — no generalizar sin confirmar el alcance.
+- Build en verde (comprobar tras 6a/6b/6d).
+- Repetir la prueba: buscar "Beethoven" o "Sinfonía" sueltos y
+  confirmar que aparece una lista de álbumes candidatos con carátula;
+  elegir uno y confirmar que ahí sí se pide tracklist + emparejamiento
+  YouTube; reimportar Lou Reed - Transformer (u otro álbum) y
+  confirmar que las pistas aparecen en la misma lista con su estado de
+  descarga, se descargan solas, el botón "Ver en Biblioteca" lleva
+  hasta allí, y son escuchables sin pasos adicionales.
 
-**Parte 2 — Visibilidad, incluso sin depender de la Parte 1.**
-- Feedback inmediato en `AlbumSearchScreen` tras importar (mostrar
-  `downloadStatus` de cada pista importada en la misma lista), y/o
-  botón "Ver en Biblioteca" en el diálogo de confirmación — decidir
-  cuál(es) con Miguel Ángel.
+---
 
-### PASO 6c — Verificación funcional real (repetir)
+## COMPLETADAS EN S002 (2026-07-02, sesión NewFlow)
 
-- Build en verde (comprobar tras 6a/6b).
-- Repetir la prueba: buscar "Novena Sinfonía" sin artista obligatorio,
-  reimportar Lou Reed - Transformer (u otro álbum) confirmando que
-  las pistas aparecen, se descargan solas, y son escuchables desde
-  Biblioteca sin pasos adicionales.
+- **PASO 6a** — búsqueda de álbum con artista solo, álbum solo, o
+  ambos. `matchAlbum(artist: String?, album: String?, ...)` construye
+  la query de MusicBrainz condicionalmente; botón "Buscar álbum"
+  habilitado con al menos un campo relleno.
+- **PASO 6b Parte 1** — autodescarga real al importar, vía
+  `DownloadQueueManager.enqueue()` por cada pista, mismo mecanismo que
+  `SearchViewModel.requestDownload()`. Alcance limitado al import de
+  álbum, confirmado con Miguel Ángel que no hace falta extenderlo a
+  `SearchScreen` (ya existe la misma paridad ahí vía el botón
+  "Descargar" por pista).
+- **PASO 6b Parte 2** — visibilidad tras importar, ambos enfoques
+  decididos por Miguel Ángel: estado de descarga en vivo en la misma
+  fila de la lista de matches (`importedStatus`, observado desde Room
+  vía `flatMapLatest`) y botón "Ver en Biblioteca" en el diálogo de
+  confirmación.
+- **PASO 6d** — selector de álbumes candidatos, ver detalle arriba.
+- **Corrección de diagnóstico** (no parte de H05, ver `ANNEX_H03.md`):
+  la hipótesis de keystore antigua residual para el "conflicto con un
+  paquete" al actualizar la APK quedó descartada — es sistemático en
+  10-12 versiones seguidas, no un caso puntual. Pista real aportada
+  por Miguel Ángel: revisar los changelogs de NewPipe, que tuvo el
+  mismo problema y lo resolvió. Pospuesto hasta terminar H05.
 
 ---
 
