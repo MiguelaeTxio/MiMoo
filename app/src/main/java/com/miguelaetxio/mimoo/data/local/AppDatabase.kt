@@ -5,19 +5,25 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
+import com.miguelaetxio.mimoo.data.local.entity.Playlist
+import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 
 @Database(
     entities = [
         SearchResultTrack::class,
+        Playlist::class,
+        PlaylistTrackCrossRef::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun searchResultTrackDao(): SearchResultTrackDao
+    abstract fun playlistDao(): PlaylistDao
 
     companion object {
         /**
@@ -86,6 +92,47 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     "ALTER TABLE search_result_tracks ADD COLUMN coverArtUrl TEXT"
+                )
+            }
+        }
+
+        /**
+         * Creates the playlists and playlist_track_cross_refs tables
+         * (Hito 04). Does not touch search_result_tracks at all — new
+         * tables only, no ALTER on the existing schema.
+         * ---
+         * Crea las tablas playlists y playlist_track_cross_refs
+         * (Hito 04). No toca search_result_tracks en absoluto — solo
+         * tablas nuevas, sin ALTER sobre el esquema existente.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `playlists` (" +
+                        "`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " +
+                        "`name` TEXT NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `playlist_track_cross_refs` (" +
+                        "`playlistId` INTEGER NOT NULL, " +
+                        "`youtubeId` TEXT NOT NULL, " +
+                        "`position` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`playlistId`, `youtubeId`), " +
+                        "FOREIGN KEY(`playlistId`) REFERENCES `playlists`(`id`) " +
+                        "ON DELETE CASCADE, " +
+                        "FOREIGN KEY(`youtubeId`) REFERENCES `search_result_tracks`(`youtubeId`) " +
+                        "ON DELETE CASCADE)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS " +
+                        "`index_playlist_track_cross_refs_youtubeId` " +
+                        "ON `playlist_track_cross_refs` (`youtubeId`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS " +
+                        "`index_playlist_track_cross_refs_playlistId` " +
+                        "ON `playlist_track_cross_refs` (`playlistId`)"
                 )
             }
         }
