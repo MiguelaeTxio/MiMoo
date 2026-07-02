@@ -23,27 +23,45 @@ import kotlinx.coroutines.launch
 import java.util.Collections
 import javax.inject.Inject
 
-enum class LibraryViewMode { HIERARCHICAL, FLAT }
-enum class LibrarySortOption { TITLE, ARTIST, DATE }
+enum class LibraryTab { ALBUMS, SINGLES, FAVORITES }
 
 /**
- * Fallback label for albums with no name — matches the "Sencillos"
- * convention already used by DownloadDirManager for the on-disk
- * folder, so the UI and the storage structure agree.
+ * Displayed label for the MusicBrainz "Various Artists" credit — solo
+ * a nivel de presentación, la clave de agrupación real sigue siendo
+ * el artist-credit tal cual vino de MusicBrainz (PASO 6d, H05), para
+ * no romper el filtro de texto ni la reubicación de archivos si
+ * alguna vez se edita a mano.
  * ---
- * Etiqueta de respaldo para álbumes sin nombre — coincide con la
- * convención "Sencillos" que ya usa DownloadDirManager para la
- * carpeta en disco, para que la UI y el almacenamiento concuerden.
+ * Etiqueta mostrada para el artist-credit "Various Artists" de
+ * MusicBrainz — solo a nivel de presentación, la clave de agrupación
+ * real sigue siendo el artist-credit tal cual vino de MusicBrainz
+ * (PASO 6d, H05), para no romper el filtro de texto ni la reubicación
+ * de archivos si alguna vez se edita a mano.
  */
-const val UNKNOWN_ALBUM_LABEL = "Sencillos"
+const val VARIOUS_ARTISTS_CREDIT = "Various Artists"
+const val VARIOUS_ARTISTS_DISPLAY_LABEL = "Varios"
+
+fun displayArtistName(artist: String): String =
+    if (artist.equals(VARIOUS_ARTISTS_CREDIT, ignoreCase = true)) {
+        VARIOUS_ARTISTS_DISPLAY_LABEL
+    } else {
+        artist
+    }
 
 data class LibraryUiState(
-    val viewMode: LibraryViewMode = LibraryViewMode.HIERARCHICAL,
-    val sortOption: LibrarySortOption = LibrarySortOption.ARTIST,
+    val tab: LibraryTab = LibraryTab.ALBUMS,
     val filterQuery: String = "",
-    val showFavoritesOnly: Boolean = false,
-    val flatTracks: List<SearchResultTrack> = emptyList(),
-    val grouped: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
+    // PASO: reorganizacion de Biblioteca a peticion de Miguel Angel --
+    // tres estructuras separadas en vez de un unico grouped+viewMode
+    // ambiguo. albumsByArtist solo contiene pistas con album real
+    // (compilaciones de un artista incluidas -- "Various Artists"
+    // cae aqui igual que cualquier otro artista, agrupando de facto
+    // los recopilatorios multi-artista bajo un unico "artista").
+    // singlesByArtist solo pistas sin album. favorites es plana,
+    // ordenada por titulo, sin importar si son album o sencillo.
+    val albumsByArtist: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
+    val singlesByArtist: Map<String, List<SearchResultTrack>> = emptyMap(),
+    val favorites: List<SearchResultTrack> = emptyList(),
     val isRefreshing: Boolean = false,
     val editMetadataError: String? = null,
 )
@@ -117,26 +135,12 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    fun setViewMode(mode: LibraryViewMode) {
-        _uiState.value = _uiState.value.copy(viewMode = mode)
-        recompute()
-    }
-
-    fun setSortOption(option: LibrarySortOption) {
-        _uiState.value = _uiState.value.copy(sortOption = option)
-        recompute()
+    fun setTab(tab: LibraryTab) {
+        _uiState.value = _uiState.value.copy(tab = tab)
     }
 
     fun onFilterQueryChange(query: String) {
         _uiState.value = _uiState.value.copy(filterQuery = query)
-        recompute()
-    }
-
-    /** Toggles the "show favorites only" filter (PASO 4, H03). */
-    fun setShowFavoritesOnly(showFavoritesOnly: Boolean) {
-        _uiState.value = _uiState.value.copy(
-            showFavoritesOnly = showFavoritesOnly,
-        )
         recompute()
     }
 
@@ -150,26 +154,23 @@ class LibraryViewModel @Inject constructor(
     /**
      * Resolves and persists the cover art for one artist+album if it
      * hasn't been requested yet this process run (PASO 6, H03).
-     * Called from LibraryScreen once per rendered AlbumHeaderRow — the
-     * `coverArtRequested` guard makes repeated calls across
-     * recompositions a no-op after the first. Synthetic "Sencillos"
-     * groupings (no real album, see UNKNOWN_ALBUM_LABEL) are never
-     * passed here — there is nothing meaningful to search for.
+     * Called from LibraryScreen once per rendered AlbumHeaderRow —
+     * only real albums reach this function, since singles now live in
+     * their own tab (albumsByArtist never contains a synthetic
+     * "Sencillos" grouping).
      * ---
      * Resuelve y persiste la carátula de un artista+álbum si no se ha
      * pedido ya en esta ejecución del proceso (PASO 6, H03). Se llama
      * desde LibraryScreen una vez por cada AlbumHeaderRow renderizado
-     * — el guardián `coverArtRequested` hace que las llamadas
-     * repetidas entre recomposiciones no hagan nada tras la primera.
-     * Las agrupaciones sintéticas "Sencillos" (sin álbum real, ver
-     * UNKNOWN_ALBUM_LABEL) nunca se pasan aquí — no hay nada
-     * significativo que buscar.
+     * — solo llegan aquí álbumes reales, ya que los sencillos ahora
+     * viven en su propia pestaña (albumsByArtist nunca contiene una
+     * agrupación sintética "Sencillos").
      */
     fun requestCoverArtIfMissing(artist: String, album: String) {
         val key = "$artist|$album"
         if (!coverArtRequested.add(key)) return
 
-        val alreadyHasCover = _uiState.value.grouped[artist]?.get(album)
+        val alreadyHasCover = _uiState.value.albumsByArtist[artist]?.get(album)
             ?.any { it.coverArtUrl != null } == true
         if (alreadyHasCover) return
 
@@ -294,18 +295,11 @@ class LibraryViewModel @Inject constructor(
 
     private fun recompute() {
         val query = _uiState.value.filterQuery.trim().lowercase()
-        val favoritesOnly = _uiState.value.showFavoritesOnly
-
-        val base = if (favoritesOnly) {
-            allDownloaded.filter { it.isFavorite }
-        } else {
-            allDownloaded
-        }
 
         val filtered = if (query.isEmpty()) {
-            base
+            allDownloaded
         } else {
-            base.filter { track ->
+            allDownloaded.filter { track ->
                 track.title.lowercase().contains(query) ||
                     (track.artist ?: track.channelTitle).lowercase()
                         .contains(query) ||
@@ -313,31 +307,38 @@ class LibraryViewModel @Inject constructor(
             }
         }
 
-        val sorted = when (_uiState.value.sortOption) {
-            LibrarySortOption.TITLE -> filtered.sortedBy { it.title }
-            LibrarySortOption.ARTIST -> filtered.sortedBy {
-                it.artist ?: it.channelTitle
-            }
-            LibrarySortOption.DATE -> filtered.sortedByDescending {
-                it.lastSearchedAt
-            }
-        }
-
-        val grouped = filtered
+        // PASO: reorganizacion de Biblioteca -- separacion real por
+        // album != null en vez de la etiqueta sintetica UNKNOWN_ALBUM_LABEL
+        // de antes. LibraryReconciler ya mapea las carpetas "Sencillos"/
+        // legacy a album = null, asi que esta particion es identica
+        // para pistas de busqueda y pistas reconciliadas desde disco.
+        val albumsByArtist = filtered
+            .filter { it.album != null }
             .groupBy { it.artist ?: it.channelTitle }
             .toSortedMap()
             .mapValues { (_, tracks) ->
                 tracks
-                    .groupBy { it.album ?: UNKNOWN_ALBUM_LABEL }
+                    .groupBy { it.album!! }
                     .toSortedMap()
                     .mapValues { (_, albumTracks) ->
                         albumTracks.sortedBy { it.title }
                     }
             }
 
+        val singlesByArtist = filtered
+            .filter { it.album == null }
+            .groupBy { it.artist ?: it.channelTitle }
+            .toSortedMap()
+            .mapValues { (_, tracks) -> tracks.sortedBy { it.title } }
+
+        val favorites = filtered
+            .filter { it.isFavorite }
+            .sortedBy { it.title }
+
         _uiState.value = _uiState.value.copy(
-            flatTracks = sorted,
-            grouped = grouped,
+            albumsByArtist = albumsByArtist,
+            singlesByArtist = singlesByArtist,
+            favorites = favorites,
         )
     }
 
@@ -349,29 +350,49 @@ class LibraryViewModel @Inject constructor(
 
     /** Plays every track of one album, in title order, as a queue. */
     fun playAlbum(artist: String, album: String) {
-        val tracks = _uiState.value.grouped[artist]?.get(album) ?: return
+        val tracks = _uiState.value.albumsByArtist[artist]?.get(album) ?: return
         playerManager.playQueue(tracks.toQueueItems())
     }
 
     /**
-     * Plays every track of one artist across all their albums, album
-     * order then title order within each album, as a queue.
+     * Plays every album track of one artist, album order then title
+     * order within each album, as a queue (pestaña Álbumes).
      * ---
-     * Reproduce todas las pistas de un artista en todos sus álbumes,
-     * en orden de álbum y luego de título dentro de cada álbum, como
-     * cola.
+     * Reproduce todas las pistas de álbum de un artista, en orden de
+     * álbum y luego de título dentro de cada álbum, como cola
+     * (pestaña Álbumes).
      */
-    fun playArtist(artist: String) {
-        val albums = _uiState.value.grouped[artist] ?: return
-        val tracks = albums.values.flatten()
+    fun playArtistAlbums(artist: String) {
+        val albums = _uiState.value.albumsByArtist[artist] ?: return
+        playerManager.playQueue(albums.values.flatten().toQueueItems())
+    }
+
+    /** Plays every album track of one artist in random order (pestaña Álbumes). */
+    fun playArtistAlbumsShuffled(artist: String) {
+        val albums = _uiState.value.albumsByArtist[artist] ?: return
+        playerManager.playQueue(albums.values.flatten().shuffled().toQueueItems())
+    }
+
+    /** Plays every single of one artist, title order, as a queue (pestaña Sencillos). */
+    fun playArtistSingles(artist: String) {
+        val tracks = _uiState.value.singlesByArtist[artist] ?: return
         playerManager.playQueue(tracks.toQueueItems())
     }
 
-    /** Plays every track of one artist in random order. */
-    fun playArtistShuffled(artist: String) {
-        val albums = _uiState.value.grouped[artist] ?: return
-        val tracks = albums.values.flatten().shuffled()
-        playerManager.playQueue(tracks.toQueueItems())
+    /** Plays every single of one artist in random order (pestaña Sencillos). */
+    fun playArtistSinglesShuffled(artist: String) {
+        val tracks = _uiState.value.singlesByArtist[artist] ?: return
+        playerManager.playQueue(tracks.shuffled().toQueueItems())
+    }
+
+    /** Plays every favorite, title order, as a queue (pestaña Favoritos). */
+    fun playFavorites() {
+        playerManager.playQueue(_uiState.value.favorites.toQueueItems())
+    }
+
+    /** Plays every favorite in random order (pestaña Favoritos). */
+    fun playFavoritesShuffled() {
+        playerManager.playQueue(_uiState.value.favorites.shuffled().toQueueItems())
     }
 
     private fun List<SearchResultTrack>.toQueueItems(): List<QueueItem> =

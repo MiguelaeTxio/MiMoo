@@ -30,7 +30,8 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 
 private sealed class LibraryListItem {
-    data class ArtistHeader(val artist: String) : LibraryListItem()
+    data class ArtistAlbumsHeader(val artist: String) : LibraryListItem()
+    data class ArtistSinglesHeader(val artist: String) : LibraryListItem()
     data class AlbumHeader(val artist: String, val album: String) : LibraryListItem()
     data class TrackRow(val track: SearchResultTrack) : LibraryListItem()
 }
@@ -108,95 +109,40 @@ fun LibraryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(
-                    onClick = {
-                        viewModel.setViewMode(LibraryViewMode.HIERARCHICAL)
-                    },
-                ) {
-                    Text(
-                        "Jerárquica",
-                        fontWeight = if (
-                            uiState.viewMode == LibraryViewMode.HIERARCHICAL
-                        ) {
-                            FontWeight.Bold
-                        } else {
-                            FontWeight.Normal
-                        },
-                    )
-                }
-                TextButton(
-                    onClick = { viewModel.setViewMode(LibraryViewMode.FLAT) },
-                ) {
-                    Text(
-                        "Plana",
-                        fontWeight = if (
-                            uiState.viewMode == LibraryViewMode.FLAT
-                        ) {
-                            FontWeight.Bold
-                        } else {
-                            FontWeight.Normal
-                        },
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-                IconButton(
-                    onClick = {
-                        viewModel.setShowFavoritesOnly(
-                            !uiState.showFavoritesOnly,
-                        )
-                    },
-                ) {
-                    Icon(
-                        imageVector = if (uiState.showFavoritesOnly) {
-                            Icons.Filled.Star
-                        } else {
-                            Icons.Filled.StarBorder
-                        },
-                        contentDescription = if (uiState.showFavoritesOnly) {
-                            "Mostrar todas"
-                        } else {
-                            "Mostrar solo favoritos"
-                        },
-                        tint = if (uiState.showFavoritesOnly) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-            }
-
-            if (uiState.viewMode == LibraryViewMode.FLAT) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    SortButton(
-                        label = "Título",
-                        option = LibrarySortOption.TITLE,
-                        current = uiState.sortOption,
-                        onSelect = viewModel::setSortOption,
-                    )
-                    SortButton(
-                        label = "Artista",
-                        option = LibrarySortOption.ARTIST,
-                        current = uiState.sortOption,
-                        onSelect = viewModel::setSortOption,
-                    )
-                    SortButton(
-                        label = "Fecha",
-                        option = LibrarySortOption.DATE,
-                        current = uiState.sortOption,
-                        onSelect = viewModel::setSortOption,
-                    )
-                }
+                LibraryTabButton(
+                    label = "Álbumes",
+                    tab = LibraryTab.ALBUMS,
+                    current = uiState.tab,
+                    onSelect = viewModel::setTab,
+                )
+                LibraryTabButton(
+                    label = "Sencillos",
+                    tab = LibraryTab.SINGLES,
+                    current = uiState.tab,
+                    onSelect = viewModel::setTab,
+                )
+                LibraryTabButton(
+                    label = "Favoritos",
+                    tab = LibraryTab.FAVORITES,
+                    current = uiState.tab,
+                    onSelect = viewModel::setTab,
+                )
             }
 
             Spacer(Modifier.height(8.dp))
 
-            if (uiState.grouped.isEmpty() && uiState.flatTracks.isEmpty()) {
+            val isEmpty = when (uiState.tab) {
+                LibraryTab.ALBUMS -> uiState.albumsByArtist.isEmpty()
+                LibraryTab.SINGLES -> uiState.singlesByArtist.isEmpty()
+                LibraryTab.FAVORITES -> uiState.favorites.isEmpty()
+            }
+
+            if (isEmpty) {
                 Text(
-                    if (uiState.showFavoritesOnly) {
-                        "Todavía no hay favoritos descargados."
-                    } else {
-                        "Todavía no hay pistas descargadas."
+                    when (uiState.tab) {
+                        LibraryTab.ALBUMS -> "Todavía no hay álbumes descargados."
+                        LibraryTab.SINGLES -> "Todavía no hay sencillos descargados."
+                        LibraryTab.FAVORITES -> "Todavía no hay canciones favoritas."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -204,12 +150,18 @@ fun LibraryScreen(
                 )
             }
 
-            val listItems: List<LibraryListItem> = if (
-                uiState.viewMode == LibraryViewMode.HIERARCHICAL
-            ) {
-                buildList {
-                    uiState.grouped.forEach { (artist, albums) ->
-                        add(LibraryListItem.ArtistHeader(artist))
+            if (uiState.tab == LibraryTab.FAVORITES && uiState.favorites.isNotEmpty()) {
+                FavoritesHeaderRow(
+                    count = uiState.favorites.size,
+                    onPlayAll = viewModel::playFavorites,
+                    onShuffle = viewModel::playFavoritesShuffled,
+                )
+            }
+
+            val listItems: List<LibraryListItem> = when (uiState.tab) {
+                LibraryTab.ALBUMS -> buildList {
+                    uiState.albumsByArtist.forEach { (artist, albums) ->
+                        add(LibraryListItem.ArtistAlbumsHeader(artist))
                         albums.forEach { (album, tracks) ->
                             add(LibraryListItem.AlbumHeader(artist, album))
                             tracks.forEach { track ->
@@ -218,8 +170,16 @@ fun LibraryScreen(
                         }
                     }
                 }
-            } else {
-                uiState.flatTracks.map { LibraryListItem.TrackRow(it) }
+                LibraryTab.SINGLES -> buildList {
+                    uiState.singlesByArtist.forEach { (artist, tracks) ->
+                        add(LibraryListItem.ArtistSinglesHeader(artist))
+                        tracks.forEach { track ->
+                            add(LibraryListItem.TrackRow(track))
+                        }
+                    }
+                }
+                LibraryTab.FAVORITES ->
+                    uiState.favorites.map { LibraryListItem.TrackRow(it) }
             }
 
             LazyColumn(modifier = Modifier.weight(1f)) {
@@ -227,8 +187,10 @@ fun LibraryScreen(
                     listItems,
                     key = { item ->
                         when (item) {
-                            is LibraryListItem.ArtistHeader ->
-                                "artist:${item.artist}"
+                            is LibraryListItem.ArtistAlbumsHeader ->
+                                "artist-albums:${item.artist}"
+                            is LibraryListItem.ArtistSinglesHeader ->
+                                "artist-singles:${item.artist}"
                             is LibraryListItem.AlbumHeader ->
                                 "album:${item.artist}:${item.album}"
                             is LibraryListItem.TrackRow ->
@@ -237,17 +199,24 @@ fun LibraryScreen(
                     },
                 ) { item ->
                     when (item) {
-                        is LibraryListItem.ArtistHeader -> ArtistHeaderRow(
+                        is LibraryListItem.ArtistAlbumsHeader -> ArtistHeaderRow(
                             artist = item.artist,
-                            onPlayAll = { viewModel.playArtist(item.artist) },
+                            onPlayAll = { viewModel.playArtistAlbums(item.artist) },
                             onShuffle = {
-                                viewModel.playArtistShuffled(item.artist)
+                                viewModel.playArtistAlbumsShuffled(item.artist)
+                            },
+                        )
+                        is LibraryListItem.ArtistSinglesHeader -> ArtistHeaderRow(
+                            artist = item.artist,
+                            onPlayAll = { viewModel.playArtistSingles(item.artist) },
+                            onShuffle = {
+                                viewModel.playArtistSinglesShuffled(item.artist)
                             },
                         )
                         is LibraryListItem.AlbumHeader -> AlbumHeaderRow(
                             artist = item.artist,
                             album = item.album,
-                            tracks = uiState.grouped[item.artist]?.get(item.album)
+                            tracks = uiState.albumsByArtist[item.artist]?.get(item.album)
                                 ?: emptyList(),
                             onPlayAlbum = {
                                 viewModel.playAlbum(item.artist, item.album)
@@ -331,21 +300,48 @@ fun LibraryScreen(
 }
 
 @Composable
-private fun SortButton(
+private fun LibraryTabButton(
     label: String,
-    option: LibrarySortOption,
-    current: LibrarySortOption,
-    onSelect: (LibrarySortOption) -> Unit,
+    tab: LibraryTab,
+    current: LibraryTab,
+    onSelect: (LibraryTab) -> Unit,
 ) {
-    TextButton(onClick = { onSelect(option) }) {
+    TextButton(onClick = { onSelect(tab) }) {
         Text(
             label,
-            fontWeight = if (current == option) {
+            fontWeight = if (current == tab) {
                 FontWeight.Bold
             } else {
                 FontWeight.Normal
             },
         )
+    }
+}
+
+@Composable
+private fun FavoritesHeaderRow(
+    count: Int,
+    onPlayAll: () -> Unit,
+    onShuffle: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "$count favoritas",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onPlayAll) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir favoritos")
+        }
+        IconButton(onClick = onShuffle) {
+            Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
+        }
     }
 }
 
@@ -362,7 +358,7 @@ private fun ArtistHeaderRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = artist,
+            text = displayArtistName(artist),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
         )
@@ -386,13 +382,11 @@ private fun AlbumHeaderRow(
     onPlayAlbum: () -> Unit,
     onRequestCoverArt: (artist: String, album: String) -> Unit,
 ) {
-    // "Sencillos" is a synthetic grouping label for tracks with no
-    // real album (see UNKNOWN_ALBUM_LABEL) — there is nothing to
-    // search on MusicBrainz for it, so the lookup is skipped entirely.
+    // Todos los álbumes que llegan aquí son reales -- los sencillos
+    // (sin álbum) ahora viven en su propia pestaña, nunca en
+    // albumsByArtist -- así que siempre hay algo que buscar.
     LaunchedEffect(artist, album) {
-        if (album != UNKNOWN_ALBUM_LABEL) {
-            onRequestCoverArt(artist, album)
-        }
+        onRequestCoverArt(artist, album)
     }
 
     val coverArtUrl = tracks.firstNotNullOfOrNull { it.coverArtUrl }
@@ -506,7 +500,7 @@ private fun LibraryTrackRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(track.title, style = MaterialTheme.typography.bodyMedium)
             Text(
-                track.artist ?: track.channelTitle,
+                displayArtistName(track.artist ?: track.channelTitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
