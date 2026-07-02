@@ -314,16 +314,16 @@ private fun AlbumTrackMatchRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = if (match.matchedTrack != null && match.isAutoMatched) {
-                Icons.Filled.CheckCircle
-            } else {
-                Icons.Filled.WarningAmber
+            imageVector = when {
+                match.matchError != null -> Icons.Filled.ErrorOutline
+                match.matchedTrack != null && match.isAutoMatched -> Icons.Filled.CheckCircle
+                else -> Icons.Filled.WarningAmber
             },
             contentDescription = null,
-            tint = if (match.matchedTrack != null && match.isAutoMatched) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.error
+            tint = when {
+                match.matchError != null -> MaterialTheme.colorScheme.error
+                match.matchedTrack != null && match.isAutoMatched -> MaterialTheme.colorScheme.primary
+                else -> MaterialTheme.colorScheme.error
             },
         )
         Spacer(Modifier.width(8.dp))
@@ -331,6 +331,7 @@ private fun AlbumTrackMatchRow(
             Text("${match.position}. ${match.mbTitle}")
             Text(
                 text = when {
+                    match.matchError != null -> "Error: ${match.matchError}"
                     match.matchedTrack == null -> "Sin emparejar"
                     match.isAutoMatched -> "Emparejado: ${match.matchedTrack.title}"
                     else -> "Revisar: ${match.matchedTrack.title}"

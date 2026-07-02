@@ -145,9 +145,17 @@ standalone de yt-dlp — es un script Python). El mismo módulo
   `buildConfigField` desde `local.properties`, generado en el
   workflow de GitHub Actions a partir del secret de repositorio
   `YOUTUBE_API_KEY`.
-- **Coste real:** `search.list` cuesta 1 unidad/llamada, límite
-  propio de cuota 100/día (verificado 2026-06-30 contra documentación
-  oficial de Google — no asumir de memoria, puede cambiar).
+- **Coste real (CORREGIDO 2026-07-02, ver H05 sesión "1 de 11 pistas
+  emparejadas"):** `search.list` cuesta **100 unidades/llamada**, no 1
+  como se afirmaba antes — verificado contra documentación oficial de
+  Google (`developers.google.com/youtube/v3/determine_quota_cost`,
+  actualizada 2026-06-01) y varias fuentes independientes recientes.
+  Pool diario de 10.000 unidades/proyecto → ~100 llamadas search.list
+  como máximo. `videos.list` y `playlistItems.list` cuestan solo 1
+  unidad/llamada cada una — la búsqueda de álbumes completos (H05)
+  prioriza por eso `playlistItems.list` (álbum entero de una vez, 1
+  unidad) sobre `search.list` pista a pista (100 unidades × N pistas),
+  ver `AlbumMatchRepository.matchAlbumTracks` PASO 6e.
 - **Proyecto Google Cloud:** `mimoo-501004`. API key restringida
   exclusivamente a YouTube Data API v3, sin restricción de
   aplicación.

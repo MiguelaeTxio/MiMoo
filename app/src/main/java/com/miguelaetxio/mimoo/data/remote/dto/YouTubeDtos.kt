@@ -20,6 +20,7 @@ data class SearchItem(
 
 data class SearchItemId(
     @SerializedName("videoId") val videoId: String? = null,
+    @SerializedName("playlistId") val playlistId: String? = null,
 )
 
 data class SearchItemSnippet(
@@ -35,6 +36,39 @@ data class Thumbnails(
 
 data class ThumbnailItem(
     @SerializedName("url") val url: String,
+)
+
+/**
+ * playlistItems.list response — order of `items` already reflects
+ * the real position of each video in the playlist (position field
+ * confirms it explicitly). No `contentDetails.duration` here —
+ * durations still require a separate videos.list batch call, same as
+ * for a plain video search.
+ * ---
+ * Respuesta de playlistItems.list — el orden de `items` ya refleja la
+ * posición real de cada vídeo en la playlist (el campo position lo
+ * confirma explícitamente). No trae `contentDetails.duration` — las
+ * duraciones siguen necesitando una llamada batch aparte a
+ * videos.list, igual que en una búsqueda de vídeo normal.
+ */
+data class PlaylistItemsResponse(
+    @SerializedName("items") val items: List<PlaylistItem> = emptyList(),
+)
+
+data class PlaylistItem(
+    @SerializedName("snippet") val snippet: PlaylistItemSnippet,
+)
+
+data class PlaylistItemSnippet(
+    @SerializedName("title") val title: String,
+    @SerializedName("position") val position: Int,
+    @SerializedName("channelTitle") val channelTitle: String = "",
+    @SerializedName("thumbnails") val thumbnails: Thumbnails? = null,
+    @SerializedName("resourceId") val resourceId: PlaylistItemResourceId,
+)
+
+data class PlaylistItemResourceId(
+    @SerializedName("videoId") val videoId: String? = null,
 )
 
 data class VideoListResponse(

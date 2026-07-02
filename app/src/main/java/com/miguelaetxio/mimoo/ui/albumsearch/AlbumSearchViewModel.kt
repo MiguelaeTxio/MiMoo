@@ -173,6 +173,7 @@ class AlbumSearchViewModel @Inject constructor(
                 val matches = albumMatchRepository.matchAlbumTracks(
                     mbid = candidate.mbid,
                     artist = candidate.artist,
+                    album = candidate.title,
                     youtubeApiKey = BuildConfig.YOUTUBE_API_KEY,
                 )
                 _uiState.value = _uiState.value.copy(

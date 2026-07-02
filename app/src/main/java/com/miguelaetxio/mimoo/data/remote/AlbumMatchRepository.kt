@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzTrack
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +19,12 @@ data class AlbumTrackMatch(
     val mbDurationSeconds: Int?,
     val matchedTrack: TrackDto?,
     val isAutoMatched: Boolean,
+    // PASO 6e: distingue "no se encontró nada en YouTube" (matchError
+    // null, matchedTrack null) de "no se pudo ni intentar" (matchError
+    // con el motivo real -- cuota agotada, fallo de red...). Antes
+    // ambos casos se veían igual ("Sin emparejar"), lo que ocultó el
+    // agotamiento de cuota real de la sesión "1 de 11 pistas".
+    val matchError: String? = null,
 )
 
 /**
@@ -96,6 +103,18 @@ class AlbumMatchRepository @Inject constructor(
          * cuáles son los mejores, solo cuántos se listan.
          */
         const val CANDIDATE_SEARCH_LIMIT = 20
+
+        /**
+         * Tolerancia de duración para el emparejamiento vía playlist
+         * (PASO 6e), más laxa que DURATION_TOLERANCE_SECONDS porque
+         * aquí no se busca la mejor coincidencia entre varios
+         * candidatos -- se confía en el orden de una playlist ya
+         * curada, y esta tolerancia es solo una comprobación de
+         * cordura para detectar un desalineamiento grave de posición
+         * (p. ej. bonus tracks intercalados en la playlist real que
+         * no están en el tracklist de MusicBrainz).
+         */
+        const val PLAYLIST_DURATION_SANITY_TOLERANCE_SECONDS = 20
     }
 
     /**
@@ -136,42 +155,161 @@ class AlbumMatchRepository @Inject constructor(
 
     /**
      * Returns the tracklist of the release already chosen by the user
-     * (PASO 6d), each entry matched to its best YouTube candidate if
-     * one was found within tolerance. Never throws for individual
-     * track match failures — a track search error or "no candidates"
-     * just yields matchedTrack = null for that entry, letting the rest
-     * of the album still be usable.
+     * (PASO 6d), each entry matched against YouTube.
+     *
+     * PASO 6e — estrategia de playlist primero: en vez de una
+     * search.list (100 unidades de cuota) por cada pista del álbum,
+     * primero se intenta encontrar una playlist de YouTube con el
+     * álbum completo (1 search.list de tipo playlist + 1
+     * playlistItems.list = 100 + 1 unidades, TOTAL fijo por álbum,
+     * independiente del número de pistas) y se empareja por posición.
+     * Solo si no hay playlist utilizable (ninguna encontrada, o con
+     * menos pistas que el tracklist real) se cae al emparejamiento
+     * pista a pista de antes, que sigue costando N × 100 unidades pero
+     * ahora es la red de seguridad, no el camino principal.
+     *
+     * Petición explícita de Miguel Ángel (2026-07-02, tras ver "1 de
+     * 11 pistas emparejadas" en Transformer de Lou Reed): "las
+     * canciones están todas en YouTube... hay listas de reproducción
+     * de ese disco". Confirmado además que search.list cuesta 100
+     * unidades/llamada, no 1 como decía la documentación anterior (ver
+     * YouTubeApiService) — de ahí que un álbum de 11 pistas agotara la
+     * cuota diaria a media búsqueda.
      * ---
      * Devuelve el tracklist del release ya elegido por el usuario
-     * (PASO 6d), cada entrada emparejada con su mejor candidato de
-     * YouTube si se encontró uno dentro de tolerancia. Nunca lanza
-     * excepción por fallos de emparejamiento de una pista individual —
-     * un error de búsqueda o "sin candidatos" simplemente deja
-     * matchedTrack = null para esa entrada, dejando el resto del álbum
-     * utilizable.
+     * (PASO 6d), cada entrada emparejada contra YouTube.
+     *
+     * PASO 6e — estrategia de playlist primero: en vez de una
+     * search.list (100 unidades de cuota) por cada pista del álbum,
+     * primero se intenta encontrar una playlist de YouTube con el
+     * álbum completo (1 search.list tipo playlist + 1
+     * playlistItems.list = 100 + 1 unidades, TOTAL fijo por álbum,
+     * independiente del número de pistas) y se empareja por posición.
+     * Solo si no hay playlist utilizable se cae al emparejamiento
+     * pista a pista de antes.
      */
     suspend fun matchAlbumTracks(
         mbid: String,
         artist: String?,
+        album: String,
         youtubeApiKey: String,
     ): List<AlbumTrackMatch> {
         val tracklist = musicBrainzApiService.lookupRelease(mbid).media
             .flatMap { it.tracks }
             .sortedBy { it.position }
 
+        val playlistQuery = if (!artist.isNullOrBlank()) "$artist $album" else album
+        val playlistMatches = try {
+            matchFromPlaylist(playlistQuery, tracklist, youtubeApiKey)
+        } catch (e: Exception) {
+            if (isQuotaError(e)) {
+                // Sin sentido caer al fallback pista a pista si ya no
+                // queda cuota -- volvería a fallar en la primera
+                // pista. Propagar para que la UI muestre el motivo
+                // real en vez de "Sin emparejar" en las 11 filas.
+                throw e
+            }
+            null
+        }
+        if (playlistMatches != null) return playlistMatches
+
+        return matchTrackByTrack(tracklist, artist, youtubeApiKey)
+    }
+
+    /**
+     * Attempts the playlist-first match. Returns null (not an error)
+     * when there is no usable playlist — either MusicBrainz/YouTube
+     * found none, or the playlist found has fewer items than the real
+     * tracklist (probably not the full album — a fan edit, a single,
+     * a reaction video, etc.).
+     * ---
+     * Intenta el emparejamiento vía playlist. Devuelve null (no es un
+     * error) cuando no hay playlist utilizable — o no se encontró
+     * ninguna, o la encontrada tiene menos items que el tracklist real
+     * (probablemente no es el álbum completo -- un fan edit, un
+     * sencillo, un vídeo de reacción...).
+     */
+    private suspend fun matchFromPlaylist(
+        query: String,
+        tracklist: List<MusicBrainzTrack>,
+        youtubeApiKey: String,
+    ): List<AlbumTrackMatch>? {
+        val playlistId = youTubeRepository.searchPlaylist(query, youtubeApiKey)
+            ?: return null
+        val playlistTracks = youTubeRepository.getPlaylistTracks(playlistId, youtubeApiKey)
+        if (playlistTracks.size < tracklist.size) return null
+
+        return tracklist.mapIndexed { index, mbTrack ->
+            val candidate = playlistTracks.getOrNull(index)
+            val mbDurationSeconds = mbTrack.length?.let { it / 1000 }
+            val isAutoMatched = candidate != null && (
+                mbDurationSeconds == null ||
+                    abs(candidate.durationSeconds - mbDurationSeconds) <=
+                        PLAYLIST_DURATION_SANITY_TOLERANCE_SECONDS
+            )
+            AlbumTrackMatch(
+                position = mbTrack.position,
+                mbTitle = mbTrack.title,
+                mbDurationSeconds = mbDurationSeconds,
+                matchedTrack = candidate,
+                isAutoMatched = isAutoMatched,
+            )
+        }
+    }
+
+    /**
+     * Fallback: one search.list call per track (100 units each — see
+     * YouTubeApiService), same algorithm as before PASO 6e. If a
+     * track search fails with a quota error, every remaining track is
+     * marked with matchError instead of silently retrying (which
+     * would just fail again) — surfaces the real cause instead of
+     * looking like "no encontrado" for the rest of the album.
+     * ---
+     * Red de seguridad: una llamada search.list por pista (100
+     * unidades cada una — ver YouTubeApiService), mismo algoritmo que
+     * antes del PASO 6e. Si la búsqueda de una pista falla por cuota,
+     * el resto de pistas se marca con matchError en vez de
+     * reintentar en silencio (que solo volvería a fallar) — muestra
+     * la causa real en vez de parecer "no encontrado" en el resto del
+     * álbum.
+     */
+    private suspend fun matchTrackByTrack(
+        tracklist: List<MusicBrainzTrack>,
+        artist: String?,
+        youtubeApiKey: String,
+    ): List<AlbumTrackMatch> {
+        var quotaExhausted = false
+
         return tracklist.map { mbTrack ->
             val mbDurationSeconds = mbTrack.length?.let { it / 1000 }
+
+            if (quotaExhausted) {
+                return@map AlbumTrackMatch(
+                    position = mbTrack.position,
+                    mbTitle = mbTrack.title,
+                    mbDurationSeconds = mbDurationSeconds,
+                    matchedTrack = null,
+                    isAutoMatched = false,
+                    matchError = "Cuota de YouTube agotada por hoy.",
+                )
+            }
+
             val searchQuery = if (!artist.isNullOrBlank()) {
                 "$artist ${mbTrack.title}"
             } else {
                 mbTrack.title
             }
+
+            var trackError: String? = null
             val candidates = try {
-                youTubeRepository.search(
-                    query = searchQuery,
-                    apiKey = youtubeApiKey,
-                )
+                youTubeRepository.search(query = searchQuery, apiKey = youtubeApiKey)
             } catch (e: Exception) {
+                if (isQuotaError(e)) {
+                    quotaExhausted = true
+                    trackError = "Cuota de YouTube agotada por hoy."
+                } else {
+                    trackError = e.message ?: "Error al buscar en YouTube"
+                }
                 emptyList()
             }
 
@@ -193,8 +331,28 @@ class AlbumMatchRepository @Inject constructor(
                 mbDurationSeconds = mbDurationSeconds,
                 matchedTrack = best,
                 isAutoMatched = isAutoMatched,
+                matchError = trackError,
             )
         }
+    }
+
+    /**
+     * Detects a YouTube quota error from the wrapped exception message
+     * (see YouTubeRepository.wrapHttpErrors) — checks Google's real
+     * `reason` values, not just the HTTP status, since 403 also covers
+     * unrelated causes (bad API key, restricted key, etc.).
+     * ---
+     * Detecta un error de cuota de YouTube a partir del mensaje de la
+     * excepción envuelta (ver YouTubeRepository.wrapHttpErrors) —
+     * comprueba los valores reales de `reason` de Google, no solo el
+     * estado HTTP, ya que 403 también cubre causas no relacionadas
+     * (API key incorrecta, key restringida, etc.).
+     */
+    private fun isQuotaError(e: Exception): Boolean {
+        val message = e.message ?: return false
+        return message.contains("quotaExceeded", ignoreCase = true) ||
+            message.contains("dailyLimitExceeded", ignoreCase = true) ||
+            message.contains("rateLimitExceeded", ignoreCase = true)
     }
 
     private fun escape(value: String) = value.replace("\"", "")
