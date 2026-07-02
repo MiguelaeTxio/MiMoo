@@ -35,6 +35,34 @@ class SearchResultTrackRepository @Inject constructor(
     suspend fun update(track: SearchResultTrack) = dao.update(track)
 
     /**
+     * Deletes a track row entirely (PASO 5, H03). Used only for
+     * synthetic rows (from LibraryReconciler) that have no real
+     * youtubeId to fall back to — there is nothing to re-download.
+     * ---
+     * Elimina una fila de pista por completo (PASO 5, H03). Se usa
+     * solo para filas sintéticas (de LibraryReconciler) que no tienen
+     * un youtubeId real al que volver — no hay nada que re-descargar.
+     */
+    suspend fun delete(track: SearchResultTrack) = dao.delete(track)
+
+    /**
+     * Clears the download (filePath -> null, downloadStatus ->
+     * PENDING) for a real, search-originated track, keeping the row
+     * itself so it can be re-downloaded later (PASO 5, H03).
+     * ---
+     * Limpia la descarga (filePath -> null, downloadStatus ->
+     * PENDING) de una pista real originada de una búsqueda,
+     * conservando la fila para que pueda volver a descargarse más
+     * adelante (PASO 5, H03).
+     */
+    suspend fun clearDownload(youtubeId: String) {
+        val track = dao.getById(youtubeId) ?: return
+        dao.update(
+            track.copy(filePath = null, downloadStatus = DownloadStatus.PENDING)
+        )
+    }
+
+    /**
      * Updates only the downloadStatus column for the given track.
      * Called by DownloadWorker at DOWNLOADING and ERROR transitions.
      * ---

@@ -1,5 +1,8 @@
 package com.miguelaetxio.mimoo.ui.library
 
+import android.content.Context
+import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.StorageManager
@@ -10,6 +13,7 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +71,7 @@ class LibraryViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val storageManager: StorageManager,
     private val libraryReconciler: LibraryReconciler,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LibraryUiState())
@@ -126,6 +131,34 @@ class LibraryViewModel @Inject constructor(
     fun toggleFavorite(track: SearchResultTrack) {
         viewModelScope.launch {
             repository.updateFavorite(track.youtubeId, !track.isFavorite)
+        }
+    }
+
+    /**
+     * Deletes a download (PASO 5, H03): removes the physical .opus
+     * file via SAF, then either deletes the row entirely (synthetic
+     * rows from LibraryReconciler, which have no real youtubeId to
+     * fall back to) or resets it to PENDING with a null filePath
+     * (real, search-originated rows, which can be re-downloaded
+     * later from SearchScreen).
+     * ---
+     * Elimina una descarga (PASO 5, H03): borra el archivo .opus
+     * físico vía SAF, y después o bien elimina la fila entera (filas
+     * sintéticas de LibraryReconciler, que no tienen un youtubeId
+     * real al que volver) o la resetea a PENDING con filePath null
+     * (filas reales originadas de una búsqueda, que pueden volver a
+     * descargarse más adelante desde SearchScreen).
+     */
+    fun deleteDownload(track: SearchResultTrack) {
+        viewModelScope.launch {
+            track.filePath?.let { path ->
+                DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+            }
+            if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                repository.delete(track)
+            } else {
+                repository.clearDownload(track.youtubeId)
+            }
         }
     }
 

@@ -23,15 +23,28 @@ import javax.inject.Singleton
 private const val UNKNOWN_ALBUM_LABEL = "Sencillos"
 
 /**
- * Prefix for synthetic youtubeId values assigned to files discovered
- * on disk that have no matching Room row. Never collides with real
- * YouTube IDs, which are always exactly 11 chars with no colon.
+ * Legacy on-disk folder name for "no album", used by
+ * DownloadDirManager before it was renamed to "Sencillos". Real
+ * files downloaded before that rename still sit in a folder with
+ * this literal name — treated as equivalent, not as a real album
+ * name, or the same physical content ends up split into two
+ * different album groups in the UI depending only on when it was
+ * downloaded.
  * ---
- * Prefijo para los youtubeId sintéticos de archivos encontrados en
- * disco sin fila Room correspondiente. Nunca choca con IDs reales de
- * YouTube, que siempre tienen exactamente 11 caracteres sin dos puntos.
+ * Nombre de carpeta legacy para "sin álbum", usado por
+ * DownloadDirManager antes de renombrarse a "Sencillos". Los
+ * archivos reales descargados antes de ese cambio siguen en una
+ * carpeta con este nombre literal — se trata como equivalente, no
+ * como un nombre de álbum real, o el mismo contenido físico acaba
+ * repartido en dos grupos de álbum distintos en la UI solo según
+ * cuándo se descargó.
  */
-private const val LOCAL_ID_PREFIX = "local:"
+private const val LEGACY_UNKNOWN_ALBUM_DIR_NAME = "_sin_album"
+
+private val NULL_ALBUM_FOLDER_NAMES = setOf(
+    UNKNOWN_ALBUM_LABEL,
+    LEGACY_UNKNOWN_ALBUM_DIR_NAME,
+)
 
 /**
  * Reconciles the SAF storage folder against Room (PASO 10, H03): any
@@ -68,12 +81,52 @@ class LibraryReconciler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: SearchResultTrackRepository,
 ) {
+    companion object {
+        /**
+         * Public so callers (e.g. LibraryViewModel.deleteDownload)
+         * can tell synthetic rows apart from real, search-originated
+         * ones without duplicating this literal.
+         * ---
+         * Público para que quien lo use (p.ej.
+         * LibraryViewModel.deleteDownload) pueda distinguir filas
+         * sintéticas de filas reales originadas de una búsqueda sin
+         * duplicar este literal.
+         */
+        const val LOCAL_ID_PREFIX = "local:"
+    }
     suspend fun rescan(rootUri: Uri) {
         val root = DocumentFile.fromTreeUri(context, rootUri) ?: return
 
-        val knownPaths = repository.getAll().first()
+        // Only real, search-originated rows are protected from being
+        // touched again. Synthetic rows (our own, from a previous
+        // rescan) are always recomputed and upserted below, so fixes
+        // to this reconciler's own logic (e.g. album-name mapping)
+        // self-heal on the next manual refresh instead of leaving a
+        // stale, wrong row behind forever.
+        // ---
+        // Solo las filas reales, originadas de una búsqueda, están
+        // protegidas de volver a tocarse. Las filas sintéticas
+        // (propias, de un rescan anterior) siempre se recalculan y
+        // se sobrescriben abajo, así que las correcciones a la
+        // lógica de este reconciliador (p.ej. el mapeo de nombres de
+        // álbum) se autocorrigen en el siguiente refresco manual en
+        // vez de dejar una fila obsoleta y equivocada para siempre.
+        val allRows = repository.getAll().first()
+        val knownRealPaths = allRows
+            .filter { !it.youtubeId.startsWith(LOCAL_ID_PREFIX) }
             .mapNotNull { it.filePath }
             .toSet()
+        // Existing synthetic rows, keyed by filePath, so a re-scan
+        // preserves isFavorite instead of resetting it to false every
+        // time (REPLACE overwrites the whole row on conflict).
+        // ---
+        // Filas sintéticas existentes, indexadas por filePath, para
+        // que un re-escaneo conserve isFavorite en vez de resetearlo
+        // a false cada vez (REPLACE sobrescribe la fila entera en
+        // caso de conflicto).
+        val existingSyntheticByPath = allRows
+            .filter { it.youtubeId.startsWith(LOCAL_ID_PREFIX) }
+            .associateBy { it.filePath }
 
         val discovered = mutableListOf<SearchResultTrack>()
 
@@ -91,13 +144,17 @@ class LibraryReconciler @Inject constructor(
                             }
                             .forEach { file ->
                                 val uriString = file.uri.toString()
-                                if (uriString !in knownPaths) {
+                                if (uriString !in knownRealPaths) {
+                                    val preservedFavorite =
+                                        existingSyntheticByPath[uriString]
+                                            ?.isFavorite ?: false
                                     discovered.add(
                                         buildSyntheticTrack(
                                             uriString = uriString,
                                             fileName = file.name!!,
                                             artistName = artistName,
                                             albumName = albumName,
+                                            isFavorite = preservedFavorite,
                                         )
                                     )
                                 }
@@ -115,6 +172,7 @@ class LibraryReconciler @Inject constructor(
         fileName: String,
         artistName: String,
         albumName: String,
+        isFavorite: Boolean,
     ): SearchResultTrack {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(uriString.toByteArray())
@@ -130,7 +188,12 @@ class LibraryReconciler @Inject constructor(
             filePath = uriString,
             downloadStatus = DownloadStatus.DONE,
             artist = artistName,
-            album = if (albumName == UNKNOWN_ALBUM_LABEL) null else albumName,
+            album = if (albumName in NULL_ALBUM_FOLDER_NAMES) {
+                null
+            } else {
+                albumName
+            },
+            isFavorite = isFavorite,
         )
     }
 }

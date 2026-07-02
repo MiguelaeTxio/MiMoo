@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -33,6 +34,9 @@ fun LibraryScreen(
     onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var trackPendingDelete by remember {
+        mutableStateOf<SearchResultTrack?>(null)
+    }
 
     Scaffold(
         topBar = {
@@ -238,11 +242,38 @@ fun LibraryScreen(
                             onToggleFavorite = {
                                 viewModel.toggleFavorite(item.track)
                             },
+                            onDelete = { trackPendingDelete = item.track },
                         )
                     }
                 }
             }
         }
+    }
+
+    trackPendingDelete?.let { track ->
+        AlertDialog(
+            onDismissRequest = { trackPendingDelete = null },
+            title = { Text("Borrar descarga") },
+            text = {
+                Text(
+                    "Se eliminará el archivo \"${track.title}\" de tu " +
+                        "dispositivo. Esta acción no se puede deshacer."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteDownload(track)
+                    trackPendingDelete = null
+                }) {
+                    Text("Borrar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { trackPendingDelete = null }) {
+                    Text("Cancelar")
+                }
+            },
+        )
     }
 }
 
@@ -325,6 +356,7 @@ private fun LibraryTrackRow(
     track: SearchResultTrack,
     onPlay: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -357,6 +389,13 @@ private fun LibraryTrackRow(
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
+            )
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = "Borrar descarga",
+                tint = MaterialTheme.colorScheme.error,
             )
         }
         IconButton(onClick = onPlay) {
