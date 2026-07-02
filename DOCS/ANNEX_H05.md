@@ -101,43 +101,52 @@ quiere depender de volver a buscar en YouTube cada vez.
 
 ## Hoja de Ruta para la Siguiente Sesión
 
-**Los PASOS 1-5 ya están implementados — no repetirlos. PASO 6a y
-PASO 6b (Partes 1 y 2) ya están implementados y pusheados en S002
+**Los PASOS 1-5 ya están implementados — no repetirlos. PASO 6a, 6b
+(Partes 1 y 2), 6d y 6e ya están implementados y pusheados en S002
 (2026-07-02, sesión NewFlow) — ver detalle en "COMPLETADAS EN S002"
-más abajo.** Queda 6c (verificación real) y un nuevo PASO 6d que se
-intercala antes de 6c por petición explícita de Miguel Ángel.
+más abajo.** Solo queda 6c (verificación real, con dispositivo).
 
-### PASO 6d — Selector de álbumes candidatos (HECHO — S002)
+### PASO 6e — Emparejamiento vía playlist de YouTube + coste de cuota corregido (HECHO — S002)
 
-- Petición explícita de Miguel Ángel: buscar por un solo término
-  ("Beethoven", "Sinfonía") coincidía con demasiados releases
-  distintos en MusicBrainz como para importar el primero sin
-  mostrarlos — resolvía así la ambigüedad que 6a dejó pendiente de
-  decidir.
-- `AlbumMatchRepository.matchAlbum()` dividido en
-  `searchAlbumCandidates(artist, album)` (hasta 20 releases,
-  `AlbumCandidate` con mbid/title/artist/year/coverArtUrl) y
-  `matchAlbumTracks(mbid, artist, apiKey)` (lookup + emparejamiento
-  YouTube del release ya elegido).
-- `AlbumSearchScreen`: lista de candidatos con carátula (Cover Art
-  Archive vía Coil, fallback a icono genérico) hasta elegir uno;
-  entonces cabecera del álbum elegido (con botón para volver a la
-  lista) + tracklist + Importar, igual que antes.
-- `DOCS/MASTER_DOCUMENT.md` §4.5 (actualizarse en línea sobre APIs
-  externas) aplicado: campos `artist-credit`/`date` de MusicBrainz
-  verificados contra la documentación oficial antes de mapearlos en
-  el DTO.
+- Diagnóstico real de "1 de 11 pistas emparejadas" (Transformer, Lou
+  Reed, probado por Miguel Ángel): `search.list` cuesta **100
+  unidades de cuota/llamada**, no 1 como afirmaba la documentación del
+  proyecto — un álbum de 11 pistas quemaba 1.100 unidades solo en
+  búsquedas pista a pista, agotando el pool diario de 10.000 a media
+  búsqueda tras las pruebas repetidas de la sesión. El bug quedaba
+  oculto porque `matchAlbumTracks` tragaba la excepción real
+  (`catch` genérico → `emptyList()`), mostrando "Sin emparejar"
+  idéntico a un fallo real de cuota.
+- Petición explícita de Miguel Ángel, correcta: "las canciones están
+  todas en YouTube... hay listas de reproducción de ese disco".
+- `AlbumMatchRepository.matchAlbumTracks()`: ahora recibe también el
+  título del álbum; intenta primero encontrar una playlist de YouTube
+  del álbum completo (`searchPlaylist` + `getPlaylistTracks`, 100+1
+  unidades fijas por álbum, independiente del número de pistas) y
+  empareja por posición con tolerancia de cordura de duración (20s).
+  Solo si no hay playlist utilizable cae al emparejamiento pista a
+  pista de antes (100 unidades × N pistas, ahora red de seguridad, no
+  camino principal).
+- Nuevo campo `AlbumTrackMatch.matchError` distingue "no se encontró
+  nada" de "error real" (cuota agotada, red) — antes eran
+  indistinguibles en la UI.
+- `MASTER_DOCUMENT.md` §2.3 corregido con el coste real de cuota.
 
 ### PASO 6c — Verificación funcional real (repetir, PENDIENTE)
 
-- Build en verde (comprobar tras 6a/6b/6d).
-- Repetir la prueba: buscar "Beethoven" o "Sinfonía" sueltos y
-  confirmar que aparece una lista de álbumes candidatos con carátula;
-  elegir uno y confirmar que ahí sí se pide tracklist + emparejamiento
-  YouTube; reimportar Lou Reed - Transformer (u otro álbum) y
-  confirmar que las pistas aparecen en la misma lista con su estado de
-  descarga, se descargan solas, el botón "Ver en Biblioteca" lleva
-  hasta allí, y son escuchables sin pasos adicionales.
+- Build en verde (comprobar tras 6a/6b/6d/6e).
+- Repetir la prueba: reimportar Lou Reed - Transformer y confirmar que
+  ahora empareja las 11 pistas de golpe vía playlist (no una a una).
+  Si vuelve a fallar, comprobar si el mensaje de error menciona
+  "Cuota de YouTube agotada" — la cuota diaria (10.000 unidades,
+  proyecto `mimoo-501004`) puede seguir agotada de las pruebas de hoy
+  hasta que resetee a medianoche hora del Pacífico.
+- Repetir también la prueba de "Beethoven"/"Sinfonía" sueltos, elegir
+  un candidato de la lista y confirmar que ahí sí se pide tracklist +
+  emparejamiento YouTube; confirmar que las pistas importadas
+  aparecen en la misma lista con su estado de descarga, se descargan
+  solas, el botón "Ver en Biblioteca" lleva hasta allí, y son
+  escuchables sin pasos adicionales.
 
 ---
 
@@ -159,6 +168,8 @@ intercala antes de 6c por petición explícita de Miguel Ángel.
   vía `flatMapLatest`) y botón "Ver en Biblioteca" en el diálogo de
   confirmación.
 - **PASO 6d** — selector de álbumes candidatos, ver detalle arriba.
+- **PASO 6e** — emparejamiento vía playlist de YouTube + corrección de
+  coste de cuota, ver detalle arriba.
 - **Corrección de diagnóstico** (no parte de H05, ver `ANNEX_H03.md`):
   la hipótesis de keystore antigua residual para el "conflicto con un
   paquete" al actualizar la APK quedó descartada — es sistemático en
