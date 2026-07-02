@@ -38,10 +38,43 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.MiMoo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!--
+                Registers MiMoo as an option when the user opens an
+                audio file from the system file explorer (PASO 9,
+                H03). audio/* rather than a narrower audio/opus: some
+                file managers/content providers misreport the MIME
+                type of less-common extensions like .opus, and a
+                broad match is the documented pattern for this use
+                case (developer.android.com/guide/components/
+                intents-filters, verified 2026-07-02). No scheme is
+                declared, which per that same doc implicitly matches
+                content: and file: — the two schemes a file explorer
+                VIEW intent actually uses.
+                ===
+                Registra MiMoo como opción al abrir un archivo de
+                audio desde el explorador de archivos del sistema
+                (PASO 9, H03). audio/* en vez de un audio/opus más
+                estrecho: algunos gestores de archivos/proveedores de
+                contenido informan mal el tipo MIME de extensiones
+                menos comunes como .opus, y una coincidencia amplia es
+                el patrón documentado para este caso de uso
+                (developer.android.com/guide/components/
+                intents-filters, verificado 2026-07-02). No se declara
+                scheme, lo que según esa misma doc coincide
+                implícitamente con content: y file: — los dos esquemas
+                que realmente usa un intent VIEW de un explorador de
+                archivos.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
             </intent-filter>
         </activity>
 

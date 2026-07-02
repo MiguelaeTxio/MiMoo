@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
+import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.ui.navigation.MiMooNavGraph
 import com.miguelaetxio.mimoo.ui.navigation.Screen
 import com.miguelaetxio.mimoo.ui.player.PlayerBar
@@ -49,6 +51,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var libraryReconciler: LibraryReconciler
+
+    @Inject
+    lateinit var playerManager: PlayerManager
 
     /**
      * SAF folder picker. Launched only after the user confirms the
@@ -80,8 +85,41 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    /**
+     * Routes an incoming ACTION_VIEW intent (PASO 9, H03) — the user
+     * opened an audio file from the system file explorer and picked
+     * MiMoo as the app to play it with. Independent of
+     * SearchViewModel/Biblioteca: the file did not come from a search
+     * result or a SearchResultTrack row, just a raw content:// or
+     * file:// Uri handed to us by the OS, so it goes straight to
+     * PlayerManager instead of through the Room-backed flows used
+     * everywhere else in the app.
+     * ---
+     * Enruta un intent ACTION_VIEW entrante (PASO 9, H03) — el
+     * usuario abrió un archivo de audio desde el explorador de
+     * archivos del sistema y eligió MiMoo para reproducirlo.
+     * Independiente de SearchViewModel/Biblioteca: el archivo no vino
+     * de un resultado de búsqueda ni de una fila SearchResultTrack,
+     * solo un Uri content:// o file:// en crudo que nos entrega el
+     * SO, así que va directo a PlayerManager en vez de pasar por los
+     * flujos respaldados por Room que usa el resto de la app.
+     */
+    private fun handleViewIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        val title = uri.lastPathSegment ?: "Pista externa"
+        playerManager.play(uri.toString(), title, isLocal = true)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleViewIntent(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleViewIntent(intent)
 
         enableEdgeToEdge()
         setContent {
