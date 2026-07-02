@@ -5,7 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 
@@ -22,6 +25,7 @@ import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 fun AlbumSearchScreen(
     viewModel: AlbumSearchViewModel = hiltViewModel(),
     onOpenDrawer: () -> Unit,
+    onNavigateToLibrary: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var trackPendingManualMatch by remember { mutableStateOf<AlbumTrackMatch?>(null) }
@@ -99,6 +103,9 @@ fun AlbumSearchScreen(
                     items(uiState.matches, key = { it.position }) { match ->
                         AlbumTrackMatchRow(
                             match = match,
+                            downloadStatus = match.matchedTrack?.let {
+                                uiState.importedStatus[it.youtubeId]
+                            },
                             onCorrect = { trackPendingManualMatch = match },
                         )
                         HorizontalDivider()
@@ -124,13 +131,23 @@ fun AlbumSearchScreen(
             title = { Text("Álbum importado") },
             text = {
                 Text(
-                    "$count pistas añadidas a Búsqueda, listas para " +
-                        "descargar o reproducir."
+                    "$count pistas añadidas y descargándose. Se " +
+                        "escucharán desde Biblioteca en cuanto terminen."
                 )
             },
             confirmButton = {
                 TextButton(onClick = viewModel::dismissImportedDialog) {
                     Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.dismissImportedDialog()
+                        onNavigateToLibrary()
+                    },
+                ) {
+                    Text("Ver en Biblioteca")
                 }
             },
         )
@@ -157,6 +174,7 @@ fun AlbumSearchScreen(
 @Composable
 private fun AlbumTrackMatchRow(
     match: AlbumTrackMatch,
+    downloadStatus: DownloadStatus?,
     onCorrect: () -> Unit,
 ) {
     Row(
@@ -191,8 +209,53 @@ private fun AlbumTrackMatchRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // PASO 6b Parte 2: feedback en vivo de la descarga automatica
+        // tras importar, en la misma fila -- sin esto solo se ve el
+        // emparejamiento, nunca si la descarga real avanza o falla.
+        if (downloadStatus != null) {
+            Spacer(Modifier.width(4.dp))
+            ImportedDownloadStatusIcon(downloadStatus)
+        }
         IconButton(onClick = onCorrect) {
             Icon(Icons.Filled.Edit, contentDescription = "Corregir manualmente")
+        }
+    }
+}
+
+/**
+ * Read-only status indicator for a track already imported and
+ * auto-enqueued for download (PASO 6b Parte 2) — not a retry button,
+ * DownloadWorker already handles its own lifecycle.
+ * ---
+ * Indicador de estado de solo lectura para una pista ya importada y
+ * encolada automáticamente para descarga (PASO 6b Parte 2) — no es un
+ * botón de reintento, DownloadWorker ya gestiona su propio ciclo de
+ * vida.
+ */
+@Composable
+private fun ImportedDownloadStatusIcon(status: DownloadStatus) {
+    when (status) {
+        DownloadStatus.PENDING, DownloadStatus.DOWNLOADING -> {
+            Box(
+                modifier = Modifier.size(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp))
+            }
+        }
+        DownloadStatus.DONE -> {
+            Icon(
+                Icons.Filled.CloudDownload,
+                contentDescription = "Descargada",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        DownloadStatus.ERROR -> {
+            Icon(
+                Icons.Filled.ErrorOutline,
+                contentDescription = "Error al descargar",
+                tint = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }

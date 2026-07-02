@@ -56,7 +56,12 @@ fun MiMooNavGraph(
             PlaylistDetailScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.AlbumSearch.route) {
-            AlbumSearchScreen(onOpenDrawer = onOpenDrawer)
+            AlbumSearchScreen(
+                onOpenDrawer = onOpenDrawer,
+                onNavigateToLibrary = {
+                    navController.navigate(Screen.Library.route)
+                },
+            )
         }
     }
 }

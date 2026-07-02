@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.BuildConfig
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.remote.AlbumMatchRepository
@@ -11,9 +12,13 @@ import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
 import com.miguelaetxio.mimoo.data.remote.YouTubeRepository
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,6 +31,10 @@ data class AlbumSearchUiState(
     val manualSearchCandidates: List<TrackDto> = emptyList(),
     val isSearchingManualCandidates: Boolean = false,
     val importedCount: Int? = null,
+    // PASO 6b Parte 2: downloadStatus en vivo por youtubeId de las
+    // pistas ya importadas, para pintarlo en la misma lista de
+    // matches sin esperar a entrar en Biblioteca.
+    val importedStatus: Map<String, DownloadStatus> = emptyMap(),
 )
 
 /**
@@ -39,6 +48,7 @@ data class AlbumSearchUiState(
  * por duración con YouTube por pista, corregirlo manualmente donde
  * haga falta, e importar el resultado a search_result_tracks.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class AlbumSearchViewModel @Inject constructor(
     private val albumMatchRepository: AlbumMatchRepository,
@@ -49,6 +59,31 @@ class AlbumSearchViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(AlbumSearchUiState())
     val uiState: StateFlow<AlbumSearchUiState> = _uiState.asStateFlow()
+
+    // PASO 6b Parte 2: mismo patron que SearchViewModel._currentYoutubeIds
+    // -- se re-emite el conjunto de ids importados y se observa Room en
+    // vivo para reflejar downloadStatus sin polling.
+    private val _importedYoutubeIds = MutableStateFlow<List<String>>(emptyList())
+
+    init {
+        viewModelScope.launch {
+            _importedYoutubeIds
+                .flatMapLatest { ids ->
+                    if (ids.isEmpty()) {
+                        flowOf(emptyMap())
+                    } else {
+                        searchResultTrackRepository.getAll().map { all ->
+                            val idSet = ids.toSet()
+                            all.filter { it.youtubeId in idSet }
+                                .associate { it.youtubeId to it.downloadStatus }
+                        }
+                    }
+                }
+                .collect { statusByYoutubeId ->
+                    _uiState.value = _uiState.value.copy(importedStatus = statusByYoutubeId)
+                }
+        }
+    }
 
     fun onArtistChange(artist: String) {
         _uiState.value = _uiState.value.copy(artist = artist)
@@ -192,6 +227,10 @@ class AlbumSearchViewModel @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                 )
             }
+            // PASO 6b Parte 2: dispara la observacion en vivo de Room
+            // para estas pistas -- el init{} las recoge y actualiza
+            // importedStatus segun avance DownloadWorker.
+            _importedYoutubeIds.value = tracks.map { it.youtubeId }
             _uiState.value = _uiState.value.copy(importedCount = tracks.size)
         }
     }
