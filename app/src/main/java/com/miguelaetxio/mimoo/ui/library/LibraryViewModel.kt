@@ -2,6 +2,8 @@ package com.miguelaetxio.mimoo.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.library.LibraryReconciler
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
@@ -35,21 +37,36 @@ data class LibraryUiState(
     val showFavoritesOnly: Boolean = false,
     val flatTracks: List<SearchResultTrack> = emptyList(),
     val grouped: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
+    val isRefreshing: Boolean = false,
 )
 
 /**
  * ViewModel for the Biblioteca (local library) screen. Reads only
  * tracks with downloadStatus == DONE — this screen is about what has
  * actually been downloaded, not search results.
+ *
+ * Does NOT auto-reconcile the SAF folder on creation — that only
+ * happens once when the storage folder is first chosen (in
+ * MainActivity) or on demand via refreshLibrary(), called from an
+ * explicit refresh button. A full SAF tree walk on every screen open
+ * would not scale to a large library.
  * ---
  * ViewModel de la pantalla de Biblioteca (biblioteca local). Lee
  * solo pistas con downloadStatus == DONE — esta pantalla trata sobre
  * lo que realmente se ha descargado, no resultados de búsqueda.
+ *
+ * NO reconcilia la carpeta SAF automáticamente al crearse — eso solo
+ * ocurre una vez al elegir la carpeta por primera vez (en
+ * MainActivity) o bajo demanda vía refreshLibrary(), llamado desde un
+ * botón de refresco explícito. Un recorrido completo del árbol SAF en
+ * cada apertura de pantalla no escalaría con una biblioteca grande.
  */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val repository: SearchResultTrackRepository,
     private val playerManager: PlayerManager,
+    private val storageManager: StorageManager,
+    private val libraryReconciler: LibraryReconciler,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LibraryUiState())
@@ -63,6 +80,22 @@ class LibraryViewModel @Inject constructor(
                 allDownloaded = tracks
                 recompute()
             }
+        }
+    }
+
+    /**
+     * Manually triggers a SAF↔Room reconciliation, called only from
+     * the refresh button in LibraryScreen.
+     * ---
+     * Dispara manualmente una reconciliación SAF↔Room, llamado solo
+     * desde el botón de refresco de LibraryScreen.
+     */
+    fun refreshLibrary() {
+        val rootUri = storageManager.getRootUri() ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            libraryReconciler.rescan(rootUri)
+            _uiState.value = _uiState.value.copy(isRefreshing = false)
         }
     }
 

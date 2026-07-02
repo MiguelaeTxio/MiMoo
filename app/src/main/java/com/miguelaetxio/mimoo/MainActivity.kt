@@ -29,9 +29,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.library.LibraryReconciler
 import com.miguelaetxio.mimoo.ui.navigation.MiMooNavGraph
 import com.miguelaetxio.mimoo.ui.navigation.Screen
 import com.miguelaetxio.mimoo.ui.player.PlayerBar
@@ -45,17 +47,26 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var storageManager: StorageManager
 
+    @Inject
+    lateinit var libraryReconciler: LibraryReconciler
+
     /**
      * SAF folder picker. Launched only after the user confirms the
      * explanation dialog below, so it is clear what the picker is
      * for before the OS shows it. The chosen Uri is persisted by
-     * StorageManager so the picker is not shown again.
+     * StorageManager so the picker is not shown again, and the
+     * library is reconciled once against whatever the folder already
+     * contains (PASO 10, H03) — relevant when the user picks a folder
+     * that already has audio files from a previous install.
      * ---
      * Selector de carpeta SAF. Se lanza solo tras confirmar el
      * dialogo explicativo de abajo, para que quede claro para que
      * sirve el selector antes de que el sistema lo muestre. El Uri
      * elegido es persistido por StorageManager para que el selector
-     * no vuelva a aparecer.
+     * no vuelva a aparecer, y la biblioteca se reconcilia una vez
+     * contra lo que ya haya en la carpeta (PASO 10, H03) — relevante
+     * cuando el usuario elige una carpeta que ya tiene audios de una
+     * instalación anterior.
      */
     private val openDocumentTree =
         registerForActivityResult(
@@ -63,6 +74,9 @@ class MainActivity : ComponentActivity() {
         ) { uri ->
             if (uri != null) {
                 storageManager.saveRootUri(uri)
+                lifecycleScope.launch {
+                    libraryReconciler.rescan(uri)
+                }
             }
         }
 

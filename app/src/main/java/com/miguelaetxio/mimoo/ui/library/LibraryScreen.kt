@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Star
@@ -40,6 +41,25 @@ fun LibraryScreen(
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                    }
+                },
+                actions = {
+                    if (uiState.isRefreshing) {
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = viewModel::refreshLibrary) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = "Refrescar biblioteca",
+                            )
+                        }
                     }
                 },
             )
