@@ -8,6 +8,8 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -64,7 +66,10 @@ fun LibraryScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 TextButton(
                     onClick = {
                         viewModel.setViewMode(LibraryViewMode.HIERARCHICAL)
@@ -92,6 +97,32 @@ fun LibraryScreen(
                             FontWeight.Bold
                         } else {
                             FontWeight.Normal
+                        },
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(
+                    onClick = {
+                        viewModel.setShowFavoritesOnly(
+                            !uiState.showFavoritesOnly,
+                        )
+                    },
+                ) {
+                    Icon(
+                        imageVector = if (uiState.showFavoritesOnly) {
+                            Icons.Filled.Star
+                        } else {
+                            Icons.Filled.StarBorder
+                        },
+                        contentDescription = if (uiState.showFavoritesOnly) {
+                            "Mostrar todas"
+                        } else {
+                            "Mostrar solo favoritos"
+                        },
+                        tint = if (uiState.showFavoritesOnly) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                     )
                 }
@@ -124,7 +155,11 @@ fun LibraryScreen(
 
             if (uiState.grouped.isEmpty() && uiState.flatTracks.isEmpty()) {
                 Text(
-                    "Todavía no hay pistas descargadas.",
+                    if (uiState.showFavoritesOnly) {
+                        "Todavía no hay favoritos descargados."
+                    } else {
+                        "Todavía no hay pistas descargadas."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp),
@@ -180,6 +215,9 @@ fun LibraryScreen(
                         is LibraryListItem.TrackRow -> LibraryTrackRow(
                             track = item.track,
                             onPlay = { viewModel.playTrack(item.track) },
+                            onToggleFavorite = {
+                                viewModel.toggleFavorite(item.track)
+                            },
                         )
                     }
                 }
@@ -266,6 +304,7 @@ private fun AlbumHeaderRow(
 private fun LibraryTrackRow(
     track: SearchResultTrack,
     onPlay: () -> Unit,
+    onToggleFavorite: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -279,6 +318,25 @@ private fun LibraryTrackRow(
                 track.artist ?: track.channelTitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                imageVector = if (track.isFavorite) {
+                    Icons.Filled.Star
+                } else {
+                    Icons.Filled.StarBorder
+                },
+                contentDescription = if (track.isFavorite) {
+                    "Quitar de favoritos"
+                } else {
+                    "Marcar como favorito"
+                },
+                tint = if (track.isFavorite) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
         IconButton(onClick = onPlay) {

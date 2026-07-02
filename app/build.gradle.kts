@@ -31,7 +31,15 @@ android {
         applicationId = "com.miguelaetxio.mimoo"
         minSdk        = 26
         targetSdk     = 36
-        versionCode   = 2
+        // versionCode dinamico: recibido como -PversionCode=N desde
+        // el workflow (github.run_number, siempre creciente). Sin
+        // esto, cada build de CI generaba el mismo versionCode fijo
+        // y Android bloqueaba las actualizaciones como bajada de
+        // version, mostrando "conflicto con un paquete" en vez de un
+        // aviso claro de downgrade (causa real S004, no la firma).
+        // Fallback a 2 si se compila localmente sin pasar la property.
+        versionCode = (project.findProperty("versionCode") as String?)
+            ?.toIntOrNull() ?: 2
         versionName   = "0.2"
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
@@ -162,4 +170,3 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
-

@@ -45,7 +45,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Compilar APK debug
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }}
 
       - name: Subir APK a PythonAnywhere
         env:

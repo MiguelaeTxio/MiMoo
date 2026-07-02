@@ -10,6 +10,8 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,6 +82,7 @@ fun SearchScreen(
                         track = track,
                         onPlay = { viewModel.playTrack(track) },
                         onDownload = { viewModel.requestDownload(track) },
+                        onToggleFavorite = { viewModel.toggleFavorite(track) },
                     )
                     HorizontalDivider()
                 }
@@ -97,6 +100,7 @@ private fun SearchResultRow(
     track: SearchResultTrack,
     onPlay: () -> Unit,
     onDownload: () -> Unit,
+    onToggleFavorite: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -110,6 +114,26 @@ private fun SearchResultRow(
                 "${track.channelTitle} · ${formatDuration(track.durationSeconds)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                imageVector = if (track.isFavorite) {
+                    Icons.Filled.Star
+                } else {
+                    Icons.Filled.StarBorder
+                },
+                contentDescription = if (track.isFavorite) {
+                    "Quitar de favoritos"
+                } else {
+                    "Marcar como favorito"
+                },
+                tint = if (track.isFavorite) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
 

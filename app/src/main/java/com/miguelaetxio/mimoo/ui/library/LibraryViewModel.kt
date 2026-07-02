@@ -32,6 +32,7 @@ data class LibraryUiState(
     val viewMode: LibraryViewMode = LibraryViewMode.HIERARCHICAL,
     val sortOption: LibrarySortOption = LibrarySortOption.ARTIST,
     val filterQuery: String = "",
+    val showFavoritesOnly: Boolean = false,
     val flatTracks: List<SearchResultTrack> = emptyList(),
     val grouped: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
 )
@@ -80,12 +81,35 @@ class LibraryViewModel @Inject constructor(
         recompute()
     }
 
+    /** Toggles the "show favorites only" filter (PASO 4, H03). */
+    fun setShowFavoritesOnly(showFavoritesOnly: Boolean) {
+        _uiState.value = _uiState.value.copy(
+            showFavoritesOnly = showFavoritesOnly,
+        )
+        recompute()
+    }
+
+    /** Toggles the favorite flag for a track from the library. */
+    fun toggleFavorite(track: SearchResultTrack) {
+        viewModelScope.launch {
+            repository.updateFavorite(track.youtubeId, !track.isFavorite)
+        }
+    }
+
     private fun recompute() {
         val query = _uiState.value.filterQuery.trim().lowercase()
-        val filtered = if (query.isEmpty()) {
-            allDownloaded
+        val favoritesOnly = _uiState.value.showFavoritesOnly
+
+        val base = if (favoritesOnly) {
+            allDownloaded.filter { it.isFavorite }
         } else {
-            allDownloaded.filter { track ->
+            allDownloaded
+        }
+
+        val filtered = if (query.isEmpty()) {
+            base
+        } else {
+            base.filter { track ->
                 track.title.lowercase().contains(query) ||
                     (track.artist ?: track.channelTitle).lowercase()
                         .contains(query) ||

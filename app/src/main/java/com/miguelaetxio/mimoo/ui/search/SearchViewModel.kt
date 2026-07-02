@@ -175,4 +175,22 @@ class SearchViewModel @Inject constructor(
             artist = track.artist ?: track.channelTitle,
         )
     }
+
+    /**
+     * Toggles the favorite flag for a track (PASO 4, H03). Favoriting
+     * is independent of download state — a search result can be
+     * favorited before it has ever been downloaded.
+     * ---
+     * Alterna el marcador de favorito de una pista (PASO 4, H03).
+     * Marcar como favorito es independiente del estado de descarga —
+     * un resultado de búsqueda puede marcarse antes de descargarse.
+     */
+    fun toggleFavorite(track: SearchResultTrack) {
+        viewModelScope.launch {
+            searchResultTrackRepository.updateFavorite(
+                track.youtubeId,
+                !track.isFavorite,
+            )
+        }
+    }
 }
