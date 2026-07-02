@@ -12,12 +12,14 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Collections
 import javax.inject.Inject
 
 enum class LibraryViewMode { HIERARCHICAL, FLAT }
@@ -32,7 +34,7 @@ enum class LibrarySortOption { TITLE, ARTIST, DATE }
  * convención "Sencillos" que ya usa DownloadDirManager para la
  * carpeta en disco, para que la UI y el almacenamiento concuerden.
  */
-private const val UNKNOWN_ALBUM_LABEL = "Sencillos"
+const val UNKNOWN_ALBUM_LABEL = "Sencillos"
 
 data class LibraryUiState(
     val viewMode: LibraryViewMode = LibraryViewMode.HIERARCHICAL,
@@ -71,6 +73,7 @@ class LibraryViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val storageManager: StorageManager,
     private val libraryReconciler: LibraryReconciler,
+    private val coverArtRepository: CoverArtRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -78,6 +81,13 @@ class LibraryViewModel @Inject constructor(
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     private var allDownloaded: List<SearchResultTrack> = emptyList()
+
+    // Tracks which artist+album pairs already have a cover art lookup
+    // in flight or resolved this process run, so LibraryScreen can
+    // call requestCoverArtIfMissing() on every recomposition without
+    // spamming MusicBrainz — only the first call per album per app
+    // run actually triggers a network request.
+    private val coverArtRequested = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
         viewModelScope.launch {
@@ -131,6 +141,40 @@ class LibraryViewModel @Inject constructor(
     fun toggleFavorite(track: SearchResultTrack) {
         viewModelScope.launch {
             repository.updateFavorite(track.youtubeId, !track.isFavorite)
+        }
+    }
+
+    /**
+     * Resolves and persists the cover art for one artist+album if it
+     * hasn't been requested yet this process run (PASO 6, H03).
+     * Called from LibraryScreen once per rendered AlbumHeaderRow — the
+     * `coverArtRequested` guard makes repeated calls across
+     * recompositions a no-op after the first. Synthetic "Sencillos"
+     * groupings (no real album, see UNKNOWN_ALBUM_LABEL) are never
+     * passed here — there is nothing meaningful to search for.
+     * ---
+     * Resuelve y persiste la carátula de un artista+álbum si no se ha
+     * pedido ya en esta ejecución del proceso (PASO 6, H03). Se llama
+     * desde LibraryScreen una vez por cada AlbumHeaderRow renderizado
+     * — el guardián `coverArtRequested` hace que las llamadas
+     * repetidas entre recomposiciones no hagan nada tras la primera.
+     * Las agrupaciones sintéticas "Sencillos" (sin álbum real, ver
+     * UNKNOWN_ALBUM_LABEL) nunca se pasan aquí — no hay nada
+     * significativo que buscar.
+     */
+    fun requestCoverArtIfMissing(artist: String, album: String) {
+        val key = "$artist|$album"
+        if (!coverArtRequested.add(key)) return
+
+        val alreadyHasCover = _uiState.value.grouped[artist]?.get(album)
+            ?.any { it.coverArtUrl != null } == true
+        if (alreadyHasCover) return
+
+        viewModelScope.launch {
+            val url = coverArtRepository.resolveCoverArtUrl(artist, album)
+            if (url != null) {
+                repository.updateCoverArtForAlbum(artist, album, url)
+            }
         }
     }
 

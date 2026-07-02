@@ -1,9 +1,12 @@
 package com.miguelaetxio.mimoo.ui.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
@@ -16,9 +19,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 
 private sealed class LibraryListItem {
@@ -231,10 +236,14 @@ fun LibraryScreen(
                             },
                         )
                         is LibraryListItem.AlbumHeader -> AlbumHeaderRow(
+                            artist = item.artist,
                             album = item.album,
+                            tracks = uiState.grouped[item.artist]?.get(item.album)
+                                ?: emptyList(),
                             onPlayAlbum = {
                                 viewModel.playAlbum(item.artist, item.album)
                             },
+                            onRequestCoverArt = viewModel::requestCoverArtIfMissing,
                         )
                         is LibraryListItem.TrackRow -> LibraryTrackRow(
                             track = item.track,
@@ -327,15 +336,35 @@ private fun ArtistHeaderRow(
 
 @Composable
 private fun AlbumHeaderRow(
+    artist: String,
     album: String,
+    tracks: List<SearchResultTrack>,
     onPlayAlbum: () -> Unit,
+    onRequestCoverArt: (artist: String, album: String) -> Unit,
 ) {
+    // "Sencillos" is a synthetic grouping label for tracks with no
+    // real album (see UNKNOWN_ALBUM_LABEL) — there is nothing to
+    // search on MusicBrainz for it, so the lookup is skipped entirely.
+    LaunchedEffect(artist, album) {
+        if (album != UNKNOWN_ALBUM_LABEL) {
+            onRequestCoverArt(artist, album)
+        }
+    }
+
+    val coverArtUrl = tracks.firstNotNullOfOrNull { it.coverArtUrl }
+    val fallbackThumbnailUrl = tracks.firstNotNullOfOrNull { it.thumbnailUrl }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp, top = 4.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        AlbumCoverThumbnail(
+            coverArtUrl = coverArtUrl,
+            fallbackThumbnailUrl = fallbackThumbnailUrl,
+        )
+        Spacer(Modifier.width(8.dp))
         Text(
             text = album,
             style = MaterialTheme.typography.bodyLarge,
@@ -349,6 +378,70 @@ private fun AlbumHeaderRow(
             )
         }
     }
+}
+
+/**
+ * Small square album thumbnail. Tries the MusicBrainz+Cover Art
+ * Archive URL first; if that fails to load (404, no match, or simply
+ * null because the lookup hasn't resolved yet) it falls back to the
+ * YouTube thumbnail already cached on the track, and finally to a
+ * generic album icon if neither is available — matching the fallback
+ * chain defined in mimoo-annex-v03 PASO 6.
+ * ---
+ * Miniatura cuadrada pequeña de álbum. Prueba primero la URL de
+ * MusicBrainz+Cover Art Archive; si falla al cargar (404, sin
+ * coincidencia, o simplemente null porque la búsqueda aún no se ha
+ * resuelto) hace fallback a la miniatura de YouTube ya cacheada en la
+ * pista, y por último a un icono genérico de álbum si ninguna está
+ * disponible — según la cadena de fallback definida en
+ * mimoo-annex-v03 PASO 6.
+ */
+@Composable
+private fun AlbumCoverThumbnail(
+    coverArtUrl: String?,
+    fallbackThumbnailUrl: String?,
+) {
+    val size = 40.dp
+    val shape = RoundedCornerShape(4.dp)
+
+    if (coverArtUrl == null && fallbackThumbnailUrl == null) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Album,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        return
+    }
+
+    SubcomposeAsyncImage(
+        model = coverArtUrl ?: fallbackThumbnailUrl,
+        contentDescription = "Carátula del álbum",
+        modifier = Modifier.size(size).clip(shape),
+        error = {
+            if (coverArtUrl != null && fallbackThumbnailUrl != null) {
+                // The MusicBrainz+CAA URL failed to load (no match /
+                // 404) — retry with the YouTube thumbnail instead of
+                // giving up.
+                SubcomposeAsyncImage(
+                    model = fallbackThumbnailUrl,
+                    contentDescription = "Carátula del álbum",
+                    modifier = Modifier.size(size).clip(shape),
+                    error = { AlbumCoverThumbnail(null, null) },
+                )
+            } else {
+                AlbumCoverThumbnail(null, null)
+            }
+        },
+    )
 }
 
 @Composable

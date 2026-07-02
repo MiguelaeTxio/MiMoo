@@ -51,6 +51,7 @@ data class SearchResultTrack(
     val artist: String? = null,         // structured artist, PASO 2 H03
     val album: String? = null,          // null until MusicBrainz/manual edit
     val isFavorite: Boolean = false,    // PASO 4 H03
+    val coverArtUrl: String? = null,    // MusicBrainz+CAA front cover, PASO 6 H03
 ) {
     val youtubeUrl: String get() = "https://youtu.be/$youtubeId"
 }

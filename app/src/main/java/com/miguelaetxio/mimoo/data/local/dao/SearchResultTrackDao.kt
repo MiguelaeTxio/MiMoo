@@ -79,4 +79,29 @@ interface SearchResultTrackDao {
         "WHERE youtubeId = :youtubeId"
     )
     suspend fun updateFavorite(youtubeId: String, isFavorite: Boolean)
+
+    /**
+     * Partial update: persists the resolved cover art URL for every
+     * track sharing the same artist+album, in one write (PASO 6, H03).
+     * A cover belongs to the album, not to an individual track, so a
+     * single MusicBrainz+CAA lookup fans out to all its tracks at
+     * once instead of repeating the lookup per track.
+     * ---
+     * Actualización parcial: persiste la URL de carátula resuelta
+     * para todas las pistas que comparten artista+álbum, en una sola
+     * escritura (PASO 6, H03). Una carátula pertenece al álbum, no a
+     * una pista individual, así que una sola búsqueda MusicBrainz+CAA
+     * se propaga a todas sus pistas de una vez en lugar de repetir la
+     * búsqueda por pista.
+     */
+    @Query(
+        "UPDATE search_result_tracks " +
+        "SET coverArtUrl = :coverArtUrl " +
+        "WHERE artist = :artist AND album = :album"
+    )
+    suspend fun updateCoverArtForAlbum(
+        artist: String,
+        album: String,
+        coverArtUrl: String,
+    )
 }

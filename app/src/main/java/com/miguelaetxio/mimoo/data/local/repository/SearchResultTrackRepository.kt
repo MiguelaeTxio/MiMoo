@@ -95,4 +95,17 @@ class SearchResultTrackRepository @Inject constructor(
      */
     suspend fun updateFavorite(youtubeId: String, isFavorite: Boolean) =
         dao.updateFavorite(youtubeId, isFavorite)
+
+    /**
+     * Persists a resolved cover art URL for every track of the given
+     * artist+album (PASO 6, H03).
+     * ---
+     * Persiste una URL de carátula resuelta para todas las pistas del
+     * artista+álbum indicado (PASO 6, H03).
+     */
+    suspend fun updateCoverArtForAlbum(
+        artist: String,
+        album: String,
+        coverArtUrl: String,
+    ) = dao.updateCoverArtForAlbum(artist, album, coverArtUrl)
 }

@@ -12,7 +12,7 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
     entities = [
         SearchResultTrack::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -63,6 +63,29 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL(
                     "ALTER TABLE search_result_tracks " +
                         "ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
+        /**
+         * Adds coverArtUrl to search_result_tracks (PASO 6, H03).
+         * Nullable, same reasoning as artist/album: absence of cover
+         * art is a real "not resolved yet" state, not a false default,
+         * so existing rows get NULL and are picked up lazily by
+         * CoverArtRepository the next time their album is rendered in
+         * LibraryScreen.
+         * ---
+         * Anade coverArtUrl a search_result_tracks (PASO 6, H03).
+         * Nullable, mismo razonamiento que artist/album: la ausencia
+         * de caratula es un estado real de "aun no resuelto", no un
+         * falso valor por defecto, asi que las filas existentes
+         * quedan en NULL y se resuelven de forma perezosa la proxima
+         * vez que su album se renderiza en LibraryScreen.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE search_result_tracks ADD COLUMN coverArtUrl TEXT"
                 )
             }
         }
