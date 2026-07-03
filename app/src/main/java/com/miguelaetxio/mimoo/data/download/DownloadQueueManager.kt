@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,6 +21,7 @@ import javax.inject.Singleton
 @Singleton
 class DownloadQueueManager @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val repository: SearchResultTrackRepository,
 ) {
 
     private val workManager = WorkManager.getInstance(context)
@@ -27,15 +29,29 @@ class DownloadQueueManager @Inject constructor(
     /**
      * Enqueues a download job for the given YouTube video.
      * DownloadWorker resolves the output path internally via SAF.
+     * Marca la pista como QUEUED en Room antes de encolar el
+     * OneTimeWorkRequest — único punto de entrada real de toda
+     * descarga pedida por el usuario (SearchScreen, AlbumSearchScreen,
+     * ImportLinkScreen), así que es el sitio correcto para que la
+     * pantalla "Descargas" pueda verla de inmediato, sin esperar a
+     * que WorkManager arranque el Worker.
      * ---
      * Encola un trabajo de descarga para el video de YouTube indicado.
      * DownloadWorker resuelve la ruta de salida internamente via SAF.
+     * Marca la pista como QUEUED en Room antes de encolar el
+     * OneTimeWorkRequest — único punto de entrada real de toda
+     * descarga pedida por el usuario (SearchScreen, AlbumSearchScreen,
+     * ImportLinkScreen), así que es el sitio correcto para que la
+     * pantalla "Descargas" pueda verla de inmediato, sin esperar a
+     * que WorkManager arranque el Worker.
      *
      * @param youtubeId  11-char YouTube video ID.
      * @param title      Track title (used as filename by DownloadWorker).
      * @param artist     Artist/channel name (used as dir by DownloadWorker).
      */
-    fun enqueue(youtubeId: String, title: String, artist: String) {
+    suspend fun enqueue(youtubeId: String, title: String, artist: String) {
+        repository.markQueued(youtubeId)
+
         val inputData = Data.Builder()
             .putString(DownloadWorker.KEY_YOUTUBE_ID, youtubeId)
             .putString(DownloadWorker.KEY_TITLE, title)

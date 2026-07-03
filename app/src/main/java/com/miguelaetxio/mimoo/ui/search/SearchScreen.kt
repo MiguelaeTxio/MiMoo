@@ -172,13 +172,17 @@ private fun SearchResultRow(
 /**
  * Download action button that reflects the current DownloadStatus.
  * PENDING  -> download icon, enabled.
- * DOWNLOADING -> circular progress spinner, disabled.
+ * QUEUED, DOWNLOADING -> circular progress spinner, disabled (para
+ *   progreso real en %, ver la pantalla "Descargas" — este botón solo
+ *   necesita indicar "hay algo en marcha", no el porcentaje).
  * DONE     -> green check icon, disabled.
  * ERROR    -> red error icon, enabled (tap to retry).
  * ---
  * Boton de descarga que refleja el DownloadStatus actual.
  * PENDING      -> icono de descarga, habilitado.
- * DOWNLOADING  -> spinner circular, deshabilitado.
+ * QUEUED, DOWNLOADING -> spinner circular, deshabilitado (para
+ *   progreso real en %, ver la pantalla "Descargas" — este boton solo
+ *   necesita indicar "hay algo en marcha", no el porcentaje).
  * DONE         -> icono verde de exito, deshabilitado.
  * ERROR        -> icono rojo de error, habilitado (pulsar para reintentar).
  */
@@ -196,7 +200,7 @@ private fun DownloadButton(
                 )
             }
         }
-        DownloadStatus.DOWNLOADING -> {
+        DownloadStatus.QUEUED, DownloadStatus.DOWNLOADING -> {
             Box(
                 modifier = Modifier.size(48.dp),
                 contentAlignment = Alignment.Center,

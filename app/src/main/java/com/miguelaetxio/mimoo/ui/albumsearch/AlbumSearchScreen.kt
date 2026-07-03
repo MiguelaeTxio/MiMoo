@@ -366,7 +366,7 @@ private fun AlbumTrackMatchRow(
 @Composable
 private fun ImportedDownloadStatusIcon(status: DownloadStatus) {
     when (status) {
-        DownloadStatus.PENDING, DownloadStatus.DOWNLOADING -> {
+        DownloadStatus.PENDING, DownloadStatus.QUEUED, DownloadStatus.DOWNLOADING -> {
             Box(
                 modifier = Modifier.size(24.dp),
                 contentAlignment = Alignment.Center,

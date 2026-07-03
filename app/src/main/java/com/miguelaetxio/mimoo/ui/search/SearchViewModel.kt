@@ -169,11 +169,13 @@ class SearchViewModel @Inject constructor(
      * StorageManager + DownloadDirManager.
      */
     fun requestDownload(track: SearchResultTrack) {
-        downloadQueueManager.enqueue(
-            youtubeId = track.youtubeId,
-            title = track.title,
-            artist = track.artist ?: track.channelTitle,
-        )
+        viewModelScope.launch {
+            downloadQueueManager.enqueue(
+                youtubeId = track.youtubeId,
+                title = track.title,
+                artist = track.artist ?: track.channelTitle,
+            )
+        }
     }
 
     /**
