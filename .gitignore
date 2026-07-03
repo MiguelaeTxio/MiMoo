@@ -17,3 +17,7 @@ local.properties
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Bytecode Python generado localmente (verificacion py_compile) -- nunca versionar
+__pycache__/
+*.pyc
