@@ -174,6 +174,7 @@ class SearchViewModel @Inject constructor(
                 youtubeId = track.youtubeId,
                 title = track.title,
                 artist = track.artist ?: track.channelTitle,
+                album = track.album,
             )
         }
     }

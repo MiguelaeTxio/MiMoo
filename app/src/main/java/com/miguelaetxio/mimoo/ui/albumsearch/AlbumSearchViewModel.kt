@@ -307,6 +307,7 @@ class AlbumSearchViewModel @Inject constructor(
                     youtubeId = track.youtubeId,
                     title = track.title,
                     artist = track.artist ?: track.channelTitle,
+                    album = track.album,
                 )
             }
             // PASO 6b Parte 2: dispara la observacion en vivo de Room

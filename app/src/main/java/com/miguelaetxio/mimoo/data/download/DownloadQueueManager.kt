@@ -48,14 +48,23 @@ class DownloadQueueManager @Inject constructor(
      * @param youtubeId  11-char YouTube video ID.
      * @param title      Track title (used as filename by DownloadWorker).
      * @param artist     Artist/channel name (used as dir by DownloadWorker).
+     * @param album      Album name (used as sub-dir by DownloadWorker), or
+     *                   null for a sencillo — DownloadDirManager falls
+     *                   back to "Sencillos" in that case, never before.
      */
-    suspend fun enqueue(youtubeId: String, title: String, artist: String) {
+    suspend fun enqueue(
+        youtubeId: String,
+        title: String,
+        artist: String,
+        album: String? = null,
+    ) {
         repository.markQueued(youtubeId)
 
         val inputData = Data.Builder()
             .putString(DownloadWorker.KEY_YOUTUBE_ID, youtubeId)
             .putString(DownloadWorker.KEY_TITLE, title)
             .putString(DownloadWorker.KEY_ARTIST, artist)
+            .putString(DownloadWorker.KEY_ALBUM, album)
             .build()
 
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()

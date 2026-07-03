@@ -62,6 +62,7 @@ class DownloadWorker @AssistedInject constructor(
         const val KEY_YOUTUBE_ID = "youtube_id"
         const val KEY_TITLE = "title"
         const val KEY_ARTIST = "artist"
+        const val KEY_ALBUM = "album"
     }
 
     override suspend fun doWork(): Result {
@@ -71,17 +72,27 @@ class DownloadWorker @AssistedInject constructor(
             ?: return Result.failure()
         val artist = inputData.getString(KEY_ARTIST)
             ?: return Result.failure()
+        // Ausente == sencillo (comportamiento normal) -- a diferencia
+        // de youtubeId/title/artist, la ausencia de album NO es un
+        // fallo, así que no aborta con Result.failure().
+        val album = inputData.getString(KEY_ALBUM)
 
         val youtubeUrl = "https://youtu.be/$youtubeId"
 
         val rootUri = storageManager.getRootUri()
             ?: return Result.failure()
 
+        // Álbum real, no siempre null -- antes de este fix, TODO lo
+        // descargado (incluso álbumes completos con su campo album
+        // correcto en Room) acababa físicamente en
+        // {artista}/Sencillos/, sin importar lo que mostrara
+        // Biblioteca. Reportado por Miguel Ángel (2026-07-03): "las
+        // carpetas son un galimatías".
         val trackDir = DownloadDirManager.getOrCreateTrackDir(
             context = applicationContext,
             rootUri = rootUri,
             artist = artist,
-            album = null,
+            album = album,
         ) ?: return Result.failure()
 
         val safeTitle = DownloadDirManager.sanitize(title)
