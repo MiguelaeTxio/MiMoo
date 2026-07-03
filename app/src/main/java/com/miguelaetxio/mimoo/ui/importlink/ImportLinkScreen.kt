@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -106,8 +108,6 @@ fun ImportLinkScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    TextButton(onClick = viewModel::selectAll) { Text("Todo") }
-                    TextButton(onClick = viewModel::selectNone) { Text("Ninguno") }
                 }
 
                 Spacer(Modifier.height(4.dp))
@@ -122,13 +122,33 @@ fun ImportLinkScreen(
                     }
                 }
 
+                if (uiState.isResolvingQueue) {
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+
                 Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = viewModel::importSelected,
-                    enabled = uiState.selectedYoutubeIds.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Importar (${uiState.selectedYoutubeIds.size} pistas)")
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = viewModel::playSelected,
+                        enabled = uiState.selectedYoutubeIds.isNotEmpty() &&
+                            !uiState.isResolvingQueue,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Reproducir")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = viewModel::importSelected,
+                        enabled = uiState.selectedYoutubeIds.isNotEmpty(),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Filled.Download, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Descargar (${uiState.selectedYoutubeIds.size})")
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
             }

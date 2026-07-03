@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
+import com.miguelaetxio.mimoo.data.playback.PlayerManager
+import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import com.miguelaetxio.mimoo.ui.library.VARIOUS_ARTISTS_CREDIT
@@ -28,6 +31,9 @@ data class ImportLinkUiState(
     val tracks: List<ExternalLinkTrack> = emptyList(),
     val selectedYoutubeIds: Set<String> = emptySet(),
     val importedCount: Int? = null,
+    // Resolviendo streams para reproducir sin descargar (playSelected) --
+    // separado de isResolving (que es la resolucion inicial del enlace).
+    val isResolvingQueue: Boolean = false,
 )
 
 /**
@@ -56,6 +62,8 @@ class ImportLinkViewModel @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val downloadQueueManager: DownloadQueueManager,
+    private val streamResolver: StreamResolver,
+    private val playerManager: PlayerManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImportLinkUiState())
@@ -111,14 +119,57 @@ class ImportLinkViewModel @Inject constructor(
         )
     }
 
-    fun selectAll() {
-        _uiState.value = _uiState.value.copy(
-            selectedYoutubeIds = _uiState.value.tracks.map { it.youtubeId }.toSet(),
-        )
-    }
+    /**
+     * Resolves a live streaming URL for every selected track (same
+     * mechanism as SearchViewModel.playTrack(), one
+     * StreamResolver.resolveAudioStreamUrl() call per track) and
+     * plays them as a queue — no download involved. Petición de
+     * Miguel Ángel tras probar el enlace: hacía falta poder escuchar
+     * la lista sin tener que descargarla primero.
+     *
+     * Sequential resolution, not parallel: yt-dlp's extraction is
+     * already an external network call per track, and PlayerManager
+     * only starts playing the first queue item immediately — the
+     * remaining resolves happen while that first track is already
+     * sonando, so playback does not wait for all of them the way it
+     * feels here (the whole list resolves before playQueue() is
+     * called, but the first track is normally quick since it's
+     * always resolved first in this same loop).
+     * ---
+     * Resuelve una URL de streaming en vivo para cada pista
+     * seleccionada (mismo mecanismo que
+     * SearchViewModel.playTrack(), una llamada a
+     * StreamResolver.resolveAudioStreamUrl() por pista) y las
+     * reproduce como cola — sin descarga de por medio. Petición de
+     * Miguel Ángel tras probar el enlace: hacía falta poder escuchar
+     * la lista sin tener que descargarla primero.
+     */
+    fun playSelected() {
+        val state = _uiState.value
+        val selected = state.tracks.filter { it.youtubeId in state.selectedYoutubeIds }
+        if (selected.isEmpty()) return
 
-    fun selectNone() {
-        _uiState.value = _uiState.value.copy(selectedYoutubeIds = emptySet())
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isResolvingQueue = true,
+                errorMessage = null,
+            )
+            try {
+                val items = selected.map { track ->
+                    val streamUrl = streamResolver.resolveAudioStreamUrl(
+                        "https://youtu.be/${track.youtubeId}",
+                    )
+                    QueueItem(uri = streamUrl, title = track.title, isLocal = false)
+                }
+                playerManager.playQueue(items)
+                _uiState.value = _uiState.value.copy(isResolvingQueue = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isResolvingQueue = false,
+                    errorMessage = e.message ?: "Error al resolver el stream",
+                )
+            }
+        }
     }
 
     /**
