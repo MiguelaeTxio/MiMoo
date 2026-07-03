@@ -159,9 +159,24 @@ class ImportLinkViewModel @Inject constructor(
     private fun resolveCoverArt(album: String, channelTitles: List<String>) {
         val artist = dominantArtist(channelTitles) ?: return
         viewModelScope.launch {
-            val url = coverArtRepository.resolveCoverArtUrl(artist, album)
-            if (url != null) {
-                _uiState.value = _uiState.value.copy(coverArtUrl = url)
+            // CoverArtRepository.resolveCoverArtUrl() documenta que
+            // nunca lanza -- pero esta es una corrutina "dispara y
+            // olvida" (nadie hace join/await de ella), y una
+            // excepcion no capturada aqui se lleva la app entera por
+            // delante (viewModelScope no instala ningun
+            // CoroutineExceptionHandler). La caratula es un detalle
+            // cosmetico, nunca vale la pena cerrar la app por ella --
+            // blindaje explicito tras el reporte de cierre de Miguel
+            // Angel (2026-07-02) que coincide exactamente con "es
+            // lista" (unico caso en que esta funcion se llama).
+            try {
+                val url = coverArtRepository.resolveCoverArtUrl(artist, album)
+                if (url != null) {
+                    _uiState.value = _uiState.value.copy(coverArtUrl = url)
+                }
+            } catch (e: Exception) {
+                // Sin caratula, sin romper nada -- no es un error que
+                // el usuario necesite ver.
             }
         }
     }
