@@ -5,8 +5,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,7 +43,8 @@ fun DownloadsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isEmpty = uiState.downloading.isEmpty() &&
         uiState.queued.isEmpty() &&
-        uiState.recentlyCompleted.isEmpty()
+        uiState.recentlyCompleted.isEmpty() &&
+        uiState.failed.isEmpty()
 
     Scaffold(
         topBar = {
@@ -89,6 +92,15 @@ fun DownloadsScreen(
                 }
                 items(uiState.queued, key = { "q_${it.youtubeId}" }) { track ->
                     QueuedRow(track)
+                }
+            }
+
+            if (uiState.failed.isNotEmpty()) {
+                item {
+                    SectionHeader("Con error (${uiState.failed.size})")
+                }
+                items(uiState.failed, key = { "e_${it.youtubeId}" }) { track ->
+                    FailedRow(track, onRetry = { viewModel.retry(track) })
                 }
             }
 
@@ -176,6 +188,33 @@ private fun QueuedRow(track: SearchResultTrack) {
                 progress = { 0f },
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+/**
+ * Fila "con error": icono rojo + botón de reintentar, que reencola la
+ * descarga (mismo mecanismo que el botón de retry en
+ * SearchScreen.DownloadButton para ERROR).
+ */
+@Composable
+private fun FailedRow(track: SearchResultTrack, onRetry: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Filled.ErrorOutline,
+            contentDescription = "Error al descargar",
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        TrackTitleLine(track, modifier = Modifier.weight(1f))
+        IconButton(onClick = onRetry) {
+            Icon(Icons.Filled.Refresh, contentDescription = "Reintentar")
         }
     }
 }

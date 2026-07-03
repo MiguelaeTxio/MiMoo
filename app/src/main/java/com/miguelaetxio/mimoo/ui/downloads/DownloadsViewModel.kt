@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.ui.downloads
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
@@ -29,6 +30,11 @@ data class DownloadsUiState(
     val queued: List<SearchResultTrack> = emptyList(),
     val downloading: List<SearchResultTrack> = emptyList(),
     val recentlyCompleted: List<SearchResultTrack> = emptyList(),
+    // Hueco real detectado por Miguel Ángel (2026-07-03): antes de
+    // esto, una descarga con ERROR era invisible en TODA la app --
+    // ni aquí ni en ImportLinkScreen/AlbumSearchScreen había forma de
+    // saber que algo había fallado en silencio.
+    val failed: List<SearchResultTrack> = emptyList(),
 )
 
 /**
@@ -55,6 +61,7 @@ data class DownloadsUiState(
 @HiltViewModel
 class DownloadsViewModel @Inject constructor(
     private val repository: SearchResultTrackRepository,
+    private val downloadQueueManager: DownloadQueueManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
@@ -79,6 +86,30 @@ class DownloadsViewModel @Inject constructor(
                     recentlyCompleted = tracks.take(RECENTLY_COMPLETED_LIMIT),
                 )
             }
+        }
+        viewModelScope.launch {
+            repository.getByStatus(DownloadStatus.ERROR).collect { tracks ->
+                _uiState.value = _uiState.value.copy(failed = tracks)
+            }
+        }
+    }
+
+    /**
+     * Reintenta una descarga fallida — mismo mecanismo que
+     * SearchScreen.DownloadButton en ERROR (downloadQueueManager.enqueue()
+     * marca QUEUED y vuelve a encolar el Worker).
+     * ---
+     * Retries a failed download — same mechanism as
+     * SearchScreen.DownloadButton on ERROR (downloadQueueManager.enqueue()
+     * marks QUEUED and re-enqueues the Worker).
+     */
+    fun retry(track: SearchResultTrack) {
+        viewModelScope.launch {
+            downloadQueueManager.enqueue(
+                youtubeId = track.youtubeId,
+                title = track.title,
+                artist = track.artist ?: track.channelTitle,
+            )
         }
     }
 }
