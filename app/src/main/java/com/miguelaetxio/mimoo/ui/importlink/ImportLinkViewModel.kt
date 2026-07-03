@@ -8,6 +8,7 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
+import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import com.miguelaetxio.mimoo.ui.library.VARIOUS_ARTISTS_CREDIT
@@ -31,6 +32,13 @@ data class ImportLinkUiState(
     val tracks: List<ExternalLinkTrack> = emptyList(),
     val selectedYoutubeIds: Set<String> = emptySet(),
     val importedCount: Int? = null,
+    // Carátula real (MusicBrainz + Cover Art Archive) para el
+    // álbum/playlist resuelto -- se resuelve en segundo plano tras
+    // resolveLink(), sin bloquear la lista de pistas. Null hasta que
+    // se resuelve o si MusicBrainz no tiene coincidencia (entonces la
+    // UI cae a la miniatura de YouTube de la primera pista, igual que
+    // AlbumSearchScreen/LibraryScreen).
+    val coverArtUrl: String? = null,
     // Resolviendo streams para reproducir sin descargar (playSelected) --
     // separado de isResolving (que es la resolucion inicial del enlace).
     val isResolvingQueue: Boolean = false,
@@ -64,6 +72,7 @@ class ImportLinkViewModel @Inject constructor(
     private val downloadQueueManager: DownloadQueueManager,
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
+    private val coverArtRepository: CoverArtRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImportLinkUiState())
@@ -88,10 +97,11 @@ class ImportLinkViewModel @Inject constructor(
             )
             try {
                 val result = externalLinkResolver.resolveLink(url)
+                val isPlaylist = result.tracks.size > 1
                 _uiState.value = _uiState.value.copy(
                     isResolving = false,
                     resolvedTitle = result.title,
-                    isPlaylist = result.tracks.size > 1,
+                    isPlaylist = isPlaylist,
                     tracks = result.tracks,
                     // Todas seleccionadas por defecto -- el usuario
                     // desmarca las que no quiere en vez de tener que
@@ -99,6 +109,9 @@ class ImportLinkViewModel @Inject constructor(
                     // el album entero).
                     selectedYoutubeIds = result.tracks.map { it.youtubeId }.toSet(),
                 )
+                if (isPlaylist) {
+                    resolveCoverArt(result.title, result.tracks.map { it.channelTitle })
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isResolving = false,
@@ -107,6 +120,46 @@ class ImportLinkViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Resolves cover art for the whole resolved playlist/album via
+     * CoverArtRepository (MusicBrainz + Cover Art Archive, same
+     * mechanism as Biblioteca/AlbumSearchScreen) — peticion de Miguel
+     * Ángel tras probar el enlace. Only attempted when every track
+     * shares a single channel: CoverArtRepository.resolveCoverArtUrl()
+     * requires both artist and album for its MusicBrainz query, and a
+     * mixed-channel compilation has no single real artist to search
+     * with (it will get VARIOUS_ARTISTS_CREDIT on import, which
+     * MusicBrainz will not match to a specific release's cover).
+     * Never blocks the track list from showing — runs after it's
+     * already in the UI state.
+     * ---
+     * Resuelve la carátula de toda la playlist/álbum resuelto vía
+     * CoverArtRepository (MusicBrainz + Cover Art Archive, mismo
+     * mecanismo que Biblioteca/AlbumSearchScreen) — petición de Miguel
+     * Ángel tras probar el enlace. Solo se intenta cuando todas las
+     * pistas comparten un único canal:
+     * CoverArtRepository.resolveCoverArtUrl() necesita artista y álbum
+     * para su consulta a MusicBrainz, y una compilación de canales
+     * mixtos no tiene un artista real único con el que buscar (recibe
+     * VARIOUS_ARTISTS_CREDIT al importar, que MusicBrainz no va a
+     * emparejar con la carátula de un release concreto). Nunca bloquea
+     * que se muestre la lista de pistas — se ejecuta después de que ya
+     * está en el estado de la UI.
+     */
+    private fun resolveCoverArt(album: String, channelTitles: List<String>) {
+        val artist = dominantArtist(channelTitles) ?: return
+        viewModelScope.launch {
+            val url = coverArtRepository.resolveCoverArtUrl(artist, album)
+            if (url != null) {
+                _uiState.value = _uiState.value.copy(coverArtUrl = url)
+            }
+        }
+    }
+
+    /** Returns the single shared channel title, or null if there is more than one. */
+    private fun dominantArtist(channelTitles: List<String>): String? =
+        channelTitles.distinct().singleOrNull()
 
     fun toggleTrackSelected(youtubeId: String) {
         val current = _uiState.value.selectedYoutubeIds
@@ -204,12 +257,8 @@ class ImportLinkViewModel @Inject constructor(
         val selected = state.tracks.filter { it.youtubeId in state.selectedYoutubeIds }
         if (selected.isEmpty()) return
 
-        val distinctChannels = selected.map { it.channelTitle }.distinct()
-        val artist = if (distinctChannels.size == 1) {
-            distinctChannels.first()
-        } else {
-            VARIOUS_ARTISTS_CREDIT
-        }
+        val artist = dominantArtist(selected.map { it.channelTitle })
+            ?: VARIOUS_ARTISTS_CREDIT
         val album = if (state.isPlaylist) state.resolvedTitle else null
 
         viewModelScope.launch {
@@ -231,6 +280,15 @@ class ImportLinkViewModel @Inject constructor(
                     title = track.title,
                     artist = track.artist ?: track.channelTitle,
                 )
+            }
+            // Ya resuelta en resolveCoverArt() -- se persiste aqui
+            // para que Biblioteca no tenga que volver a preguntarle a
+            // MusicBrainz por el mismo album (misma logica de cache
+            // permanente que ya usa LibraryViewModel.requestCoverArtIfMissing).
+            if (album != null) {
+                state.coverArtUrl?.let { url ->
+                    searchResultTrackRepository.updateCoverArtForAlbum(artist, album, url)
+                }
             }
             _uiState.value = _uiState.value.copy(importedCount = tracks.size)
         }

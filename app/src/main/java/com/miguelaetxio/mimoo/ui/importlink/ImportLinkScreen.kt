@@ -1,11 +1,13 @@
 package com.miguelaetxio.mimoo.ui.importlink
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
@@ -96,6 +98,13 @@ fun ImportLinkScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    if (uiState.isPlaylist) {
+                        LinkCoverThumbnail(
+                            coverArtUrl = uiState.coverArtUrl,
+                            fallbackThumbnailUrl = uiState.tracks.firstOrNull()?.thumbnailUrl,
+                        )
+                        Spacer(Modifier.width(12.dp))
+                    }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             uiState.resolvedTitle ?: "",
@@ -182,6 +191,60 @@ fun ImportLinkScreen(
             },
         )
     }
+}
+
+/**
+ * Same fallback chain as LibraryScreen.AlbumCoverThumbnail: MusicBrainz
+ * + Cover Art Archive first, then the first track's own YouTube
+ * thumbnail, then a generic album icon.
+ * ---
+ * Misma cadena de fallback que LibraryScreen.AlbumCoverThumbnail:
+ * primero MusicBrainz + Cover Art Archive, luego la miniatura de
+ * YouTube de la primera pista, luego un icono genérico de álbum.
+ */
+@Composable
+private fun LinkCoverThumbnail(
+    coverArtUrl: String?,
+    fallbackThumbnailUrl: String?,
+) {
+    val size = 48.dp
+    val shape = RoundedCornerShape(4.dp)
+
+    if (coverArtUrl == null && fallbackThumbnailUrl == null) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Album,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        return
+    }
+
+    SubcomposeAsyncImage(
+        model = coverArtUrl ?: fallbackThumbnailUrl,
+        contentDescription = "Carátula",
+        modifier = Modifier.size(size).clip(shape),
+        error = {
+            if (coverArtUrl != null && fallbackThumbnailUrl != null) {
+                SubcomposeAsyncImage(
+                    model = fallbackThumbnailUrl,
+                    contentDescription = "Carátula",
+                    modifier = Modifier.size(size).clip(shape),
+                    error = { LinkCoverThumbnail(null, null) },
+                )
+            } else {
+                LinkCoverThumbnail(null, null)
+            }
+        },
+    )
 }
 
 @Composable
