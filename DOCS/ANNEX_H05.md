@@ -102,51 +102,40 @@ quiere depender de volver a buscar en YouTube cada vez.
 ## Hoja de Ruta para la Siguiente Sesión
 
 **Los PASOS 1-5 ya están implementados — no repetirlos. PASO 6a, 6b
-(Partes 1 y 2), 6d y 6e ya están implementados y pusheados en S002
+(Partes 1 y 2), 6d, 6e y 6f ya están implementados y pusheados en S002
 (2026-07-02, sesión NewFlow) — ver detalle en "COMPLETADAS EN S002"
-más abajo.** Solo queda 6c (verificación real, con dispositivo).
+más abajo.** Queda 6c (verificación real, con dispositivo) — ahora
+más urgente de lo habitual porque incluye confirmar un fix de un
+cierre de aplicación real.
 
-### PASO 6e — Emparejamiento vía playlist de YouTube + coste de cuota corregido (HECHO — S002)
+### PASO 6c — Verificación funcional real (repetir, PENDIENTE — prioridad alta)
 
-- Diagnóstico real de "1 de 11 pistas emparejadas" (Transformer, Lou
-  Reed, probado por Miguel Ángel): `search.list` cuesta **100
-  unidades de cuota/llamada**, no 1 como afirmaba la documentación del
-  proyecto — un álbum de 11 pistas quemaba 1.100 unidades solo en
-  búsquedas pista a pista, agotando el pool diario de 10.000 a media
-  búsqueda tras las pruebas repetidas de la sesión. El bug quedaba
-  oculto porque `matchAlbumTracks` tragaba la excepción real
-  (`catch` genérico → `emptyList()`), mostrando "Sin emparejar"
-  idéntico a un fallo real de cuota.
-- Petición explícita de Miguel Ángel, correcta: "las canciones están
-  todas en YouTube... hay listas de reproducción de ese disco".
-- `AlbumMatchRepository.matchAlbumTracks()`: ahora recibe también el
-  título del álbum; intenta primero encontrar una playlist de YouTube
-  del álbum completo (`searchPlaylist` + `getPlaylistTracks`, 100+1
-  unidades fijas por álbum, independiente del número de pistas) y
-  empareja por posición con tolerancia de cordura de duración (20s).
-  Solo si no hay playlist utilizable cae al emparejamiento pista a
-  pista de antes (100 unidades × N pistas, ahora red de seguridad, no
-  camino principal).
-- Nuevo campo `AlbumTrackMatch.matchError` distingue "no se encontró
-  nada" de "error real" (cuota agotada, red) — antes eran
-  indistinguibles en la UI.
-- `MASTER_DOCUMENT.md` §2.3 corregido con el coste real de cuota.
-
-### PASO 6c — Verificación funcional real (repetir, PENDIENTE)
-
-- Build en verde (comprobar tras 6a/6b/6d/6e).
-- Repetir la prueba: reimportar Lou Reed - Transformer y confirmar que
-  ahora empareja las 11 pistas de golpe vía playlist (no una a una).
-  Si vuelve a fallar, comprobar si el mensaje de error menciona
-  "Cuota de YouTube agotada" — la cuota diaria (10.000 unidades,
-  proyecto `mimoo-501004`) puede seguir agotada de las pruebas de hoy
-  hasta que resetee a medianoche hora del Pacífico.
+- Build en verde (comprobar tras 6a/6b/6d/6e/6f).
+- **Prioridad 1 — confirmar el fix del cierre de app en "Importar
+  enlace":** reimportar el mismo álbum de YouTube Music que cerraba
+  la app (el enlace `OLAK5uy_...`). Dos capas de arreglo aplicadas,
+  ninguna probada todavía en dispositivo: (a) filtrado en yt-dlp de
+  pistas sin `youtube_id` real, (b) try/catch en la corrutina de
+  `resolveCoverArt()` (hipótesis principal si (a) no fuera la causa
+  completa). Si sigue cerrándose, pedir a Miguel Ángel el log real
+  del cierre (Play Protect "Enviar detalles" o `logcat`) en vez de
+  seguir iterando a ciegas.
+- Reimportar Lou Reed - Transformer (búsqueda por álbum, PASO 6e) y
+  confirmar que ahora empareja las 11 pistas de golpe vía playlist
+  (no una a una). Si vuelve a fallar, comprobar si el mensaje de
+  error menciona "Cuota de YouTube agotada" — la cuota diaria (10.000
+  unidades, proyecto `mimoo-501004`) puede seguir agotada de las
+  pruebas de la sesión hasta que resetee a medianoche hora del
+  Pacífico (~9:00 hora española).
 - Repetir también la prueba de "Beethoven"/"Sinfonía" sueltos, elegir
   un candidato de la lista y confirmar que ahí sí se pide tracklist +
   emparejamiento YouTube; confirmar que las pistas importadas
   aparecen en la misma lista con su estado de descarga, se descargan
   solas, el botón "Ver en Biblioteca" lleva hasta allí, y son
   escuchables sin pasos adicionales.
+- Probar "Importar enlace" con una playlist normal de YouTube (no
+  YouTube Music) y con un enlace de un solo vídeo, confirmar carátula
+  cuando hay un único canal detrás, y los botones Reproducir/Descargar.
 
 ---
 
@@ -170,6 +159,32 @@ más abajo.** Solo queda 6c (verificación real, con dispositivo).
 - **PASO 6d** — selector de álbumes candidatos, ver detalle arriba.
 - **PASO 6e** — emparejamiento vía playlist de YouTube + corrección de
   coste de cuota, ver detalle arriba.
+- **PASO 6f** — "Importar enlace": nueva pantalla que resuelve un
+  enlace de YouTube/YouTube Music (playlist/álbum o vídeo suelto)
+  directamente con yt-dlp (`link_resolver.py`), sin tocar la YouTube
+  Data API — coste de cuota cero. Petición explícita de Miguel Ángel:
+  "aquí la búsqueda es externa". Preview con checkboxes, botones
+  Reproducir (streaming, sin descargar) y Descargar (autodescarga,
+  destacado visualmente a petición de Miguel Ángel). Asignación de
+  artista: un solo canal → ese canal; canales distintos →
+  `VARIOUS_ARTISTS_CREDIT`, agrupa bajo "Varios" en Biblioteca.
+  Carátula real vía `CoverArtRepository` (MusicBrainz + Cover Art
+  Archive) cuando hay un único canal detrás del álbum.
+  **Bug real encontrado en pruebas de Miguel Ángel:** la app se
+  cerraba al importar un álbum de YouTube Music (aceptaba el enlace,
+  mostraba las pistas, y se cerraba). Dos capas de arreglo aplicadas,
+  **ninguna verificada todavía en dispositivo** (ver PASO 6c): (a)
+  yt-dlp descarta entradas sin `youtube_id` real (bonus tracks no
+  disponibles, etc. — la hipótesis más probable, ya que un `null` en
+  ese campo rompía un tipo no-nullable de Kotlin usado como `key` de
+  `LazyColumn`), (b) `resolveCoverArt()` blindado con try/catch por
+  ser una corrutina disparar-y-olvidar sin manejador de excepciones
+  (coincide con que el cierre solo ocurría en listas, nunca en
+  sencillos, ya que esa función solo se llama para listas).
+- **Reorganización de Biblioteca** (no es parte de H05 en sentido
+  estricto, pero ocurrió en esta misma sesión): pestañas
+  Álbumes/Sencillos/Favoritos sustituyendo el confuso toggle
+  Jerárquica/Plana + sort roto. Ver commit `ac85989`.
 - **Corrección de diagnóstico** (no parte de H05, ver `ANNEX_H03.md`):
   la hipótesis de keystore antigua residual para el "conflicto con un
   paquete" al actualizar la APK quedó descartada — es sistemático en
