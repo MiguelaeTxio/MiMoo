@@ -97,6 +97,15 @@ class ImportLinkViewModel @Inject constructor(
             )
             try {
                 val result = externalLinkResolver.resolveLink(url)
+                if (result.tracks.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        isResolving = false,
+                        errorMessage = "El enlace no tiene ninguna pista " +
+                            "reproducible (puede ser contenido bloqueado " +
+                            "o no disponible).",
+                    )
+                    return@launch
+                }
                 val isPlaylist = result.tracks.size > 1
                 _uiState.value = _uiState.value.copy(
                     isResolving = false,

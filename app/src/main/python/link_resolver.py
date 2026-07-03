@@ -102,24 +102,52 @@ def resolve_youtube_link(url: str) -> str:
     entries = info.get("entries")
     if entries is not None:
         tracks = [
-            _entry_to_track(entry) for entry in entries if entry is not None
+            track for entry in entries
+            if entry is not None
+            for track in [_entry_to_track(entry)]
+            if track is not None
         ]
         result = {
             "title": info.get("title") or "(lista sin título)",
             "tracks": tracks,
         }
     else:
+        track = _entry_to_track(info)
+        if track is None:
+            raise RuntimeError(
+                "El enlace no resolvió a ningún vídeo reproducible: " + url
+            )
         result = {
             "title": info.get("title") or "(sin título)",
-            "tracks": [_entry_to_track(info)],
+            "tracks": [track],
         }
 
     return json.dumps(result)
 
 
-def _entry_to_track(entry: dict) -> dict:
+def _entry_to_track(entry: dict):
+    # Algunas entradas de álbumes/playlists (visto con enlaces de
+    # YouTube Music) no traen id de vídeo real -- pistas bonus no
+    # disponibles, marcadores de seccion, contenido regional
+    # bloqueado, etc. Sin id no hay nada que reproducir ni descargar,
+    # así que se descartan aquí en vez de dejar pasar un "youtube_id"
+    # nulo que rompería un campo Kotlin no-nullable en el lado
+    # Android (causa real del cierre de la app reportado por Miguel
+    # Ángel, 2026-07-02, al importar un álbum de YouTube Music).
+    # ---
+    # Some entries in albums/playlists (seen with YouTube Music links)
+    # don't carry a real video id -- unavailable bonus tracks, section
+    # markers, region-blocked content, etc. With no id there is
+    # nothing to play or download, so they're discarded here instead
+    # of letting a null "youtube_id" through, which would break a
+    # non-nullable Kotlin field on the Android side (real cause of the
+    # app closing reported by Miguel Ángel, 2026-07-02, when importing
+    # a YouTube Music album).
+    video_id = entry.get("id")
+    if not video_id:
+        return None
     return {
-        "youtube_id": entry.get("id"),
+        "youtube_id": video_id,
         "title": entry.get("title") or "(sin título)",
         "duration_seconds": int(entry.get("duration") or 0),
         "channel_title": entry.get("uploader") or entry.get("channel") or "",
