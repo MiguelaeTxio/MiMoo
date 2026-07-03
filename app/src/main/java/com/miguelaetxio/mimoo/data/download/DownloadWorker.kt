@@ -8,7 +8,24 @@ import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.runBlocking
 import java.io.File
+
+/**
+ * Callback interface passed as a Chaquopy proxy into downloader.py's
+ * download_audio(progress_listener=...) — yt-dlp's progress_hooks call
+ * onProgress() synchronously from the same (blocking) thread running
+ * runYtDlp(), many times per second while the raw download is active.
+ * ---
+ * Interfaz de callback pasada como proxy de Chaquopy a
+ * download_audio(progress_listener=...) de downloader.py — los
+ * progress_hooks de yt-dlp llaman a onProgress() de forma sincrona
+ * desde el mismo hilo (bloqueante) que ejecuta runYtDlp(), muchas
+ * veces por segundo mientras la descarga en crudo esta activa.
+ */
+fun interface DownloadProgressListener {
+    fun onProgress(percent: Int)
+}
 
 /**
  * WorkManager worker that downloads a YouTube track as an Opus file.
@@ -98,10 +115,25 @@ class DownloadWorker @AssistedInject constructor(
 
         repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
 
+        // runBlocking es aceptable aqui: onProgress() se llama de forma
+        // sincrona desde dentro de la llamada bloqueante a Chaquopy
+        // (runYtDlp, mas abajo), que ya bloquea este mismo hilo — no
+        // añade una espera nueva, solo una escritura corta a Room en
+        // el mismo hilo que ya estaba ocupado.
+        // ---
+        // runBlocking is fine here: onProgress() is called synchronously
+        // from inside the blocking Chaquopy call (runYtDlp, below),
+        // which already blocks this same thread — it doesn't add a new
+        // wait, just a short Room write on the thread that was already
+        // busy.
+        val progressListener = DownloadProgressListener { percent ->
+            runBlocking { repository.updateDownloadProgress(youtubeId, percent) }
+        }
+
         return try {
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
-            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegDir)
+            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegDir, progressListener)
 
             // yt-dlp appends .opus to the output template.
             // yt-dlp añade .opus a la plantilla de salida.
@@ -237,6 +269,7 @@ class DownloadWorker @AssistedInject constructor(
         youtubeUrl: String,
         outputBasePath: String,
         ffmpegPath: String,
+        progressListener: DownloadProgressListener,
     ) {
         val py = com.chaquo.python.Python.getInstance()
         val downloader = py.getModule("downloader")
@@ -245,6 +278,7 @@ class DownloadWorker @AssistedInject constructor(
             youtubeUrl,
             outputBasePath,
             ffmpegPath,
+            progressListener,
         )
     }
 }

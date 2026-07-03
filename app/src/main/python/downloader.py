@@ -18,6 +18,7 @@ def download_audio(
     youtube_url: str,
     output_path: str,
     ffmpeg_location: str,
+    progress_listener=None,
 ) -> bool:
     """
     Download the best audio stream and convert it to Opus at output_path.
@@ -25,6 +26,17 @@ def download_audio(
     ffmpeg_location must be the directory containing the ffmpeg binary,
     or the full path to the ffmpeg binary itself.
     Returns True on success; raises on failure.
+
+    progress_listener, if given, is a Kotlin/Java object (Chaquopy proxy)
+    exposing onProgress(percent: Int) — see DownloadWorker.
+    DownloadProgressListener. Called from yt-dlp's own progress_hooks,
+    which only cover the raw audio download step, not the ffmpeg Opus
+    postprocessing/mux that follows — percent is capped at 99 while
+    status == "downloading" for that reason, real 100 is set by
+    DownloadWorker itself once the whole doWork() (download + SAF copy)
+    succeeds. Throttled here (min 2-point delta) so a slow connection
+    doesn't flood Room with a write per callback — yt-dlp fires this
+    hook many times per second.
     ---
     Descarga el mejor stream de audio y lo convierte a Opus en output_path.
     output_path debe ser una ruta de sistema de archivos con permiso de
@@ -33,16 +45,44 @@ def download_audio(
     o la ruta completa al binario ffmpeg.
     Devuelve True en exito; lanza excepcion en fallo.
 
+    progress_listener, si se pasa, es un objeto Kotlin/Java (proxy de
+    Chaquopy) que expone onProgress(percent: Int) — ver
+    DownloadWorker.DownloadProgressListener. Se llama desde el propio
+    progress_hooks de yt-dlp, que solo cubre el paso de descarga de
+    audio en crudo, no el postproceso/mux a Opus de ffmpeg que viene
+    despues — por eso el porcentaje se limita a 99 mientras
+    status == "downloading"; el 100 real lo fija el propio
+    DownloadWorker cuando todo doWork() (descarga + copia SAF) termina
+    con exito. Con throttling aqui (delta minimo de 2 puntos) para que
+    una conexion lenta no sature Room con una escritura por callback —
+    yt-dlp dispara este hook muchas veces por segundo.
+
     Args:
         youtube_url:     Full YouTube URL (e.g. https://youtu.be/XXXXXXXXXXX).
         output_path:     Absolute filesystem path WITHOUT .opus extension
                          (yt-dlp appends it automatically).
         ffmpeg_location: Path to ffmpeg binary or its parent directory.
+        progress_listener: Optional Kotlin DownloadProgressListener proxy.
 
     Returns:
         True if download and conversion succeeded.
     """
     import os
+
+    last_reported = -1
+
+    def _progress_hook(d):
+        nonlocal last_reported
+        if progress_listener is None or d.get("status") != "downloading":
+            return
+        total = d.get("total_bytes") or d.get("total_bytes_estimate")
+        downloaded = d.get("downloaded_bytes")
+        if not total or downloaded is None:
+            return
+        percent = min(99, int(downloaded * 100 / total))
+        if percent - last_reported >= 2:
+            last_reported = percent
+            progress_listener.onProgress(percent)
     # yt-dlp accepts either the binary path or its parent directory.
     # If we receive the full path, extract the directory.
     # yt-dlp acepta tanto la ruta al binario como su directorio padre.
@@ -86,6 +126,7 @@ def download_audio(
         },
         "quiet": True,
         "no_warnings": True,
+        "progress_hooks": [_progress_hook],
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([youtube_url])
