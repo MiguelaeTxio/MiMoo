@@ -62,15 +62,52 @@ object DownloadDirManager {
         rootUri: Uri,
         artist: String,
         album: String?,
-    ): DocumentFile? {
+    ): DocumentFile? = synchronized(this) {
+        // synchronized(this) -- bug real reportado por Miguel Ángel
+        // (2026-07-03, reimportación de Moon Safari): findOrCreate()
+        // hace un find-then-create no atómico (TOCTOU). Cuando varias
+        // pistas del mismo álbum descargan en paralelo (varios
+        // DownloadWorker concurrentes, más probable aún tras el fix de
+        // reconcileOrphanedDownloads(), que reencola de golpe todo lo
+        // huérfano al arrancar), dos workers pueden comprobar a la vez
+        // que la carpeta "Air"/"Air french Band" no existe todavía y
+        // los dos llamar a createDirectory() -- el proveedor SAF
+        // resuelve el choque renombrando la segunda a "Air (1)",
+        // "Air (2)"... creando carpetas duplicadas físicas en disco
+        // que LibraryReconciler.rescan() importa después como
+        // artistas/álbumes distintos (visible en Biblioteca como
+        // grupos "Air (1)", "Air french Band (3)", etc., cada uno con
+        // solo una o dos pistas). synchronized(this) serializa toda
+        // resolución/creación de directorio (poco frecuente, coste
+        // despreciable) para que el find y el create de cada llamada
+        // sean atómicos entre sí.
+        // ---
+        // synchronized(this) -- real bug reported by Miguel Ángel
+        // (2026-07-03, Moon Safari re-import): findOrCreate() does a
+        // non-atomic find-then-create (TOCTOU). When several tracks of
+        // the same album download in parallel (several concurrent
+        // DownloadWorkers, even more likely after the
+        // reconcileOrphanedDownloads() fix, which re-enqueues
+        // everything orphaned at once on startup), two workers can
+        // both check at the same time that the "Air"/"Air french Band"
+        // folder doesn't exist yet and both call createDirectory() --
+        // the SAF provider resolves the clash by renaming the second
+        // one to "Air (1)", "Air (2)"... creating duplicate physical
+        // folders on disk that LibraryReconciler.rescan() later
+        // imports as distinct artists/albums (visible in Biblioteca as
+        // "Air (1)", "Air french Band (3)" groups, etc., each with
+        // only one or two tracks). synchronized(this) serializes all
+        // directory resolution/creation (infrequent, negligible cost)
+        // so each call's find and create are atomic with respect to
+        // each other.
         val root = DocumentFile.fromTreeUri(context, rootUri)
-            ?: return null
+            ?: return@synchronized null
 
         val artistDir = root.findOrCreate(sanitize(artist))
-            ?: return null
+            ?: return@synchronized null
 
         val albumName = album?.let { sanitize(it) } ?: UNKNOWN_ALBUM_DIR_NAME
-        return artistDir.findOrCreate(albumName)
+        artistDir.findOrCreate(albumName)
     }
 
     /**
