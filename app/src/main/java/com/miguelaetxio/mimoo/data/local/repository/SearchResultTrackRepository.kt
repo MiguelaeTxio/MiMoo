@@ -35,6 +35,17 @@ class SearchResultTrackRepository @Inject constructor(
     fun getActiveDownloads(): Flow<List<SearchResultTrack>> =
         dao.getActiveDownloads()
 
+    /**
+     * Versión de una sola vez de getActiveDownloads() -- usada por
+     * DownloadQueueManager.reconcileOrphanedDownloads() al arrancar la
+     * app.
+     * ---
+     * One-shot version of getActiveDownloads() -- used by
+     * DownloadQueueManager.reconcileOrphanedDownloads() at app startup.
+     */
+    suspend fun getActiveDownloadsOnce(): List<SearchResultTrack> =
+        dao.getActiveDownloadsOnce()
+
     suspend fun getById(youtubeId: String): SearchResultTrack? =
         dao.getById(youtubeId)
 

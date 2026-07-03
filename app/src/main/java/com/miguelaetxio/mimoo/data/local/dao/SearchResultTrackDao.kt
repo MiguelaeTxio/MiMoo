@@ -39,6 +39,31 @@ interface SearchResultTrackDao {
     )
     fun getActiveDownloads(): Flow<List<SearchResultTrack>>
 
+    /**
+     * Misma consulta que getActiveDownloads() pero de una sola vez
+     * (no Flow) — usada al arrancar la app para reconciliar contra el
+     * estado real de WorkManager (ver DownloadQueueManager.
+     * reconcileOrphanedDownloads()). Una fila QUEUED/DOWNLOADING puede
+     * quedar huérfana si el proceso murió o el sistema canceló el
+     * WorkRequest antes de que DownloadWorker llegara a DONE o ERROR
+     * -- sin esta reconciliación esa fila se queda así para siempre,
+     * visible en "Descargas" pero sin ningún trabajo real detrás.
+     * ---
+     * Same query as getActiveDownloads() but one-shot (not a Flow) --
+     * used at app startup to reconcile against WorkManager's real
+     * state (see DownloadQueueManager.reconcileOrphanedDownloads()). A
+     * QUEUED/DOWNLOADING row can become orphaned if the process died
+     * or the system cancelled the WorkRequest before DownloadWorker
+     * reached DONE or ERROR -- without this reconciliation that row
+     * stays that way forever, visible in "Descargas" but with no real
+     * work behind it.
+     */
+    @Query(
+        "SELECT * FROM search_result_tracks " +
+        "WHERE downloadStatus IN ('QUEUED', 'DOWNLOADING')"
+    )
+    suspend fun getActiveDownloadsOnce(): List<SearchResultTrack>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(track: SearchResultTrack)
 

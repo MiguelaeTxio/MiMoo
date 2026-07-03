@@ -6,8 +6,13 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -36,12 +41,43 @@ class MiMooApp : Application(), Configuration.Provider {
     @Inject
     lateinit var storageManager: StorageManager
 
+    @Inject
+    lateinit var downloadQueueManager: DownloadQueueManager
+
+    // Vive tanto como el proceso -- solo se usa para el disparo puntual
+    // de reconcileOrphanedDownloads() al arrancar, no para trabajo
+    // continuo (eso sigue siendo responsabilidad de WorkManager).
+    // ---
+    // Lives as long as the process -- only used for the one-shot
+    // reconcileOrphanedDownloads() trigger at startup, not for ongoing
+    // work (that remains WorkManager's responsibility).
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override fun onCreate() {
         super.onCreate()
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
         installCrashLogger()
+
+        // Reencola al arrancar cualquier descarga QUEUED/DOWNLOADING
+        // que se quedó huérfana (proceso muerto o WorkRequest
+        // cancelado por el sistema antes de llegar a DONE/ERROR) --
+        // bug real reportado por Miguel Ángel el 2026-07-03
+        // reimportando Moon Safari: 4 de 10 pistas se quedaban "En
+        // cola" para siempre sin avanzar y sin reintento manual
+        // posible. Ver DownloadQueueManager.reconcileOrphanedDownloads().
+        // ---
+        // Re-enqueues at startup any QUEUED/DOWNLOADING download left
+        // orphaned (process died or WorkRequest cancelled by the
+        // system before reaching DONE/ERROR) -- real bug reported by
+        // Miguel Ángel on 2026-07-03 while re-importing Moon Safari: 4
+        // of 10 tracks stayed "En cola" forever, never progressing and
+        // with no manual retry possible. See DownloadQueueManager.
+        // reconcileOrphanedDownloads().
+        appScope.launch {
+            downloadQueueManager.reconcileOrphanedDownloads()
+        }
     }
 
     /**
