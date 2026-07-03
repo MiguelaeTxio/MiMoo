@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.miguelaetxio.mimoo.ui.albumsearch.AlbumSearchScreen
+import com.miguelaetxio.mimoo.ui.downloads.DownloadsScreen
 import com.miguelaetxio.mimoo.ui.importlink.ImportLinkScreen
 import com.miguelaetxio.mimoo.ui.library.LibraryScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
@@ -22,6 +23,7 @@ sealed class Screen(val route: String) {
     }
     object AlbumSearch : Screen("album_search")
     object ImportLink : Screen("import_link")
+    object Downloads : Screen("downloads")
 }
 
 @Composable
@@ -72,6 +74,9 @@ fun MiMooNavGraph(
                     navController.navigate(Screen.Library.route)
                 },
             )
+        }
+        composable(Screen.Downloads.route) {
+            DownloadsScreen(onOpenDrawer = onOpenDrawer)
         }
     }
 }

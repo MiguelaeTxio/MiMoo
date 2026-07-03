@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QueueMusic
@@ -228,6 +229,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.ImportLink.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Descargas") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Downloading,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Downloads.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Downloads.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
