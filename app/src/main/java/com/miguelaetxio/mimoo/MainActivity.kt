@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -210,6 +211,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.AlbumSearch.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Importar enlace") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Link,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.ImportLink.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.ImportLink.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
