@@ -41,6 +41,29 @@ enum class LibraryTab { ALBUMS, SINGLES, FAVORITES }
 const val VARIOUS_ARTISTS_CREDIT = "Various Artists"
 const val VARIOUS_ARTISTS_DISPLAY_LABEL = "Varios"
 
+/**
+ * Fallback credit for cuando YouTube no da ningún nombre de canal
+ * real utilizable (p.ej. uploader "-" en playlists auto-generadas de
+ * YouTube Music, normalizado a blanco en link_resolver.py) — a
+ * diferencia de VARIOUS_ARTISTS_CREDIT, que es para compilaciones con
+ * varios artistas reales distintos, esto es para un único álbum/pista
+ * real cuyo nombre de artista simplemente no se pudo determinar. Se
+ * guarda y se muestra igual, sin mapeo — no es una convención de
+ * MusicBrainz como VARIOUS_ARTISTS_CREDIT, así que no hace falta
+ * traducirlo en displayArtistName().
+ * ---
+ * Fallback credit for when YouTube gives no usable real channel name
+ * at all (e.g. uploader "-" on auto-generated YouTube Music
+ * playlists, normalized to blank in link_resolver.py) — unlike
+ * VARIOUS_ARTISTS_CREDIT, which is for compilations with several
+ * distinct real artists, this is for a single real album/track whose
+ * artist name simply couldn't be determined. Stored and displayed
+ * as-is, no mapping needed — it isn't a MusicBrainz convention like
+ * VARIOUS_ARTISTS_CREDIT, so displayArtistName() doesn't need to
+ * translate it.
+ */
+const val UNKNOWN_ARTIST_CREDIT = "Artista desconocido"
+
 fun displayArtistName(artist: String): String =
     if (artist.equals(VARIOUS_ARTISTS_CREDIT, ignoreCase = true)) {
         VARIOUS_ARTISTS_DISPLAY_LABEL

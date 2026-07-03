@@ -146,11 +146,28 @@ def _entry_to_track(entry: dict):
     video_id = entry.get("id")
     if not video_id:
         return None
+    # YouTube devuelve a veces literalmente "-" como uploader en
+    # playlists auto-generadas de YouTube Music (álbumes) -- no es un
+    # nombre de canal real, así que se normaliza a "" igual que cuando
+    # el campo falta del todo. Sin esto, "-" se colaba como si fuera
+    # un artista válido (reportado por Miguel Ángel, 2026-07-03, con
+    # el álbum "Moon Safari" de Air).
+    # ---
+    # YouTube sometimes literally returns "-" as the uploader on
+    # auto-generated YouTube Music playlists (albums) -- not a real
+    # channel name, so it's normalized to "" just like a missing
+    # field. Without this, "-" leaked through as if it were a valid
+    # artist name (reported by Miguel Ángel, 2026-07-03, with Air's
+    # "Moon Safari" album).
+    channel_title = entry.get("uploader") or entry.get("channel") or ""
+    if channel_title.strip() == "-":
+        channel_title = ""
+
     return {
         "youtube_id": video_id,
         "title": entry.get("title") or "(sin título)",
         "duration_seconds": int(entry.get("duration") or 0),
-        "channel_title": entry.get("uploader") or entry.get("channel") or "",
+        "channel_title": channel_title,
         "thumbnail_url": _best_thumbnail(entry.get("thumbnails")),
     }
 

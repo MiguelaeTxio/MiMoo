@@ -11,6 +11,7 @@ import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
+import com.miguelaetxio.mimoo.ui.library.UNKNOWN_ARTIST_CREDIT
 import com.miguelaetxio.mimoo.ui.library.VARIOUS_ARTISTS_CREDIT
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -181,9 +182,45 @@ class ImportLinkViewModel @Inject constructor(
         }
     }
 
-    /** Returns the single shared channel title, or null if there is more than one. */
+    /**
+     * Returns the single shared, non-blank channel title, or null if
+     * there is more than one distinct real channel, or if none of
+     * them carry real channel info (link_resolver.py ya normaliza un
+     * uploader "-" de YouTube a "" — ver PASO de esa función — así
+     * que un canal en blanco aquí siempre significa "YouTube no dio
+     * esa información", nunca un nombre real).
+     * ---
+     * Devuelve el único canal compartido y no vacío, o null si hay
+     * más de un canal real distinto, o si ninguno trae información
+     * real de canal (link_resolver.py ya normaliza un uploader "-" de
+     * YouTube a "" — ver esa función — así que un canal en blanco
+     * aquí siempre significa "YouTube no dio esa información", nunca
+     * un nombre real).
+     */
     private fun dominantArtist(channelTitles: List<String>): String? =
-        channelTitles.distinct().singleOrNull()
+        channelTitles.filter { it.isNotBlank() }.distinct().singleOrNull()
+
+    /**
+     * Called only when dominantArtist() returned null — decide cuál
+     * de los dos fallbacks aplica. Si ningún canal trae info real
+     * (todos en blanco), esto no es una compilación, es simplemente
+     * que YouTube no dio el dato — UNKNOWN_ARTIST_CREDIT. Si hay
+     * varios canales reales y distintos, sí es una compilación
+     * genuina — VARIOUS_ARTISTS_CREDIT, como antes.
+     * ---
+     * Called only when dominantArtist() returned null — decides which
+     * of the two fallbacks applies. If no channel carries real info
+     * (all blank), this isn't a compilation, YouTube just didn't give
+     * the data — UNKNOWN_ARTIST_CREDIT. If there are several distinct
+     * real channels, it is a genuine compilation — VARIOUS_ARTISTS_CREDIT,
+     * as before.
+     */
+    private fun fallbackArtistCredit(channelTitles: List<String>): String =
+        if (channelTitles.all { it.isBlank() }) {
+            UNKNOWN_ARTIST_CREDIT
+        } else {
+            VARIOUS_ARTISTS_CREDIT
+        }
 
     fun toggleTrackSelected(youtubeId: String) {
         val current = _uiState.value.selectedYoutubeIds
@@ -282,7 +319,7 @@ class ImportLinkViewModel @Inject constructor(
         if (selected.isEmpty()) return
 
         val artist = dominantArtist(selected.map { it.channelTitle })
-            ?: VARIOUS_ARTISTS_CREDIT
+            ?: fallbackArtistCredit(selected.map { it.channelTitle })
         val album = if (state.isPlaylist) state.resolvedTitle else null
 
         viewModelScope.launch {
