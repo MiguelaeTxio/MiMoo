@@ -52,7 +52,26 @@ import javax.inject.Singleton
 class CoverArtRepository @Inject constructor(
     private val musicBrainzApiService: MusicBrainzApiService,
 ) {
-    private val sessionCache = ConcurrentHashMap<String, String?>()
+    /**
+     * ConcurrentHashMap.put() lanza NullPointerException si el valor
+     * es null — no lo admite bajo ninguna circunstancia. sessionCache
+     * guardaba `url` directamente (nullable), así que cualquier álbum
+     * sin match en MusicBrainz (mbid null -> url null) crasheaba la
+     * app entera al intentar cachear el resultado negativo — causa
+     * real del cierre al entrar en Biblioteca (Miguel Ángel,
+     * 2026-07-03). NO_MATCH es el centinela: "ya se buscó, no hay
+     * carátula", sin tener que guardar null.
+     * ---
+     * ConcurrentHashMap.put() throws NullPointerException if the
+     * value is null — not allowed under any circumstance. sessionCache
+     * used to store `url` directly (nullable), so any album with no
+     * MusicBrainz match (mbid null -> url null) crashed the whole app
+     * when trying to cache the negative result — the real cause of
+     * the crash on entering Biblioteca (Miguel Ángel, 2026-07-03).
+     * NO_MATCH is the sentinel: "already searched, no cover art",
+     * without ever storing null.
+     */
+    private val sessionCache = ConcurrentHashMap<String, String>()
 
     /**
      * Returns the front cover URL for artist+album, or null if
@@ -68,7 +87,7 @@ class CoverArtRepository @Inject constructor(
      */
     suspend fun resolveCoverArtUrl(artist: String, album: String): String? {
         val key = "$artist|$album"
-        if (sessionCache.containsKey(key)) return sessionCache[key]
+        sessionCache[key]?.let { cached -> return cached.ifEmpty { null } }
 
         val mbid = try {
             musicBrainzApiService
@@ -81,12 +100,16 @@ class CoverArtRepository @Inject constructor(
         }
 
         val url = mbid?.let { "https://coverartarchive.org/release/$it/front" }
-        sessionCache[key] = url
+        sessionCache[key] = url ?: NO_MATCH
         return url
     }
 
     private fun buildQuery(artist: String, album: String): String {
         fun escape(value: String) = value.replace("\"", "")
         return "artist:\"${escape(artist)}\" AND release:\"${escape(album)}\""
+    }
+
+    private companion object {
+        private const val NO_MATCH = ""
     }
 }
