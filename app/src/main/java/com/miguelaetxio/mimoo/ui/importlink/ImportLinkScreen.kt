@@ -31,6 +31,9 @@ fun ImportLinkScreen(
     onNavigateToLibrary: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showMetadataDialog by remember { mutableStateOf(false) }
+    var metadataArtist by remember { mutableStateOf("") }
+    var metadataAlbum by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -150,7 +153,17 @@ fun ImportLinkScreen(
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
-                        onClick = viewModel::importSelected,
+                        onClick = {
+                            if (viewModel.needsArtistConfirmation()) {
+                                val (defArtist, defAlbum) =
+                                    viewModel.defaultArtistAndAlbum()
+                                metadataArtist = defArtist
+                                metadataAlbum = defAlbum
+                                showMetadataDialog = true
+                            } else {
+                                viewModel.importSelected()
+                            }
+                        },
                         enabled = uiState.selectedYoutubeIds.isNotEmpty(),
                         modifier = Modifier.weight(1f),
                     ) {
@@ -162,6 +175,59 @@ fun ImportLinkScreen(
                 Spacer(Modifier.height(8.dp))
             }
         }
+    }
+
+    if (showMetadataDialog) {
+        AlertDialog(
+            onDismissRequest = { showMetadataDialog = false },
+            title = { Text("Confirmar artista y álbum") },
+            text = {
+                Column {
+                    Text(
+                        "YouTube no ha dado un nombre de artista real " +
+                            "para estas pistas. Revisa o corrige los " +
+                            "datos antes de descargar — se aplicarán a " +
+                            "las ${uiState.selectedYoutubeIds.size} " +
+                            "pistas seleccionadas.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = metadataArtist,
+                        onValueChange = { metadataArtist = it },
+                        label = { Text("Artista") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = metadataAlbum,
+                        onValueChange = { metadataAlbum = it },
+                        label = { Text("Álbum (vacío = Sencillos)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showMetadataDialog = false
+                        viewModel.importSelected(
+                            artistOverride = metadataArtist,
+                            albumOverride = metadataAlbum,
+                        )
+                    },
+                ) {
+                    Text("Descargar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMetadataDialog = false }) {
+                    Text("Cancelar")
+                }
+            },
+        )
     }
 
     uiState.importedCount?.let { count ->

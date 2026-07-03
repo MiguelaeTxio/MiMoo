@@ -222,6 +222,51 @@ class ImportLinkViewModel @Inject constructor(
             VARIOUS_ARTISTS_CREDIT
         }
 
+    /**
+     * True cuando la selección actual no tiene un artista real y
+     * único determinable — es decir, cuando importSelected() caería a
+     * fallbackArtistCredit(). Usado por ImportLinkScreen para
+     * preguntar Artista/Álbum antes de descargar en vez de guardar
+     * "Artista desconocido"/"Various Artists" en silencio (Miguel
+     * Ángel, 2026-07-03). Solo mira el artista, nunca el álbum — un
+     * álbum sin asignar en un vídeo suelto es el comportamiento
+     * normal (sencillo), no un dato desconocido que preguntar.
+     * ---
+     * True when the current selection has no determinable single real
+     * artist — i.e. when importSelected() would fall back to
+     * fallbackArtistCredit(). Used by ImportLinkScreen to ask for
+     * Artista/Álbum before downloading instead of silently storing
+     * "Artista desconocido"/"Various Artists" (Miguel Ángel,
+     * 2026-07-03). Only looks at the artist, never the album — a
+     * missing album on a single video is normal behaviour (sencillo),
+     * not unknown data worth asking about.
+     */
+    fun needsArtistConfirmation(): Boolean {
+        val state = _uiState.value
+        val selected = state.tracks.filter { it.youtubeId in state.selectedYoutubeIds }
+        return dominantArtist(selected.map { it.channelTitle }) == null
+    }
+
+    /**
+     * Best-guess artist/álbum to pre-fill the confirmation dialog with
+     * — same values importSelected() would use automatically, so
+     * confirming without editing behaves identically to not asking at
+     * all.
+     * ---
+     * Mejor estimación de artista/álbum para prellenar el diálogo de
+     * confirmación — los mismos valores que usaría importSelected()
+     * automáticamente, así que confirmar sin editar se comporta igual
+     * que no preguntar en absoluto.
+     */
+    fun defaultArtistAndAlbum(): Pair<String, String> {
+        val state = _uiState.value
+        val selected = state.tracks.filter { it.youtubeId in state.selectedYoutubeIds }
+        val artist = dominantArtist(selected.map { it.channelTitle })
+            ?: fallbackArtistCredit(selected.map { it.channelTitle })
+        val album = if (state.isPlaylist) state.resolvedTitle.orEmpty() else ""
+        return artist to album
+    }
+
     fun toggleTrackSelected(youtubeId: String) {
         val current = _uiState.value.selectedYoutubeIds
         _uiState.value = _uiState.value.copy(
@@ -298,6 +343,12 @@ class ImportLinkViewModel @Inject constructor(
      * unrelated per-channel artist buckets. album is only set when
      * the resolved link was a playlist (isPlaylist) — a single-video
      * link is a sencillo, not a one-track "album".
+     *
+     * artistOverride/albumOverride (Miguel Ángel, 2026-07-03): when
+     * the screen detected no real artist could be determined
+     * (needsArtistConfirmation()) and prompted the user, these carry
+     * what they typed — applied to every selected track at once, same
+     * as the automatic assignment would have been.
      * ---
      * Importa las pistas seleccionadas y encola su descarga
      * automáticamente — misma convención que
@@ -312,15 +363,24 @@ class ImportLinkViewModel @Inject constructor(
      * cuando el enlace resuelto era una playlist (isPlaylist) — un
      * enlace de un solo vídeo es un sencillo, no un "álbum" de una
      * pista.
+     *
+     * artistOverride/albumOverride (Miguel Ángel, 2026-07-03): cuando
+     * la pantalla detecta que no se pudo determinar un artista real
+     * (needsArtistConfirmation()) y se le pregunta al usuario, aquí
+     * llega lo que escribió — se aplica a todas las pistas
+     * seleccionadas de golpe, igual que haría la asignación
+     * automática.
      */
-    fun importSelected() {
+    fun importSelected(artistOverride: String? = null, albumOverride: String? = null) {
         val state = _uiState.value
         val selected = state.tracks.filter { it.youtubeId in state.selectedYoutubeIds }
         if (selected.isEmpty()) return
 
-        val artist = dominantArtist(selected.map { it.channelTitle })
+        val artist = artistOverride?.trim()?.takeIf { it.isNotBlank() }
+            ?: dominantArtist(selected.map { it.channelTitle })
             ?: fallbackArtistCredit(selected.map { it.channelTitle })
-        val album = if (state.isPlaylist) state.resolvedTitle else null
+        val album = albumOverride?.trim()?.takeIf { it.isNotBlank() }
+            ?: if (state.isPlaylist) state.resolvedTitle else null
 
         viewModelScope.launch {
             val tracks = selected.map { track ->
