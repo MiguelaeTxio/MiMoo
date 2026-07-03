@@ -17,7 +17,7 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         Playlist::class,
         PlaylistTrackCrossRef::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -165,6 +165,31 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL(
                     "UPDATE search_result_tracks SET downloadProgress = 100 " +
                         "WHERE downloadStatus = 'DONE'"
+                )
+            }
+        }
+
+        /**
+         * Adds trackPosition to search_result_tracks (orden real de
+         * álbum, en vez de siempre alfabético). Nullable sin backfill:
+         * las filas existentes no tienen forma de saber su posición
+         * real retroactivamente, así que quedan en NULL y
+         * LibraryViewModel.recompute() ya cae a orden alfabético para
+         * ellas -- exactamente el comportamiento que tenían antes de
+         * esta migración, ningún álbum existente empeora.
+         * ---
+         * Anade trackPosition a search_result_tracks (orden real de
+         * album, en vez de siempre alfabetico). Nullable sin backfill:
+         * las filas existentes no tienen forma de saber su posicion
+         * real retroactivamente, asi que quedan en NULL y
+         * LibraryViewModel.recompute() ya cae a orden alfabetico para
+         * ellas -- exactamente el comportamiento que tenian antes de
+         * esta migracion, ningun album existente empeora.
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE search_result_tracks ADD COLUMN trackPosition INTEGER"
                 )
             }
         }

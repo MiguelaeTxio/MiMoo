@@ -67,6 +67,16 @@ data class SearchResultTrack(
     val album: String? = null,          // null until MusicBrainz/manual edit
     val isFavorite: Boolean = false,    // PASO 4 H03
     val coverArtUrl: String? = null,    // MusicBrainz+CAA front cover, PASO 6 H03
+    // Posición real de la pista dentro del álbum (0-indexed), tal
+    // como llegó de la fuente (orden de la playlist de YouTube Music
+    // en ImportLinkViewModel, orden de MusicBrainz en
+    // AlbumSearchViewModel). Null cuando no se conoce -- pistas
+    // sueltas de SearchScreen, o filas sintéticas de
+    // LibraryReconciler -- en cuyo caso Biblioteca cae a orden
+    // alfabético para esas pistas. Reportado por Miguel Ángel
+    // (2026-07-03): Biblioteca ordenaba SIEMPRE alfabéticamente,
+    // nunca por posición real de disco.
+    val trackPosition: Int? = null,
 ) {
     val youtubeUrl: String get() = "https://youtu.be/$youtubeId"
 }

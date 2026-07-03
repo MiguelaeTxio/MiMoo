@@ -344,7 +344,17 @@ class LibraryViewModel @Inject constructor(
                     .groupBy { it.album!! }
                     .toSortedMap()
                     .mapValues { (_, albumTracks) ->
-                        albumTracks.sortedBy { it.title }
+                        // trackPosition real primero (orden de disco);
+                        // las pistas sin posición conocida (sueltas de
+                        // SearchScreen, o reconciliadas desde disco)
+                        // caen al final, ordenadas entre ellas por
+                        // título -- mismo comportamiento que antes de
+                        // este fix para esas filas en concreto.
+                        albumTracks.sortedWith(
+                            compareBy<SearchResultTrack> {
+                                it.trackPosition ?: Int.MAX_VALUE
+                            }.thenBy { it.title }
+                        )
                     }
             }
 

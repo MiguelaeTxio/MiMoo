@@ -332,6 +332,14 @@ class ImportLinkViewModel @Inject constructor(
                     thumbnailUrl = track.thumbnailUrl,
                     artist = artist,
                     album = album,
+                    // Posición real dentro de la lista RESUELTA
+                    // (state.tracks), no del subconjunto seleccionado
+                    // -- así, si el usuario deselecciona una pista, el
+                    // resto conserva su posición real de disco en vez
+                    // de recomprimirse.
+                    trackPosition = state.tracks.indexOfFirst {
+                        it.youtubeId == track.youtubeId
+                    }.takeIf { it >= 0 },
                 )
             }
             searchResultTrackRepository.cacheSearchResults(tracks)

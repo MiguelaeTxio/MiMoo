@@ -272,7 +272,7 @@ class AlbumSearchViewModel @Inject constructor(
         // no se puebla hasta selectCandidate().
         val artist = selected?.artist ?: _uiState.value.artist.trim()
         val album = selected?.title ?: _uiState.value.album.trim()
-        val tracks = _uiState.value.matches.mapNotNull { match ->
+        val tracks = _uiState.value.matches.mapIndexedNotNull { index, match ->
             match.matchedTrack?.let { candidate ->
                 SearchResultTrack(
                     youtubeId = candidate.youtubeId,
@@ -282,6 +282,12 @@ class AlbumSearchViewModel @Inject constructor(
                     thumbnailUrl = candidate.thumbnailUrl,
                     artist = artist,
                     album = album,
+                    // Posición real dentro de matches -- orden que ya
+                    // viene de MusicBrainz (release track order), no
+                    // se recalcula tras descartar pistas sin
+                    // emparejar, así que el hueco de una pista sin
+                    // match no desplaza la posición de las demás.
+                    trackPosition = index,
                 )
             }
         }
