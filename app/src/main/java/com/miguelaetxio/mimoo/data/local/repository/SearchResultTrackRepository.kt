@@ -26,6 +26,15 @@ class SearchResultTrackRepository @Inject constructor(
         status: DownloadStatus,
     ): Flow<List<SearchResultTrack>> = dao.getByStatus(status)
 
+    /**
+     * Pistas con una descarga QUEUED o DOWNLOADING (pantalla
+     * "Descargas").
+     * ---
+     * Tracks with a QUEUED or DOWNLOADING download ("Descargas" screen).
+     */
+    fun getActiveDownloads(): Flow<List<SearchResultTrack>> =
+        dao.getActiveDownloads()
+
     suspend fun getById(youtubeId: String): SearchResultTrack? =
         dao.getById(youtubeId)
 
@@ -74,6 +83,27 @@ class SearchResultTrackRepository @Inject constructor(
         youtubeId: String,
         status: DownloadStatus,
     ) = dao.updateDownloadStatus(youtubeId, status)
+
+    /**
+     * Marca una pista como QUEUED — llamado por
+     * DownloadQueueManager.enqueue() en el momento exacto en que se
+     * pide la descarga, antes de que DownloadWorker haya arrancado.
+     * ---
+     * Marks a track as QUEUED — called by
+     * DownloadQueueManager.enqueue() at the exact moment the download
+     * is requested, before DownloadWorker has started.
+     */
+    suspend fun markQueued(youtubeId: String) = dao.markQueued(youtubeId)
+
+    /**
+     * Persiste el porcentaje real de descarga (0-100), reportado por
+     * progress_hooks de yt-dlp vía Chaquopy.
+     * ---
+     * Persists the real download percentage (0-100), reported by
+     * yt-dlp's progress_hooks via Chaquopy.
+     */
+    suspend fun updateDownloadProgress(youtubeId: String, progress: Int) =
+        dao.updateDownloadProgress(youtubeId, progress)
 
     /**
      * Persists the local file path and final status once a download

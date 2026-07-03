@@ -17,7 +17,7 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         Playlist::class,
         PlaylistTrackCrossRef::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -133,6 +133,38 @@ abstract class AppDatabase : RoomDatabase() {
                     "CREATE INDEX IF NOT EXISTS " +
                         "`index_playlist_track_cross_refs_playlistId` " +
                         "ON `playlist_track_cross_refs` (`playlistId`)"
+                )
+            }
+        }
+
+        /**
+         * Adds downloadProgress to search_result_tracks (pantalla
+         * "Descargas"). NOT NULL DEFAULT 0, igual razonamiento que
+         * isFavorite: la ausencia de progreso tiene un valor correcto
+         * inequivoco (0%) salvo para las filas que ya estan DONE, que
+         * reciben un backfill explicito a 100 para que la nueva
+         * pantalla no las muestre como "0% descargado" por error.
+         * QUEUED es el nuevo valor de DownloadStatus.Converters ya
+         * persiste el enum por su .name, asi que no hace falta tocar
+         * ninguna columna para soportarlo — solo aplica a filas
+         * nuevas a partir de esta version.
+         * ---
+         * Anade downloadProgress a search_result_tracks (pantalla
+         * "Descargas"). NOT NULL DEFAULT 0, mismo razonamiento que
+         * isFavorite: la ausencia de progreso tiene un valor correcto
+         * inequivoco (0%) salvo para las filas que ya estan DONE, que
+         * reciben un backfill explicito a 100 para que la nueva
+         * pantalla no las muestre como "0% descargado" por error.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE search_result_tracks " +
+                        "ADD COLUMN downloadProgress INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "UPDATE search_result_tracks SET downloadProgress = 100 " +
+                        "WHERE downloadStatus = 'DONE'"
                 )
             }
         }

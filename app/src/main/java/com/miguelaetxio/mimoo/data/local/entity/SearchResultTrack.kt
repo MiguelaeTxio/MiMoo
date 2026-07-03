@@ -5,12 +5,22 @@ import androidx.room.PrimaryKey
 
 /**
  * Playback status of a search result that the user has chosen to
- * download for offline listening.
+ * download for offline listening. QUEUED (añadido: pantalla
+ * "Descargas") marca el momento exacto entre "el usuario pidió la
+ * descarga" (DownloadQueueManager.enqueue()) y "DownloadWorker ya
+ * empezó a ejecutarla" (DOWNLOADING) — sin este estado intermedio,
+ * una pista recién encolada era indistinguible en Room de una que
+ * nadie ha pedido descargar nunca, porque ambas quedaban en PENDING.
  * ---
  * Estado de descarga de un resultado de búsqueda que el usuario ha
- * elegido descargar para escucha offline.
+ * elegido descargar para escucha offline. QUEUED (añadido: pantalla
+ * "Descargas") marca el momento exacto entre "el usuario pidió la
+ * descarga" (DownloadQueueManager.enqueue()) y "DownloadWorker ya
+ * empezó a ejecutarla" (DOWNLOADING) — sin este estado intermedio,
+ * una pista recién encolada era indistinguible en Room de una que
+ * nadie ha pedido descargar nunca, porque ambas quedaban en PENDING.
  */
-enum class DownloadStatus { PENDING, DOWNLOADING, DONE, ERROR }
+enum class DownloadStatus { PENDING, QUEUED, DOWNLOADING, DONE, ERROR }
 
 /**
  * A single audio track resolved from a YouTube search result.
@@ -47,6 +57,11 @@ data class SearchResultTrack(
     val thumbnailUrl: String?,
     val filePath: String? = null,       // local .opus path once downloaded
     val downloadStatus: DownloadStatus = DownloadStatus.PENDING,
+    // Porcentaje real 0-100 durante DOWNLOADING (progress_hooks de
+    // yt-dlp vía Chaquopy, ver DownloadWorker). 0 en PENDING/QUEUED,
+    // 100 en DONE, indefinido/irrelevante en ERROR. Pantalla
+    // "Descargas".
+    val downloadProgress: Int = 0,
     val lastSearchedAt: Long = System.currentTimeMillis(),
     val artist: String? = null,         // structured artist, PASO 2 H03
     val album: String? = null,          // null until MusicBrainz/manual edit
