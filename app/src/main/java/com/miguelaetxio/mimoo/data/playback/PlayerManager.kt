@@ -1,6 +1,8 @@
 package com.miguelaetxio.mimoo.data.playback
 
 import android.content.Context
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -45,9 +47,23 @@ data class PlaybackState(
  */
 @Singleton
 class PlayerManager @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val appContext: Context,
 ) {
-    private val player: ExoPlayer = ExoPlayer.Builder(context).build()
+    /**
+     * Público (antes privado) para que MiMooPlaybackService pueda
+     * envolver esta MISMA instancia en un MediaSession -- al ser
+     * PlayerManager un @Singleton de Hilt, el Service y todos los
+     * ViewModels comparten exactamente el mismo ExoPlayer, así que
+     * nada más en la app necesita cambiar: se sigue llamando a
+     * PlayerManager.play()/playQueue() exactamente igual que antes.
+     * ---
+     * Public (was private) so MiMooPlaybackService can wrap this SAME
+     * instance in a MediaSession -- since PlayerManager is a Hilt
+     * @Singleton, the Service and every ViewModel share the exact same
+     * ExoPlayer, so nothing else in the app needs to change: it's
+     * still PlayerManager.play()/playQueue() exactly as before.
+     */
+    val player: ExoPlayer = ExoPlayer.Builder(appContext).build()
 
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
@@ -59,6 +75,33 @@ class PlayerManager @Inject constructor(
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _state.value = _state.value.copy(isPlaying = isPlaying)
+                // Arranca (o promociona a primer plano) el servicio de
+                // reproducción en cuanto empieza a sonar algo -- bug
+                // real reportado por Miguel Ángel (2026-07-04): sin
+                // esto, el ExoPlayer vivía solo en un singleton sin
+                // ningún servicio en primer plano, y el sistema podía
+                // (y lo hizo) matar el proceso entero al cerrar otra
+                // app y reclamar memoria, sin dejar ningún rastro en
+                // crash_log.txt. ContextCompat.startForegroundService
+                // es idempotente -- llamarlo con el servicio ya
+                // arrancado no hace nada malo.
+                // ---
+                // Starts (or promotes to foreground) the playback
+                // service as soon as something starts playing -- real
+                // bug reported by Miguel Ángel (2026-07-04): without
+                // this, the ExoPlayer lived alone in a singleton with
+                // no foreground service at all, and the system could
+                // (and did) kill the entire process when another app
+                // closed and memory was reclaimed, leaving no trace in
+                // crash_log.txt. ContextCompat.startForegroundService
+                // is idempotent -- calling it with the service already
+                // running does nothing harmful.
+                if (isPlaying) {
+                    ContextCompat.startForegroundService(
+                        appContext,
+                        Intent(appContext, MiMooPlaybackService::class.java),
+                    )
+                }
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
