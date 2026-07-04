@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.player
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -15,9 +16,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
+/**
+ * onOpenQueue: tocar el título/artista abre la pantalla de gestión de
+ * la cola de sesión (QueueScreen) -- petición explícita de Miguel
+ * Ángel (2026-07-05), patrón habitual de mini-reproductor -> pantalla
+ * de cola en cualquier app de música.
+ * ---
+ * onOpenQueue: tapping the title/artist opens the session queue
+ * management screen (QueueScreen) -- explicit request from Miguel
+ * Ángel (2026-07-05), the usual mini-player -> queue screen pattern in
+ * any music app.
+ */
 @Composable
 fun PlayerBar(
     viewModel: PlayerBarViewModel = hiltViewModel(),
+    onOpenQueue: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val title = state.currentTitle ?: return
@@ -29,7 +42,11 @@ fun PlayerBar(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpenQueue),
+            ) {
                 Text(
                     text = title,
                     maxLines = 1,

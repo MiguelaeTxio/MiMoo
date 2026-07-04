@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -300,6 +301,23 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(horizontal = 12.dp),
                             )
                             NavigationDrawerItem(
+                                label = { Text("Cola de reproducción") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.PlaylistPlay,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Queue.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Queue.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
                                 label = { Text("Descargas") },
                                 icon = {
                                     Icon(
@@ -329,7 +347,13 @@ class MainActivity : ComponentActivity() {
                                     },
                                 )
                             }
-                            PlayerBar()
+                            PlayerBar(
+                                onOpenQueue = {
+                                    navController.navigate(
+                                        Screen.Queue.route,
+                                    ) { launchSingleTop = true }
+                                },
+                            )
                         }
 
                         if (showStorageExplanation) {

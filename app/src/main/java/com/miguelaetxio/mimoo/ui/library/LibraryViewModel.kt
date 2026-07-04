@@ -704,6 +704,68 @@ class LibraryViewModel @Inject constructor(
         playerManager.play(filePath, track.title, isLocal = true)
     }
 
+    /**
+     * Añade una pista suelta al FINAL de la cola de reproducción de
+     * sesión, sin interrumpir lo que suena ahora -- petición explícita
+     * de Miguel Ángel (2026-07-05): "añado una canción a la lista de
+     * reproducción... en la lista de reproducción actual estoy
+     * añadiendo una canción". Distinto de playTrack(), que sí
+     * interrumpe y reproduce ya.
+     * ---
+     * Adds a single track to the END of the session playback queue,
+     * without interrupting what's currently playing -- explicit
+     * request from Miguel Ángel (2026-07-05): "I add a song to the
+     * playback queue... I'm adding a song to the CURRENT queue".
+     * Distinct from playTrack(), which does interrupt and play right
+     * away.
+     */
+    fun addTrackToQueue(track: SearchResultTrack) {
+        val filePath = track.filePath ?: return
+        playerManager.addToQueue(
+            listOf(QueueItem(uri = filePath, title = track.title, isLocal = true))
+        )
+    }
+
+    /**
+     * "Reproducir a continuación" -- pista suelta. Ver
+     * PlayerManager.insertNext() para la semántica exacta.
+     * ---
+     * "Play next" -- single track. See PlayerManager.insertNext() for
+     * the exact semantics.
+     */
+    fun insertTrackNext(track: SearchResultTrack) {
+        val filePath = track.filePath ?: return
+        playerManager.insertNext(
+            listOf(QueueItem(uri = filePath, title = track.title, isLocal = true))
+        )
+    }
+
+    /**
+     * Añade un álbum entero al final de la cola de sesión, sin
+     * interrumpir lo que suena -- mismo criterio que
+     * addTrackToQueue(), a nivel de álbum.
+     * ---
+     * Adds a whole album to the end of the session queue, without
+     * interrupting what's playing -- same criterion as
+     * addTrackToQueue(), at the album level.
+     */
+    fun addAlbumToQueue(artist: String, album: String) {
+        val tracks = _uiState.value.albumsByArtist[artist]?.get(album) ?: return
+        playerManager.addToQueue(tracks.toQueueItems())
+    }
+
+    /**
+     * "Reproducir a continuación" -- álbum entero. Ver
+     * PlayerManager.insertNext() para la semántica exacta.
+     * ---
+     * "Play next" -- whole album. See PlayerManager.insertNext() for
+     * the exact semantics.
+     */
+    fun insertAlbumNext(artist: String, album: String) {
+        val tracks = _uiState.value.albumsByArtist[artist]?.get(album) ?: return
+        playerManager.insertNext(tracks.toQueueItems())
+    }
+
     /** Plays every track of one album, in title order, as a queue. */
     fun playAlbum(artist: String, album: String) {
         val tracks = _uiState.value.albumsByArtist[artist]?.get(album) ?: return

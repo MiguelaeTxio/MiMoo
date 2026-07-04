@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -456,6 +458,8 @@ private fun ColumnScope.AlbumsTabContent(
                         onPlayAlbum = { viewModel.playAlbum(drill.artist, album) },
                         onDelete = { onDeleteAlbum(drill.artist, album) },
                         onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
+                        onAddToQueue = { viewModel.addAlbumToQueue(drill.artist, album) },
+                        onInsertNext = { viewModel.insertAlbumNext(drill.artist, album) },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
                     )
                 }
@@ -473,6 +477,8 @@ private fun ColumnScope.AlbumsTabContent(
                         onDelete = { onDeleteTrack(track) },
                         onEdit = { onEditTrack(track) },
                         onAddToPlaylist = { onAddToPlaylist(track) },
+                        onAddToQueue = { viewModel.addTrackToQueue(track) },
+                        onInsertNext = { viewModel.insertTrackNext(track) },
                     )
                 }
             }
@@ -518,6 +524,8 @@ private fun ColumnScope.SinglesTabContent(
                         onDelete = { onDeleteTrack(track) },
                         onEdit = { onEditTrack(track) },
                         onAddToPlaylist = { onAddToPlaylist(track) },
+                        onAddToQueue = { viewModel.addTrackToQueue(track) },
+                        onInsertNext = { viewModel.insertTrackNext(track) },
                     )
                 }
             }
@@ -558,6 +566,8 @@ private fun ColumnScope.FavoritesTabContent(
                 onDelete = { onDeleteTrack(track) },
                 onEdit = { onEditTrack(track) },
                 onAddToPlaylist = { onAddToPlaylist(track) },
+                onAddToQueue = { viewModel.addTrackToQueue(track) },
+                onInsertNext = { viewModel.insertTrackNext(track) },
             )
         }
     }
@@ -704,6 +714,8 @@ private fun AlbumHeaderRow(
     onPlayAlbum: () -> Unit,
     onDelete: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onInsertNext: () -> Unit,
     onRequestCoverArt: (artist: String, album: String) -> Unit,
 ) {
     LaunchedEffect(artist, album) {
@@ -761,6 +773,16 @@ private fun AlbumHeaderRow(
                 onDismissRequest = { showOverflowMenu = false },
             ) {
                 DropdownMenuItem(
+                    text = { Text("Reproducir a continuación") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.PlaylistPlay, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onInsertNext()
+                    },
+                )
+                DropdownMenuItem(
                     text = { Text("Añadir a lista") },
                     leadingIcon = {
                         Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
@@ -768,6 +790,16 @@ private fun AlbumHeaderRow(
                     onClick = {
                         showOverflowMenu = false
                         onAddToPlaylist()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Añadir al final de la cola") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.QueueMusic, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onAddToQueue()
                     },
                 )
                 if (shareableUrl != null) {
@@ -858,6 +890,8 @@ private fun LibraryTrackRow(
     onDelete: () -> Unit,
     onEdit: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onInsertNext: () -> Unit,
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -895,6 +929,16 @@ private fun LibraryTrackRow(
                 onDismissRequest = { showOverflowMenu = false },
             ) {
                 DropdownMenuItem(
+                    text = { Text("Reproducir a continuación") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.PlaylistPlay, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onInsertNext()
+                    },
+                )
+                DropdownMenuItem(
                     text = { Text("Añadir a lista") },
                     leadingIcon = {
                         Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
@@ -902,6 +946,16 @@ private fun LibraryTrackRow(
                     onClick = {
                         showOverflowMenu = false
                         onAddToPlaylist()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Añadir al final de la cola") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.QueueMusic, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onAddToQueue()
                     },
                 )
                 DropdownMenuItem(
