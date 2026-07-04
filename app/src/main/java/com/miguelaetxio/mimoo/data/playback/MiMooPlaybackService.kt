@@ -1,10 +1,19 @@
 package com.miguelaetxio.mimoo.data.playback
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+
+private const val NOTIFICATION_CHANNEL_ID = "mimoo_playback"
+private const val NOTIFICATION_ID = 1
 
 /**
  * MediaSessionService en primer plano para la reproducción de audio
@@ -63,6 +72,82 @@ class MiMooPlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         mediaSession = MediaSession.Builder(this, playerManager.player).build()
+
+        // Llamada MANUAL e inmediata a startForeground() -- bug real
+        // reportado por Miguel Ángel (2026-07-04, crash_log.txt):
+        // ForegroundServiceDidNotStartInTimeException. El mecanismo
+        // automático de MediaSessionService reacciona a eventos de
+        // cambio de estado del reproductor, pero en nuestro flujo la
+        // transición a "reproduciendo" (que dispara
+        // ContextCompat.startForegroundService() desde
+        // PlayerManager.onIsPlayingChanged) ya ha ocurrido ANTES de
+        // que este servicio termine de arrancar y cree la sesión --
+        // para cuando Media3 podría reaccionar, no hay ningún evento
+        // nuevo que lo dispare, y el sistema mata el proceso a los 5
+        // segundos por no haber llamado a startForeground() a tiempo.
+        // Llamarlo aquí, de forma síncrona en onCreate(), garantiza
+        // que siempre se cumple el plazo; Media3 sigue actualizando
+        // esta misma notificación con controles/metadatos reales en
+        // cuanto procesa la sesión.
+        // ---
+        // MANUAL, immediate startForeground() call -- real bug
+        // reported by Miguel Ángel (2026-07-04, crash_log.txt):
+        // ForegroundServiceDidNotStartInTimeException.
+        // MediaSessionService's automatic mechanism reacts to player
+        // state-change events, but in our flow the transition to
+        // "playing" (which triggers ContextCompat.
+        // startForegroundService() from PlayerManager.
+        // onIsPlayingChanged) has already happened BEFORE this service
+        // finishes starting and creates the session -- by the time
+        // Media3 could react, there's no new event left to trigger it,
+        // and the system kills the process after 5 seconds for not
+        // calling startForeground() in time. Calling it here,
+        // synchronously in onCreate(), guarantees the deadline is
+        // always met; Media3 keeps updating this same notification
+        // with real controls/metadata once it processes the session.
+        startForegroundImmediately()
+    }
+
+    private fun startForegroundImmediately() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            if (manager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) == null) {
+                manager.createNotificationChannel(
+                    NotificationChannel(
+                        NOTIFICATION_CHANNEL_ID,
+                        "Reproducción de MiMoo",
+                        NotificationManager.IMPORTANCE_LOW,
+                    )
+                )
+            }
+        }
+
+        // Icono de sistema como placeholder -- este proyecto todavía
+        // no tiene un icono de app propio en res/ (ver
+        // AndroidManifest.xml, sin android:icon). Cuando exista uno,
+        // sustituir por el drawable real de MiMoo.
+        // ---
+        // System icon as a placeholder -- this project doesn't have
+        // its own app icon in res/ yet (see AndroidManifest.xml, no
+        // android:icon). Once one exists, swap in MiMoo's real
+        // drawable.
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setContentTitle("MiMoo")
+            .setContentText("Reproduciendo música")
+            .setOngoing(true)
+            .build()
+
+        ServiceCompat.startForeground(
+            this,
+            NOTIFICATION_ID,
+            notification,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            } else {
+                0
+            },
+        )
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
