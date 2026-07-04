@@ -13,7 +13,7 @@
     <!--
         Requeridos para que la reproducción corra en un
         MediaSessionService en primer plano y el sistema no mate el
-        proceso mientras suena música en segundo plano -- causa real
+        proceso mientras suena música en segundo plano — causa real
         del cierre reportado por Miguel Ángel (2026-07-04) al cerrar
         otra app (ajedrez) mientras MiMoo reproducía: sin foreground
         service, el sistema puede matar el proceso libremente bajo
@@ -21,10 +21,10 @@
         porque no es una excepción capturada por la app.
         FOREGROUND_SERVICE_MEDIA_PLAYBACK es obligatorio desde API 34
         para este tipo concreto de servicio (targetSdk 36).
-        ---
+        —
         Required so playback runs on a foreground MediaSessionService
         and the system can't kill the process while music plays in the
-        background -- real cause of the crash Miguel Ángel reported
+        background — real cause of the crash Miguel Ángel reported
         (2026-07-04) when closing another app (chess) while MiMoo was
         playing: without a foreground service, the system can freely
         kill the process under memory pressure, leaving no trace in
@@ -104,13 +104,13 @@
 
         <!--
             MediaSessionService en primer plano para la reproducción de
-            audio (2026-07-04) -- ver PlayerManager.kt y
+            audio (2026-07-04) — ver PlayerManager.kt y
             MiMooPlaybackService.kt para el porqué. android:exported
             debe ser true para que el sistema (controles de bloqueo,
             Bluetooth, Android Auto) pueda conectarse a la sesión.
-            ---
+            —
             Foreground MediaSessionService for audio playback
-            (2026-07-04) -- see PlayerManager.kt and
+            (2026-07-04) — see PlayerManager.kt and
             MiMooPlaybackService.kt for why. android:exported must be
             true so the system (lock screen controls, Bluetooth,
             Android Auto) can connect to the session.
