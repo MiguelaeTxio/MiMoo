@@ -17,7 +17,7 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         Playlist::class,
         PlaylistTrackCrossRef::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -190,6 +190,36 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     "ALTER TABLE search_result_tracks ADD COLUMN trackPosition INTEGER"
+                )
+            }
+        }
+
+        /**
+         * Adds sourceUrl to search_result_tracks -- petición explícita
+         * de Miguel Ángel (2026-07-04): poder compartir por WhatsApp el
+         * enlace de un álbum/playlist que se importó, no solo el ID de
+         * vídeo individual (que ya se podía reconstruir siempre vía
+         * youtubeUrl). Nullable, sin backfill: solo se rellena para
+         * pistas importadas a partir de ahora vía "Importar enlace"
+         * (ImportLinkViewModel.importSelected()); las pistas de Buscar
+         * álbum y las ya existentes quedan en NULL, y la UI cae a
+         * compartir youtubeUrl (el vídeo individual) en ese caso.
+         * ---
+         * Adds sourceUrl to search_result_tracks -- explicit request
+         * from Miguel Ángel (2026-07-04): being able to share via
+         * WhatsApp the link of an imported album/playlist, not just
+         * the individual video ID (which could already always be
+         * reconstructed via youtubeUrl). Nullable, no backfill: only
+         * populated for tracks imported from now on via "Importar
+         * enlace" (ImportLinkViewModel.importSelected()); Buscar álbum
+         * tracks and already-existing ones stay NULL, and the UI falls
+         * back to sharing youtubeUrl (the individual video) in that
+         * case.
+         */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE search_result_tracks ADD COLUMN sourceUrl TEXT"
                 )
             }
         }

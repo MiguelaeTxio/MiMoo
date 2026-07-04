@@ -383,6 +383,18 @@ class ImportLinkViewModel @Inject constructor(
             ?: fallbackArtistCredit(selected.map { it.channelTitle })
         val album = albumOverride?.trim()?.takeIf { it.isNotBlank() }
             ?: if (state.isPlaylist) state.resolvedTitle else null
+        // Enlace pegado por el usuario, guardado tal cual para poder
+        // compartirlo después por WhatsApp -- petición explícita de
+        // Miguel Ángel (2026-07-04). Mismo enlace para todas las
+        // pistas de este import (sea un vídeo suelto o una playlist
+        // entera), ya que todas vinieron de la misma URL.
+        // ---
+        // Link pasted by the user, saved as-is so it can be shared
+        // later via WhatsApp -- explicit request from Miguel Ángel
+        // (2026-07-04). Same link for every track in this import
+        // (whether a single video or a whole playlist), since they all
+        // came from the same URL.
+        val sourceUrl = state.url.trim().takeIf { it.isNotBlank() }
 
         viewModelScope.launch {
             val tracks = selected.map { track ->
@@ -394,6 +406,7 @@ class ImportLinkViewModel @Inject constructor(
                     thumbnailUrl = track.thumbnailUrl,
                     artist = artist,
                     album = album,
+                    sourceUrl = sourceUrl,
                     // Posición real dentro de la lista RESUELTA
                     // (state.tracks), no del subconjunto seleccionado
                     // -- así, si el usuario deselecciona una pista, el

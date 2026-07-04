@@ -1,5 +1,7 @@
 package com.miguelaetxio.mimoo.ui.importlink
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,16 +14,37 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import com.miguelaetxio.mimoo.ui.library.displayArtistName
+
+/**
+ * Comparte un texto (un enlace, en nuestro caso) vía el selector
+ * nativo de Android -- WhatsApp incluido. Petición explícita de
+ * Miguel Ángel (2026-07-04): poder pasarle a su pareja el enlace de un
+ * álbum, o pedírselo ella a él, sin salir de MiMoo.
+ * ---
+ * Shares a text (a link, in our case) via Android's native share
+ * sheet -- WhatsApp included. Explicit request from Miguel Ángel
+ * (2026-07-04): being able to send his partner an album link, or have
+ * her ask him for one, without leaving MiMoo.
+ */
+private fun shareText(context: Context, text: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(intent, null))
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +57,7 @@ fun ImportLinkScreen(
     var showMetadataDialog by remember { mutableStateOf(false) }
     var metadataArtist by remember { mutableStateOf("") }
     var metadataAlbum by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -69,6 +93,21 @@ fun ImportLinkScreen(
                 label = { Text("Enlace de YouTube / YouTube Music") },
                 leadingIcon = {
                     Icon(Icons.Filled.Link, contentDescription = null)
+                },
+                trailingIcon = {
+                    // Compartir el enlace pegado -- petición explícita
+                    // de Miguel Ángel (2026-07-04), para poder
+                    // pasárselo a su pareja por WhatsApp antes/después
+                    // de importarlo.
+                    // ---
+                    // Share the pasted link -- explicit request from
+                    // Miguel Ángel (2026-07-04), to send it to his
+                    // partner via WhatsApp before/after importing it.
+                    if (uiState.url.isNotBlank()) {
+                        IconButton(onClick = { shareText(context, uiState.url) }) {
+                            Icon(Icons.Filled.Share, contentDescription = "Compartir enlace")
+                        }
+                    }
                 },
                 singleLine = true,
             )

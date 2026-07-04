@@ -77,6 +77,16 @@ data class SearchResultTrack(
     // (2026-07-03): Biblioteca ordenaba SIEMPRE alfabéticamente,
     // nunca por posición real de disco.
     val trackPosition: Int? = null,
+    // Enlace de origen (la URL de playlist/álbum pegada en "Importar
+    // enlace"), para poder compartirlo luego por WhatsApp -- petición
+    // explícita de Miguel Ángel (2026-07-04). Null para pistas de
+    // Buscar álbum/Búsqueda (no vienen de un enlace pegado) y para
+    // filas ya existentes antes de esta migración; la UI cae a
+    // youtubeUrl (el vídeo individual) en ese caso.
+    val sourceUrl: String? = null,
 ) {
     val youtubeUrl: String get() = "https://youtu.be/$youtubeId"
+
+    /** Mejor enlace disponible para compartir -- ver comentario de sourceUrl. */
+    val shareableUrl: String get() = sourceUrl ?: youtubeUrl
 }

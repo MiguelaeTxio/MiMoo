@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.library
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,10 +15,12 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -26,12 +29,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
+
+/**
+ * Comparte un enlace vía el selector nativo de Android (WhatsApp
+ * incluido) -- petición explícita de Miguel Ángel (2026-07-04): poder
+ * pasarle a su pareja el enlace de un disco que está escuchando, o
+ * pedírselo ella a él, directamente desde Biblioteca.
+ * ---
+ * Shares a link via Android's native share sheet (WhatsApp included)
+ * -- explicit request from Miguel Ángel (2026-07-04): being able to
+ * send his partner the link of an album he's listening to, or have
+ * her ask him for one, straight from Biblioteca.
+ */
+private fun shareLink(context: android.content.Context, url: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, url)
+    }
+    context.startActivity(Intent.createChooser(intent, null))
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -673,6 +696,15 @@ private fun AlbumHeaderRow(
 
     val coverArtUrl = tracks.firstNotNullOfOrNull { it.coverArtUrl }
     val fallbackThumbnailUrl = tracks.firstNotNullOfOrNull { it.thumbnailUrl }
+    // Mismo enlace para todas las pistas de un álbum importado como
+    // playlist -- basta con el de la primera. Petición explícita de
+    // Miguel Ángel (2026-07-04).
+    // ---
+    // Same link for every track of an album imported as a playlist --
+    // the first one is enough. Explicit request from Miguel Ángel
+    // (2026-07-04).
+    val shareableUrl = tracks.firstOrNull()?.shareableUrl
+    val context = LocalContext.current
 
     Row(
         modifier = Modifier
@@ -693,6 +725,11 @@ private fun AlbumHeaderRow(
         }
         IconButton(onClick = onPlayAlbum) {
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir álbum")
+        }
+        if (shareableUrl != null) {
+            IconButton(onClick = { shareLink(context, shareableUrl) }) {
+                Icon(Icons.Filled.Share, contentDescription = "Compartir enlace del álbum")
+            }
         }
         IconButton(onClick = onDelete) {
             Icon(
@@ -769,6 +806,9 @@ private fun LibraryTrackRow(
     onEdit: () -> Unit,
     onAddToPlaylist: () -> Unit,
 ) {
+    var showOverflowMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -783,17 +823,55 @@ private fun LibraryTrackRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = onAddToPlaylist) {
-            Icon(
-                Icons.Filled.PlaylistAdd,
-                contentDescription = "Añadir a lista",
-            )
-        }
-        IconButton(onClick = onEdit) {
-            Icon(
-                Icons.Filled.Edit,
-                contentDescription = "Editar metadatos",
-            )
+        // Acciones menos frecuentes agrupadas en un menú de overflow
+        // (añadir a lista, editar, compartir) -- petición explícita de
+        // Miguel Ángel de mantener la pantalla limpia; favoritos/
+        // borrar/reproducir se quedan siempre visibles por ser las más
+        // usadas.
+        // ---
+        // Less-frequent actions grouped into an overflow menu (add to
+        // playlist, edit, share) -- explicit request from Miguel Ángel
+        // to keep the screen clean; favorite/delete/play stay always
+        // visible as the most-used ones.
+        Box {
+            IconButton(onClick = { showOverflowMenu = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = "Más opciones")
+            }
+            DropdownMenu(
+                expanded = showOverflowMenu,
+                onDismissRequest = { showOverflowMenu = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Añadir a lista") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onAddToPlaylist()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Editar metadatos") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Edit, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onEdit()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Compartir enlace") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Share, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        shareLink(context, track.shareableUrl)
+                    },
+                )
+            }
         }
         IconButton(onClick = onToggleFavorite) {
             Icon(
