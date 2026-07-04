@@ -37,6 +37,22 @@ fun AlbumSearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var trackPendingManualMatch by remember { mutableStateOf<AlbumTrackMatch?>(null) }
+    // Confirmación de pistas descartadas (2026-07-04): antes, pulsar
+    // "Importar álbum" descartaba en silencio toda pista "Sin
+    // emparejar" -- bug real reportado por Miguel Ángel con álbumes de
+    // Beethoven, donde el emparejamiento automático por duración falla
+    // más a menudo (sinfonías con varios movimientos). Ahora, si hay
+    // alguna pista sin emparejar, se exige esta confirmación explícita
+    // listándolas por nombre antes de proceder.
+    // ---
+    // Skipped-tracks confirmation (2026-07-04): previously, tapping
+    // "Importar álbum" silently discarded every "Sin emparejar" track
+    // -- real bug reported by Miguel Ángel with Beethoven albums, where
+    // automatic duration-based matching fails more often (multi-
+    // movement symphonies). Now, if any track is unmatched, this
+    // explicit confirmation is required, listing them by name before
+    // proceeding.
+    var showSkippedConfirmation by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -151,7 +167,14 @@ fun AlbumSearchScreen(
 
                     Spacer(Modifier.height(8.dp))
                     Button(
-                        onClick = viewModel::importAlbum,
+                        onClick = {
+                            val skippedCount = uiState.matches.size - matchedCount
+                            if (skippedCount > 0) {
+                                showSkippedConfirmation = true
+                            } else {
+                                viewModel.importAlbum()
+                            }
+                        },
                         enabled = matchedCount > 0,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -161,6 +184,48 @@ fun AlbumSearchScreen(
                 }
             }
         }
+    }
+
+    if (showSkippedConfirmation) {
+        val skippedTitles = uiState.matches
+            .filter { it.matchedTrack == null }
+            .map { it.mbTitle }
+        AlertDialog(
+            onDismissRequest = { showSkippedConfirmation = false },
+            title = { Text("${skippedTitles.size} pistas se quedarán fuera") },
+            text = {
+                Column {
+                    Text(
+                        "Estas pistas no tienen emparejamiento con " +
+                            "YouTube y NO se importarán ni descargarán:",
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    skippedTitles.forEach { title ->
+                        Text("• $title", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Puedes cancelar y corregirlas a mano (icono de " +
+                            "editar en cada pista) antes de importar.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSkippedConfirmation = false
+                    viewModel.importAlbum()
+                }) {
+                    Text("Importar sin ellas")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSkippedConfirmation = false }) {
+                    Text("Cancelar")
+                }
+            },
+        )
     }
 
     uiState.importedCount?.let { count ->
