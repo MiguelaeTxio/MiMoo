@@ -13,6 +13,7 @@ import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import com.miguelaetxio.mimoo.ui.library.UNKNOWN_ARTIST_CREDIT
 import com.miguelaetxio.mimoo.ui.library.VARIOUS_ARTISTS_CREDIT
+import com.miguelaetxio.mimoo.util.YoutubeTitleCleaner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -108,9 +109,10 @@ class ImportLinkViewModel @Inject constructor(
                     return@launch
                 }
                 val isPlaylist = result.tracks.size > 1
+                val cleanedTitle = YoutubeTitleCleaner.clean(result.title)
                 _uiState.value = _uiState.value.copy(
                     isResolving = false,
-                    resolvedTitle = result.title,
+                    resolvedTitle = cleanedTitle,
                     isPlaylist = isPlaylist,
                     tracks = result.tracks,
                     // Todas seleccionadas por defecto -- el usuario
@@ -120,7 +122,7 @@ class ImportLinkViewModel @Inject constructor(
                     selectedYoutubeIds = result.tracks.map { it.youtubeId }.toSet(),
                 )
                 if (isPlaylist) {
-                    resolveCoverArt(result.title, result.tracks.map { it.channelTitle })
+                    resolveCoverArt(cleanedTitle, result.tracks.map { it.channelTitle })
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -386,7 +388,7 @@ class ImportLinkViewModel @Inject constructor(
             val tracks = selected.map { track ->
                 SearchResultTrack(
                     youtubeId = track.youtubeId,
-                    title = track.title,
+                    title = YoutubeTitleCleaner.clean(track.title),
                     channelTitle = track.channelTitle,
                     durationSeconds = track.durationSeconds,
                     thumbnailUrl = track.thumbnailUrl,
