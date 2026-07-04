@@ -47,6 +47,20 @@ private val NULL_ALBUM_FOLDER_NAMES = setOf(
 )
 
 /**
+ * Resultado de mergeDuplicateArtistFolders(), para que
+ * LibraryViewModel pueda mostrarle a Miguel Ángel un resumen concreto
+ * de lo que se hizo.
+ * ---
+ * Result of mergeDuplicateArtistFolders(), so LibraryViewModel can
+ * show Miguel Ángel a concrete summary of what happened.
+ */
+data class DuplicateMergeResult(
+    val foldersMerged: Int,
+    val filesMoved: Int,
+    val conflicts: Int,
+)
+
+/**
  * Reconciles the SAF storage folder against Room (PASO 10, H03): any
  * {Artista}/{Álbum}/Título.opus file with no matching filePath in the
  * database is registered as a new, synthetic entry. Recovers from
@@ -165,6 +179,226 @@ class LibraryReconciler @Inject constructor(
         if (discovered.isNotEmpty()) {
             repository.cacheSearchResults(discovered)
         }
+    }
+
+    /**
+     * Elimina las filas sintéticas (LOCAL_ID_PREFIX) cuyo archivo ya no
+     * existe en disco -- p.ej. tras mergeDuplicateArtistFolders(), que
+     * mueve/borra archivos físicos sin tocar Room directamente. Las
+     * filas reales (originadas de una búsqueda) nunca se tocan aquí,
+     * igual que en rescan().
+     * ---
+     * Removes synthetic rows (LOCAL_ID_PREFIX) whose file no longer
+     * exists on disk -- e.g. after mergeDuplicateArtistFolders(), which
+     * moves/deletes physical files without touching Room directly.
+     * Real, search-originated rows are never touched here, same as in
+     * rescan().
+     */
+    suspend fun pruneDeadSyntheticRows() {
+        repository.getAll().first()
+            .filter { it.youtubeId.startsWith(LOCAL_ID_PREFIX) }
+            .forEach { track ->
+                val stillExists = track.filePath
+                    ?.let { DocumentFile.fromSingleUri(context, Uri.parse(it)) }
+                    ?.exists() == true
+                if (!stillExists) {
+                    repository.delete(track)
+                }
+            }
+    }
+
+    /**
+     * Fusiona carpetas de artista duplicadas por la condición de
+     * carrera de DownloadDirManager.getOrCreateTrackDir() (ya
+     * corregida para descargas futuras, ver ese archivo) -- p.ej.
+     * "Air", "Air (1)", "Air (2)"... vuelven a ser una sola carpeta
+     * "Air" con todos los álbumes/pistas dentro. Reportado por Miguel
+     * Ángel (2026-07-03): Moon Safari repartido en 10 grupos de
+     * artista distintos en Biblioteca.
+     *
+     * Algoritmo, por cada grupo de carpetas con el mismo nombre base
+     * (sufijo " (N)" quitado):
+     *   1. La carpeta canónica es la que NO tiene sufijo numérico si
+     *      existe una así en el grupo; si no, la primera por orden
+     *      alfabético (caso borde: la propia "sin sufijo" ya hubiera
+     *      colisionado alguna vez).
+     *   2. Para cada carpeta duplicada del grupo, cada álbum dentro se
+     *      busca/crea en la carpeta canónica, y cada .opus se copia
+     *      (con nombre único si ya existe uno igual) y se borra el
+     *      original solo si la copia tuvo éxito -- mismo patrón
+     *      copy+verify+delete que TrackFileRelocator.relocate().
+     *   3. Álbum y carpeta de artista duplicados se borran al quedar
+     *      vacíos.
+     *
+     * No toca Room directamente -- el llamante (LibraryViewModel) debe
+     * encadenar pruneDeadSyntheticRows() + rescan() después, para que
+     * las filas sintéticas reflejen las rutas nuevas. Las filas reales
+     * (de búsqueda) no se ven afectadas por este movimiento de
+     * archivos: su artist en Room ya era el nombre canónico desde el
+     * principio (el sufijo solo aparecía en el nombre de carpeta real,
+     * nunca en el campo Room de una fila real -- ver comentario en
+     * DownloadDirManager).
+     * ---
+     * Merges duplicate artist folders caused by
+     * DownloadDirManager.getOrCreateTrackDir()'s race condition
+     * (already fixed for future downloads, see that file) -- e.g.
+     * "Air", "Air (1)", "Air (2)"... become one "Air" folder again
+     * with every album/track inside. Reported by Miguel Ángel
+     * (2026-07-03): Moon Safari split across 10 distinct artist groups
+     * in Biblioteca.
+     *
+     * Algorithm, for each group of folders sharing the same base name
+     * (with the " (N)" suffix stripped):
+     *   1. The canonical folder is the one WITHOUT a numeric suffix if
+     *      one exists in the group; otherwise the first one
+     *      alphabetically (edge case: even the "no suffix" one could
+     *      have collided at some point).
+     *   2. For each duplicate folder in the group, every album inside
+     *      it is found/created under the canonical folder, and every
+     *      .opus is copied (with a unique name if one already exists)
+     *      and the original deleted only if the copy succeeded --
+     *      same copy+verify+delete pattern as
+     *      TrackFileRelocator.relocate().
+     *   3. Duplicate album and artist folders are deleted once empty.
+     *
+     * Does not touch Room directly -- the caller (LibraryViewModel)
+     * must chain pruneDeadSyntheticRows() + rescan() afterwards, so
+     * synthetic rows reflect the new paths. Real (search-originated)
+     * rows are unaffected by this file move: their Room artist field
+     * was already the canonical name from the start (the suffix only
+     * ever showed up in the real folder name, never in a real row's
+     * Room field -- see the comment in DownloadDirManager).
+     */
+    suspend fun mergeDuplicateArtistFolders(rootUri: Uri): DuplicateMergeResult {
+        val root = DocumentFile.fromTreeUri(context, rootUri)
+            ?: return DuplicateMergeResult(0, 0, 0)
+
+        val artistDirs = root.listFiles().filter { it.isDirectory }
+        val groups = artistDirs.groupBy { stripDuplicateSuffix(it.name ?: "") }
+
+        var foldersMerged = 0
+        var filesMoved = 0
+        var conflicts = 0
+
+        groups.values
+            .filter { it.size > 1 }
+            .forEach { group ->
+                val canonical = group.firstOrNull { name(it) == stripDuplicateSuffix(name(it)) }
+                    ?: group.sortedBy { name(it) }.first()
+                val duplicates = group.filter { it.uri != canonical.uri }
+
+                duplicates.forEach { duplicateArtistDir ->
+                    duplicateArtistDir.listFiles()
+                        .filter { it.isDirectory }
+                        .forEach { duplicateAlbumDir ->
+                            val canonicalAlbumDir = canonical
+                                .findFile(duplicateAlbumDir.name ?: return@forEach)
+                                ?: canonical.createDirectory(duplicateAlbumDir.name!!)
+                                ?: return@forEach
+
+                            duplicateAlbumDir.listFiles()
+                                .filter {
+                                    it.isFile && it.name?.endsWith(".opus") == true
+                                }
+                                .forEach { file ->
+                                    val moved = moveFile(file, canonicalAlbumDir)
+                                    if (moved) filesMoved++ else conflicts++
+                                }
+
+                            // Borra el álbum duplicado solo si quedó
+                            // vacío (algún archivo pudo no copiarse).
+                            // ---
+                            // Deletes the duplicate album only if it
+                            // ended up empty (some file may have
+                            // failed to copy).
+                            if (duplicateAlbumDir.listFiles().isEmpty()) {
+                                duplicateAlbumDir.delete()
+                            }
+                        }
+
+                    if (duplicateArtistDir.listFiles().isEmpty()) {
+                        duplicateArtistDir.delete()
+                        foldersMerged++
+                    }
+                }
+            }
+
+        return DuplicateMergeResult(foldersMerged, filesMoved, conflicts)
+    }
+
+    private fun name(doc: DocumentFile): String = doc.name ?: ""
+
+    /**
+     * Quita un sufijo de colisión SAF tipo " (1)", " (12)" del final
+     * del nombre, si lo hay.
+     * ---
+     * Strips a SAF collision suffix like " (1)", " (12)" from the end
+     * of the name, if present.
+     */
+    private fun stripDuplicateSuffix(name: String): String =
+        name.replace(Regex(" \\(\\d+\\)$"), "")
+
+    /**
+     * Copia un archivo a la carpeta destino (con nombre único si ya
+     * existe uno igual) y borra el original solo si la copia tuvo
+     * éxito. Devuelve true si se movió, false si hubo que dejar el
+     * original intacto por un fallo de copia.
+     * ---
+     * Copies a file to the target folder (with a unique name if one
+     * already exists) and deletes the original only if the copy
+     * succeeded. Returns true if it was moved, false if the original
+     * had to be left intact due to a copy failure.
+     */
+    private fun moveFile(source: DocumentFile, targetDir: DocumentFile): Boolean {
+        val sourceName = source.name ?: return false
+        val targetName = uniqueFileName(targetDir, sourceName)
+
+        val targetDoc = targetDir.createFile("audio/opus", targetName)
+            ?: return false
+
+        val copiedOk = try {
+            context.contentResolver.openInputStream(source.uri)?.use { input ->
+                context.contentResolver.openOutputStream(targetDoc.uri)?.use { output ->
+                    input.copyTo(output)
+                }
+            } != null
+        } catch (e: Exception) {
+            false
+        }
+
+        if (!copiedOk) {
+            targetDoc.delete()
+            return false
+        }
+
+        source.delete()
+        return true
+    }
+
+    /**
+     * Igual que TrackFileRelocator.uniqueFileName() -- añade " (2)",
+     * " (3)"... hasta que el nombre quede libre en la carpeta destino,
+     * en vez de sobrescribir en silencio.
+     * ---
+     * Same as TrackFileRelocator.uniqueFileName() -- appends " (2)",
+     * " (3)"... until the name is free in the target folder, instead
+     * of silently overwriting.
+     */
+    private fun uniqueFileName(targetDir: DocumentFile, fileName: String): String {
+        if (targetDir.findFile(fileName) == null) return fileName
+        val base = fileName.substringBeforeLast('.', fileName)
+        val extension = fileName.substringAfterLast('.', "")
+        var suffix = 2
+        var candidate: String
+        do {
+            candidate = if (extension.isEmpty()) {
+                "$base ($suffix)"
+            } else {
+                "$base ($suffix).$extension"
+            }
+            suffix++
+        } while (targetDir.findFile(candidate) != null)
+        return candidate
     }
 
     private fun buildSyntheticTrack(

@@ -87,6 +87,12 @@ data class LibraryUiState(
     val favorites: List<SearchResultTrack> = emptyList(),
     val isRefreshing: Boolean = false,
     val editMetadataError: String? = null,
+    // Resumen de mergeDuplicateFolders() para mostrar como Snackbar en
+    // LibraryScreen; null cuando no hay nada pendiente de mostrar.
+    // ---
+    // Summary from mergeDuplicateFolders() to show as a Snackbar in
+    // LibraryScreen; null when there's nothing pending to show.
+    val mergeResultMessage: String? = null,
 )
 
 /**
@@ -156,6 +162,51 @@ class LibraryViewModel @Inject constructor(
             libraryReconciler.rescan(rootUri)
             _uiState.value = _uiState.value.copy(isRefreshing = false)
         }
+    }
+
+    /**
+     * Fusiona carpetas de artista duplicadas por la condición de
+     * carrera de DownloadDirManager (2026-07-03, ver
+     * LibraryReconciler.mergeDuplicateArtistFolders()), y a
+     * continuación limpia filas sintéticas muertas y vuelve a
+     * escanear para que Biblioteca refleje las rutas nuevas. Acción
+     * explícita del usuario, igual que refreshLibrary() -- nunca
+     * automática.
+     * ---
+     * Merges duplicate artist folders caused by DownloadDirManager's
+     * race condition (2026-07-03, see LibraryReconciler.
+     * mergeDuplicateArtistFolders()), then prunes dead synthetic rows
+     * and rescans so Biblioteca reflects the new paths. Explicit user
+     * action, same as refreshLibrary() -- never automatic.
+     */
+    fun mergeDuplicateFolders() {
+        val rootUri = storageManager.getRootUri() ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            val result = libraryReconciler.mergeDuplicateArtistFolders(rootUri)
+            libraryReconciler.pruneDeadSyntheticRows()
+            libraryReconciler.rescan(rootUri)
+            val message = if (result.foldersMerged == 0 && result.filesMoved == 0) {
+                "No se encontraron carpetas duplicadas."
+            } else {
+                "Fusionadas ${result.foldersMerged} carpetas duplicadas, " +
+                    "${result.filesMoved} pistas movidas" +
+                    if (result.conflicts > 0) {
+                        ", ${result.conflicts} con conflicto (no se tocaron)."
+                    } else {
+                        "."
+                    }
+            }
+            _uiState.value = _uiState.value.copy(
+                isRefreshing = false,
+                mergeResultMessage = message,
+            )
+        }
+    }
+
+    /** Descarta el mensaje de resumen de mergeDuplicateFolders() tras mostrarlo. */
+    fun dismissMergeResultMessage() {
+        _uiState.value = _uiState.value.copy(mergeResultMessage = null)
     }
 
     fun setTab(tab: LibraryTab) {

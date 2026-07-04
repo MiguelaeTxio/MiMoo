@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -53,7 +54,24 @@ fun LibraryScreen(
         mutableStateOf<SearchResultTrack?>(null)
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Muestra el resumen de mergeDuplicateFolders() en un Snackbar en
+    // cuanto llega, y lo descarta de uiState para no repetirlo si la
+    // pantalla se recompone.
+    // ---
+    // Shows mergeDuplicateFolders()'s summary in a Snackbar as soon as
+    // it arrives, and dismisses it from uiState so it doesn't repeat
+    // on recomposition.
+    LaunchedEffect(uiState.mergeResultMessage) {
+        uiState.mergeResultMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissMergeResultMessage()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Biblioteca") },
@@ -73,6 +91,12 @@ fun LibraryScreen(
                             )
                         }
                     } else {
+                        IconButton(onClick = viewModel::mergeDuplicateFolders) {
+                            Icon(
+                                Icons.Filled.CleaningServices,
+                                contentDescription = "Fusionar carpetas duplicadas",
+                            )
+                        }
                         IconButton(onClick = viewModel::refreshLibrary) {
                             Icon(
                                 Icons.Filled.Refresh,
