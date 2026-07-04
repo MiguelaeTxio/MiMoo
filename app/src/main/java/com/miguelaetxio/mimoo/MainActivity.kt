@@ -39,6 +39,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
+import com.miguelaetxio.mimoo.data.library.StartupNotices
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.ui.navigation.MiMooNavGraph
 import com.miguelaetxio.mimoo.ui.navigation.Screen
@@ -55,6 +56,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var libraryReconciler: LibraryReconciler
+
+    @Inject
+    lateinit var startupNotices: StartupNotices
 
     @Inject
     lateinit var playerManager: PlayerManager
@@ -141,7 +145,38 @@ class MainActivity : ComponentActivity() {
         if (storageManager.hasRootUri()) {
             storageManager.getRootUri()?.let { uri ->
                 lifecycleScope.launch {
-                    libraryReconciler.rescan(uri)
+                    val result = libraryReconciler.rescan(uri)
+                    // Aviso explícito pedido por Miguel Ángel
+                    // (2026-07-04) -- solo si hubo algo real que
+                    // contar, para no mostrar un Snackbar vacío en
+                    // cada arranque normal sin novedades.
+                    // ---
+                    // Explicit notice requested by Miguel Ángel
+                    // (2026-07-04) -- only if there was something real
+                    // to report, so a normal startup with nothing new
+                    // doesn't show an empty Snackbar every time.
+                    if (result.emptyFoldersRemoved > 0 || result.tracksDiscovered > 0) {
+                        startupNotices.post(
+                            buildString {
+                                append("Limpieza de arranque: ")
+                                val parts = mutableListOf<String>()
+                                if (result.emptyFoldersRemoved > 0) {
+                                    parts.add(
+                                        "${result.emptyFoldersRemoved} " +
+                                            "carpeta(s) vacía(s) borrada(s)"
+                                    )
+                                }
+                                if (result.tracksDiscovered > 0) {
+                                    parts.add(
+                                        "${result.tracksDiscovered} pista(s) " +
+                                            "nueva(s) encontrada(s) en disco"
+                                    )
+                                }
+                                append(parts.joinToString(", "))
+                                append(".")
+                            }
+                        )
+                    }
                 }
             }
         }

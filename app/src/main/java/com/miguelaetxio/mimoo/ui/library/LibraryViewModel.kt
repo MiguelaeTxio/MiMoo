@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.DownloadDirManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
+import com.miguelaetxio.mimoo.data.library.StartupNotices
 import com.miguelaetxio.mimoo.data.library.TrackFileRelocator
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -158,6 +159,12 @@ data class LibraryUiState(
     // Summary from mergeDuplicateFolders() to show as a Snackbar in
     // LibraryScreen; null when there's nothing pending to show.
     val mergeResultMessage: String? = null,
+    // Aviso de la limpieza automática de arranque (MainActivity ->
+    // StartupNotices), mostrado una sola vez como Snackbar.
+    // ---
+    // Notice from the automatic startup cleanup (MainActivity ->
+    // StartupNotices), shown exactly once as a Snackbar.
+    val startupMessage: String? = null,
 )
 
 /**
@@ -187,6 +194,7 @@ class LibraryViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val storageManager: StorageManager,
     private val libraryReconciler: LibraryReconciler,
+    private val startupNotices: StartupNotices,
     private val coverArtRepository: CoverArtRepository,
     private val trackFileRelocator: TrackFileRelocator,
     @ApplicationContext private val context: Context,
@@ -211,6 +219,19 @@ class LibraryViewModel @Inject constructor(
                 recompute()
             }
         }
+        viewModelScope.launch {
+            startupNotices.message.collect { message ->
+                if (message != null) {
+                    _uiState.value = _uiState.value.copy(startupMessage = message)
+                }
+            }
+        }
+    }
+
+    /** Descarta el aviso de limpieza de arranque tras mostrarlo. */
+    fun dismissStartupMessage() {
+        _uiState.value = _uiState.value.copy(startupMessage = null)
+        startupNotices.consume()
     }
 
     /**

@@ -63,6 +63,19 @@ class DownloadWorker @AssistedInject constructor(
         const val KEY_TITLE = "title"
         const val KEY_ARTIST = "artist"
         const val KEY_ALBUM = "album"
+
+        /**
+         * Número máximo de intentos antes de rendirse y marcar ERROR
+         * sin dejar rastro en disco (petición de Miguel Ángel,
+         * 2026-07-04). runAttemptCount empieza en 0, así que se
+         * reintenta mientras sea menor que MAX_DOWNLOAD_ATTEMPTS - 1.
+         * ---
+         * Maximum number of attempts before giving up and marking
+         * ERROR with no trace left on disk (requested by Miguel Ángel,
+         * 2026-07-04). runAttemptCount starts at 0, so it retries
+         * while it's less than MAX_DOWNLOAD_ATTEMPTS - 1.
+         */
+        const val MAX_DOWNLOAD_ATTEMPTS = 3
     }
 
     override suspend fun doWork(): Result {
@@ -177,6 +190,19 @@ class DownloadWorker @AssistedInject constructor(
             runBlocking { repository.updateDownloadProgress(youtubeId, percent) }
         }
 
+        // Hoisted fuera del try para que el catch pueda borrarlo si se
+        // llegó a crear pero la copia falló después -- sin esto, un
+        // fallo a mitad de copyTo() dejaba un archivo SAF vacío o a
+        // medias huérfano en disco para siempre (vector real de
+        // "espurios" reportado por Miguel Ángel, 2026-07-04).
+        // ---
+        // Hoisted out of the try so the catch block can delete it if
+        // it was created but the copy failed afterwards -- without
+        // this, a failure partway through copyTo() left an empty or
+        // partial SAF file orphaned on disk forever (real "espurios"
+        // vector reported by Miguel Ángel, 2026-07-04).
+        var outputDoc: androidx.documentfile.provider.DocumentFile? = null
+
         return try {
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
@@ -194,7 +220,7 @@ class DownloadWorker @AssistedInject constructor(
 
             // Step 2 — copy to SAF destination via ContentResolver.
             // Paso 2 — copiar al destino SAF via ContentResolver.
-            val outputDoc = trackDir.createFile("audio/opus", outputFileName)
+            outputDoc = trackDir.createFile("audio/opus", outputFileName)
                 ?: throw RuntimeException(
                     "No se pudo crear el archivo SAF: $outputFileName"
                 )
@@ -217,6 +243,17 @@ class DownloadWorker @AssistedInject constructor(
             // Limpiar archivos temporales.
             File("${tempBase.absolutePath}.opus").delete()
             tempBase.delete()
+
+            // Borra el archivo SAF de destino si se llegó a crear pero
+            // la copia falló después -- ver comentario de outputDoc
+            // más arriba. Nunca deja un archivo vacío/a medias en la
+            // carpeta del álbum.
+            // ---
+            // Deletes the SAF destination file if it was created but
+            // the copy failed afterwards -- see the outputDoc comment
+            // above. Never leaves an empty/partial file in the album
+            // folder.
+            outputDoc?.delete()
 
             // Write stacktrace via SAF to the root dir where we have
             // write permission (chosen by the user via OpenDocumentTree).
@@ -270,8 +307,32 @@ class DownloadWorker @AssistedInject constructor(
                 }
             } catch (_: Exception) { }
 
-            repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
-            Result.failure()
+            // Reintento automático hasta MAX_DOWNLOAD_ATTEMPTS veces
+            // (petición explícita de Miguel Ángel, 2026-07-04: "si en
+            // tres veces no hemos conseguido descargar una canción, no
+            // dejar rastros en disco... y avisado el usuario"). Con
+            // Result.retry(), WorkManager reprograma este mismo
+            // WorkRequest con backoff, incrementando runAttemptCount;
+            // solo al agotar los intentos se marca ERROR de verdad (ya
+            // sin ningún archivo parcial en disco, por el
+            // outputDoc?.delete() de más arriba).
+            // ---
+            // Automatic retry up to MAX_DOWNLOAD_ATTEMPTS times
+            // (explicit request from Miguel Ángel, 2026-07-04: "if
+            // three times we haven't managed to download a song, leave
+            // no trace on disk... and the user is notified").  With
+            // Result.retry(), WorkManager reschedules this same
+            // WorkRequest with backoff, incrementing runAttemptCount;
+            // only once attempts are exhausted is it marked ERROR for
+            // real (with no partial file left on disk anymore, thanks
+            // to the outputDoc?.delete() above).
+            if (runAttemptCount < MAX_DOWNLOAD_ATTEMPTS - 1) {
+                repository.updateDownloadStatus(youtubeId, DownloadStatus.QUEUED)
+                Result.retry()
+            } else {
+                repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
+                Result.failure()
+            }
         }
     }
 

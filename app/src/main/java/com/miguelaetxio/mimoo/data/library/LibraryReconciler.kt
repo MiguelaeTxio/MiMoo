@@ -92,6 +92,21 @@ data class DuplicateMergeResult(
 )
 
 /**
+ * Resultado de rescan(), para poder avisar a Miguel Ángel al arrancar
+ * la app de qué se ha encontrado/limpiado (petición explícita,
+ * 2026-07-04): carpetas vacías borradas y pistas nuevas descubiertas
+ * en disco sin fila en Room.
+ * ---
+ * Result of rescan(), so Miguel Ángel can be notified at app startup
+ * of what was found/cleaned up (explicit request, 2026-07-04): empty
+ * folders deleted and new tracks discovered on disk with no Room row.
+ */
+data class RescanResult(
+    val emptyFoldersRemoved: Int,
+    val tracksDiscovered: Int,
+)
+
+/**
  * Reconciles the SAF storage folder against Room (PASO 10, H03): any
  * {Artista}/{Álbum}/Título.opus file with no matching filePath in the
  * database is registered as a new, synthetic entry. Recovers from
@@ -99,12 +114,10 @@ data class DuplicateMergeResult(
  * but not the external SAF folder) without touching the physical
  * files at all.
  *
- * Called from exactly two places, both explicit user actions — never
- * automatically on screen open, since a full SAF tree walk does not
- * scale to being run on every navigation with a large library:
- *   1. MainActivity, once, right after the user picks the storage
- *      folder for the first time.
- *   2. LibraryViewModel, on demand, via a manual refresh button.
+ * Called automatically on EVERY app startup where a storage folder is
+ * already chosen (MainActivity.onCreate(), 2026-07-04 -- previously
+ * only ran once, the first time the folder was picked), plus on
+ * demand via LibraryViewModel's manual refresh button.
  * ---
  * Reconcilia la carpeta de almacenamiento SAF contra Room (PASO 10,
  * H03): cualquier archivo {Artista}/{Álbum}/Título.opus sin filePath
@@ -113,13 +126,10 @@ data class DuplicateMergeResult(
  * una desinstalación, que borra el almacenamiento interno pero no la
  * carpeta SAF externa) sin tocar los archivos físicos.
  *
- * Se llama desde exactamente dos sitios, ambos acciones explícitas
- * del usuario — nunca automáticamente al abrir la pantalla, ya que un
- * recorrido completo del árbol SAF no escala a ejecutarse en cada
- * navegación con una biblioteca grande:
- *   1. MainActivity, una vez, justo tras elegir la carpeta de
- *      almacenamiento por primera vez.
- *   2. LibraryViewModel, bajo demanda, vía un botón de refresco manual.
+ * Se llama automáticamente en CADA arranque de la app donde ya hay
+ * carpeta elegida (MainActivity.onCreate(), 2026-07-04 -- antes solo
+ * corría una vez, la primera vez que se elegía la carpeta), además de
+ * bajo demanda vía el botón de refresco manual de LibraryViewModel.
  */
 @Singleton
 class LibraryReconciler @Inject constructor(
@@ -139,8 +149,23 @@ class LibraryReconciler @Inject constructor(
          */
         const val LOCAL_ID_PREFIX = "local:"
     }
-    suspend fun rescan(rootUri: Uri) {
-        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return
+    suspend fun rescan(rootUri: Uri): RescanResult {
+        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return RescanResult(0, 0)
+
+        // Carpetas vacías primero (petición explícita de Miguel Ángel,
+        // 2026-07-04, tras encontrar carpetas de artista completamente
+        // vacías en disco -- restos de descargas movidas/fusionadas en
+        // sesiones anteriores a este fix -- que nunca se limpiaban
+        // solas). Nunca borra rootUri en sí, solo sus subcarpetas,
+        // recursivamente y de abajo hacia arriba.
+        // ---
+        // Empty folders first (explicit request from Miguel Ángel,
+        // 2026-07-04, after finding completely empty artist folders on
+        // disk -- leftovers from downloads moved/merged in sessions
+        // before this fix -- that never cleaned themselves up). Never
+        // deletes rootUri itself, only its subfolders, recursively and
+        // bottom-up.
+        val emptyFoldersRemoved = pruneEmptyFolders(root)
 
         // Only real, search-originated rows are protected from being
         // touched again. Synthetic rows (our own, from a previous
@@ -185,6 +210,55 @@ class LibraryReconciler @Inject constructor(
         if (discovered.isNotEmpty()) {
             repository.cacheSearchResults(discovered)
         }
+
+        return RescanResult(emptyFoldersRemoved, discovered.size)
+    }
+
+    /**
+     * Borra recursivamente, de abajo hacia arriba, cualquier
+     * subcarpeta que quede vacía tras procesar sus propios hijos --
+     * nunca borra `dir` en sí (el nivel raíz nunca se toca porque solo
+     * se llama a delete() sobre los HIJOS, nunca sobre el parámetro
+     * del nivel superior). Bug real reportado por Miguel Ángel
+     * (2026-07-04): "Air french Band", "AIRfrenchbandofficial", etc.
+     * quedaban como carpetas completamente vacías en disco para
+     * siempre tras fusionar/mover su contenido, y tuvo que borrarlas a
+     * mano desde el explorador de archivos.
+     * ---
+     * Recursively, bottom-up, deletes any subfolder left empty after
+     * processing its own children -- never deletes `dir` itself (the
+     * root level is never touched because delete() is only ever
+     * called on CHILDREN, never on the top-level parameter). Real bug
+     * reported by Miguel Ángel (2026-07-04): "Air french Band",
+     * "AIRfrenchbandofficial", etc. were left as completely empty
+     * folders on disk forever after their content was merged/moved,
+     * and he had to delete them by hand from the file explorer.
+     */
+    private fun pruneEmptyFolders(dir: DocumentFile): Int {
+        var removed = 0
+        val children = try {
+            dir.listFiles()
+        } catch (e: Exception) {
+            return removed
+        }
+        children
+            .filter { it.isDirectory }
+            .forEach { sub ->
+                removed += pruneEmptyFolders(sub)
+                try {
+                    if (sub.listFiles().isEmpty()) {
+                        sub.delete()
+                        removed++
+                    }
+                } catch (e: Exception) {
+                    // Un fallo puntual al comprobar/borrar una carpeta
+                    // no debe impedir seguir con sus hermanas.
+                    // ---
+                    // A one-off failure checking/deleting one folder
+                    // must not stop processing its siblings.
+                }
+            }
+        return removed
     }
 
     /**
@@ -233,44 +307,85 @@ class LibraryReconciler @Inject constructor(
         knownRealPaths: Set<String>,
         existingSyntheticByPath: Map<String?, SearchResultTrack>,
     ) {
-        dir.listFiles().forEach { child ->
-            when {
-                child.isDirectory -> {
-                    val childName = child.name ?: return@forEach
-                    collectAudioFiles(
-                        dir = child,
-                        pathNames = pathNames + childName,
-                        discovered = discovered,
-                        knownRealPaths = knownRealPaths,
-                        existingSyntheticByPath = existingSyntheticByPath,
-                    )
-                }
-                child.isFile -> {
-                    val extension = child.name
-                        ?.substringAfterLast('.', "")
-                        ?.lowercase()
-                    if (extension == null || extension !in AUDIO_EXTENSIONS) {
-                        return@forEach
-                    }
-                    val uriString = child.uri.toString()
-                    if (uriString in knownRealPaths) return@forEach
+        // Bug real reportado por Miguel Ángel (2026-07-04): con la
+        // versión anterior, una excepción en CUALQUIER punto del
+        // recorrido (un nombre de archivo raro, un proveedor SAF que
+        // falla en una carpeta concreta, etc.) abortaba rescan()
+        // entero -- y como discovered solo se persiste UNA VEZ al
+        // final, se perdía TODO lo encontrado hasta ese momento, no
+        // solo lo que venía después. Resultado observado: Biblioteca
+        // solo mostraba lo que ya tenía fila real de antes (el álbum
+        // "Air" original), y Beethoven/Canal IMAR/DW Classical Music/
+        // etc. quedaban invisibles del todo, indefinidamente. Ahora
+        // cada hijo (carpeta o archivo) se procesa en su propio
+        // try/catch: un problema puntual se salta y se sigue con sus
+        // hermanos, en vez de perder el escaneo completo.
+        // ---
+        // Real bug reported by Miguel Ángel (2026-07-04): in the
+        // previous version, an exception at ANY point during the walk
+        // (an odd filename, a SAF provider failing on one particular
+        // folder, etc.) aborted the entire rescan() -- and since
+        // discovered is only persisted ONCE at the end, EVERYTHING
+        // found up to that point was lost, not just what came after.
+        // Observed result: Biblioteca only showed what already had a
+        // real row from before (the original "Air" album), and
+        // Beethoven/Canal IMAR/DW Classical Music/etc. were completely
+        // invisible, indefinitely. Now every child (folder or file) is
+        // processed in its own try/catch: a one-off problem is skipped
+        // and its siblings still get processed, instead of losing the
+        // whole scan.
+        val children = try {
+            dir.listFiles()
+        } catch (e: Exception) {
+            return
+        }
 
-                    val preservedFavorite = existingSyntheticByPath[uriString]
-                        ?.isFavorite ?: false
-                    val artistName = pathNames.getOrNull(0)
-                        ?: UNKNOWN_ARTIST_FOLDER_LABEL
-                    val albumName = pathNames.getOrNull(1)
-
-                    discovered.add(
-                        buildSyntheticTrack(
-                            uriString = uriString,
-                            fileName = child.name!!,
-                            artistName = artistName,
-                            albumName = albumName,
-                            isFavorite = preservedFavorite,
+        children.forEach { child ->
+            try {
+                when {
+                    child.isDirectory -> {
+                        val childName = child.name ?: return@forEach
+                        collectAudioFiles(
+                            dir = child,
+                            pathNames = pathNames + childName,
+                            discovered = discovered,
+                            knownRealPaths = knownRealPaths,
+                            existingSyntheticByPath = existingSyntheticByPath,
                         )
-                    )
+                    }
+                    child.isFile -> {
+                        val extension = child.name
+                            ?.substringAfterLast('.', "")
+                            ?.lowercase()
+                        if (extension == null || extension !in AUDIO_EXTENSIONS) {
+                            return@forEach
+                        }
+                        val uriString = child.uri.toString()
+                        if (uriString in knownRealPaths) return@forEach
+
+                        val preservedFavorite = existingSyntheticByPath[uriString]
+                            ?.isFavorite ?: false
+                        val artistName = pathNames.getOrNull(0)
+                            ?: UNKNOWN_ARTIST_FOLDER_LABEL
+                        val albumName = pathNames.getOrNull(1)
+
+                        discovered.add(
+                            buildSyntheticTrack(
+                                uriString = uriString,
+                                fileName = child.name!!,
+                                artistName = artistName,
+                                albumName = albumName,
+                                isFavorite = preservedFavorite,
+                            )
+                        )
+                    }
                 }
+            } catch (e: Exception) {
+                // Un hijo problemático no debe tirar abajo el resto
+                // del recorrido -- ver comentario de la función.
+                // ---
+                // One problematic child must not take down the rest
+                // of the walk -- see the function's comment.
             }
         }
     }

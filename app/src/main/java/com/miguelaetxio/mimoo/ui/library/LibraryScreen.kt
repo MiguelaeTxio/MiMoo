@@ -71,6 +71,20 @@ fun LibraryScreen(
         }
     }
 
+    // Aviso de la limpieza automática de arranque (carpetas vacías
+    // borradas / pistas nuevas encontradas en disco) -- petición
+    // explícita de Miguel Ángel (2026-07-04).
+    // ---
+    // Notice from the automatic startup cleanup (empty folders
+    // deleted / new tracks found on disk) -- explicit request from
+    // Miguel Ángel (2026-07-04).
+    LaunchedEffect(uiState.startupMessage) {
+        uiState.startupMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissStartupMessage()
+        }
+    }
+
     // Nivel de profundidad actual de la pestaña activa -- 0 = Letras
     // (nivel raíz de esa pestaña, no hay nada que subir).
     // ---
