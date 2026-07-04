@@ -33,6 +33,18 @@ fun SearchScreen(
     var trackPendingAddToPlaylist by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
+    // Confirmación/edición de metadatos antes de descargar (petición
+    // explícita de Miguel Ángel, 2026-07-04): con la búsqueda gratuita
+    // por yt-dlp los metadatos son más pobres, así que se pueden
+    // corregir aquí antes de que el archivo se cree en disco.
+    // ---
+    // Metadata confirmation/edit before downloading (explicit request
+    // from Miguel Ángel, 2026-07-04): with the free yt-dlp search the
+    // metadata is poorer, so it can be corrected here before the file
+    // is created on disk.
+    var trackPendingDownloadConfirm by remember {
+        mutableStateOf<SearchResultTrack?>(null)
+    }
 
     Scaffold(
         topBar = {
@@ -86,7 +98,7 @@ fun SearchScreen(
                     SearchResultRow(
                         track = track,
                         onPlay = { viewModel.playTrack(track) },
-                        onDownload = { viewModel.requestDownload(track) },
+                        onDownload = { trackPendingDownloadConfirm = track },
                         onToggleFavorite = { viewModel.toggleFavorite(track) },
                         onAddToPlaylist = { trackPendingAddToPlaylist = track },
                     )
@@ -106,6 +118,91 @@ fun SearchScreen(
             onDismiss = { trackPendingAddToPlaylist = null },
         )
     }
+
+    trackPendingDownloadConfirm?.let { track ->
+        DownloadConfirmDialog(
+            track = track,
+            onDismiss = { trackPendingDownloadConfirm = null },
+            onConfirm = { title, artist, album ->
+                viewModel.confirmDownload(track, title, artist, album)
+                trackPendingDownloadConfirm = null
+            },
+        )
+    }
+}
+
+/**
+ * Diálogo de confirmación/edición de metadatos antes de descargar
+ * (petición explícita de Miguel Ángel, 2026-07-04). Álbum vacío =
+ * sencillo, igual que en Importar enlace/Biblioteca.
+ * ---
+ * Metadata confirmation/edit dialog before downloading (explicit
+ * request from Miguel Ángel, 2026-07-04). Empty album = single, same
+ * as Importar enlace/Biblioteca.
+ */
+@Composable
+private fun DownloadConfirmDialog(
+    track: SearchResultTrack,
+    onDismiss: () -> Unit,
+    onConfirm: (title: String, artist: String, album: String) -> Unit,
+) {
+    var title by remember(track.youtubeId) { mutableStateOf(track.title) }
+    var artist by remember(track.youtubeId) {
+        mutableStateOf(track.artist ?: track.channelTitle)
+    }
+    var album by remember(track.youtubeId) { mutableStateOf(track.album ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Confirmar descarga") },
+        text = {
+            Column {
+                Text(
+                    "Revisa los metadatos antes de descargar -- se " +
+                        "usarán para el nombre del archivo y la carpeta.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Título") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = artist,
+                    onValueChange = { artist = it },
+                    label = { Text("Artista") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = album,
+                    onValueChange = { album = it },
+                    label = { Text("Álbum (vacío = Sencillos)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(title, artist, album) },
+                enabled = title.isNotBlank() && artist.isNotBlank(),
+            ) {
+                Text("Descargar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+    )
 }
 
 @Composable

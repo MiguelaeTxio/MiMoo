@@ -169,6 +169,47 @@ class SearchViewModel @Inject constructor(
     }
 
     /**
+     * Confirma la descarga de una pista, guardando primero cualquier
+     * corrección manual de título/artista/álbum -- petición explícita
+     * de Miguel Ángel (2026-07-04): con la búsqueda gratuita por
+     * yt-dlp los metadatos son más pobres que los de la API oficial,
+     * así que antes de descargar (y de que el archivo se cree en
+     * disco con ese nombre/carpeta) se puede corregir a mano, en vez
+     * de tener que editar y mover el archivo después desde Biblioteca.
+     * Álbum vacío = sencillo (igual que en Importar enlace).
+     * ---
+     * Confirms downloading a track, first saving any manual title/
+     * artist/album correction -- explicit request from Miguel Ángel
+     * (2026-07-04): with the free yt-dlp search the metadata is
+     * poorer than the official API's, so before downloading (and
+     * before the file gets created on disk with that name/folder) it
+     * can be corrected by hand, instead of having to edit and move the
+     * file afterwards from Biblioteca. Empty album = single (same as
+     * Importar enlace).
+     */
+    fun confirmDownload(track: SearchResultTrack, title: String, artist: String, albumRaw: String) {
+        val trimmedTitle = title.trim().ifBlank { track.title }
+        val trimmedArtist = artist.trim()
+            .ifBlank { track.artist ?: track.channelTitle }
+        val album = albumRaw.trim().ifBlank { null }
+
+        viewModelScope.launch {
+            val updated = track.copy(
+                title = trimmedTitle,
+                artist = trimmedArtist,
+                album = album,
+            )
+            searchResultTrackRepository.update(updated)
+            downloadQueueManager.enqueue(
+                youtubeId = updated.youtubeId,
+                title = updated.title,
+                artist = updated.artist ?: updated.channelTitle,
+                album = updated.album,
+            )
+        }
+    }
+
+    /**
      * Enqueues a WorkManager download job for the given track.
      * DownloadWorker resolves the SAF destination internally via
      * StorageManager + DownloadDirManager.
