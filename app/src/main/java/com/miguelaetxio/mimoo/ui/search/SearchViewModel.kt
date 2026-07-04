@@ -1,17 +1,17 @@
 package com.miguelaetxio.mimoo.ui.search
 
 import android.content.Context
-import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.miguelaetxio.mimoo.BuildConfig
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
-import com.miguelaetxio.mimoo.data.remote.YouTubeRepository
+import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
+import com.miguelaetxio.mimoo.ui.library.UNKNOWN_ARTIST_CREDIT
+import com.miguelaetxio.mimoo.util.YoutubeTitleCleaner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,9 +35,21 @@ data class SearchUiState(
 /**
  * ViewModel for the search screen. Handles YouTube search, stream
  * playback, and audio download requests.
+ *
+ * search() usa ExternalLinkResolver.searchYoutube() (yt-dlp,
+ * "ytsearchN:query") en vez de YouTubeApiService.search() (search.list,
+ * 100 unidades/llamada) -- petición explícita de Miguel Ángel
+ * (2026-07-04): "quiero poder buscar de forma gratuita, no gastar
+ * cuota". Coste de cuota CERO, sin importar cuántas veces se use.
  * ---
  * ViewModel de la pantalla de busqueda. Gestiona la busqueda en
  * YouTube, la reproduccion en streaming y las solicitudes de descarga.
+ *
+ * search() uses ExternalLinkResolver.searchYoutube() (yt-dlp,
+ * "ytsearchN:query") instead of YouTubeApiService.search() (search.list,
+ * 100 units/call) -- explicit request from Miguel Ángel (2026-07-04):
+ * "I want to be able to search for free, not spend quota". ZERO quota
+ * cost, no matter how many times it's used.
  *
  * Download state flow:
  *   search() inserts tracks into Room ->
@@ -50,7 +62,7 @@ data class SearchUiState(
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val youTubeRepository: YouTubeRepository,
+    private val externalLinkResolver: ExternalLinkResolver,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
@@ -96,18 +108,15 @@ class SearchViewModel @Inject constructor(
                 errorMessage = null,
             )
             try {
-                val dtos = youTubeRepository.search(
-                    query = query,
-                    apiKey = BuildConfig.YOUTUBE_API_KEY,
-                )
-                val tracks = dtos.map { dto ->
+                val result = externalLinkResolver.searchYoutube(query)
+                val tracks = result.tracks.map { dto ->
                     SearchResultTrack(
                         youtubeId = dto.youtubeId,
-                        title = dto.title,
+                        title = YoutubeTitleCleaner.clean(dto.title),
                         channelTitle = dto.channelTitle,
                         durationSeconds = dto.durationSeconds,
                         thumbnailUrl = dto.thumbnailUrl,
-                        artist = dto.channelTitle,
+                        artist = dto.channelTitle.ifBlank { UNKNOWN_ARTIST_CREDIT },
                     )
                 }
                 searchResultTrackRepository.cacheSearchResults(tracks)

@@ -54,4 +54,29 @@ class ExternalLinkResolver @Inject constructor() {
             val json = module.callAttr("resolve_youtube_link", url).toString()
             gson.fromJson(json, ExternalLinkResult::class.java)
         }
+
+    /**
+     * Búsqueda por texto libre gratuita, a coste de cuota CERO --
+     * petición explícita de Miguel Ángel (2026-07-04): "quiero poder
+     * realizar las búsquedas de forma gratuita... prefiero tener que
+     * escribir los nombres a gastar mi cuota". Usa la sintaxis
+     * pseudo-URL "ytsearchN:query" de yt-dlp, que resolve_youtube_link()
+     * ya sabe tratar exactamente igual que una playlist real (mismos
+     * "entries", mismo extract_flat) -- no hace falta ninguna función
+     * Python nueva. Sustituye a YouTubeApiService.search() (search.list,
+     * 100 unidades/llamada sobre un pool diario de 10.000) en la
+     * pantalla de Búsqueda.
+     * ---
+     * Free-text search at ZERO quota cost -- explicit request from
+     * Miguel Ángel (2026-07-04): "I want to be able to search for
+     * free... I'd rather type the names than spend my quota". Uses
+     * yt-dlp's "ytsearchN:query" pseudo-URL syntax, which
+     * resolve_youtube_link() already knows how to handle exactly like
+     * a real playlist (same "entries", same extract_flat) -- no new
+     * Python function needed. Replaces YouTubeApiService.search()
+     * (search.list, 100 units/call over a 10,000/day pool) in the
+     * Search screen.
+     */
+    suspend fun searchYoutube(query: String, limit: Int = 15): ExternalLinkResult =
+        resolveLink("ytsearch$limit:$query")
 }
