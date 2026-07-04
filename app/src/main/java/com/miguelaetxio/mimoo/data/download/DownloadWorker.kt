@@ -98,6 +98,42 @@ class DownloadWorker @AssistedInject constructor(
         val safeTitle = DownloadDirManager.sanitize(title)
         val outputFileName = "$safeTitle.opus"
 
+        // Idempotencia real (2026-07-04, petición de Miguel Ángel tras
+        // el fix de reconcileOrphanedDownloads()): esta pista puede
+        // reencolarse por una fila QUEUED/DOWNLOADING huérfana cuyo
+        // archivo YA se descargó con éxito la vez anterior -- el
+        // proceso murió justo después de la copia SAF pero antes de
+        // updateDownloadResult(DONE). Sin esta comprobación,
+        // trackDir.createFile() de más abajo crearía un duplicado
+        // físico byte a byte (con sufijo " (1)" añadido por el
+        // proveedor SAF) cada vez que esa fila huérfana se reencola --
+        // exactamente el escenario de "zombis" que preocupa a Miguel
+        // Ángel a escala de una tarjeta de 256 GB. Si el archivo ya
+        // existe, no se descarga nada: se marca DONE con ese archivo
+        // tal cual y se termina aquí.
+        // ---
+        // Real idempotency (2026-07-04, requested by Miguel Ángel
+        // after the reconcileOrphanedDownloads() fix): this track can
+        // get re-enqueued by an orphaned QUEUED/DOWNLOADING row whose
+        // file was ALREADY downloaded successfully last time -- the
+        // process died right after the SAF copy but before
+        // updateDownloadResult(DONE). Without this check,
+        // trackDir.createFile() further down would create a byte-for-
+        // byte physical duplicate (with a " (1)" suffix added by the
+        // SAF provider) every time that orphaned row gets re-enqueued
+        // -- exactly the "zombie" scenario Miguel Ángel is worried
+        // about at the scale of a 256 GB card. If the file already
+        // exists, nothing is downloaded: it's marked DONE with that
+        // existing file as-is and we return here.
+        trackDir.findFile(outputFileName)?.let { existing ->
+            repository.updateDownloadResult(
+                youtubeId,
+                filePath = existing.uri.toString(),
+                status = DownloadStatus.DONE,
+            )
+            return Result.success()
+        }
+
         // Temp file in app cache dir: no permission needed.
         // Archivo temporal en cache dir de la app: sin permiso necesario.
         val tempBase = File(applicationContext.cacheDir, youtubeId)
