@@ -125,6 +125,27 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         handleViewIntent(intent)
 
+        // Reconcilia SAF↔Room en CADA arranque de la app, no solo la
+        // primera vez que se elige la carpeta -- petición explícita de
+        // Miguel Ángel (2026-07-04): archivos añadidos a mano fuera de
+        // MiMoo (p.ej. carpetas de Beethoven copiadas desde un PC)
+        // antes solo se detectaban con el botón de refresco manual de
+        // Biblioteca, nunca automáticamente al abrir la app.
+        // ---
+        // Reconciles SAF↔Room on EVERY app startup, not just the first
+        // time the folder is chosen -- explicit request from Miguel
+        // Ángel (2026-07-04): files added by hand outside MiMoo (e.g.
+        // Beethoven folders copied from a PC) were previously only
+        // detected via Biblioteca's manual refresh button, never
+        // automatically on app open.
+        if (storageManager.hasRootUri()) {
+            storageManager.getRootUri()?.let { uri ->
+                lifecycleScope.launch {
+                    libraryReconciler.rescan(uri)
+                }
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             var showStorageExplanation by remember {

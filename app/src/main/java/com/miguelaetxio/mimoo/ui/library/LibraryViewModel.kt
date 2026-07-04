@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.download.DownloadDirManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
 import com.miguelaetxio.mimoo.data.library.TrackFileRelocator
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.Normalizer
 import java.util.Collections
 import javax.inject.Inject
 
@@ -47,20 +49,14 @@ const val VARIOUS_ARTISTS_DISPLAY_LABEL = "Varios"
  * YouTube Music, normalizado a blanco en link_resolver.py) — a
  * diferencia de VARIOUS_ARTISTS_CREDIT, que es para compilaciones con
  * varios artistas reales distintos, esto es para un único álbum/pista
- * real cuyo nombre de artista simplemente no se pudo determinar. Se
- * guarda y se muestra igual, sin mapeo — no es una convención de
- * MusicBrainz como VARIOUS_ARTISTS_CREDIT, así que no hace falta
- * traducirlo en displayArtistName().
+ * real cuyo nombre de artista simplemente no se pudo determinar.
  * ---
  * Fallback credit for when YouTube gives no usable real channel name
  * at all (e.g. uploader "-" on auto-generated YouTube Music
  * playlists, normalized to blank in link_resolver.py) — unlike
  * VARIOUS_ARTISTS_CREDIT, which is for compilations with several
  * distinct real artists, this is for a single real album/track whose
- * artist name simply couldn't be determined. Stored and displayed
- * as-is, no mapping needed — it isn't a MusicBrainz convention like
- * VARIOUS_ARTISTS_CREDIT, so displayArtistName() doesn't need to
- * translate it.
+ * artist name simply couldn't be determined.
  */
 const val UNKNOWN_ARTIST_CREDIT = "Artista desconocido"
 
@@ -70,6 +66,66 @@ fun displayArtistName(artist: String): String =
     } else {
         artist
     }
+
+/**
+ * Letra de agrupación de un artista para la primera capa de
+ * Biblioteca ("Artistas por letra"), pedida por Miguel Ángel
+ * (2026-07-04): se agrupa por el nombre TAL CUAL está guardado en
+ * Room (el "nombre conocido" -- Beethoven, Mozart, Alejandro Sanz --
+ * ya es lo que viene de MusicBrainz/YouTube, no el nombre de pila
+ * completo), sin ninguna heurística de apellido. Solo se le quitan
+ * los acentos/diacríticos para que "Ángel" caiga en "A" y no en un
+ * cubo aparte para "Á". Cualquier nombre que no empiece por una letra
+ * A-Z cae en "#".
+ * ---
+ * Grouping letter for an artist for Biblioteca's first layer
+ * ("Artistas por letra"), requested by Miguel Ángel (2026-07-04):
+ * grouped by the name AS STORED in Room (the "known name" --
+ * Beethoven, Mozart, Alejandro Sanz -- is already what comes from
+ * MusicBrainz/YouTube, not the full birth name), no surname
+ * heuristic. Only diacritics are stripped so "Ángel" falls under "A"
+ * instead of a separate "Á" bucket. Anything not starting with an
+ * A-Z letter falls under "#".
+ */
+fun sortLetterFor(artist: String): Char {
+    val trimmed = displayArtistName(artist).trim()
+    if (trimmed.isEmpty()) return '#'
+    val normalized = Normalizer.normalize(trimmed, Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}"), "")
+    val first = normalized.firstOrNull()?.uppercaseChar() ?: '#'
+    return if (first in 'A'..'Z') first else '#'
+}
+
+/**
+ * Niveles de navegación por capas de la pestaña Álbumes, pedidos por
+ * Miguel Ángel (2026-07-04): Letras -> Artistas (de esa letra) ->
+ * Álbumes (de ese artista) -> Pistas (de ese álbum) -- nunca todo
+ * junto en una sola pantalla.
+ * ---
+ * Drill-down navigation levels for the Álbumes tab, requested by
+ * Miguel Ángel (2026-07-04): Letters -> Artists (for that letter) ->
+ * Albums (for that artist) -> Tracks (for that album) -- never
+ * everything on one screen at once.
+ */
+sealed class AlbumsDrillLevel {
+    object Letters : AlbumsDrillLevel()
+    data class Artists(val letter: Char) : AlbumsDrillLevel()
+    data class Albums(val artist: String) : AlbumsDrillLevel()
+    data class Tracks(val artist: String, val album: String) : AlbumsDrillLevel()
+}
+
+/**
+ * Igual que AlbumsDrillLevel pero para la pestaña Sencillos, que no
+ * tiene capa de álbum: Letras -> Artistas -> Pistas directamente.
+ * ---
+ * Same as AlbumsDrillLevel but for the Sencillos tab, which has no
+ * album layer: Letters -> Artists -> Tracks directly.
+ */
+sealed class SinglesDrillLevel {
+    object Letters : SinglesDrillLevel()
+    data class Artists(val letter: Char) : SinglesDrillLevel()
+    data class Tracks(val artist: String) : SinglesDrillLevel()
+}
 
 data class LibraryUiState(
     val tab: LibraryTab = LibraryTab.ALBUMS,
@@ -85,6 +141,15 @@ data class LibraryUiState(
     val albumsByArtist: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
     val singlesByArtist: Map<String, List<SearchResultTrack>> = emptyMap(),
     val favorites: List<SearchResultTrack> = emptyList(),
+    // Letras disponibles (con al menos un artista) para la primera
+    // capa de cada pestaña, ya ordenadas.
+    // ---
+    // Available letters (with at least one artist) for the first
+    // layer of each tab, already sorted.
+    val albumLetters: List<Char> = emptyList(),
+    val singleLetters: List<Char> = emptyList(),
+    val albumsDrill: AlbumsDrillLevel = AlbumsDrillLevel.Letters,
+    val singlesDrill: SinglesDrillLevel = SinglesDrillLevel.Letters,
     val isRefreshing: Boolean = false,
     val editMetadataError: String? = null,
     // Resumen de mergeDuplicateFolders() para mostrar como Snackbar en
@@ -100,21 +165,21 @@ data class LibraryUiState(
  * tracks with downloadStatus == DONE — this screen is about what has
  * actually been downloaded, not search results.
  *
- * Does NOT auto-reconcile the SAF folder on creation — that only
- * happens once when the storage folder is first chosen (in
- * MainActivity) or on demand via refreshLibrary(), called from an
- * explicit refresh button. A full SAF tree walk on every screen open
- * would not scale to a large library.
+ * La reconciliación SAF↔Room automática al ARRANCAR la app vive en
+ * MainActivity (cada vez que hay una carpeta ya elegida, no solo la
+ * primera vez -- petición explícita de Miguel Ángel, 2026-07-04).
+ * refreshLibrary() sigue existiendo aquí como acción manual adicional
+ * desde el botón de refresco.
  * ---
  * ViewModel de la pantalla de Biblioteca (biblioteca local). Lee
  * solo pistas con downloadStatus == DONE — esta pantalla trata sobre
  * lo que realmente se ha descargado, no resultados de búsqueda.
  *
- * NO reconcilia la carpeta SAF automáticamente al crearse — eso solo
- * ocurre una vez al elegir la carpeta por primera vez (en
- * MainActivity) o bajo demanda vía refreshLibrary(), llamado desde un
- * botón de refresco explícito. Un recorrido completo del árbol SAF en
- * cada apertura de pantalla no escalaría con una biblioteca grande.
+ * La reconciliación automática SAF↔Room al arrancar vive en
+ * MainActivity (cada vez que ya hay carpeta elegida, no solo la
+ * primera vez -- petición explícita de Miguel Ángel, 2026-07-04).
+ * refreshLibrary() sigue existiendo aquí como acción manual adicional
+ * desde el botón de refresco.
  */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
@@ -169,15 +234,12 @@ class LibraryViewModel @Inject constructor(
      * carrera de DownloadDirManager (2026-07-03, ver
      * LibraryReconciler.mergeDuplicateArtistFolders()), y a
      * continuación limpia filas sintéticas muertas y vuelve a
-     * escanear para que Biblioteca refleje las rutas nuevas. Acción
-     * explícita del usuario, igual que refreshLibrary() -- nunca
-     * automática.
+     * escanear para que Biblioteca refleje las rutas nuevas.
      * ---
      * Merges duplicate artist folders caused by DownloadDirManager's
      * race condition (2026-07-03, see LibraryReconciler.
      * mergeDuplicateArtistFolders()), then prunes dead synthetic rows
-     * and rescans so Biblioteca reflects the new paths. Explicit user
-     * action, same as refreshLibrary() -- never automatic.
+     * and rescans so Biblioteca reflects the new paths.
      */
     fun mergeDuplicateFolders() {
         val rootUri = storageManager.getRootUri() ?: return
@@ -218,6 +280,69 @@ class LibraryViewModel @Inject constructor(
         recompute()
     }
 
+    // --- Navegación por capas, pestaña Álbumes -----------------------
+
+    fun selectAlbumsLetter(letter: Char) {
+        _uiState.value = _uiState.value.copy(
+            albumsDrill = AlbumsDrillLevel.Artists(letter),
+        )
+    }
+
+    fun selectAlbumsArtist(artist: String) {
+        _uiState.value = _uiState.value.copy(
+            albumsDrill = AlbumsDrillLevel.Albums(artist),
+        )
+    }
+
+    fun selectAlbumsAlbum(artist: String, album: String) {
+        _uiState.value = _uiState.value.copy(
+            albumsDrill = AlbumsDrillLevel.Tracks(artist, album),
+        )
+    }
+
+    /** Sube un nivel en la navegación de Álbumes; en Letras no hace nada. */
+    fun backAlbumsDrill(): Boolean {
+        val current = _uiState.value.albumsDrill
+        val newLevel = when (current) {
+            is AlbumsDrillLevel.Letters -> return false
+            is AlbumsDrillLevel.Artists -> AlbumsDrillLevel.Letters
+            is AlbumsDrillLevel.Albums -> AlbumsDrillLevel.Artists(
+                sortLetterFor(current.artist),
+            )
+            is AlbumsDrillLevel.Tracks -> AlbumsDrillLevel.Albums(current.artist)
+        }
+        _uiState.value = _uiState.value.copy(albumsDrill = newLevel)
+        return true
+    }
+
+    // --- Navegación por capas, pestaña Sencillos ---------------------
+
+    fun selectSinglesLetter(letter: Char) {
+        _uiState.value = _uiState.value.copy(
+            singlesDrill = SinglesDrillLevel.Artists(letter),
+        )
+    }
+
+    fun selectSinglesArtist(artist: String) {
+        _uiState.value = _uiState.value.copy(
+            singlesDrill = SinglesDrillLevel.Tracks(artist),
+        )
+    }
+
+    /** Sube un nivel en la navegación de Sencillos; en Letras no hace nada. */
+    fun backSinglesDrill(): Boolean {
+        val current = _uiState.value.singlesDrill
+        val newLevel = when (current) {
+            is SinglesDrillLevel.Letters -> return false
+            is SinglesDrillLevel.Artists -> SinglesDrillLevel.Letters
+            is SinglesDrillLevel.Tracks -> SinglesDrillLevel.Artists(
+                sortLetterFor(current.artist),
+            )
+        }
+        _uiState.value = _uiState.value.copy(singlesDrill = newLevel)
+        return true
+    }
+
     /** Toggles the favorite flag for a track from the library. */
     fun toggleFavorite(track: SearchResultTrack) {
         viewModelScope.launch {
@@ -228,17 +353,9 @@ class LibraryViewModel @Inject constructor(
     /**
      * Resolves and persists the cover art for one artist+album if it
      * hasn't been requested yet this process run (PASO 6, H03).
-     * Called from LibraryScreen once per rendered AlbumHeaderRow —
-     * only real albums reach this function, since singles now live in
-     * their own tab (albumsByArtist never contains a synthetic
-     * "Sencillos" grouping).
      * ---
      * Resuelve y persiste la carátula de un artista+álbum si no se ha
-     * pedido ya en esta ejecución del proceso (PASO 6, H03). Se llama
-     * desde LibraryScreen una vez por cada AlbumHeaderRow renderizado
-     * — solo llegan aquí álbumes reales, ya que los sencillos ahora
-     * viven en su propia pestaña (albumsByArtist nunca contiene una
-     * agrupación sintética "Sencillos").
+     * pedido ya en esta ejecución del proceso (PASO 6, H03).
      */
     fun requestCoverArtIfMissing(artist: String, album: String) {
         val key = "$artist|$album"
@@ -260,27 +377,13 @@ class LibraryViewModel @Inject constructor(
      * Applies a manual metadata edit to a track (PASO 7, H03). Title
      * always updates in place with no file move. Artist/album changes
      * additionally relocate the physical .opus file to the new
-     * {artist}/{album}/ folder via TrackFileRelocator — applies
-     * equally to real, search-originated rows and to synthetic rows
-     * from LibraryReconciler, since both carry a real filePath once
-     * downloaded. If relocation is needed but fails (no root Uri, or
-     * the copy itself fails), the whole edit is aborted and neither
-     * Room nor the filesystem changes — surfaced via
-     * editMetadataError rather than silently keeping a stale filePath
-     * that playback would then fail to open.
+     * {artist}/{album}/ folder via TrackFileRelocator.
      * ---
      * Aplica una edición manual de metadatos a una pista (PASO 7,
      * H03). El título siempre se actualiza en el sitio sin mover el
      * archivo. Los cambios de artista/álbum además reubican el
-     * archivo .opus físico a la nueva carpeta {artista}/{álbum}/ vía
-     * TrackFileRelocator — aplica igual a filas reales originadas de
-     * una búsqueda y a filas sintéticas de LibraryReconciler, ya que
-     * ambas llevan un filePath real una vez descargadas. Si hace
-     * falta reubicar pero falla (sin Uri raíz, o la copia en sí
-     * falla), toda la edición se aborta y ni Room ni el sistema de
-     * archivos cambian — se muestra vía editMetadataError en lugar de
-     * dejar en silencio un filePath obsoleto que la reproducción
-     * fallaría al abrir.
+     * archivo físico a la nueva carpeta {artista}/{álbum}/ vía
+     * TrackFileRelocator.
      */
     fun editMetadata(track: SearchResultTrack, newTitle: String, newArtist: String, newAlbumRaw: String) {
         val trimmedTitle = newTitle.trim().ifBlank { track.title }
@@ -321,6 +424,13 @@ class LibraryViewModel @Inject constructor(
                     return@launch
                 }
                 updatedFilePath = relocated
+
+                // El archivo salió de {currentArtist}/{track.album}/ --
+                // si quedó vacía, la limpiamos igual que en un borrado.
+                // ---
+                // The file left {currentArtist}/{track.album}/ -- if it
+                // ended up empty, clean it up just like on a delete.
+                cleanupEmptyFolders(currentArtist, track.album)
             }
 
             repository.update(
@@ -340,30 +450,163 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
-     * Deletes a download (PASO 5, H03): removes the physical .opus
-     * file via SAF, then either deletes the row entirely (synthetic
-     * rows from LibraryReconciler, which have no real youtubeId to
-     * fall back to) or resets it to PENDING with a null filePath
-     * (real, search-originated rows, which can be re-downloaded
-     * later from SearchScreen).
+     * Deletes a download: removes the physical file via SAF, borra la
+     * carpeta de álbum si quedó vacía y la de artista si también
+     * quedó vacía (petición de Miguel Ángel, 2026-07-04 -- nunca se
+     * borra la carpeta raíz), y después o bien elimina la fila entera
+     * (filas sintéticas de LibraryReconciler) o la resetea a PENDING
+     * (filas reales, que pueden volver a descargarse).
      * ---
-     * Elimina una descarga (PASO 5, H03): borra el archivo .opus
-     * físico vía SAF, y después o bien elimina la fila entera (filas
-     * sintéticas de LibraryReconciler, que no tienen un youtubeId
-     * real al que volver) o la resetea a PENDING con filePath null
-     * (filas reales originadas de una búsqueda, que pueden volver a
-     * descargarse más adelante desde SearchScreen).
+     * Elimina una descarga: borra el archivo físico vía SAF, borra la
+     * carpeta de álbum si quedó vacía y la de artista si también
+     * quedó vacía (requested by Miguel Ángel, 2026-07-04 -- the root
+     * folder is never deleted), then either deletes the row entirely
+     * (synthetic rows from LibraryReconciler) or resets it to PENDING
+     * (real rows, which can be re-downloaded).
      */
     fun deleteDownload(track: SearchResultTrack) {
         viewModelScope.launch {
             track.filePath?.let { path ->
                 DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
             }
+            cleanupEmptyFolders(track.artist ?: track.channelTitle, track.album)
             if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
                 repository.delete(track)
             } else {
                 repository.clearDownload(track.youtubeId)
             }
+        }
+    }
+
+    /**
+     * Borra un álbum entero de un artista: todas sus pistas (archivo
+     * físico + fila Room) y, al final, la carpeta de álbum entera y la
+     * de artista si quedó vacía. Acción explícita pedida por Miguel
+     * Ángel (2026-07-04) para gestionar la biblioteca desde dentro de
+     * un artista.
+     * ---
+     * Deletes an entire album from an artist: every track (physical
+     * file + Room row) and, at the end, the whole album folder and the
+     * artist folder if it ended up empty. Explicit action requested by
+     * Miguel Ángel (2026-07-04) to manage the library from within an
+     * artist.
+     */
+    fun deleteAlbum(artist: String, album: String) {
+        viewModelScope.launch {
+            val tracks = _uiState.value.albumsByArtist[artist]?.get(album)
+                ?: return@launch
+            tracks.forEach { track ->
+                track.filePath?.let { path ->
+                    DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                }
+                if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                    repository.delete(track)
+                } else {
+                    repository.clearDownload(track.youtubeId)
+                }
+            }
+            deleteFolderIfExists(artist, album)
+            cleanupEmptyFolders(artist, album)
+
+            if (_uiState.value.albumsDrill is AlbumsDrillLevel.Tracks) {
+                _uiState.value = _uiState.value.copy(
+                    albumsDrill = AlbumsDrillLevel.Albums(artist),
+                )
+            }
+        }
+    }
+
+    /**
+     * Borra un artista entero: todas sus pistas de álbum y sencillos
+     * (archivo físico + fila Room) y la carpeta de artista completa.
+     * Acción explícita pedida por Miguel Ángel (2026-07-04).
+     * ---
+     * Deletes an entire artist: every album and single track (physical
+     * file + Room row) and the whole artist folder. Explicit action
+     * requested by Miguel Ángel (2026-07-04).
+     */
+    fun deleteArtist(artist: String) {
+        viewModelScope.launch {
+            val albumTracks = _uiState.value.albumsByArtist[artist]
+                ?.values?.flatten() ?: emptyList()
+            val singleTracks = _uiState.value.singlesByArtist[artist] ?: emptyList()
+
+            (albumTracks + singleTracks).forEach { track ->
+                track.filePath?.let { path ->
+                    DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                }
+                if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                    repository.delete(track)
+                } else {
+                    repository.clearDownload(track.youtubeId)
+                }
+            }
+
+            val rootUri = storageManager.getRootUri()
+            if (rootUri != null) {
+                DocumentFile.fromTreeUri(context, rootUri)
+                    ?.findFile(DownloadDirManager.sanitize(artist))
+                    ?.delete()
+            }
+
+            if (_uiState.value.albumsDrill !is AlbumsDrillLevel.Letters) {
+                _uiState.value = _uiState.value.copy(
+                    albumsDrill = AlbumsDrillLevel.Letters,
+                )
+            }
+            if (_uiState.value.singlesDrill !is SinglesDrillLevel.Letters) {
+                _uiState.value = _uiState.value.copy(
+                    singlesDrill = SinglesDrillLevel.Letters,
+                )
+            }
+        }
+    }
+
+    /**
+     * Borra físicamente la carpeta de álbum {artist}/{album}/ entera
+     * (llamado desde deleteAlbum(), donde ya se han borrado todas las
+     * pistas conocidas pero podría quedar algún archivo suelto no
+     * indexado -- p.ej. una carátula .jpg). No falla si no existe.
+     * ---
+     * Physically deletes the whole {artist}/{album}/ folder (called
+     * from deleteAlbum(), where every known track has already been
+     * removed but a stray, non-indexed file might remain -- e.g. a
+     * .jpg cover). Does not fail if it doesn't exist.
+     */
+    private fun deleteFolderIfExists(artist: String, album: String?) {
+        val rootUri = storageManager.getRootUri() ?: return
+        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return
+        val artistDir = root.findFile(DownloadDirManager.sanitize(artist)) ?: return
+        val albumDirName = album?.let { DownloadDirManager.sanitize(it) } ?: "Sencillos"
+        artistDir.findFile(albumDirName)?.delete()
+    }
+
+    /**
+     * Borra la carpeta de álbum si quedó vacía tras un borrado, y la
+     * de artista si también quedó vacía -- nunca la carpeta raíz.
+     * Petición explícita de Miguel Ángel (2026-07-04): "cuando
+     * borremos el último integrante de la carpeta debe borrar la
+     * carpeta excepto la carpeta raíz".
+     * ---
+     * Deletes the album folder if it ended up empty after a deletion,
+     * and the artist folder if it also ended up empty -- never the
+     * root folder. Explicit request from Miguel Ángel (2026-07-04):
+     * "when we delete the last member of the folder, the folder
+     * should be deleted, except the root folder".
+     */
+    private fun cleanupEmptyFolders(artist: String, album: String?) {
+        val rootUri = storageManager.getRootUri() ?: return
+        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return
+        val artistDir = root.findFile(DownloadDirManager.sanitize(artist)) ?: return
+
+        val albumDirName = album?.let { DownloadDirManager.sanitize(it) } ?: "Sencillos"
+        val albumDir = artistDir.findFile(albumDirName)
+        if (albumDir != null && albumDir.isDirectory && albumDir.listFiles().isEmpty()) {
+            albumDir.delete()
+        }
+
+        if (artistDir.isDirectory && artistDir.listFiles().isEmpty()) {
+            artistDir.delete()
         }
     }
 
@@ -396,11 +639,8 @@ class LibraryViewModel @Inject constructor(
                     .toSortedMap()
                     .mapValues { (_, albumTracks) ->
                         // trackPosition real primero (orden de disco);
-                        // las pistas sin posición conocida (sueltas de
-                        // SearchScreen, o reconciliadas desde disco)
-                        // caen al final, ordenadas entre ellas por
-                        // título -- mismo comportamiento que antes de
-                        // este fix para esas filas en concreto.
+                        // las pistas sin posición conocida caen al
+                        // final, ordenadas entre ellas por título.
                         albumTracks.sortedWith(
                             compareBy<SearchResultTrack> {
                                 it.trackPosition ?: Int.MAX_VALUE
@@ -419,10 +659,21 @@ class LibraryViewModel @Inject constructor(
             .filter { it.isFavorite }
             .sortedBy { it.title }
 
+        val albumLetters = albumsByArtist.keys
+            .map { sortLetterFor(it) }
+            .toSortedSet()
+            .toList()
+        val singleLetters = singlesByArtist.keys
+            .map { sortLetterFor(it) }
+            .toSortedSet()
+            .toList()
+
         _uiState.value = _uiState.value.copy(
             albumsByArtist = albumsByArtist,
             singlesByArtist = singlesByArtist,
             favorites = favorites,
+            albumLetters = albumLetters,
+            singleLetters = singleLetters,
         )
     }
 
@@ -441,10 +692,6 @@ class LibraryViewModel @Inject constructor(
     /**
      * Plays every album track of one artist, album order then title
      * order within each album, as a queue (pestaña Álbumes).
-     * ---
-     * Reproduce todas las pistas de álbum de un artista, en orden de
-     * álbum y luego de título dentro de cada álbum, como cola
-     * (pestaña Álbumes).
      */
     fun playArtistAlbums(artist: String) {
         val albums = _uiState.value.albumsByArtist[artist] ?: return

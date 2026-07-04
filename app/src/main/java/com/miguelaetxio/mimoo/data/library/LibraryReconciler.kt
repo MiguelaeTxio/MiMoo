@@ -47,6 +47,37 @@ private val NULL_ALBUM_FOLDER_NAMES = setOf(
 )
 
 /**
+ * Extensiones de audio aceptadas por rescan() -- no solo ".opus"
+ * (formato que usa el propio descargador de MiMoo), también los
+ * formatos habituales de archivos copiados a mano desde un PC. Bug
+ * real reportado por Miguel Ángel (2026-07-04): pistas de Beethoven en
+ * .mp3/.flac ignoradas por completo porque el filtro anterior solo
+ * aceptaba ".opus".
+ * ---
+ * Audio extensions accepted by rescan() -- not just ".opus" (the
+ * format MiMoo's own downloader uses), also the common formats for
+ * files copied by hand from a PC. Real bug reported by Miguel Ángel
+ * (2026-07-04): Beethoven tracks in .mp3/.flac completely ignored
+ * because the previous filter only accepted ".opus".
+ */
+private val AUDIO_EXTENSIONS = setOf(
+    "opus", "mp3", "m4a", "flac", "ogg", "wav", "aac", "wma",
+)
+
+/**
+ * Fallback artist label for an audio file found directly at the SAF
+ * root (no artist folder at all) -- an edge case, but one Miguel
+ * Ángel's manually-copied folders could hit if a file was ever placed
+ * loose at the root.
+ * ---
+ * Etiqueta de artista de respaldo para un archivo de audio encontrado
+ * directamente en la raíz SAF (sin ninguna carpeta de artista) -- un
+ * caso borde, pero uno que las carpetas copiadas a mano por Miguel
+ * Ángel podrían tocar si algún archivo quedó suelto en la raíz.
+ */
+private const val UNKNOWN_ARTIST_FOLDER_LABEL = "Desconocido"
+
+/**
  * Resultado de mergeDuplicateArtistFolders(), para que
  * LibraryViewModel pueda mostrarle a Miguel Ángel un resumen concreto
  * de lo que se hizo.
@@ -143,41 +174,104 @@ class LibraryReconciler @Inject constructor(
             .associateBy { it.filePath }
 
         val discovered = mutableListOf<SearchResultTrack>()
-
-        root.listFiles()
-            .filter { it.isDirectory }
-            .forEach { artistDir ->
-                val artistName = artistDir.name ?: return@forEach
-                artistDir.listFiles()
-                    .filter { it.isDirectory }
-                    .forEach { albumDir ->
-                        val albumName = albumDir.name ?: return@forEach
-                        albumDir.listFiles()
-                            .filter {
-                                it.isFile && it.name?.endsWith(".opus") == true
-                            }
-                            .forEach { file ->
-                                val uriString = file.uri.toString()
-                                if (uriString !in knownRealPaths) {
-                                    val preservedFavorite =
-                                        existingSyntheticByPath[uriString]
-                                            ?.isFavorite ?: false
-                                    discovered.add(
-                                        buildSyntheticTrack(
-                                            uriString = uriString,
-                                            fileName = file.name!!,
-                                            artistName = artistName,
-                                            albumName = albumName,
-                                            isFavorite = preservedFavorite,
-                                        )
-                                    )
-                                }
-                            }
-                    }
-            }
+        collectAudioFiles(
+            dir = root,
+            pathNames = emptyList(),
+            discovered = discovered,
+            knownRealPaths = knownRealPaths,
+            existingSyntheticByPath = existingSyntheticByPath,
+        )
 
         if (discovered.isNotEmpty()) {
             repository.cacheSearchResults(discovered)
+        }
+    }
+
+    /**
+     * Recorre rootUri recursivamente (no solo 2 niveles fijos
+     * {artista}/{álbum}/) y acepta cualquier extensión de
+     * AUDIO_EXTENSIONS, no solo .opus. Bug real reportado por Miguel
+     * Ángel (2026-07-04): pistas de Beethoven copiadas a mano en el
+     * dispositivo (no descargadas vía MiMoo, por tanto en formatos
+     * como .mp3/.flac/.m4a, nunca .opus) no aparecían en Biblioteca
+     * porque rescan() solo miraba 2 niveles de profundidad y filtraba
+     * únicamente por ".opus".
+     *
+     * artist/album se derivan de la profundidad del archivo respecto
+     * a rootUri:
+     *   - profundidad 0 (archivo suelto en la raíz): artista
+     *     desconocido, sin álbum.
+     *   - profundidad 1 (root/Artista/archivo): artista = ese
+     *     directorio, sin álbum (sencillo).
+     *   - profundidad 2+ (root/Artista/Álbum/.../archivo): artista =
+     *     primer nivel, álbum = segundo nivel (los niveles más
+     *     profundos, si los hay, se ignoran a efectos de agrupación).
+     * ---
+     * Walks rootUri recursively (not just a fixed 2 levels
+     * {artist}/{album}/) and accepts any extension in
+     * AUDIO_EXTENSIONS, not just .opus. Real bug reported by Miguel
+     * Ángel (2026-07-04): Beethoven tracks manually copied onto the
+     * device (not downloaded via MiMoo, hence in formats like
+     * .mp3/.flac/.m4a, never .opus) weren't showing up in Biblioteca
+     * because rescan() only looked 2 levels deep and filtered by
+     * ".opus" only.
+     *
+     * artist/album are derived from the file's depth relative to
+     * rootUri:
+     *   - depth 0 (a loose file at the root): unknown artist, no
+     *     album.
+     *   - depth 1 (root/Artist/file): artist = that directory, no
+     *     album (single).
+     *   - depth 2+ (root/Artist/Album/.../file): artist = first
+     *     level, album = second level (any deeper levels, if
+     *     present, are ignored for grouping purposes).
+     */
+    private fun collectAudioFiles(
+        dir: DocumentFile,
+        pathNames: List<String>,
+        discovered: MutableList<SearchResultTrack>,
+        knownRealPaths: Set<String>,
+        existingSyntheticByPath: Map<String?, SearchResultTrack>,
+    ) {
+        dir.listFiles().forEach { child ->
+            when {
+                child.isDirectory -> {
+                    val childName = child.name ?: return@forEach
+                    collectAudioFiles(
+                        dir = child,
+                        pathNames = pathNames + childName,
+                        discovered = discovered,
+                        knownRealPaths = knownRealPaths,
+                        existingSyntheticByPath = existingSyntheticByPath,
+                    )
+                }
+                child.isFile -> {
+                    val extension = child.name
+                        ?.substringAfterLast('.', "")
+                        ?.lowercase()
+                    if (extension == null || extension !in AUDIO_EXTENSIONS) {
+                        return@forEach
+                    }
+                    val uriString = child.uri.toString()
+                    if (uriString in knownRealPaths) return@forEach
+
+                    val preservedFavorite = existingSyntheticByPath[uriString]
+                        ?.isFavorite ?: false
+                    val artistName = pathNames.getOrNull(0)
+                        ?: UNKNOWN_ARTIST_FOLDER_LABEL
+                    val albumName = pathNames.getOrNull(1)
+
+                    discovered.add(
+                        buildSyntheticTrack(
+                            uriString = uriString,
+                            fileName = child.name!!,
+                            artistName = artistName,
+                            albumName = albumName,
+                            isFavorite = preservedFavorite,
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -405,7 +499,7 @@ class LibraryReconciler @Inject constructor(
         uriString: String,
         fileName: String,
         artistName: String,
-        albumName: String,
+        albumName: String?,
         isFavorite: Boolean,
     ): SearchResultTrack {
         val digest = MessageDigest.getInstance("SHA-256")
@@ -415,14 +509,14 @@ class LibraryReconciler @Inject constructor(
 
         return SearchResultTrack(
             youtubeId = "$LOCAL_ID_PREFIX$digest",
-            title = fileName.removeSuffix(".opus"),
+            title = fileName.substringBeforeLast('.', fileName),
             channelTitle = artistName,
             durationSeconds = 0,
             thumbnailUrl = null,
             filePath = uriString,
             downloadStatus = DownloadStatus.DONE,
             artist = artistName,
-            album = if (albumName in NULL_ALBUM_FOLDER_NAMES) {
+            album = if (albumName == null || albumName in NULL_ALBUM_FOLDER_NAMES) {
                 null
             } else {
                 albumName
