@@ -69,8 +69,19 @@ fun LibraryScreen(
     var trackPendingEdit by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
-    var trackPendingAddToPlaylist by remember {
-        mutableStateOf<SearchResultTrack?>(null)
+    // Lista de youtubeIds pendiente para AddToPlaylistDialog -- una
+    // sola pista (listOf(track)) o un álbum entero (tracks.map { it })
+    // según desde dónde se abra. Petición explícita de Miguel Ángel
+    // (2026-07-04): poder añadir álbumes completos a una lista, no
+    // solo pista a pista.
+    // ---
+    // Pending track list for AddToPlaylistDialog -- a single track
+    // (listOf(track)) or a whole album (tracks.map { it }) depending on
+    // where it's opened from. Explicit request from Miguel Ángel
+    // (2026-07-04): being able to add whole albums to a playlist, not
+    // just track by track.
+    var tracksPendingAddToPlaylist by remember {
+        mutableStateOf<List<SearchResultTrack>?>(null)
     }
     // Confirmaciones de borrado en bloque (petición de Miguel Ángel,
     // 2026-07-04): borrar un artista o un álbum entero es destructivo
@@ -267,7 +278,8 @@ fun LibraryScreen(
                     onDeleteAlbum = { artist, album -> albumPendingDelete = artist to album },
                     onDeleteTrack = { trackPendingDelete = it },
                     onEditTrack = { trackPendingEdit = it },
-                    onAddToPlaylist = { trackPendingAddToPlaylist = it },
+                    onAddToPlaylist = { tracksPendingAddToPlaylist = listOf(it) },
+                    onAddAlbumToPlaylist = { tracksPendingAddToPlaylist = it },
                 )
                 LibraryTab.SINGLES -> SinglesTabContent(
                     uiState = uiState,
@@ -275,14 +287,14 @@ fun LibraryScreen(
                     onDeleteArtist = { artistPendingDelete = it },
                     onDeleteTrack = { trackPendingDelete = it },
                     onEditTrack = { trackPendingEdit = it },
-                    onAddToPlaylist = { trackPendingAddToPlaylist = it },
+                    onAddToPlaylist = { tracksPendingAddToPlaylist = listOf(it) },
                 )
                 LibraryTab.FAVORITES -> FavoritesTabContent(
                     uiState = uiState,
                     viewModel = viewModel,
                     onDeleteTrack = { trackPendingDelete = it },
                     onEditTrack = { trackPendingEdit = it },
-                    onAddToPlaylist = { trackPendingAddToPlaylist = it },
+                    onAddToPlaylist = { tracksPendingAddToPlaylist = listOf(it) },
                 )
             }
         }
@@ -392,10 +404,10 @@ fun LibraryScreen(
         )
     }
 
-    trackPendingAddToPlaylist?.let { track ->
+    tracksPendingAddToPlaylist?.let { tracks ->
         AddToPlaylistDialog(
-            youtubeId = track.youtubeId,
-            onDismiss = { trackPendingAddToPlaylist = null },
+            youtubeIds = tracks.map { it.youtubeId },
+            onDismiss = { tracksPendingAddToPlaylist = null },
         )
     }
 }
@@ -409,6 +421,7 @@ private fun ColumnScope.AlbumsTabContent(
     onDeleteTrack: (SearchResultTrack) -> Unit,
     onEditTrack: (SearchResultTrack) -> Unit,
     onAddToPlaylist: (SearchResultTrack) -> Unit,
+    onAddAlbumToPlaylist: (List<SearchResultTrack>) -> Unit,
 ) {
     when (val drill = uiState.albumsDrill) {
         is AlbumsDrillLevel.Letters -> LetterGrid(
@@ -433,14 +446,16 @@ private fun ColumnScope.AlbumsTabContent(
                 ?: emptyList()
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(albums, key = { "album:${drill.artist}:$it" }) { album ->
+                    val albumTracks = uiState.albumsByArtist[drill.artist]?.get(album)
+                        ?: emptyList()
                     AlbumHeaderRow(
                         artist = drill.artist,
                         album = album,
-                        tracks = uiState.albumsByArtist[drill.artist]?.get(album)
-                            ?: emptyList(),
+                        tracks = albumTracks,
                         onClick = { viewModel.selectAlbumsAlbum(drill.artist, album) },
                         onPlayAlbum = { viewModel.playAlbum(drill.artist, album) },
                         onDelete = { onDeleteAlbum(drill.artist, album) },
+                        onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
                     )
                 }
@@ -688,6 +703,7 @@ private fun AlbumHeaderRow(
     onClick: () -> Unit,
     onPlayAlbum: () -> Unit,
     onDelete: () -> Unit,
+    onAddToPlaylist: () -> Unit,
     onRequestCoverArt: (artist: String, album: String) -> Unit,
 ) {
     LaunchedEffect(artist, album) {
@@ -705,6 +721,7 @@ private fun AlbumHeaderRow(
     // (2026-07-04).
     val shareableUrl = tracks.firstOrNull()?.shareableUrl
     val context = LocalContext.current
+    var showOverflowMenu by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -726,9 +743,45 @@ private fun AlbumHeaderRow(
         IconButton(onClick = onPlayAlbum) {
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir álbum")
         }
-        if (shareableUrl != null) {
-            IconButton(onClick = { shareLink(context, shareableUrl) }) {
-                Icon(Icons.Filled.Share, contentDescription = "Compartir enlace del álbum")
+        // Compartir/Añadir a lista agrupados en un overflow -- mismo
+        // criterio de limpieza que LibraryTrackRow. Borrar se queda
+        // siempre visible por ser una acción destructiva que conviene
+        // no esconder detrás de un menú.
+        // ---
+        // Share/Add to playlist grouped into an overflow -- same
+        // cleanliness criterion as LibraryTrackRow. Delete stays
+        // always visible since it's a destructive action better not
+        // hidden behind a menu.
+        Box {
+            IconButton(onClick = { showOverflowMenu = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = "Más opciones del álbum")
+            }
+            DropdownMenu(
+                expanded = showOverflowMenu,
+                onDismissRequest = { showOverflowMenu = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Añadir a lista") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onAddToPlaylist()
+                    },
+                )
+                if (shareableUrl != null) {
+                    DropdownMenuItem(
+                        text = { Text("Compartir enlace") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Share, contentDescription = null)
+                        },
+                        onClick = {
+                            showOverflowMenu = false
+                            shareLink(context, shareableUrl)
+                        },
+                    )
+                }
             }
         }
         IconButton(onClick = onDelete) {

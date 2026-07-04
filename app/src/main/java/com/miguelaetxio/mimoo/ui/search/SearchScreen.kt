@@ -114,7 +114,7 @@ fun SearchScreen(
 
     trackPendingAddToPlaylist?.let { track ->
         AddToPlaylistDialog(
-            youtubeId = track.youtubeId,
+            youtubeIds = listOf(track.youtubeId),
             onDismiss = { trackPendingAddToPlaylist = null },
         )
     }

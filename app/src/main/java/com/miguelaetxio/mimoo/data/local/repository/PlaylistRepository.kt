@@ -56,6 +56,25 @@ class PlaylistRepository @Inject constructor(
         )
     }
 
+    /**
+     * Añade varias pistas de golpe, en el orden dado -- petición
+     * explícita de Miguel Ángel (2026-07-04): poder añadir un álbum
+     * entero a una lista de reproducción, no solo pista a pista.
+     * Reutiliza addTrackToPlaylist() en bucle: cada llamada añade al
+     * final, así que el orden del álbum se conserva en la lista.
+     * ---
+     * Adds several tracks at once, in the given order -- explicit
+     * request from Miguel Ángel (2026-07-04): being able to add a
+     * whole album to a playlist, not just track by track. Reuses
+     * addTrackToPlaylist() in a loop: each call appends at the end, so
+     * the album's order is preserved in the playlist.
+     */
+    suspend fun addTracksToPlaylist(playlistId: Long, youtubeIds: List<String>) {
+        youtubeIds.forEach { youtubeId ->
+            addTrackToPlaylist(playlistId, youtubeId)
+        }
+    }
+
     suspend fun removeTrackFromPlaylist(playlistId: Long, youtubeId: String) =
         dao.removeTrackFromPlaylist(playlistId, youtubeId)
 

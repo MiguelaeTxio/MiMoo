@@ -46,18 +46,29 @@ class AddToPlaylistDialogViewModel @Inject constructor(
         }
     }
 
-    fun addToExistingPlaylist(playlistId: Long, youtubeId: String) {
+    /**
+     * youtubeIds en vez de un solo youtubeId -- petición explícita de
+     * Miguel Ángel (2026-07-04): poder añadir un álbum entero (varias
+     * pistas de golpe) a una lista, no solo una pista suelta. Los
+     * llamantes existentes (una sola pista) pasan listOf(youtubeId).
+     * ---
+     * youtubeIds instead of a single youtubeId -- explicit request
+     * from Miguel Ángel (2026-07-04): being able to add a whole album
+     * (several tracks at once) to a playlist, not just a single track.
+     * Existing callers (one track) pass listOf(youtubeId).
+     */
+    fun addToExistingPlaylist(playlistId: Long, youtubeIds: List<String>) {
         viewModelScope.launch {
-            repository.addTrackToPlaylist(playlistId, youtubeId)
+            repository.addTracksToPlaylist(playlistId, youtubeIds)
         }
     }
 
-    fun createPlaylistAndAdd(name: String, youtubeId: String) {
+    fun createPlaylistAndAdd(name: String, youtubeIds: List<String>) {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return
         viewModelScope.launch {
             val playlistId = repository.createPlaylist(trimmed)
-            repository.addTrackToPlaylist(playlistId, youtubeId)
+            repository.addTracksToPlaylist(playlistId, youtubeIds)
         }
     }
 }
