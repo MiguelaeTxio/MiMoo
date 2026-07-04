@@ -103,6 +103,7 @@ data class DuplicateMergeResult(
  */
 data class RescanResult(
     val emptyFoldersRemoved: Int,
+    val junkFilesRemoved: Int,
     val tracksDiscovered: Int,
 )
 
@@ -150,7 +151,7 @@ class LibraryReconciler @Inject constructor(
         const val LOCAL_ID_PREFIX = "local:"
     }
     suspend fun rescan(rootUri: Uri): RescanResult {
-        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return RescanResult(0, 0)
+        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return RescanResult(0, 0, 0)
 
         // Carpetas vacías primero (petición explícita de Miguel Ángel,
         // 2026-07-04, tras encontrar carpetas de artista completamente
@@ -165,6 +166,25 @@ class LibraryReconciler @Inject constructor(
         // before this fix -- that never cleaned themselves up). Never
         // deletes rootUri itself, only its subfolders, recursively and
         // bottom-up.
+        // Archivos no musicales dentro de subcarpetas primero (petición
+        // explícita de Miguel Ángel, 2026-07-04: "una carpeta con
+        // archivos que no son cosas recuperables por MiMoo, en el
+        // primer arranque, MiMoo tiene que borrarlas"). Nunca toca la
+        // raíz -- ahí SÍ viven a propósito crash_log.txt/
+        // debug_error.txt (logs de diagnóstico deliberados, no restos
+        // de descargas). Se hace antes que pruneEmptyFolders() para
+        // que una carpeta que se quede vacía tras esto también se
+        // borre en el mismo pase.
+        // ---
+        // Non-audio files inside subfolders first (explicit request
+        // from Miguel Ángel, 2026-07-04: "a folder with files that
+        // aren't recoverable by MiMoo, on first startup, MiMoo has to
+        // delete them"). Never touches the root -- that's where
+        // crash_log.txt/debug_error.txt deliberately live (intentional
+        // diagnostic logs, not download leftovers). Done before
+        // pruneEmptyFolders() so a folder left empty by this also gets
+        // deleted in the same pass.
+        val junkFilesRemoved = pruneJunkFiles(root, isRoot = true)
         val emptyFoldersRemoved = pruneEmptyFolders(root)
 
         // Only real, search-originated rows are protected from being
@@ -211,7 +231,55 @@ class LibraryReconciler @Inject constructor(
             repository.cacheSearchResults(discovered)
         }
 
-        return RescanResult(emptyFoldersRemoved, discovered.size)
+        return RescanResult(emptyFoldersRemoved, junkFilesRemoved, discovered.size)
+    }
+
+    /**
+     * Borra recursivamente cualquier archivo que NO sea de audio
+     * (extensión fuera de AUDIO_EXTENSIONS) dentro de una subcarpeta
+     * -- nunca en `dir` cuando `isRoot=true` (ahí viven a propósito
+     * crash_log.txt/debug_error.txt). Petición explícita de Miguel
+     * Ángel (2026-07-04), probada con una "carpeta fantasma" con un
+     * archivo ajeno a la música creada a propósito para verificar que
+     * esta limpieza la detecta y la borra en el primer arranque.
+     * ---
+     * Recursively deletes any file that is NOT audio (extension
+     * outside AUDIO_EXTENSIONS) inside a subfolder -- never in `dir`
+     * when `isRoot=true` (that's where crash_log.txt/debug_error.txt
+     * deliberately live). Explicit request from Miguel Ángel
+     * (2026-07-04), tested with a "phantom folder" holding an
+     * unrelated file created on purpose to verify this cleanup detects
+     * and deletes it on first startup.
+     */
+    private fun pruneJunkFiles(dir: DocumentFile, isRoot: Boolean): Int {
+        var removed = 0
+        val children = try {
+            dir.listFiles()
+        } catch (e: Exception) {
+            return removed
+        }
+        children.forEach { child ->
+            try {
+                if (child.isDirectory) {
+                    removed += pruneJunkFiles(child, isRoot = false)
+                } else if (child.isFile && !isRoot) {
+                    val extension = child.name
+                        ?.substringAfterLast('.', "")
+                        ?.lowercase()
+                    if (extension == null || extension !in AUDIO_EXTENSIONS) {
+                        child.delete()
+                        removed++
+                    }
+                }
+            } catch (e: Exception) {
+                // Un fallo puntual con un archivo no debe impedir
+                // seguir con sus hermanos.
+                // ---
+                // A one-off failure with one file must not stop
+                // processing its siblings.
+            }
+        }
+        return removed
     }
 
     /**

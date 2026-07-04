@@ -155,11 +155,20 @@ class MainActivity : ComponentActivity() {
                     // (2026-07-04) -- only if there was something real
                     // to report, so a normal startup with nothing new
                     // doesn't show an empty Snackbar every time.
-                    if (result.emptyFoldersRemoved > 0 || result.tracksDiscovered > 0) {
+                    if (result.emptyFoldersRemoved > 0 ||
+                        result.junkFilesRemoved > 0 ||
+                        result.tracksDiscovered > 0
+                    ) {
                         startupNotices.post(
                             buildString {
                                 append("Limpieza de arranque: ")
                                 val parts = mutableListOf<String>()
+                                if (result.junkFilesRemoved > 0) {
+                                    parts.add(
+                                        "${result.junkFilesRemoved} archivo(s) " +
+                                            "no musical(es) borrado(s)"
+                                    )
+                                }
                                 if (result.emptyFoldersRemoved > 0) {
                                     parts.add(
                                         "${result.emptyFoldersRemoved} " +
