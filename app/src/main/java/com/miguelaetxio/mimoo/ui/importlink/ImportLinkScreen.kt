@@ -193,15 +193,30 @@ fun ImportLinkScreen(
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if (viewModel.needsArtistConfirmation()) {
-                                val (defArtist, defAlbum) =
-                                    viewModel.defaultArtistAndAlbum()
-                                metadataArtist = defArtist
-                                metadataAlbum = defAlbum
-                                showMetadataDialog = true
-                            } else {
-                                viewModel.importSelected()
-                            }
+                            // Antes solo se mostraba el diálogo cuando
+                            // needsArtistConfirmation() detectaba que
+                            // YouTube no daba ningún nombre de artista
+                            // -- petición explícita de Miguel Ángel
+                            // (2026-07-05): "casi nunca viene bien" el
+                            // nombre automático (canales como "Air
+                            // french Band", "Canal IMAR", etc. sí
+                            // tienen nombre, pero no es el que
+                            // quieres), así que ahora se muestra
+                            // SIEMPRE, sin esa condición.
+                            // ---
+                            // Previously the dialog only showed when
+                            // needsArtistConfirmation() detected
+                            // YouTube gave no artist name at all --
+                            // explicit request from Miguel Ángel
+                            // (2026-07-05): the automatic name is
+                            // "almost never right" (channels like "Air
+                            // french Band", "Canal IMAR", etc. DO have
+                            // a name, just not the one you want), so it
+                            // now ALWAYS shows, without that condition.
+                            val (defArtist, defAlbum) = viewModel.defaultArtistAndAlbum()
+                            metadataArtist = defArtist
+                            metadataAlbum = defAlbum
+                            showMetadataDialog = true
                         },
                         enabled = uiState.selectedYoutubeIds.isNotEmpty(),
                         modifier = Modifier.weight(1f),
@@ -223,10 +238,10 @@ fun ImportLinkScreen(
             text = {
                 Column {
                     Text(
-                        "YouTube no ha dado un nombre de artista real " +
-                            "para estas pistas. Revisa o corrige los " +
-                            "datos antes de descargar — se aplicarán a " +
-                            "las ${uiState.selectedYoutubeIds.size} " +
+                        "Revisa o corrige el artista y el álbum antes " +
+                            "de descargar -- el nombre que trae YouTube " +
+                            "no siempre es el que quieres. Se aplicarán " +
+                            "a las ${uiState.selectedYoutubeIds.size} " +
                             "pistas seleccionadas.",
                         style = MaterialTheme.typography.bodySmall,
                     )
