@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -41,11 +42,28 @@ data class PlaybackState(
  * Miguel Ángel (2026-07-05): "hay lo que es una lista de reproducción
  * actual... una lista temporal de lo que se está oyendo... una vez
  * que cierras la app, la lista desaparece". Esta cola vive SOLO en
- * memoria (el propio `_queue` de este @Singleton de Hilt) -- nunca se
- * persiste en Room, así que desaparece sola al matar el proceso,
- * exactamente como se pidió. No confundir con las Playlists guardadas
- * (PlaylistRepository/Room), que son un concepto totalmente distinto
- * y persistente.
+ * memoria -- nunca se persiste en Room, así que desaparece sola al
+ * matar el proceso, exactamente como se pidió. No confundir con las
+ * Playlists guardadas (PlaylistRepository/Room), que son un concepto
+ * totalmente distinto y persistente.
+ *
+ * LA COLA VIVE DENTRO DEL PROPIO EXOPLAYER (2026-07-05, corrige un bug
+ * real): antes, `_queue` era una lista aparte mantenida a mano, y el
+ * player solo veía UNA pista suelta cada vez (player.setMediaItem()).
+ * Eso rompía los botones nativos siguiente/anterior de la notificación
+ * del sistema -- esos botones actúan sobre el ExoPlayer de verdad via
+ * la MediaSession, no sobre nuestra lógica interna, y un player con
+ * una sola pista cargada nunca tiene un "siguiente" real que ofrecer
+ * (por eso el botón "anterior" sí aparecía -- ExoPlayer permite
+ * reiniciar la pista actual sin necesitar más de un item -- pero
+ * "siguiente" nunca funcionaba). Ahora `queueItems` (nuestros datos:
+ * título, uri, isLocal) se mantiene en paralelo, en el mismo orden,
+ * 1:1 con la playlist real del player (player.addMediaItems()/
+ * removeMediaItem()/moveMediaItem()), así que
+ * seekToNextMediaItem()/seekToPreviousMediaItem() del propio ExoPlayer
+ * -- lo que la notificación llama de verdad -- funcionan con datos
+ * reales. `currentIndex` ya no se guarda a mano: siempre se lee de
+ * player.currentMediaItemIndex, la única fuente de verdad.
  *
  * Semántica clave, tal como la describió Miguel Ángel:
  *   - "Reproducir" un álbum/pista/lista NUNCA sustituye la cola
@@ -58,16 +76,32 @@ data class PlaybackState(
  *   - La pantalla de gestión de la cola (QueueScreen) puede reordenar,
  *     quitar pistas, saltar a una concreta, o vaciarla entera.
  * ---
- * Envuelve una única instancia de ExoPlayer para reproducción de solo
- * audio, y gestiona la COLA DE REPRODUCCIÓN DE SESIÓN -- explicit
- * request from Miguel Ángel (2026-07-05): "there's a thing called the
- * current playlist... a temporary list of what's playing... once you
- * close the app, the list disappears". This queue lives ONLY in
- * memory (this Hilt @Singleton's own `_queue`) -- it's never persisted
- * to Room, so it disappears on its own when the process dies, exactly
- * as requested. Not to be confused with saved Playlists
+ * Wraps a single ExoPlayer instance for audio-only playback, and
+ * manages the SESSION PLAYBACK QUEUE -- explicit request from Miguel
+ * Ángel (2026-07-05): "there's a thing called the current playlist...
+ * a temporary list of what's playing... once you close the app, the
+ * list disappears". This queue lives ONLY in memory -- it's never
+ * persisted to Room, so it disappears on its own when the process
+ * dies, exactly as requested. Not to be confused with saved Playlists
  * (PlaylistRepository/Room), which are a completely different,
  * persistent concept.
+ *
+ * THE QUEUE NOW LIVES INSIDE EXOPLAYER ITSELF (2026-07-05, fixes a
+ * real bug): previously, `_queue` was a separate hand-maintained list,
+ * and the player only ever saw ONE loose track at a time
+ * (player.setMediaItem()). That broke the system notification's native
+ * next/previous buttons -- those buttons act on the real ExoPlayer via
+ * the MediaSession, not on our internal logic, and a player with only
+ * one item loaded never has a real "next" to offer (which is why
+ * "previous" did show up -- ExoPlayer allows restarting the current
+ * item without needing more than one item -- but "next" never worked).
+ * Now `queueItems` (our own data: title, uri, isLocal) is kept in
+ * parallel, in the same order, 1:1 with the player's real playlist
+ * (player.addMediaItems()/removeMediaItem()/moveMediaItem()), so the
+ * ExoPlayer's own seekToNextMediaItem()/seekToPreviousMediaItem() --
+ * what the notification actually calls -- work with real data.
+ * `currentIndex` is no longer hand-tracked: it's always read from
+ * player.currentMediaItemIndex, the single source of truth.
  *
  * Key semantics, as described by Miguel Ángel:
  *   - "Playing" an album/track/playlist NEVER replaces the whole
@@ -106,15 +140,32 @@ class PlayerManager @Inject constructor(
 
     /**
      * La cola de sesión en sí, expuesta para QueueScreen -- ver el
-     * comentario de clase. Solo en memoria, nunca en Room.
+     * comentario de clase. Solo en memoria, nunca en Room. Siempre en
+     * el mismo orden que la playlist real de `player`.
      * ---
      * The session queue itself, exposed for QueueScreen -- see the
-     * class comment. In memory only, never in Room.
+     * class comment. In memory only, never in Room. Always in the same
+     * order as `player`'s real playlist.
      */
     private val _queue = MutableStateFlow<List<QueueItem>>(emptyList())
     val queue: StateFlow<List<QueueItem>> = _queue
 
-    private var currentIndex: Int = -1
+    /**
+     * Copia 1:1 de `_queue.value` como lista mutable, para poder
+     * insertar/quitar/mover en el mismo índice que
+     * player.addMediaItems()/removeMediaItem()/moveMediaItem() sin
+     * tener que reconstruir MediaItems desde `_queue` en cada
+     * operación. SIEMPRE se muta en el mismo bloque que la playlist
+     * real del player -- nunca por separado.
+     * ---
+     * 1:1 copy of `_queue.value` as a mutable list, so we can
+     * insert/remove/move at the same index as
+     * player.addMediaItems()/removeMediaItem()/moveMediaItem() without
+     * rebuilding MediaItems from `_queue` on every operation. ALWAYS
+     * mutated in the same block as the player's real playlist -- never
+     * separately.
+     */
+    private val queueItems: MutableList<QueueItem> = mutableListOf()
 
     init {
         player.addListener(object : Player.Listener {
@@ -149,13 +200,55 @@ class PlayerManager @Inject constructor(
                 }
             }
 
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_ENDED) {
-                    playNext()
-                }
+            // onMediaItemTransition/onTimelineChanged cubren TODOS los
+            // casos en que cambia la pista actual o el tamaño de la
+            // playlist -- avance automático al terminar una pista
+            // (ExoPlayer lo hace solo con una playlist real, ya no
+            // hace falta el hack manual de "STATE_ENDED -> playNext()"
+            // de antes), seekToNextMediaItem()/seekToPreviousMediaItem()
+            // llamados desde la notificación del sistema, o cualquier
+            // cambio disparado desde esta misma clase.
+            // ---
+            // onMediaItemTransition/onTimelineChanged cover ALL cases
+            // where the current track or the playlist size changes --
+            // automatic advance when a track ends (ExoPlayer does this
+            // on its own with a real playlist, no longer needs the old
+            // manual "STATE_ENDED -> playNext()" hack),
+            // seekToNextMediaItem()/seekToPreviousMediaItem() called
+            // from the system notification, or any change triggered
+            // from this same class.
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                syncStateFromPlayer()
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                syncStateFromPlayer()
             }
         })
     }
+
+    private fun syncStateFromPlayer() {
+        val index = player.currentMediaItemIndex
+        val item = queueItems.getOrNull(index)
+        _queue.value = queueItems.toList()
+        _state.value = _state.value.copy(
+            currentTitle = item?.title,
+            isLocal = item?.isLocal ?: false,
+            queueIndex = if (queueItems.isEmpty()) -1 else index,
+            queueSize = queueItems.size,
+        )
+    }
+
+    private fun toMediaItem(item: QueueItem): MediaItem =
+        MediaItem.Builder()
+            .setUri(item.uri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(item.title)
+                    .setDisplayTitle(item.title)
+                    .build()
+            )
+            .build()
 
     /**
      * Reproduce una pista puntual -- misma semántica de inserción que
@@ -201,13 +294,17 @@ class PlayerManager @Inject constructor(
      */
     fun playQueue(items: List<QueueItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
-        val insertAt = (currentIndex + 1).coerceIn(0, _queue.value.size)
-        val newQueue = _queue.value.toMutableList().apply {
-            addAll(insertAt, items)
+        val insertAt = if (queueItems.isEmpty()) {
+            0
+        } else {
+            (player.currentMediaItemIndex + 1).coerceIn(0, queueItems.size)
         }
-        _queue.value = newQueue
-        currentIndex = insertAt + startIndex.coerceIn(0, items.lastIndex)
-        playCurrent()
+        queueItems.addAll(insertAt, items)
+        player.addMediaItems(insertAt, items.map { toMediaItem(it) })
+        player.prepare()
+        player.seekTo(insertAt + startIndex.coerceIn(0, items.lastIndex), 0)
+        player.play()
+        syncStateFromPlayer()
     }
 
     /**
@@ -229,11 +326,14 @@ class PlayerManager @Inject constructor(
      */
     fun insertNext(items: List<QueueItem>) {
         if (items.isEmpty()) return
-        val insertAt = (currentIndex + 1).coerceIn(0, _queue.value.size)
-        _queue.value = _queue.value.toMutableList().apply {
-            addAll(insertAt, items)
+        val insertAt = if (queueItems.isEmpty()) {
+            0
+        } else {
+            (player.currentMediaItemIndex + 1).coerceIn(0, queueItems.size)
         }
-        _state.value = _state.value.copy(queueSize = _queue.value.size)
+        queueItems.addAll(insertAt, items)
+        player.addMediaItems(insertAt, items.map { toMediaItem(it) })
+        syncStateFromPlayer()
     }
 
     /**
@@ -249,70 +349,30 @@ class PlayerManager @Inject constructor(
      */
     fun addToQueue(items: List<QueueItem>) {
         if (items.isEmpty()) return
-        _queue.value = _queue.value + items
-        _state.value = _state.value.copy(queueSize = _queue.value.size)
-    }
-
-    private fun playCurrent() {
-        val item = _queue.value.getOrNull(currentIndex) ?: return
-        // MediaMetadata real (antes se reproducía con MediaItem.fromUri()
-        // a secas, sin título) -- DefaultMediaNotificationProvider usa
-        // esto para el título de la notificación con controles reales.
-        // Diagnóstico de por qué la notificación no muestra controles
-        // (2026-07-05, ver NotificationDebugLogger): puede que Media3
-        // necesite metadatos para considerar la sesión "lista".
-        // ---
-        // Real MediaMetadata (previously played with a bare
-        // MediaItem.fromUri(), no title at all) -- DefaultMediaNotificationProvider
-        // uses this for the title of the real-controls notification.
-        // Diagnosing why the notification shows no controls (2026-07-05,
-        // see NotificationDebugLogger): Media3 may need metadata to
-        // consider the session "ready".
-        val mediaItem = MediaItem.Builder()
-            .setUri(item.uri)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(item.title)
-                    .setDisplayTitle(item.title)
-                    .build()
-            )
-            .build()
-        player.setMediaItem(mediaItem)
-        player.prepare()
-        player.play()
-        _state.value = _state.value.copy(
-            currentTitle = item.title,
-            isLocal = item.isLocal,
-            queueIndex = currentIndex,
-            queueSize = _queue.value.size,
-        )
-        NotificationDebugLogger.log(
-            appContext, storageManager,
-            "playCurrent() -- index=$currentIndex title=\"${item.title}\" " +
-                "commands=${player.availableCommands}",
-        )
+        queueItems.addAll(items)
+        player.addMediaItems(items.map { toMediaItem(it) })
+        syncStateFromPlayer()
     }
 
     /**
-     * Advances to the next queue item, if any. Called automatically
-     * when a track ends, and available for manual skip.
+     * Avanza a la siguiente pista de la cola, si la hay -- ahora
+     * delega en el seekToNextMediaItem() real de ExoPlayer (2026-07-05,
+     * ver comentario de clase) en vez de mantener el índice a mano.
      * ---
-     * Avanza al siguiente elemento de la cola, si lo hay. Se llama
-     * automáticamente al terminar una pista, y también está
-     * disponible para avance manual.
+     * Advances to the next queue item, if any -- now delegates to
+     * ExoPlayer's real seekToNextMediaItem() (2026-07-05, see class
+     * comment) instead of hand-tracking the index.
      */
     fun playNext() {
-        if (currentIndex < _queue.value.lastIndex) {
-            currentIndex++
-            playCurrent()
+        if (player.hasNextMediaItem()) {
+            player.seekToNextMediaItem()
         }
     }
 
     /** Goes back to the previous queue item, if any. */
     fun playPrevious() {
-        if (currentIndex > 0) {
-            currentIndex--
-            playCurrent()
+        if (player.hasPreviousMediaItem()) {
+            player.seekToPreviousMediaItem()
         }
     }
 
@@ -324,59 +384,32 @@ class PlayerManager @Inject constructor(
      * from QueueScreen (tapping a track in the list).
      */
     fun playAtIndex(index: Int) {
-        if (index in _queue.value.indices) {
-            currentIndex = index
-            playCurrent()
+        if (index in queueItems.indices) {
+            player.seekTo(index, 0)
+            player.play()
         }
     }
 
     /**
      * Quita una pista de la cola por posición -- gestión manual desde
-     * QueueScreen. Si se quita la que estaba sonando, sigue con la
-     * que ocupa ahora su misma posición (la que era la siguiente); si
-     * la cola queda vacía, para la reproducción.
+     * QueueScreen. Si se quita la que estaba sonando, ExoPlayer sigue
+     * solo con la que ocupa ahora su misma posición (la que era la
+     * siguiente); si la cola queda vacía, para la reproducción.
      * ---
      * Removes a track from the queue by position -- manual management
-     * from QueueScreen. If the one playing gets removed, continues
-     * with whatever now occupies that same position (what was next);
-     * if the queue ends up empty, stops playback.
+     * from QueueScreen. If the one playing gets removed, ExoPlayer
+     * continues on its own with whatever now occupies that same
+     * position (what was next); if the queue ends up empty, stops
+     * playback.
      */
     fun removeFromQueue(index: Int) {
-        val current = _queue.value
-        if (index !in current.indices) return
-
-        val newQueue = current.toMutableList().apply { removeAt(index) }
-        _queue.value = newQueue
-
-        when {
-            index < currentIndex -> {
-                currentIndex--
-                _state.value = _state.value.copy(
-                    queueIndex = currentIndex,
-                    queueSize = newQueue.size,
-                )
-            }
-            index == currentIndex -> {
-                if (newQueue.isEmpty()) {
-                    currentIndex = -1
-                    player.stop()
-                    _state.value = _state.value.copy(
-                        isPlaying = false,
-                        currentTitle = null,
-                        queueIndex = -1,
-                        queueSize = 0,
-                    )
-                } else {
-                    if (currentIndex > newQueue.lastIndex) {
-                        currentIndex = newQueue.lastIndex
-                    }
-                    playCurrent()
-                }
-            }
-            else -> {
-                _state.value = _state.value.copy(queueSize = newQueue.size)
-            }
+        if (index !in queueItems.indices) return
+        queueItems.removeAt(index)
+        player.removeMediaItem(index)
+        if (queueItems.isEmpty()) {
+            player.stop()
         }
+        syncStateFromPlayer()
     }
 
     /**
@@ -387,21 +420,11 @@ class PlayerManager @Inject constructor(
      * manual reordering from QueueScreen.
      */
     fun moveInQueue(fromIndex: Int, toIndex: Int) {
-        val current = _queue.value
-        if (fromIndex !in current.indices || toIndex !in current.indices) return
-
-        val newQueue = current.toMutableList()
-        val moved = newQueue.removeAt(fromIndex)
-        newQueue.add(toIndex, moved)
-        _queue.value = newQueue
-
-        currentIndex = when (currentIndex) {
-            fromIndex -> toIndex
-            in (fromIndex + 1)..toIndex -> currentIndex - 1
-            in toIndex until fromIndex -> currentIndex + 1
-            else -> currentIndex
-        }
-        _state.value = _state.value.copy(queueIndex = currentIndex)
+        if (fromIndex !in queueItems.indices || toIndex !in queueItems.indices) return
+        val moved = queueItems.removeAt(fromIndex)
+        queueItems.add(toIndex, moved)
+        player.moveMediaItem(fromIndex, toIndex)
+        syncStateFromPlayer()
     }
 
     /**
@@ -412,15 +435,10 @@ class PlayerManager @Inject constructor(
      * management action from QueueScreen.
      */
     fun clearQueue() {
-        _queue.value = emptyList()
-        currentIndex = -1
+        queueItems.clear()
+        player.clearMediaItems()
         player.stop()
-        _state.value = _state.value.copy(
-            isPlaying = false,
-            currentTitle = null,
-            queueIndex = -1,
-            queueSize = 0,
-        )
+        syncStateFromPlayer()
     }
 
     fun pause() = player.pause()
