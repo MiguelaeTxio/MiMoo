@@ -1,11 +1,15 @@
 package com.miguelaetxio.mimoo
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -95,6 +99,30 @@ class MainActivity : ComponentActivity() {
         }
 
     /**
+     * Solicita POST_NOTIFICATIONS (obligatorio desde Android 13) --
+     * bug real reportado por Miguel Ángel (2026-07-05): la
+     * notificación de MiMooPlaybackService no aparecía en absoluto,
+     * ni siquiera la provisional, porque la app nunca pedía este
+     * permiso. Sin él, el servicio en primer plano sigue funcionando
+     * (el proceso no muere), pero el sistema suprime en silencio
+     * cualquier notificación. No se hace nada especial si el usuario
+     * lo deniega -- simplemente no verá la notificación con controles,
+     * pero la reproducción en segundo plano sigue protegida igual.
+     * ---
+     * Requests POST_NOTIFICATIONS (mandatory since Android 13) --
+     * real bug reported by Miguel Ángel (2026-07-05):
+     * MiMooPlaybackService's notification wasn't showing up at all,
+     * not even the placeholder, because the app never requested this
+     * permission. Without it, the foreground service keeps working
+     * fine (the process doesn't die), but the system silently
+     * suppresses any notification. Nothing special is done if the
+     * user denies it -- they simply won't see the notification with
+     * controls, but background playback stays protected either way.
+     */
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    /**
      * Routes an incoming ACTION_VIEW intent (PASO 9, H03) — the user
      * opened an audio file from the system file explorer and picked
      * MiMoo as the app to play it with. Independent of
@@ -129,6 +157,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleViewIntent(intent)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         // Reconcilia SAF↔Room en CADA arranque de la app, no solo la
         // primera vez que se elige la carpeta -- petición explícita de

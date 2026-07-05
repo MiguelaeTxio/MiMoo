@@ -11,6 +11,29 @@
         android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <!--
+        Obligatorio desde Android 13 (API 33) para poder mostrar
+        CUALQUIER notificación al usuario, incluida la de
+        MiMooPlaybackService — bug real reportado por Miguel Ángel
+        (2026-07-05): la notificación de reproducción no aparecía en
+        absoluto, ni siquiera la provisional. Sin este permiso
+        concedido, el servicio en primer plano sigue funcionando (el
+        proceso no muere), pero el sistema suprime en silencio
+        cualquier notificación, incluida la de controles de
+        reproducción. Se declara aquí; la solicitud en tiempo de
+        ejecución vive en MainActivity.
+        —
+        Mandatory since Android 13 (API 33) to show ANY notification to
+        the user at all, including MiMooPlaybackService's — real bug
+        reported by Miguel Ángel (2026-07-05): the playback
+        notification wasn't showing up at all, not even the
+        placeholder. Without this permission granted, the foreground
+        service keeps working fine (the process doesn't die), but the
+        system silently suppresses any notification, including the
+        playback controls one. Declared here; the runtime request
+        lives in MainActivity.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
         Requeridos para que la reproducción corra en un
         MediaSessionService en primer plano y el sistema no mate el
         proceso mientras suena música en segundo plano — causa real
