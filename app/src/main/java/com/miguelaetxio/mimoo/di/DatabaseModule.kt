@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.di
 import android.content.Context
 import androidx.room.Room
 import com.miguelaetxio.mimoo.data.local.AppDatabase
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import dagger.Module
@@ -42,4 +43,19 @@ object DatabaseModule {
 
     @Provides
     fun providePlaylistDao(db: AppDatabase): PlaylistDao = db.playlistDao()
+
+    /**
+     * Faltaba -- causa real del fallo de compilación
+     * [Dagger/MissingBinding] (2026-07-05): FavoriteAlbumRepository
+     * pide un FavoriteAlbumDao inyectado, pero nunca se declaró cómo
+     * proveerlo. Mismo patrón que los otros DAOs de este módulo.
+     * ---
+     * Was missing -- real cause of the [Dagger/MissingBinding] compile
+     * failure (2026-07-05): FavoriteAlbumRepository asks for an
+     * injected FavoriteAlbumDao, but how to provide it was never
+     * declared. Same pattern as this module's other DAOs.
+     */
+    @Provides
+    fun provideFavoriteAlbumDao(db: AppDatabase): FavoriteAlbumDao =
+        db.favoriteAlbumDao()
 }
