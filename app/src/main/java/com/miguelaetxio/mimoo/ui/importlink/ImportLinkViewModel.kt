@@ -424,6 +424,7 @@ class ImportLinkViewModel @Inject constructor(
                     title = track.title,
                     artist = track.artist ?: track.channelTitle,
                     album = track.album,
+                    trackPosition = track.trackPosition,
                 )
             }
             // Ya resuelta en resolveCoverArt() -- se persiste aqui

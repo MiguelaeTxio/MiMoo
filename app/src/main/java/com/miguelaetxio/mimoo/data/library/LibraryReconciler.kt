@@ -704,6 +704,35 @@ class LibraryReconciler @Inject constructor(
         return candidate
     }
 
+    /**
+     * "NN - Título.opus" -> trackPosition=NN-1 (0-indexed), título sin
+     * el prefijo. Petición explícita de Miguel Ángel (2026-07-05): "en
+     * la reconciliación el orden de las canciones cambia... en discos
+     * conceptuales como The Wall, eso rompe el concepto de álbum".
+     * DownloadWorker (ver KEY_TRACK_POSITION) ya antepone este prefijo
+     * al nombre de archivo cuando se conoce la posición, precisamente
+     * para que un rescan futuro pueda recuperarla de aquí -- sin este
+     * parseo, toda pista reconciliada perdía su trackPosition y
+     * Biblioteca caía a orden alfabético (radiofórmula, no álbum).
+     * Null si el archivo no lleva el prefijo (descargado antes de este
+     * fix, o de otra fuente) -- fallback exactamente al comportamiento
+     * de antes, sin regresión.
+     * ---
+     * "NN - Title.opus" -> trackPosition=NN-1 (0-indexed), title
+     * without the prefix. Explicit request from Miguel Ángel
+     * (2026-07-05): "on reconciliation the song order changes... on
+     * concept albums like The Wall, that breaks the album concept".
+     * DownloadWorker (see KEY_TRACK_POSITION) already prepends this
+     * prefix to the filename when the position is known, precisely so
+     * a future rescan can recover it from here -- without this
+     * parsing, every reconciled track lost its trackPosition and
+     * Biblioteca fell back to alphabetical order (radio-style, not an
+     * album). Null if the file doesn't carry the prefix (downloaded
+     * before this fix, or from another source) -- falls back to
+     * exactly the previous behavior, no regression.
+     */
+    private val TRACK_POSITION_PREFIX = Regex("^(\\d{2,3}) - (.+)$")
+
     private fun buildSyntheticTrack(
         uriString: String,
         fileName: String,
@@ -716,9 +745,14 @@ class LibraryReconciler @Inject constructor(
             .joinToString("") { "%02x".format(it) }
             .take(16)
 
+        val nameWithoutExtension = fileName.substringBeforeLast('.', fileName)
+        val prefixMatch = TRACK_POSITION_PREFIX.matchEntire(nameWithoutExtension)
+        val trackPosition = prefixMatch?.groupValues?.get(1)?.toIntOrNull()?.let { it - 1 }
+        val title = prefixMatch?.groupValues?.get(2) ?: nameWithoutExtension
+
         return SearchResultTrack(
             youtubeId = "$LOCAL_ID_PREFIX$digest",
-            title = fileName.substringBeforeLast('.', fileName),
+            title = title,
             channelTitle = artistName,
             durationSeconds = 0,
             thumbnailUrl = null,
@@ -731,6 +765,7 @@ class LibraryReconciler @Inject constructor(
                 albumName
             },
             isFavorite = isFavorite,
+            trackPosition = trackPosition,
         )
     }
 }

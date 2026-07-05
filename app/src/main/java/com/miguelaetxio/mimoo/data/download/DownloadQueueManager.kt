@@ -54,12 +54,17 @@ class DownloadQueueManager @Inject constructor(
      * @param album      Album name (used as sub-dir by DownloadWorker), or
      *                   null for a sencillo — DownloadDirManager falls
      *                   back to "Sencillos" in that case, never before.
+     * @param trackPosition Posición dentro del álbum (0-indexed), o null
+     *                   si no se conoce (sencillos, pistas de Búsqueda).
+     *                   Se antepone al nombre de archivo -- ver
+     *                   DownloadWorker.KEY_TRACK_POSITION.
      */
     suspend fun enqueue(
         youtubeId: String,
         title: String,
         artist: String,
         album: String? = null,
+        trackPosition: Int? = null,
     ) {
         repository.markQueued(youtubeId)
 
@@ -68,6 +73,11 @@ class DownloadQueueManager @Inject constructor(
             .putString(DownloadWorker.KEY_TITLE, title)
             .putString(DownloadWorker.KEY_ARTIST, artist)
             .putString(DownloadWorker.KEY_ALBUM, album)
+            .apply {
+                if (trackPosition != null) {
+                    putInt(DownloadWorker.KEY_TRACK_POSITION, trackPosition)
+                }
+            }
             .build()
 
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()

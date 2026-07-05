@@ -65,6 +65,30 @@ class DownloadWorker @AssistedInject constructor(
         const val KEY_ALBUM = "album"
 
         /**
+         * Posición dentro del álbum (0-indexed), opcional -- si está
+         * presente, se antepone al nombre del archivo como "NN - " para
+         * que el orden real de disco sobreviva a una reconciliación
+         * futura (ver LibraryReconciler). Petición explícita de Miguel
+         * Ángel (2026-07-05): "cuando hacemos la reconciliación, el
+         * orden de las canciones cambia... en discos conceptuales como
+         * The Wall, eso rompe el concepto de álbum por completo". Sin
+         * esto en el propio nombre de archivo, no había forma de que
+         * un rescan recuperara el orden -- el archivo en disco no
+         * llevaba ninguna pista de su posición real.
+         * ---
+         * Position within the album (0-indexed), optional -- if
+         * present, it's prepended to the filename as "NN - " so the
+         * real disc order survives a future reconciliation (see
+         * LibraryReconciler). Explicit request from Miguel Ángel
+         * (2026-07-05): "when we reconcile, the song order changes...
+         * on concept albums like The Wall, that completely breaks the
+         * album concept". Without this in the filename itself, there
+         * was no way for a rescan to recover the order -- the file on
+         * disk carried no trace of its real position.
+         */
+        const val KEY_TRACK_POSITION = "track_position"
+
+        /**
          * Número máximo de intentos antes de rendirse y marcar ERROR
          * sin dejar rastro en disco (petición de Miguel Ángel,
          * 2026-07-04). runAttemptCount empieza en 0, así que se
@@ -89,6 +113,15 @@ class DownloadWorker @AssistedInject constructor(
         // de youtubeId/title/artist, la ausencia de album NO es un
         // fallo, así que no aborta con Result.failure().
         val album = inputData.getString(KEY_ALBUM)
+        // Ausente == no se conoce la posición (comportamiento normal
+        // para sencillos o pistas de la pantalla de Búsqueda) -- ver
+        // comentario de KEY_TRACK_POSITION más arriba.
+        // ---
+        // Absent == position unknown (normal for singles or tracks
+        // from the Search screen) -- see KEY_TRACK_POSITION's comment
+        // above.
+        val trackPosition = inputData.getInt(KEY_TRACK_POSITION, -1)
+            .takeIf { it >= 0 }
 
         val youtubeUrl = "https://youtu.be/$youtubeId"
 
@@ -109,7 +142,20 @@ class DownloadWorker @AssistedInject constructor(
         ) ?: return Result.failure()
 
         val safeTitle = DownloadDirManager.sanitize(title)
-        val outputFileName = "$safeTitle.opus"
+        // "NN - Título.opus" cuando se conoce la posición -- ver
+        // comentario de KEY_TRACK_POSITION. +1 porque trackPosition es
+        // 0-indexed en Room pero el número de pista real de un disco
+        // siempre empieza en 1.
+        // ---
+        // "NN - Title.opus" when the position is known -- see
+        // KEY_TRACK_POSITION's comment. +1 because trackPosition is
+        // 0-indexed in Room but a real disc's track number always
+        // starts at 1.
+        val outputFileName = if (trackPosition != null) {
+            "%02d - %s.opus".format(trackPosition + 1, safeTitle)
+        } else {
+            "$safeTitle.opus"
+        }
 
         // Idempotencia real (2026-07-04, petición de Miguel Ángel tras
         // el fix de reconcileOrphanedDownloads()): esta pista puede

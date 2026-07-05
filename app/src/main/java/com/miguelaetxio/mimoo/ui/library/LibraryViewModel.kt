@@ -439,6 +439,7 @@ class LibraryViewModel @Inject constructor(
                         newArtist = trimmedArtist,
                         newAlbum = newAlbum,
                         title = trimmedTitle,
+                        trackPosition = track.trackPosition,
                     )
                 }
                 if (relocated == null) {

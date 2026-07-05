@@ -308,6 +308,7 @@ class AlbumSearchViewModel @Inject constructor(
                     title = track.title,
                     artist = track.artist ?: track.channelTitle,
                     album = track.album,
+                    trackPosition = track.trackPosition,
                 )
             }
             // PASO 6b Parte 2: dispara la observacion en vivo de Room

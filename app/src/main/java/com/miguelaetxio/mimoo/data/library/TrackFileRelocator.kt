@@ -49,6 +49,7 @@ class TrackFileRelocator @Inject constructor() {
         newArtist: String,
         newAlbum: String?,
         title: String,
+        trackPosition: Int? = null,
     ): String? {
         val sourceDoc = DocumentFile.fromSingleUri(context, Uri.parse(sourceFilePath))
             ?: return null
@@ -62,7 +63,20 @@ class TrackFileRelocator @Inject constructor() {
         ) ?: return null
 
         val extension = sourceDoc.name?.substringAfterLast('.', "opus") ?: "opus"
-        val baseFileName = DownloadDirManager.sanitize(title)
+        // Conserva el prefijo "NN - " si la pista tenía una posición
+        // conocida -- petición de Miguel Ángel (2026-07-05): editar
+        // metadatos no debe romper el orden del álbum igual que ya no
+        // lo rompe una reconciliación (ver LibraryReconciler).
+        // ---
+        // Preserves the "NN - " prefix if the track had a known
+        // position -- requested by Miguel Ángel (2026-07-05): editing
+        // metadata shouldn't break the album order any more than a
+        // reconciliation now does (see LibraryReconciler).
+        val baseFileName = if (trackPosition != null) {
+            "%02d - %s".format(trackPosition + 1, DownloadDirManager.sanitize(title))
+        } else {
+            DownloadDirManager.sanitize(title)
+        }
         val targetFileName = uniqueFileName(targetDir, baseFileName, extension)
 
         val targetDoc = targetDir.createFile(

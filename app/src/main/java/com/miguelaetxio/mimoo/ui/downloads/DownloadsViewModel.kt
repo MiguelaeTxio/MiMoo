@@ -110,6 +110,7 @@ class DownloadsViewModel @Inject constructor(
                 title = track.title,
                 artist = track.artist ?: track.channelTitle,
                 album = track.album,
+                trackPosition = track.trackPosition,
             )
         }
     }
