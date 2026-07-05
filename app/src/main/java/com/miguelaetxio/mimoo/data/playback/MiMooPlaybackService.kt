@@ -10,6 +10,7 @@ import androidx.core.app.ServiceCompat
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -65,11 +66,18 @@ class MiMooPlaybackService : MediaSessionService() {
     @Inject
     lateinit var playerManager: PlayerManager
 
+    @Inject
+    lateinit var storageManager: StorageManager
+
     private var mediaSession: MediaSession? = null
 
     override fun onCreate() {
         super.onCreate()
         mediaSession = MediaSession.Builder(this, playerManager.player).build()
+        NotificationDebugLogger.log(
+            this, storageManager,
+            "onCreate() -- MediaSession creada, player=${playerManager.player}",
+        )
 
         // Registrado explícitamente (aunque MediaSessionService ya usa
         // este mismo provider por defecto si no se llama a este método)
@@ -205,8 +213,13 @@ class MiMooPlaybackService : MediaSessionService() {
         )
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
-        mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        NotificationDebugLogger.log(
+            this, storageManager,
+            "onGetSession() -- llamado por package=${controllerInfo.packageName}",
+        )
+        return mediaSession
+    }
 
     /**
      * Si la app se cierra desde recientes mientras NO hay nada
@@ -253,6 +266,7 @@ class MiMooPlaybackService : MediaSessionService() {
      * the session itself.
      */
     override fun onDestroy() {
+        NotificationDebugLogger.log(this, storageManager, "onDestroy()")
         mediaSession?.release()
         mediaSession = null
         super.onDestroy()

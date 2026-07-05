@@ -4,8 +4,10 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -81,6 +83,7 @@ data class PlaybackState(
 @Singleton
 class PlayerManager @Inject constructor(
     @ApplicationContext private val appContext: Context,
+    private val storageManager: StorageManager,
 ) {
     /**
      * Público (antes privado) para que MiMooPlaybackService pueda
@@ -252,7 +255,29 @@ class PlayerManager @Inject constructor(
 
     private fun playCurrent() {
         val item = _queue.value.getOrNull(currentIndex) ?: return
-        player.setMediaItem(MediaItem.fromUri(item.uri))
+        // MediaMetadata real (antes se reproducía con MediaItem.fromUri()
+        // a secas, sin título) -- DefaultMediaNotificationProvider usa
+        // esto para el título de la notificación con controles reales.
+        // Diagnóstico de por qué la notificación no muestra controles
+        // (2026-07-05, ver NotificationDebugLogger): puede que Media3
+        // necesite metadatos para considerar la sesión "lista".
+        // ---
+        // Real MediaMetadata (previously played with a bare
+        // MediaItem.fromUri(), no title at all) -- DefaultMediaNotificationProvider
+        // uses this for the title of the real-controls notification.
+        // Diagnosing why the notification shows no controls (2026-07-05,
+        // see NotificationDebugLogger): Media3 may need metadata to
+        // consider the session "ready".
+        val mediaItem = MediaItem.Builder()
+            .setUri(item.uri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(item.title)
+                    .setDisplayTitle(item.title)
+                    .build()
+            )
+            .build()
+        player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
         _state.value = _state.value.copy(
@@ -260,6 +285,11 @@ class PlayerManager @Inject constructor(
             isLocal = item.isLocal,
             queueIndex = currentIndex,
             queueSize = _queue.value.size,
+        )
+        NotificationDebugLogger.log(
+            appContext, storageManager,
+            "playCurrent() -- index=$currentIndex title=\"${item.title}\" " +
+                "commands=${player.availableCommands}",
         )
     }
 
