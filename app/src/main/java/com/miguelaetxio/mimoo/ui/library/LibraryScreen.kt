@@ -968,16 +968,18 @@ private fun LibraryTrackRow(
                         onEdit()
                     },
                 )
-                DropdownMenuItem(
-                    text = { Text("Compartir enlace") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Share, contentDescription = null)
-                    },
-                    onClick = {
-                        showOverflowMenu = false
-                        shareLink(context, track.shareableUrl)
-                    },
-                )
+                if (track.shareableUrl != null) {
+                    DropdownMenuItem(
+                        text = { Text("Compartir enlace") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Share, contentDescription = null)
+                        },
+                        onClick = {
+                            showOverflowMenu = false
+                            shareLink(context, track.shareableUrl!!)
+                        },
+                    )
+                }
             }
         }
         IconButton(onClick = onToggleFavorite) {

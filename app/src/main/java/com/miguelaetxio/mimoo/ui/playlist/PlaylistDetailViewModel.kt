@@ -128,12 +128,26 @@ class PlaylistDetailViewModel @Inject constructor(
             var resolutionFailures = 0
             val items = tracks.mapNotNull { track ->
                 val localPath = track.filePath
+                val remoteUrl = track.youtubeUrl
                 if (localPath != null) {
                     QueueItem(uri = localPath, title = track.title, isLocal = true)
+                } else if (remoteUrl == null) {
+                    // Pista sintética (local:) sin filePath -- caso
+                    // extremo que no debería darse nunca en la
+                    // práctica (las sintéticas siempre vienen de un
+                    // archivo real en disco), pero sin URL real de
+                    // YouTube que resolver no hay nada que reproducir.
+                    // ---
+                    // Synthetic (local:) track with no filePath --
+                    // edge case that shouldn't happen in practice
+                    // (synthetic tracks always come from a real disk
+                    // file), but with no real YouTube URL to resolve
+                    // there's nothing to play.
+                    resolutionFailures++
+                    null
                 } else {
                     try {
-                        val streamUrl =
-                            streamResolver.resolveAudioStreamUrl(track.youtubeUrl)
+                        val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
                         QueueItem(uri = streamUrl, title = track.title, isLocal = false)
                     } catch (e: Exception) {
                         resolutionFailures++

@@ -149,14 +149,15 @@ class SearchViewModel @Inject constructor(
             return
         }
 
+        val remoteUrl = track.youtubeUrl ?: return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isResolvingStream = true,
                 errorMessage = null,
             )
             try {
-                val streamUrl =
-                    streamResolver.resolveAudioStreamUrl(track.youtubeUrl)
+                val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
                 playerManager.play(streamUrl, track.title, isLocal = false)
                 _uiState.value = _uiState.value.copy(isResolvingStream = false)
             } catch (e: Exception) {
