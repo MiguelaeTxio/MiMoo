@@ -58,7 +58,45 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Explícito, no implícito -- bug real (2026-07-05): Android
+            // Developer Console rechazaba el APK con "firma diferente"
+            // pese a que habíamos verificado que ~/.android/debug.keystore
+            // tenía la huella SHA-256 correcta en cada build. Esa
+            // verificación solo confirmaba que EL ARCHIVO era correcto
+            // -- nunca que Gradle lo estuviera usando de verdad para
+            // firmar, ya que sin este bloque AGP resuelve la ruta del
+            // keystore de debug de forma implícita, sin ninguna
+            // garantía de que coincida exactamente con la ruta que
+            // restaura el workflow. Con esta ruta explícita
+            // (System.getProperty("user.home") = mismo $HOME que usa
+            // "~/.android/debug.keystore" en bash), no hay ambigüedad
+            // posible.
+            // ---
+            // Explicit, not implicit -- real bug (2026-07-05): Android
+            // Developer Console rejected the APK with "different
+            // signature" despite having verified that
+            // ~/.android/debug.keystore had the correct SHA-256
+            // fingerprint on every build. That check only confirmed THE
+            // FILE was correct -- never that Gradle was actually using
+            // it to sign, since without this block AGP resolves the
+            // debug keystore's path implicitly, with no guarantee it
+            // matches exactly the path the workflow restores it to.
+            // With this explicit path (System.getProperty("user.home")
+            // = the same $HOME that bash's "~/.android/debug.keystore"
+            // uses), there's no ambiguity left.
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
