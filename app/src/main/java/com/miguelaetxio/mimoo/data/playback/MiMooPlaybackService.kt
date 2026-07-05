@@ -2,14 +2,18 @@ package com.miguelaetxio.mimoo.data.playback
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionToken
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -70,6 +74,33 @@ class MiMooPlaybackService : MediaSessionService() {
     lateinit var storageManager: StorageManager
 
     private var mediaSession: MediaSession? = null
+
+    /**
+     * MediaController conectado a NUESTRA PROPIA sesión -- confirmado
+     * con notification_debug.txt (2026-07-05): onGetSession() no se
+     * llamaba NUNCA, ni una sola vez en todo el log, por mucho que
+     * sonara música durante 16 minutos. Sin ningún MediaController
+     * conectándose (ni el sistema ni la propia app lo hacían, ya que
+     * PlayerManager habla directo con el ExoPlayer), la maquinaria
+     * interna de Media3 que fabrica la notificación real con controles
+     * nunca se activaba -- de ahí el placeholder estático para
+     * siempre. No se usa para controlar la reproducción (eso lo
+     * sigue haciendo PlayerManager exactamente igual); su única
+     * función es forzar la conexión que dispara onGetSession().
+     * ---
+     * MediaController connected to OUR OWN session -- confirmed with
+     * notification_debug.txt (2026-07-05): onGetSession() was NEVER
+     * called, not once in the whole log, no matter that music played
+     * for 16 minutes. With no MediaController ever connecting (neither
+     * the system nor the app itself, since PlayerManager talks
+     * directly to the ExoPlayer), Media3's internal machinery that
+     * builds the real notification with controls never engaged --
+     * hence the permanent static placeholder. Not used to control
+     * playback (PlayerManager still does that exactly as before); its
+     * only job is to force the connection that triggers
+     * onGetSession().
+     */
+    private var debugController: MediaController? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -140,6 +171,37 @@ class MiMooPlaybackService : MediaSessionService() {
         // always met; Media3 keeps updating this same notification
         // with real controls/metadata once it processes the session.
         startForegroundImmediately()
+
+        // El fix real (2026-07-05, ver comentario de debugController
+        // más arriba): conectamos un MediaController a nuestra propia
+        // sesión para forzar la llamada a onGetSession() que nunca
+        // llegaba. SessionToken(this, ComponentName(...)) apunta a
+        // este mismo servicio.
+        // ---
+        // The real fix (2026-07-05, see debugController's comment
+        // above): we connect a MediaController to our own session to
+        // force the onGetSession() call that never arrived.
+        // SessionToken(this, ComponentName(...)) points at this same
+        // service.
+        val token = SessionToken(this, ComponentName(this, MiMooPlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(this, token).buildAsync()
+        controllerFuture.addListener(
+            {
+                try {
+                    debugController = controllerFuture.get()
+                    NotificationDebugLogger.log(
+                        this, storageManager,
+                        "MediaController conectado correctamente a la propia sesión",
+                    )
+                } catch (e: Exception) {
+                    NotificationDebugLogger.log(
+                        this, storageManager,
+                        "MediaController -- fallo al conectar: ${e.message}",
+                    )
+                }
+            },
+            ContextCompat.getMainExecutor(this),
+        )
     }
 
     private fun startForegroundImmediately() {
@@ -267,6 +329,8 @@ class MiMooPlaybackService : MediaSessionService() {
      */
     override fun onDestroy() {
         NotificationDebugLogger.log(this, storageManager, "onDestroy()")
+        debugController?.release()
+        debugController = null
         mediaSession?.release()
         mediaSession = null
         super.onDestroy()
