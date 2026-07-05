@@ -7,6 +7,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -16,14 +18,16 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         SearchResultTrack::class,
         Playlist::class,
         PlaylistTrackCrossRef::class,
+        FavoriteAlbum::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun searchResultTrackDao(): SearchResultTrackDao
     abstract fun playlistDao(): PlaylistDao
+    abstract fun favoriteAlbumDao(): FavoriteAlbumDao
 
     companion object {
         /**
@@ -220,6 +224,34 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     "ALTER TABLE search_result_tracks ADD COLUMN sourceUrl TEXT"
+                )
+            }
+        }
+
+        /**
+         * Crea favorite_albums -- petición explícita de Miguel Ángel
+         * (2026-07-05): favoritos a nivel de ÁLBUM, un concepto nuevo
+         * y separado del favorito por pista (isFavorite en
+         * search_result_tracks, que sigue existiendo tal cual para
+         * sencillos). Clave compuesta (artist, album) -- ver comentario
+         * de la entidad FavoriteAlbum. Tabla nueva, no toca
+         * search_result_tracks.
+         * ---
+         * Creates favorite_albums -- explicit request from Miguel Ángel
+         * (2026-07-05): ALBUM-level favorites, a new concept separate
+         * from the per-track favorite (isFavorite on
+         * search_result_tracks, which keeps existing as-is for
+         * singles). Composite key (artist, album) -- see the
+         * FavoriteAlbum entity's comment. New table, doesn't touch
+         * search_result_tracks.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `favorite_albums` (" +
+                        "`artist` TEXT NOT NULL, " +
+                        "`album` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`artist`, `album`))"
                 )
             }
         }

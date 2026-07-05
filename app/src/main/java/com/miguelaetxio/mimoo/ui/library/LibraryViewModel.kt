@@ -12,6 +12,7 @@ import com.miguelaetxio.mimoo.data.library.StartupNotices
 import com.miguelaetxio.mimoo.data.library.TrackFileRelocator
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.local.repository.FavoriteAlbumRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
@@ -112,9 +113,36 @@ fun sortLetterFor(artist: String): Char {
  */
 sealed class AlbumsDrillLevel {
     object Letters : AlbumsDrillLevel()
+    /**
+     * Entrada "Favoritos" -- petición explícita de Miguel Ángel
+     * (2026-07-05): lista plana (no por letra/artista, "todo
+     * exactamente igual" en orden alfabético) de álbumes marcados como
+     * favoritos, cruzando artistas. Aparece antes que las letras en la
+     * pantalla de Letters.
+     * ---
+     * "Favoritos" entry -- explicit request from Miguel Ángel
+     * (2026-07-05): a flat (not by letter/artist, "everything exactly
+     * the same" in alphabetical order) list of albums marked as
+     * favorite, across artists. Shown before the letters on the
+     * Letters screen.
+     */
+    object FavoriteAlbums : AlbumsDrillLevel()
     data class Artists(val letter: Char) : AlbumsDrillLevel()
     data class Albums(val artist: String) : AlbumsDrillLevel()
-    data class Tracks(val artist: String, val album: String) : AlbumsDrillLevel()
+    /**
+     * fromFavorites indica si se llegó aquí desde FavoriteAlbums (para
+     * que el botón atrás vuelva ahí en vez de a Albums(artist), que
+     * asume siempre el mismo artista).
+     * ---
+     * fromFavorites tracks whether we got here from FavoriteAlbums (so
+     * the back button returns there instead of to Albums(artist),
+     * which always assumes the same artist).
+     */
+    data class Tracks(
+        val artist: String,
+        val album: String,
+        val fromFavorites: Boolean = false,
+    ) : AlbumsDrillLevel()
 }
 
 /**
@@ -167,6 +195,21 @@ data class LibraryUiState(
     // Notice from the automatic startup cleanup (MainActivity ->
     // StartupNotices), shown exactly once as a Snackbar.
     val startupMessage: String? = null,
+    // Favoritos a nivel de álbum -- petición explícita de Miguel Ángel
+    // (2026-07-05). favoriteAlbumKeys para saber si un álbum concreto
+    // está marcado (icono relleno/vacío en AlbumHeaderRow);
+    // favoriteAlbumsFlat ya filtrado a álbumes que siguen existiendo en
+    // la biblioteca y ordenado alfabéticamente por título de álbum,
+    // para la lista plana de AlbumsDrillLevel.FavoriteAlbums.
+    // ---
+    // Album-level favorites -- explicit request from Miguel Ángel
+    // (2026-07-05). favoriteAlbumKeys to know if a specific album is
+    // marked (filled/empty icon in AlbumHeaderRow); favoriteAlbumsFlat
+    // already filtered to albums that still exist in the library and
+    // sorted alphabetically by album title, for
+    // AlbumsDrillLevel.FavoriteAlbums's flat list.
+    val favoriteAlbumKeys: Set<Pair<String, String>> = emptySet(),
+    val favoriteAlbumsFlat: List<Pair<String, String>> = emptyList(),
 )
 
 /**
@@ -199,6 +242,7 @@ class LibraryViewModel @Inject constructor(
     private val startupNotices: StartupNotices,
     private val coverArtRepository: CoverArtRepository,
     private val trackFileRelocator: TrackFileRelocator,
+    private val favoriteAlbumRepository: FavoriteAlbumRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -206,6 +250,12 @@ class LibraryViewModel @Inject constructor(
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     private var allDownloaded: List<SearchResultTrack> = emptyList()
+    // Set en memoria de (artist, album) marcados favoritos -- ver
+    // comentario de LibraryUiState.favoriteAlbumKeys.
+    // ---
+    // In-memory set of (artist, album) marked favorite -- see
+    // LibraryUiState.favoriteAlbumKeys' comment.
+    private var favoriteAlbumKeysSet: Set<Pair<String, String>> = emptySet()
 
     // Tracks which artist+album pairs already have a cover art lookup
     // in flight or resolved this process run, so LibraryScreen can
@@ -227,6 +277,27 @@ class LibraryViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(startupMessage = message)
                 }
             }
+        }
+        viewModelScope.launch {
+            favoriteAlbumRepository.getAll().collect { favorites ->
+                favoriteAlbumKeysSet = favorites.map { it.artist to it.album }.toSet()
+                recompute()
+            }
+        }
+    }
+
+    /**
+     * Marca/desmarca un álbum entero como favorito -- concepto NUEVO,
+     * separado de toggleFavorite() (que es por pista, para sencillos).
+     * Petición explícita de Miguel Ángel (2026-07-05).
+     * ---
+     * Marks/unmarks a whole album as favorite -- a NEW concept,
+     * separate from toggleFavorite() (which is per-track, for
+     * singles). Explicit request from Miguel Ángel (2026-07-05).
+     */
+    fun toggleFavoriteAlbum(artist: String, album: String) {
+        viewModelScope.launch {
+            favoriteAlbumRepository.toggle(artist, album)
         }
     }
 
@@ -311,15 +382,22 @@ class LibraryViewModel @Inject constructor(
         )
     }
 
+    /** Entra en la lista plana de álbumes favoritos -- ver AlbumsDrillLevel.FavoriteAlbums. */
+    fun selectFavoriteAlbums() {
+        _uiState.value = _uiState.value.copy(
+            albumsDrill = AlbumsDrillLevel.FavoriteAlbums,
+        )
+    }
+
     fun selectAlbumsArtist(artist: String) {
         _uiState.value = _uiState.value.copy(
             albumsDrill = AlbumsDrillLevel.Albums(artist),
         )
     }
 
-    fun selectAlbumsAlbum(artist: String, album: String) {
+    fun selectAlbumsAlbum(artist: String, album: String, fromFavorites: Boolean = false) {
         _uiState.value = _uiState.value.copy(
-            albumsDrill = AlbumsDrillLevel.Tracks(artist, album),
+            albumsDrill = AlbumsDrillLevel.Tracks(artist, album, fromFavorites),
         )
     }
 
@@ -328,11 +406,16 @@ class LibraryViewModel @Inject constructor(
         val current = _uiState.value.albumsDrill
         val newLevel = when (current) {
             is AlbumsDrillLevel.Letters -> return false
+            is AlbumsDrillLevel.FavoriteAlbums -> AlbumsDrillLevel.Letters
             is AlbumsDrillLevel.Artists -> AlbumsDrillLevel.Letters
             is AlbumsDrillLevel.Albums -> AlbumsDrillLevel.Artists(
                 sortLetterFor(current.artist),
             )
-            is AlbumsDrillLevel.Tracks -> AlbumsDrillLevel.Albums(current.artist)
+            is AlbumsDrillLevel.Tracks -> if (current.fromFavorites) {
+                AlbumsDrillLevel.FavoriteAlbums
+            } else {
+                AlbumsDrillLevel.Albums(current.artist)
+            }
         }
         _uiState.value = _uiState.value.copy(albumsDrill = newLevel)
         return true
@@ -702,12 +785,31 @@ class LibraryViewModel @Inject constructor(
             .toSortedSet()
             .toList()
 
+        // Solo álbumes marcados favoritos que SIGUEN existiendo en la
+        // biblioteca (si se borró un álbum favorito, desaparece de
+        // aquí solo -- la fila de favorite_albums queda huérfana pero
+        // inofensiva, nunca se muestra). Orden alfabético por título
+        // de álbum, cruzando artistas -- "todo exactamente igual"
+        // pedido por Miguel Ángel, pero en una lista plana.
+        // ---
+        // Only albums marked favorite that STILL exist in the library
+        // (if a favorite album gets deleted, it just disappears from
+        // here -- the favorite_albums row is left orphaned but
+        // harmless, never shown). Alphabetical order by album title,
+        // across artists -- "everything exactly the same" requested by
+        // Miguel Ángel, but in a flat list.
+        val favoriteAlbumsFlat = favoriteAlbumKeysSet
+            .filter { (artist, album) -> albumsByArtist[artist]?.containsKey(album) == true }
+            .sortedBy { (_, album) -> album }
+
         _uiState.value = _uiState.value.copy(
             albumsByArtist = albumsByArtist,
             singlesByArtist = singlesByArtist,
             favorites = favorites,
             albumLetters = albumLetters,
             singleLetters = singleLetters,
+            favoriteAlbumKeys = favoriteAlbumKeysSet,
+            favoriteAlbumsFlat = favoriteAlbumsFlat,
         )
     }
 
