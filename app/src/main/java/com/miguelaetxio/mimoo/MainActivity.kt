@@ -477,7 +477,7 @@ class MainActivity : ComponentActivity() {
                                 title = { Text("Carpeta de descargas") },
                                 text = {
                                     Text(
-                                        "MiMoo necesita una carpeta donde " +
+                                        "miMoo necesita una carpeta donde " +
                                             "guardar la música que " +
                                             "descargues para escucharla " +
                                             "sin conexión. En la " +

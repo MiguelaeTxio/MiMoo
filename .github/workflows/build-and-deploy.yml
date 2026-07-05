@@ -54,4 +54,4 @@ jobs:
           curl -X POST \
             -H "Authorization: Token $PA_API_TOKEN" \
             -F "content=@app/build/outputs/apk/debug/app-debug.apk" \
-            "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/files/path/home/MiguelAeTxio/ANDROID/MiMoo/apk/MiMoo.apk"
+            "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/files/path/home/MiguelAeTxio/ANDROID/MiMoo/apk/miMoo.apk"
