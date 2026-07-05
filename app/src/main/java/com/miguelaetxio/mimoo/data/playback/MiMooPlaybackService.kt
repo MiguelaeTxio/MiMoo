@@ -188,7 +188,7 @@ class MiMooPlaybackService : MediaSessionService() {
         // placeholder is only visible for a split second.
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentTitle("MiMoo")
+            .setContentTitle("miMoo")
             .setContentText("Reproduciendo música")
             .setOngoing(true)
             .build()

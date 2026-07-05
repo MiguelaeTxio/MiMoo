@@ -242,13 +242,13 @@ class MainActivity : ComponentActivity() {
                 navController.currentBackStackEntryAsState()
             val currentRoute = currentBackStackEntry?.destination?.route
 
-            MaterialTheme {
+            MaterialTheme(colorScheme = com.miguelaetxio.mimoo.ui.theme.MiMooColorScheme) {
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet {
                             Text(
-                                text = "MiMoo",
+                                text = "miMoo",
                                 style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier.padding(16.dp),
                             )
