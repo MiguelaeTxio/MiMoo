@@ -7,7 +7,9 @@ import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -150,8 +152,31 @@ class LibraryReconciler @Inject constructor(
          */
         const val LOCAL_ID_PREFIX = "local:"
     }
-    suspend fun rescan(rootUri: Uri): RescanResult {
-        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return RescanResult(0, 0, 0)
+    suspend fun rescan(rootUri: Uri): RescanResult = withContext(Dispatchers.IO) {
+        // withContext(Dispatchers.IO) -- bug real reportado por Miguel
+        // Ángel (2026-07-05): "cuando intento borrar una carpeta... no
+        // responde". Causa raíz confirmada: NINGUNA operación de
+        // archivo de este reconciliador cambiaba de dispatcher, así
+        // que el recorrido recursivo completo del árbol SAF (llamadas
+        // bloqueantes al content provider) corría en el hilo
+        // principal -- con una biblioteca pequeña no se nota, pero
+        // cuanto más crece más fácil es que bloquee la interfaz por
+        // completo (ANR), sin dejar ninguna excepción que capturar en
+        // crash_log.txt/debug_error.txt (de ahí que los logs no
+        // coincidieran con el momento del bloqueo).
+        // ---
+        // withContext(Dispatchers.IO) -- real bug reported by Miguel
+        // Ángel (2026-07-05): "when I try to delete a folder... it
+        // doesn't respond". Confirmed root cause: NO file operation in
+        // this reconciler ever switched dispatcher, so the entire
+        // recursive SAF tree walk (blocking calls to the content
+        // provider) ran on the main thread -- unnoticeable with a
+        // small library, but increasingly likely to freeze the UI
+        // completely (ANR) as it grows, with no exception left to
+        // catch in crash_log.txt/debug_error.txt (which is why those
+        // logs never matched the moment of the freeze).
+        val root = DocumentFile.fromTreeUri(context, rootUri)
+            ?: return@withContext RescanResult(0, 0, 0)
 
         // Carpetas vacías primero (petición explícita de Miguel Ángel,
         // 2026-07-04, tras encontrar carpetas de artista completamente
@@ -231,7 +256,7 @@ class LibraryReconciler @Inject constructor(
             repository.cacheSearchResults(discovered)
         }
 
-        return RescanResult(emptyFoldersRemoved, junkFilesRemoved, discovered.size)
+        RescanResult(emptyFoldersRemoved, junkFilesRemoved, discovered.size)
     }
 
     /**
@@ -471,7 +496,7 @@ class LibraryReconciler @Inject constructor(
      * Real, search-originated rows are never touched here, same as in
      * rescan().
      */
-    suspend fun pruneDeadSyntheticRows() {
+    suspend fun pruneDeadSyntheticRows() = withContext(Dispatchers.IO) {
         repository.getAll().first()
             .filter { it.youtubeId.startsWith(LOCAL_ID_PREFIX) }
             .forEach { track ->
@@ -546,9 +571,10 @@ class LibraryReconciler @Inject constructor(
      * ever showed up in the real folder name, never in a real row's
      * Room field -- see the comment in DownloadDirManager).
      */
-    suspend fun mergeDuplicateArtistFolders(rootUri: Uri): DuplicateMergeResult {
+    suspend fun mergeDuplicateArtistFolders(rootUri: Uri): DuplicateMergeResult =
+        withContext(Dispatchers.IO) {
         val root = DocumentFile.fromTreeUri(context, rootUri)
-            ?: return DuplicateMergeResult(0, 0, 0)
+            ?: return@withContext DuplicateMergeResult(0, 0, 0)
 
         val artistDirs = root.listFiles().filter { it.isDirectory }
         val groups = artistDirs.groupBy { stripDuplicateSuffix(it.name ?: "") }
@@ -600,7 +626,7 @@ class LibraryReconciler @Inject constructor(
                 }
             }
 
-        return DuplicateMergeResult(foldersMerged, filesMoved, conflicts)
+        DuplicateMergeResult(foldersMerged, filesMoved, conflicts)
     }
 
     private fun name(doc: DocumentFile): String = doc.name ?: ""

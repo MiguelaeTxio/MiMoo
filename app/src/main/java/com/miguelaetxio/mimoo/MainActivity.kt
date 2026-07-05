@@ -10,8 +10,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +41,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -92,11 +98,103 @@ class MainActivity : ComponentActivity() {
         ) { uri ->
             if (uri != null) {
                 storageManager.saveRootUri(uri)
+                // Escaneo SOLO en la primera instalación/primer permiso
+                // de carpeta -- petición explícita de Miguel Ángel
+                // (2026-07-05, reiterando y corrigiendo la decisión del
+                // 2026-07-04): con una biblioteca grande (200 discos ×
+                // 10 pistas = 2.000 canciones), reconciliar en CADA
+                // arranque de la app sería una barbaridad de trabajo
+                // repetido sin necesidad. El rescan de cada arranque
+                // se quitó de onCreate() -- este es ahora el ÚNICO
+                // punto donde se dispara solo, y nunca se vuelve a
+                // repetir automáticamente (el botón de refresco manual
+                // de Biblioteca sigue disponible para cuando el propio
+                // usuario decida forzarlo). isInitialScanning muestra
+                // un spinner de pantalla completa mientras dura, para
+                // que no parezca que la app se ha quedado bloqueada.
+                // ---
+                // Scan ONLY on first install/first folder permission --
+                // explicit request from Miguel Ángel (2026-07-05,
+                // reiterating and correcting the 2026-07-04 decision):
+                // with a large library (200 albums × 10 tracks = 2,000
+                // songs), reconciling on EVERY app startup would be a
+                // huge amount of needlessly repeated work. The
+                // every-startup rescan was removed from onCreate() --
+                // this is now the ONLY place it fires on its own, and
+                // it's never repeated automatically again (Biblioteca's
+                // manual refresh button is still there for whenever the
+                // user themselves decides to force it).
+                // isInitialScanning shows a full-screen spinner while it
+                // runs, so it doesn't look like the app froze.
+                isInitialScanning = true
                 lifecycleScope.launch {
-                    libraryReconciler.rescan(uri)
+                    val result = libraryReconciler.rescan(uri)
+                    postStartupNotice(result)
+                    isInitialScanning = false
                 }
             }
         }
+
+    /**
+     * true mientras dura el escaneo inicial (solo tras elegir la
+     * carpeta por primera vez) -- MainActivity, no una pantalla
+     * Composable concreta, porque el callback de openDocumentTree vive
+     * fuera de setContent{}. Compose observa igualmente los cambios de
+     * un `mutableStateOf` a nivel de Activity.
+     * ---
+     * true while the initial scan runs (only right after picking the
+     * folder for the first time) -- lives on MainActivity, not a
+     * specific Composable screen, because openDocumentTree's callback
+     * lives outside setContent{}. Compose still observes changes to an
+     * Activity-level `mutableStateOf` just the same.
+     */
+    private var isInitialScanning by mutableStateOf(false)
+
+    /**
+     * Aviso explícito pedido por Miguel Ángel (2026-07-04) -- solo si
+     * hubo algo real que contar, para no mostrar un Snackbar vacío.
+     * Extraído a función propia porque ahora solo se llama desde el
+     * escaneo inicial (openDocumentTree), no en cada arranque.
+     * ---
+     * Explicit notice requested by Miguel Ángel (2026-07-04) -- only if
+     * there was something real to report, so it doesn't show an empty
+     * Snackbar. Extracted into its own function because it's now only
+     * called from the initial scan (openDocumentTree), not on every
+     * startup.
+     */
+    private fun postStartupNotice(result: com.miguelaetxio.mimoo.data.library.RescanResult) {
+        if (result.emptyFoldersRemoved > 0 ||
+            result.junkFilesRemoved > 0 ||
+            result.tracksDiscovered > 0
+        ) {
+            startupNotices.post(
+                buildString {
+                    append("Limpieza de arranque: ")
+                    val parts = mutableListOf<String>()
+                    if (result.junkFilesRemoved > 0) {
+                        parts.add(
+                            "${result.junkFilesRemoved} archivo(s) " +
+                                "no musical(es) borrado(s)"
+                        )
+                    }
+                    if (result.emptyFoldersRemoved > 0) {
+                        parts.add(
+                            "${result.emptyFoldersRemoved} " +
+                                "carpeta(s) vacía(s) borrada(s)"
+                        )
+                    }
+                    if (result.tracksDiscovered > 0) {
+                        parts.add(
+                            "${result.tracksDiscovered} pista(s) " +
+                                "nueva(s) encontrada(s) en disco"
+                        )
+                    }
+                    append(parts.joinToString(", "))
+                    append(".")
+                }
+            )
+        }
+    }
 
     /**
      * Solicita POST_NOTIFICATIONS (obligatorio desde Android 13) --
@@ -167,67 +265,6 @@ class MainActivity : ComponentActivity() {
             requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-        // Reconcilia SAF↔Room en CADA arranque de la app, no solo la
-        // primera vez que se elige la carpeta -- petición explícita de
-        // Miguel Ángel (2026-07-04): archivos añadidos a mano fuera de
-        // MiMoo (p.ej. carpetas de Beethoven copiadas desde un PC)
-        // antes solo se detectaban con el botón de refresco manual de
-        // Biblioteca, nunca automáticamente al abrir la app.
-        // ---
-        // Reconciles SAF↔Room on EVERY app startup, not just the first
-        // time the folder is chosen -- explicit request from Miguel
-        // Ángel (2026-07-04): files added by hand outside MiMoo (e.g.
-        // Beethoven folders copied from a PC) were previously only
-        // detected via Biblioteca's manual refresh button, never
-        // automatically on app open.
-        if (storageManager.hasRootUri()) {
-            storageManager.getRootUri()?.let { uri ->
-                lifecycleScope.launch {
-                    val result = libraryReconciler.rescan(uri)
-                    // Aviso explícito pedido por Miguel Ángel
-                    // (2026-07-04) -- solo si hubo algo real que
-                    // contar, para no mostrar un Snackbar vacío en
-                    // cada arranque normal sin novedades.
-                    // ---
-                    // Explicit notice requested by Miguel Ángel
-                    // (2026-07-04) -- only if there was something real
-                    // to report, so a normal startup with nothing new
-                    // doesn't show an empty Snackbar every time.
-                    if (result.emptyFoldersRemoved > 0 ||
-                        result.junkFilesRemoved > 0 ||
-                        result.tracksDiscovered > 0
-                    ) {
-                        startupNotices.post(
-                            buildString {
-                                append("Limpieza de arranque: ")
-                                val parts = mutableListOf<String>()
-                                if (result.junkFilesRemoved > 0) {
-                                    parts.add(
-                                        "${result.junkFilesRemoved} archivo(s) " +
-                                            "no musical(es) borrado(s)"
-                                    )
-                                }
-                                if (result.emptyFoldersRemoved > 0) {
-                                    parts.add(
-                                        "${result.emptyFoldersRemoved} " +
-                                            "carpeta(s) vacía(s) borrada(s)"
-                                    )
-                                }
-                                if (result.tracksDiscovered > 0) {
-                                    parts.add(
-                                        "${result.tracksDiscovered} pista(s) " +
-                                            "nueva(s) encontrada(s) en disco"
-                                    )
-                                }
-                                append(parts.joinToString(", "))
-                                append(".")
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
         enableEdgeToEdge()
         setContent {
             var showStorageExplanation by remember {
@@ -243,6 +280,47 @@ class MainActivity : ComponentActivity() {
             val currentRoute = currentBackStackEntry?.destination?.route
 
             MaterialTheme(colorScheme = com.miguelaetxio.mimoo.ui.theme.MiMooColorScheme) {
+                if (isInitialScanning) {
+                    // Spinner de pantalla completa durante el escaneo
+                    // inicial (solo tras elegir la carpeta por primera
+                    // vez) -- petición explícita de Miguel Ángel
+                    // (2026-07-05): sin esto, con una biblioteca grande
+                    // el usuario podría pensar que la app se ha
+                    // quedado bloqueada al arrancar.
+                    // ---
+                    // Full-screen spinner during the initial scan (only
+                    // right after picking the folder for the first
+                    // time) -- explicit request from Miguel Ángel
+                    // (2026-07-05): without this, with a large library
+                    // the user might think the app froze on startup.
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(24.dp))
+                            Text(
+                                "Analizando tu biblioteca por primera vez...",
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Puede tardar unos segundos si ya tienes " +
+                                    "muchas canciones descargadas. Esto solo " +
+                                    "ocurre una vez.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                    return@MaterialTheme
+                }
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {

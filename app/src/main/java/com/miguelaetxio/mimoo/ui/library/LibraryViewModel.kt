@@ -18,10 +18,12 @@ import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.Normalizer
 import java.util.Collections
 import javax.inject.Inject
@@ -429,14 +431,16 @@ class LibraryViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val relocated = trackFileRelocator.relocate(
-                    context = context,
-                    sourceFilePath = track.filePath!!,
-                    rootUri = rootUri,
-                    newArtist = trimmedArtist,
-                    newAlbum = newAlbum,
-                    title = trimmedTitle,
-                )
+                val relocated = withContext(Dispatchers.IO) {
+                    trackFileRelocator.relocate(
+                        context = context,
+                        sourceFilePath = track.filePath!!,
+                        rootUri = rootUri,
+                        newArtist = trimmedArtist,
+                        newAlbum = newAlbum,
+                        title = trimmedTitle,
+                    )
+                }
                 if (relocated == null) {
                     _uiState.value = _uiState.value.copy(
                         editMetadataError = "No se pudo mover el archivo a la " +
@@ -451,7 +455,9 @@ class LibraryViewModel @Inject constructor(
                 // ---
                 // The file left {currentArtist}/{track.album}/ -- if it
                 // ended up empty, clean it up just like on a delete.
-                cleanupEmptyFolders(currentArtist, track.album)
+                withContext(Dispatchers.IO) {
+                    cleanupEmptyFolders(currentArtist, track.album)
+                }
             }
 
             repository.update(
@@ -487,14 +493,16 @@ class LibraryViewModel @Inject constructor(
      */
     fun deleteDownload(track: SearchResultTrack) {
         viewModelScope.launch {
-            track.filePath?.let { path ->
-                DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
-            }
-            cleanupEmptyFolders(track.artist ?: track.channelTitle, track.album)
-            if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
-                repository.delete(track)
-            } else {
-                repository.clearDownload(track.youtubeId)
+            withContext(Dispatchers.IO) {
+                track.filePath?.let { path ->
+                    DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                }
+                cleanupEmptyFolders(track.artist ?: track.channelTitle, track.album)
+                if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                    repository.delete(track)
+                } else {
+                    repository.clearDownload(track.youtubeId)
+                }
             }
         }
     }
@@ -516,18 +524,20 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch {
             val tracks = _uiState.value.albumsByArtist[artist]?.get(album)
                 ?: return@launch
-            tracks.forEach { track ->
-                track.filePath?.let { path ->
-                    DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+            withContext(Dispatchers.IO) {
+                tracks.forEach { track ->
+                    track.filePath?.let { path ->
+                        DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                    }
+                    if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                        repository.delete(track)
+                    } else {
+                        repository.clearDownload(track.youtubeId)
+                    }
                 }
-                if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
-                    repository.delete(track)
-                } else {
-                    repository.clearDownload(track.youtubeId)
-                }
+                deleteFolderIfExists(artist, album)
+                cleanupEmptyFolders(artist, album)
             }
-            deleteFolderIfExists(artist, album)
-            cleanupEmptyFolders(artist, album)
 
             if (_uiState.value.albumsDrill is AlbumsDrillLevel.Tracks) {
                 _uiState.value = _uiState.value.copy(
@@ -552,22 +562,24 @@ class LibraryViewModel @Inject constructor(
                 ?.values?.flatten() ?: emptyList()
             val singleTracks = _uiState.value.singlesByArtist[artist] ?: emptyList()
 
-            (albumTracks + singleTracks).forEach { track ->
-                track.filePath?.let { path ->
-                    DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+            withContext(Dispatchers.IO) {
+                (albumTracks + singleTracks).forEach { track ->
+                    track.filePath?.let { path ->
+                        DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                    }
+                    if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                        repository.delete(track)
+                    } else {
+                        repository.clearDownload(track.youtubeId)
+                    }
                 }
-                if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
-                    repository.delete(track)
-                } else {
-                    repository.clearDownload(track.youtubeId)
-                }
-            }
 
-            val rootUri = storageManager.getRootUri()
-            if (rootUri != null) {
-                DocumentFile.fromTreeUri(context, rootUri)
-                    ?.findFile(DownloadDirManager.sanitize(artist))
-                    ?.delete()
+                val rootUri = storageManager.getRootUri()
+                if (rootUri != null) {
+                    DocumentFile.fromTreeUri(context, rootUri)
+                        ?.findFile(DownloadDirManager.sanitize(artist))
+                        ?.delete()
+                }
             }
 
             if (_uiState.value.albumsDrill !is AlbumsDrillLevel.Letters) {
