@@ -7,13 +7,11 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-
-private const val NOTIFICATION_CHANNEL_ID = "mimoo_playback"
-private const val NOTIFICATION_ID = 1
 
 /**
  * MediaSessionService en primer plano para la reproducción de audio
@@ -73,6 +71,34 @@ class MiMooPlaybackService : MediaSessionService() {
         super.onCreate()
         mediaSession = MediaSession.Builder(this, playerManager.player).build()
 
+        // Registrado explícitamente (aunque MediaSessionService ya usa
+        // este mismo provider por defecto si no se llama a este método)
+        // para dejar constancia expresa de qué ID/canal se usan --
+        // deben coincidir EXACTAMENTE con los que usa
+        // startForegroundImmediately() más abajo, o la notificación
+        // manual de arranque y la real de Media3 con controles
+        // acabarían siendo dos notificaciones distintas en vez de una
+        // sola que se sustituye a sí misma. Bug real reportado por
+        // Miguel Ángel (2026-07-05): "tendría que aparecer en la
+        // pantalla de notificaciones para poder manejarlo desde ahí" --
+        // antes se veía la notificación de arranque (sin controles) y
+        // nunca la sustituía la real, porque usaban ID/canal distintos.
+        // ---
+        // Explicitly registered (even though MediaSessionService
+        // already uses this same provider by default if this method
+        // isn't called) to leave explicit record of which ID/channel
+        // are used -- they must match EXACTLY what
+        // startForegroundImmediately() uses below, or the manual
+        // startup notification and Media3's real one with controls
+        // would end up being two separate notifications instead of one
+        // replacing itself. Real bug reported by Miguel Ángel
+        // (2026-07-05): "it should show up in the notification screen
+        // so it can be controlled from there" -- previously the
+        // startup notification (no controls) showed up and was never
+        // replaced by the real one, because they used different
+        // ID/channel.
+        setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build())
+
         // Llamada MANUAL e inmediata a startForeground() -- bug real
         // reportado por Miguel Ángel (2026-07-04, crash_log.txt):
         // ForegroundServiceDidNotStartInTimeException. El mecanismo
@@ -109,12 +135,36 @@ class MiMooPlaybackService : MediaSessionService() {
     }
 
     private fun startForegroundImmediately() {
+        // ID y canal IDÉNTICOS a los que usa DefaultMediaNotificationProvider
+        // por defecto (androidx.media3.session.DefaultMediaNotificationProvider.
+        // DEFAULT_NOTIFICATION_ID = 1001, DEFAULT_CHANNEL_ID =
+        // "default_channel_id", confirmado contra el código fuente de
+        // Media3) -- así, en cuanto Media3 publique su notificación
+        // real con controles de play/pausa/siguiente/anterior, lo hace
+        // sobre este MISMO id+canal y sustituye a esta notificación
+        // provisional en vez de crear una segunda notificación
+        // separada sin controles que se quedaba fija para siempre
+        // (bug real reportado por Miguel Ángel, 2026-07-05).
+        // ---
+        // ID and channel IDENTICAL to what DefaultMediaNotificationProvider
+        // uses by default (androidx.media3.session.
+        // DefaultMediaNotificationProvider.DEFAULT_NOTIFICATION_ID =
+        // 1001, DEFAULT_CHANNEL_ID = "default_channel_id", confirmed
+        // against Media3's source code) -- this way, as soon as Media3
+        // posts its real notification with play/pause/next/previous
+        // controls, it does so on this SAME id+channel and replaces
+        // this placeholder notification instead of creating a second,
+        // separate, controls-less notification that stayed stuck
+        // forever (real bug reported by Miguel Ángel, 2026-07-05).
+        val channelId = DefaultMediaNotificationProvider.DEFAULT_CHANNEL_ID
+        val notificationId = DefaultMediaNotificationProvider.DEFAULT_NOTIFICATION_ID
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
-            if (manager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) == null) {
+            if (manager.getNotificationChannel(channelId) == null) {
                 manager.createNotificationChannel(
                     NotificationChannel(
-                        NOTIFICATION_CHANNEL_ID,
+                        channelId,
                         "Reproducción de MiMoo",
                         NotificationManager.IMPORTANCE_LOW,
                     )
@@ -125,13 +175,18 @@ class MiMooPlaybackService : MediaSessionService() {
         // Icono de sistema como placeholder -- este proyecto todavía
         // no tiene un icono de app propio en res/ (ver
         // AndroidManifest.xml, sin android:icon). Cuando exista uno,
-        // sustituir por el drawable real de MiMoo.
+        // sustituir por el drawable real de MiMoo. Media3 sustituirá
+        // esta notificación entera (icono incluido) en cuanto publique
+        // la suya real, así que este placeholder solo se ve una
+        // fracción de segundo.
         // ---
         // System icon as a placeholder -- this project doesn't have
         // its own app icon in res/ yet (see AndroidManifest.xml, no
         // android:icon). Once one exists, swap in MiMoo's real
-        // drawable.
-        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        // drawable. Media3 will replace this whole notification (icon
+        // included) as soon as it posts its real one, so this
+        // placeholder is only visible for a split second.
+        val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("MiMoo")
             .setContentText("Reproduciendo música")
@@ -140,7 +195,7 @@ class MiMooPlaybackService : MediaSessionService() {
 
         ServiceCompat.startForeground(
             this,
-            NOTIFICATION_ID,
+            notificationId,
             notification,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
