@@ -105,13 +105,61 @@ class DownloadsViewModel @Inject constructor(
      */
     fun retry(track: SearchResultTrack) {
         viewModelScope.launch {
-            downloadQueueManager.enqueue(
-                youtubeId = track.youtubeId,
-                title = track.title,
-                artist = track.artist ?: track.channelTitle,
-                album = track.album,
-                trackPosition = track.trackPosition,
-            )
+            enqueueRetry(track)
+        }
+    }
+
+    /**
+     * Reintenta TODAS las descargas fallidas de golpe -- petición
+     * explícita de Miguel Ángel (2026-07-06): "es un coñazo estar
+     * reintentando una por una... 36 de 100 títulos han fallado".
+     * ---
+     * Retries ALL failed downloads at once -- explicit request from
+     * Miguel Ángel (2026-07-06): "it's a pain having to retry one by
+     * one... 36 out of 100 titles failed".
+     */
+    fun retryAll() {
+        viewModelScope.launch {
+            _uiState.value.failed.forEach { track ->
+                enqueueRetry(track)
+            }
+        }
+    }
+
+    private suspend fun enqueueRetry(track: SearchResultTrack) {
+        downloadQueueManager.enqueue(
+            youtubeId = track.youtubeId,
+            title = track.title,
+            artist = track.artist ?: track.channelTitle,
+            album = track.album,
+            trackPosition = track.trackPosition,
+        )
+    }
+
+    /**
+     * Borra una descarga fallida de forma DEFINITIVA -- para las que
+     * fallan siempre, sin importar cuánto se espere o se reintente.
+     * Petición explícita de Miguel Ángel (2026-07-06): "hay algunas
+     * que fallan siempre... sería conveniente poder borrar esas
+     * descargas fallidas para no reintentarlas más". A diferencia de
+     * retry(), esto borra la fila entera de Room -- no queda ningún
+     * rastro que pueda reintentarse por error más adelante. Si
+     * Miguel Ángel quiere esa pista en el futuro, tendrá que buscarla/
+     * importarla de nuevo desde cero.
+     * ---
+     * Permanently deletes a failed download -- for the ones that
+     * always fail, no matter how long you wait or how many times you
+     * retry. Explicit request from Miguel Ángel (2026-07-06): "some
+     * always fail... it would help to be able to delete those failed
+     * downloads so they don't get retried anymore". Unlike retry(),
+     * this deletes the whole Room row -- no trace is left that could
+     * accidentally get retried later. If Miguel Ángel wants that track
+     * in the future, he'll have to search/import it again from
+     * scratch.
+     */
+    fun deleteFailed(track: SearchResultTrack) {
+        viewModelScope.launch {
+            repository.delete(track)
         }
     }
 }

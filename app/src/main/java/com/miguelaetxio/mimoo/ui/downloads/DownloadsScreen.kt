@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Menu
@@ -97,10 +98,36 @@ fun DownloadsScreen(
 
             if (uiState.failed.isNotEmpty()) {
                 item {
-                    SectionHeader("Con error (${uiState.failed.size})")
+                    // Cabecera con botón "Reintentar todas" -- petición
+                    // explícita de Miguel Ángel (2026-07-06): "es un
+                    // coñazo estar reintentando una por una", con 36 de
+                    // 100 títulos fallados en una sola descarga.
+                    // ---
+                    // Header with a "Retry all" button -- explicit
+                    // request from Miguel Ángel (2026-07-06): "it's a
+                    // pain having to retry one by one", with 36 out of
+                    // 100 titles failed in a single download.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SectionHeader(
+                            "Con error (${uiState.failed.size})",
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = viewModel::retryAll) {
+                            Text("Reintentar todas")
+                        }
+                    }
                 }
                 items(uiState.failed, key = { "e_${it.youtubeId}" }) { track ->
-                    FailedRow(track, onRetry = { viewModel.retry(track) })
+                    FailedRow(
+                        track,
+                        onRetry = { viewModel.retry(track) },
+                        onDelete = { viewModel.deleteFailed(track) },
+                    )
                 }
             }
 
@@ -120,12 +147,12 @@ fun DownloadsScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
+private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         title,
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
 }
 
@@ -193,12 +220,18 @@ private fun QueuedRow(track: SearchResultTrack) {
 }
 
 /**
- * Fila "con error": icono rojo + botón de reintentar, que reencola la
- * descarga (mismo mecanismo que el botón de retry en
- * SearchScreen.DownloadButton para ERROR).
+ * Fila "con error": icono rojo + botón de reintentar (mismo mecanismo
+ * que el botón de retry en SearchScreen.DownloadButton para ERROR) +
+ * botón de borrar definitivo -- para las que fallan siempre, sin
+ * importar cuánto se espere o se reintente (petición explícita de
+ * Miguel Ángel, 2026-07-06).
  */
 @Composable
-private fun FailedRow(track: SearchResultTrack, onRetry: () -> Unit) {
+private fun FailedRow(
+    track: SearchResultTrack,
+    onRetry: () -> Unit,
+    onDelete: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -215,6 +248,13 @@ private fun FailedRow(track: SearchResultTrack, onRetry: () -> Unit) {
         TrackTitleLine(track, modifier = Modifier.weight(1f))
         IconButton(onClick = onRetry) {
             Icon(Icons.Filled.Refresh, contentDescription = "Reintentar")
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = "Borrar definitivamente",
+                tint = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }
