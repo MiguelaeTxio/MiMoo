@@ -50,7 +50,7 @@ esas partes.
 | 3 | Pantalla AlbumSearchScreen + AlbumSearchViewModel | HECHO — S001 |
 | 4 | Corrección manual del emparejamiento por pista | HECHO — S001 |
 | 5 | Importar álbum a search_result_tracks | HECHO — S001, con incidencias (ver COMPLETADAS EN S001) |
-| 6 | Verificación funcional end-to-end (dispositivo) | EN CURSO — Prioridad 1 confirmada (S003), quedan Lou Reed/Beethoven/playlist normal |
+| 6 | Verificación funcional end-to-end (dispositivo) | EN CURSO — Prioridad 1 confirmada (S003); S004 resolvió una cadena larga de bugs de fondo (reconciliación, hilos, notificación, firma) que bloqueaban probar esto en condiciones; quedan Lou Reed/Beethoven/playlist normal sin confirmación explícita |
 
 ---
 
@@ -96,6 +96,123 @@ el álbum importado debe **descargarse automáticamente**, no quedarse
 como metadato a la espera de descarga manual. Motivo: la YouTube Data
 API tiene un tope de cuota (mencionado como "100 búsquedas"/día) y no
 quiere depender de volver a buscar en YouTube cada vez.
+
+---
+
+## COMPLETADAS EN S004 (2026-07-04 a 2026-07-06, sesión NewFlow — la más larga y de mayor alcance hasta la fecha)
+
+**Nota de alcance:** esta sesión desbordó ampliamente el objetivo
+formal de H05 (búsqueda de álbumes vía MusicBrainz). Nació como
+continuación del PASO 6c pendiente, pero la propia verificación real
+de Miguel Ángel en dispositivo fue destapando una cadena larga de
+bugs estructurales de fondo (reconciliación, hilos, firma de
+compilación, reproducción en segundo plano) que requerían resolverse
+antes de que las pruebas de H05 tuvieran sentido. Se documenta todo
+aquí, agrupado por tema, en vez de forzarlo a la forma de "PASO 6c".
+
+**1. Reconciliación SAF↔Room — de frágil a robusta:**
+`LibraryReconciler.rescan()` pasó de mirar solo 2 niveles fijos y solo
+`.opus`, a recorrido recursivo real con formatos comunes
+(mp3/m4a/flac/ogg/wav/aac/wma) — causa raíz real de que pistas de
+Beethoven en otro formato aparecieran "ignoradas por completo". Se
+hizo resiliente por-hijo (un archivo problemático ya no aborta todo el
+escaneo, bug real que dejaba Biblioteca mostrando solo el artista "Air"
+tras horas de reproducción). Limpieza añadida: carpetas vacías,
+archivos no musicales fuera de la raíz, filas sintéticas muertas,
+huérfanos de descarga (`QUEUED`/`DOWNLOADING` sin `WorkRequest` vivo).
+**Decisión de producto revertida en la propia sesión:** primero se puso
+a reconciliar en cada arranque (petición explícita del 04/07), pero
+Miguel Ángel corrigió el 05/07 que debía ser solo en el primer arranque
+tras elegir carpeta — con 2.000 canciones sería trabajo repetido
+innecesario. Queda así: solo una vez, con spinner de pantalla completa
+mientras dura. Todas las operaciones de disco (antes en el hilo
+principal sin excepción) pasaron a `Dispatchers.IO` — causa real de
+"se queda sin responder" al borrar, sin nada en los logs de error.
+
+**2. Biblioteca — reorganización completa:** navegación por capas
+Letras → Artistas → Álbumes → Pistas (Sencillos sin capa de álbum),
+sustituyendo la vista plana anterior. Letra de agrupación por nombre
+tal cual guardado (sin heurística de apellido). Borrado en cascada
+(pista/álbum/artista) con limpieza de carpetas vacías. Favoritos de
+**álbum** como concepto nuevo y separado del favorito por pista (tabla
+`favorite_albums`, migración v8→v9), con entrada "★ Álbumes favoritos"
+antes de las letras.
+
+**3. Descargas — cierre de vectores de "zombis" y mejoras de flujo:**
+idempotencia real en `DownloadWorker` (si el archivo ya existe, no
+vuelve a descargar), reintento automático hasta 3 veces antes de
+marcar error definitivo, orden de pista guardado en el propio nombre
+de archivo (`"NN - Título.opus"`) para que sobreviva a una
+reconciliación futura — bug real: discos conceptuales como *The Wall*
+perdían el orden al reconciliar. Confirmar/editar metadatos antes de
+descargar (Búsqueda e Importar enlace, este último corregido para que
+el diálogo aparezca siempre, no solo cuando falta nombre de canal).
+Pantalla Descargas: borrar definitivamente una descarga que falla
+siempre, y "Reintentar todas" de golpe (36 de 100 títulos fallados en
+una sesión real).
+
+**4. Búsqueda gratuita:** pantalla de Búsqueda migrada de
+`search.list` (100 unidades/llamada) a `yt-dlp` (`ytsearchN:`, coste
+cero) — petición explícita de Miguel Ángel, priorizando gratuidad
+sobre precisión de metadatos.
+
+**5. Reproducción en segundo plano — la cadena de bugs más larga de
+la sesión:** `MediaSessionService` en primer plano (antes, el
+`ExoPlayer` vivía en un singleton sin protección, y el sistema mataba
+el proceso al cerrar otra app, sin excepción capturada). Encadenado:
+`ForegroundServiceDidNotStartInTimeException` (startForeground manual
+e inmediato), notificación fija sin controles (ID/canal no coincidían
+con `DefaultMediaNotificationProvider`), permiso `POST_NOTIFICATIONS`
+nunca solicitado (la notificación no aparecía en absoluto), y
+finalmente — confirmado con `notification_debug.txt`, no con teoría —
+`onGetSession()` nunca se llamaba porque ningún `MediaController` se
+conectaba nunca a la sesión; se añadió uno conectado a la propia
+sesión solo para forzar esa conexión. Cola de reproducción de sesión
+(temporal, en memoria, distinta de las Playlists guardadas):
+Reproducir ahora / a continuación / Añadir al final, gestión con
+drag-and-drop. Migrada después a vivir dentro de la playlist real de
+`ExoPlayer` (antes solo cargaba una pista suelta cada vez) — causa
+real de que el botón "siguiente" de la notificación no funcionara,
+mientras "anterior" sí.
+
+**6. Listas de reproducción:** añadir un álbum completo de golpe, no
+solo pista a pista (la gestión de listas ya existía completa desde
+antes).
+
+**7. Compartir enlaces por WhatsApp:** enlace de origen (`sourceUrl`)
+guardado al importar por enlace, para poder compartir el álbum/pista
+después. Bug real corregido: pistas sintéticas (reconciliadas desde
+disco, `youtubeId` con prefijo `local:`) generaban un enlace
+`youtu.be` inválido — ahora `shareableUrl` es `null` para esas, sin
+enlace roto.
+
+**8. Identidad visual:** icono de app nuevo (antes no existía
+ninguno) — fondo azul MSX2 (nostalgia personal de Miguel Ángel), "mi"
+arriba y "Moo" debajo. Tema de la app a azul MSX con letra blanca y
+rojo→amarillo en controles/errores (contraste real sobre azul). Nombre
+visible corregido de "MiMoo" a "miMoo" en todos los textos de usuario.
+
+**9. Verificación de desarrollador Android (fuera del código, proceso
+guiado en tiempo real):** registro completo de cuenta "Full
+distribution" en Android Developer Console, identidad verificada,
+paquete `com.miguelaetxio.mimoo` registrado y verificado. **Causa
+real encontrada de "conflicto con un paquete"/"firma diferente"**
+(incidencia arrastrada desde S002, entonces sin resolver): nunca había
+un `signingConfig` explícito en `build.gradle.kts` — se había
+verificado que el archivo del keystore tenía la huella correcta, pero
+nunca que Gradle lo usara de verdad para firmar. Con el
+`signingConfig` explícito, Android Developer Console pasó de rechazar
+el APK a verificarlo correctamente. Pendiente confirmar en una
+actualización real sobre instalación existente (ver hoja de ruta).
+
+**10. Bugs de build corregidos en el camino:** manifiesto XML
+inválido (`--` no permitido dentro de comentarios XML, dos veces),
+`[Dagger/MissingBinding]` por un `@Provides` olvidado para
+`FavoriteAlbumDao`.
+
+**Pregunta abierta sin resolver, planteada por Miguel Ángel:** ¿hace
+falta un menú de configuración para elegir tema/color? Se confirmó que
+nunca existió; sin decisión tomada.
 
 ---
 
@@ -222,33 +339,53 @@ entradas antiguas. Sin conclusión definitiva — vigilar si se repite.
 
 ## Hoja de Ruta para la Siguiente Sesión
 
-**PASOS 1-5 y PASO 6a/6b/6d/6e/6f siguen sin repetirse — ya
-implementados y verificados.** La Prioridad 1 de PASO 6c (cierre de
-app al reimportar) queda CONFIRMADA RESUELTA — no repetir esa prueba
-salvo que reaparezca. Queda el resto de PASO 6c, sin tocar en S003:
+**Verificación pendiente de todo lo hecho en S004 (prioridad sobre
+retomar H05 desde cero):**
 
-- **Reimportar Lou Reed - Transformer** (búsqueda por álbum, PASO 6e)
-  y confirmar que empareja las 11 pistas de golpe vía playlist. Si
-  falla, comprobar si el mensaje menciona cuota de YouTube agotada
-  (proyecto `mimoo-501004`, resetea a medianoche hora del Pacífico).
-- **Probar "Beethoven"/"Sinfonía" sueltos** (solo título, sin
-  artista) en Buscar álbum — confirmar que se pide tracklist +
-  emparejamiento, que las pistas se descargan solas, y que el orden
-  de disco ahora es correcto (trackPosition, fix de S003).
-- **"Importar enlace" con una playlist normal de YouTube** (no
-  YouTube Music) y con un vídeo suelto — confirmar carátula cuando
-  hay un único canal, y que la carpeta en disco ahora es
-  `{artista}/{álbum}/` real (fix de S003), no `Sencillos/`.
-- Si reaparecen pistas "perdidas" de un álbum, comprobar primero la
-  nueva sección "Con error" de Descargas antes de investigar a
-  ciegas.
-- Decisión pendiente de Miguel Ángel: ¿se aborda ya la migración de
-  `SearchScreen` a búsqueda vía `yt-dlp` (`ytsearch:`, sin cuota) como
-  hito propio, o queda pospuesta?
-- Recordatorio de housekeeping: el álbum Moon Safari ya descargado
-  sigue físicamente en `Air/Sencillos/` (carpeta antigua) — borrar y
-  redescargar cuando convenga para que se reubique en
-  `Air/Air - Moon Safari [Full Album]/`.
+- **Actualización real sobre instalación existente**, ya con el
+  `signingConfig` explícito — confirmar que una actualización (no una
+  instalación limpia) ya no da "conflicto con un paquete"/"firma
+  diferente". Miguel Ángel iba a probarlo al cierre de S004, sin
+  confirmación todavía en este documento.
+- **Notificación de reproducción con controles reales** — confirmada
+  con captura que aparecen play/pausa/anterior/barra de progreso; el
+  botón "siguiente" se corrigió al final de la sesión (cola migrada a
+  la playlist real de ExoPlayer) sin confirmación explícita de Miguel
+  Ángel todavía.
+- **Reintento de descargas fallidas** (borrar definitiva/reintentar
+  todas) — sin probar en dispositivo todavía, nace de una sesión real
+  donde 36 de 100 títulos fallaron.
+- **Favoritos de álbum** — funcionalidad nueva, sin verificar en
+  dispositivo.
+- **Compartir enlaces** — confirmado que fallaba para pistas
+  sintéticas antiguas (arreglado); Miguel Ángel iba a probarlo con una
+  descarga nueva para confirmar que el enlace de origen se comparte
+  bien.
+- **Orden de pista en discos conceptuales** (prefijo `NN -` en el
+  nombre de archivo) — solo afecta a descargas nuevas a partir de
+  S004; los discos ya descargados antes seguirán sin orden tras
+  reconciliar salvo que se vuelvan a descargar.
+
+**Pendiente original de H05 (PASO 6c), sin confirmación explícita de
+que se probara durante S004 pese a la actividad intensa:**
+
+- Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
+  emparejamiento vía playlist, 11 pistas de golpe.
+- Buscar álbum con solo artista o solo título suelto (p.ej.
+  "Beethoven"/"Sinfonía") — confirmar tracklist + emparejamiento +
+  orden real de pistas.
+- "Importar enlace" con una playlist normal de YouTube (no YouTube
+  Music) y con un vídeo suelto — confirmar carátula y ruta en disco
+  real.
+
+**Decisión de producto pendiente, sin resolver:**
+
+- ¿Hace falta un menú de configuración para elegir tema/color de la
+  app? Confirmado que nunca existió; Miguel Ángel no ha decidido si
+  se construye.
+- Migración de `SearchScreen` a búsqueda vía `yt-dlp` sin cuota — ya
+  **implementada** en S004 (no queda pendiente, se deja constancia de
+  que la pregunta original de S003 ya tiene respuesta).
 
 ---
 

@@ -10,62 +10,71 @@ completo. Para el detalle exacto de qué cambió en cada paso, consultar
 
 ---
 
-## Última actualización: 2026-07-03 (cierre de sesión S003 NewFlow)
+## Última actualización: 2026-07-06 (cierre de sesión S004 NewFlow)
 
 **Hito EN PROGRESO:** H05 — ver `DOCS/MASTER_DOCUMENT.md` para la
 tabla completa de hitos y estado.
 
-**Prioridad 1 de PASO 6c (cierre de app al reimportar) — CONFIRMADA
-RESUELTA en S003.** Causa real: NPE en `ConcurrentHashMap` dentro de
-`CoverArtRepository` (no las dos capas de S002, que eran fixes reales
-pero insuficientes). Detalle completo en `DOCS/ANNEX_H05.md`, sección
-"COMPLETADAS EN S003".
+**S004 fue la sesión más larga y de mayor alcance del proyecto hasta
+la fecha (2026-07-04 a 2026-07-06, 33 commits).** Empezó como
+continuación del PASO 6c pendiente de H05, pero la propia
+verificación real de Miguel Ángel en dispositivo destapó una cadena
+larga de bugs estructurales de fondo que necesitaban resolverse
+primero. Detalle completo, agrupado por tema, en
+`DOCS/ANNEX_H05.md`, sección "COMPLETADAS EN S004" — no repetirlo
+aquí, solo el resumen de qué falta confirmar.
 
-**Próxima sesión: resto de PASO 6c** — ver
-`DOCS/ANNEX_H05.md`, sección "Hoja de Ruta para la Siguiente Sesión".
-Resumen:
+**Incidencia histórica de "conflicto con un paquete" al actualizar —
+CAUSA REAL ENCONTRADA en S004, no descartada esta vez.** Nunca había
+un `signingConfig` explícito en `build.gradle.kts`: se había
+verificado que el archivo del keystore tenía la huella SHA-256
+correcta, pero nunca que Gradle lo usara de verdad para firmar. Con el
+`signingConfig` explícito, Android Developer Console (registro de
+desarrollador completado en la misma sesión, cuenta "Full
+distribution", paquete `com.miguelaetxio.mimoo` verificado) pasó de
+rechazar el APK ("firma diferente") a verificarlo correctamente.
+**Pendiente de confirmar en una actualización real** sobre una
+instalación ya existente (no una instalación limpia) — Miguel Ángel
+iba a probarlo justo al cierre de la sesión, sin confirmación en este
+documento todavía.
+
+**Próxima sesión — verificar lo hecho en S004, por este orden de
+prioridad:**
+1. Actualización real sobre instalación existente, con el
+   `signingConfig` ya en su sitio — ¿desaparece "conflicto con un
+   paquete" de verdad?
+2. Notificación de reproducción: controles reales confirmados
+   (play/pausa/anterior/barra), botón "siguiente" corregido al final
+   de la sesión (cola migrada a la playlist real de ExoPlayer) sin
+   confirmación explícita todavía.
+3. Reintento de descargas fallidas (borrar definitiva/reintentar
+   todas) — nace de una sesión real con 36 de 100 títulos fallados,
+   sin probar la solución todavía.
+4. Favoritos de álbum — funcionalidad nueva, sin verificar en
+   dispositivo.
+5. Compartir enlaces — arreglado para pistas sintéticas, pendiente de
+   confirmar con una descarga nueva que el enlace de origen se
+   comparte bien.
+
+**Pendiente original de H05 (PASO 6c), sin confirmación de que se
+probara pese a la actividad intensa de S004:**
 1. Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
-   emparejamiento vía playlist (11 pistas de golpe, no una a una).
-   Puede fallar por cuota agotada hasta el reset de medianoche hora
-   del Pacífico.
+   emparejamiento vía playlist (11 pistas de golpe).
 2. Probar búsqueda de álbum por artista o título sueltos
-   ("Beethoven"/"Sinfonía"), confirmando también que el orden de
-   pistas en Biblioteca ahora es el real (fix `trackPosition` de
-   S003).
+   ("Beethoven"/"Sinfonía"), confirmando también el orden real de
+   pistas (prefijo `NN -` en el nombre de archivo, S004 — solo afecta
+   a descargas nuevas a partir de ahora).
 3. Probar "Importar enlace" con playlist normal de YouTube y con
-   vídeo suelto, confirmando que la carpeta en disco ahora es
-   `{artista}/{álbum}/` real (fix de S003), no `Sencillos/`.
+   vídeo suelto.
 
 **Decisión pendiente de Miguel Ángel (no técnica, de producto):**
-¿se aborda como hito propio la migración de `SearchScreen` a búsqueda
-vía `yt-dlp` (`ytsearch:`, sin cuota de YouTube Data API), o queda
-pospuesta? Contexto completo en `DOCS/ANNEX_H05.md`.
+¿hace falta un menú de configuración para elegir tema/color de la
+app? Confirmado en S004 que nunca existió; sin decisión tomada.
 
-**Housekeeping pendiente (no bloquea nada):** el álbum Moon Safari de
-Air, ya descargado antes del fix de carpetas de S003, sigue
-físicamente en `Air/Sencillos/` — borrar desde Biblioteca y
-redescargar cuando convenga para que se reubique en
-`Air/Air - Moon Safari [Full Album]/`.
-
-**Sin confirmación definitiva:** dos pistas de Moon Safari
-("La femme d'argent", "Sexy Boy") parecían faltar tras la primera
-importación completa, pero Miguel Ángel limpió la biblioteca antes de
-poder diagnosticarlo del todo. Si vuelve a pasar con cualquier álbum,
-la nueva sección "Con error" de Descargas (S003) debería mostrarlo de
-inmediato.
+**Ya resuelto en S004, no hace falta seguir preguntando:** la
+migración de `SearchScreen` a búsqueda vía `yt-dlp` (sin cuota) que
+quedaba pendiente de decisión en S003 — **implementada**, ya no es
+una pregunta abierta.
 
 **H03 PASO 8 y H04 PASO 6** (verificación funcional en dispositivo)
-siguen pendientes — no tocados en S003, sin bloquear nada.
-
-**Incidencia histórica sin confirmación de resolución:** actualización
-de la APK fallaba con "conflicto con un paquete" (ver
-`DOCS/ANNEX_H03.md`, sección "Incidencias Abiertas") — confirmado
-sistemático (10-12 versiones seguidas), no un caso puntual; hipótesis
-de keystore antigua residual descartada. Pista real de Miguel Ángel:
-revisar changelogs de NewPipe. **Pospuesto explícitamente hasta
-terminar H05** — no sacarlo salvo que Miguel Ángel lo mencione.
-
-**Duplicados de prueba sin limpiar (sin confirmación de vigencia):**
-4 archivos físicos en `Canal IMAR/_sin_album` (3) y
-`Canal IMAR/Sencillos` (1) — Miguel Ángel prefiere borrarlos desde la
-app.
+siguen pendientes — no tocados en S004, sin bloquear nada.
