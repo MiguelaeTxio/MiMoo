@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -127,7 +129,8 @@ fun LibraryScreen(
     // Current drill depth of the active tab -- 0 = Letters (root level
     // of that tab, nothing to go back to).
     val canGoBack = when (uiState.tab) {
-        LibraryTab.ALBUMS -> uiState.albumsDrill !is AlbumsDrillLevel.Letters
+        LibraryTab.ALBUMS -> uiState.albumsDrill !is AlbumsDrillLevel.Letters &&
+            uiState.albumsDrill !is AlbumsDrillLevel.ArtistsFlat
         LibraryTab.SINGLES -> uiState.singlesDrill !is SinglesDrillLevel.Letters
         LibraryTab.FAVORITES -> false
     }
@@ -148,6 +151,7 @@ fun LibraryScreen(
     val title = when (uiState.tab) {
         LibraryTab.ALBUMS -> when (val drill = uiState.albumsDrill) {
             is AlbumsDrillLevel.Letters -> "Artistas por letra"
+            is AlbumsDrillLevel.ArtistsFlat -> "Todos los artistas"
             is AlbumsDrillLevel.FavoriteAlbums -> "Álbumes favoritos"
             is AlbumsDrillLevel.Artists -> "Artistas · ${drill.letter}"
             is AlbumsDrillLevel.Albums -> displayArtistName(drill.artist)
@@ -194,6 +198,24 @@ fun LibraryScreen(
                             )
                         }
                     } else {
+                        if (uiState.tab == LibraryTab.ALBUMS &&
+                            (uiState.albumsDrill is AlbumsDrillLevel.Letters ||
+                                uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat)
+                        ) {
+                            IconButton(onClick = viewModel::toggleAlbumsViewMode) {
+                                if (uiState.albumsViewMode == AlbumsViewMode.BY_LETTER) {
+                                    Icon(
+                                        Icons.Filled.FormatListBulleted,
+                                        contentDescription = "Ver todos los artistas en una lista",
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Filled.SortByAlpha,
+                                        contentDescription = "Ver artistas agrupados por letra",
+                                    )
+                                }
+                            }
+                        }
                         IconButton(onClick = viewModel::mergeDuplicateFolders) {
                             Icon(
                                 Icons.Filled.CleaningServices,
@@ -228,6 +250,7 @@ fun LibraryScreen(
             // already looking at exactly what you searched for.
             val showFilter = when (uiState.tab) {
                 LibraryTab.ALBUMS -> uiState.albumsDrill is AlbumsDrillLevel.Letters ||
+                    uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat ||
                     uiState.albumsDrill is AlbumsDrillLevel.Artists
                 LibraryTab.SINGLES -> uiState.singlesDrill is SinglesDrillLevel.Letters ||
                     uiState.singlesDrill is SinglesDrillLevel.Artists
@@ -490,6 +513,16 @@ private fun ColumnScope.AlbumsTabContent(
             val artists = uiState.albumsByArtist.keys
                 .filter { sortLetterFor(it) == drill.letter }
                 .sorted()
+            ArtistList(
+                artists = artists,
+                onArtistClick = viewModel::selectAlbumsArtist,
+                onPlayAll = viewModel::playArtistAlbums,
+                onShuffle = viewModel::playArtistAlbumsShuffled,
+                onDelete = onDeleteArtist,
+            )
+        }
+        is AlbumsDrillLevel.ArtistsFlat -> {
+            val artists = uiState.albumsByArtist.keys.sorted()
             ArtistList(
                 artists = artists,
                 onArtistClick = viewModel::selectAlbumsArtist,

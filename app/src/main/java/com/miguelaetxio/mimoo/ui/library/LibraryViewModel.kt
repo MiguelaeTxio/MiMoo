@@ -114,6 +114,21 @@ fun sortLetterFor(artist: String): Char {
 sealed class AlbumsDrillLevel {
     object Letters : AlbumsDrillLevel()
     /**
+     * Vista plana alternativa a Letters -- toggle pedido por Miguel
+     * Ángel (2026-07-07): todos los artistas ordenados
+     * alfabéticamente, sin la capa de letras intermedia. Es raíz
+     * igual que Letters (no tiene "atrás"); AlbumsViewMode decide
+     * cuál de las dos está activa. De aquí para abajo (Albums,
+     * Tracks) no cambia nada.
+     * ---
+     * Flat alternative view to Letters -- toggle requested by Miguel
+     * Ángel (2026-07-07): all artists sorted alphabetically, without
+     * the intermediate letters layer. It's a root level just like
+     * Letters (no "back"); AlbumsViewMode decides which of the two is
+     * active. Nothing changes below this (Albums, Tracks).
+     */
+    object ArtistsFlat : AlbumsDrillLevel()
+    /**
      * Entrada "Favoritos" -- petición explícita de Miguel Ángel
      * (2026-07-05): lista plana (no por letra/artista, "todo
      * exactamente igual" en orden alfabético) de álbumes marcados como
@@ -158,6 +173,19 @@ sealed class SinglesDrillLevel {
     data class Tracks(val artist: String) : SinglesDrillLevel()
 }
 
+/**
+ * Qué vista raíz de la pestaña Álbumes está activa -- toggle pedido
+ * por Miguel Ángel (2026-07-07). Solo afecta a qué nivel raíz se
+ * usa (Letters vs ArtistsFlat); Albums y Tracks son idénticos en
+ * ambos modos.
+ * ---
+ * Which root view of the Álbumes tab is active -- toggle requested
+ * by Miguel Ángel (2026-07-07). Only affects which root level is
+ * used (Letters vs ArtistsFlat); Albums and Tracks are identical in
+ * both modes.
+ */
+enum class AlbumsViewMode { BY_LETTER, FLAT }
+
 data class LibraryUiState(
     val tab: LibraryTab = LibraryTab.ALBUMS,
     val filterQuery: String = "",
@@ -180,6 +208,7 @@ data class LibraryUiState(
     val albumLetters: List<Char> = emptyList(),
     val singleLetters: List<Char> = emptyList(),
     val albumsDrill: AlbumsDrillLevel = AlbumsDrillLevel.Letters,
+    val albumsViewMode: AlbumsViewMode = AlbumsViewMode.BY_LETTER,
     val singlesDrill: SinglesDrillLevel = SinglesDrillLevel.Letters,
     val isRefreshing: Boolean = false,
     val editMetadataError: String? = null,
@@ -376,9 +405,49 @@ class LibraryViewModel @Inject constructor(
 
     // --- Navegación por capas, pestaña Álbumes -----------------------
 
+    /** Nivel raíz de la pestaña Álbumes según el modo de vista activo. */
+    private fun rootAlbumsLevel(): AlbumsDrillLevel = when (_uiState.value.albumsViewMode) {
+        AlbumsViewMode.BY_LETTER -> AlbumsDrillLevel.Letters
+        AlbumsViewMode.FLAT -> AlbumsDrillLevel.ArtistsFlat
+    }
+
     fun selectAlbumsLetter(letter: Char) {
         _uiState.value = _uiState.value.copy(
             albumsDrill = AlbumsDrillLevel.Artists(letter),
+        )
+    }
+
+    /**
+     * Alterna la vista raíz de Álbumes entre Letters y ArtistsFlat.
+     * Solo tiene efecto visible si el usuario está en uno de esos dos
+     * niveles raíz en ese momento; si está más adentro (Artists,
+     * Albums, Tracks) igualmente cambia el modo memorizado, para que
+     * el siguiente "atrás" hasta la raíz respete el nuevo modo.
+     * ---
+     * Toggles the Álbumes root view between Letters and ArtistsFlat.
+     * Only has a visible effect if the user is currently at one of
+     * those two root levels; if they're deeper in (Artists, Albums,
+     * Tracks) it still changes the remembered mode, so the next
+     * "back" up to the root respects the new mode.
+     */
+    fun toggleAlbumsViewMode() {
+        val newMode = when (_uiState.value.albumsViewMode) {
+            AlbumsViewMode.BY_LETTER -> AlbumsViewMode.FLAT
+            AlbumsViewMode.FLAT -> AlbumsViewMode.BY_LETTER
+        }
+        val current = _uiState.value.albumsDrill
+        val newDrill = when (current) {
+            is AlbumsDrillLevel.Letters, is AlbumsDrillLevel.ArtistsFlat ->
+                if (newMode == AlbumsViewMode.FLAT) {
+                    AlbumsDrillLevel.ArtistsFlat
+                } else {
+                    AlbumsDrillLevel.Letters
+                }
+            else -> current
+        }
+        _uiState.value = _uiState.value.copy(
+            albumsViewMode = newMode,
+            albumsDrill = newDrill,
         )
     }
 
@@ -406,11 +475,14 @@ class LibraryViewModel @Inject constructor(
         val current = _uiState.value.albumsDrill
         val newLevel = when (current) {
             is AlbumsDrillLevel.Letters -> return false
+            is AlbumsDrillLevel.ArtistsFlat -> return false
             is AlbumsDrillLevel.FavoriteAlbums -> AlbumsDrillLevel.Letters
             is AlbumsDrillLevel.Artists -> AlbumsDrillLevel.Letters
-            is AlbumsDrillLevel.Albums -> AlbumsDrillLevel.Artists(
-                sortLetterFor(current.artist),
-            )
+            is AlbumsDrillLevel.Albums -> if (_uiState.value.albumsViewMode == AlbumsViewMode.FLAT) {
+                AlbumsDrillLevel.ArtistsFlat
+            } else {
+                AlbumsDrillLevel.Artists(sortLetterFor(current.artist))
+            }
             is AlbumsDrillLevel.Tracks -> if (current.fromFavorites) {
                 AlbumsDrillLevel.FavoriteAlbums
             } else {
@@ -666,9 +738,11 @@ class LibraryViewModel @Inject constructor(
                 }
             }
 
-            if (_uiState.value.albumsDrill !is AlbumsDrillLevel.Letters) {
+            if (_uiState.value.albumsDrill !is AlbumsDrillLevel.Letters &&
+                _uiState.value.albumsDrill !is AlbumsDrillLevel.ArtistsFlat
+            ) {
                 _uiState.value = _uiState.value.copy(
-                    albumsDrill = AlbumsDrillLevel.Letters,
+                    albumsDrill = rootAlbumsLevel(),
                 )
             }
             if (_uiState.value.singlesDrill !is SinglesDrillLevel.Letters) {
