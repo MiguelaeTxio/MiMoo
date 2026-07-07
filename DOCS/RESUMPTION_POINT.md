@@ -33,26 +33,44 @@ correcta, pero nunca que Gradle lo usara de verdad para firmar. Con el
 desarrollador completado en la misma sesión, cuenta "Full
 distribution", paquete `com.miguelaetxio.mimoo` verificado) pasó de
 rechazar el APK ("firma diferente") a verificarlo correctamente.
-**Pendiente de confirmar en una actualización real** sobre una
-instalación ya existente (no una instalación limpia) — Miguel Ángel
-iba a probarlo justo al cierre de la sesión, sin confirmación en este
-documento todavía.
+**CONFIRMADO en S005 (2026-07-07):** actualización real sobre
+instalación ya existente en el teléfono principal de Miguel Ángel —
+ya no da "conflicto con un paquete". El `signingConfig` explícito
+queda verificado en dispositivo, cierra este pendiente.
 
-**Próxima sesión — verificar lo hecho en S004, por este orden de
+**Incidencia nueva encontrada y resuelta en S005 — Uri SAF "fantasma"
+tras clonado de dispositivo.** En la tablet, "no reproduce nada" y
+"la descarga va a veces" (incluyendo archivos pegados a mano en la
+carpeta, que tampoco se reconciliaban). Causa: la tablet se configuró
+copiando los datos del teléfono origen (clonado de dispositivo, tipo
+"Mi Move to Xiaomi", en vez de una instalación limpia desde la APK).
+Eso copió el `SharedPreferences` de `StorageManager` con el `Uri` SAF
+del teléfono origen ya guardado — `hasRootUri()` daba `true` en la
+tablet, así que la app nunca volvía a lanzar el selector de carpeta
+propio, pero `takePersistableUriPermission` nunca se había tomado
+para ese `Uri` en la tablet, dejándolo sin permiso real. Solución
+aplicada: desinstalar y reinstalar limpio en la tablet (borra el
+`SharedPreferences` heredado) — al arrancar, `hasRootUri()` vuelve a
+dar `false`, la app lanza el selector real, se toma el permiso
+persistente en este dispositivo y se dispara el escaneo inicial.
+**Confirmado por Miguel Ángel: funciona correctamente tras
+reinstalar.** Lección para el futuro: un clonado de dispositivo
+Android puede dejar un `Uri` SAF con permiso inválido en el
+dispositivo nuevo; no asumir que "ya tiene carpeta configurada" es lo
+mismo que "tiene permiso real".
+
+**Próxima sesión — verificar lo que queda de S004, por este orden de
 prioridad:**
-1. Actualización real sobre instalación existente, con el
-   `signingConfig` ya en su sitio — ¿desaparece "conflicto con un
-   paquete" de verdad?
-2. Notificación de reproducción: controles reales confirmados
+1. Notificación de reproducción: controles reales confirmados
    (play/pausa/anterior/barra), botón "siguiente" corregido al final
    de la sesión (cola migrada a la playlist real de ExoPlayer) sin
    confirmación explícita todavía.
-3. Reintento de descargas fallidas (borrar definitiva/reintentar
+2. Reintento de descargas fallidas (borrar definitiva/reintentar
    todas) — nace de una sesión real con 36 de 100 títulos fallados,
    sin probar la solución todavía.
-4. Favoritos de álbum — funcionalidad nueva, sin verificar en
+3. Favoritos de álbum — funcionalidad nueva, sin verificar en
    dispositivo.
-5. Compartir enlaces — arreglado para pistas sintéticas, pendiente de
+4. Compartir enlaces — arreglado para pistas sintéticas, pendiente de
    confirmar con una descarga nueva que el enlace de origen se
    comparte bien.
 
