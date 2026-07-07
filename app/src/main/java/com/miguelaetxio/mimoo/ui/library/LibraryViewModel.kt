@@ -169,9 +169,14 @@ sealed class AlbumsDrillLevel {
  */
 sealed class SinglesDrillLevel {
     object Letters : SinglesDrillLevel()
+    /** Vista plana equivalente a AlbumsDrillLevel.ArtistsFlat, misma petición (2026-07-07). */
+    object ArtistsFlat : SinglesDrillLevel()
     data class Artists(val letter: Char) : SinglesDrillLevel()
     data class Tracks(val artist: String) : SinglesDrillLevel()
 }
+
+/** Equivalente a AlbumsViewMode pero para la pestaña Sencillos. */
+enum class SinglesViewMode { BY_LETTER, FLAT }
 
 /**
  * Qué vista raíz de la pestaña Álbumes está activa -- toggle pedido
@@ -210,6 +215,7 @@ data class LibraryUiState(
     val albumsDrill: AlbumsDrillLevel = AlbumsDrillLevel.Letters,
     val albumsViewMode: AlbumsViewMode = AlbumsViewMode.BY_LETTER,
     val singlesDrill: SinglesDrillLevel = SinglesDrillLevel.Letters,
+    val singlesViewMode: SinglesViewMode = SinglesViewMode.BY_LETTER,
     val isRefreshing: Boolean = false,
     val editMetadataError: String? = null,
     // Resumen de mergeDuplicateFolders() para mostrar como Snackbar en
@@ -495,9 +501,37 @@ class LibraryViewModel @Inject constructor(
 
     // --- Navegación por capas, pestaña Sencillos ---------------------
 
+    /** Nivel raíz de Sencillos según el modo de vista activo. */
+    private fun rootSinglesLevel(): SinglesDrillLevel = when (_uiState.value.singlesViewMode) {
+        SinglesViewMode.BY_LETTER -> SinglesDrillLevel.Letters
+        SinglesViewMode.FLAT -> SinglesDrillLevel.ArtistsFlat
+    }
+
     fun selectSinglesLetter(letter: Char) {
         _uiState.value = _uiState.value.copy(
             singlesDrill = SinglesDrillLevel.Artists(letter),
+        )
+    }
+
+    /** Alterna la vista raíz de Sencillos entre Letters y ArtistsFlat -- ver toggleAlbumsViewMode. */
+    fun toggleSinglesViewMode() {
+        val newMode = when (_uiState.value.singlesViewMode) {
+            SinglesViewMode.BY_LETTER -> SinglesViewMode.FLAT
+            SinglesViewMode.FLAT -> SinglesViewMode.BY_LETTER
+        }
+        val current = _uiState.value.singlesDrill
+        val newDrill = when (current) {
+            is SinglesDrillLevel.Letters, is SinglesDrillLevel.ArtistsFlat ->
+                if (newMode == SinglesViewMode.FLAT) {
+                    SinglesDrillLevel.ArtistsFlat
+                } else {
+                    SinglesDrillLevel.Letters
+                }
+            else -> current
+        }
+        _uiState.value = _uiState.value.copy(
+            singlesViewMode = newMode,
+            singlesDrill = newDrill,
         )
     }
 
@@ -507,15 +541,18 @@ class LibraryViewModel @Inject constructor(
         )
     }
 
-    /** Sube un nivel en la navegación de Sencillos; en Letras no hace nada. */
+    /** Sube un nivel en la navegación de Sencillos; en la raíz no hace nada. */
     fun backSinglesDrill(): Boolean {
         val current = _uiState.value.singlesDrill
         val newLevel = when (current) {
             is SinglesDrillLevel.Letters -> return false
+            is SinglesDrillLevel.ArtistsFlat -> return false
             is SinglesDrillLevel.Artists -> SinglesDrillLevel.Letters
-            is SinglesDrillLevel.Tracks -> SinglesDrillLevel.Artists(
-                sortLetterFor(current.artist),
-            )
+            is SinglesDrillLevel.Tracks -> if (_uiState.value.singlesViewMode == SinglesViewMode.FLAT) {
+                SinglesDrillLevel.ArtistsFlat
+            } else {
+                SinglesDrillLevel.Artists(sortLetterFor(current.artist))
+            }
         }
         _uiState.value = _uiState.value.copy(singlesDrill = newLevel)
         return true
@@ -745,9 +782,11 @@ class LibraryViewModel @Inject constructor(
                     albumsDrill = rootAlbumsLevel(),
                 )
             }
-            if (_uiState.value.singlesDrill !is SinglesDrillLevel.Letters) {
+            if (_uiState.value.singlesDrill !is SinglesDrillLevel.Letters &&
+                _uiState.value.singlesDrill !is SinglesDrillLevel.ArtistsFlat
+            ) {
                 _uiState.value = _uiState.value.copy(
-                    singlesDrill = SinglesDrillLevel.Letters,
+                    singlesDrill = rootSinglesLevel(),
                 )
             }
         }

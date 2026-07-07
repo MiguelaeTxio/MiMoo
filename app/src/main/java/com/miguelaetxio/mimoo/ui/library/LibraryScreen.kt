@@ -131,7 +131,8 @@ fun LibraryScreen(
     val canGoBack = when (uiState.tab) {
         LibraryTab.ALBUMS -> uiState.albumsDrill !is AlbumsDrillLevel.Letters &&
             uiState.albumsDrill !is AlbumsDrillLevel.ArtistsFlat
-        LibraryTab.SINGLES -> uiState.singlesDrill !is SinglesDrillLevel.Letters
+        LibraryTab.SINGLES -> uiState.singlesDrill !is SinglesDrillLevel.Letters &&
+            uiState.singlesDrill !is SinglesDrillLevel.ArtistsFlat
         LibraryTab.FAVORITES -> false
     }
 
@@ -159,6 +160,7 @@ fun LibraryScreen(
         }
         LibraryTab.SINGLES -> when (val drill = uiState.singlesDrill) {
             is SinglesDrillLevel.Letters -> "Artistas por letra"
+            is SinglesDrillLevel.ArtistsFlat -> "Todos los artistas"
             is SinglesDrillLevel.Artists -> "Artistas · ${drill.letter}"
             is SinglesDrillLevel.Tracks -> displayArtistName(drill.artist)
         }
@@ -198,12 +200,30 @@ fun LibraryScreen(
                             )
                         }
                     } else {
-                        if (uiState.tab == LibraryTab.ALBUMS &&
+                        val showAlbumsToggle = uiState.tab == LibraryTab.ALBUMS &&
                             (uiState.albumsDrill is AlbumsDrillLevel.Letters ||
                                 uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat)
-                        ) {
+                        val showSinglesToggle = uiState.tab == LibraryTab.SINGLES &&
+                            (uiState.singlesDrill is SinglesDrillLevel.Letters ||
+                                uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat)
+                        if (showAlbumsToggle) {
                             IconButton(onClick = viewModel::toggleAlbumsViewMode) {
                                 if (uiState.albumsViewMode == AlbumsViewMode.BY_LETTER) {
+                                    Icon(
+                                        Icons.Filled.FormatListBulleted,
+                                        contentDescription = "Ver todos los artistas en una lista",
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Filled.SortByAlpha,
+                                        contentDescription = "Ver artistas agrupados por letra",
+                                    )
+                                }
+                            }
+                        }
+                        if (showSinglesToggle) {
+                            IconButton(onClick = viewModel::toggleSinglesViewMode) {
+                                if (uiState.singlesViewMode == SinglesViewMode.BY_LETTER) {
                                     Icon(
                                         Icons.Filled.FormatListBulleted,
                                         contentDescription = "Ver todos los artistas en una lista",
@@ -253,6 +273,7 @@ fun LibraryScreen(
                     uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat ||
                     uiState.albumsDrill is AlbumsDrillLevel.Artists
                 LibraryTab.SINGLES -> uiState.singlesDrill is SinglesDrillLevel.Letters ||
+                    uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat ||
                     uiState.singlesDrill is SinglesDrillLevel.Artists
                 LibraryTab.FAVORITES -> true
             }
@@ -523,13 +544,22 @@ private fun ColumnScope.AlbumsTabContent(
         }
         is AlbumsDrillLevel.ArtistsFlat -> {
             val artists = uiState.albumsByArtist.keys.sorted()
-            ArtistList(
-                artists = artists,
-                onArtistClick = viewModel::selectAlbumsArtist,
-                onPlayAll = viewModel::playArtistAlbums,
-                onShuffle = viewModel::playArtistAlbumsShuffled,
-                onDelete = onDeleteArtist,
-            )
+            if (artists.isEmpty()) {
+                Text(
+                    "Todavía no hay álbumes descargados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 16.dp),
+                )
+            } else {
+                ArtistList(
+                    artists = artists,
+                    onArtistClick = viewModel::selectAlbumsArtist,
+                    onPlayAll = viewModel::playArtistAlbums,
+                    onShuffle = viewModel::playArtistAlbumsShuffled,
+                    onDelete = onDeleteArtist,
+                )
+            }
         }
         is AlbumsDrillLevel.Albums -> {
             val albums = uiState.albumsByArtist[drill.artist]?.keys?.toList()
@@ -604,6 +634,25 @@ private fun ColumnScope.SinglesTabContent(
                 onShuffle = viewModel::playArtistSinglesShuffled,
                 onDelete = onDeleteArtist,
             )
+        }
+        is SinglesDrillLevel.ArtistsFlat -> {
+            val artists = uiState.singlesByArtist.keys.sorted()
+            if (artists.isEmpty()) {
+                Text(
+                    "Todavía no hay sencillos descargados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 16.dp),
+                )
+            } else {
+                ArtistList(
+                    artists = artists,
+                    onArtistClick = viewModel::selectSinglesArtist,
+                    onPlayAll = viewModel::playArtistSingles,
+                    onShuffle = viewModel::playArtistSinglesShuffled,
+                    onDelete = onDeleteArtist,
+                )
+            }
         }
         is SinglesDrillLevel.Tracks -> {
             val tracks = uiState.singlesByArtist[drill.artist] ?: emptyList()
