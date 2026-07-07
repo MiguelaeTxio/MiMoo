@@ -59,20 +59,11 @@ Android puede dejar un `Uri` SAF con permiso inválido en el
 dispositivo nuevo; no asumir que "ya tiene carpeta configurada" es lo
 mismo que "tiene permiso real".
 
-**Próxima sesión — verificar lo que queda de S004, por este orden de
-prioridad:**
-1. Notificación de reproducción: controles reales confirmados
-   (play/pausa/anterior/barra), botón "siguiente" corregido al final
-   de la sesión (cola migrada a la playlist real de ExoPlayer) sin
-   confirmación explícita todavía.
-2. Reintento de descargas fallidas (borrar definitiva/reintentar
-   todas) — nace de una sesión real con 36 de 100 títulos fallados,
-   sin probar la solución todavía.
-3. Favoritos de álbum — funcionalidad nueva, sin verificar en
-   dispositivo.
-4. Compartir enlaces — arreglado para pistas sintéticas, pendiente de
-   confirmar con una descarga nueva que el enlace de origen se
-   comparte bien.
+**CONFIRMADO en S005 (2026-07-07):** los cuatro puntos restantes de
+S004 quedan probados y funcionando en dispositivo — notificación de
+reproducción (controles + botón "siguiente" con la cola de
+ExoPlayer), reintento/borrado de descargas fallidas, favoritos de
+álbum y compartir enlaces. S004 queda íntegramente verificado.
 
 **Pendiente original de H05 (PASO 6c), sin confirmación de que se
 probara pese a la actividad intensa de S004:**
