@@ -82,18 +82,32 @@ desde `app/src/main/java/com/miguelaetxio/mimoo/data/local/entity/`):
 metadatos, igual que ya preveía `MASTER_DOCUMENT.md` §1 punto 6 antes
 de este hito (respaldo opcional de metadatos, no de audio).
 
-**Prerrequisito bloqueante, pendiente de Miguel Ángel antes de PASO
-2:** integrar Google Drive requiere Google Sign-In (o Credential
-Manager) + Drive REST API habilitada. Aún sin decidir/confirmar: (a)
-si se reutiliza el proyecto de Google Cloud `mimoo-501004` (ya usado
-para YouTube Data API v3) o se crea uno nuevo; (b) alta de un OAuth
-Client ID tipo Android en la consola (requiere el SHA-1 del keystore
-de firma real usado por el workflow de GitHub Actions, no el de un
-`gradlew` local — ver `android-build`); (c) pantalla de consentimiento
-OAuth (modo "Testing" con Miguel Ángel como usuario de prueba es
-suficiente para uso personal, sin necesidad de verificación de
-Google). **No se puede avanzar PASO 2 sin esto resuelto** — el modelo
-no tiene acceso a la consola de Google Cloud.
+**Prerrequisito de Google Cloud — RESUELTO en S006 (2026-07-08):**
+integrar Google Drive requiere Google Sign-In/Credential Manager +
+Drive REST API habilitada. Decisiones y valores ya confirmados:
+
+- Proyecto de Google Cloud reutilizado: `mimoo-501004` (el mismo que
+  ya usa la YouTube Data API v3), sin crear uno nuevo.
+- Google Drive API habilitada en ese proyecto.
+- Google Auth Platform configurado: Audience en modo `Testing` con
+  Miguel Ángel como Test user (evita verificación de Google, suficiente
+  para uso personal); scope `drive.file` añadido en Data Access.
+- OAuth Client ID tipo **Android** creado (`Clients` → package
+  `com.miguelaetxio.mimoo` + SHA-1 real de la keystore de firma,
+  obtenido del log del workflow de GitHub Actions — paso "Mostrar
+  SHA-1 de firma", añadido en S006 junto a la verificación de
+  SHA-256 ya existente):
+  `652972961389-2cefjrssrhnd79hpo189f9bm99pvmcig.apps.googleusercontent.com`.
+  Los clientes tipo Android no llevan client secret — el JSON que
+  ofrece descargar la consola es solo un resumen de estos mismos
+  datos, no hace falta guardarlo en el repositorio.
+
+**Pendiente mecánico antes de PASO 2 (no bloquea código, es
+infraestructura):** dar de alta el secret de GitHub Actions
+`GOOGLE_OAUTH_ANDROID_CLIENT_ID` con el valor de arriba, mismo patrón
+que `YOUTUBE_API_KEY` — inyectarlo en `local.properties` en el
+workflow y exponerlo como
+`BuildConfig.GOOGLE_OAUTH_ANDROID_CLIENT_ID`. Sin hacer todavía.
 
 **Directriz §4.5 aplica sin excepción:** antes de implementar la
 integración con Drive REST API / Google Sign-In / Credential Manager,
@@ -108,7 +122,7 @@ mecanismo de sign-in en Android en los últimos años).
 | Paso | Descripción | Estado |
 |---|---|---|
 | 1 | Modelo de exportación — DTOs + serialización/deserialización JSON de las 4 tablas | PENDIENTE |
-| 2 | Integración Google Drive — auth + subida/descarga de archivo | BLOQUEADO — prerrequisito de consola pendiente de Miguel Ángel |
+| 2 | Integración Google Drive — auth + subida/descarga de archivo | PENDIENTE — prerrequisito de Google Cloud resuelto en S006, falta dar de alta el secret `GOOGLE_OAUTH_ANDROID_CLIENT_ID` en GitHub |
 | 3 | Pantalla Exportar | PENDIENTE |
 | 4 | Pantalla Importar + lógica destructiva de sustitución | PENDIENTE |
 | 5 | Auto-descarga tras importar, con metadatos ya fijados (sin diálogo de edición) | PENDIENTE |
