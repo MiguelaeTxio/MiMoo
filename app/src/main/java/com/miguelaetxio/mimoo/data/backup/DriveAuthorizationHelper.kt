@@ -10,6 +10,7 @@ import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -63,7 +64,9 @@ sealed class DriveAuthorizationOutcome {
  * (`hasResolution() == false`).
  */
 @Singleton
-class DriveAuthorizationHelper @Inject constructor() {
+class DriveAuthorizationHelper @Inject constructor(
+    private val storageManager: StorageManager,
+) {
 
     /**
      * Pide (o renueva silenciosamente) el access token para el scope
@@ -85,19 +88,20 @@ class DriveAuthorizationHelper @Inject constructor() {
                 .build()
 
             Log.d(TAG, "authorize(): pidiendo scope drive.file")
+            BackupDebugLogger.log(activity, storageManager, "authorize() -- pidiendo scope drive.file")
             Identity.getAuthorizationClient(activity)
                 .authorize(request)
                 .addOnSuccessListener { result: AuthorizationResult ->
-                    Log.d(
-                        TAG,
-                        "authorize() OK -- hasResolution=${result.hasResolution()} " +
-                            "accessToken=${if (result.accessToken != null) "presente" else "null"}"
-                    )
+                    val summary = "authorize() OK -- hasResolution=${result.hasResolution()} " +
+                        "accessToken=${if (result.accessToken != null) "presente" else "null"}"
+                    Log.d(TAG, summary)
+                    BackupDebugLogger.log(activity, storageManager, summary)
                     val outcome = resultToOutcome(result)
                     if (continuation.isActive) continuation.resume(outcome)
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "authorize() FALLÓ", e)
+                    BackupDebugLogger.logError(activity, storageManager, "authorize() FALLÓ", e)
                     if (continuation.isActive) continuation.resumeWithException(e)
                 }
         }
@@ -155,16 +159,17 @@ class DriveAuthorizationHelper @Inject constructor() {
             Identity.getAuthorizationClient(context)
                 .getAuthorizationResultFromIntent(resultData)
         } catch (e: ApiException) {
-            Log.e(TAG, "getAuthorizationResultFromIntent() FALLÓ -- statusCode=${e.statusCode}", e)
+            val msg = "getAuthorizationResultFromIntent() FALLÓ -- statusCode=${e.statusCode}"
+            Log.e(TAG, msg, e)
+            BackupDebugLogger.logError(context, storageManager, msg, e)
             throw IllegalStateException(
                 "Google no concedió el acceso a Drive (código ${e.statusCode}).", e
             )
         }
-        Log.d(
-            TAG,
-            "getAuthorizationResultFromIntent() OK -- " +
-                "accessToken=${if (result.accessToken != null) "presente" else "null"}"
-        )
+        val summary = "getAuthorizationResultFromIntent() OK -- " +
+            "accessToken=${if (result.accessToken != null) "presente" else "null"}"
+        Log.d(TAG, summary)
+        BackupDebugLogger.log(context, storageManager, summary)
         return result.accessToken
             ?: error("La resolución de autorización no devolvió un accessToken")
     }

@@ -22,6 +22,36 @@ import javax.inject.Singleton
 
 private const val TAG = "MiMoo-Backup-Import"
 
+/**
+ * Nombres de archivos de diagnóstico que la propia app escribe en la
+ * raíz SAF (ver BackupDebugLogger, NotificationDebugLogger,
+ * DownloadWorker.debug_error.txt, MiMooApp.crash_log.txt) --
+ * excluidos EXPLÍCITAMENTE del borrado destructivo de
+ * deleteExistingPhysicalFiles(). Sin esto, una importación se
+ * borraría a sí misma el propio log de diagnóstico justo en el
+ * momento en que más interesa conservarlo, y de paso perdería
+ * cualquier historial de depuración de otras partes de la app sin
+ * relación con la música. Estos archivos no son música, así que no
+ * hay ninguna razón de producto para tratarlos como parte del
+ * repositorio importado/exportado.
+ * ---
+ * Names of diagnostic files the app itself writes at the SAF root
+ * (see BackupDebugLogger, NotificationDebugLogger,
+ * DownloadWorker.debug_error.txt, MiMooApp.crash_log.txt) --
+ * EXPLICITLY excluded from deleteExistingPhysicalFiles()'s
+ * destructive wipe. Without this, an import would delete its own
+ * diagnostic log right when it matters most, and would also wipe any
+ * debugging history from unrelated parts of the app. These files
+ * aren't music, so there's no product reason to treat them as part of
+ * the imported/exported repository.
+ */
+private val PRESERVED_DEBUG_FILE_NAMES = setOf(
+    "backup_debug.txt",
+    "notification_debug.txt",
+    "debug_error.txt",
+    "crash_log.txt",
+)
+
 /** Resultado de una importación, para que la UI (PASO 4) muestre un resumen. */
 data class BackupImportResult(
     val importedTracks: List<SearchResultTrack>,
@@ -83,8 +113,10 @@ class BackupImportRepository @Inject constructor(
     suspend fun importDestructively(bundle: BackupBundle): BackupImportResult =
         withContext(Dispatchers.IO) {
             Log.d(TAG, "importDestructively() -- borrando archivos físicos existentes...")
+            BackupDebugLogger.log(context, storageManager, "importDestructively() -- borrando archivos físicos existentes...")
             deleteExistingPhysicalFiles()
             Log.d(TAG, "importDestructively() -- archivos físicos borrados. Iniciando transacción Room...")
+            BackupDebugLogger.log(context, storageManager, "importDestructively() -- archivos físicos borrados. Iniciando transacción Room...")
 
             lateinit var result: BackupImportResult
             database.withTransaction {
@@ -92,7 +124,9 @@ class BackupImportRepository @Inject constructor(
                 playlistDao.deleteAllPlaylists()
                 favoriteAlbumDao.deleteAll()
                 trackDao.deleteAll()
-                Log.d(TAG, "importDestructively() -- 4 tablas borradas. Insertando ${bundle.tracks.size} pistas...")
+                val stepTables = "importDestructively() -- 4 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
+                Log.d(TAG, stepTables)
+                BackupDebugLogger.log(context, storageManager, stepTables)
 
                 val newTracks = bundle.tracks.map { it.toEntity() }
                 trackDao.insertAll(newTracks)
@@ -121,11 +155,10 @@ class BackupImportRepository @Inject constructor(
                     favoriteAlbumCount = bundle.favoriteAlbums.size,
                     playlistCount = bundle.playlists.size,
                 )
-                Log.d(
-                    TAG,
-                    "importDestructively() -- transacción completa: ${newTracks.size} pistas, " +
-                        "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists"
-                )
+                val stepDone = "importDestructively() -- transacción completa: ${newTracks.size} pistas, " +
+                    "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists"
+                Log.d(TAG, stepDone)
+                BackupDebugLogger.log(context, storageManager, stepDone)
             }
             result
         }
@@ -153,8 +186,11 @@ class BackupImportRepository @Inject constructor(
             Log.w(TAG, "deleteExistingPhysicalFiles() -- DocumentFile.fromTreeUri devolvió null para $rootUri")
             return
         }
-        val children = root.listFiles()
-        Log.d(TAG, "deleteExistingPhysicalFiles() -- borrando ${children.size} elementos bajo la raíz")
+        val children = root.listFiles().filterNot { it.name in PRESERVED_DEBUG_FILE_NAMES }
+        val msg = "deleteExistingPhysicalFiles() -- borrando ${children.size} elementos bajo la raíz " +
+            "(preservando los archivos de diagnóstico)"
+        Log.d(TAG, msg)
+        BackupDebugLogger.log(context, storageManager, msg)
         children.forEach { child -> deleteRecursively(child) }
     }
 
