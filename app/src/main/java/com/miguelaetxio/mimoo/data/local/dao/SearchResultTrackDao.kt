@@ -10,6 +10,15 @@ interface SearchResultTrackDao {
     @Query("SELECT * FROM search_result_tracks ORDER BY lastSearchedAt DESC")
     fun getAll(): Flow<List<SearchResultTrack>>
 
+    /**
+     * Variante de una sola lectura de getAll(), sin Flow -- para
+     * construir un BackupBundle de exportación (H06 PASO 1), donde
+     * hace falta una foto fija del repositorio en el momento de
+     * exportar, no una suscripción continua.
+     */
+    @Query("SELECT * FROM search_result_tracks ORDER BY lastSearchedAt DESC")
+    suspend fun getAllOnce(): List<SearchResultTrack>
+
     @Query("SELECT * FROM search_result_tracks WHERE youtubeId = :youtubeId")
     suspend fun getById(youtubeId: String): SearchResultTrack?
 

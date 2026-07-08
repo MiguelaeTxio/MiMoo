@@ -23,6 +23,10 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY createdAt DESC")
     fun getAllPlaylists(): Flow<List<Playlist>>
 
+    /** Variante de una sola lectura de getAllPlaylists() -- ver SearchResultTrackDao.getAllOnce, H06 PASO 1. */
+    @Query("SELECT * FROM playlists ORDER BY createdAt DESC")
+    suspend fun getAllPlaylistsOnce(): List<Playlist>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertPlaylist(playlist: Playlist): Long
 
@@ -91,6 +95,15 @@ interface PlaylistDao {
         "ORDER BY x.position ASC"
     )
     fun getTracksForPlaylist(playlistId: Long): Flow<List<SearchResultTrack>>
+
+    /** Variante de una sola lectura de getTracksForPlaylist() -- ver SearchResultTrackDao.getAllOnce, H06 PASO 1. */
+    @Query(
+        "SELECT t.* FROM search_result_tracks t " +
+        "INNER JOIN playlist_track_cross_refs x ON t.youtubeId = x.youtubeId " +
+        "WHERE x.playlistId = :playlistId " +
+        "ORDER BY x.position ASC"
+    )
+    suspend fun getTracksForPlaylistOnce(playlistId: Long): List<SearchResultTrack>
 
     @Query(
         "SELECT COUNT(*) FROM playlist_track_cross_refs " +

@@ -13,6 +13,10 @@ interface FavoriteAlbumDao {
     @Query("SELECT * FROM favorite_albums")
     fun getAll(): Flow<List<FavoriteAlbum>>
 
+    /** Variante de una sola lectura de getAll() -- ver SearchResultTrackDao.getAllOnce, H06 PASO 1. */
+    @Query("SELECT * FROM favorite_albums")
+    suspend fun getAllOnce(): List<FavoriteAlbum>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(favorite: FavoriteAlbum)
 
