@@ -27,6 +27,10 @@ de apertura:
    destino **muere por completo** y se sustituye por la copia
    importada — no hay fusión ni resolución de conflictos pista a
    pista.
+4. **Las pistas sintéticas (`local:...`) no se exportan.** No tienen
+   vídeo real de YouTube detrás, así que no tiene sentido llevarlas a
+   otro dispositivo donde no se podrán re-descargar — quedan excluidas
+   por completo del `BackupBundle`, no solo del auto-encolado.
 
 ---
 
@@ -58,10 +62,11 @@ desde `app/src/main/java/com/miguelaetxio/mimoo/data/local/entity/`):
   `downloadStatus` (se reimporta siempre como `PENDING`),
   `downloadProgress` (se reimporta siempre como `0`). `youtubeId` sí
   se exporta — es la clave real y estable, no depende del
-  dispositivo. Nota: filas sintéticas (`youtubeId` con prefijo
-  `local:`, generadas por `LibraryReconciler` para archivos pegados a
-  mano sin fila real) se exportan igual que el resto — ver PASO 3 para
-  la implicación en la descarga automática.
+  dispositivo. **Filas sintéticas excluidas del export:** las que
+  tienen `youtubeId` con prefijo `local:` (generadas por
+  `LibraryReconciler` para archivos pegados a mano sin fila real) se
+  filtran antes de construir el `BackupBundle` — decisión de Miguel
+  Ángel (S006), no viajan al backup en absoluto.
 - **`FavoriteAlbum`** (tabla `favorite_albums`, PK compuesta
   `artist`+`album`) — se exporta/importa tal cual, sin transformación.
 - **`Playlist`** (tabla `playlists`, PK `id` autogenerado) — `name` y
@@ -122,10 +127,18 @@ acoplar el formato de archivo al esquema interno de la base de datos:
 - `BackupBundle(version: Int, exportedAt: Long, tracks: List<TrackBackupDto>, favoriteAlbums: List<FavoriteAlbumBackupDto>, playlists: List<PlaylistBackupDto>)`
 - `TrackBackupDto`: todos los campos de `SearchResultTrack` exportables
   listados arriba (sin `filePath`/`downloadStatus`/`downloadProgress`).
+  **Filtrado obligatorio antes de mapear:** excluir toda fila cuyo
+  `youtubeId` empiece por `local:` (filas sintéticas de
+  `LibraryReconciler`) — no entran en `tracks`.
 - `PlaylistBackupDto(originalId: Long, name: String, createdAt: Long, trackYoutubeIdsInOrder: List<String>)`
   — aplana `PlaylistTrackCrossRef` dentro de la propia playlist
   (lista ordenada por `position`) en vez de exportar la tabla de unión
   suelta; simplifica el remapeo de IDs en la importación (PASO 4).
+  **Coherencia con el filtrado de pistas sintéticas:** si una playlist
+  contenía una pista `local:...`, su `youtubeId` se omite de
+  `trackYoutubeIdsInOrder` (esa pista no existe en `tracks`, así que
+  una referencia a ella sería colgante en el destino) — el resto de
+  la playlist se exporta igual, solo se acorta.
 - Serialización con `kotlinx.serialization` o Gson (comprobar cuál ya
   está en `build.gradle.kts` antes de añadir una dependencia nueva —
   releer el archivo real, directriz §4.1).
@@ -200,15 +213,10 @@ edición de metadatos, porque `artist`/`album`/`title` ya vienen
 correctos del backup. Encolar automáticamente **todas** las pistas
 importadas (no solo las que tenían `downloadStatus = DONE` en origen —
 en destino todas empiezan en `PENDING`, es una redescarga completa por
-diseño).
-
-Caso filas sintéticas (`youtubeId` con prefijo `local:`): no tienen
-vídeo real de YouTube detrás, así que no se pueden re-descargar — se
-importan como fila (conservan metadatos/favoritos/pertenencia a
-playlist) pero se excluyen del auto-encolado de descarga, quedando en
-`downloadStatus = ERROR` con motivo explícito en vez de intentar una
-descarga imposible. Confirmar este comportamiento con Miguel Ángel en
-la sesión de implementación si no lo ha decidido ya explícitamente.
+diseño). Al quedar las filas `local:...` excluidas ya en el propio
+export (ver CONTEXTO TÉCNICO y PASO 1), en el destino no puede
+aparecer ninguna fila sin vídeo real detrás — no hace falta ningún
+caso especial aquí.
 
 ### PASO 6 — Verificación funcional end-to-end
 
