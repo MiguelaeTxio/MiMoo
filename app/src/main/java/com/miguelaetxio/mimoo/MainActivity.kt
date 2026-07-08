@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -444,6 +445,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Downloads.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Ajustes") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Settings.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Settings.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

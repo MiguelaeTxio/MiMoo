@@ -14,6 +14,7 @@ import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistsScreen
 import com.miguelaetxio.mimoo.ui.queue.QueueScreen
 import com.miguelaetxio.mimoo.ui.search.SearchScreen
+import com.miguelaetxio.mimoo.ui.settings.SettingsScreen
 
 sealed class Screen(val route: String) {
     object Search : Screen("search")
@@ -26,6 +27,7 @@ sealed class Screen(val route: String) {
     object ImportLink : Screen("import_link")
     object Downloads : Screen("downloads")
     object Queue : Screen("queue")
+    object Settings : Screen("settings")
 }
 
 @Composable
@@ -82,6 +84,9 @@ fun MiMooNavGraph(
         }
         composable(Screen.Queue.route) {
             QueueScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(onOpenDrawer = onOpenDrawer)
         }
     }
 }
