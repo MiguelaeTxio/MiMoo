@@ -124,9 +124,9 @@ mecanismo de sign-in en Android en los últimos años).
 | 1 | Modelo de exportación — DTOs + serialización/deserialización JSON de las 4 tablas | HECHO — S006 (`BackupDto.kt` + `BackupRepository.kt`, commit `4655895`) |
 | 2 | Integración Google Drive — auth + subida/descarga de archivo | HECHO — S006 (`DriveAuthorizationHelper` + `DriveApiService`/`DriveUploadApiService` + `BackupDriveRepository`, commit `a514e4e`) |
 | 3 | Pantalla Exportar | HECHO — S006 (`SettingsScreen`/`SettingsViewModel`, entrada "Ajustes" en el drawer, commit `72fdcec`) |
-| 4 | Pantalla Importar + lógica destructiva de sustitución | PENDIENTE |
-| 5 | Auto-descarga tras importar, con metadatos ya fijados (sin diálogo de edición) | PENDIENTE |
-| 6 | Verificación funcional end-to-end en dispositivo (móvil → tablet) | PENDIENTE |
+| 4 | Pantalla Importar + lógica destructiva de sustitución | HECHO — S006 (`BackupImportRepository`, listado+confirmación destructiva en `SettingsScreen`, commit `691ca65`) |
+| 5 | Auto-descarga tras importar, con metadatos ya fijados (sin diálogo de edición) | HECHO — S006 (`SettingsViewModel.importNow()`, commit `691ca65`) |
+| 6 | Verificación funcional end-to-end en dispositivo (móvil → tablet) | PENDIENTE — siguiente sesión |
 
 ---
 
