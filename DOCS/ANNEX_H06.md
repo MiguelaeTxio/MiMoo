@@ -122,7 +122,7 @@ mecanismo de sign-in en Android en los últimos años).
 | Paso | Descripción | Estado |
 |---|---|---|
 | 1 | Modelo de exportación — DTOs + serialización/deserialización JSON de las 4 tablas | HECHO — S006 (`BackupDto.kt` + `BackupRepository.kt`, commit `4655895`) |
-| 2 | Integración Google Drive — auth + subida/descarga de archivo | PENDIENTE — prerrequisito de Google Cloud resuelto y `BuildConfig.GOOGLE_OAUTH_ANDROID_CLIENT_ID` ya cableado (S006, commit `59d8654`), sin empezar la integración real |
+| 2 | Integración Google Drive — auth + subida/descarga de archivo | HECHO — S006 (`DriveAuthorizationHelper` + `DriveApiService`/`DriveUploadApiService` + `BackupDriveRepository`, commit `a514e4e`) |
 | 3 | Pantalla Exportar | PENDIENTE |
 | 4 | Pantalla Importar + lógica destructiva de sustitución | PENDIENTE |
 | 5 | Auto-descarga tras importar, con metadatos ya fijados (sin diálogo de edición) | PENDIENTE |
