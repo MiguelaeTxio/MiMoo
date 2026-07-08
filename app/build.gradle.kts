@@ -50,6 +50,18 @@ android {
             "\"${localProperties.getProperty("YOUTUBE_API_KEY") ?: ""}\""
         )
 
+        // Client ID OAuth tipo Android (H06, Google Drive backup) --
+        // no es secreto (va embebido en el APK igual que cualquier
+        // Client ID de Android, su seguridad depende del SHA-1 dado
+        // de alta en Google Cloud, no de mantenerlo oculto), pero se
+        // inyecta igual que YOUTUBE_API_KEY para no repartir el valor
+        // literal por el repositorio y poder rotarlo sin tocar código.
+        buildConfigField(
+            "String",
+            "GOOGLE_OAUTH_ANDROID_CLIENT_ID",
+            "\"${localProperties.getProperty("GOOGLE_OAUTH_ANDROID_CLIENT_ID") ?: ""}\""
+        )
+
         ndk {
             // Chaquopy requiere abiFilters explicito. Solo arm64-v8a:
             // unico target real de dispositivo (ver decision tecnica
