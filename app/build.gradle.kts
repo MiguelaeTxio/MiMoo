@@ -208,6 +208,14 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
 
+    // Identity.getAuthorizationClient() (H06 PASO 2) -- autorización
+    // de scopes Google (Drive), separada de la autenticación
+    // (Credential Manager, no usado aquí: no hace falta saber quién
+    // es el usuario, solo pedir permiso sobre su Drive). Versión
+    // verificada en línea en S006 contra
+    // developer.android.com/identity/authorization.
+    implementation(libs.play.services.auth)
+
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
 

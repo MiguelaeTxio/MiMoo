@@ -1,5 +1,7 @@
 package com.miguelaetxio.mimoo.di
 
+import com.miguelaetxio.mimoo.data.remote.DriveApiService
+import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
 import com.miguelaetxio.mimoo.data.remote.YouTubeApiService
 import dagger.Module
@@ -31,6 +33,13 @@ object NetworkModule {
     // MusicBrainz API root — see MusicBrainzApiService. Verified
     // 2026-07-02 against musicbrainz.org/doc/MusicBrainz_API.
     private const val MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2/"
+
+    // Drive REST v3 (H06 PASO 2) -- DOS base URL distintas a
+    // propósito, igual que documenta Google: la de metadatos/listado/
+    // descarga y la de subida de contenido no son el mismo host+path.
+    // Verificado en línea en S006.
+    private const val DRIVE_BASE_URL = "https://www.googleapis.com/drive/v3/"
+    private const val DRIVE_UPLOAD_BASE_URL = "https://www.googleapis.com/upload/drive/v3/"
 
     // Required by MusicBrainz's rate-limiting rules: every request
     // needs a meaningful User-Agent identifying the app and a way to
@@ -126,4 +135,42 @@ object NetworkModule {
     fun provideMusicBrainzApiService(
         @Named("musicBrainzRetrofit") retrofit: Retrofit,
     ): MusicBrainzApiService = retrofit.create(MusicBrainzApiService::class.java)
+
+    // Drive REST v3 (H06 PASO 2). Sin interceptor propio -- a
+    // diferencia de MusicBrainz, Drive no exige User-Agent ni rate
+    // limiting; la autorización viaja como @Header por llamada
+    // (DriveAuthorizationHelper), no como interceptor fijo, porque el
+    // token cambia entre llamadas y puede no existir todavía cuando
+    // se construye este Retrofit @Singleton.
+    @Provides
+    @Singleton
+    @Named("driveRetrofit")
+    fun provideDriveRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(DRIVE_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideDriveApiService(
+        @Named("driveRetrofit") retrofit: Retrofit,
+    ): DriveApiService = retrofit.create(DriveApiService::class.java)
+
+    @Provides
+    @Singleton
+    @Named("driveUploadRetrofit")
+    fun provideDriveUploadRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(DRIVE_UPLOAD_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideDriveUploadApiService(
+        @Named("driveUploadRetrofit") retrofit: Retrofit,
+    ): DriveUploadApiService = retrofit.create(DriveUploadApiService::class.java)
 }
