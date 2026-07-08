@@ -41,6 +41,11 @@ jobs:
           echo "Huella SHA-256 real:"
           keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep "SHA256:"
 
+      - name: Mostrar SHA-1 de firma (para OAuth Client ID Android en Google Cloud, H06)
+        run: |
+          echo "SHA-1 de la keystore de firma real -- usar tal cual en Google Auth Platform > Clients > Create client > Android:"
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep "SHA1:"
+
       - name: Dar permisos a gradlew
         run: chmod +x gradlew
 
