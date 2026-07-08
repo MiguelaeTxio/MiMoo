@@ -96,6 +96,7 @@ fun LibraryScreen(
     // cascading, so it always goes through an explicit dialog.
     var artistPendingDelete by remember { mutableStateOf<String?>(null) }
     var albumPendingDelete by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var albumPendingEdit by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -323,6 +324,7 @@ fun LibraryScreen(
                     viewModel = viewModel,
                     onDeleteArtist = { artistPendingDelete = it },
                     onDeleteAlbum = { artist, album -> albumPendingDelete = artist to album },
+                    onEditAlbum = { artist, album -> albumPendingEdit = artist to album },
                     onDeleteTrack = { trackPendingDelete = it },
                     onEditTrack = { trackPendingEdit = it },
                     onAddToPlaylist = { tracksPendingAddToPlaylist = listOf(it) },
@@ -400,6 +402,21 @@ fun LibraryScreen(
         )
     }
 
+    albumPendingEdit?.let { (artist, album) ->
+        EditAlbumDialog(
+            artist = artist,
+            album = album,
+            onDismiss = { albumPendingEdit = null },
+            onSave = { newArtist, newAlbum ->
+                viewModel.editAlbumMetadata(artist, album, newArtist, newAlbum)
+                albumPendingEdit = null
+            },
+        )
+    }
+            },
+        )
+    }
+
     artistPendingDelete?.let { artist ->
         AlertDialog(
             onDismissRequest = { artistPendingDelete = null },
@@ -465,6 +482,7 @@ private fun ColumnScope.AlbumsTabContent(
     viewModel: LibraryViewModel,
     onDeleteArtist: (String) -> Unit,
     onDeleteAlbum: (String, String) -> Unit,
+    onEditAlbum: (String, String) -> Unit,
     onDeleteTrack: (SearchResultTrack) -> Unit,
     onEditTrack: (SearchResultTrack) -> Unit,
     onAddToPlaylist: (SearchResultTrack) -> Unit,
@@ -521,6 +539,7 @@ private fun ColumnScope.AlbumsTabContent(
                         },
                         onPlayAlbum = { viewModel.playAlbum(artist, album) },
                         onDelete = { onDeleteAlbum(artist, album) },
+                        onEditAlbum = { onEditAlbum(artist, album) },
                         onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
                         onAddToQueue = { viewModel.addAlbumToQueue(artist, album) },
                         onInsertNext = { viewModel.insertAlbumNext(artist, album) },
@@ -576,6 +595,7 @@ private fun ColumnScope.AlbumsTabContent(
                         onClick = { viewModel.selectAlbumsAlbum(drill.artist, album) },
                         onPlayAlbum = { viewModel.playAlbum(drill.artist, album) },
                         onDelete = { onDeleteAlbum(drill.artist, album) },
+                        onEditAlbum = { onEditAlbum(drill.artist, album) },
                         onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
                         onAddToQueue = { viewModel.addAlbumToQueue(drill.artist, album) },
                         onInsertNext = { viewModel.insertAlbumNext(drill.artist, album) },
@@ -855,6 +875,7 @@ private fun AlbumHeaderRow(
     onClick: () -> Unit,
     onPlayAlbum: () -> Unit,
     onDelete: () -> Unit,
+    onEditAlbum: () -> Unit,
     onAddToPlaylist: () -> Unit,
     onAddToQueue: () -> Unit,
     onInsertNext: () -> Unit,
@@ -944,6 +965,16 @@ private fun AlbumHeaderRow(
                 expanded = showOverflowMenu,
                 onDismissRequest = { showOverflowMenu = false },
             ) {
+                DropdownMenuItem(
+                    text = { Text("Editar álbum") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Edit, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onEditAlbum()
+                    },
+                )
                 DropdownMenuItem(
                     text = { Text("Reproducir a continuación") },
                     leadingIcon = {
@@ -1193,6 +1224,67 @@ private fun LibraryTrackRow(
  * Diálogo de edición manual de metadatos (PASO 7, H03). El álbum se
  * edita como texto libre; un valor vacío se convierte en null.
  */
+@Composable
+private fun EditAlbumDialog(
+    artist: String,
+    album: String,
+    onDismiss: () -> Unit,
+    onSave: (artist: String, album: String) -> Unit,
+) {
+    var artistField by remember(artist, album) { mutableStateOf(artist) }
+    var albumField by remember(artist, album) { mutableStateOf(album) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar álbum") },
+        text = {
+            Column {
+                Text(
+                    "Se aplicará a todas las pistas de este álbum a la vez.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = artistField,
+                    onValueChange = { artistField = it },
+                    label = { Text("Artista") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = albumField,
+                    onValueChange = { albumField = it },
+                    label = { Text("Álbum") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Si cambias artista o álbum, todos los archivos de este " +
+                        "álbum se moverán a la nueva carpeta.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(artistField, albumField) },
+                enabled = artistField.isNotBlank() && albumField.isNotBlank(),
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+    )
+}
+
 @Composable
 private fun EditMetadataDialog(
     track: SearchResultTrack,

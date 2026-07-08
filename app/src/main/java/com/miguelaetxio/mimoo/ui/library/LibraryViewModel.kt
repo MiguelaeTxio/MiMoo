@@ -664,6 +664,82 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Aplica una edición manual de artista/álbum a TODAS las pistas de
+     * un álbum de golpe (petición de Miguel Ángel, 2026-07-08 --
+     * corregir una errata de artista/álbum pista por pista era
+     * tedioso y podía dejar el álbum roto a medias si se paraba antes
+     * de terminar). El título de cada pista no se toca. Reutiliza
+     * TrackFileRelocator pista a pista, igual que editMetadata(); si
+     * una reubicación falla a mitad, se detiene ahí y se informa del
+     * error -- las pistas ya movidas se quedan movidas, no hay
+     * rollback.
+     * ---
+     * Applies a manual artist/album edit to ALL tracks of an album at
+     * once (requested by Miguel Ángel, 2026-07-08 -- fixing an
+     * artist/album typo track by track was tedious and could leave
+     * the album half-broken if stopped partway through). Each track's
+     * title is left untouched. Reuses TrackFileRelocator track by
+     * track, same as editMetadata(); if a relocation fails partway,
+     * it stops there and reports the error -- tracks already moved
+     * stay moved, there's no rollback.
+     */
+    fun editAlbumMetadata(artist: String, album: String, newArtistRaw: String, newAlbumRaw: String) {
+        val tracks = _uiState.value.albumsByArtist[artist]?.get(album) ?: return
+        val trimmedArtist = newArtistRaw.trim().ifBlank { artist }
+        val newAlbum = newAlbumRaw.trim().ifBlank { album }
+        val needsRelocation = trimmedArtist != artist || newAlbum != album
+
+        if (!needsRelocation) return
+
+        viewModelScope.launch {
+            val rootUri = storageManager.getRootUri()
+            if (tracks.any { it.filePath != null } && rootUri == null) {
+                _uiState.value = _uiState.value.copy(
+                    editMetadataError = "No se puede mover el álbum: " +
+                        "no hay carpeta de almacenamiento elegida.",
+                )
+                return@launch
+            }
+
+            for (track in tracks) {
+                var updatedFilePath = track.filePath
+                if (track.filePath != null && rootUri != null) {
+                    val relocated = withContext(Dispatchers.IO) {
+                        trackFileRelocator.relocate(
+                            context = context,
+                            sourceFilePath = track.filePath!!,
+                            rootUri = rootUri,
+                            newArtist = trimmedArtist,
+                            newAlbum = newAlbum,
+                            title = track.title,
+                            trackPosition = track.trackPosition,
+                        )
+                    }
+                    if (relocated == null) {
+                        _uiState.value = _uiState.value.copy(
+                            editMetadataError = "No se pudo mover \"${track.title}\" a la " +
+                                "nueva carpeta. El resto del álbum se ha quedado sin editar.",
+                        )
+                        return@launch
+                    }
+                    updatedFilePath = relocated
+                }
+                repository.update(
+                    track.copy(
+                        artist = trimmedArtist,
+                        album = newAlbum,
+                        filePath = updatedFilePath,
+                    )
+                )
+            }
+
+            withContext(Dispatchers.IO) {
+                cleanupEmptyFolders(artist, album)
+            }
+        }
+    }
+
     /** Dismisses a previously shown editMetadata error banner/dialog. */
     fun dismissEditMetadataError() {
         _uiState.value = _uiState.value.copy(editMetadataError = null)
