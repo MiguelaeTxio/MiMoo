@@ -123,7 +123,7 @@ mecanismo de sign-in en Android en los últimos años).
 |---|---|---|
 | 1 | Modelo de exportación — DTOs + serialización/deserialización JSON de las 4 tablas | HECHO — S006 (`BackupDto.kt` + `BackupRepository.kt`, commit `4655895`) |
 | 2 | Integración Google Drive — auth + subida/descarga de archivo | HECHO — S006 (`DriveAuthorizationHelper` + `DriveApiService`/`DriveUploadApiService` + `BackupDriveRepository`, commit `a514e4e`) |
-| 3 | Pantalla Exportar | PENDIENTE |
+| 3 | Pantalla Exportar | HECHO — S006 (`SettingsScreen`/`SettingsViewModel`, entrada "Ajustes" en el drawer, commit `72fdcec`) |
 | 4 | Pantalla Importar + lógica destructiva de sustitución | PENDIENTE |
 | 5 | Auto-descarga tras importar, con metadatos ya fijados (sin diálogo de edición) | PENDIENTE |
 | 6 | Verificación funcional end-to-end en dispositivo (móvil → tablet) | PENDIENTE |
@@ -174,13 +174,16 @@ resuelto:
 - Listado/descarga: `DriveRepository.listBackups(): List<DriveBackupFile>`
   (nombre + fecha) y `DriveRepository.downloadBackup(fileId): BackupBundle`.
 
-### PASO 3 — Pantalla Exportar
+### PASO 3 — Pantalla Exportar (HECHO, S006)
 
-Punto de entrada nuevo (menú principal o Ajustes — a decidir con
-Miguel Ángel el sitio exacto en la sesión donde se implemente, no
-inventar ubicación sin confirmar). Botón único "Exportar repositorio a
-Drive": serializa las 4 tablas completas (PASO 1), sube (PASO 2),
-confirma con fecha/hora del archivo subido. Sin selección parcial —
+Punto de entrada decidido con Miguel Ángel: pantalla "Ajustes" nueva
+(`SettingsScreen`), con entrada propia en el drawer principal — no un
+ítem suelto en el menú. Botón único "Exportar repositorio a Drive":
+construye el `BackupBundle` (PASO 1), pide autorización a Drive
+(`DriveAuthorizationHelper` — silenciosa si ya estaba concedida,
+diálogo de consentimiento vía `ActivityResultLauncher` si no) y sube
+(PASO 2), confirmando con un Snackbar el nombre del archivo subido.
+Sin selección parcial —
 decisión ya tomada por Miguel Ángel.
 
 ### PASO 4 — Pantalla Importar + sustitución destructiva
