@@ -413,9 +413,6 @@ fun LibraryScreen(
             },
         )
     }
-            },
-        )
-    }
 
     artistPendingDelete?.let { artist ->
         AlertDialog(
