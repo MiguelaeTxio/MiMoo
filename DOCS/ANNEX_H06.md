@@ -247,6 +247,51 @@ origen.
 
 ---
 
+## INCIDENCIA REAL — S006, verificación de PASO 3/4
+
+**Síntoma reportado por Miguel Ángel:** exportar preguntaba la cuenta
+de Google y no decía nada más — ni éxito, ni error, ni progreso.
+Importar, igual: preguntaba la cuenta y no pasaba nada — confirmado
+que no funcionaba porque la pestaña Descargas no mostraba ninguna
+descarga en curso, y la Biblioteca de la tablet seguía siendo la
+misma de antes de "importar".
+
+**Causa raíz:** `SettingsScreen` comprobaba
+`result.resultCode == Activity.RESULT_OK` antes de intentar extraer
+el `AuthorizationResult` del `Intent` devuelto por el diálogo de
+consentimiento de Drive. El ejemplo oficial de Google
+(`developer.android.com/identity/authorization`, releído en línea en
+S006 para este diagnóstico) **no hace esa comprobación** — llama
+directamente a `getAuthorizationResultFromIntent()` y deja que lance
+`ApiException` si algo falló de verdad. Con la comprobación de
+`resultCode`, un consentimiento que SÍ había concedido acceso válido
+se trataba como "cancelado por el usuario" (código ya eliminado,
+`onConsentCancelled()`, que dejaba el estado en `Idle` sin ningún
+mensaje) — exportar/importar se abandonaban en silencio justo después
+de elegir la cuenta, exactamente el síntoma descrito.
+
+**Fix:** el `ActivityResultLauncher` de `SettingsScreen` ya no mira
+`resultCode`, llama siempre a `onConsentResolved()` con el `data`
+devuelto; `DriveAuthorizationHelper.extractAccessTokenFromResolution()`
+captura `ApiException` explícitamente (patrón oficial) y relanza con
+el `statusCode` real en el mensaje, para que el Snackbar de error sea
+informativo de verdad si algo falla de nuevo.
+
+**Además, logging exhaustivo añadido** en
+`DriveAuthorizationHelper`/`SettingsViewModel`/`BackupDriveRepository`/
+`BackupImportRepository` (tags `MiMoo-Backup-Auth`/`VM`/`Drive`/
+`Import`) en cada paso real (autorización, construcción del bundle,
+subida/descarga/listado en Drive, transacción de importación) — para
+que, si algo más falla en la verificación de PASO 6, haya datos reales
+de Logcat que consultar en vez de tener que adivinar de nuevo a
+ciegas.
+
+**Sin verificar todavía en dispositivo tras este fix** — pendiente de
+que Miguel Ángel repita la prueba de exportar/importar con el build de
+este commit.
+
+---
+
 ## Fuera de Alcance de Este Hito (explícitamente pospuesto)
 
 - Exportación parcial (por álbum/artista/playlist) — decisión ya
