@@ -50,6 +50,25 @@ interface PlaylistDao {
     @Query("DELETE FROM playlists WHERE id = :playlistId")
     suspend fun deletePlaylist(playlistId: Long)
 
+    /**
+     * Borra TODAS las playlists -- cascada automática a
+     * playlist_track_cross_refs vía FK (mismo comentario de arriba).
+     * Solo para la importación destructiva de H06 PASO 4.
+     */
+    @Query("DELETE FROM playlists")
+    suspend fun deleteAllPlaylists()
+
+    /**
+     * Borra TODAS las referencias playlist-pista de forma explícita.
+     * Redundante con la cascada de deleteAllPlaylists() (y con la
+     * cascada del lado search_result_tracks), pero se llama primero
+     * de todas formas en H06 PASO 4 para que la transacción sea
+     * explícita y no dependa implícitamente de cascada -- ver
+     * ANNEX_H06.md.
+     */
+    @Query("DELETE FROM playlist_track_cross_refs")
+    suspend fun deleteAllCrossRefs()
+
     @Query(
         "SELECT MAX(position) FROM playlist_track_cross_refs " +
         "WHERE playlistId = :playlistId"

@@ -6,10 +6,12 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.BackupDriveRepository
+import com.miguelaetxio.mimoo.data.backup.BackupImportRepository
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.DriveBackupFile
+import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +34,9 @@ sealed class BackupUiState {
     object Idle : BackupUiState()
     object Working : BackupUiState()
     data class ExportSuccess(val fileName: String) : BackupUiState()
+    /** Backups disponibles en Drive, listados tras pulsar "Importar" -- la UI muestra esta lista para elegir uno. */
+    data class BackupsListed(val backups: List<DriveBackupFile>) : BackupUiState()
+    data class ImportSuccess(val trackCount: Int) : BackupUiState()
     data class Error(val message: String) : BackupUiState()
 }
 
@@ -62,6 +67,8 @@ class SettingsViewModel @Inject constructor(
     private val backupRepository: BackupRepository,
     private val driveRepository: BackupDriveRepository,
     private val authorizationHelper: DriveAuthorizationHelper,
+    private val importRepository: BackupImportRepository,
+    private val downloadQueueManager: DownloadQueueManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
@@ -92,12 +99,34 @@ class SettingsViewModel @Inject constructor(
      */
     private sealed class PendingAction {
         object Export : PendingAction()
+        object ListBackups : PendingAction()
+        data class ImportBackup(val backup: DriveBackupFile) : PendingAction()
     }
 
     private var pendingAction: PendingAction? = null
 
     fun onExportClicked(activity: Activity) {
         pendingAction = PendingAction.Export
+        beginAuthorization(activity)
+    }
+
+    /** Pide la lista de backups disponibles en Drive -- la UI la muestra para que Miguel Ángel elija uno. */
+    fun onImportRequested(activity: Activity) {
+        pendingAction = PendingAction.ListBackups
+        beginAuthorization(activity)
+    }
+
+    /**
+     * Llamado tras la confirmación explícita del diálogo destructivo
+     * en la UI ("esto borrará tu repositorio actual..."), nunca
+     * directamente al tocar un ítem de la lista.
+     * ---
+     * Called after the explicit confirmation of the destructive
+     * dialog in the UI ("this will erase your current
+     * repository..."), never directly on tapping a list item.
+     */
+    fun onImportConfirmed(activity: Activity, backup: DriveBackupFile) {
+        pendingAction = PendingAction.ImportBackup(backup)
         beginAuthorization(activity)
     }
 
@@ -160,10 +189,12 @@ class SettingsViewModel @Inject constructor(
         try {
             when (action) {
                 is PendingAction.Export -> exportNow(accessToken)
+                is PendingAction.ListBackups -> listBackupsNow(accessToken)
+                is PendingAction.ImportBackup -> importNow(accessToken, action.backup)
             }
         } catch (e: Exception) {
             _uiState.value = BackupUiState.Error(
-                e.message ?: "Error inesperado exportando a Drive."
+                e.message ?: "Error inesperado hablando con Drive."
             )
         }
     }
@@ -173,5 +204,44 @@ class SettingsViewModel @Inject constructor(
         val json = backupRepository.toJson(bundle)
         val uploaded: DriveBackupFile = driveRepository.uploadBackup(accessToken, json)
         _uiState.value = BackupUiState.ExportSuccess(uploaded.name)
+    }
+
+    private suspend fun listBackupsNow(accessToken: String) {
+        val backups = driveRepository.listBackups(accessToken)
+        _uiState.value = BackupUiState.BackupsListed(backups)
+    }
+
+    /**
+     * Descarga el backup elegido, lo deserializa (fromJson() ya
+     * rechaza versiones no reconocidas), ejecuta la sustitución
+     * destructiva (PASO 4) y encola automáticamente la descarga de
+     * TODAS las pistas importadas con los metadatos ya fijados, sin
+     * ningún diálogo de edición (PASO 5) -- reutiliza
+     * DownloadQueueManager.enqueue(), el mismo mecanismo que H05
+     * PASO 6b.
+     * ---
+     * Downloads the chosen backup, deserializes it (fromJson() already
+     * rejects unrecognized versions), runs the destructive substitution
+     * (PASO 4), and automatically enqueues the download of ALL
+     * imported tracks with the metadata already set, with no edit
+     * dialog (PASO 5) -- reuses DownloadQueueManager.enqueue(), the
+     * same mechanism as H05 PASO 6b.
+     */
+    private suspend fun importNow(accessToken: String, backup: DriveBackupFile) {
+        val json = driveRepository.downloadBackupJson(accessToken, backup.id)
+        val bundle = backupRepository.fromJson(json)
+        val result = importRepository.importDestructively(bundle)
+
+        result.importedTracks.forEach { track ->
+            downloadQueueManager.enqueue(
+                youtubeId = track.youtubeId,
+                title = track.title,
+                artist = track.artist ?: track.channelTitle,
+                album = track.album,
+                trackPosition = track.trackPosition,
+            )
+        }
+
+        _uiState.value = BackupUiState.ImportSuccess(result.importedTracks.size)
     }
 }

@@ -25,4 +25,9 @@ interface FavoriteAlbumDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM favorite_albums WHERE artist = :artist AND album = :album)")
     suspend fun isFavorite(artist: String, album: String): Boolean
+
+    /** Borra TODAS las filas -- ver SearchResultTrackDao.deleteAll(), H06 PASO 4. */
+    @Query("DELETE FROM favorite_albums")
+    suspend fun deleteAll()
+
 }

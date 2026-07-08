@@ -22,6 +22,15 @@ interface SearchResultTrackDao {
     @Query("SELECT * FROM search_result_tracks WHERE youtubeId = :youtubeId")
     suspend fun getById(youtubeId: String): SearchResultTrack?
 
+    /**
+     * Borra TODAS las filas -- solo para la importación destructiva de
+     * H06 PASO 4 (sustitución completa del repositorio). Se llama
+     * dentro de AppDatabase.withTransaction junto al borrado de las
+     * otras tres tablas, nunca sola.
+     */
+    @Query("DELETE FROM search_result_tracks")
+    suspend fun deleteAll()
+
     @Query(
         "SELECT * FROM search_result_tracks " +
         "WHERE downloadStatus = :status ORDER BY lastSearchedAt DESC"
