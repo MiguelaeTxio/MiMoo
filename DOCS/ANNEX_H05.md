@@ -339,35 +339,24 @@ entradas antiguas. Sin conclusión definitiva — vigilar si se repite.
 
 ## Hoja de Ruta para la Siguiente Sesión
 
-**Verificación pendiente de todo lo hecho en S004 (prioridad sobre
+**Verificación en dispositivo de lo nuevo de S005 (prioridad sobre
 retomar H05 desde cero):**
 
-- **Actualización real sobre instalación existente**, ya con el
-  `signingConfig` explícito — confirmar que una actualización (no una
-  instalación limpia) ya no da "conflicto con un paquete"/"firma
-  diferente". Miguel Ángel iba a probarlo al cierre de S004, sin
-  confirmación todavía en este documento.
-- **Notificación de reproducción con controles reales** — confirmada
-  con captura que aparecen play/pausa/anterior/barra de progreso; el
-  botón "siguiente" se corrigió al final de la sesión (cola migrada a
-  la playlist real de ExoPlayer) sin confirmación explícita de Miguel
-  Ángel todavía.
-- **Reintento de descargas fallidas** (borrar definitiva/reintentar
-  todas) — sin probar en dispositivo todavía, nace de una sesión real
-  donde 36 de 100 títulos fallaron.
-- **Favoritos de álbum** — funcionalidad nueva, sin verificar en
-  dispositivo.
-- **Compartir enlaces** — confirmado que fallaba para pistas
-  sintéticas antiguas (arreglado); Miguel Ángel iba a probarlo con una
-  descarga nueva para confirmar que el enlace de origen se comparte
-  bien.
-- **Orden de pista en discos conceptuales** (prefijo `NN -` en el
-  nombre de archivo) — solo afecta a descargas nuevas a partir de
-  S004; los discos ya descargados antes seguirán sin orden tras
-  reconciliar salvo que se vuelvan a descargar.
+- **Toggle de vista en Biblioteca** (Álbumes y Sencillos) — probar en
+  dispositivo real: el icono de la TopAppBar alterna correctamente
+  entre letras y lista plana, la lista plana muestra todos los
+  artistas, y el botón atrás desde dentro de un artista/álbum vuelve
+  a la raíz correcta según qué modo estaba activo al entrar.
+- **"Editar álbum"** — probar en dispositivo con el caso real que lo
+  motivó (el álbum de Herbert von Karajan con el nombre mal escrito):
+  confirmar que el menú de tres puntos del álbum muestra "Editar
+  álbum", que el diálogo permite corregir artista/álbum, y que tras
+  guardar las 4 pistas aparecen bajo el nombre correcto (sin quedar
+  huérfanas ni duplicadas) y el archivo físico se movió de carpeta.
 
-**Pendiente original de H05 (PASO 6c), sin confirmación explícita de
-que se probara durante S004 pese a la actividad intensa:**
+**Pendiente original de H05 (PASO 6c), sigue sin confirmación real
+tras dos sesiones seguidas de otra actividad (S004 verificación,
+S005 UI de Biblioteca):**
 
 - Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
   emparejamiento vía playlist, 11 pistas de golpe.
@@ -383,13 +372,83 @@ que se probara durante S004 pese a la actividad intensa:**
 - ¿Hace falta un menú de configuración para elegir tema/color de la
   app? Confirmado que nunca existió; Miguel Ángel no ha decidido si
   se construye.
-- Migración de `SearchScreen` a búsqueda vía `yt-dlp` sin cuota — ya
-  **implementada** en S004 (no queda pendiente, se deja constancia de
-  que la pregunta original de S003 ya tiene respuesta).
 
 ---
 
-## COMPLETADAS EN S002 (2026-07-02, sesión NewFlow)
+## COMPLETADAS EN S005 (2026-07-07 a 2026-07-08, sesión NewFlow)
+
+- **Verificación en dispositivo de todo S004 — CONFIRMADO:**
+  - Actualización real sobre instalación existente en el teléfono
+    principal, con el `signingConfig` explícito ya en su sitio: ya no
+    da "conflicto con un paquete". Cierra el pendiente heredado de
+    S004.
+  - Notificación de reproducción (controles reales + botón
+    "siguiente" con la cola migrada a la playlist de ExoPlayer),
+    reintento/borrado de descargas fallidas, favoritos de álbum y
+    compartir enlaces — los cuatro confirmados funcionando en
+    dispositivo.
+- **Incidencia real encontrada y resuelta — Uri SAF "fantasma" tras
+  clonado de dispositivo.** En la tablet: no reproducía nada, la
+  descarga fallaba de forma intermitente, y los archivos pegados a
+  mano en la carpeta no se reconciliaban. Causa: la tablet se
+  configuró clonando los datos del teléfono origen (tipo "Mi Move to
+  Xiaomi") en vez de una instalación limpia desde la APK, lo que copió
+  el `SharedPreferences` de `StorageManager` con un `Uri` SAF del
+  teléfono origen ya guardado — `hasRootUri()` daba `true` en la
+  tablet (así que la app nunca relanzaba el selector propio), pero
+  `takePersistableUriPermission` nunca se había tomado para ese `Uri`
+  en este dispositivo. Solución: desinstalar y reinstalar limpio en
+  la tablet. Lección para el futuro: un clonado de dispositivo Android
+  puede dejar un `Uri` SAF con apariencia válida pero sin permiso real
+  en el dispositivo nuevo.
+- **Toggle de vista en Biblioteca (Álbumes y Sencillos)** — petición
+  explícita de Miguel Ángel: alternar entre la vista actual por letras
+  (Letras → Artistas → Álbumes/Pistas) y una vista plana con todos los
+  artistas ordenados alfabéticamente, sin la capa de letras. Añadido
+  `AlbumsDrillLevel.ArtistsFlat` / `SinglesDrillLevel.ArtistsFlat`
+  como nivel raíz alternativo (junto a `Letters`), con
+  `AlbumsViewMode`/`SinglesViewMode` para recordar qué modo está
+  activo y que el botón atrás desde Artistas/Álbumes vuelva a la raíz
+  correcta según el modo. Icono nuevo en la TopAppBar (lista ↔ A-Z)
+  visible en la raíz de cada pestaña. Reutiliza el mismo `ArtistList`
+  ya existente, sin duplicar UI. Favoritos no se tocó — esa pestaña ya
+  era una lista plana desde siempre, no tenía agrupación por letra.
+  Commits `1b0a547` (Álbumes) y `ad3c105` (Sencillos).
+- **"Editar álbum" en el menú de un álbum** — petición explícita de
+  Miguel Ángel tras encontrar una errata real ("Herbet von Katajan" en
+  vez de "Herbert von Karajan") que no se podía corregir: hasta ahora
+  solo existía edición de metadatos por pista suelta
+  (`editMetadata()`), y corregir un álbum entero pista a pista era
+  tedioso y podía dejarlo roto a medias. Nueva función
+  `editAlbumMetadata(artist, album, newArtist, newAlbum)` en
+  `LibraryViewModel`: reubica el archivo de cada pista del álbum a la
+  carpeta `{nuevoArtista}/{nuevoÁlbum}/` vía el mismo
+  `TrackFileRelocator`, sin tocar el título de cada pista; si una
+  reubicación falla a mitad, se detiene ahí y reporta el error (las
+  pistas ya movidas se quedan movidas, sin rollback). Nuevo ítem
+  "Editar álbum" en el menú de tres puntos de `AlbumHeaderRow` (nivel
+  Álbumes y Álbumes favoritos), con `EditAlbumDialog` (campos Artista
+  y Álbum, sin título). **Sin verificar en dispositivo todavía —
+  pendiente para la próxima sesión.** Commit `ab61c4e`.
+- **Incidencia de sesión (no de la app) — token PAT expirado a media
+  sesión.** El primer token entregado (`mimoo_temp_token`) expiraba el
+  8 de julio de 2026; expiró literalmente durante la sesión, dejando
+  un commit local (`ab61c4e`) sin pushear hasta que Miguel Ángel
+  entregó un token nuevo. Sin impacto en el código, solo constancia
+  para el futuro: los tokens de 24h pueden caducar a mitad de una
+  sesión larga.
+
+**Pendiente original de H05 (PASO 6c) — sigue sin tocar, otra vez
+pospuesto por la actividad de verificación/UI de esta sesión:**
+
+- Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
+  emparejamiento vía playlist, 11 pistas de golpe.
+- Buscar álbum con solo artista o solo título suelto (p.ej.
+  "Beethoven"/"Sinfonía") — confirmar tracklist + emparejamiento +
+  orden real de pistas.
+- "Importar enlace" con una playlist normal de YouTube (no YouTube
+  Music) y con un vídeo suelto — confirmar carátula y ruta en disco
+  real.
 
 - **PASO 6a** — búsqueda de álbum con artista solo, álbum solo, o
   ambos. `matchAlbum(artist: String?, album: String?, ...)` construye

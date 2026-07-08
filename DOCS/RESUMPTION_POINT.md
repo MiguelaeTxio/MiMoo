@@ -10,80 +10,48 @@ completo. Para el detalle exacto de qué cambió en cada paso, consultar
 
 ---
 
-## Última actualización: 2026-07-06 (cierre de sesión S004 NewFlow)
+## Última actualización: 2026-07-08 (cierre de sesión S005 NewFlow)
 
 **Hito EN PROGRESO:** H05 — ver `DOCS/MASTER_DOCUMENT.md` para la
 tabla completa de hitos y estado.
 
-**S004 fue la sesión más larga y de mayor alcance del proyecto hasta
-la fecha (2026-07-04 a 2026-07-06, 33 commits).** Empezó como
-continuación del PASO 6c pendiente de H05, pero la propia
-verificación real de Miguel Ángel en dispositivo destapó una cadena
-larga de bugs estructurales de fondo que necesitaban resolverse
-primero. Detalle completo, agrupado por tema, en
-`DOCS/ANNEX_H05.md`, sección "COMPLETADAS EN S004" — no repetirlo
-aquí, solo el resumen de qué falta confirmar.
+**S004 queda íntegramente verificado en dispositivo tras S005**
+(signingConfig sobre actualización real, notificación de
+reproducción, reintento de descargas, favoritos de álbum, compartir
+enlaces — los cinco confirmados). Detalle completo en
+`DOCS/ANNEX_H05.md`, sección "COMPLETADAS EN S005".
 
-**Incidencia histórica de "conflicto con un paquete" al actualizar —
-CAUSA REAL ENCONTRADA en S004, no descartada esta vez.** Nunca había
-un `signingConfig` explícito en `build.gradle.kts`: se había
-verificado que el archivo del keystore tenía la huella SHA-256
-correcta, pero nunca que Gradle lo usara de verdad para firmar. Con el
-`signingConfig` explícito, Android Developer Console (registro de
-desarrollador completado en la misma sesión, cuenta "Full
-distribution", paquete `com.miguelaetxio.mimoo` verificado) pasó de
-rechazar el APK ("firma diferente") a verificarlo correctamente.
-**CONFIRMADO en S005 (2026-07-07):** actualización real sobre
-instalación ya existente en el teléfono principal de Miguel Ángel —
-ya no da "conflicto con un paquete". El `signingConfig` explícito
-queda verificado en dispositivo, cierra este pendiente.
+**S005 en resumen:** sesión de verificación de S004 + una incidencia
+real nueva (Uri SAF "fantasma" tras clonar la tablet desde el
+teléfono principal, resuelta reinstalando limpio) + dos features de
+UI pedidas sobre la marcha: toggle letras/lista plana en Biblioteca
+(Álbumes y Sencillos) y "Editar álbum" (corrige artista/álbum de
+todas las pistas de un álbum a la vez, en vez de una por una).
+Detalle técnico completo de ambas en `DOCS/ANNEX_H05.md`, sección
+"COMPLETADAS EN S005" — no repetirlo aquí.
 
-**Incidencia nueva encontrada y resuelta en S005 — Uri SAF "fantasma"
-tras clonado de dispositivo.** En la tablet, "no reproduce nada" y
-"la descarga va a veces" (incluyendo archivos pegados a mano en la
-carpeta, que tampoco se reconciliaban). Causa: la tablet se configuró
-copiando los datos del teléfono origen (clonado de dispositivo, tipo
-"Mi Move to Xiaomi", en vez de una instalación limpia desde la APK).
-Eso copió el `SharedPreferences` de `StorageManager` con el `Uri` SAF
-del teléfono origen ya guardado — `hasRootUri()` daba `true` en la
-tablet, así que la app nunca volvía a lanzar el selector de carpeta
-propio, pero `takePersistableUriPermission` nunca se había tomado
-para ese `Uri` en la tablet, dejándolo sin permiso real. Solución
-aplicada: desinstalar y reinstalar limpio en la tablet (borra el
-`SharedPreferences` heredado) — al arrancar, `hasRootUri()` vuelve a
-dar `false`, la app lanza el selector real, se toma el permiso
-persistente en este dispositivo y se dispara el escaneo inicial.
-**Confirmado por Miguel Ángel: funciona correctamente tras
-reinstalar.** Lección para el futuro: un clonado de dispositivo
-Android puede dejar un `Uri` SAF con permiso inválido en el
-dispositivo nuevo; no asumir que "ya tiene carpeta configurada" es lo
-mismo que "tiene permiso real".
+**Próxima sesión — verificar en dispositivo lo nuevo de S005 antes de
+nada más** (ninguna de las dos features de S005 se ha probado en el
+móvil todavía):
+1. Toggle de vista en Biblioteca (icono en la TopAppBar, Álbumes y
+   Sencillos).
+2. "Editar álbum" — probar justo con el caso real que lo motivó
+   (álbum de Herbert von Karajan con el nombre mal escrito).
 
-**CONFIRMADO en S005 (2026-07-07):** los cuatro puntos restantes de
-S004 quedan probados y funcionando en dispositivo — notificación de
-reproducción (controles + botón "siguiente" con la cola de
-ExoPlayer), reintento/borrado de descargas fallidas, favoritos de
-álbum y compartir enlaces. S004 queda íntegramente verificado.
-
-**Pendiente original de H05 (PASO 6c), sin confirmación de que se
-probara pese a la actividad intensa de S004:**
+**Pendiente original de H05 (PASO 6c), sigue sin confirmación real
+tras dos sesiones seguidas de otra actividad (S004 verificación, S005
+UI de Biblioteca):**
 1. Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
    emparejamiento vía playlist (11 pistas de golpe).
 2. Probar búsqueda de álbum por artista o título sueltos
    ("Beethoven"/"Sinfonía"), confirmando también el orden real de
-   pistas (prefijo `NN -` en el nombre de archivo, S004 — solo afecta
-   a descargas nuevas a partir de ahora).
+   pistas.
 3. Probar "Importar enlace" con playlist normal de YouTube y con
    vídeo suelto.
 
 **Decisión pendiente de Miguel Ángel (no técnica, de producto):**
 ¿hace falta un menú de configuración para elegir tema/color de la
-app? Confirmado en S004 que nunca existió; sin decisión tomada.
-
-**Ya resuelto en S004, no hace falta seguir preguntando:** la
-migración de `SearchScreen` a búsqueda vía `yt-dlp` (sin cuota) que
-quedaba pendiente de decisión en S003 — **implementada**, ya no es
-una pregunta abierta.
+app? Confirmado que nunca existió; sin decisión tomada.
 
 **H03 PASO 8 y H04 PASO 6** (verificación funcional en dispositivo)
-siguen pendientes — no tocados en S004, sin bloquear nada.
+siguen pendientes — no tocados en S005, sin bloquear nada.
