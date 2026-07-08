@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.ui.settings
 
 import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TAG = "MiMoo-Backup-VM"
 
 /**
  * Estado de la pantalla Ajustes en lo relativo a H06. Un único
@@ -131,16 +134,22 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun beginAuthorization(activity: Activity) {
+        Log.d(TAG, "beginAuthorization() -- pendingAction=$pendingAction")
         _uiState.value = BackupUiState.Working
         viewModelScope.launch {
             try {
                 when (val outcome = authorizationHelper.requestAuthorization(activity)) {
-                    is DriveAuthorizationOutcome.Authorized ->
+                    is DriveAuthorizationOutcome.Authorized -> {
+                        Log.d(TAG, "Ya autorizado, sin diálogo -- ejecutando pendingAction directamente")
                         runPendingAction(outcome.accessToken)
-                    is DriveAuthorizationOutcome.NeedsUserConsent ->
+                    }
+                    is DriveAuthorizationOutcome.NeedsUserConsent -> {
+                        Log.d(TAG, "Hace falta consentimiento del usuario -- lanzando IntentSenderRequest")
                         _pendingConsent.value = outcome.intentSenderRequest
+                    }
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "beginAuthorization() FALLÓ", e)
                 pendingAction = null
                 _uiState.value = BackupUiState.Error(
                     e.message ?: "No se pudo pedir autorización a Google."
@@ -159,21 +168,19 @@ class SettingsViewModel @Inject constructor(
      * on success.
      */
     fun onConsentResolved(activity: Activity, resultData: Intent?) {
+        Log.d(TAG, "onConsentResolved() -- resolviendo consentimiento devuelto")
         _pendingConsent.value = null
         try {
             val token = authorizationHelper.extractAccessTokenFromResolution(activity, resultData)
+            Log.d(TAG, "onConsentResolved() OK -- token obtenido, ejecutando pendingAction")
             viewModelScope.launch { runPendingAction(token) }
         } catch (e: Exception) {
+            Log.e(TAG, "onConsentResolved() FALLÓ", e)
             pendingAction = null
-            _uiState.value = BackupUiState.Error("Google no concedió el acceso a Drive.")
+            _uiState.value = BackupUiState.Error(
+                e.message ?: "Google no concedió el acceso a Drive."
+            )
         }
-    }
-
-    /** Llamado por la UI si el usuario cancela el diálogo de consentimiento. */
-    fun onConsentCancelled() {
-        _pendingConsent.value = null
-        pendingAction = null
-        _uiState.value = BackupUiState.Idle
     }
 
     fun dismissMessage() {
@@ -183,8 +190,12 @@ class SettingsViewModel @Inject constructor(
     private suspend fun runPendingAction(accessToken: String) {
         val action = pendingAction
         pendingAction = null
-        if (action == null) return
+        if (action == null) {
+            Log.w(TAG, "runPendingAction() llamado sin ninguna acción pendiente -- no hace nada")
+            return
+        }
 
+        Log.d(TAG, "runPendingAction() -- ejecutando $action")
         _uiState.value = BackupUiState.Working
         try {
             when (action) {
@@ -192,7 +203,9 @@ class SettingsViewModel @Inject constructor(
                 is PendingAction.ListBackups -> listBackupsNow(accessToken)
                 is PendingAction.ImportBackup -> importNow(accessToken, action.backup)
             }
+            Log.d(TAG, "runPendingAction() -- $action terminado con éxito")
         } catch (e: Exception) {
+            Log.e(TAG, "runPendingAction() -- $action FALLÓ", e)
             _uiState.value = BackupUiState.Error(
                 e.message ?: "Error inesperado hablando con Drive."
             )
@@ -201,13 +214,17 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun exportNow(accessToken: String) {
         val bundle = backupRepository.buildCurrentBundle()
+        Log.d(TAG, "exportNow() -- bundle construido: ${bundle.tracks.size} pistas, ${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists")
         val json = backupRepository.toJson(bundle)
+        Log.d(TAG, "exportNow() -- JSON serializado, ${json.length} caracteres. Subiendo a Drive...")
         val uploaded: DriveBackupFile = driveRepository.uploadBackup(accessToken, json)
+        Log.d(TAG, "exportNow() -- subida OK, archivo '${uploaded.name}' (id=${uploaded.id})")
         _uiState.value = BackupUiState.ExportSuccess(uploaded.name)
     }
 
     private suspend fun listBackupsNow(accessToken: String) {
         val backups = driveRepository.listBackups(accessToken)
+        Log.d(TAG, "listBackupsNow() -- ${backups.size} backups encontrados en Drive")
         _uiState.value = BackupUiState.BackupsListed(backups)
     }
 
@@ -228,9 +245,13 @@ class SettingsViewModel @Inject constructor(
      * same mechanism as H05 PASO 6b.
      */
     private suspend fun importNow(accessToken: String, backup: DriveBackupFile) {
+        Log.d(TAG, "importNow() -- descargando '${backup.name}' (id=${backup.id})")
         val json = driveRepository.downloadBackupJson(accessToken, backup.id)
+        Log.d(TAG, "importNow() -- descarga OK, ${json.length} caracteres. Deserializando...")
         val bundle = backupRepository.fromJson(json)
+        Log.d(TAG, "importNow() -- bundle válido: ${bundle.tracks.size} pistas, ${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists. Ejecutando sustitución destructiva...")
         val result = importRepository.importDestructively(bundle)
+        Log.d(TAG, "importNow() -- sustitución OK, ${result.importedTracks.size} pistas insertadas. Encolando descargas...")
 
         result.importedTracks.forEach { track ->
             downloadQueueManager.enqueue(
@@ -241,6 +262,7 @@ class SettingsViewModel @Inject constructor(
                 trackPosition = track.trackPosition,
             )
         }
+        Log.d(TAG, "importNow() -- ${result.importedTracks.size} descargas encoladas")
 
         _uiState.value = BackupUiState.ImportSuccess(result.importedTracks.size)
     }

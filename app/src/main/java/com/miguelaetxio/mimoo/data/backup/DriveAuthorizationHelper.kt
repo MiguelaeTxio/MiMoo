@@ -3,16 +3,20 @@ package com.miguelaetxio.mimoo.data.backup
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.activity.result.IntentSenderRequest
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
+private const val TAG = "MiMoo-Backup-Auth"
 
 /**
  * Scope mínimo para Drive: solo los archivos que la propia app cree
@@ -80,13 +84,20 @@ class DriveAuthorizationHelper @Inject constructor() {
                 .setRequestedScopes(listOf(Scope(DRIVE_FILE_SCOPE_URL)))
                 .build()
 
+            Log.d(TAG, "authorize(): pidiendo scope drive.file")
             Identity.getAuthorizationClient(activity)
                 .authorize(request)
                 .addOnSuccessListener { result: AuthorizationResult ->
+                    Log.d(
+                        TAG,
+                        "authorize() OK -- hasResolution=${result.hasResolution()} " +
+                            "accessToken=${if (result.accessToken != null) "presente" else "null"}"
+                    )
                     val outcome = resultToOutcome(result)
                     if (continuation.isActive) continuation.resume(outcome)
                 }
                 .addOnFailureListener { e ->
+                    Log.e(TAG, "authorize() FALLÓ", e)
                     if (continuation.isActive) continuation.resumeWithException(e)
                 }
         }
@@ -106,18 +117,54 @@ class DriveAuthorizationHelper @Inject constructor() {
 
     /**
      * Tras lanzar el `IntentSenderRequest` de `NeedsUserConsent` con
-     * un `ActivityResultLauncher<IntentSenderRequest>` y recibir el
-     * resultado, extrae el access token del propio Intent de vuelta
-     * -- no hace falta volver a llamar a `authorize()`.
+     * un `ActivityResultLauncher<IntentSenderRequest>`, extrae el
+     * access token del propio Intent de vuelta -- no hace falta
+     * volver a llamar a `authorize()`.
+     *
+     * **IMPORTANTE (bug real corregido en S006):** esta función se
+     * llama SIEMPRE con el `data` del resultado, sin mirar antes el
+     * `resultCode` -- el ejemplo oficial de Google
+     * (developer.android.com/identity/authorization) tampoco
+     * comprueba `resultCode == RESULT_OK`, extrae directamente y dejar
+     * que `getAuthorizationResultFromIntent` lance `ApiException` si
+     * algo falló. Comprobar `resultCode` antes (como hacía la versión
+     * anterior de `SettingsScreen`) trataba como "cancelado por el
+     * usuario" un resultado que en realidad sí traía autorización
+     * válida, y la exportación/importación se abandonaba en silencio
+     * sin ningún mensaje de error.
      * ---
      * After launching the `NeedsUserConsent`'s `IntentSenderRequest`
-     * with an `ActivityResultLauncher<IntentSenderRequest>` and
-     * getting the result back, extracts the access token from the
-     * returned Intent itself -- no need to call `authorize()` again.
+     * with an `ActivityResultLauncher<IntentSenderRequest>`, extracts
+     * the access token from the returned Intent itself -- no need to
+     * call `authorize()` again.
+     *
+     * **IMPORTANT (real bug fixed in S006):** this function is ALWAYS
+     * called with the result's `data`, without checking `resultCode`
+     * first -- Google's official example
+     * (developer.android.com/identity/authorization) doesn't check
+     * `resultCode == RESULT_OK` either, it extracts directly and lets
+     * `getAuthorizationResultFromIntent` throw `ApiException` if
+     * something failed. Checking `resultCode` beforehand (as the
+     * previous version of `SettingsScreen` did) treated a result that
+     * actually carried valid authorization as "cancelled by the
+     * user", and the export/import was silently abandoned with no
+     * error message at all.
      */
     fun extractAccessTokenFromResolution(context: Context, resultData: Intent?): String {
-        val result = Identity.getAuthorizationClient(context)
-            .getAuthorizationResultFromIntent(resultData)
+        val result = try {
+            Identity.getAuthorizationClient(context)
+                .getAuthorizationResultFromIntent(resultData)
+        } catch (e: ApiException) {
+            Log.e(TAG, "getAuthorizationResultFromIntent() FALLÓ -- statusCode=${e.statusCode}", e)
+            throw IllegalStateException(
+                "Google no concedió el acceso a Drive (código ${e.statusCode}).", e
+            )
+        }
+        Log.d(
+            TAG,
+            "getAuthorizationResultFromIntent() OK -- " +
+                "accessToken=${if (result.accessToken != null) "presente" else "null"}"
+        )
         return result.accessToken
             ?: error("La resolución de autorización no devolvió un accessToken")
     }

@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.data.backup
 
+import android.util.Log
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.dto.DriveFileCreateDto
@@ -11,6 +12,8 @@ import java.util.Locale
 import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "MiMoo-Backup-Drive"
 
 /** Carpeta fija en Drive donde viven todos los backups de MiMoo -- decisión de ANNEX_H06.md. */
 private const val BACKUP_FOLDER_NAME = "MiMoo Backups"
@@ -60,12 +63,17 @@ class BackupDriveRepository @Inject constructor(
     suspend fun ensureBackupFolder(accessToken: String): String {
         val query = "mimeType = '$FOLDER_MIME_TYPE' and name = '$BACKUP_FOLDER_NAME' and trashed = false"
         val existing = driveApi.listFiles(bearer(accessToken), query = query, fields = "files(id,name)")
-        existing.files.firstOrNull()?.let { return it.id }
+        existing.files.firstOrNull()?.let {
+            Log.d(TAG, "ensureBackupFolder() -- carpeta ya existía, id=${it.id}")
+            return it.id
+        }
 
+        Log.d(TAG, "ensureBackupFolder() -- carpeta no existía, creándola")
         val created = driveApi.createFileMetadata(
             bearer(accessToken),
             DriveFileCreateDto(name = BACKUP_FOLDER_NAME, mimeType = FOLDER_MIME_TYPE),
         )
+        Log.d(TAG, "ensureBackupFolder() -- carpeta creada, id=${created.id}")
         return created.id
     }
 
@@ -85,11 +93,13 @@ class BackupDriveRepository @Inject constructor(
     suspend fun uploadBackup(accessToken: String, json: String): DriveBackupFile {
         val folderId = ensureBackupFolder(accessToken)
         val fileName = "mimoo_backup_${timestampForFileName()}.json"
+        Log.d(TAG, "uploadBackup() -- creando metadatos de '$fileName' en carpeta $folderId")
 
         val createdMetadata = driveApi.createFileMetadata(
             bearer(accessToken),
             DriveFileCreateDto(name = fileName, parents = listOf(folderId)),
         )
+        Log.d(TAG, "uploadBackup() -- metadatos creados, id=${createdMetadata.id}. Subiendo contenido (${json.length} chars)...")
 
         val body = json.toRequestBody(JSON_MEDIA_TYPE.toMediaType())
         val uploaded = driveUploadApi.uploadMediaContent(
@@ -97,6 +107,7 @@ class BackupDriveRepository @Inject constructor(
             fileId = createdMetadata.id,
             content = body,
         )
+        Log.d(TAG, "uploadBackup() -- contenido subido OK para id=${uploaded.id}")
 
         return DriveBackupFile(
             id = uploaded.id,
@@ -110,12 +121,17 @@ class BackupDriveRepository @Inject constructor(
         val folderId = ensureBackupFolder(accessToken)
         val query = "'$folderId' in parents and trashed = false"
         val result = driveApi.listFiles(bearer(accessToken), query = query)
+        Log.d(TAG, "listBackups() -- ${result.files.size} archivos encontrados en carpeta $folderId")
         return result.files.map { DriveBackupFile(id = it.id, name = it.name ?: it.id, createdTime = it.createdTime) }
     }
 
     /** Descarga el contenido JSON de un backup por su id de Drive. */
-    suspend fun downloadBackupJson(accessToken: String, fileId: String): String =
-        driveApi.downloadFileContent(bearer(accessToken), fileId).string()
+    suspend fun downloadBackupJson(accessToken: String, fileId: String): String {
+        Log.d(TAG, "downloadBackupJson() -- descargando id=$fileId")
+        val content = driveApi.downloadFileContent(bearer(accessToken), fileId).string()
+        Log.d(TAG, "downloadBackupJson() -- descargados ${content.length} caracteres")
+        return content
+    }
 
     private fun timestampForFileName(): String {
         val formatter = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())

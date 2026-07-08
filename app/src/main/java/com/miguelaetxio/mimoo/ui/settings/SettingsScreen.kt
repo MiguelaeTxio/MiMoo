@@ -79,11 +79,12 @@ fun SettingsScreen(
     val consentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult(),
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.onConsentResolved(activity, result.data)
-        } else {
-            viewModel.onConsentCancelled()
-        }
+        // Bug real corregido en S006: NO mirar result.resultCode antes
+        // de intentar extraer -- ver el comentario de
+        // DriveAuthorizationHelper.extractAccessTokenFromResolution.
+        // Se intenta siempre; si de verdad falló, la propia función
+        // lanza y onConsentResolved lo convierte en un Error visible.
+        viewModel.onConsentResolved(activity, result.data)
     }
 
     LaunchedEffect(pendingConsent) {

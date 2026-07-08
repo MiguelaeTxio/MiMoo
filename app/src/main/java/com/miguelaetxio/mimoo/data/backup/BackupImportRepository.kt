@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.backup
 
 import android.content.Context
+import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.room.withTransaction
 import com.miguelaetxio.mimoo.data.download.StorageManager
@@ -18,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "MiMoo-Backup-Import"
 
 /** Resultado de una importación, para que la UI (PASO 4) muestre un resumen. */
 data class BackupImportResult(
@@ -79,7 +82,9 @@ class BackupImportRepository @Inject constructor(
      */
     suspend fun importDestructively(bundle: BackupBundle): BackupImportResult =
         withContext(Dispatchers.IO) {
+            Log.d(TAG, "importDestructively() -- borrando archivos físicos existentes...")
             deleteExistingPhysicalFiles()
+            Log.d(TAG, "importDestructively() -- archivos físicos borrados. Iniciando transacción Room...")
 
             lateinit var result: BackupImportResult
             database.withTransaction {
@@ -87,6 +92,7 @@ class BackupImportRepository @Inject constructor(
                 playlistDao.deleteAllPlaylists()
                 favoriteAlbumDao.deleteAll()
                 trackDao.deleteAll()
+                Log.d(TAG, "importDestructively() -- 4 tablas borradas. Insertando ${bundle.tracks.size} pistas...")
 
                 val newTracks = bundle.tracks.map { it.toEntity() }
                 trackDao.insertAll(newTracks)
@@ -115,6 +121,11 @@ class BackupImportRepository @Inject constructor(
                     favoriteAlbumCount = bundle.favoriteAlbums.size,
                     playlistCount = bundle.playlists.size,
                 )
+                Log.d(
+                    TAG,
+                    "importDestructively() -- transacción completa: ${newTracks.size} pistas, " +
+                        "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists"
+                )
             }
             result
         }
@@ -132,9 +143,19 @@ class BackupImportRepository @Inject constructor(
      * mismo principio de cautela que `LibraryReconciler.pruneEmptyFolders`.
      */
     private fun deleteExistingPhysicalFiles() {
-        val rootUri = storageManager.getRootUri() ?: return
-        val root = DocumentFile.fromTreeUri(context, rootUri) ?: return
-        root.listFiles().forEach { child -> deleteRecursively(child) }
+        val rootUri = storageManager.getRootUri()
+        if (rootUri == null) {
+            Log.d(TAG, "deleteExistingPhysicalFiles() -- sin raíz SAF elegida todavía, nada que borrar")
+            return
+        }
+        val root = DocumentFile.fromTreeUri(context, rootUri)
+        if (root == null) {
+            Log.w(TAG, "deleteExistingPhysicalFiles() -- DocumentFile.fromTreeUri devolvió null para $rootUri")
+            return
+        }
+        val children = root.listFiles()
+        Log.d(TAG, "deleteExistingPhysicalFiles() -- borrando ${children.size} elementos bajo la raíz")
+        children.forEach { child -> deleteRecursively(child) }
     }
 
     private fun deleteRecursively(doc: DocumentFile) {
