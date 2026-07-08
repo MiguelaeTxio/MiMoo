@@ -30,9 +30,16 @@ todas las pistas de un álbum a la vez, en vez de una por una).
 Detalle técnico completo de ambas en `DOCS/ANNEX_H05.md`, sección
 "COMPLETADAS EN S005" — no repetirlo aquí.
 
+**Build roto tras el primer cierre de S005, ya arreglado.** El commit
+de "Editar álbum" dejó un cierre de bloque duplicado en
+`LibraryScreen.kt` que rompía la compilación (workflows #123 y #124
+en rojo, mismo error). Diagnosticado y corregido en `b0af47d` en esta
+misma continuación de sesión — **workflow #125 verde, APK ya en
+PythonAnywhere.** Detalle en `DOCS/ANNEX_H05.md`.
+
 **Próxima sesión — verificar en dispositivo lo nuevo de S005 antes de
 nada más** (ninguna de las dos features de S005 se ha probado en el
-móvil todavía):
+móvil todavía — el build ya está verde, así que ahora sí se puede):
 1. Toggle de vista en Biblioteca (icono en la TopAppBar, Álbumes y
    Sencillos).
 2. "Editar álbum" — probar justo con el caso real que lo motivó

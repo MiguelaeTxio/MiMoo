@@ -428,8 +428,20 @@ S005 UI de Biblioteca):**
   pistas ya movidas se quedan movidas, sin rollback). Nuevo ítem
   "Editar álbum" en el menú de tres puntos de `AlbumHeaderRow` (nivel
   Álbumes y Álbumes favoritos), con `EditAlbumDialog` (campos Artista
-  y Álbum, sin título). **Sin verificar en dispositivo todavía —
-  pendiente para la próxima sesión.** Commit `ab61c4e`.
+  y Álbum, sin título). Commit `ab61c4e`.
+- **BUILD ROTO tras el cierre de S005 y arreglado en la misma
+  continuación de sesión.** El commit `ab61c4e` ("Editar álbum") dejó
+  `LibraryScreen.kt` con un cierre de bloque duplicado (`},` `)` `}`
+  sobrante justo después del nuevo `albumPendingEdit?.let {...}`) —
+  un `str_replace` mal delimitado dejó el cierre original del diálogo
+  anterior huérfano en vez de dentro de él. El workflow #123
+  (`ab61c4e`) y #124 (`df82a76`, el cierre de sesión, que solo tocaba
+  `.md` y heredó el mismo `.kt` roto) fallaron con el mismo log
+  exacto — no eran dos errores distintos, era el mismo arrastrado.
+  Corregido en `b0af47d` eliminando las tres líneas sobrantes;
+  **workflow #125 verde, APK ya en PythonAnywhere.** "Editar álbum"
+  y el toggle de vista quedan ahora sí listos para probar en
+  dispositivo en la próxima sesión.
 - **Incidencia de sesión (no de la app) — token PAT expirado a media
   sesión.** El primer token entregado (`mimoo_temp_token`) expiraba el
   8 de julio de 2026; expiró literalmente durante la sesión, dejando
