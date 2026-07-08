@@ -20,16 +20,22 @@ la vez. Cambiar de hito es editar esta tabla y commitear — ver
 | H02 | Descarga a Local: yt-dlp + Opus + Queue | `DOCS/ANNEX_H02.md` | |
 | H03 | Biblioteca Local: Reproducción Offline, CRUD, Favoritos y Carátulas | `DOCS/ANNEX_H03.md` | |
 | H04 | Listas de Reproducción Locales | `DOCS/ANNEX_H04.md` | |
-| H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | ← EN PROGRESO |
+| H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | |
+| H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | ← EN PROGRESO |
 
-**Resultado actual (migrado desde la sesión skill-based, 2026-07-02):**
+**Resultado actual (migrado desde la sesión skill-based, 2026-07-02;
+actualizado 2026-07-08 S006):**
 H01 y H02 completados y verificados funcionalmente. H03 (PASOS 6, 7,
 9 hechos en la sesión del 2026-07-02) y H04 (PASOS 1-6 hechos, mismo
 día) tienen todo el código escrito pero comparten un pendiente:
 verificación física en el dispositivo de Miguel Ángel (H03 PASO 8,
 H04 PASO 6) — no bloquea nada, simplemente no se ha hecho. H05 tiene
-los PASOS 1-5 implementados; PASO 6 en curso con dos incidencias
-reales detectadas en la prueba de Miguel Ángel (ver `DOCS/ANNEX_H05.md`).
+los PASOS 1-5 implementados y el toggle de vista + "Editar álbum" de
+S005 ya verificados en dispositivo (S006); **PASO 6c queda pausado sin
+tocar** (Lou Reed, búsqueda por artista/título suelto, Importar
+enlace — ver `DOCS/ANNEX_H05.md`, no es el hito activo). H06 es hito
+nuevo, sin código todavía, abierto en S006 a petición explícita de
+Miguel Ángel al conseguir una tablet además del móvil.
 
 ---
 
@@ -96,8 +102,10 @@ reinstalar o cambiar de dispositivo.
    emparejamiento automático de cada pista a un vídeo de YouTube por
    minutaje, y edición manual cuando el emparejamiento falla —
    Hito 05.
-6. Música relacionada y backup de metadatos en Google Drive (hitos
-   futuros, sin anexo aún).
+6. Backup/restauración de metadatos vía Google Drive entre
+   dispositivos — Hito 06 (`DOCS/ANNEX_H06.md`). Música relacionada
+   sigue como hito futuro, sin alcance definido ni anexo — explícitamente
+   otra cosa, no confundir con H06.
 
 ---
 
@@ -171,8 +179,12 @@ standalone de yt-dlp — es un script Python). El mismo módulo
   release para carátulas (Hito 03).
 - **Cover Art Archive** (`coverartarchive.org`) — portada de álbum a
   partir del MBID de MusicBrainz.
-- **Google Drive** — backup de metadatos (favoritos, catálogo), no
-  de archivos de audio. Sin implementar todavía.
+- **Google Drive** — backup/restauración de metadatos de todo el
+  repositorio (pistas, favoritos de álbum, listas de reproducción),
+  nunca de archivos de audio — Hito 06, ver `DOCS/ANNEX_H06.md`. Sin
+  implementar todavía; requiere Google Sign-In/Credential Manager y
+  Drive REST API, sin decidir aún en qué proyecto de Google Cloud ni
+  con qué credenciales (ver anexo).
 
 ### 2.5. Control de Versiones — NewFlow
 
@@ -212,9 +224,20 @@ funcional en dispositivo) pendiente.
 funcional en dispositivo) pendiente.
 
 ### Hito 5: Búsqueda de Álbumes Completos vía MusicBrainz
-(Ver `DOCS/ANNEX_H05.md`) — EN PROGRESO. PASOS 1-5 hechos, PASO 6 con
-incidencias reales detectadas por Miguel Ángel, hoja de ruta de
-corrección ya redactada en el propio anexo.
+(Ver `DOCS/ANNEX_H05.md`) — Pausado (no completado). PASOS 1-5 hechos,
+S005 (toggle Biblioteca + Editar álbum) verificado en dispositivo en
+S006. PASO 6c pendiente sin tocar: Lou Reed, búsqueda por
+artista/título suelto, Importar enlace.
+
+### Hito 6: Exportar/Importar Repositorio de Música vía Google Drive
+(Ver `DOCS/ANNEX_H06.md`) — EN PROGRESO. Hito nuevo abierto en S006:
+exportar toda la biblioteca local (metadatos, no audio) a un archivo
+en Google Drive, e importarla en otro dispositivo (p.ej. la tablet)
+sustituyendo por completo el repositorio local destino y encolando la
+descarga de cada pista con los metadatos ya corregidos, sin pasar por
+el diálogo de edición de metadatos. Explícitamente independiente de
+cualquier futura función de "música relacionada" (punto 6 de §1, sigue
+sin alcance definido y sin tocar).
 
 ---
 
