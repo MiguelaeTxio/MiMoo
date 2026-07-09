@@ -27,6 +27,24 @@ private const val TAG = "MiMoo-Backup-Auth"
 private const val DRIVE_FILE_SCOPE_URL = "https://www.googleapis.com/auth/drive.file"
 
 /**
+ * ⚠️ TEMPORAL -- DIAGNÓSTICO S007, revertir tras la prueba. Scope
+ * alternativo (`drive.appdata`) usado solo para aislar si
+ * UNREGISTERED_ON_API_CONSOLE es un rechazo específico del registro
+ * de `drive.file` o de todo el cliente/proyecto -- ver ANNEX_H06.md,
+ * "INVESTIGACIÓN ABIERTA". No usar para exportar/importar de verdad:
+ * `drive.appdata` no da acceso a archivos visibles en Drive normal.
+ * ---
+ * ⚠️ TEMPORARY -- S007 DIAGNOSTIC, revert after the test. Alternate
+ * scope (`drive.appdata`) used only to isolate whether
+ * UNREGISTERED_ON_API_CONSOLE is a rejection specific to `drive.file`'s
+ * registration or of the whole client/project -- see ANNEX_H06.md,
+ * "INVESTIGACIÓN ABIERTA". Do not use for real export/import:
+ * `drive.appdata` doesn't grant access to files visible in regular
+ * Drive.
+ */
+private const val DIAGNOSTIC_DRIVE_APPDATA_SCOPE_URL = "https://www.googleapis.com/auth/drive.appdata"
+
+/**
  * Resultado de pedir autorización. `Authorized` es el caso común tras
  * la primera vez (Google recuerda el permiso y no vuelve a pedir
  * confirmación al usuario, ver "Maintain ongoing access" en la doc
@@ -83,12 +101,16 @@ class DriveAuthorizationHelper @Inject constructor(
      */
     suspend fun requestAuthorization(activity: Activity): DriveAuthorizationOutcome =
         suspendCancellableCoroutine { continuation ->
+            // ⚠️ TEMPORAL -- DIAGNÓSTICO S007: pidiendo drive.appdata en
+            // vez de drive.file para aislar el rechazo. Revertir a
+            // DRIVE_FILE_SCOPE_URL en cuanto termine la prueba.
+            val diagnosticScopeUrl = DIAGNOSTIC_DRIVE_APPDATA_SCOPE_URL
             val request = AuthorizationRequest.builder()
-                .setRequestedScopes(listOf(Scope(DRIVE_FILE_SCOPE_URL)))
+                .setRequestedScopes(listOf(Scope(diagnosticScopeUrl)))
                 .build()
 
-            Log.d(TAG, "authorize(): pidiendo scope drive.file")
-            BackupDebugLogger.log(activity, storageManager, "authorize() -- pidiendo scope drive.file")
+            Log.d(TAG, "authorize(): [DIAGNÓSTICO S007] pidiendo scope $diagnosticScopeUrl")
+            BackupDebugLogger.log(activity, storageManager, "authorize() -- [DIAGNÓSTICO S007] pidiendo scope $diagnosticScopeUrl")
             Identity.getAuthorizationClient(activity)
                 .authorize(request)
                 .addOnSuccessListener { result: AuthorizationResult ->
