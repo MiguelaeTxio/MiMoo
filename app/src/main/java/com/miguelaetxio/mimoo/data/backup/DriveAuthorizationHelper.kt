@@ -100,8 +100,17 @@ class DriveAuthorizationHelper @Inject constructor(
                     if (continuation.isActive) continuation.resume(outcome)
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "authorize() FALLÓ", e)
-                    BackupDebugLogger.logError(activity, storageManager, "authorize() FALLÓ", e)
+                    // Mismo criterio que extractAccessTokenFromResolution
+                    // (S007): si el fallo es un ApiException, volcar
+                    // status completo, no solo el mensaje genérico.
+                    val detail = if (e is ApiException) {
+                        "authorize() FALLÓ -- statusCode=${e.statusCode} " +
+                            "statusMessage=${e.status.statusMessage} status.toString()=${e.status}"
+                    } else {
+                        "authorize() FALLÓ -- ${e::class.java.name}"
+                    }
+                    Log.e(TAG, detail, e)
+                    BackupDebugLogger.logError(activity, storageManager, detail, e)
                     if (continuation.isActive) continuation.resumeWithException(e)
                 }
         }
@@ -159,11 +168,28 @@ class DriveAuthorizationHelper @Inject constructor(
             Identity.getAuthorizationClient(context)
                 .getAuthorizationResultFromIntent(resultData)
         } catch (e: ApiException) {
-            val msg = "getAuthorizationResultFromIntent() FALLÓ -- statusCode=${e.statusCode}"
+            // AMPLIADO (S007): e.statusCode y e.message por sí solos no
+            // bastan -- ApiException.status lleva más información real
+            // que Google devuelve (statusMessage, resolution) y que
+            // hasta ahora nunca llegaba a ver la luz. Se loguea todo el
+            // objeto Status (su toString() incluye statusCode +
+            // statusMessage + resolution si los hay) para dejar de
+            // adivinar con solo el número.
+            // ---
+            // EXPANDED (S007): e.statusCode and e.message alone aren't
+            // enough -- ApiException.status carries more real
+            // information Google returns (statusMessage, resolution)
+            // that was never surfaced until now. Logging the full
+            // Status object (its toString() includes statusCode +
+            // statusMessage + resolution if present) instead of
+            // guessing from the number alone.
+            val msg = "getAuthorizationResultFromIntent() FALLÓ -- " +
+                "statusCode=${e.statusCode} statusMessage=${e.status.statusMessage} " +
+                "status.toString()=${e.status} hasResolution=${e.status.hasResolution()}"
             Log.e(TAG, msg, e)
             BackupDebugLogger.logError(context, storageManager, msg, e)
             throw IllegalStateException(
-                "Google no concedió el acceso a Drive (código ${e.statusCode}).", e
+                "Google no concedió el acceso a Drive (código ${e.statusCode}: ${e.status.statusMessage ?: e.status}).", e
             )
         }
         val summary = "getAuthorizationResultFromIntent() OK -- " +
