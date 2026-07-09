@@ -58,9 +58,29 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
+    <!-- DESACTIVADO (S007, 2026-07-09): con allowBackup="true" el
+         Auto Backup de Android restauraba SharedPreferences tras
+         reinstalar (incluida saf_root_uri de StorageManager.kt),
+         haciendo que la app se saltara el selector de carpeta
+         creyendo que ya tenía raíz elegida — pero sin el permiso
+         SAF real re-concedido en la instalación nueva, así que
+         cualquier escritura (incluido backup_debug.txt) fallaba en
+         silencio. MiMoo ya tiene su propio backup real (H06, vía
+         Drive) — el de Android era redundante y activamente
+         dañino para las pruebas.
+         ———
+         DISABLED (S007, 2026-07-09): with allowBackup="true"
+         Android's Auto Backup restored SharedPreferences on
+         reinstall (including StorageManager.kt's saf_root_uri),
+         causing the app to skip the folder picker thinking it
+         already had a root chosen — but without the real SAF
+         permission re-granted on the new install, any write
+         (including backup_debug.txt) silently failed. MiMoo
+         already has its own real backup (H06, via Drive) —
+         Android's was redundant and actively harmful to testing. -->
     <application
         android:name=".MiMooApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="miMoo"
