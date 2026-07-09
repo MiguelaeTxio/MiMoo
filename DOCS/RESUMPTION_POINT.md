@@ -10,44 +10,45 @@ completo. Para el detalle exacto de qué cambió en cada paso, consultar
 
 ---
 
-## Última actualización: 2026-07-08 (cierre de sesión S005 NewFlow)
+## Última actualización: 2026-07-08 (cierre de sesión S006 NewFlow)
 
-**Hito EN PROGRESO:** H05 — ver `DOCS/MASTER_DOCUMENT.md` para la
-tabla completa de hitos y estado.
+**Hito EN PROGRESO:** H06 — ver `DOCS/MASTER_DOCUMENT.md` para la
+tabla completa de hitos y estado. H05 queda pausado sin tocar (PASO 6c
+pendiente, ver `DOCS/ANNEX_H05.md`).
 
-**S004 queda íntegramente verificado en dispositivo tras S005**
-(signingConfig sobre actualización real, notificación de
-reproducción, reintento de descargas, favoritos de álbum, compartir
-enlaces — los cinco confirmados). Detalle completo en
-`DOCS/ANNEX_H05.md`, sección "COMPLETADAS EN S005".
+**S006 en resumen:** verificación en dispositivo de las dos features
+de S005 (toggle Biblioteca + "Editar álbum") confirmada correcta.
+Apertura de H06 completo (exportar/importar todo el repositorio vía
+Google Drive) a petición de Miguel Ángel al incorporar una tablet:
+PASOS 1-5 de la hoja de ruta implementados de punta a punta en esta
+misma sesión (DTOs, integración real con Drive, pantalla Ajustes con
+Exportar/Importar, sustitución destructiva, auto-descarga). Detalle
+técnico completo en `DOCS/ANNEX_H06.md`, sección "COMPLETADAS EN
+S006" — no repetirlo aquí.
 
-**S005 en resumen:** sesión de verificación de S004 + una incidencia
-real nueva (Uri SAF "fantasma" tras clonar la tablet desde el
-teléfono principal, resuelta reinstalando limpio) + dos features de
-UI pedidas sobre la marcha: toggle letras/lista plana en Biblioteca
-(Álbumes y Sencillos) y "Editar álbum" (corrige artista/álbum de
-todas las pistas de un álbum a la vez, en vez de una por una).
-Detalle técnico completo de ambas en `DOCS/ANNEX_H05.md`, sección
-"COMPLETADAS EN S005" — no repetirlo aquí.
+**PASO 6 (verificación end-to-end en dispositivo) queda bloqueado al
+cierre, sin resolver.** Un bug real de código sí se encontró y
+corrigió en el camino (comprobación de `resultCode` que abandonaba la
+autorización en silencio) — pero tras el fix, la autorización con
+Drive sigue fallando con `ApiException: 8
+[status=UNREGISTERED_ON_API_CONSOLE]`. Todas las comprobaciones de
+configuración de Google Cloud verificables desde la consola (SHA-1,
+package name, proyecto, test users, scope, API habilitada) se hicieron
+con evidencia real y están correctas.
 
-**Build roto tras el primer cierre de S005, ya arreglado.** El commit
-de "Editar álbum" dejó un cierre de bloque duplicado en
-`LibraryScreen.kt` que rompía la compilación (workflows #123 y #124
-en rojo, mismo error). Diagnosticado y corregido en `b0af47d` en esta
-misma continuación de sesión — **workflow #125 verde, APK ya en
-PythonAnywhere.** Detalle en `DOCS/ANNEX_H05.md`.
+**Petición explícita de Miguel Ángel para la próxima sesión: que quien
+retome esto investigue el error de cero, sin heredar las hipótesis de
+S006 (caché de Play Services / propagación del cliente OAuth) como si
+fueran conclusiones confirmadas — no lo son, están marcadas como tal
+en `DOCS/ANNEX_H06.md`, sección "INVESTIGACIÓN ABIERTA — H06 PASO 6".**
+Esa sección separa explícitamente los hechos verificados de las
+conjeturas sin probar; empezar por ahí, releer el código real de
+`DriveAuthorizationHelper.kt` en el clon, y contrastar de nuevo con
+documentación actual antes de repetir ninguna de las hipótesis de
+S006 como si fuera la explicación.
 
-**Próxima sesión — verificar en dispositivo lo nuevo de S005 antes de
-nada más** (ninguna de las dos features de S005 se ha probado en el
-móvil todavía — el build ya está verde, así que ahora sí se puede):
-1. Toggle de vista en Biblioteca (icono en la TopAppBar, Álbumes y
-   Sencillos).
-2. "Editar álbum" — probar justo con el caso real que lo motivó
-   (álbum de Herbert von Karajan con el nombre mal escrito).
-
-**Pendiente original de H05 (PASO 6c), sigue sin confirmación real
-tras dos sesiones seguidas de otra actividad (S004 verificación, S005
-UI de Biblioteca):**
+**Pendiente original de H05 (PASO 6c), pausado, no bloquea nada,
+sigue ahí para cuando se retome H05:**
 1. Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
    emparejamiento vía playlist (11 pistas de golpe).
 2. Probar búsqueda de álbum por artista o título sueltos
@@ -61,4 +62,4 @@ UI de Biblioteca):**
 app? Confirmado que nunca existió; sin decisión tomada.
 
 **H03 PASO 8 y H04 PASO 6** (verificación funcional en dispositivo)
-siguen pendientes — no tocados en S005, sin bloquear nada.
+siguen pendientes — no tocados en S006, sin bloquear nada.

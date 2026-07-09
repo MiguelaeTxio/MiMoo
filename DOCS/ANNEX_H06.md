@@ -247,48 +247,125 @@ origen.
 
 ---
 
-## INCIDENCIA REAL — S006, verificación de PASO 3/4
+## COMPLETADAS EN S006
 
-**Síntoma reportado por Miguel Ángel:** exportar preguntaba la cuenta
-de Google y no decía nada más — ni éxito, ni error, ni progreso.
-Importar, igual: preguntaba la cuenta y no pasaba nada — confirmado
-que no funcionaba porque la pestaña Descargas no mostraba ninguna
-descarga en curso, y la Biblioteca de la tablet seguía siendo la
-misma de antes de "importar".
+- H06 abierto de cero: DTOs de exportación (`BackupDto.kt`), lectura/
+  escritura Room vía `BackupRepository` (PASO 1); integración real con
+  Google Drive vía `AuthorizationClient`/`Identity` + Drive REST v3
+  (`DriveAuthorizationHelper`, `DriveApiService`,
+  `DriveUploadApiService`, `BackupDriveRepository`, PASO 2); pantalla
+  "Ajustes" nueva con Exportar/Importar (`SettingsScreen`/
+  `SettingsViewModel`, PASO 3-4); sustitución destructiva real sobre
+  Room + borrado físico SAF (`BackupImportRepository`, PASO 4);
+  auto-encolado de descargas tras importar (PASO 5).
+- Prerrequisito de Google Cloud completo: proyecto `mimoo-501004`
+  reutilizado, Drive API habilitada, scope `drive.file` añadido en
+  Data Access, Miguel Ángel como Test user, Cliente OAuth Android
+  creado con SHA-1 real (impreso ahora por el workflow de Actions,
+  nuevo paso añadido este mismo día).
+- Bug real de código encontrado y corregido en la verificación de
+  PASO 3/4: `SettingsScreen` comprobaba `resultCode == RESULT_OK`
+  antes de extraer el resultado de autorización, contra el patrón
+  oficial de Google (que no hace esa comprobación) -- un consentimiento
+  válido se trataba como cancelado, abandonando exportar/importar en
+  silencio. Corregido y verificado que ya no se comporta así (ahora
+  sí aparece un mensaje de error real).
+- Doble mecanismo de diagnóstico añadido para H06: logging a Logcat
+  (tags `MiMoo-Backup-*`) y log a archivo `backup_debug.txt` en la
+  raíz SAF (`BackupDebugLogger`, mismo patrón que
+  `NotificationDebugLogger`) -- este último a petición de Miguel Ángel,
+  usando `notification_debug.txt`/`debug_error.txt`/`crash_log.txt`
+  como ejemplo del mecanismo ya existente en la app. De paso,
+  `BackupImportRepository` excluye ahora esos 4 archivos de
+  diagnóstico del borrado destructivo (antes se borraban a sí mismos
+  en cada importación).
+- Verificación end-to-end en dispositivo (PASO 6) sigue bloqueada: ver
+  sección de investigación abierta más abajo.
 
-**Causa raíz:** `SettingsScreen` comprobaba
-`result.resultCode == Activity.RESULT_OK` antes de intentar extraer
-el `AuthorizationResult` del `Intent` devuelto por el diálogo de
-consentimiento de Drive. El ejemplo oficial de Google
-(`developer.android.com/identity/authorization`, releído en línea en
-S006 para este diagnóstico) **no hace esa comprobación** — llama
-directamente a `getAuthorizationResultFromIntent()` y deja que lance
-`ApiException` si algo falló de verdad. Con la comprobación de
-`resultCode`, un consentimiento que SÍ había concedido acceso válido
-se trataba como "cancelado por el usuario" (código ya eliminado,
-`onConsentCancelled()`, que dejaba el estado en `Idle` sin ningún
-mensaje) — exportar/importar se abandonaban en silencio justo después
-de elegir la cuenta, exactamente el síntoma descrito.
+---
 
-**Fix:** el `ActivityResultLauncher` de `SettingsScreen` ya no mira
-`resultCode`, llama siempre a `onConsentResolved()` con el `data`
-devuelto; `DriveAuthorizationHelper.extractAccessTokenFromResolution()`
-captura `ApiException` explícitamente (patrón oficial) y relanza con
-el `statusCode` real en el mensaje, para que el Snackbar de error sea
-informativo de verdad si algo falla de nuevo.
+## INVESTIGACIÓN ABIERTA — H06 PASO 6, sin resolver al cierre de S006
 
-**Además, logging exhaustivo añadido** en
-`DriveAuthorizationHelper`/`SettingsViewModel`/`BackupDriveRepository`/
-`BackupImportRepository` (tags `MiMoo-Backup-Auth`/`VM`/`Drive`/
-`Import`) en cada paso real (autorización, construcción del bundle,
-subida/descarga/listado en Drive, transacción de importación) — para
-que, si algo más falla en la verificación de PASO 6, haya datos reales
-de Logcat que consultar en vez de tener que adivinar de nuevo a
-ciegas.
+**Petición explícita de Miguel Ángel para quien retome esto:**
+investiga este error de cero. Las hipótesis que aparecen marcadas como
+tal más abajo son conjeturas de S006, no conclusiones verificadas --
+no las des por buenas sin más, ni asumas que el camino que falta es
+simplemente "esperar" o "borrar caché". Contrástalo tú mismo con
+documentación actual y con el código real antes de proponer nada.
 
-**Sin verificar todavía en dispositivo tras este fix** — pendiente de
-que Miguel Ángel repita la prueba de exportar/importar con el build de
-este commit.
+### El hecho, sin interpretar
+
+Al tocar "Exportar a Drive" en el móvil, tras elegir cuenta de Google
+en el diálogo de consentimiento, la app recibe este error (capturado
+literal en `backup_debug.txt`, ver también Logcat tag
+`MiMoo-Backup-Auth`):
+
+```
+com.google.android.gms.common.api.ApiException: 8: [8] Unknown error [status=UNREGISTERED_ON_API_CONSOLE].
+	at com.google.android.gms.internal.auth-api.zbad.getAuthorizationResultFromIntent(com.google.android.gms:play-services-auth@@21.6.0:6)
+	at com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper.extractAccessTokenFromResolution(DriveAuthorizationHelper.kt:160)
+```
+
+Ocurre siempre en el mismo punto: `authorize()` devuelve
+`hasResolution() == true` (primera vez pidiendo el scope, o acceso
+revocado), se lanza el `IntentSenderRequest`, el usuario completa el
+diálogo de Google, y al volver
+`Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(resultData)`
+lanza esta `ApiException` en vez de devolver un resultado con
+`accessToken`.
+
+### Comprobaciones ya hechas en S006, con su resultado real (hechos, no hipótesis)
+
+Estas comprobaciones SÍ están hechas con evidencia (capturas de
+pantalla de la consola de Google Cloud contrastadas carácter a
+carácter donde aplica) -- no hace falta repetirlas de cero, pero sí
+vale la pena que quien retome esto las re-verifique con sus propios
+ojos si tiene alguna duda, en vez de fiarse de esta nota:
+
+- SHA-1 del cliente Android en Google Cloud === SHA-1 real de la
+  keystore de firma (impreso por el workflow de Actions) -- coinciden
+  carácter a carácter.
+- Package name del cliente: `com.miguelaetxio.mimoo` -- coincide con
+  `applicationId` real del proyecto.
+- Proyecto de Google Cloud del cliente OAuth: `miMoo` (`mimoo-501004`)
+  -- mismo proyecto donde está habilitada la Drive API, confirmado por
+  captura de pantalla del selector de proyecto.
+- `Google Auth Platform` → `Audience`: modo `Testing`, con la cuenta de
+  Gmail de Miguel Ángel añadida como Test user.
+- `Google Auth Platform` → `Data Access`: scope
+  `.../auth/drive.file` presente y guardado.
+- `APIs & Services` → `Enabled APIs and services`: Google Drive API
+  aparece como habilitada (`Enabled`) en el proyecto `miMoo`.
+- El código de la llamada (`AuthorizationRequest.Builder`,
+  `Identity.getAuthorizationClient()`, manejo del
+  `IntentSenderRequest`, extracción vía
+  `getAuthorizationResultFromIntent()`) se contrastó línea a línea
+  contra la documentación oficial vigente
+  (`developer.android.com/identity/authorization`) y coincide con el
+  patrón oficial actual -- no se encontró ninguna discrepancia.
+
+### Hipótesis de S006 -- NO VERIFICADAS, no dar por buenas
+
+- **Caché negativa de Play Services en el dispositivo.** Sin probar
+  todavía si borrar la caché de Google Play Services (o reiniciar el
+  móvil) cambia algo.
+- **Propagación del cliente OAuth recién creado.** Basada en un hilo
+  de GitHub (`googlesamples/google-services#381`) sobre el mismo
+  código de error en general, no específico de este proyecto ni de
+  esta API (`AuthorizationClient`/Identity, no el
+  `GoogleSignInClient` clásico al que se refiere la mayoría de
+  reportes de ese hilo). No hay ninguna confirmación de que el tiempo
+  transcurrido sea la causa real aquí.
+
+Ninguna de las dos se ha confirmado ni descartado con una prueba real
+tras agotar el tiempo de espera. Quien retome esto debería, como
+mínimo, cuestionar si `UNREGISTERED_ON_API_CONSOLE` con
+`AuthorizationClient`/`Identity` (API relativamente nueva, distinta de
+`GoogleSignInClient`) tiene alguna causa documentada específica que
+S006 no encontró -- toda la investigación de S006 se apoyó en
+resultados de búsqueda sobre el `GoogleSignInClient` clásico y
+`ApiException: 10`, no en documentación específica de `Identity`/
+`AuthorizationClient` para este código exacto.
 
 ---
 
