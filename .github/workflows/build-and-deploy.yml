@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout codigo
@@ -60,3 +62,31 @@ jobs:
             -H "Authorization: Token $PA_API_TOKEN" \
             -F "content=@app/build/outputs/apk/debug/app-debug.apk" \
             "https://www.pythonanywhere.com/api/v0/user/MiguelAeTxio/files/path/home/MiguelAeTxio/ANDROID/MiMoo/apk/miMoo.apk"
+
+      - name: Generar manifest.json de version (H07 PARTE 2, PASO 2.2)
+        run: |
+          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          cat > manifest.json <<EOF
+          {
+            "versionCode": ${{ github.run_number }},
+            "versionName": "$VERSION_NAME",
+            "apkUrl": "https://github.com/MiguelaeTxio/AndroidReleases/releases/download/v${{ github.run_number }}/MiMoo.apk"
+          }
+          EOF
+          echo "Manifiesto generado:"
+          cat manifest.json
+          python3 -m json.tool manifest.json > /dev/null && echo "[JSON OK]"
+
+      - name: Preparar APK con nombre fijo para el asset de la Release
+        run: cp app/build/outputs/apk/debug/app-debug.apk MiMoo.apk
+
+      - name: Publicar Release en AndroidReleases (H07 PARTE 2, PASO 2.3)
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: MiguelaeTxio/AndroidReleases
+          token: ${{ secrets.RELEASES_REPO_TOKEN }}
+          tag_name: v${{ github.run_number }}
+          name: MiMoo v${{ github.run_number }}
+          files: |
+            MiMoo.apk
+            manifest.json
