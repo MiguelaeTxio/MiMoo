@@ -21,4 +21,10 @@ class PlayerBarViewModel @Inject constructor(
     fun playNext() = playerManager.playNext()
 
     fun playPrevious() = playerManager.playPrevious()
+
+    /** H07 PARTE 3. */
+    fun toggleRepeat() = playerManager.toggleRepeatMode()
+
+    /** H07 PARTE 3. */
+    fun toggleShuffle() = playerManager.toggleShuffleMode()
 }

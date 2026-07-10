@@ -34,6 +34,10 @@ data class PlaybackState(
     val isLocal: Boolean = false,
     val queueIndex: Int = -1,
     val queueSize: Int = 0,
+    /** H07 PARTE 3 -- true si la cola vuelve al principio al terminar. */
+    val repeatModeEnabled: Boolean = false,
+    /** H07 PARTE 3 -- true si el orden de reproducción es aleatorio. */
+    val shuffleModeEnabled: Boolean = false,
 )
 
 /**
@@ -224,6 +228,29 @@ class PlayerManager @Inject constructor(
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 syncStateFromPlayer()
             }
+
+            // H07 PARTE 3 -- si repeat/shuffle cambian por cualquier
+            // vía (nuestros propios toggleRepeatMode()/
+            // toggleShuffleMode(), o en el futuro un control nativo de
+            // la notificación), el estado expuesto se sincroniza
+            // igual que con la cola -- una única fuente de verdad
+            // (player.repeatMode/player.shuffleModeEnabled), nunca un
+            // booleano mantenido a mano por separado.
+            // ---
+            // H07 PART 3 -- if repeat/shuffle change through any path
+            // (our own toggleRepeatMode()/toggleShuffleMode(), or in
+            // the future a native notification control), the exposed
+            // state is synced the same way as the queue -- a single
+            // source of truth (player.repeatMode/
+            // player.shuffleModeEnabled), never a hand-kept separate
+            // boolean.
+            override fun onRepeatModeChanged(repeatMode: Int) {
+                syncStateFromPlayer()
+            }
+
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                syncStateFromPlayer()
+            }
         })
     }
 
@@ -236,6 +263,8 @@ class PlayerManager @Inject constructor(
             isLocal = item?.isLocal ?: false,
             queueIndex = if (queueItems.isEmpty()) -1 else index,
             queueSize = queueItems.size,
+            repeatModeEnabled = player.repeatMode == Player.REPEAT_MODE_ALL,
+            shuffleModeEnabled = player.shuffleModeEnabled,
         )
     }
 
@@ -444,6 +473,56 @@ class PlayerManager @Inject constructor(
     fun pause() = player.pause()
 
     fun resume() = player.play()
+
+    /**
+     * Cíclico: al llegar al final de la cola, vuelve a empezar por la
+     * primera pista -- Player.REPEAT_MODE_ALL cubre exactamente esto
+     * de forma nativa (verificado en línea, S008): repite la playlist
+     * entera, no solo la pista actual (eso sería REPEAT_MODE_ONE, que
+     * no es lo que pidió Miguel Ángel). Caso descrito explícitamente
+     * por Miguel Ángel: cola construida añadiendo pistas sueltas
+     * (p.ej. 200 canciones) -- al llegar a la última, vuelve a la
+     * primera y repite la cola completa en el mismo orden.
+     * ---
+     * Cyclic: on reaching the end of the queue, starts again from the
+     * first track -- Player.REPEAT_MODE_ALL covers exactly this
+     * natively (verified online, S008): repeats the whole playlist,
+     * not just the current track (that would be REPEAT_MODE_ONE,
+     * which isn't what Miguel Ángel asked for). Case explicitly
+     * described by Miguel Ángel: a queue built by adding loose tracks
+     * (e.g. 200 songs) -- on reaching the last one, goes back to the
+     * first and repeats the whole queue in the same order.
+     */
+    fun toggleRepeatMode() {
+        player.repeatMode = if (player.repeatMode == Player.REPEAT_MODE_ALL) {
+            Player.REPEAT_MODE_OFF
+        } else {
+            Player.REPEAT_MODE_ALL
+        }
+    }
+
+    /**
+     * Aleatorio: orden aleatorio dentro de la cola actual. Por sí
+     * solo (shuffleModeEnabled=true, repeatMode=OFF), ExoPlayer SÍ se
+     * para al agotar la cola -- igual que en orden normal, solo
+     * cambia el orden, no si para al final. El "no para nunca" que
+     * describe Miguel Ángel es la combinación de shuffle + cíclico
+     * activados a la vez (ver toggleRepeatMode()), no un modo
+     * separado -- verificado en línea (S008) el comportamiento real
+     * de ExoPlayer/Media3 antes de asumirlo.
+     * ---
+     * Shuffle: random order within the current queue. On its own
+     * (shuffleModeEnabled=true, repeatMode=OFF), ExoPlayer DOES stop
+     * once the queue is exhausted -- same as normal order, only the
+     * order changes, not whether it stops at the end. The "never
+     * stops" Miguel Ángel describes is the combination of shuffle +
+     * cyclic both enabled at once (see toggleRepeatMode()), not a
+     * separate mode -- verified online (S008) ExoPlayer/Media3's real
+     * behavior before assuming it.
+     */
+    fun toggleShuffleMode() {
+        player.shuffleModeEnabled = !player.shuffleModeEnabled
+    }
 
     fun currentPositionMs(): Long = player.currentPosition
 

@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.*
@@ -69,9 +71,39 @@ fun PlayerBar(
             }
 
             if (state.queueSize > 1) {
+                IconButton(onClick = viewModel::toggleShuffle) {
+                    Icon(
+                        Icons.Filled.Shuffle,
+                        contentDescription = if (state.shuffleModeEnabled) {
+                            "Desactivar orden aleatorio"
+                        } else {
+                            "Activar orden aleatorio"
+                        },
+                        tint = if (state.shuffleModeEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            LocalContentColor.current
+                        },
+                    )
+                }
+            }
+
+            if (state.queueSize > 1) {
                 IconButton(
                     onClick = viewModel::playPrevious,
-                    enabled = state.queueIndex > 0,
+                    // Con cíclico activado, "anterior" en la primera
+                    // pista envuelve a la última -- ExoPlayer ya lo
+                    // resuelve solo (hasPreviousMediaItem() con
+                    // REPEAT_MODE_ALL), así que aquí solo hace falta
+                    // no deshabilitar el botón en ese caso.
+                    // ---
+                    // With cyclic on, "previous" on the first track
+                    // wraps to the last one -- ExoPlayer already
+                    // handles this on its own
+                    // (hasPreviousMediaItem() with REPEAT_MODE_ALL),
+                    // so here it's just a matter of not disabling the
+                    // button in that case.
+                    enabled = state.repeatModeEnabled || state.queueIndex > 0,
                 ) {
                     Icon(
                         Icons.Filled.SkipPrevious,
@@ -98,11 +130,29 @@ fun PlayerBar(
             if (state.queueSize > 1) {
                 IconButton(
                     onClick = viewModel::playNext,
-                    enabled = state.queueIndex < state.queueSize - 1,
+                    enabled = state.repeatModeEnabled || state.queueIndex < state.queueSize - 1,
                 ) {
                     Icon(
                         Icons.Filled.SkipNext,
                         contentDescription = "Siguiente",
+                    )
+                }
+            }
+
+            if (state.queueSize > 1) {
+                IconButton(onClick = viewModel::toggleRepeat) {
+                    Icon(
+                        Icons.Filled.Repeat,
+                        contentDescription = if (state.repeatModeEnabled) {
+                            "Desactivar reproducción cíclica"
+                        } else {
+                            "Activar reproducción cíclica"
+                        },
+                        tint = if (state.repeatModeEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            LocalContentColor.current
+                        },
                     )
                 }
             }

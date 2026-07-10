@@ -313,17 +313,26 @@ bloqueantes, puede implementarse ya):**
 
 ### PARTE 3 — Controles de reproducción
 
-**PASO 3.1** — Exponer `repeatMode`/`shuffleModeEnabled` de ExoPlayer
-en `PlayerManager` (o el repositorio/viewmodel equivalente del
-reproductor — releer código real antes de tocar, §4.1).
+**PASO 3.1 ✅ (S008)** — `PlayerManager.toggleRepeatMode()`/
+`toggleShuffleMode()`, sobre `player.repeatMode`/
+`player.shuffleModeEnabled` de ExoPlayer directamente (sin booleanos
+propios mantenidos a mano) — `PlaybackState` expone
+`repeatModeEnabled`/`shuffleModeEnabled`, sincronizados vía
+`onRepeatModeChanged`/`onShuffleModeEnabledChanged` como única fuente
+de verdad.
 
-**PASO 3.2** — UI: dos toggles en la pantalla del reproductor.
+**PASO 3.2 ✅ (S008)** — Dos `IconButton` (Repeat/Shuffle) en
+`PlayerBar.kt`, junto a anterior/reproducir-pausar/siguiente, con
+tinte de color cuando están activos. De paso, "anterior"/"siguiente"
+dejan de deshabilitarse en los extremos de la cola cuando el modo
+cíclico está activo (antes se deshabilitaban siempre en la primera/
+última pista, lo cual no tenía sentido con cíclico encendido).
 
 **PASO 3.3** — Verificación funcional: cola larga (~200 pistas)
 añadida progresivamente, cíclico activado, confirmar que al terminar
 vuelve a la primera en el mismo orden; aleatorio activado (con y sin
 cíclico), confirmar que no se detiene al agotar la cola cuando ambos
-están activos.
+están activos. **Pendiente en dispositivo real por Miguel Ángel.**
 
 ---
 
