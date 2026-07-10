@@ -21,10 +21,11 @@ la vez. Cambiar de hito es editar esta tabla y commitear — ver
 | H03 | Biblioteca Local: Reproducción Offline, CRUD, Favoritos y Carátulas | `DOCS/ANNEX_H03.md` | |
 | H04 | Listas de Reproducción Locales | `DOCS/ANNEX_H04.md` | |
 | H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | |
-| H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | ← EN PROGRESO |
+| H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | |
+| H07 | Sincronización entre Dispositivos + Actualizaciones In-App | `DOCS/ANNEX_H07.md` | ← EN PROGRESO |
 
 **Resultado actual (migrado desde la sesión skill-based, 2026-07-02;
-actualizado 2026-07-08 S006):**
+actualizado 2026-07-10 S007):**
 H01 y H02 completados y verificados funcionalmente. H03 (PASOS 6, 7,
 9 hechos en la sesión del 2026-07-02) y H04 (PASOS 1-6 hechos, mismo
 día) tienen todo el código escrito pero comparten un pendiente:
@@ -33,9 +34,14 @@ H04 PASO 6) — no bloquea nada, simplemente no se ha hecho. H05 tiene
 los PASOS 1-5 implementados y el toggle de vista + "Editar álbum" de
 S005 ya verificados en dispositivo (S006); **PASO 6c queda pausado sin
 tocar** (Lou Reed, búsqueda por artista/título suelto, Importar
-enlace — ver `DOCS/ANNEX_H05.md`, no es el hito activo). H06 es hito
-nuevo, sin código todavía, abierto en S006 a petición explícita de
-Miguel Ángel al conseguir una tablet además del móvil.
+enlace — ver `DOCS/ANNEX_H05.md`, no es el hito activo). H06 queda
+**pausado, no completado**: "Exportar a Drive" verificado en
+dispositivo real (proyecto Google Cloud `mimoo-drive`, tras resolver
+en S007 un bloqueo de registro OAuth irresoluble en el proyecto
+original `mimoo-501004` — ver `DOCS/ANNEX_H06.md`); **"Importar desde
+Drive" queda sin probar**, pendiente para cuando se retome H06. H07 es
+hito nuevo, sin código todavía, abierto en S007 a petición explícita
+de Miguel Ángel una vez confirmado que Drive funciona.
 
 ---
 
@@ -147,29 +153,28 @@ standalone de yt-dlp — es un script Python). El mismo módulo
 
 ### 2.3. Integración con YouTube — Solo Metadatos y Búsqueda
 
-- **YouTube Data API v3** para búsqueda de vídeos y metadatos
-  (título, canal, duración, miniatura). Autenticación mediante API
-  key (`BuildConfig.YOUTUBE_API_KEY`), inyectada en build vía
-  `buildConfigField` desde `local.properties`, generado en el
-  workflow de GitHub Actions a partir del secret de repositorio
-  `YOUTUBE_API_KEY`.
-- **Coste real (CORREGIDO 2026-07-02, ver H05 sesión "1 de 11 pistas
-  emparejadas"):** `search.list` cuesta **100 unidades/llamada**, no 1
-  como se afirmaba antes — verificado contra documentación oficial de
-  Google (`developers.google.com/youtube/v3/determine_quota_cost`,
-  actualizada 2026-06-01) y varias fuentes independientes recientes.
-  Pool diario de 10.000 unidades/proyecto → ~100 llamadas search.list
-  como máximo. `videos.list` y `playlistItems.list` cuestan solo 1
-  unidad/llamada cada una — la búsqueda de álbumes completos (H05)
-  prioriza por eso `playlistItems.list` (álbum entero de una vez, 1
-  unidad) sobre `search.list` pista a pista (100 unidades × N pistas),
-  ver `AlbumMatchRepository.matchAlbumTracks` PASO 6e.
-- **Proyecto Google Cloud:** `mimoo-501004`. API key restringida
-  exclusivamente a YouTube Data API v3, sin restricción de
-  aplicación.
-- **YouTube Data API v3 nunca se usa para resolver el stream de
-  audio en sí** — eso es responsabilidad exclusiva de yt-dlp. La Data
-  API solo aporta metadatos de búsqueda.
+- **Búsqueda y emparejamiento de metadatos vía `yt-dlp` (búsqueda
+  libre, "ytsearchN:query"), sin cuota ni API key** —
+  `ExternalLinkResolver.searchYoutube()`. Cubre tanto la pantalla de
+  Búsqueda normal (desde el 4 de julio) como la búsqueda/emparejamiento
+  de álbumes completos de H05 (desde S007, 2026-07-10).
+- **HISTÓRICO — YouTube Data API v3, eliminada por completo en S007
+  (2026-07-10):** hasta esa sesión, la búsqueda de álbumes (H05) usaba
+  `search.list`/`playlistItems.list` vía API key
+  (`BuildConfig.YOUTUBE_API_KEY`, proyecto `mimoo-501004`). Se retiró
+  del proyecto entero — código (`YouTubeApiService.kt`,
+  `YouTubeRepository.kt`, wiring de Retrofit en `NetworkModule.kt`),
+  secret de GitHub Actions y `buildConfigField` — a petición explícita
+  de Miguel Ángel, para poder borrar `mimoo-501004` sin dejar ninguna
+  función de MiMoo dependiendo de él (ver `DOCS/ANNEX_H06.md`,
+  "COMPLETADAS EN S007", para el detalle completo). La pérdida real:
+  ya no existe la estrategia "playlist primero" que evitaba gastar
+  cuota en álbumes largos (no tenía sentido mantenerla sin cuota que
+  ahorrar) — sustituida por búsqueda libre pista a pista, igual de
+  automática.
+- **`yt-dlp` nunca necesitó la YouTube Data API para resolver el
+  stream de audio en sí** — eso siempre fue responsabilidad exclusiva
+  de `yt-dlp`, sin cambios por esta eliminación.
 
 ### 2.4. Fuentes Externas Adicionales
 
@@ -181,10 +186,11 @@ standalone de yt-dlp — es un script Python). El mismo módulo
   partir del MBID de MusicBrainz.
 - **Google Drive** — backup/restauración de metadatos de todo el
   repositorio (pistas, favoritos de álbum, listas de reproducción),
-  nunca de archivos de audio — Hito 06, ver `DOCS/ANNEX_H06.md`. Sin
-  implementar todavía; requiere Google Sign-In/Credential Manager y
-  Drive REST API, sin decidir aún en qué proyecto de Google Cloud ni
-  con qué credenciales (ver anexo).
+  nunca de archivos de audio — Hito 06, ver `DOCS/ANNEX_H06.md`.
+  "Exportar a Drive" implementado y verificado en dispositivo real
+  (S007); "Importar desde Drive" implementado, verificación pendiente.
+  Proyecto Google Cloud: `mimoo-drive` (ver anexo para el porqué del
+  cambio desde `mimoo-501004`).
 
 ### 2.5. Control de Versiones — NewFlow
 
@@ -202,8 +208,11 @@ standalone de yt-dlp — es un script Python). El mismo módulo
   de contacto restante con PythonAnywhere: servir la APK compilada
   para descarga, gestionado por el propio workflow sin intervención
   manual).
-- **Secrets necesarios en GitHub Actions:** `YOUTUBE_API_KEY`,
-  `PA_API_TOKEN`.
+- **Secrets necesarios en GitHub Actions:**
+  `GOOGLE_OAUTH_ANDROID_CLIENT_ID` (proyecto `mimoo-drive`, ver
+  `DOCS/ANNEX_H06.md`), `DEBUG_KEYSTORE_BASE64`, `PA_API_TOKEN`.
+  `YOUTUBE_API_KEY` ya no existe — eliminado en S007 junto con toda la
+  YouTube Data API (ver §2.3).
 
 ---
 
@@ -230,14 +239,35 @@ S006. PASO 6c pendiente sin tocar: Lou Reed, búsqueda por
 artista/título suelto, Importar enlace.
 
 ### Hito 6: Exportar/Importar Repositorio de Música vía Google Drive
-(Ver `DOCS/ANNEX_H06.md`) — EN PROGRESO. Hito nuevo abierto en S006:
-exportar toda la biblioteca local (metadatos, no audio) a un archivo
-en Google Drive, e importarla en otro dispositivo (p.ej. la tablet)
-sustituyendo por completo el repositorio local destino y encolando la
-descarga de cada pista con los metadatos ya corregidos, sin pasar por
-el diálogo de edición de metadatos. Explícitamente independiente de
-cualquier futura función de "música relacionada" (punto 6 de §1, sigue
-sin alcance definido y sin tocar).
+(Ver `DOCS/ANNEX_H06.md`) — Pausado. Exportar toda la biblioteca local
+(metadatos, no audio) a un archivo en Google Drive, e importarla en
+otro dispositivo sustituyendo por completo el repositorio local
+destino y encolando la descarga de cada pista con los metadatos ya
+corregidos. "Exportar" verificado en dispositivo real (S007);
+"Importar" implementado, verificación pendiente. Explícitamente
+independiente de cualquier futura función de "música relacionada"
+(punto 6 de §1, sigue sin alcance definido y sin tocar).
+
+### Hito 7: Sincronización entre Dispositivos + Actualizaciones In-App
+(Ver `DOCS/ANNEX_H07.md`) — EN PROGRESO. Hito nuevo abierto en S007:
+dos funciones distintas comparten hito por surgir de la misma
+conversación, no por dependencia técnica entre ellas.
+1. **Sincronización incremental vía Drive** — a diferencia de la
+   importación destructiva de H06 (sustituye todo el repositorio
+   local), aquí solo se descarga/añade lo nuevo desde la última
+   sincronización, pensado para un dispositivo que ya tiene contenido
+   y solo quiere ponerse al día, no partir de cero.
+2. **Comprobación y descarga de actualizaciones de la app desde dentro
+   de la propia app** — la APK compilada ya se aloja en PythonAnywhere
+   (ver §2.5); hace falta exponer también la versión más reciente
+   (manifiesto) para que la app pueda comparar su propia versión y
+   ofrecer la descarga sin que Miguel Ángel tenga que ir a buscarla a
+   mano.
+
+Prerrequisito de Google Cloud: añadir `silviaytxio@gmail.com` como
+test user en el proyecto `mimoo-drive` (Google Auth Platform →
+Audience), para que también pueda usar Drive con MiMoo — sin hacer
+todavía, ver `DOCS/ANNEX_H07.md`.
 
 ---
 
