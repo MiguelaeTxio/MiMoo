@@ -23,10 +23,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Crear local.properties con API key
+      - name: Crear local.properties
         run: |
-          echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" \
-            >> local.properties
           echo "GOOGLE_OAUTH_ANDROID_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_ANDROID_CLIENT_ID }}" \
             >> local.properties
 

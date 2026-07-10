@@ -3,7 +3,6 @@ package com.miguelaetxio.mimoo.di
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
-import com.miguelaetxio.mimoo.data.remote.YouTubeApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,9 +25,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    private const val YOUTUBE_BASE_URL =
-        "https://www.googleapis.com/youtube/v3/"
 
     // MusicBrainz API root — see MusicBrainzApiService. Verified
     // 2026-07-02 against musicbrainz.org/doc/MusicBrainz_API.
@@ -84,23 +80,9 @@ object NetworkModule {
             )
             .build()
 
-    @Provides
-    @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
-        Retrofit.Builder()
-            .baseUrl(YOUTUBE_BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-    @Provides
-    @Singleton
-    fun provideYouTubeApiService(retrofit: Retrofit): YouTubeApiService =
-        retrofit.create(YouTubeApiService::class.java)
-
     // Separate OkHttpClient/Retrofit for MusicBrainz — different base
     // URL, and it needs its own interceptor stack (User-Agent +
-    // rate limit) that must never apply to YouTube Data API calls.
+    // rate limit) that must never apply to other API calls.
     @Provides
     @Singleton
     @Named("musicBrainzOkHttpClient")

@@ -2,7 +2,6 @@ package com.miguelaetxio.mimoo.ui.albumsearch
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.miguelaetxio.mimoo.BuildConfig
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -10,7 +9,7 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.remote.AlbumCandidate
 import com.miguelaetxio.mimoo.data.remote.AlbumMatchRepository
 import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
-import com.miguelaetxio.mimoo.data.remote.YouTubeRepository
+import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,7 +58,7 @@ data class AlbumSearchUiState(
 @HiltViewModel
 class AlbumSearchViewModel @Inject constructor(
     private val albumMatchRepository: AlbumMatchRepository,
-    private val youTubeRepository: YouTubeRepository,
+    private val externalLinkResolver: ExternalLinkResolver,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val downloadQueueManager: DownloadQueueManager,
 ) : ViewModel() {
@@ -174,7 +173,6 @@ class AlbumSearchViewModel @Inject constructor(
                     mbid = candidate.mbid,
                     artist = candidate.artist,
                     album = candidate.title,
-                    youtubeApiKey = BuildConfig.YOUTUBE_API_KEY,
                 )
                 _uiState.value = _uiState.value.copy(
                     isLoadingTracks = false,
@@ -219,7 +217,15 @@ class AlbumSearchViewModel @Inject constructor(
                 manualSearchCandidates = emptyList(),
             )
             val candidates = try {
-                youTubeRepository.search(trimmed, BuildConfig.YOUTUBE_API_KEY)
+                externalLinkResolver.searchYoutube(trimmed).tracks.map { entry ->
+                    TrackDto(
+                        youtubeId = entry.youtubeId,
+                        title = entry.title,
+                        durationSeconds = entry.durationSeconds,
+                        thumbnailUrl = entry.thumbnailUrl,
+                        channelTitle = entry.channelTitle,
+                    )
+                }
             } catch (e: Exception) {
                 emptyList()
             }
