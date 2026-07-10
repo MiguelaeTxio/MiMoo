@@ -1,271 +1,302 @@
 # MIMOO — ANEXO HITO 07
-# Sincronización entre Dispositivos + Actualizaciones In-App
+# Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción
 
 *Vive en `DOCS/ANNEX_H07.md` — flujo NewFlow Android. Ver estado en
 `DOCS/MASTER_DOCUMENT.md`. EN PROGRESO.*
 
 ---
 
-## NOTA DE APERTURA (S007, 2026-07-10)
+## NOTA DE REDEFINICIÓN (S008, 2026-07-10)
 
-Abierto a petición explícita de Miguel Ángel justo después de resolver
-el bloqueo de H06 (ver `DOCS/ANNEX_H06.md`) y confirmar "Exportar a
-Drive" funcionando en dispositivo real. Dos funciones distintas
-comparten hito por haber surgido de la misma conversación, no porque
-dependan técnicamente una de otra — se pueden implementar en cualquier
-orden:
+Este anexo **sustituye por completo** el diseño abierto en S007. No es
+un ajuste menor: el diagnóstico de un bug real (export/import vacíos)
+destapó un problema de fondo que obliga a rehacer el planteamiento
+entero del hito.
 
-1. **Sincronización incremental vía Drive** entre dispositivos.
-2. **Comprobación y descarga de actualizaciones de la app** desde
-   dentro de la propia app.
+### Qué pasó
 
-**Explícitamente independiente de H06**: H06 (exportar/importar
-destructivo) no se toca ni se sustituye — sigue siendo la vía para
-"quiero este dispositivo exactamente igual que el backup, sin importar
-lo que tenía antes" (dispositivo nuevo, restauración tras
-reinstalación). H07 añade una vía **adicional**, no destructiva, para
-"quiero traer a este dispositivo lo que le falta, sin perder lo que ya
-tiene".
+Miguel Ángel reportó que "Exportar a Drive" subía un JSON vacío
+(`tracks: []`, `favoriteAlbums: []`, `playlists: []`), y por tanto
+"Importar" no traía nada. Investigado con código real (no memoria):
+
+1. `BackupRepository.buildCurrentBundle()` filtra explícitamente
+   cualquier `SearchResultTrack` cuyo `youtubeId` empiece por
+   `local:` (decisión de S006, ver histórico en `ANNEX_H06.md`) — son
+   filas sintéticas que `LibraryReconciler` genera para archivos
+   encontrados en disco sin fila en Room.
+2. `LibraryReconciler.rescan()` genera esas filas sintéticas
+   **solo** la primera vez que se elige la carpeta SAF (el
+   comentario de cabecera de `LibraryReconciler.kt` decía "en CADA
+   arranque" pero es un docstring obsoleto — el código real de
+   `MainActivity.kt`, corregido el 2026-07-05, confirma que solo
+   dispara en el primer picker, más el botón de refresco manual).
+   Es exactamente lo que ocurre tras una reinstalación: Room vive en
+   almacenamiento interno (se borra al desinstalar), la carpeta SAF
+   externa no — al volver a elegirla, todo lo que había se reconstruye
+   como sintético.
+3. **Causa raíz real, más profunda que el filtro de S006:**
+   `downloader.py`/`DownloadWorker.kt` nunca grabaron el `youtubeId`
+   ni la URL de origen en ningún sitio del archivo `.opus` en sí —
+   solo en la fila de Room. Confirmado leyendo `downloader.py`
+   completo: no hay postprocesador de metadatos, ni `-metadata`, ni
+   ningún tag con el id o la URL. El link **solo existía en Room**.
+   Con varias reinstalaciones sucesivas durante H06 (migración de
+   dispositivo, fix de `allowBackup`), Room se vació y el disco
+   reconstruyó sintéticamente toda la biblioteca sin links reales —
+   de ahí el JSON vacío al exportar.
+
+No había backup antiguo en Drive con datos reales que rescatar
+(confirmado con Miguel Ángel). La biblioteca actual del dispositivo
+se da por perdida a efectos de link real; Miguel Ángel la borra él
+mismo (Room + archivos) para partir de cero, fuera de esta sesión de
+trabajo — no es una tarea de este modelo.
+
+### Decisión de fondo
+
+El link de YouTube tiene que persistir **en el propio archivo**, no
+solo en Room, para que sobreviva a cualquier reinstalación. Sin eso,
+ni el backup manual (H06) ni ninguna sincronización automática pueden
+funcionar de verdad — es la base de todo lo demás, por eso pasa a ser
+la PARTE 0 de este hito, antes que cualquier otra cosa.
+
+Aprovechando que hay que rehacer esto, se amplía el alcance del hito
+para cerrar de una vez varios pendientes que Miguel Ángel quiere
+resueltos juntos, sin dilatarlo en sesiones sueltas.
 
 ---
 
-## OBJETIVO DEL HITO
+## OBJETIVO DEL HITO (redefinido)
 
-### Parte 1 — Sincronización incremental
+### PARTE 0 — Persistencia del link dentro del archivo (prerrequisito de todo lo demás)
 
-Hoy (H06) importar desde Drive es siempre destructivo:
-`BackupImportRepository.importDestructively()` borra las 4 tablas
-Room y los archivos SAF del dispositivo destino antes de reinsertar
-todo el contenido del `BackupBundle`. Sirve bien para "dispositivo
-nuevo, sin nada todavía", pero es la herramienta equivocada para "la
-tablet ya tiene descargas propias y solo quiero traerle las pistas
-nuevas que añadí desde el móvil" — con la vía actual, sincronizar así
-implica perder cualquier cosa exclusiva de la tablet que no esté en el
-backup del móvil.
+Grabar el `youtubeId` (o la URL) como metadato embebido en cada
+`.opus` en el momento de la descarga, para que el archivo lleve su
+propio origen pegado encima, sobreviva o no Room a una desinstalación.
+`LibraryReconciler.buildSyntheticTrack()` pasa a intentar leer ese
+metadato al reconciliar un archivo huérfano; solo si no lo encuentra
+(archivo de antes de este fix, o copiado a mano desde fuera de MiMoo)
+recurre al hash `local:` como hasta ahora.
 
-H07 añade un segundo modo de importación, **aditivo**: comparar el
-`BackupBundle` descargado de Drive contra el estado local del
-dispositivo, y solo insertar/encolar lo que no existe ya localmente —
-sin borrar nada.
+**Pendiente de verificar en línea (directriz §4.5 del
+`MASTER_DOCUMENT.md`) antes de implementar:** qué tag de metadato
+Opus/Vorbis Comment es el más robusto para guardar un campo propio
+(p.ej. `MIMOO_YOUTUBE_ID` o reutilizar `COMMENT`), y qué API de
+Android permite leerlo de vuelta de forma fiable
+(`MediaMetadataRetriever` tiene soporte limitado a claves estándar —
+puede hacer falta parsear el bloque de comentario Ogg/Vorbis a mano,
+que es un formato simple, o evaluar una librería ligera). Este anexo
+no fija la solución técnica exacta todavía — se decide al empezar a
+codificar esta parte, con la información más actual disponible.
 
-### Parte 2 — Actualizaciones in-app
+### PARTE 1 — Sincronización automática entre dispositivos (sustituye la "sincronización incremental" de S007)
 
-Hoy Miguel Ángel se entera de que hay una APK nueva y la instala a
-mano (ver skill `android-deploy`: descarga por sftp desde
-PythonAnywhere, sin URL pública). H07 añade, dentro de la propia app,
-una forma de comprobar si hay una versión más reciente que la
-instalada y descargarla sin salir de MiMoo.
+Diseño completamente distinto al aditivo de S007: un archivo de
+**copia de respaldo automática** en Drive, actualizado en cada cambio
+local, que dos dispositivos comparten para acabar con la biblioteca
+en el mismo estado — no es aditivo, es un espejo.
 
----
+- **Distinto de Exportar/Importar (H06):** aquellos siguen siendo
+  manuales, a petición explícita desde Ajustes, y generan un archivo
+  nuevo con timestamp cada vez (histórico de snapshots). La copia de
+  respaldo automática de H07 es **un único archivo fijo** en Drive
+  (no timestamped) que se sobreescribe en su sitio.
+- **Actualización automática:** cada vez que se añade o borra un
+  álbum, un sencillo o una lista de reproducción, la copia de
+  respaldo en Drive se actualiza para reflejarlo — sin acción manual
+  de Miguel Ángel.
+- **Al arrancar la app / iniciar sesión en un dispositivo:** se
+  descarga la copia de respaldo y se compara contra el estado local.
+  El disco se deja **exactamente igual** que la copia: lo que está en
+  la copia y no en el disco se descarga; lo que está en el disco y ya
+  no está en la copia se borra.
+- **Nunca se borra nada en silencio:** si la comparación detecta que
+  hay que eliminar algo local que ya no está en la copia de respaldo,
+  se avisa a Miguel Ángel y se pide confirmación antes de machacar —
+  igual que ya hace "Importar desde Drive" en H06.
+- Reutiliza el mismo `BackupBundle`/DTOs de `BackupDto.kt` como
+  formato — no hace falta inventar uno nuevo, solo un fichero Drive
+  distinto (nombre fijo, no timestamped) y una lógica de comparación
+  nueva (espejo, no solo-insertar).
 
-## CONTEXTO TÉCNICO — LO QUE YA EXISTE (leído del clon, S007)
+### PARTE 2 — Actualizaciones in-app vía EnterpriseBot
 
-### Esquema de datos (mismo que H06, sin cambios de esquema previstos)
+MiMoo es uso exclusivo de Miguel Ángel y Silvia — no hace falta
+publicación pública real, solo un punto de descarga accesible por
+URL que nadie adivine. Decisión cerrada con Miguel Ángel (S008):
+reutilizar el web app de **EnterpriseBot**, ya público en
+PythonAnywhere, añadiéndole una ruta nueva, no enlazada desde ningún
+menú/plantilla, protegida por un token largo aleatorio como parte de
+la propia URL (no un simple "sin enlazar" — sin el token la ruta no
+sirve nada):
 
-Las 4 entidades Room de siempre — `SearchResultTrack` (PK
-`youtubeId`), `FavoriteAlbum` (PK compuesta `artist`+`album`),
-`Playlist` (PK `id` autogenerado), `PlaylistTrackCrossRef` (PK
-compuesta) — ver `DOCS/ANNEX_H06.md`, sección "CONTEXTO TÉCNICO", para
-el detalle completo de cada campo. H07 reutiliza el mismo
-`BackupBundle`/`TrackBackupDto`/`FavoriteAlbumBackupDto`/
-`PlaylistBackupDto` de `BackupDto.kt` — no hace falta un formato de
-archivo nuevo, la sincronización lee el mismo backup que ya genera
-`BackupRepository`.
+```
+https://{dominio-enterprisebot}/mimoo-updates/{TOKEN_LARGO_ALEATORIO}/apk
+https://{dominio-enterprisebot}/mimoo-updates/{TOKEN_LARGO_ALEATORIO}/manifest.json
+```
 
-### Pieza existente a extender, no a duplicar
+El token vive embebido en el APK de MiMoo (mismo patrón que el
+Client ID OAuth de Drive, que ya se embebe hoy sin problema) y
+registrado en la ruta de EnterpriseBot. La app compara su
+`BuildConfig.VERSION_CODE` contra el `versionCode` del manifiesto;
+si hay una versión más nueva, avisa a Miguel Ángel en Ajustes y
+descarga solo si él confirma explícitamente — nunca automático ni
+silencioso.
 
-- `BackupImportRepository.importDestructively(bundle: BackupBundle): BackupImportResult`
-  — el modo destructivo de H06, se queda tal cual, intacto.
-- El nuevo modo aditivo debería vivir en la misma clase, como un
-  método hermano (p.ej. `importIncrementally(bundle: BackupBundle): BackupImportResult`
-  o nombre que se decida en su momento), para compartir las funciones
-  de mapeo `TrackBackupDto.toEntity()` etc. que ya existen — no
-  reescribirlas.
-- `SettingsScreen`/`SettingsViewModel` (H06 PASO 3-4) ganan una tercera
-  acción junto a "Exportar a Drive"/"Importar desde Drive": algo como
-  "Sincronizar con Drive" — mismo flujo de autorización
-  (`DriveAuthorizationHelper`, ya funcionando) y de descarga del
-  archivo (`BackupDriveRepository`), solo cambia qué se hace con el
-  `BackupBundle` una vez descargado.
+**Implicaciones de infraestructura, distintas de las asumidas en
+S007:**
+- Esto toca el repositorio de **EnterpriseBot**, no el de MiMoo — flujo
+  de trabajo `nfs-enterprisebot-*`, con su propio token de sesión
+  (pendiente: Miguel Ángel debe entregarlo cuando se llegue a esta
+  parte).
+- El workflow de GitHub Actions de MiMoo (`build-and-deploy.yml`) debe
+  seguir subiendo el APK a PythonAnywhere como hasta ahora (ver
+  `android-deploy`) — EnterpriseBot necesita poder leer ese mismo
+  archivo para servirlo por su nueva ruta, o el workflow lo sube
+  también a donde EnterpriseBot lo espera; detalle a resolver al
+  implementar esta parte.
+- El reload del web app de EnterpriseBot en PythonAnywhere lo hace
+  Miguel Ángel a mano desde el dashboard, como siempre — fuera del
+  alcance de lo que este modelo puede hacer en NewFlow.
 
-### Prerrequisito de Google Cloud — SIN HACER TODAVÍA
+### PARTE 3 — Controles de reproducción: aleatorio y cíclico
 
-Añadir `silviaytxio@gmail.com` como test user en el proyecto
-`mimoo-drive` (Google Auth Platform → Audience → Test users → Add
-users), para que también pueda autorizar el acceso a Drive con MiMoo
-desde su propia cuenta — igual que ya está `nummenor@gmail.com`. No
-hace falta ningún otro cambio de configuración: cada dispositivo/
-cuenta autoriza su propio acceso a su propio Drive vía el mismo
-`AuthorizationClient` ya funcionando, `mimoo-drive` no necesita saber
-de antemano cuántos usuarios lo van a usar más allá de la lista de
-test users (proyecto en modo Testing, límite 100 test users, sobra de
-margen).
+Confirmado en el código actual del reproductor (S008): no existe hoy
+ningún control de `repeatMode` ni `shuffleMode`. Se añaden dos modos
+independientes y combinables, sobre ExoPlayer/Media3 (soporte nativo,
+no hay que reinventar nada):
+
+- **Cíclico (repeat):** al llegar al final de la cola de reproducción
+  actual, vuelve a empezar por la primera pista — `Player.REPEAT_MODE_ALL`.
+- **Aleatorio (shuffle):** orden aleatorio dentro de la cola de
+  reproducción actual, sin pararse nunca al terminar la cola —
+  requiere `shuffleModeEnabled = true` combinado con
+  `REPEAT_MODE_ALL` (shuffle solo, sin repeat, sí llega al final y se
+  para; la combinación es la que da el comportamiento "no para
+  nunca" que describe Miguel Ángel).
+- Caso descrito explícitamente por Miguel Ángel: cíclico activado +
+  cola construida progresivamente añadiendo pistas sueltas (p.ej. 200
+  canciones vistas/añadidas durante la sesión) → al llegar a la
+  pista 200, vuelve a la 1 y repite la cola completa en el mismo
+  orden en que se añadieron.
+- UI: dos controles (toggle) en la pantalla del reproductor, junto a
+  play/pausa/siguiente/anterior — diseño visual a definir al
+  implementar esta parte, sin bloquear el resto del hito.
 
 ---
 
 ## HOJA DE RUTA DETALLADA
 
-### PASO 1 — Prerrequisito de Google Cloud
+### PARTE 0 — Persistencia del link
 
-Añadir `silviaytxio@gmail.com` como test user en `mimoo-drive` (ver
-CONTEXTO TÉCNICO arriba). Un solo paso, dos minutos, sin código de por
-medio.
+**PASO 0.1** — Actualizarse en línea (directriz §4.5) sobre la forma
+más robusta de embeber y leer un campo de metadato custom en un
+contenedor Ogg/Opus desde Android/Kotlin y desde yt-dlp/ffmpeg (via
+Chaquopy). Cerrar la decisión técnica exacta antes de tocar código.
 
-### PASO 2 — Diseño de la comparación "qué es nuevo"
+**PASO 0.2** — `downloader.py`/`DownloadWorker.kt`: grabar el
+`youtubeId` (y, si es barato hacerlo a la vez, título/artista/álbum)
+como metadato del archivo en el propio paso de conversión a Opus, sin
+necesitar una segunda pasada de ffmpeg si es evitable.
 
-**Decisión de producto pendiente de confirmar con Miguel Ángel al
-empezar esta parte** — plantear antes de escribir código:
+**PASO 0.3** — `LibraryReconciler.buildSyntheticTrack()`: leer el
+metadato embebido al reconciliar un archivo huérfano; usar el
+`youtubeId` real si está presente, caer al hash `local:` solo si no
+hay metadato (archivo legacy o ajeno a MiMoo).
 
-- **Pistas (`SearchResultTrack`):** trivial — comparar por
-  `youtubeId` (PK real y estable, no depende del dispositivo). Un
-  `youtubeId` del bundle que no existe ya en la tabla local es
-  "nuevo"; se inserta y se encola su descarga
-  (`DownloadQueueManager.enqueue()`, mismo patrón que H06 PASO 5). Un
-  `youtubeId` que ya existe localmente se deja intacto — no se
-  sobrescribe ni se compara contenido, se asume que el existente es
-  igual de válido.
-- **Favoritos de álbum (`FavoriteAlbum`):** igual de trivial — PK
-  compuesta `artist`+`album`, mismo criterio "no existe → se inserta".
-- **Listas de reproducción (`Playlist`+`PlaylistTrackCrossRef`): la
-  parte con decisión real pendiente.** El `id` de playlist no es
-  estable entre dispositivos (autogenerado por Room en cada uno) — a
-  diferencia de H06 donde el destino no tenía playlists previas y el
-  remapeo era 1:1 sin ambigüedad, aquí puede haber una playlist con el
-  **mismo nombre** en origen y destino, con contenido parcialmente
-  distinto. Opciones a decidir con Miguel Ángel, no a asumir:
-  1. Emparejar por `name` exacto: si ya existe una playlist con ese
-     nombre en destino, añadirle las pistas del bundle que le falten
-     (unión); si no existe, crearla entera.
-  2. Tratar toda playlist del bundle como nueva salvo que el nombre
-     coincida Y el contenido sea idéntico (más conservador, puede
-     crear duplicados con sufijo si el contenido difiere).
-  3. No sincronizar playlists en esta primera versión de H07 — solo
-     pistas sueltas y favoritos de álbum, dejar playlists para una
-     iteración posterior si la sincronización simple ya resuelve la
-     necesidad real de Miguel Ángel.
+**PASO 0.4** — Verificación funcional: descargar una pista nueva,
+comprobar el metadato con una herramienta externa (p.ej. `ffprobe` si
+está disponible, o inspección manual), borrar su fila de Room a mano
+y forzar un refresco de Biblioteca — confirmar que recupera el
+`youtubeId` real, no uno `local:`.
 
-### PASO 3 — `BackupImportRepository`: modo aditivo
+### PARTE 1 — Sincronización automática
 
-Implementar el método nuevo siguiendo la decisión del PASO 2. Reglas
-ya claras sin necesidad de decisión adicional:
+**PASO 1.1** — Diseño del archivo de copia de respaldo automática en
+Drive: nombre fijo (no timestamped), carpeta (reutilizar "MiMoo
+Backups" o carpeta nueva — a decidir al implementar), y cómo se
+localiza/actualiza en su sitio (buscar por nombre + `PATCH` de
+contenido sobre el mismo `fileId`, mismo patrón que
+`BackupDriveRepository.ensureBackupFolder()`).
 
-- Nunca tocar `deleteExistingPhysicalFiles()` ni ningún borrado — el
-  modo aditivo, por definición, no borra nada.
-- Pistas nuevas encoladas para descarga automática, igual que H06
-  PASO 5 (mismos metadatos ya corregidos, sin pasar por el diálogo de
-  edición).
-- Devolver un resultado que distinga "cuántas eran nuevas" de "cuántas
-  ya existían" (por ejemplo extendiendo `BackupImportResult` o un tipo
-  hermano) — la UI necesita poder decir "3 pistas nuevas importadas,
-  47 ya las tenías" en vez de un genérico "sincronización completada".
+**PASO 1.2** — Hook de escritura automática: cada operación que añade
+o borra un álbum, sencillo o playlist (repositorios ya existentes de
+favoritos/playlists/descargas) dispara una actualización de la copia
+de respaldo en Drive. Necesita accesToken válido en segundo plano —
+revisar cómo encaja con `DriveAuthorizationHelper` (hoy pensado para
+una acción puntual disparada por el usuario desde Ajustes, no para
+escritura en background).
 
-### PASO 4 — UI: "Sincronizar con Drive"
+**PASO 1.3** — Comparación tipo espejo al arrancar/iniciar sesión:
+descargar la copia de respaldo, comparar contra Room+disco local,
+calcular qué falta (descargar) y qué sobra (candidato a borrar).
 
-Tercera acción en `SettingsScreen` (H06 PASO 3), junto a Exportar/
-Importar. Mismo flujo de autorización y descarga de archivo que ya
-funciona; el diálogo de confirmación debe dejar claro que esta acción
-**no borra nada** (a diferencia de "Importar desde Drive", que sí es
-destructivo y ya tiene su propio aviso desde H06 PASO 4) — evitar que
-Miguel Ángel confunda los dos botones por descuido.
+**PASO 1.4** — Confirmación antes de borrar: si hay elementos locales
+que ya no están en la copia de respaldo, mostrar un diálogo con el
+detalle antes de ejecutar ningún borrado — nunca automático.
 
-### PASO 5 — Verificación funcional end-to-end
+**PASO 1.5** — Verificación funcional end-to-end con dos dispositivos
+reales: añadir/borrar en uno, confirmar que el otro se sincroniza al
+iniciar sesión, incluyendo el diálogo de confirmación de borrado.
 
-Con dos dispositivos reales con contenido parcialmente distinto:
-sincronizar y confirmar (a) nada del contenido previo del destino se
-pierde, (b) las pistas realmente nuevas aparecen y se descargan solas,
-(c) las pistas ya presentes no se duplican ni se re-encolan, (d) el
-comportamiento de playlists coincide con lo decidido en el PASO 2.
+### PARTE 2 — Actualizaciones in-app
 
----
+**PASO 2.1** — Token de sesión de EnterpriseBot (cuando Miguel Ángel
+lo entregue) + diseño de la ruta oculta con token aleatorio en la URL
+(ver OBJETIVO DEL HITO arriba).
 
-## PARTE 2 — ACTUALIZACIONES IN-APP
+**PASO 2.2** — Generar el manifiesto de versión en el workflow de
+MiMoo (`build-and-deploy.yml`), tras `assembleDebug`:
+`{"versionCode": N, "versionName": "X.Y", "apkUrl": "..."}`, usando
+`versionCode` desde `-PversionCode=${{ github.run_number }}` (ya
+existe, ver `android-deploy`).
 
-### PASO A — Decisión de infraestructura de publicación (pendiente, dos opciones)
+**PASO 2.3** — Resolver cómo EnterpriseBot accede al APK compilado
+para servirlo por su ruta (¿lo sube el mismo workflow de MiMoo a
+donde EnterpriseBot lo espera, o EnterpriseBot lee de donde ya está
+en PythonAnywhere?) — detalle técnico a cerrar al implementar.
 
-Hoy la APK vive en PythonAnywhere sin URL pública (ver skill
-`android-deploy`: descarga solo por sftp, deliberadamente sin exponer
-nada vía HTTP — decisión previa documentada para no mezclar MiMoo con
-el proyecto Django de EnterpriseBot). Para que la propia app pueda
-comprobar/descargar una versión nueva hace falta **algún** endpoint
-HTTP público — dos caminos razonables, a decidir con Miguel Ángel
-antes de tocar el workflow, ninguno asumido de antemano:
+**PASO 2.4** — `AppUpdateRepository` en MiMoo: `GET` al manifiesto vía
+la URL con token embebido, comparar `versionCode` contra
+`BuildConfig.VERSION_CODE`.
 
-1. **Servir la APK + un manifiesto de versión desde PythonAnywhere**,
-   como una excepción puntual y aislada a la decisión de
-   `android-deploy` (una web app mínima dedicada solo a esto, sin
-   tocar EnterpriseBot) — requiere dar de alta esa web app en
-   PythonAnywhere, fuera del alcance de lo que este modelo puede hacer
-   por sí solo en NewFlow (no hay acceso a la consola de PythonAnywhere
-   en este flujo, solo a la API de subida de archivos vía
-   `PA_API_TOKEN`, que no crea web apps).
-2. **GitHub Releases** del propio repo: el workflow, tras compilar,
-   adjunta el `.apk` como asset de una release nueva (usando el token
-   de sesión de NewFlow o, mejor, el `GITHUB_TOKEN` automático que ya
-   tiene GitHub Actions sin necesidad de ningún secret nuevo). Da una
-   URL pública estable por versión de forma nativa, sin infraestructura
-   adicional que mantener. **Matiz a resolver:** si el repositorio
-   `MiMoo` es privado, la URL de descarga de un asset de Release
-   también exige autenticación para un `GET` normal — la app tendría
-   que llevar embebido algún token de lectura para poder descargar,
-   lo cual es un secreto de más alcance (acceso a la cuenta de GitHub)
-   que el Client ID OAuth de Drive que ya se embebe hoy sin problema.
-   Antes de elegir esta vía, confirmar si el repo es público o
-   privado, y si privado, si Miguel Ángel está cómodo embebiendo un
-   token de solo lectura con alcance mínimo (`contents:read`) en el
-   APK.
+**PASO 2.5** — UI en Ajustes: "Buscar actualizaciones", muestra
+versión actual vs. disponible, botón de descarga solo si Miguel Ángel
+confirma. Instalación vía `FileProvider` + `Intent(ACTION_VIEW)`
+(fuentes desconocidas, MiMoo no está en Google Play).
 
-### PASO B — Manifiesto de versión
+**PASO 2.6** — Verificación funcional: publicar una versión de prueba
+con `versionCode` mayor, confirmar detección, descarga e instalación
+correcta sobre la instalada.
 
-Sea cual sea la vía del PASO A, generar en cada build (mismo workflow,
-tras `assembleDebug`) un JSON pequeño con al menos:
-`{"versionCode": N, "versionName": "X.Y", "apkUrl": "..."}` —
-`versionCode` viene del mismo `-PversionCode=${{ github.run_number }}`
-que ya recibe Gradle hoy (ver `build-and-deploy.yml`), no hace falta
-inventar un contador nuevo.
+### PARTE 3 — Controles de reproducción
 
-### PASO C — Comprobación desde la app
+**PASO 3.1** — Exponer `repeatMode`/`shuffleModeEnabled` de ExoPlayer
+en `PlayerManager` (o el repositorio/viewmodel equivalente del
+reproductor — releer código real antes de tocar, §4.1).
 
-Nuevo repositorio (p.ej. `AppUpdateRepository`) que haga un `GET`
-simple al manifiesto (sin autenticación si PASO A resuelve en
-PythonAnywhere/repo público; con el token de solo lectura si acaba
-siendo un repo privado vía GitHub Releases) y compare
-`versionCode` contra `BuildConfig.VERSION_CODE` (ya existe, lo genera
-el propio Gradle a partir de `defaultConfig.versionCode` — ver
-`android-deploy`, sección "Versioning").
+**PASO 3.2** — UI: dos toggles en la pantalla del reproductor.
 
-### PASO D — UI y descarga
-
-Entrada en "Ajustes" (mismo `SettingsScreen` de H06/H07-Parte-1):
-"Buscar actualizaciones", muestra versión actual vs. disponible, botón
-de descarga. Para la instalación en sí: como MiMoo no está en Google
-Play, Android exige el flujo estándar de "fuentes desconocidas" con
-`FileProvider` + `Intent(ACTION_VIEW)` apuntando al APK descargado —
-patrón conocido de Android, sin necesitar ninguna API adicional más
-allá de lo que ya usa el proyecto (Chaquopy/yt-dlp también descargan
-archivos por HTTP hoy, mismo tipo de operación de red).
-
-### PASO E — Verificación funcional
-
-Publicar una versión de prueba con `versionCode` mayor, confirmar que
-la app la detecta, la descarga, y el flujo de instalación de Android
-la reconoce como actualización válida sobre la instalada (mismo
-`applicationId`, mismo criterio que ya usa la instalación manual por
-sftp).
+**PASO 3.3** — Verificación funcional: cola larga (~200 pistas)
+añadida progresivamente, cíclico activado, confirmar que al terminar
+vuelve a la primera en el mismo orden; aleatorio activado (con y sin
+cíclico), confirmar que no se detiene al agotar la cola cuando ambos
+están activos.
 
 ---
 
 ## Fuera de Alcance de Este Hito (explícitamente pospuesto)
 
-- Sincronización automática en segundo plano (WorkManager periódico)
-  — esta primera versión es manual, a petición explícita del usuario
-  desde "Ajustes". Automatizarlo es una posible iteración futura, no
-  parte de H07.
-- Resolución de conflictos más allá de "no existe → se añade" — no
-  hay ningún escenario de "existe pero es diferente" contemplado en
-  esta primera versión (aplica igual a pistas, favoritos y playlists).
-- Actualización silenciosa/automática de la app sin acción del
-  usuario — el flujo siempre pasa por que Miguel Ángel vea la
-  comprobación y pulse descargar/instalar él mismo.
-- Publicación en Google Play — fuera de alcance del proyecto entero,
-  no solo de este hito (MiMoo es una app personal, no destinada a
-  distribución pública).
+- Resolución de conflictos más allá de "la copia de respaldo manda"
+  en la sincronización automática — no hay fusión inteligente de
+  cambios concurrentes en dos dispositivos sin conexión a la vez,
+  más allá del aviso antes de borrar.
+- Reetiquetado retroactivo de la biblioteca existente con metadatos —
+  la biblioteca actual del dispositivo se pierde y se reconstruye
+  desde cero (decisión de Miguel Ángel, S008); Parte 0 solo afecta a
+  descargas hechas a partir de su implementación.
+- Sincronización en segundo plano fuera de apertura de app/inicio de
+  sesión (WorkManager periódico) — posible iteración futura, no parte
+  de este hito.
+- Actualización silenciosa/automática de la app sin confirmación
+  explícita de Miguel Ángel.
+- Publicación en Google Play — fuera de alcance del proyecto entero.

@@ -22,7 +22,7 @@ la vez. Cambiar de hito es editar esta tabla y commitear — ver
 | H04 | Listas de Reproducción Locales | `DOCS/ANNEX_H04.md` | |
 | H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | |
 | H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | |
-| H07 | Sincronización entre Dispositivos + Actualizaciones In-App | `DOCS/ANNEX_H07.md` | ← EN PROGRESO |
+| H07 | Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción | `DOCS/ANNEX_H07.md` | ← EN PROGRESO |
 
 **Resultado actual (migrado desde la sesión skill-based, 2026-07-02;
 actualizado 2026-07-10 S007):**
