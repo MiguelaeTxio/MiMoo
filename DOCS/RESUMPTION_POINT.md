@@ -12,53 +12,59 @@ completo. Para el detalle exacto de qué cambió en cada paso, consultar
 
 ## Última actualización: 2026-07-10 (cierre de sesión S007 NewFlow)
 
-**Hito EN PROGRESO:** H06 — ver `DOCS/MASTER_DOCUMENT.md` para la
-tabla completa de hitos y estado. H05 queda pausado sin tocar (PASO 6c
-pendiente, ver `DOCS/ANNEX_H05.md`).
+**Hito EN PROGRESO: H07 — Sincronización entre Dispositivos +
+Actualizaciones In-App** (`DOCS/ANNEX_H07.md`, recién abierto, PCH al
+cierre de esta misma sesión). Ver `DOCS/MASTER_DOCUMENT.md` para la
+tabla completa. H06 queda **pausado** (no completado — ver abajo).
 
-**S007 en resumen:** el bloqueo de H06 PASO 6
-(`UNREGISTERED_ON_API_CONSOLE`) quedó **resuelto**. Causa real: el
-proyecto de Google Cloud `mimoo-501004` tenía su registro OAuth roto
-internamente, sin ninguna causa diagnosticable desde la consola —
-confirmado tras agotar con evidencia real todas las comprobaciones de
-configuración y código documentadas (incluida la creación del cliente
-Web application que faltaba, con 14h de margen sin efecto, y una
-prueba de aislamiento de scope que descartó que fuera específico de
-`drive.file`). La solución fue crear un proyecto de Google Cloud
-nuevo desde cero — **`mimoo-drive`** — con la misma configuración
-mínima: funcionó a la primera. "Exportar a Drive" verificado en
-dispositivo real. **"Importar desde Drive" queda sin probar,
-siguiente paso de PASO 6.** Detalle técnico completo en
-`DOCS/ANNEX_H06.md`, sección "INVESTIGACIÓN H06 PASO 6 — RESUELTA EN
-S007" y "COMPLETADAS EN S007".
+**S007 en resumen, de más a menos reciente:**
 
-**Cambios adicionales de esta sesión:**
-- Bug real corregido: `android:allowBackup="true"` causaba que
-  Android restaurase `saf_root_uri` obsoleta tras reinstalar la app
-  (Auto Backup), rompiendo el selector de carpeta y el logging SAF en
-  silencio. Ahora `allowBackup="false"`.
-- **YouTube Data API eliminada del proyecto por completo** (decisión
-  de producto de Miguel Ángel, para poder borrar `mimoo-501004` sin
-  dependencias vivas): la búsqueda/emparejamiento de álbumes
-  (`AlbumSearchViewModel`/`AlbumMatchRepository`) pasa a usar la
-  búsqueda libre de `yt-dlp` que ya usa la pantalla de Búsqueda normal
-  — sin cuota, sin API key. `YouTubeApiService.kt`/`YouTubeRepository.kt`
-  eliminados, `YOUTUBE_API_KEY` fuera del workflow y de
-  `build.gradle.kts`. Build verde tras el cambio.
-- `mimoo-501004` sin ninguna función viva de MiMoo. **Borrado
-  programado por Miguel Ángel para el 9 de agosto de 2026.**
-- `GOOGLE_OAUTH_ANDROID_CLIENT_ID` actualizado al Client ID del
-  proyecto `mimoo-drive` (el de `mimoo-501004` quedó obsoleto).
+1. **H06 PASO 6 resuelto.** El bloqueo `UNREGISTERED_ON_API_CONSOLE`
+   era un registro OAuth roto internamente en el proyecto de Google
+   Cloud `mimoo-501004`, sin causa diagnosticable desde la consola —
+   confirmado tras agotar con evidencia real todas las comprobaciones
+   de configuración y código documentadas. Solución: proyecto nuevo
+   desde cero, **`mimoo-drive`**, funcionó a la primera. "Exportar a
+   Drive" verificado en dispositivo real. **"Importar desde Drive"
+   sigue sin probar** — primer pendiente real si se retoma H06.
+   Detalle completo en `DOCS/ANNEX_H06.md`.
+2. **Bug real corregido**: `android:allowBackup="true"` causaba que
+   el Auto Backup de Android restaurase `saf_root_uri` obsoleta tras
+   reinstalar, rompiendo el selector de carpeta y el logging SAF en
+   silencio. Ahora `allowBackup="false"`.
+3. **YouTube Data API eliminada del proyecto por completo** (decisión
+   de producto explícita, para poder borrar `mimoo-501004` sin dejar
+   nada de MiMoo dependiendo de él). Búsqueda/emparejamiento de
+   álbumes (H05) pasa a usar la misma búsqueda libre de `yt-dlp` que
+   ya usa la pantalla de Búsqueda normal. `mimoo-501004` sin ninguna
+   función viva de MiMoo — **borrado programado por Miguel Ángel para
+   el 9 de agosto de 2026.**
+4. **H07 abierto (PCH)**: dos funciones nuevas, sin dependencia
+   técnica entre sí — sincronización incremental (no destructiva) vía
+   Drive, y comprobación/descarga de actualizaciones de la app desde
+   dentro de MiMoo. Hoja de ruta completa, con varias decisiones de
+   producto explícitamente marcadas como pendientes de confirmar con
+   Miguel Ángel antes de escribir código (emparejamiento de playlists
+   en la sincronización; vía de publicación de la APK para
+   actualizaciones — PythonAnywhere vs GitHub Releases). Ver
+   `DOCS/ANNEX_H07.md`.
+5. **`MASTER_DOCUMENT.md` corregido**: las secciones 2.3 (YouTube),
+   2.4 (Drive) y 2.5 (secrets) estaban desactualizadas tras los
+   cambios de esta misma sesión — puestas al día para que la próxima
+   sesión no parta de información falsa.
 
-**Siguiente sesión — orden sugerido:**
-1. Probar "Importar desde Drive" en dispositivo real para cerrar H06
-   PASO 6 del todo (export ya verificado).
-2. Si PASO 6 cierra, H06 queda completo — decidir con Miguel Ángel si
-   se retoma H05 (PASO 6c pendiente, ver abajo) o se abre el
-   siguiente hito.
+**Siguiente sesión — orden sugerido (a decidir con Miguel Ángel, no
+asumido):**
+1. H07 PASO 1: añadir `silviaytxio@gmail.com` como test user en
+   `mimoo-drive` (dos minutos, sin código).
+2. H07 PASO 2: cerrar con Miguel Ángel la decisión de producto sobre
+   emparejamiento de playlists en la sincronización, antes de escribir
+   `BackupImportRepository`.
+3. Alternativamente, si se prefiere cerrar H06 del todo primero:
+   probar "Importar desde Drive" (PASO 6 de H06) antes de avanzar en
+   H07 — ambas rutas son válidas, decisión de Miguel Ángel al empezar.
 
-**Pendiente original de H05 (PASO 6c), pausado, no bloquea nada,
-sigue ahí para cuando se retome H05:**
+**Pendiente original de H05 (PASO 6c), pausado, no bloquea nada:**
 1. Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
    emparejamiento — nota: tras S007 el emparejamiento ya no usa
    playlist-primero (ver `ANNEX_H06.md`), así que este paso también
