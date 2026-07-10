@@ -118,45 +118,68 @@ en el mismo estado — no es aditivo, es un espejo.
   distinto (nombre fijo, no timestamped) y una lógica de comparación
   nueva (espejo, no solo-insertar).
 
-### PARTE 2 — Actualizaciones in-app vía EnterpriseBot
+### PARTE 2 — Actualizaciones in-app vía repositorio GitHub dedicado + PIN de acceso
 
-MiMoo es uso exclusivo de Miguel Ángel y Silvia — no hace falta
-publicación pública real, solo un punto de descarga accesible por
-URL que nadie adivine. Decisión cerrada con Miguel Ángel (S008):
-reutilizar el web app de **EnterpriseBot**, ya público en
-PythonAnywhere, añadiéndole una ruta nueva, no enlazada desde ningún
-menú/plantilla, protegida por un token largo aleatorio como parte de
-la propia URL (no un simple "sin enlazar" — sin el token la ruta no
-sirve nada):
+**Redefinido dentro de la propia S008**, tras probar primero la vía de
+EnterpriseBot (implementada, revertida en el mismo commit — ver
+`ENTERPRISEBOT_ATTACHED_MILESTONE_V17.md`, NOTA DE DESVÍO pendiente al
+cierre de esa sesión) y descartarla por decisión explícita de Miguel
+Ángel: no quiere mezclar un proyecto personal dentro de la aplicación
+cliente de EnterpriseBot.
 
-```
-https://{dominio-enterprisebot}/mimoo-updates/{TOKEN_LARGO_ALEATORIO}/apk
-https://{dominio-enterprisebot}/mimoo-updates/{TOKEN_LARGO_ALEATORIO}/manifest.json
-```
+**Diseño nuevo — dos piezas independientes:**
 
-El token vive embebido en el APK de MiMoo (mismo patrón que el
-Client ID OAuth de Drive, que ya se embebe hoy sin problema) y
-registrado en la ruta de EnterpriseBot. La app compara su
-`BuildConfig.VERSION_CODE` contra el `versionCode` del manifiesto;
-si hay una versión más nueva, avisa a Miguel Ángel en Ajustes y
-descarga solo si él confirma explícitamente — nunca automático ni
-silencioso.
+**A) Distribución del APK — repositorio GitHub nuevo, público, dedicado**
 
-**Implicaciones de infraestructura, distintas de las asumidas en
-S007:**
-- Esto toca el repositorio de **EnterpriseBot**, no el de MiMoo — flujo
-  de trabajo `nfs-enterprisebot-*`, con su propio token de sesión
-  (pendiente: Miguel Ángel debe entregarlo cuando se llegue a esta
-  parte).
-- El workflow de GitHub Actions de MiMoo (`build-and-deploy.yml`) debe
-  seguir subiendo el APK a PythonAnywhere como hasta ahora (ver
-  `android-deploy`) — EnterpriseBot necesita poder leer ese mismo
-  archivo para servirlo por su nueva ruta, o el workflow lo sube
-  también a donde EnterpriseBot lo espera; detalle a resolver al
-  implementar esta parte.
-- El reload del web app de EnterpriseBot en PythonAnywhere lo hace
-  Miguel Ángel a mano desde el dashboard, como siempre — fuera del
-  alcance de lo que este modelo puede hacer en NewFlow.
+Un repositorio nuevo (nombre a decidir con Miguel Ángel, p.ej.
+`MiMoo-Releases`), **público**, que **solo aloja los binarios
+compilados vía GitHub Releases — nunca el código fuente de MiMoo**
+(ese sigue exclusivamente en el repo privado actual). El propio
+workflow de MiMoo (`build-and-deploy.yml`), tras compilar, publica una
+Release nueva en ese repositorio con el `.apk` y un `manifest.json`
+como assets. Las URLs de descarga de una Release son estables, sirven
+el binario directo (sin páginas intermedias, a diferencia de Google
+Drive — ver más abajo) y no necesitan servidor ni infraestructura
+propia que mantener.
+
+Se evaluó y descartó explícitamente:
+- **EnterpriseBot** (diseño de la primera vuelta de S008): descartado
+  por Miguel Ángel, no quiere mezclar proyectos.
+- **Google Drive**: descartado tras verificación en línea (S008) —
+  Drive muestra una página de aviso ("no se puede escanear en busca
+  de virus") para archivos por encima de ~25 MB, un APK la supera con
+  facilidad. Existen workarounds con un parámetro `confirm=` en la
+  URL, pero es un comportamiento no oficial y frágil pensado para
+  navegador, no para un `GET` programático limpio desde la propia app.
+
+**Pendiente de Miguel Ángel antes de implementar esta parte:**
+1. Crear el repositorio nuevo, público, vacío.
+2. Crear un Personal Access Token fine-grained con acceso de escritura
+   **solo** a ese repositorio nuevo (nunca al repo privado de MiMoo).
+3. Añadir ese token como secret de GitHub Actions **en el repositorio
+   privado de MiMoo** (el que ejecuta el workflow), con un nombre tipo
+   `RELEASES_REPO_TOKEN` — el `GITHUB_TOKEN` automático de Actions
+   solo tiene permisos sobre el repo donde corre, no sobre un
+   repositorio distinto.
+
+**B) PIN de acceso a la propia app**
+
+Independiente de cómo se distribuya el APK: la app, en su primer
+arranque tras instalarse (o tras cualquier reinstalación, ya que el
+estado vive en `SharedPreferences`/`DataStore`, que se borra igual que
+Room), muestra una pantalla de PIN de 4 dígitos que bloquea el acceso
+a cualquier otra pantalla hasta introducirlo correctamente. PIN fijo
+`0485`, embebido en la app (no configurable desde la UI). Texto del
+campo: **"Introduce tu PIN, Silvia"**, literal, igual en ambos
+dispositivos — decisión explícita de Miguel Ángel, no condicionado a
+quién use el dispositivo.
+
+**Precisión técnica importante, ya aclarada con Miguel Ángel:** esto
+no bloquea la instalación del APK en sí — eso lo controla Android, no
+hay forma de que código de la propia app intervenga antes de que el
+sistema operativo termine de instalarla. Lo que sí hace es dejar la
+app completamente inservible sin el PIN correcto desde el instante en
+que se abre por primera vez, que es el efecto práctico que se busca.
 
 ### PARTE 3 — Controles de reproducción: aleatorio y cíclico
 
@@ -238,11 +261,12 @@ detalle antes de ejecutar ningún borrado — nunca automático.
 reales: añadir/borrar en uno, confirmar que el otro se sincroniza al
 iniciar sesión, incluyendo el diálogo de confirmación de borrado.
 
-### PARTE 2 — Actualizaciones in-app
+### PARTE 2 — Actualizaciones in-app + PIN de acceso
 
-**PASO 2.1** — Token de sesión de EnterpriseBot (cuando Miguel Ángel
-lo entregue) + diseño de la ruta oculta con token aleatorio en la URL
-(ver OBJETIVO DEL HITO arriba).
+**PASO 2.1** — Pendiente de Miguel Ángel: nombre y creación del
+repositorio nuevo público, PAT de solo ese repo, y el secret
+`RELEASES_REPO_TOKEN` en el repo privado de MiMoo (ver OBJETIVO DEL
+HITO arriba, apartado A). Bloqueante para el resto de esta parte.
 
 **PASO 2.2** — Generar el manifiesto de versión en el workflow de
 MiMoo (`build-and-deploy.yml`), tras `assembleDebug`:
@@ -250,13 +274,15 @@ MiMoo (`build-and-deploy.yml`), tras `assembleDebug`:
 `versionCode` desde `-PversionCode=${{ github.run_number }}` (ya
 existe, ver `android-deploy`).
 
-**PASO 2.3** — Resolver cómo EnterpriseBot accede al APK compilado
-para servirlo por su ruta (¿lo sube el mismo workflow de MiMoo a
-donde EnterpriseBot lo espera, o EnterpriseBot lee de donde ya está
-en PythonAnywhere?) — detalle técnico a cerrar al implementar.
+**PASO 2.3** — Publicar Release en el repositorio nuevo desde el
+workflow de MiMoo (`softprops/action-gh-release` o equivalente
+verificado en línea en su momento — §4.5), adjuntando `.apk` y
+`manifest.json` como assets, usando `RELEASES_REPO_TOKEN` del
+PASO 2.1.
 
-**PASO 2.4** — `AppUpdateRepository` en MiMoo: `GET` al manifiesto vía
-la URL con token embebido, comparar `versionCode` contra
+**PASO 2.4** — `AppUpdateRepository` en MiMoo: `GET` al
+`manifest.json` de la última Release (URL pública, sin token, sin
+autenticación — el repo es público), comparar `versionCode` contra
 `BuildConfig.VERSION_CODE`.
 
 **PASO 2.5** — UI en Ajustes: "Buscar actualizaciones", muestra
@@ -267,6 +293,23 @@ confirma. Instalación vía `FileProvider` + `Intent(ACTION_VIEW)`
 **PASO 2.6** — Verificación funcional: publicar una versión de prueba
 con `versionCode` mayor, confirmar detección, descarga e instalación
 correcta sobre la instalada.
+
+**PASO 2.7 — PIN de acceso (independiente de 2.1-2.6, sin
+bloqueantes, puede implementarse ya):**
+- Pantalla de PIN de 4 dígitos, previa a cualquier otra pantalla de la
+  app, mostrada mientras no exista un flag "desbloqueado" persistido
+  (`DataStore`/`SharedPreferences`).
+- PIN correcto fijo: `0485`, embebido en el código (no configurable
+  desde la UI, no viaja en `DOCS/*.md` ni en ningún sitio en claro
+  aparte del propio código fuente — mismo criterio que cualquier
+  constante de la app).
+- Texto exacto del campo: "Introduce tu PIN, Silvia" — literal, en
+  los dos dispositivos.
+- Comparación en tiempo constante (mismo criterio que
+  `BackupRepository`/tokens del proyecto — evitar canales laterales
+  de tiempo, aunque el riesgo real aquí es bajo).
+- Sin límite de intentos ni bloqueo temporal salvo que Miguel Ángel lo
+  pida explícitamente — no estaba en el encargo original.
 
 ### PARTE 3 — Controles de reproducción
 

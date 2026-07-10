@@ -37,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -281,6 +282,29 @@ class MainActivity : ComponentActivity() {
             val currentRoute = currentBackStackEntry?.destination?.route
 
             MaterialTheme(colorScheme = com.miguelaetxio.mimoo.ui.theme.MiMooColorScheme) {
+                // H07 PARTE 2, PASO 2.7 -- bloquea TODO lo demás
+                // (incluida la explicación de almacenamiento y el
+                // escaneo inicial) hasta que se introduce el PIN
+                // correcto. Se comprueba antes que isInitialScanning
+                // a propósito: sin esto, alguien con el APK pero sin
+                // el PIN podría llegar a ver el selector de carpeta
+                // SAF antes de que se le pida nada.
+                // ---
+                // H07 PART 2, STEP 2.7 -- blocks EVERYTHING else
+                // (including the storage explanation and the initial
+                // scan) until the correct PIN is entered. Checked
+                // before isInitialScanning on purpose: without this,
+                // someone with the APK but not the PIN could reach
+                // the SAF folder picker before being asked for
+                // anything.
+                val pinViewModel: com.miguelaetxio.mimoo.ui.pin.PinViewModel =
+                    androidx.hilt.navigation.compose.hiltViewModel()
+                val isUnlocked by pinViewModel.isUnlocked.collectAsState()
+                if (!isUnlocked) {
+                    com.miguelaetxio.mimoo.ui.pin.PinScreen(viewModel = pinViewModel)
+                    return@MaterialTheme
+                }
+
                 if (isInitialScanning) {
                     // Spinner de pantalla completa durante el escaneo
                     // inicial (solo tras elegir la carpeta por primera
