@@ -80,6 +80,22 @@ private val AUDIO_EXTENSIONS = setOf(
 private const val UNKNOWN_ARTIST_FOLDER_LABEL = "Desconocido"
 
 /**
+ * Clave de metadato Vorbis Comment que embebe downloader.py en cada
+ * .opus descargado desde S008 (H07 PARTE 0) -- ver
+ * downloader.py::MIMOO_YOUTUBE_ID_TAG, debe coincidir literalmente
+ * con esa constante.
+ * ---
+ * Vorbis Comment metadata key that downloader.py embeds in every
+ * downloaded .opus since S008 (H07 PART 0) -- see
+ * downloader.py::MIMOO_YOUTUBE_ID_TAG, must match that constant
+ * literally.
+ */
+private const val EMBEDDED_YOUTUBE_ID_TAG = "MIMOO_YOUTUBE_ID"
+
+/** youtubeId real de YouTube: siempre 11 caracteres de este alfabeto. */
+private val YOUTUBE_ID_PATTERN = Regex("^[A-Za-z0-9_-]{11}$")
+
+/**
  * Resultado de mergeDuplicateArtistFolders(), para que
  * LibraryViewModel pueda mostrarle a Miguel Ángel un resumen concreto
  * de lo que se hizo.
@@ -740,10 +756,28 @@ class LibraryReconciler @Inject constructor(
         albumName: String?,
         isFavorite: Boolean,
     ): SearchResultTrack {
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest(uriString.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-            .take(16)
+        // H07 PARTE 0: intenta primero recuperar el youtubeId real
+        // embebido en el propio archivo (descargas hechas desde S008
+        // en adelante). Solo si no hay tag, o el archivo es anterior
+        // al fix / ajeno a MiMoo, se cae al hash local: de siempre --
+        // comportamiento idéntico al de antes de este fix.
+        // ---
+        // H07 PART 0: first tries to recover the real youtubeId
+        // embedded in the file itself (downloads made from S008
+        // onwards). Only if there's no tag, or the file predates the
+        // fix / comes from outside MiMoo, does it fall back to the
+        // usual local: hash -- identical behavior to before this fix.
+        val embeddedYoutubeId = readEmbeddedYoutubeId(Uri.parse(uriString))
+
+        val resolvedYoutubeId = if (embeddedYoutubeId != null) {
+            embeddedYoutubeId
+        } else {
+            val digest = MessageDigest.getInstance("SHA-256")
+                .digest(uriString.toByteArray())
+                .joinToString("") { "%02x".format(it) }
+                .take(16)
+            "$LOCAL_ID_PREFIX$digest"
+        }
 
         val nameWithoutExtension = fileName.substringBeforeLast('.', fileName)
         val prefixMatch = TRACK_POSITION_PREFIX.matchEntire(nameWithoutExtension)
@@ -751,7 +785,7 @@ class LibraryReconciler @Inject constructor(
         val title = prefixMatch?.groupValues?.get(2) ?: nameWithoutExtension
 
         return SearchResultTrack(
-            youtubeId = "$LOCAL_ID_PREFIX$digest",
+            youtubeId = resolvedYoutubeId,
             title = title,
             channelTitle = artistName,
             durationSeconds = 0,
@@ -767,5 +801,92 @@ class LibraryReconciler @Inject constructor(
             isFavorite = isFavorite,
             trackPosition = trackPosition,
         )
+    }
+
+    /**
+     * Lee el tag Vorbis Comment MIMOO_YOUTUBE_ID directamente del
+     * contenedor Ogg/Opus, sin pasar por MediaMetadataRetriever --
+     * esa API de Android solo expone un conjunto fijo de claves
+     * estándar (álbum, artista, título...) y no da acceso a un tag
+     * propio (ver ANNEX_H07.md PARTE 0 para la verificación online que
+     * confirmó esto). En vez de parsear la estructura completa de
+     * páginas Ogg, aprovecha que el formato de un comentario Vorbis es
+     * [longitud LE de 4 bytes]["CLAVE=valor" en UTF-8]: localiza el
+     * texto de la clave en los primeros bytes del archivo (el paquete
+     * OpusTags está garantizado en la segunda página Ogg, muy cerca
+     * del principio) y usa la longitud declarada justo antes para
+     * extraer el valor exacto, sin depender de caracteres de corte.
+     * Devuelve null ante cualquier fallo o si el tag no está presente
+     * -- nunca lanza, para que un archivo problemático no tire abajo
+     * el resto del rescan (mismo criterio que collectAudioFiles()).
+     * ---
+     * Reads the MIMOO_YOUTUBE_ID Vorbis Comment tag directly from the
+     * Ogg/Opus container, without going through MediaMetadataRetriever
+     * -- that Android API only exposes a fixed set of standard keys
+     * (album, artist, title...) and gives no access to a custom tag
+     * (see ANNEX_H07.md PARTE 0 for the online check that confirmed
+     * this). Instead of parsing the full Ogg page structure, it
+     * leverages the fact that a Vorbis comment's framing is [4-byte LE
+     * length]["KEY=value" UTF-8]: it locates the key's text in the
+     * file's first bytes (the OpusTags packet is guaranteed to be in
+     * the second Ogg page, very close to the start) and uses the
+     * length declared right before it to extract the exact value,
+     * without relying on any cutoff character. Returns null on any
+     * failure or if the tag isn't present -- never throws, so one
+     * problematic file doesn't take down the rest of the rescan (same
+     * criterion as collectAudioFiles()).
+     */
+    private fun readEmbeddedYoutubeId(uri: Uri): String? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                val buffer = ByteArray(65536)
+                var totalRead = 0
+                while (totalRead < buffer.size) {
+                    val n = input.read(buffer, totalRead, buffer.size - totalRead)
+                    if (n <= 0) break
+                    totalRead += n
+                }
+
+                val marker = "$EMBEDDED_YOUTUBE_ID_TAG=".toByteArray(Charsets.US_ASCII)
+                val markerIndex = indexOfBytes(buffer, totalRead, marker)
+                if (markerIndex < 4) return@use null
+
+                // Longitud LE de 4 bytes justo antes del texto de la
+                // clave -- ver comentario de la función.
+                val declaredLength = (buffer[markerIndex - 4].toInt() and 0xFF) or
+                    ((buffer[markerIndex - 3].toInt() and 0xFF) shl 8) or
+                    ((buffer[markerIndex - 2].toInt() and 0xFF) shl 16) or
+                    ((buffer[markerIndex - 1].toInt() and 0xFF) shl 24)
+
+                val valueLength = declaredLength - marker.size
+                if (valueLength <= 0 || valueLength > 32 ||
+                    markerIndex + marker.size + valueLength > totalRead
+                ) {
+                    return@use null
+                }
+
+                val value = String(
+                    buffer,
+                    markerIndex + marker.size,
+                    valueLength,
+                    Charsets.UTF_8,
+                )
+                value.takeIf { YOUTUBE_ID_PATTERN.matches(it) }
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** Búsqueda simple de subarray de bytes -- sin dependencias externas. */
+    private fun indexOfBytes(haystack: ByteArray, haystackLength: Int, needle: ByteArray): Int {
+        if (needle.isEmpty() || needle.size > haystackLength) return -1
+        outer@ for (i in 0..(haystackLength - needle.size)) {
+            for (j in needle.indices) {
+                if (haystack[i + j] != needle[j]) continue@outer
+            }
+            return i
+        }
+        return -1
     }
 }

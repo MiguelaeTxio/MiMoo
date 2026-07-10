@@ -252,7 +252,7 @@ class DownloadWorker @AssistedInject constructor(
         return try {
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
-            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegDir, progressListener)
+            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegDir, progressListener, youtubeId)
 
             // yt-dlp appends .opus to the output template.
             // yt-dlp añade .opus a la plantilla de salida.
@@ -415,15 +415,28 @@ class DownloadWorker @AssistedInject constructor(
     /**
      * Invokes downloader.py via Chaquopy passing the ffmpeg binary path.
      * outputBasePath must be WITHOUT the .opus extension.
+     *
+     * youtubeId se pasa para que downloader.py embeba el metadato
+     * MIMOO_YOUTUBE_ID en el .opus resultante (H07 PARTE 0) -- así el
+     * link sobrevive a una reinstalación aunque se pierda la fila de
+     * Room. Ver downloader.py::download_audio() y
+     * LibraryReconciler.kt (lado de lectura).
      * ---
      * Invoca downloader.py via Chaquopy pasando la ruta del binario ffmpeg.
      * outputBasePath debe ser SIN la extension .opus.
+     *
+     * youtubeId is passed so downloader.py embeds the
+     * MIMOO_YOUTUBE_ID metadata tag in the resulting .opus (H07
+     * PART 0) -- so the link survives a reinstall even if the Room
+     * row is lost. See downloader.py::download_audio() and
+     * LibraryReconciler.kt (read side).
      */
     private fun runYtDlp(
         youtubeUrl: String,
         outputBasePath: String,
         ffmpegPath: String,
         progressListener: DownloadProgressListener,
+        youtubeId: String,
     ) {
         val py = com.chaquo.python.Python.getInstance()
         val downloader = py.getModule("downloader")
@@ -433,6 +446,7 @@ class DownloadWorker @AssistedInject constructor(
             outputBasePath,
             ffmpegPath,
             progressListener,
+            youtubeId,
         )
     }
 }

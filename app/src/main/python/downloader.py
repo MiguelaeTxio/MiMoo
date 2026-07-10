@@ -11,7 +11,25 @@ temporal local como archivo Opus, usando el binario ffmpeg incluido
 en el APK para no necesitar instalacion externa de ffmpeg.
 """
 
+import os
+import subprocess
+
 import yt_dlp
+
+# Clave de metadato Vorbis Comment propia de MiMoo, embebida en cada
+# .opus descargado (H07 PARTE 0) para que el youtubeId sobreviva a
+# una reinstalacion -- antes de este fix, el id solo vivia en la fila
+# de Room, y LibraryReconciler no tenia forma de recuperarlo tras una
+# perdida de la base de datos. Ver LibraryReconciler.kt (lectura) y
+# DOCS/ANNEX_H07.md PARTE 0 para el diseno completo.
+# ---
+# MiMoo's own Vorbis Comment metadata key, embedded in every
+# downloaded .opus (H07 PART 0) so the youtubeId survives a
+# reinstall -- before this fix, the id only lived in the Room row,
+# and LibraryReconciler had no way to recover it after a database
+# loss. See LibraryReconciler.kt (read side) and DOCS/ANNEX_H07.md
+# PART 0 for the full design.
+MIMOO_YOUTUBE_ID_TAG = "MIMOO_YOUTUBE_ID"
 
 
 def download_audio(
@@ -19,6 +37,7 @@ def download_audio(
     output_path: str,
     ffmpeg_location: str,
     progress_listener=None,
+    youtube_id: str = None,
 ) -> bool:
     """
     Download the best audio stream and convert it to Opus at output_path.
@@ -26,6 +45,23 @@ def download_audio(
     ffmpeg_location must be the directory containing the ffmpeg binary,
     or the full path to the ffmpeg binary itself.
     Returns True on success; raises on failure.
+
+    youtube_id, if given, is embedded as a custom Vorbis Comment tag
+    (MIMOO_YOUTUBE_ID) in the resulting .opus file via a second,
+    lossless remux pass (-c copy, no re-encode) after yt-dlp's own
+    conversion. This is what lets LibraryReconciler recover the real
+    id from disk alone if Room is ever lost (H07 PARTE 0) -- without
+    it, the id only ever lived in the Room row. If omitted, no tag is
+    written (behavior identical to before this fix).
+    ---
+    youtube_id, si se pasa, se embebe como un tag Vorbis Comment
+    propio (MIMOO_YOUTUBE_ID) en el .opus resultante, via un segundo
+    paso de remux sin perdidas (-c copy, sin recodificar) tras la
+    conversion propia de yt-dlp. Esto es lo que permite a
+    LibraryReconciler recuperar el id real solo desde disco si Room
+    se pierde alguna vez (H07 PARTE 0) -- sin esto, el id solo vivia
+    en la fila de Room. Si se omite, no se escribe ningun tag
+    (comportamiento identico al de antes de este fix).
 
     progress_listener, if given, is a Kotlin/Java object (Chaquopy proxy)
     exposing onProgress(percent: Int) — see DownloadWorker.
@@ -63,12 +99,12 @@ def download_audio(
                          (yt-dlp appends it automatically).
         ffmpeg_location: Path to ffmpeg binary or its parent directory.
         progress_listener: Optional Kotlin DownloadProgressListener proxy.
+        youtube_id: Optional 11-char YouTube video id, embedded as a
+                    custom metadata tag in the output file (see above).
 
     Returns:
         True if download and conversion succeeded.
     """
-    import os
-
     last_reported = -1
 
     def _progress_hook(d):
@@ -130,5 +166,54 @@ def download_audio(
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([youtube_url])
+
+    if youtube_id:
+        _embed_youtube_id_tag(f"{output_path}.opus", ffmpeg_bin, youtube_id)
+
     return True
+
+
+def _embed_youtube_id_tag(opus_path: str, ffmpeg_bin: str, youtube_id: str) -> None:
+    """
+    Remuxes opus_path in place, adding the MIMOO_YOUTUBE_ID Vorbis
+    Comment tag. Uses -c copy (stream copy, no re-encode) so this is
+    fast and lossless -- only the container's comment header changes.
+    Writes to a sibling temp file first and replaces the original only
+    on success, so a failure here never corrupts or loses the already-
+    downloaded audio.
+    ---
+    Remuxea opus_path in situ, anadiendo el tag Vorbis Comment
+    MIMOO_YOUTUBE_ID. Usa -c copy (copia de stream, sin recodificar),
+    asi que es rapido y sin perdidas -- solo cambia la cabecera de
+    comentario del contenedor. Escribe primero en un archivo temporal
+    hermano y solo reemplaza el original si tuvo exito, para que un
+    fallo aqui nunca corrompa ni pierda el audio ya descargado.
+    """
+    tagged_path = f"{opus_path}.tagged.opus"
+    result = subprocess.run(
+        [
+            ffmpeg_bin,
+            "-y",
+            "-i", opus_path,
+            "-c", "copy",
+            "-metadata", f"{MIMOO_YOUTUBE_ID_TAG}={youtube_id}",
+            tagged_path,
+        ],
+        capture_output=True,
+    )
+    if result.returncode != 0 or not os.path.exists(tagged_path):
+        # No se aborta la descarga por esto -- el audio ya esta bien
+        # descargado, solo falta el tag. Se deja el archivo sin tag
+        # (LibraryReconciler caera a local: si algun dia hace falta
+        # reconciliarlo, igual que antes de este fix).
+        # ---
+        # Download isn't aborted over this -- the audio is already
+        # downloaded fine, only the tag is missing. The file is left
+        # untagged (LibraryReconciler will fall back to local: if it
+        # ever needs reconciling, same as before this fix).
+        if os.path.exists(tagged_path):
+            os.remove(tagged_path)
+        return
+
+    os.replace(tagged_path, opus_path)
 
