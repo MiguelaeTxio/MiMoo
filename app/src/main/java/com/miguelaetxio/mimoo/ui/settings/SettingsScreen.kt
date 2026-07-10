@@ -167,6 +167,11 @@ fun SettingsScreen(
                 Spacer(Modifier.height(12.dp))
                 CircularProgressIndicator(modifier = Modifier.height(20.dp))
             }
+
+            Spacer(Modifier.height(32.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+            UpdateCheckSection()
         }
     }
 
@@ -251,5 +256,129 @@ fun SettingsScreen(
                 }
             },
         )
+    }
+}
+
+/**
+ * H07 PARTE 2, PASO 2.5. Autocontenida: lee su propio
+ * BuildConfig.VERSION_CODE, gestiona su propio ViewModel, y lanza
+ * ella misma el Intent(ACTION_VIEW) de instalación -- no depende de
+ * nada del resto de SettingsScreen.
+ * ---
+ * H07 PART 2, STEP 2.5. Self-contained: reads its own
+ * BuildConfig.VERSION_CODE, manages its own ViewModel, and fires the
+ * install Intent(ACTION_VIEW) itself -- doesn't depend on anything
+ * else in SettingsScreen.
+ */
+@Composable
+private fun UpdateCheckSection(
+    viewModel: AppUpdateViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Actualizaciones",
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Versión instalada: ${com.miguelaetxio.mimoo.BuildConfig.VERSION_NAME} " +
+                "(${com.miguelaetxio.mimoo.BuildConfig.VERSION_CODE})",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(12.dp))
+
+        when (val state = uiState) {
+            is UpdateUiState.Idle -> {
+                TextButton(
+                    onClick = {
+                        viewModel.checkForUpdate(
+                            com.miguelaetxio.mimoo.BuildConfig.VERSION_CODE,
+                        )
+                    },
+                ) {
+                    Icon(Icons.Filled.CloudDownload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Buscar actualizaciones")
+                }
+            }
+            is UpdateUiState.Checking -> {
+                Row {
+                    CircularProgressIndicator(modifier = Modifier.height(20.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text("Comprobando...")
+                }
+            }
+            is UpdateUiState.UpToDate -> {
+                Text("Ya tienes la última versión.")
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = viewModel::dismiss) { Text("Cerrar") }
+            }
+            is UpdateUiState.UpdateAvailable -> {
+                Text(
+                    "Hay una versión nueva disponible: " +
+                        "${state.manifest.versionName} " +
+                        "(${state.manifest.versionCode})."
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(onClick = { viewModel.downloadUpdate(state.manifest) }) {
+                        Icon(Icons.Filled.CloudDownload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Descargar")
+                    }
+                    TextButton(onClick = viewModel::dismiss) { Text("Ahora no") }
+                }
+            }
+            is UpdateUiState.Downloading -> {
+                Row {
+                    CircularProgressIndicator(modifier = Modifier.height(20.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text("Descargando...")
+                }
+            }
+            is UpdateUiState.ReadyToInstall -> {
+                Text("Descarga completa.")
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = {
+                        // Fuentes desconocidas: MiMoo no está en
+                        // Google Play, Android pide confirmación
+                        // aparte si no se ha concedido ya -- fuera
+                        // del control de esta app.
+                        // ---
+                        // Unknown sources: MiMoo isn't on Google
+                        // Play, Android asks for separate
+                        // confirmation if not already granted --
+                        // outside this app's control.
+                        val installIntent = android.content.Intent(
+                            android.content.Intent.ACTION_VIEW,
+                        ).apply {
+                            setDataAndType(
+                                state.apkUri,
+                                "application/vnd.android.package-archive",
+                            )
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(installIntent)
+                        viewModel.dismiss()
+                    },
+                ) {
+                    Text("Instalar")
+                }
+            }
+            is UpdateUiState.Error -> {
+                Text(
+                    "Error: ${state.message}",
+                    color = MaterialTheme.colorScheme.error,
+                )
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = viewModel::dismiss) { Text("Cerrar") }
+            }
+        }
     }
 }

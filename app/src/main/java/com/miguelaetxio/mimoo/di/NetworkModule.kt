@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.di
 
+import com.miguelaetxio.mimoo.data.remote.AppUpdateApiService
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
@@ -36,6 +37,10 @@ object NetworkModule {
     // Verificado en línea en S006.
     private const val DRIVE_BASE_URL = "https://www.googleapis.com/drive/v3/"
     private const val DRIVE_UPLOAD_BASE_URL = "https://www.googleapis.com/upload/drive/v3/"
+
+    // Manifiesto de actualizaciones (H07 PARTE 2, PASO 2.4) -- raíz de
+    // github.com, sin API ni autenticación, ver AppUpdateApiService.
+    private const val GITHUB_BASE_URL = "https://github.com/"
 
     // Required by MusicBrainz's rate-limiting rules: every request
     // needs a meaningful User-Agent identifying the app and a way to
@@ -155,4 +160,23 @@ object NetworkModule {
     fun provideDriveUploadApiService(
         @Named("driveUploadRetrofit") retrofit: Retrofit,
     ): DriveUploadApiService = retrofit.create(DriveUploadApiService::class.java)
+
+    // Manifiesto de actualizaciones (H07 PARTE 2, PASO 2.4). Sin
+    // interceptor propio -- github.com no exige nada especial para
+    // un GET a un asset público de Release.
+    @Provides
+    @Singleton
+    @Named("githubRetrofit")
+    fun provideGithubRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(GITHUB_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideAppUpdateApiService(
+        @Named("githubRetrofit") retrofit: Retrofit,
+    ): AppUpdateApiService = retrofit.create(AppUpdateApiService::class.java)
 }

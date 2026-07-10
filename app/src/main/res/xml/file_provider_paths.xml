@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    H07 PARTE 2, PASO 2.5: expone únicamente la subcarpeta donde se
+    descarga el APK de actualización (cacheDir/apk_updates/), nunca
+    el cacheDir completo ni ningún otro directorio de la app.
+
+    H07 PART 2, STEP 2.5: exposes only the subfolder where the
+    update APK is downloaded to (cacheDir/apk_updates/), never the
+    whole cacheDir nor any other app directory.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res-auto">
+    <cache-path name="apk_updates" path="apk_updates/" />
+</paths>
