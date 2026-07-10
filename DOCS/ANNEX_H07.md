@@ -234,32 +234,66 @@ y forzar un refresco de Biblioteca — confirmar que recupera el
 
 ### PARTE 1 — Sincronización automática
 
-**PASO 1.1** — Diseño del archivo de copia de respaldo automática en
-Drive: nombre fijo (no timestamped), carpeta (reutilizar "MiMoo
-Backups" o carpeta nueva — a decidir al implementar), y cómo se
-localiza/actualiza en su sitio (buscar por nombre + `PATCH` de
-contenido sobre el mismo `fileId`, mismo patrón que
-`BackupDriveRepository.ensureBackupFolder()`).
+**PASO 1.1 ✅ (S008)** — Carpeta fija "MiMoo Sync" + archivo fijo
+`mimoo_sync_state.json` en `BackupDriveRepository`
+(`ensureSyncFolder()`/`findSyncFile()`/`pushSyncState()`/
+`pullSyncState()`) — busca por nombre y sobreescribe en su sitio
+(`PATCH` sobre el mismo `fileId`, reutilizando
+`uploadMediaContent()`), nunca genera un archivo nuevo. Distinta de
+"MiMoo Backups" (H06, snapshots manuales con timestamp).
 
-**PASO 1.2** — Hook de escritura automática: cada operación que añade
-o borra un álbum, sencillo o playlist (repositorios ya existentes de
-favoritos/playlists/descargas) dispara una actualización de la copia
-de respaldo en Drive. Necesita accesToken válido en segundo plano —
-revisar cómo encaja con `DriveAuthorizationHelper` (hoy pensado para
-una acción puntual disparada por el usuario desde Ajustes, no para
-escritura en background).
+**PASO 1.2 ⚠️ PARCIAL (S008)** — Resuelto el problema de fondo
+(`DriveAuthorizationHelper` pensado para acción puntual desde
+Activity): `AutoSyncPusher.pushIfAuthorized(activity)`, nuevo,
+reutilizable desde cualquier ViewModel de pantalla — construye el
+bundle actual y lo sube al archivo fijo si ya hay autorización
+concedida; si hace falta consentimiento, se salta en silencio sin
+interrumpir al usuario (la sincronización real de todos modos ocurre
+al siguiente arranque, PASO 1.3).
 
-**PASO 1.3** — Comparación tipo espejo al arrancar/iniciar sesión:
-descargar la copia de respaldo, comparar contra Room+disco local,
-calcular qué falta (descargar) y qué sobra (candidato a borrar).
+**Enganchado ya:** `LibraryViewModel.toggleFavoriteAlbum()` (favoritos
+de álbum) — patrón de referencia para el resto.
 
-**PASO 1.4** — Confirmación antes de borrar: si hay elementos locales
-que ya no están en la copia de respaldo, mostrar un diálogo con el
-detalle antes de ejecutar ningún borrado — nunca automático.
+**Pendiente de enganchar, mismo patrón exacto, sesión futura:**
+- `PlaylistRepository`: crear/renombrar/borrar playlist, añadir/quitar
+  pista de playlist — vía el ViewModel de Playlists (no tocar el
+  repositorio directamente, mismo criterio que favoritos).
+- Descarga de una pista suelta completada (`DownloadWorker`) — **caso
+  especial sin solución trivial:** `DownloadWorker` es un
+  `CoroutineWorker` en segundo plano, sin `Activity` disponible en
+  absoluto (a diferencia de un toggle de favorito, que siempre parte
+  de una pantalla abierta) — no puede llamar a `AutoSyncPusher`
+  directamente. Opción más simple, sin decidir todavía: no empujar al
+  completarse la descarga, confiar en que el PASO 1.3 (arranque
+  siguiente) ya recoge las pistas nuevas la próxima vez que se abra la
+  app en cualquier dispositivo — cubre el caso de uso real igual,
+  solo sin la inmediatez de un push instantáneo.
+
+**PASO 1.3 ✅ (S008)** — `BackupMirrorRepository.computeDiff()`:
+descarga la copia de respaldo (`pullSyncState()`), compara contra
+Room por PK real de cada tabla (`youtubeId` / `artist`+`album` /
+`name` de playlist — nunca por índice), y separa el resultado en dos
+mitades independientes (`applyAdditions()`, sin confirmación,
+`applyDeletions()`, solo tras confirmación explícita). Si es la
+primera sincronización de la cuenta (archivo fijo inexistente
+todavía), sube el estado local tal cual sin comparar.
+`AutoSyncViewModel` dispara esto una vez por arranque de app (ver
+`MainActivity.kt`), solo si ya hay carpeta SAF elegida.
+
+**PASO 1.4 ✅ (S008)** — `AutoSyncUiState.ConfirmDeletions` +
+`AlertDialog` en `MainActivity.kt`: lista cuántas pistas/álbumes
+favoritos/playlists se borrarían, y solo actúa si Miguel Ángel confirma
+explícitamente ("Borrar aquí también" / "No, dejarlo como está") — las
+altas del mismo diff ya se aplicaron antes de mostrar el diálogo (no
+bloquean en espera de la misma confirmación que las bajas).
 
 **PASO 1.5** — Verificación funcional end-to-end con dos dispositivos
 reales: añadir/borrar en uno, confirmar que el otro se sincroniza al
 iniciar sesión, incluyendo el diálogo de confirmación de borrado.
+**Pendiente por Miguel Ángel** — nota importante para la prueba: la
+primera vez que arranque la app con esto instalado, va a pedir
+autorización de Drive automáticamente al abrir (antes lo pedía solo al
+pulsar "Exportar"/"Importar" en Ajustes) — esperado, no es un fallo.
 
 ### PARTE 2 — Actualizaciones in-app + PIN de acceso
 

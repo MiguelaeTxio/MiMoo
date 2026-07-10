@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.library
 
+import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -485,6 +486,7 @@ private fun ColumnScope.AlbumsTabContent(
     onAddToPlaylist: (SearchResultTrack) -> Unit,
     onAddAlbumToPlaylist: (List<SearchResultTrack>) -> Unit,
 ) {
+    val activity = LocalContext.current as Activity
     when (val drill = uiState.albumsDrill) {
         is AlbumsDrillLevel.Letters -> {
             // Entrada "Favoritos" antes de las letras -- petición
@@ -540,7 +542,7 @@ private fun ColumnScope.AlbumsTabContent(
                         onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
                         onAddToQueue = { viewModel.addAlbumToQueue(artist, album) },
                         onInsertNext = { viewModel.insertAlbumNext(artist, album) },
-                        onToggleFavorite = { viewModel.toggleFavoriteAlbum(artist, album) },
+                        onToggleFavorite = { viewModel.toggleFavoriteAlbum(activity, artist, album) },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
                     )
                 }
@@ -597,7 +599,7 @@ private fun ColumnScope.AlbumsTabContent(
                         onAddToQueue = { viewModel.addAlbumToQueue(drill.artist, album) },
                         onInsertNext = { viewModel.insertAlbumNext(drill.artist, album) },
                         onToggleFavorite = {
-                            viewModel.toggleFavoriteAlbum(drill.artist, album)
+                            viewModel.toggleFavoriteAlbum(activity, drill.artist, album)
                         },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
                     )

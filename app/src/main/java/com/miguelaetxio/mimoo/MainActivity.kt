@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,6 +38,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -346,6 +348,75 @@ class MainActivity : ComponentActivity() {
                     }
                     return@MaterialTheme
                 }
+
+                // H07 PARTE 1 -- comprobación de sincronización
+                // automática, una vez por arranque de app, solo si ya
+                // hay una carpeta SAF elegida (si no la hay, el flujo
+                // de selección de carpeta de más abajo tiene
+                // prioridad -- no tiene sentido sincronizar antes de
+                // saber dónde guardar nada). Se ejecuta en segundo
+                // plano, sin bloquear la pantalla normal -- solo
+                // interrumpe con un diálogo si hace falta confirmar
+                // un borrado.
+                // ---
+                // H07 PART 1 -- automatic sync check, once per app
+                // startup, only if a SAF folder is already chosen (if
+                // not, the folder-picking flow below takes priority
+                // -- no point syncing before knowing where to save
+                // anything). Runs in the background, without blocking
+                // the normal screen -- only interrupts with a dialog
+                // if a deletion needs confirming.
+                val autoSyncViewModel: com.miguelaetxio.mimoo.ui.sync.AutoSyncViewModel =
+                    androidx.hilt.navigation.compose.hiltViewModel()
+                val autoSyncState by autoSyncViewModel.uiState.collectAsState()
+                val autoSyncPendingConsent by autoSyncViewModel.pendingConsent.collectAsState()
+
+                val autoSyncConsentLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartIntentSenderForResult(),
+                ) { result ->
+                    autoSyncViewModel.onConsentResolved(this@MainActivity, result.data)
+                }
+
+                LaunchedEffect(Unit) {
+                    if (storageManager.hasRootUri()) {
+                        autoSyncViewModel.startAutoSync(this@MainActivity)
+                    }
+                }
+
+                LaunchedEffect(autoSyncPendingConsent) {
+                    autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
+                }
+
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.ConfirmDeletions)
+                    ?.let { confirmState ->
+                        val diff = confirmState.diff
+                        AlertDialog(
+                            onDismissRequest = autoSyncViewModel::dismissDeletions,
+                            title = { Text("¿Actualizar este dispositivo?") },
+                            text = {
+                                Text(
+                                    "La copia de respaldo automática de Drive ya no tiene " +
+                                        "${diff.tracksToDelete.size} pista(s), " +
+                                        "${diff.favoritesToRemove.size} álbum(es) favorito(s) y " +
+                                        "${diff.playlistsToDelete.size} lista(s) de reproducción " +
+                                        "que sí tienes aquí -- probablemente se borraron desde " +
+                                        "otro dispositivo. ¿Los borro también en este, para " +
+                                        "dejarlo igual que la copia de respaldo?"
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(onClick = autoSyncViewModel::confirmDeletions) {
+                                    Text("Borrar aquí también")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = autoSyncViewModel::dismissDeletions) {
+                                    Text("No, dejarlo como está")
+                                }
+                            },
+                        )
+                    }
+
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {

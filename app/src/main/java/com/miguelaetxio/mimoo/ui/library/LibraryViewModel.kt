@@ -1,10 +1,12 @@
 package com.miguelaetxio.mimoo.ui.library
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.download.DownloadDirManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
@@ -278,6 +280,7 @@ class LibraryViewModel @Inject constructor(
     private val coverArtRepository: CoverArtRepository,
     private val trackFileRelocator: TrackFileRelocator,
     private val favoriteAlbumRepository: FavoriteAlbumRepository,
+    private val autoSyncPusher: AutoSyncPusher,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -330,9 +333,14 @@ class LibraryViewModel @Inject constructor(
      * separate from toggleFavorite() (which is per-track, for
      * singles). Explicit request from Miguel Ángel (2026-07-05).
      */
-    fun toggleFavoriteAlbum(artist: String, album: String) {
+    fun toggleFavoriteAlbum(activity: Activity, artist: String, album: String) {
         viewModelScope.launch {
             favoriteAlbumRepository.toggle(artist, album)
+            // H07 PARTE 1, PASO 1.2 -- empuja el cambio a la copia de
+            // respaldo automática. No bloquea ni falla la acción de
+            // favorito en sí si la subida no puede completarse -- ver
+            // comentario de AutoSyncPusher.
+            autoSyncPusher.pushIfAuthorized(activity)
         }
     }
 
