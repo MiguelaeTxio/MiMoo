@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
@@ -26,6 +28,7 @@ fun PlaylistsScreen(
     onOpenPlaylist: (playlistId: Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activity = LocalContext.current as Activity
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistPendingRename by remember { mutableStateOf<Playlist?>(null) }
     var playlistPendingDelete by remember { mutableStateOf<Playlist?>(null) }
@@ -80,7 +83,7 @@ fun PlaylistsScreen(
             initialName = "",
             onDismiss = { showCreateDialog = false },
             onConfirm = { name ->
-                viewModel.createPlaylist(name)
+                viewModel.createPlaylist(activity, name)
                 showCreateDialog = false
             },
         )
@@ -111,7 +114,7 @@ fun PlaylistsScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deletePlaylist(playlist.id)
+                    viewModel.deletePlaylist(activity, playlist.id)
                     playlistPendingDelete = null
                 }) {
                     Text("Borrar")

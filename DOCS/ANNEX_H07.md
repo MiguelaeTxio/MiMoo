@@ -251,23 +251,37 @@ concedida; si hace falta consentimiento, se salta en silencio sin
 interrumpir al usuario (la sincronización real de todos modos ocurre
 al siguiente arranque, PASO 1.3).
 
-**Enganchado ya:** `LibraryViewModel.toggleFavoriteAlbum()` (favoritos
-de álbum) — patrón de referencia para el resto.
+**Enganchado ya:**
+- `LibraryViewModel.toggleFavoriteAlbum()` (favoritos de álbum) —
+  patrón de referencia.
+- `PlaylistsViewModel.createPlaylist()`/`deletePlaylist()` (S008,
+  misma sesión) — crear/borrar una playlist entera empuja el cambio.
+  `renamePlaylist()` deliberadamente NO empuja: el diff compara
+  playlists por `name`, así que un renombrado ya se refleja solo la
+  próxima vez que se compare (aparecería como "una playlist nueva con
+  el nombre nuevo"), sin necesidad de un push especial para ese caso.
 
-**Pendiente de enganchar, mismo patrón exacto, sesión futura:**
-- `PlaylistRepository`: crear/renombrar/borrar playlist, añadir/quitar
-  pista de playlist — vía el ViewModel de Playlists (no tocar el
-  repositorio directamente, mismo criterio que favoritos).
-- Descarga de una pista suelta completada (`DownloadWorker`) — **caso
-  especial sin solución trivial:** `DownloadWorker` es un
+**Pendiente de enganchar, sesión futura:**
+- Añadir/quitar una pista suelta dentro de una playlist ya existente
+  (`PlaylistDetailViewModel`/`AddToPlaylistDialogViewModel`) —
+  **deliberadamente aplazado, no solo por falta de tiempo:** el
+  `MirrorDiff` actual, cuando el nombre de la playlist ya coincide en
+  ambos lados, no compara ni fusiona su contenido (ver comentario de
+  `BackupMirrorRepository`). Empujar un push en cada
+  añadir/quitar-pista de hoy no serviría de nada todavía en el otro
+  extremo — haría falta primero ampliar el propio algoritmo de diff
+  para comparar contenido de playlists coincidentes por nombre, lo
+  cual sí que es una decisión de producto pendiente de verdad (ver
+  las 3 opciones descritas en la versión S007 de este documento,
+  todavía sin resolver).
+- Descarga de una pista suelta completada (`DownloadWorker`) — caso
+  especial sin solución trivial: `DownloadWorker` es un
   `CoroutineWorker` en segundo plano, sin `Activity` disponible en
   absoluto (a diferencia de un toggle de favorito, que siempre parte
   de una pantalla abierta) — no puede llamar a `AutoSyncPusher`
-  directamente. Opción más simple, sin decidir todavía: no empujar al
-  completarse la descarga, confiar en que el PASO 1.3 (arranque
-  siguiente) ya recoge las pistas nuevas la próxima vez que se abra la
-  app en cualquier dispositivo — cubre el caso de uso real igual,
-  solo sin la inmediatez de un push instantáneo.
+  directamente. Se apoya en la sincronización del siguiente arranque
+  (PASO 1.3) en vez de push instantáneo — cubre el caso de uso real
+  igual, solo sin la inmediatez.
 
 **PASO 1.3 ✅ (S008)** — `BackupMirrorRepository.computeDiff()`:
 descarga la copia de respaldo (`pullSyncState()`), compara contra

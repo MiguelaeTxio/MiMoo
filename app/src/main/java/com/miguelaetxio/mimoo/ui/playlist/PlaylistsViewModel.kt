@@ -1,7 +1,9 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +29,7 @@ data class PlaylistsUiState(
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
     private val repository: PlaylistRepository,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlaylistsUiState())
@@ -40,10 +43,14 @@ class PlaylistsViewModel @Inject constructor(
         }
     }
 
-    fun createPlaylist(name: String) {
+    fun createPlaylist(activity: Activity, name: String) {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return
-        viewModelScope.launch { repository.createPlaylist(trimmed) }
+        viewModelScope.launch {
+            repository.createPlaylist(trimmed)
+            // H07 PARTE 1, PASO 1.2.
+            autoSyncPusher.pushIfAuthorized(activity)
+        }
     }
 
     fun renamePlaylist(playlistId: Long, name: String) {
@@ -52,7 +59,11 @@ class PlaylistsViewModel @Inject constructor(
         viewModelScope.launch { repository.renamePlaylist(playlistId, trimmed) }
     }
 
-    fun deletePlaylist(playlistId: Long) {
-        viewModelScope.launch { repository.deletePlaylist(playlistId) }
+    fun deletePlaylist(activity: Activity, playlistId: Long) {
+        viewModelScope.launch {
+            repository.deletePlaylist(playlistId)
+            // H07 PARTE 1, PASO 1.2.
+            autoSyncPusher.pushIfAuthorized(activity)
+        }
     }
 }
