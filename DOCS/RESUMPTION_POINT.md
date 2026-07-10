@@ -10,47 +10,59 @@ completo. Para el detalle exacto de qué cambió en cada paso, consultar
 
 ---
 
-## Última actualización: 2026-07-08 (cierre de sesión S006 NewFlow)
+## Última actualización: 2026-07-10 (cierre de sesión S007 NewFlow)
 
 **Hito EN PROGRESO:** H06 — ver `DOCS/MASTER_DOCUMENT.md` para la
 tabla completa de hitos y estado. H05 queda pausado sin tocar (PASO 6c
 pendiente, ver `DOCS/ANNEX_H05.md`).
 
-**S006 en resumen:** verificación en dispositivo de las dos features
-de S005 (toggle Biblioteca + "Editar álbum") confirmada correcta.
-Apertura de H06 completo (exportar/importar todo el repositorio vía
-Google Drive) a petición de Miguel Ángel al incorporar una tablet:
-PASOS 1-5 de la hoja de ruta implementados de punta a punta en esta
-misma sesión (DTOs, integración real con Drive, pantalla Ajustes con
-Exportar/Importar, sustitución destructiva, auto-descarga). Detalle
-técnico completo en `DOCS/ANNEX_H06.md`, sección "COMPLETADAS EN
-S006" — no repetirlo aquí.
+**S007 en resumen:** el bloqueo de H06 PASO 6
+(`UNREGISTERED_ON_API_CONSOLE`) quedó **resuelto**. Causa real: el
+proyecto de Google Cloud `mimoo-501004` tenía su registro OAuth roto
+internamente, sin ninguna causa diagnosticable desde la consola —
+confirmado tras agotar con evidencia real todas las comprobaciones de
+configuración y código documentadas (incluida la creación del cliente
+Web application que faltaba, con 14h de margen sin efecto, y una
+prueba de aislamiento de scope que descartó que fuera específico de
+`drive.file`). La solución fue crear un proyecto de Google Cloud
+nuevo desde cero — **`mimoo-drive`** — con la misma configuración
+mínima: funcionó a la primera. "Exportar a Drive" verificado en
+dispositivo real. **"Importar desde Drive" queda sin probar,
+siguiente paso de PASO 6.** Detalle técnico completo en
+`DOCS/ANNEX_H06.md`, sección "INVESTIGACIÓN H06 PASO 6 — RESUELTA EN
+S007" y "COMPLETADAS EN S007".
 
-**PASO 6 (verificación end-to-end en dispositivo) queda bloqueado al
-cierre, sin resolver.** Un bug real de código sí se encontró y
-corrigió en el camino (comprobación de `resultCode` que abandonaba la
-autorización en silencio) — pero tras el fix, la autorización con
-Drive sigue fallando con `ApiException: 8
-[status=UNREGISTERED_ON_API_CONSOLE]`. Todas las comprobaciones de
-configuración de Google Cloud verificables desde la consola (SHA-1,
-package name, proyecto, test users, scope, API habilitada) se hicieron
-con evidencia real y están correctas.
+**Cambios adicionales de esta sesión:**
+- Bug real corregido: `android:allowBackup="true"` causaba que
+  Android restaurase `saf_root_uri` obsoleta tras reinstalar la app
+  (Auto Backup), rompiendo el selector de carpeta y el logging SAF en
+  silencio. Ahora `allowBackup="false"`.
+- **YouTube Data API eliminada del proyecto por completo** (decisión
+  de producto de Miguel Ángel, para poder borrar `mimoo-501004` sin
+  dependencias vivas): la búsqueda/emparejamiento de álbumes
+  (`AlbumSearchViewModel`/`AlbumMatchRepository`) pasa a usar la
+  búsqueda libre de `yt-dlp` que ya usa la pantalla de Búsqueda normal
+  — sin cuota, sin API key. `YouTubeApiService.kt`/`YouTubeRepository.kt`
+  eliminados, `YOUTUBE_API_KEY` fuera del workflow y de
+  `build.gradle.kts`. Build verde tras el cambio.
+- `mimoo-501004` sin ninguna función viva de MiMoo. **Borrado
+  programado por Miguel Ángel para el 9 de agosto de 2026.**
+- `GOOGLE_OAUTH_ANDROID_CLIENT_ID` actualizado al Client ID del
+  proyecto `mimoo-drive` (el de `mimoo-501004` quedó obsoleto).
 
-**Petición explícita de Miguel Ángel para la próxima sesión: que quien
-retome esto investigue el error de cero, sin heredar las hipótesis de
-S006 (caché de Play Services / propagación del cliente OAuth) como si
-fueran conclusiones confirmadas — no lo son, están marcadas como tal
-en `DOCS/ANNEX_H06.md`, sección "INVESTIGACIÓN ABIERTA — H06 PASO 6".**
-Esa sección separa explícitamente los hechos verificados de las
-conjeturas sin probar; empezar por ahí, releer el código real de
-`DriveAuthorizationHelper.kt` en el clon, y contrastar de nuevo con
-documentación actual antes de repetir ninguna de las hipótesis de
-S006 como si fuera la explicación.
+**Siguiente sesión — orden sugerido:**
+1. Probar "Importar desde Drive" en dispositivo real para cerrar H06
+   PASO 6 del todo (export ya verificado).
+2. Si PASO 6 cierra, H06 queda completo — decidir con Miguel Ángel si
+   se retoma H05 (PASO 6c pendiente, ver abajo) o se abre el
+   siguiente hito.
 
 **Pendiente original de H05 (PASO 6c), pausado, no bloquea nada,
 sigue ahí para cuando se retome H05:**
 1. Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
-   emparejamiento vía playlist (11 pistas de golpe).
+   emparejamiento — nota: tras S007 el emparejamiento ya no usa
+   playlist-primero (ver `ANNEX_H06.md`), así que este paso también
+   sirve para verificar el nuevo camino por yt-dlp.
 2. Probar búsqueda de álbum por artista o título sueltos
    ("Beethoven"/"Sinfonía"), confirmando también el orden real de
    pistas.
@@ -62,4 +74,4 @@ sigue ahí para cuando se retome H05:**
 app? Confirmado que nunca existió; sin decisión tomada.
 
 **H03 PASO 8 y H04 PASO 6** (verificación funcional en dispositivo)
-siguen pendientes — no tocados en S006, sin bloquear nada.
+siguen pendientes — no tocados en S007, sin bloquear nada.

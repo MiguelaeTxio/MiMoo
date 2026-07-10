@@ -109,6 +109,19 @@ que `YOUTUBE_API_KEY` — inyectarlo en `local.properties` en el
 workflow y exponerlo como
 `BuildConfig.GOOGLE_OAUTH_ANDROID_CLIENT_ID`. Sin hacer todavía.
 
+> **ACTUALIZACIÓN S007 (2026-07-10):** el proyecto `mimoo-501004`
+> descrito arriba resultó tener un fallo de registro interno
+> irresoluble (ver "INVESTIGACIÓN ABIERTA" más abajo, ahora resuelta).
+> **Todo lo de Drive vive ahora en un proyecto de Google Cloud nuevo,
+> `mimoo-drive`** (creado como `mimoo-h06-test`, renombrado tras
+> confirmar que funcionaba). El Client ID Android de arriba
+> (`652972961389-...`) quedó obsoleto -- el secret
+> `GOOGLE_OAUTH_ANDROID_CLIENT_ID` se actualizó al Client ID nuevo de
+> `mimoo-drive` (ver COMPLETADAS EN S007). `mimoo-501004` está en cola
+> de borrado (programado por Miguel Ángel para el 9 de agosto de 2026)
+> -- ya no aloja ninguna función viva de MiMoo, incluida la YouTube
+> Data API (eliminada del todo en S007, ver más abajo).
+
 **Directriz §4.5 aplica sin excepción:** antes de implementar la
 integración con Drive REST API / Google Sign-In / Credential Manager,
 actualizarse en línea obligatoriamente — son APIs que cambian de
@@ -126,7 +139,7 @@ mecanismo de sign-in en Android en los últimos años).
 | 3 | Pantalla Exportar | HECHO — S006 (`SettingsScreen`/`SettingsViewModel`, entrada "Ajustes" en el drawer, commit `72fdcec`) |
 | 4 | Pantalla Importar + lógica destructiva de sustitución | HECHO — S006 (`BackupImportRepository`, listado+confirmación destructiva en `SettingsScreen`, commit `691ca65`) |
 | 5 | Auto-descarga tras importar, con metadatos ya fijados (sin diálogo de edición) | HECHO — S006 (`SettingsViewModel.importNow()`, commit `691ca65`) |
-| 6 | Verificación funcional end-to-end en dispositivo (móvil → tablet) | PENDIENTE — siguiente sesión |
+| 6 | Verificación funcional end-to-end en dispositivo (móvil → tablet) | PARCIAL — S007: exportar verificado en dispositivo real (proyecto `mimoo-drive`). Falta probar "Importar desde Drive" |
 
 ---
 
@@ -284,88 +297,103 @@ origen.
 
 ---
 
-## INVESTIGACIÓN ABIERTA — H06 PASO 6, sin resolver al cierre de S006
+## COMPLETADAS EN S007 (2026-07-10)
 
-**Petición explícita de Miguel Ángel para quien retome esto:**
-investiga este error de cero. Las hipótesis que aparecen marcadas como
-tal más abajo son conjeturas de S006, no conclusiones verificadas --
-no las des por buenas sin más, ni asumas que el camino que falta es
-simplemente "esperar" o "borrar caché". Contrástalo tú mismo con
-documentación actual y con el código real antes de proponer nada.
+- **Causa real de `UNREGISTERED_ON_API_CONSOLE` encontrada y
+  resuelta**: proyecto de Google Cloud nuevo (`mimoo-h06-test`,
+  renombrado a **`mimoo-drive`**) aislando el problema — ver
+  "INVESTIGACIÓN H06 PASO 6 — RESUELTA EN S007" arriba para el detalle
+  completo de las comprobaciones agotadas antes de llegar a esa
+  solución.
+- **"Exportar a Drive" verificado en dispositivo real** con
+  `mimoo-drive`: `mimoo_backup_20260710_072803.json` subido
+  correctamente. **"Importar desde Drive" queda pendiente de probar.**
+- `GOOGLE_OAUTH_ANDROID_CLIENT_ID` (secret de GitHub Actions)
+  actualizado al Client ID Android del proyecto `mimoo-drive`.
+- **Bug real corregido**: `android:allowBackup="true"` en
+  `AndroidManifest.xml` causaba que el Auto Backup de Android
+  restaurase `saf_root_uri` obsoleta tras reinstalar, saltando el
+  selector de carpeta y rompiendo las escrituras SAF en silencio
+  (incluido `backup_debug.txt`). Corregido a `allowBackup="false"`.
+- `DriveAuthorizationHelper.kt`: logging de errores ampliado para
+  volcar el `Status` completo del `ApiException` (`statusMessage`,
+  `resolution`, no solo `statusCode`) — se mantiene, útil para
+  cualquier fallo de autorización futuro.
+- **YouTube Data API eliminada del proyecto por completo** (decisión
+  explícita de Miguel Ángel, para poder borrar `mimoo-501004` sin
+  dejar ninguna función de MiMoo dependiendo de él): `AlbumSearchViewModel`
+  y `AlbumMatchRepository` (búsqueda/emparejamiento de álbumes, antes
+  vía `search.list`) pasan a usar la misma búsqueda libre de `yt-dlp`
+  (`ExternalLinkResolver.searchYoutube`) que ya usa la pantalla de
+  Búsqueda normal desde el 4 de julio — sin cuota, sin API key. Se
+  perdió la estrategia de "playlist primero" del PASO 6e de H05 (no
+  tiene equivalente gratuito fiable), sustituida por búsqueda libre
+  pista a pista, igual de automática, sin intervención manual.
+  Eliminados `YouTubeApiService.kt`, `YouTubeRepository.kt`, los DTOs
+  de la YouTube Data API (`YouTubeDtos.kt` reducido a solo `TrackDto`),
+  el wiring de Retrofit correspondiente en `NetworkModule.kt`, y el
+  secret `YOUTUBE_API_KEY` del workflow y de `build.gradle.kts`.
+  Build verificado verde en GitHub Actions tras el cambio (commit
+  `08db973`).
+- `mimoo-501004`: sin ninguna función viva de MiMoo colgando de él
+  tras lo anterior. **Borrado programado por Miguel Ángel para el 9 de
+  agosto de 2026** (fecha de borrado definitivo de Google Cloud tras
+  el periodo de gracia de ~30 días).
 
-### El hecho, sin interpretar
+---
 
-Al tocar "Exportar a Drive" en el móvil, tras elegir cuenta de Google
-en el diálogo de consentimiento, la app recibe este error (capturado
-literal en `backup_debug.txt`, ver también Logcat tag
-`MiMoo-Backup-Auth`):
+## INVESTIGACIÓN H06 PASO 6 — RESUELTA EN S007 (2026-07-10)
 
-```
-com.google.android.gms.common.api.ApiException: 8: [8] Unknown error [status=UNREGISTERED_ON_API_CONSOLE].
-	at com.google.android.gms.internal.auth-api.zbad.getAuthorizationResultFromIntent(com.google.android.gms:play-services-auth@@21.6.0:6)
-	at com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper.extractAccessTokenFromResolution(DriveAuthorizationHelper.kt:160)
-```
+### Causa real confirmada
 
-Ocurre siempre en el mismo punto: `authorize()` devuelve
-`hasResolution() == true` (primera vez pidiendo el scope, o acceso
-revocado), se lanza el `IntentSenderRequest`, el usuario completa el
-diálogo de Google, y al volver
-`Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(resultData)`
-lanza esta `ApiException` en vez de devolver un resultado con
-`accessToken`.
+El proyecto de Google Cloud `mimoo-501004` tenía su registro OAuth
+roto de alguna forma interna en los servidores de Google, no visible
+ni diagnosticable desde ningún punto de la consola. Se agotaron,
+con evidencia real (no suposición), TODAS las causas de configuración
+y de código documentadas para `AuthorizationClient`/`Identity`:
 
-### Comprobaciones ya hechas en S006, con su resultado real (hechos, no hipótesis)
+- SHA-1/package del cliente Android: correctos.
+- Cliente OAuth tipo **Web application**: creado (requisito real,
+  documentado oficialmente, que faltaba) — 14h de margen sin efecto.
+- `Audience`/Testing/test users: correctos, cuenta usada = test user
+  listado, verificado letra a letra.
+- `Data access`/scope `drive.file`: presente.
+- Código (`AuthorizationRequest`, launcher, extracción del resultado):
+  contrastado línea a línea contra la documentación oficial vigente,
+  sin discrepancias, en tres pasadas distintas.
+- **Prueba de aislamiento de scope:** pedir `drive.appdata` en vez de
+  `drive.file` (mismo proyecto) dio exactamente el mismo error —
+  descarta que fuera un problema de registro específico de un scope.
+- **Logging ampliado** del `Status` completo del `ApiException`
+  (`statusMessage`, `resolution`) no reveló ningún detalle adicional:
+  `resolution=null` — Google no ofrece ninguna vía de resolución,
+  confirma que es un rechazo cerrado del lado servidor.
 
-Estas comprobaciones SÍ están hechas con evidencia (capturas de
-pantalla de la consola de Google Cloud contrastadas carácter a
-carácter donde aplica) -- no hace falta repetirlas de cero, pero sí
-vale la pena que quien retome esto las re-verifique con sus propios
-ojos si tiene alguna duda, en vez de fiarse de esta nota:
+Con todo lo anterior agotado y verificado, la única prueba real que
+quedaba era **aislar por completo con un proyecto de Google Cloud
+nuevo**. Se creó `mimoo-h06-test` (renombrado después a
+**`mimoo-drive`**) con la configuración mínima idéntica (Drive API +
+cliente Android mismo SHA-1/package + cliente Web + scope
+`drive.file` + mismo test user) — **funcionó a la primera**, sin
+esperar propagación ni reinstalar la app. Confirma que la causa nunca
+fue el código ni la configuración hecha por nosotros: era un estado
+roto específico de `mimoo-501004`, fuera de nuestro alcance
+diagnosticar o arreglar.
 
-- SHA-1 del cliente Android en Google Cloud === SHA-1 real de la
-  keystore de firma (impreso por el workflow de Actions) -- coinciden
-  carácter a carácter.
-- Package name del cliente: `com.miguelaetxio.mimoo` -- coincide con
-  `applicationId` real del proyecto.
-- Proyecto de Google Cloud del cliente OAuth: `miMoo` (`mimoo-501004`)
-  -- mismo proyecto donde está habilitada la Drive API, confirmado por
-  captura de pantalla del selector de proyecto.
-- `Google Auth Platform` → `Audience`: modo `Testing`, con la cuenta de
-  Gmail de Miguel Ángel añadida como Test user.
-- `Google Auth Platform` → `Data Access`: scope
-  `.../auth/drive.file` presente y guardado.
-- `APIs & Services` → `Enabled APIs and services`: Google Drive API
-  aparece como habilitada (`Enabled`) en el proyecto `miMoo`.
-- El código de la llamada (`AuthorizationRequest.Builder`,
-  `Identity.getAuthorizationClient()`, manejo del
-  `IntentSenderRequest`, extracción vía
-  `getAuthorizationResultFromIntent()`) se contrastó línea a línea
-  contra la documentación oficial vigente
-  (`developer.android.com/identity/authorization`) y coincide con el
-  patrón oficial actual -- no se encontró ninguna discrepancia.
+### Bug real de código encontrado y corregido de paso (no relacionado con lo anterior)
 
-### Hipótesis de S006 -- NO VERIFICADAS, no dar por buenas
-
-- **Caché negativa de Play Services en el dispositivo.** Sin probar
-  todavía si borrar la caché de Google Play Services (o reiniciar el
-  móvil) cambia algo.
-- **Propagación del cliente OAuth recién creado.** Basada en un hilo
-  de GitHub (`googlesamples/google-services#381`) sobre el mismo
-  código de error en general, no específico de este proyecto ni de
-  esta API (`AuthorizationClient`/Identity, no el
-  `GoogleSignInClient` clásico al que se refiere la mayoría de
-  reportes de ese hilo). No hay ninguna confirmación de que el tiempo
-  transcurrido sea la causa real aquí.
-
-Ninguna de las dos se ha confirmado ni descartado con una prueba real
-tras agotar el tiempo de espera. Quien retome esto debería, como
-mínimo, cuestionar si `UNREGISTERED_ON_API_CONSOLE` con
-`AuthorizationClient`/`Identity` (API relativamente nueva, distinta de
-`GoogleSignInClient`) tiene alguna causa documentada específica que
-S006 no encontró -- toda la investigación de S006 se apoyó en
-resultados de búsqueda sobre el `GoogleSignInClient` clásico y
-`ApiException: 10`, no en documentación específica de `Identity`/
-`AuthorizationClient` para este código exacto.
+Durante las pruebas de reinstalación repetida se detectó que la app
+nunca volvía a pedir la carpeta SAF raíz ni escribía
+`backup_debug.txt` tras desinstalar/reinstalar. Causa real:
+`android:allowBackup="true"` en `AndroidManifest.xml` (sin exclusión
+alguna) activaba el Auto Backup de Android, que restauraba
+`SharedPreferences` (incluida `saf_root_uri` de `StorageManager.kt`)
+en cada reinstalación — la app creía que ya tenía raíz elegida, pero
+el permiso SAF real nunca se volvía a conceder en la instalación
+nueva, así que cualquier escritura fallaba en silencio. Corregido:
+`allowBackup="false"` (MiMoo ya tiene su propio backup real, el de
+este mismo hito — el de Android era redundante y activamente dañino
+para las pruebas).
 
 ---
 
