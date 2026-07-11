@@ -125,6 +125,156 @@ def resolve_youtube_link(url: str) -> str:
     return json.dumps(result)
 
 
+def search_by_type(query: str, sp: str, limit: int = 15) -> str:
+    """
+    Searches YouTube filtered by result type (playlist or channel) via
+    the "sp" filter token of YouTube's own search results page --
+    same free scraping mechanism as ytsearchN: video search
+    (ExternalLinkResolver.searchYoutube()), never the quota-limited
+    Data API. H08 PARTE 1 (S009): unlike a pasted link, the caller
+    doesn't know the playlist/channel URL yet -- this finds
+    candidates by free text so one can then be opened exactly like a
+    pasted link, via resolve_youtube_link().
+
+    sp is the caller's responsibility (ExternalLinkResolver.kt), not
+    hardcoded here, so the two known filter values (playlists,
+    channels -- verified against YouTube's own "Filtros de búsqueda"
+    UI and independent documentation, S009) live in one place instead
+    of duplicated between Kotlin and Python.
+
+    Returns a JSON string:
+      {
+        "results": [
+          {
+            "id": str,
+            "title": str,
+            "url": str,
+            "subtitle": str,          # best-effort, "" if unknown
+            "thumbnail_url": str | null,
+          },
+          ...
+        ]
+      }
+
+    Never raises for "no matches" (returns an empty list) -- only
+    raises if yt-dlp itself cannot reach the search page at all.
+    Filtered-type search is a less stable area of yt-dlp than plain
+    video search (documented instability in the yt-dlp tracker); a
+    caller getting zero results back is expected behavior to handle
+    gracefully, not necessarily a bug.
+    ---
+    Busca en YouTube filtrado por tipo de resultado (lista o canal) vía
+    el token de filtro "sp" de la propia página de resultados de
+    YouTube -- mismo mecanismo gratuito de scraping que la búsqueda de
+    vídeos ytsearchN: (ExternalLinkResolver.searchYoutube()), nunca la
+    Data API de cuota. H08 PARTE 1 (S009): a diferencia de un enlace
+    pegado, quien llama todavía no conoce la URL de la lista/canal --
+    esto encuentra candidatos por texto libre para que luego se pueda
+    abrir uno exactamente igual que un enlace pegado, vía
+    resolve_youtube_link().
+
+    sp es responsabilidad de quien llama (ExternalLinkResolver.kt), no
+    va fijo aquí, para que los dos valores de filtro conocidos
+    (listas, canales -- verificados contra la propia UI de "Filtros de
+    búsqueda" de YouTube y documentación independiente, S009) vivan en
+    un solo sitio en vez de duplicados entre Kotlin y Python.
+
+    Devuelve una cadena JSON:
+      {
+        "results": [
+          {
+            "id": str,
+            "title": str,
+            "url": str,
+            "subtitle": str,          # best-effort, "" si se desconoce
+            "thumbnail_url": str | null,
+          },
+          ...
+        ]
+      }
+
+    Nunca lanza excepción por "sin resultados" (devuelve una lista
+    vacía) -- solo lanza si yt-dlp no puede llegar en absoluto a la
+    página de resultados. La búsqueda filtrada por tipo es una zona
+    menos estable de yt-dlp que la búsqueda normal de vídeos
+    (inestabilidad documentada en el propio tracker de yt-dlp); que
+    quien llama reciba cero resultados es un comportamiento esperado a
+    manejar con gracia, no necesariamente un fallo.
+    """
+    import json
+    import urllib.parse
+
+    encoded_query = urllib.parse.quote_plus(query)
+    search_url = (
+        f"https://www.youtube.com/results?search_query={encoded_query}&sp={sp}"
+    )
+
+    options = {
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": True,
+        "skip_download": True,
+        "playlistend": limit,
+    }
+    with yt_dlp.YoutubeDL(options) as ydl:
+        info = ydl.extract_info(search_url, download=False)
+
+    entries = (info or {}).get("entries") or []
+    results = [
+        item for entry in entries
+        if entry is not None
+        for item in [_entry_to_search_type_result(entry)]
+        if item is not None
+    ]
+    return json.dumps({"results": results[:limit]})
+
+
+def _entry_to_search_type_result(entry: dict):
+    # Descarta entradas sin id -- igual criterio defensivo que
+    # _entry_to_track() para playlists resueltas por enlace: sin id no
+    # hay nada que abrir despues.
+    # ---
+    # Discards entries without an id -- same defensive criterion as
+    # _entry_to_track() for link-resolved playlists: no id means
+    # nothing to open afterwards.
+    entry_id = entry.get("id")
+    if not entry_id:
+        return None
+
+    entry_type = entry.get("_type") or ""
+    url = entry.get("url") or entry.get("webpage_url")
+    if not url:
+        # extract_flat a veces solo da el id, no la URL completa --
+        # se reconstruye a partir del id y el tipo declarado por
+        # yt-dlp.
+        # ---
+        # extract_flat sometimes only gives the id, not the full URL
+        # -- reconstructed from the id and yt-dlp's declared type.
+        if entry_type == "playlist":
+            url = f"https://www.youtube.com/playlist?list={entry_id}"
+        else:
+            url = f"https://www.youtube.com/channel/{entry_id}"
+
+    subtitle_parts = []
+    item_count = entry.get("playlist_count") or entry.get("entry_count")
+    if item_count:
+        subtitle_parts.append(f"{item_count} vídeos")
+    uploader = entry.get("uploader") or entry.get("channel")
+    if uploader:
+        subtitle_parts.append(uploader)
+    subscriber_count = entry.get("channel_follower_count")
+    if subscriber_count:
+        subtitle_parts.append(f"{subscriber_count} suscriptores")
+
+    return {
+        "id": entry_id,
+        "title": entry.get("title") or "(sin título)",
+        "url": url,
+        "subtitle": " · ".join(subtitle_parts),
+        "thumbnail_url": _best_thumbnail(entry.get("thumbnails")),
+    }
+
+
 def _entry_to_track(entry: dict):
     # Algunas entradas de álbumes/playlists (visto con enlaces de
     # YouTube Music) no traen id de vídeo real -- pistas bonus no

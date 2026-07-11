@@ -10,6 +10,8 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
+import com.miguelaetxio.mimoo.data.remote.SearchResultType
+import com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult
 import com.miguelaetxio.mimoo.ui.library.UNKNOWN_ARTIST_CREDIT
 import com.miguelaetxio.mimoo.util.YoutubeTitleCleaner
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,9 +26,26 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * H08 PARTE 1 (S009) -- qué busca la pantalla de Búsqueda: vídeos
+ * sueltos (comportamiento original, H01), o listas/canales creados
+ * por otros usuarios en YouTube (selector nuevo dentro de la propia
+ * pantalla, decisión explícita de Miguel Ángel: "un selector estaría
+ * bien... así no complicamos mucho la sidebar").
+ * ---
+ * H08 PARTE 1 (S009) -- what the Search screen searches for: single
+ * videos (original behavior, H01), or playlists/channels created by
+ * other users on YouTube (new selector inside the screen itself,
+ * Miguel Ángel's explicit decision: "a selector would be nice... that
+ * way we don't complicate the sidebar much").
+ */
+enum class SearchMode { VIDEOS, PLAYLISTS, CHANNELS }
+
 data class SearchUiState(
     val query: String = "",
+    val mode: SearchMode = SearchMode.VIDEOS,
     val results: List<SearchResultTrack> = emptyList(),
+    val typeResults: List<SearchTypeResult> = emptyList(),
     val isSearching: Boolean = false,
     val isResolvingStream: Boolean = false,
     val errorMessage: String? = null,
@@ -98,10 +117,38 @@ class SearchViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(query = query)
     }
 
+    /**
+     * Cambiar de modo no repite la búsqueda automáticamente (igual
+     * que search() ya requiere pulsar el botón) -- solo limpia los
+     * resultados del modo anterior para que no se vea una lista de
+     * un tipo distinto al seleccionado.
+     * ---
+     * Switching modes doesn't auto-repeat the search (same as
+     * search() already requiring the button) -- it only clears the
+     * previous mode's results so a stale, wrong-type list isn't left
+     * showing.
+     */
+    fun onModeChange(mode: SearchMode) {
+        _uiState.value = _uiState.value.copy(
+            mode = mode,
+            results = emptyList(),
+            typeResults = emptyList(),
+            errorMessage = null,
+        )
+    }
+
     fun search() {
         val query = _uiState.value.query.trim()
         if (query.isEmpty()) return
 
+        when (_uiState.value.mode) {
+            SearchMode.VIDEOS -> searchVideos(query)
+            SearchMode.PLAYLISTS -> searchByType(query, SearchResultType.PLAYLIST)
+            SearchMode.CHANNELS -> searchByType(query, SearchResultType.CHANNEL)
+        }
+    }
+
+    private fun searchVideos(query: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isSearching = true,
@@ -122,6 +169,37 @@ class SearchViewModel @Inject constructor(
                 searchResultTrackRepository.cacheSearchResults(tracks)
                 _currentYoutubeIds.value = tracks.map { it.youtubeId }
                 _uiState.value = _uiState.value.copy(isSearching = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSearching = false,
+                    errorMessage = e.message ?: "Error al buscar",
+                )
+            }
+        }
+    }
+
+    /**
+     * H08 PARTE 1 (S009). No trata una lista vacía como error --
+     * la búsqueda filtrada por tipo es una zona menos estable de
+     * yt-dlp, ver ExternalLinkResolver.searchByType().
+     * ---
+     * H08 PARTE 1 (S009). Doesn't treat an empty list as an error --
+     * type-filtered search is a less stable area of yt-dlp, see
+     * ExternalLinkResolver.searchByType().
+     */
+    private fun searchByType(query: String, type: SearchResultType) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isSearching = true,
+                errorMessage = null,
+                typeResults = emptyList(),
+            )
+            try {
+                val results = externalLinkResolver.searchByType(query, type)
+                _uiState.value = _uiState.value.copy(
+                    isSearching = false,
+                    typeResults = results,
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSearching = false,

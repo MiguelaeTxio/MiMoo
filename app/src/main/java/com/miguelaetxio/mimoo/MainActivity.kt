@@ -568,7 +568,7 @@ class MainActivity : ComponentActivity() {
                                 selected = currentRoute == Screen.ImportLink.route,
                                 onClick = {
                                     navController.navigate(
-                                        Screen.ImportLink.route,
+                                        Screen.ImportLink.routeFor(),
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

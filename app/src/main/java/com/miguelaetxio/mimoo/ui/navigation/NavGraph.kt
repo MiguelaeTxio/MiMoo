@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -24,7 +25,18 @@ sealed class Screen(val route: String) {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
     }
     object AlbumSearch : Screen("album_search")
-    object ImportLink : Screen("import_link")
+    object ImportLink : Screen("import_link?url={url}") {
+        // H08 PARTE 1 (S009) -- url opcional: null para el flujo
+        // original (pegar a mano), o la url de una playlist/canal ya
+        // encontrado por búsqueda, para saltarse el paso de pegarlo.
+        // ---
+        // H08 PARTE 1 (S009) -- optional url: null for the original
+        // flow (paste by hand), or the url of a playlist/channel
+        // already found by search, to skip the paste-it-yourself
+        // step.
+        fun routeFor(url: String? = null) =
+            if (url != null) "import_link?url=${Uri.encode(url)}" else "import_link"
+    }
     object Downloads : Screen("downloads")
     object Queue : Screen("queue")
     object Settings : Screen("settings")
@@ -40,7 +52,12 @@ fun MiMooNavGraph(
         startDestination = Screen.Search.route,
     ) {
         composable(Screen.Search.route) {
-            SearchScreen(onOpenDrawer = onOpenDrawer)
+            SearchScreen(
+                onOpenDrawer = onOpenDrawer,
+                onOpenExternalLink = { url ->
+                    navController.navigate(Screen.ImportLink.routeFor(url))
+                },
+            )
         }
         composable(Screen.Library.route) {
             LibraryScreen(onOpenDrawer = onOpenDrawer)
@@ -71,7 +88,16 @@ fun MiMooNavGraph(
                 },
             )
         }
-        composable(Screen.ImportLink.route) {
+        composable(
+            Screen.ImportLink.route,
+            arguments = listOf(
+                navArgument("url") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) {
             ImportLinkScreen(
                 onOpenDrawer = onOpenDrawer,
                 onNavigateToLibrary = {

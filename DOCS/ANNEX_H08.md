@@ -47,19 +47,11 @@ una):
 - **Listas:** `sp=EgIQAw%3D%3D`
 - **Canales:** `sp=EgIQAg%3D%3D`
 
-**Decisión de alcance (S009):**
-- Se añade búsqueda filtrada por **Listas** y por **Canales**, ambas
-  vía el mismo mecanismo gratuito.
-- **Podcasts/audiolibros quedan descartados** como filtro dedicado —
-  no hay vía técnica fiable, YouTube no los distingue como tipo de
-  búsqueda. Si existen en YouTube como vídeo o playlist normal, la
-  búsqueda de siempre (o la nueva de Listas) ya los encuentra sin
-  código adicional.
-- Colocación en la UI: Miguel Ángel lo planteó como "sidebar" —
-  **pendiente de aclarar** si se refiere al drawer de navegación ya
-  existente (`onOpenDrawer`) o a un selector dentro de la propia
-  pantalla de Búsqueda (chips/pestañas tipo Vídeos/Listas/Canales).
-  No se toca la UI hasta confirmar esto.
+**Colocación en la UI — RESUELTO (S009).** Miguel Ángel confirmó: un
+selector dentro de la propia pantalla de Búsqueda ("un selector estaría
+bien... así no complicamos mucho la sidebar"), no el drawer de
+navegación. Implementado como chips (`FilterChip`, Material 3):
+Vídeos / Listas / Canales.
 
 **Aviso de riesgo técnico, no oculto:** el tracker de yt-dlp muestra
 temporadas en las que la búsqueda filtrada por tipo (Listas/Canales)
@@ -67,7 +59,7 @@ ha dejado de devolver resultados (roto y luego parcheado). Es una
 zona menos estable que la búsqueda normal de vídeos. No hay forma de
 probarlo en vivo desde el entorno del modelo (`api.github.com` y
 similares están permitidos, `youtube.com` no) — la verificación real
-solo puede hacerse compilando y probando en dispositivo real.
+solo puede pasar por construirlo y probarlo en dispositivo real.
 
 ### Hoja de ruta
 
@@ -77,25 +69,31 @@ con `SearchNormalizer` insensible a acentos (corregido también
 retroactivamente en `LibraryViewModel`). Se conserva como mejora
 independiente, no cuenta como progreso de esta PARTE.
 
-**PASO 1.2 — PENDIENTE.** Nueva función Python (`resolver.py` o
-módulo nuevo) que resuelva `youtube.com/results?search_query=...&sp=...`
-con `extract_flat`, devolviendo una lista de playlists o de canales
-(según el `sp` pasado) en vez de vídeos sueltos.
+**PASO 1.2 — HECHO (S009).** `link_resolver.search_by_type(query, sp,
+limit)`: resuelve `youtube.com/results?search_query=...&sp=...` con
+`extract_flat`, devolviendo `{"results": [...]}` (id, title, url,
+subtitle, thumbnail_url) — playlists o canales según el `sp` pasado.
+Nunca lanza por "sin resultados", solo si yt-dlp no puede llegar a la
+página.
 
-**PASO 1.3 — PENDIENTE.** Capa Kotlin: DTOs de resultado de
-playlist/canal + método en `ExternalLinkResolver` (o clase nueva) que
-invoque la función Python nueva.
+**PASO 1.3 — HECHO (S009).** Capa Kotlin: `SearchTypeResult`/
+`SearchTypeResultsWrapper` (DTOs), `SearchResultType` enum (con los
+dos valores `sp` verificados) y `ExternalLinkResolver.searchByType()`.
 
-**PASO 1.4 — PENDIENTE, bloqueado por aclarar la UX ("sidebar").**
-Integración en `SearchScreen.kt`: selector de tipo de resultado, lista
-de resultados de playlist/canal, acción al tocar uno (reutilizar el
-flujo ya existente de `resolve_youtube_link()`/"Importar enlace" para
-abrir la lista completa en streaming o descarga).
+**PASO 1.4 — HECHO (S009).** Integración en `SearchScreen.kt`:
+selector de modo (chips), lista de resultados de playlist/canal
+(`SearchTypeResultRow`), y al tocar uno se navega a `ImportLinkScreen`
+con la url ya resuelta (`Screen.ImportLink.routeFor(url)`, argumento
+de navegación opcional nuevo) — `ImportLinkViewModel` la detecta por
+`SavedStateHandle` y llama a `resolveLink()` sola, reutilizando el
+100% del flujo ya existente de "Importar enlace" (elegir pistas,
+reproducir en streaming o descargar) sin duplicar lógica.
 
 **PASO 1.5 — PENDIENTE.** Verificación en dispositivo real: confirmar
 que la búsqueda filtrada por Listas y por Canales sigue devolviendo
 resultados hoy (dado el histórico de inestabilidad de yt-dlp en esta
-zona).
+zona), y que abrir un resultado lleva correctamente a "Importar
+enlace" con la lista/canal ya resuelto.
 
 ---
 

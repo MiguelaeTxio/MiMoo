@@ -26,3 +26,28 @@ data class ExternalLinkTrack(
     @SerializedName("channel_title") val channelTitle: String,
     @SerializedName("thumbnail_url") val thumbnailUrl: String?,
 )
+
+/**
+ * Wraps the JSON returned by link_resolver.search_by_type() (H08
+ * PARTE 1, S009) -- a playlist or channel found by free-text search,
+ * not yet resolved into its individual tracks. Opening one (url)
+ * reuses resolve_youtube_link()/ImportLinkScreen exactly like a
+ * pasted link.
+ * ---
+ * Envuelve el JSON que devuelve link_resolver.search_by_type() (H08
+ * PARTE 1, S009) -- una lista o canal encontrado por búsqueda de texto
+ * libre, todavía sin resolver a sus pistas individuales. Abrir uno
+ * (url) reutiliza resolve_youtube_link()/ImportLinkScreen exactamente
+ * igual que un enlace pegado.
+ */
+data class SearchTypeResultsWrapper(
+    val results: List<SearchTypeResult>,
+)
+
+data class SearchTypeResult(
+    val id: String,
+    val title: String,
+    val url: String,
+    val subtitle: String,
+    @SerializedName("thumbnail_url") val thumbnailUrl: String?,
+)

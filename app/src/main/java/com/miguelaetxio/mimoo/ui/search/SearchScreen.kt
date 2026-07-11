@@ -1,13 +1,16 @@
 package com.miguelaetxio.mimoo.ui.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
@@ -17,10 +20,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult
 import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +34,7 @@ import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel(),
     onOpenDrawer: () -> Unit,
+    onOpenExternalLink: (url: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var trackPendingAddToPlaylist by remember {
@@ -81,6 +88,35 @@ fun SearchScreen(
 
             Spacer(Modifier.height(8.dp))
 
+            // H08 PARTE 1 (S009) -- selector de modo dentro de la
+            // propia pantalla, no en el drawer de navegación (decisión
+            // explícita de Miguel Ángel: "un selector estaría bien...
+            // así no complicamos mucho la sidebar"). Cambiar de modo
+            // no repite la búsqueda sola, igual que el propio botón de
+            // búsqueda ya requiere una acción explícita.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SearchModeChip(
+                    label = "Vídeos",
+                    selected = uiState.mode == SearchMode.VIDEOS,
+                    onClick = { viewModel.onModeChange(SearchMode.VIDEOS) },
+                )
+                SearchModeChip(
+                    label = "Listas",
+                    selected = uiState.mode == SearchMode.PLAYLISTS,
+                    onClick = { viewModel.onModeChange(SearchMode.PLAYLISTS) },
+                )
+                SearchModeChip(
+                    label = "Canales",
+                    selected = uiState.mode == SearchMode.CHANNELS,
+                    onClick = { viewModel.onModeChange(SearchMode.CHANNELS) },
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
             if (uiState.isSearching) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
@@ -93,16 +129,46 @@ fun SearchScreen(
                 )
             }
 
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(uiState.results, key = { it.youtubeId }) { track ->
-                    SearchResultRow(
-                        track = track,
-                        onPlay = { viewModel.playTrack(track) },
-                        onDownload = { trackPendingDownloadConfirm = track },
-                        onToggleFavorite = { viewModel.toggleFavorite(track) },
-                        onAddToPlaylist = { trackPendingAddToPlaylist = track },
+            if (uiState.mode == SearchMode.VIDEOS) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(uiState.results, key = { it.youtubeId }) { track ->
+                        SearchResultRow(
+                            track = track,
+                            onPlay = { viewModel.playTrack(track) },
+                            onDownload = { trackPendingDownloadConfirm = track },
+                            onToggleFavorite = { viewModel.toggleFavorite(track) },
+                            onAddToPlaylist = { trackPendingAddToPlaylist = track },
+                        )
+                        HorizontalDivider()
+                    }
+                }
+            } else {
+                // H08 PARTE 1 (S009) -- resultado de tipo playlist/canal:
+                // no tiene reproducción/descarga propia como una pista
+                // suelta, se abre con el flujo ya existente de
+                // "Importar enlace" (resolver, elegir pistas, reproducir
+                // o descargar la lista entera).
+                if (!uiState.isSearching && uiState.typeResults.isEmpty() &&
+                    uiState.query.isNotBlank() && uiState.errorMessage == null
+                ) {
+                    Text(
+                        "Sin resultados para este filtro. La búsqueda por " +
+                            "Listas/Canales es menos estable que la de " +
+                            "vídeos -- si no aparece nada, prueba con otra " +
+                            "búsqueda o vuelve a Vídeos.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp),
                     )
-                    HorizontalDivider()
+                }
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(uiState.typeResults, key = { it.id }) { result ->
+                        SearchTypeResultRow(
+                            result = result,
+                            onOpen = { onOpenExternalLink(result.url) },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
 
@@ -330,4 +396,81 @@ private fun formatDuration(totalSeconds: Int): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
+}
+
+/**
+ * Chip de selección de modo de búsqueda (H08 PARTE 1, S009). Usa
+ * FilterChip de Material 3 en vez de una pestaña o un radio button --
+ * mismo componente que el resto de la app usa para selección
+ * exclusiva de opciones cortas.
+ * ---
+ * Search mode selection chip (H08 PARTE 1, S009). Uses Material 3's
+ * FilterChip instead of a tab or radio button -- same component the
+ * rest of the app already uses for exclusive selection of short
+ * options.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchModeChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+    )
+}
+
+/**
+ * Fila de un resultado de playlist/canal (H08 PARTE 1, S009). Tocarla
+ * abre el flujo ya existente de "Importar enlace" con la url ya
+ * resuelta -- no tiene reproducción/descarga propia como una pista
+ * suelta.
+ * ---
+ * Row for a playlist/channel result (H08 PARTE 1, S009). Tapping it
+ * opens the existing "Importar enlace" flow with the url already
+ * resolved -- it has no play/download action of its own like a
+ * single track.
+ */
+@Composable
+private fun SearchTypeResultRow(
+    result: SearchTypeResult,
+    onOpen: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (result.thumbnailUrl != null) {
+            SubcomposeAsyncImage(
+                model = result.thumbnailUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                error = {},
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(result.title, style = MaterialTheme.typography.bodyLarge)
+            if (result.subtitle.isNotBlank()) {
+                Text(
+                    result.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Icon(
+            Icons.Filled.OpenInNew,
+            contentDescription = "Abrir",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }

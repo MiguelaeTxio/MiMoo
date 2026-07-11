@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.importlink
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
@@ -69,6 +70,7 @@ data class ImportLinkUiState(
  */
 @HiltViewModel
 class ImportLinkViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val externalLinkResolver: ExternalLinkResolver,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val downloadQueueManager: DownloadQueueManager,
@@ -79,6 +81,27 @@ class ImportLinkViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(ImportLinkUiState())
     val uiState: StateFlow<ImportLinkUiState> = _uiState.asStateFlow()
+
+    init {
+        // H08 PARTE 1 (S009) -- si se llega aquí desde un resultado de
+        // búsqueda de playlist/canal (SearchScreen), la url ya viene
+        // resuelta por navegación: se prellena y se resuelve sola, sin
+        // que el usuario tenga que pegarla ni pulsar "Ver contenido
+        // del enlace" -- el flujo de pegar a mano sigue igual cuando
+        // no llega ninguna url (navegación normal desde el drawer).
+        // ---
+        // H08 PARTE 1 (S009) -- if reached from a playlist/channel
+        // search result (SearchScreen), the url already arrives via
+        // navigation: it's pre-filled and auto-resolved, without the
+        // user having to paste it or tap "Ver contenido del enlace" --
+        // the paste-by-hand flow stays identical when no url arrives
+        // (normal navigation from the drawer).
+        val initialUrl: String? = savedStateHandle["url"]
+        if (!initialUrl.isNullOrBlank()) {
+            _uiState.value = _uiState.value.copy(url = initialUrl)
+            resolveLink()
+        }
+    }
 
     fun onUrlChange(url: String) {
         _uiState.value = _uiState.value.copy(url = url)

@@ -3,10 +3,33 @@ package com.miguelaetxio.mimoo.data.remote
 import com.chaquo.python.Python
 import com.google.gson.Gson
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkResult
+import com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult
+import com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResultsWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * H08 PARTE 1 (S009) -- tipo de resultado por el que filtrar una
+ * búsqueda de YouTube, usando el mismo token "sp" que el propio
+ * selector "Filtros de búsqueda" de la app de YouTube. Valores
+ * verificados contra una captura real de esa UI y contra
+ * documentación independiente de terceros (no una única fuente) --
+ * YouTube no tiene un tipo "Podcast"/"Audiolibro" dedicado, así que
+ * no existe un tercer valor para eso.
+ * ---
+ * H08 PARTE 1 (S009) -- result type to filter a YouTube search by,
+ * using the same "sp" token as YouTube's own "Filtros de búsqueda"
+ * selector. Values verified against a real screenshot of that UI and
+ * against independent third-party documentation (not a single
+ * source) -- YouTube has no dedicated "Podcast"/"Audiobook" type, so
+ * there is no third value for that.
+ */
+enum class SearchResultType(val spFilter: String) {
+    PLAYLIST("EgIQAw%3D%3D"),
+    CHANNEL("EgIQAg%3D%3D"),
+}
 
 /**
  * Resolves a pasted YouTube/YouTube Music link (single video or
@@ -79,4 +102,47 @@ class ExternalLinkResolver @Inject constructor() {
      */
     suspend fun searchYoutube(query: String, limit: Int = 15): ExternalLinkResult =
         resolveLink("ytsearch$limit:$query")
+
+    /**
+     * H08 PARTE 1 (S009) -- busca listas o canales por texto libre,
+     * a coste de cuota CERO (mismo mecanismo de scraping que
+     * searchYoutube(), requisito explícito de Miguel Ángel). Cada
+     * resultado trae su propia url resoluble, que se abre después
+     * con resolveLink() exactamente igual que un enlace pegado a
+     * mano en "Importar enlace" -- no hace falta ninguna lógica de
+     * apertura nueva.
+     *
+     * Aviso de riesgo, no oculto: la búsqueda filtrada por tipo es
+     * una zona menos estable de yt-dlp que la búsqueda normal de
+     * vídeos (historial de roturas documentado en su propio
+     * tracker); una lista vacía de resultados es un desenlace
+     * esperable a mostrar con gracia en la UI, no necesariamente un
+     * error.
+     * ---
+     * H08 PARTE 1 (S009) -- searches playlists or channels by free
+     * text, at ZERO quota cost (same scraping mechanism as
+     * searchYoutube(), Miguel Ángel's explicit requirement). Each
+     * result carries its own resolvable url, later opened with
+     * resolveLink() exactly like a link pasted by hand in "Importar
+     * enlace" -- no new opening logic needed.
+     *
+     * Risk disclosure, not hidden: type-filtered search is a less
+     * stable area of yt-dlp than plain video search (documented
+     * history of breakage in its own tracker); an empty result list
+     * is an expected outcome to show gracefully in the UI, not
+     * necessarily an error.
+     */
+    suspend fun searchByType(
+        query: String,
+        type: SearchResultType,
+        limit: Int = 15,
+    ): List<SearchTypeResult> =
+        withContext(Dispatchers.IO) {
+            val py = Python.getInstance()
+            val module = py.getModule("link_resolver")
+            val json = module.callAttr(
+                "search_by_type", query, type.spFilter, limit,
+            ).toString()
+            gson.fromJson(json, SearchTypeResultsWrapper::class.java).results
+        }
 }
