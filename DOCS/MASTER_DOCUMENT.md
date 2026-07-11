@@ -22,10 +22,11 @@ la vez. Cambiar de hito es editar esta tabla y commitear — ver
 | H04 | Listas de Reproducción Locales | `DOCS/ANNEX_H04.md` | |
 | H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | |
 | H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | |
-| H07 | Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción | `DOCS/ANNEX_H07.md` | ← EN PROGRESO |
+| H07 | Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción | `DOCS/ANNEX_H07.md` | |
+| H08 | Búsqueda de Listas de Reproducción + Música Relacionada ("Radio") | `DOCS/ANNEX_H08.md` | ← EN PROGRESO |
 
 **Resultado actual (migrado desde la sesión skill-based, 2026-07-02;
-actualizado 2026-07-10 S007):**
+actualizado 2026-07-11 S008):**
 H01 y H02 completados y verificados funcionalmente. H03 (PASOS 6, 7,
 9 hechos en la sesión del 2026-07-02) y H04 (PASOS 1-6 hechos, mismo
 día) tienen todo el código escrito pero comparten un pendiente:
@@ -39,9 +40,17 @@ enlace — ver `DOCS/ANNEX_H05.md`, no es el hito activo). H06 queda
 dispositivo real (proyecto Google Cloud `mimoo-drive`, tras resolver
 en S007 un bloqueo de registro OAuth irresoluble en el proyecto
 original `mimoo-501004` — ver `DOCS/ANNEX_H06.md`); **"Importar desde
-Drive" queda sin probar**, pendiente para cuando se retome H06. H07 es
-hito nuevo, sin código todavía, abierto en S007 a petición explícita
-de Miguel Ángel una vez confirmado que Drive funciona.
+Drive" queda sin probar**, pendiente para cuando se retome H06. **H07
+queda pausado, completado y verificado en dispositivo real con dos
+dispositivos** (S008): persistencia del link en metadatos + DB,
+sincronización automática con regla de negocio completa (identidad de
+dispositivo, bloqueo de mutaciones sin conexión, verificación
+disco↔BBDD, restauración selectiva), actualizaciones in-app vía
+GitHub Releases dedicado, PIN de acceso, y controles de reproducción
+cíclico/aleatorio — ver `DOCS/ANNEX_H07.md` para el detalle completo
+de las seis vueltas de fixes reales de esta sesión. H08 es hito nuevo,
+sin código todavía, abierto en S008 a petición explícita de Miguel
+Ángel.
 
 ---
 
@@ -109,9 +118,10 @@ reinstalar o cambiar de dispositivo.
    minutaje, y edición manual cuando el emparejamiento falla —
    Hito 05.
 6. Backup/restauración de metadatos vía Google Drive entre
-   dispositivos — Hito 06 (`DOCS/ANNEX_H06.md`). Música relacionada
-   sigue como hito futuro, sin alcance definido ni anexo — explícitamente
-   otra cosa, no confundir con H06.
+   dispositivos — Hito 06 (`DOCS/ANNEX_H06.md`). Búsqueda de listas de
+   reproducción y música relacionada — Hito 08
+   (`DOCS/ANNEX_H08.md`) — explícitamente otra cosa, no confundir con
+   H06.
 
 ---
 
@@ -129,11 +139,13 @@ reinstalar o cambiar de dispositivo.
   del dispositivo vía SAF, estructura `{raíz elegida}/{artista}/{álbum}/`.
 - **Compilación:** NO se realiza localmente con Android Studio ni
   `gradlew` (recursos insuficientes en el equipo de desarrollo). Se
-  realiza en la nube vía GitHub Actions (`assembleDebug`, JDK 17),
-  que tras cada push compila el APK y la sube directamente a
-  PythonAnywhere (único uso de PythonAnywhere que sigue vigente en
-  NewFlow: alojar la APK compilada para descarga, nunca el código
-  fuente).
+  realiza en la nube vía GitHub Actions (`assembleDebug`, JDK 17), que
+  tras cada push compila el APK y la sube a dos sitios (H07,
+  S008): PythonAnywhere (histórico, descarga manual por sftp) y una
+  Release en el repositorio público dedicado `AndroidReleases`
+  (`MiguelaeTxio/AndroidReleases`, con `manifest.json`) para que la
+  propia app compruebe y descargue actualizaciones sola — ver
+  `DOCS/ANNEX_H07.md` PARTE 2.
 
 ### 2.2. Motor de Audio — yt-dlp vía Chaquopy
 
@@ -204,13 +216,15 @@ standalone de yt-dlp — es un script Python). El mismo módulo
   el código ni para la documentación.
 - **Compilación automática:** GitHub Actions
   (`.github/workflows/build-and-deploy.yml`) — compila APK debug y la
-  sube a `ANDROID/MiMoo/apk/MiMoo.apk` en PythonAnywhere (único punto
-  de contacto restante con PythonAnywhere: servir la APK compilada
-  para descarga, gestionado por el propio workflow sin intervención
-  manual).
+  sube a `ANDROID/MiMoo/apk/MiMoo.apk` en PythonAnywhere (vía manual
+  por sftp), y publica una Release con el APK + `manifest.json` en
+  `MiguelaeTxio/AndroidReleases` (H07, S008) para que la app compruebe
+  actualizaciones sola — ver `DOCS/ANNEX_H07.md` PARTE 2.
 - **Secrets necesarios en GitHub Actions:**
   `GOOGLE_OAUTH_ANDROID_CLIENT_ID` (proyecto `mimoo-drive`, ver
-  `DOCS/ANNEX_H06.md`), `DEBUG_KEYSTORE_BASE64`, `PA_API_TOKEN`.
+  `DOCS/ANNEX_H06.md`), `DEBUG_KEYSTORE_BASE64`, `PA_API_TOKEN`,
+  `RELEASES_REPO_LAST_TOKEN` (H07, S008 — PAT de solo el repo
+  `AndroidReleases`, `Contents: Read and write`).
   `YOUTUBE_API_KEY` ya no existe — eliminado en S007 junto con toda la
   YouTube Data API (ver §2.3).
 
@@ -245,29 +259,35 @@ otro dispositivo sustituyendo por completo el repositorio local
 destino y encolando la descarga de cada pista con los metadatos ya
 corregidos. "Exportar" verificado en dispositivo real (S007);
 "Importar" implementado, verificación pendiente. Explícitamente
-independiente de cualquier futura función de "música relacionada"
-(punto 6 de §1, sigue sin alcance definido y sin tocar).
+independiente de la búsqueda de listas de reproducción y la música
+relacionada (Hito 08).
 
-### Hito 7: Sincronización entre Dispositivos + Actualizaciones In-App
-(Ver `DOCS/ANNEX_H07.md`) — EN PROGRESO. Hito nuevo abierto en S007:
+### Hito 7: Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción
+(Ver `DOCS/ANNEX_H07.md`) — Pausado, completado y verificado en
+dispositivo real con dos dispositivos (S008). Persistencia del
+`youtubeId` en metadatos del archivo + base de datos; sincronización
+automática entre dispositivos con regla de negocio completa (identidad
+de dispositivo, bloqueo de mutaciones sin conexión, verificación
+disco↔BBDD, restauración selectiva); actualizaciones in-app vía
+repositorio GitHub dedicado (`AndroidReleases`); PIN de acceso; y
+controles de reproducción cíclico/aleatorio.
+
+### Hito 8: Búsqueda de Listas de Reproducción + Música Relacionada ("Radio")
+(Ver `DOCS/ANNEX_H08.md`) — EN PROGRESO. Hito nuevo abierto en S008:
 dos funciones distintas comparten hito por surgir de la misma
 conversación, no por dependencia técnica entre ellas.
-1. **Sincronización incremental vía Drive** — a diferencia de la
-   importación destructiva de H06 (sustituye todo el repositorio
-   local), aquí solo se descarga/añade lo nuevo desde la última
-   sincronización, pensado para un dispositivo que ya tiene contenido
-   y solo quiere ponerse al día, no partir de cero.
-2. **Comprobación y descarga de actualizaciones de la app desde dentro
-   de la propia app** — la APK compilada ya se aloja en PythonAnywhere
-   (ver §2.5); hace falta exponer también la versión más reciente
-   (manifiesto) para que la app pueda comparar su propia versión y
-   ofrecer la descarga sin que Miguel Ángel tenga que ir a buscarla a
-   mano.
-
-Prerrequisito de Google Cloud: añadir `silviaytxio@gmail.com` como
-test user en el proyecto `mimoo-drive` (Google Auth Platform →
-Audience), para que también pueda usar Drive con MiMoo — sin hacer
-todavía, ver `DOCS/ANNEX_H07.md`.
+1. **Búsqueda de listas de reproducción** — la pantalla de Playlists
+   no tiene filtro/búsqueda propio, a diferencia de Biblioteca
+   ("Filtrar biblioteca"). Alcance bien definido, sin ambigüedad.
+2. **Música relacionada ("Radio")** — cuando la cola de reproducción
+   se queda sin nada más que reproducir, sugerir/encolar
+   automáticamente música relacionada con lo que se estaba
+   escuchando, en vez de simplemente parar. **Alcance deliberadamente
+   sin cerrar** — ver `DOCS/ANNEX_H08.md` para las preguntas de diseño
+   abiertas que Miguel Ángel planteó explícitamente sin resolver
+   (cuándo se dispara exactamente, de dónde sale la relación
+   artista↔artista, si hace falta un tercer control además de
+   cíclico/aleatorio).
 
 ---
 
