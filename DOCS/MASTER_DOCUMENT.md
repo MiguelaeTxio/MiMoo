@@ -276,9 +276,15 @@ controles de reproducción cíclico/aleatorio.
 (Ver `DOCS/ANNEX_H08.md`) — EN PROGRESO. Hito nuevo abierto en S008:
 dos funciones distintas comparten hito por surgir de la misma
 conversación, no por dependencia técnica entre ellas.
-1. **Búsqueda de listas de reproducción** — la pantalla de Playlists
-   no tiene filtro/búsqueda propio, a diferencia de Biblioteca
-   ("Filtrar biblioteca"). Alcance bien definido, sin ambigüedad.
+1. **Búsqueda de listas de reproducción y canales (online)** — buscar
+   por texto y encontrar listas/canales ya creados por otros usuarios
+   en YouTube (no las playlists propias del usuario, que ya tienen su
+   propio filtro local, añadido como mejora aparte). Vía los filtros
+   nativos de YouTube (Listas/Canales), mismo mecanismo gratuito que
+   la búsqueda de vídeos actual. Podcasts/audiolibros descartados como
+   filtro dedicado: YouTube no los distingue como tipo de búsqueda.
+   Ver `DOCS/ANNEX_H08.md` para el detalle y la corrección de alcance
+   de S009.
 2. **Música relacionada ("Radio")** — cuando la cola de reproducción
    se queda sin nada más que reproducir, sugerir/encolar
    automáticamente música relacionada con lo que se estaba

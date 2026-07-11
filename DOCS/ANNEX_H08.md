@@ -19,48 +19,83 @@ agrupación.
 
 ---
 
-## PARTE 1 — Búsqueda de listas de reproducción
+## PARTE 1 — Búsqueda de listas de reproducción y canales (online)
 
-**Alcance bien definido, sin ambigüedad.** La pantalla de Playlists
-(`PlaylistsScreen.kt`, H04) lista todas las listas de reproducción sin
-ningún filtro ni buscador — a diferencia de Biblioteca, que ya tiene
-"Filtrar biblioteca" (`LibraryViewModel.onFilterQueryChange()`) desde
-H03. Con pocas playlists no se nota; en cuanto haya unas cuantas, hace
-falta lo mismo que ya existe en Biblioteca.
+**Corrección de alcance (S009).** Definición inicial equivocada: se
+implementó primero un filtro sobre las playlists **locales** del
+propio usuario (`PlaylistsScreen.kt`) — funcionalidad real y ya
+mereció la pena, **se queda**, pero no es esto. Lo que pidió Miguel
+Ángel es buscar por texto (p. ej. "música de los 90") y encontrar
+**listas de reproducción ya creadas por otros usuarios en YouTube**,
+para escucharlas en streaming o descargarlas — esto toca la pantalla
+de Búsqueda (H01), no Playlists locales.
 
-**Diseño (a confirmar con Miguel Ángel al empezar a implementar, pero
-sin ambigüedad real):**
-- Un campo de texto en `PlaylistsScreen.kt`, mismo patrón visual que
-  "Filtrar biblioteca".
-- Filtra por nombre de playlist — coincidencia parcial, insensible a
-  mayúsculas y a acentos vía `util/SearchNormalizer.kt` (NFD +
-  eliminación de marcas combinantes). **Corrección de criterio
-  (S009):** el filtro de Biblioteca en el que se iba a basar este
-  únicamente hacía `trim().lowercase()`, sin normalizar acentos — un
-  fallo real de usabilidad, no un patrón a copiar. Se creó
-  `SearchNormalizer` como utilidad compartida y se corrigió también
-  retroactivamente `LibraryViewModel.recompute()`, no solo el filtro
-  nuevo de Playlists.
-- Filtrado en memoria sobre la lista ya cargada
-  (`PlaylistsViewModel.uiState.playlists`), sin tocar Room — mismo
-  patrón que Biblioteca, no hace falta una query nueva.
+**Requisito explícito: búsqueda 100% gratuita, cero cuota** — mismo
+principio que ya rige toda la búsqueda de MiMoo desde H01 (PASO
+2026-07-04, `ExternalLinkResolver.searchYoutube()`). Verificado
+(S009): el mecanismo es el mismo scraping directo de la página de
+resultados de YouTube que ya usa la búsqueda de vídeos actual
+(`youtube.com/results?search_query=...`), no la Data API — cero coste
+añadido.
+
+**Filtro por tipo — verificado con captura real de la app de YouTube
+(S009):** el propio selector "Filtros de búsqueda" de YouTube
+distingue Todo / Vídeos / Shorts / Canales / Listas / Películas — no
+existe un filtro de tipo "Podcast" ni "Audiolibro". Valores del
+parámetro `sp` (confirmados por varias fuentes independientes, no solo
+una):
+- **Listas:** `sp=EgIQAw%3D%3D`
+- **Canales:** `sp=EgIQAg%3D%3D`
+
+**Decisión de alcance (S009):**
+- Se añade búsqueda filtrada por **Listas** y por **Canales**, ambas
+  vía el mismo mecanismo gratuito.
+- **Podcasts/audiolibros quedan descartados** como filtro dedicado —
+  no hay vía técnica fiable, YouTube no los distingue como tipo de
+  búsqueda. Si existen en YouTube como vídeo o playlist normal, la
+  búsqueda de siempre (o la nueva de Listas) ya los encuentra sin
+  código adicional.
+- Colocación en la UI: Miguel Ángel lo planteó como "sidebar" —
+  **pendiente de aclarar** si se refiere al drawer de navegación ya
+  existente (`onOpenDrawer`) o a un selector dentro de la propia
+  pantalla de Búsqueda (chips/pestañas tipo Vídeos/Listas/Canales).
+  No se toca la UI hasta confirmar esto.
+
+**Aviso de riesgo técnico, no oculto:** el tracker de yt-dlp muestra
+temporadas en las que la búsqueda filtrada por tipo (Listas/Canales)
+ha dejado de devolver resultados (roto y luego parcheado). Es una
+zona menos estable que la búsqueda normal de vídeos. No hay forma de
+probarlo en vivo desde el entorno del modelo (`api.github.com` y
+similares están permitidos, `youtube.com` no) — la verificación real
+solo puede hacerse compilando y probando en dispositivo real.
 
 ### Hoja de ruta
 
-**PASO 1.1 — HECHO (S009).** `filterQuery`/`filteredPlaylists` en
-`PlaylistsUiState` + `onFilterQueryChange()`/`recompute()` en
-`PlaylistsViewModel`, lista filtrada derivada (no sustituye
-`playlists`).
+**PASO 1.1 — HECHO (S009), pero fuera del alcance real.** Filtro
+sobre playlists locales (`PlaylistsViewModel`/`PlaylistsScreen.kt`),
+con `SearchNormalizer` insensible a acentos (corregido también
+retroactivamente en `LibraryViewModel`). Se conserva como mejora
+independiente, no cuenta como progreso de esta PARTE.
 
-**PASO 1.2 — HECHO (S009).** Campo "Filtrar listas" en
-`PlaylistsScreen.kt`, mismo estilo que `LibraryScreen.kt`; visible
-mientras haya al menos una playlist. Distingue "no hay listas" de
-"el filtro no encuentra nada".
+**PASO 1.2 — PENDIENTE.** Nueva función Python (`resolver.py` o
+módulo nuevo) que resuelva `youtube.com/results?search_query=...&sp=...`
+con `extract_flat`, devolviendo una lista de playlists o de canales
+(según el `sp` pasado) en vez de vídeos sueltos.
 
-**PASO 1.3 — PENDIENTE.** Verificación funcional en dispositivo real:
-crear varias playlists con nombres parecidos (con y sin acentos),
-confirmar que el filtro reduce la lista correctamente y que
-crear/borrar/renombrar sigue funcionando con el filtro activo.
+**PASO 1.3 — PENDIENTE.** Capa Kotlin: DTOs de resultado de
+playlist/canal + método en `ExternalLinkResolver` (o clase nueva) que
+invoque la función Python nueva.
+
+**PASO 1.4 — PENDIENTE, bloqueado por aclarar la UX ("sidebar").**
+Integración en `SearchScreen.kt`: selector de tipo de resultado, lista
+de resultados de playlist/canal, acción al tocar uno (reutilizar el
+flujo ya existente de `resolve_youtube_link()`/"Importar enlace" para
+abrir la lista completa en streaming o descarga).
+
+**PASO 1.5 — PENDIENTE.** Verificación en dispositivo real: confirmar
+que la búsqueda filtrada por Listas y por Canales sigue devolviendo
+resultados hoy (dado el histórico de inestabilidad de yt-dlp en esta
+zona).
 
 ---
 
