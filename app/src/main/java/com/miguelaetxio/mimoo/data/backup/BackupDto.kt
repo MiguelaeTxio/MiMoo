@@ -138,3 +138,25 @@ fun SearchResultTrack.toBackupDto(): TrackBackupDto = TrackBackupDto(
 
 fun FavoriteAlbum.toBackupDto(): FavoriteAlbumBackupDto =
     FavoriteAlbumBackupDto(artist = artist, album = album)
+
+/**
+ * Sobre de la copia de respaldo AUTOMÁTICA (H07 PARTE 1, redefinición
+ * S008, regla de negocio de Miguel Ángel) -- envuelve un
+ * [BackupBundle] normal con quién lo subió y cuándo, para poder
+ * distinguir "esta copia la hice yo mismo" de "esta copia la hizo
+ * otro dispositivo". NO se usa para Exportar/Importar manual (H06),
+ * que sigue subiendo un [BackupBundle] pelado, sin sobre.
+ * ---
+ * Envelope for the AUTOMATIC backup copy (H07 PART 1, S008
+ * redefinition, Miguel Ángel's business rule) -- wraps a normal
+ * [BackupBundle] with who uploaded it and when, to be able to tell
+ * "I made this copy myself" apart from "another device made this
+ * copy". NOT used for manual Export/Import (H06), which still
+ * uploads a bare [BackupBundle], no envelope.
+ */
+data class SyncEnvelope(
+    val deviceId: String,
+    val deviceLabel: String,
+    val timestamp: Long,
+    val bundle: BackupBundle,
+)

@@ -88,35 +88,74 @@ que es un formato simple, o evaluar una librería ligera). Este anexo
 no fija la solución técnica exacta todavía — se decide al empezar a
 codificar esta parte, con la información más actual disponible.
 
-### PARTE 1 — Sincronización automática entre dispositivos (sustituye la "sincronización incremental" de S007)
+### PARTE 1 — Sincronización automática entre dispositivos (redefinición S008, tercera vuelta — regla de negocio completa de Miguel Ángel)
 
-Diseño completamente distinto al aditivo de S007: un archivo de
-**copia de respaldo automática** en Drive, actualizado en cada cambio
-local, que dos dispositivos comparten para acabar con la biblioteca
-en el mismo estado — no es aditivo, es un espejo.
+**Sustituye por completo el diseño de "espejo con diff granular"** de
+la segunda vuelta de S008 (`MirrorDiff`/altas-bajas independientes),
+tras un bug real reproducido con dos dispositivos: un dispositivo que
+solo descargaba pistas (sin tocar favoritos/playlists, los únicos
+puntos enganchados entonces) nunca avisaba a Drive de nada, así que
+otro dispositivo veía esas pistas como "borradas en otro sitio" en vez
+de "nunca subidas". La causa raíz era estructural, no un detalle
+suelto: podía existir un estado "solo local, todavía sin subir".
 
-- **Distinto de Exportar/Importar (H06):** aquellos siguen siendo
-  manuales, a petición explícita desde Ajustes, y generan un archivo
-  nuevo con timestamp cada vez (histórico de snapshots). La copia de
-  respaldo automática de H07 es **un único archivo fijo** en Drive
-  (no timestamped) que se sobreescribe en su sitio.
-- **Actualización automática:** cada vez que se añade o borra un
-  álbum, un sencillo o una lista de reproducción, la copia de
-  respaldo en Drive se actualiza para reflejarlo — sin acción manual
-  de Miguel Ángel.
-- **Al arrancar la app / iniciar sesión en un dispositivo:** se
-  descarga la copia de respaldo y se compara contra el estado local.
-  El disco se deja **exactamente igual** que la copia: lo que está en
-  la copia y no en el disco se descarga; lo que está en el disco y ya
-  no está en la copia se borra.
-- **Nunca se borra nada en silencio:** si la comparación detecta que
-  hay que eliminar algo local que ya no está en la copia de respaldo,
-  se avisa a Miguel Ángel y se pide confirmación antes de machacar —
-  igual que ya hace "Importar desde Drive" en H06.
-- Reutiliza el mismo `BackupBundle`/DTOs de `BackupDto.kt` como
-  formato — no hace falta inventar uno nuevo, solo un fichero Drive
-  distinto (nombre fijo, no timestamped) y una lógica de comparación
-  nueva (espejo, no solo-insertar).
+**Regla de negocio (dictada por Miguel Ángel, verbatim resumido):**
+
+1. **Ninguna mutación puede quedar sin reflejar en la nube.** Añadir o
+   quitar una pista/favorito/playlist **requiere conexión de red en
+   el momento**, sin excepción. Sin conexión, la acción **no se
+   ejecuta en absoluto — ni siquiera en local**; se avisa y se pide
+   esperar a recuperar la conexión. La app se puede seguir *usando*
+   sin conexión con total normalidad (escuchar lo ya descargado,
+   navegar la biblioteca) — la restricción es solo sobre *modificar*
+   contenido. Con esto, un estado "solo local, sin subir" deja de
+   poder existir por construcción.
+2. **Cada dispositivo tiene una identidad estable** (UUID generado y
+   persistido la primera vez, `DeviceIdentityManager`) y la copia de
+   respaldo en Drive va envuelta con quién la subió y cuándo
+   (`SyncEnvelope`, ver más abajo) — necesario para poder distinguir
+   los casos 2 y 3 de abajo.
+3. **Al arrancar la app**, exactamente uno de estos tres casos:
+   - **No hay copia en Drive todavía** → este dispositivo la crea
+     (con su identidad y la hora), sin preguntar nada.
+   - **Hay copia, y la hizo ESTE MISMO dispositivo** → deberían
+     coincidir. Si no coinciden, es que el disco local se
+     desincronizó por su cuenta (archivos tocados a mano fuera de la
+     app, etc.) — **la nube manda siempre en este caso, sin
+     preguntar**: se restaura y se avisa. Nunca se pregunta cuando el
+     desfase es contra la propia copia del dispositivo.
+   - **Hay copia, y la hizo OTRO dispositivo** → aquí sí se pregunta
+     explícitamente: *"¿se han añadido o eliminado pistas desde otro
+     dispositivo?"*. Responder que sí sustituye lo local por la copia
+     de Drive; responder que no sustituye la copia de Drive por lo
+     local (y se sube). Tras resolver, el disco se deja exactamente
+     igual que la copia ganadora.
+4. **Todo-o-nada, nunca fusión parcial**: a diferencia del diseño
+   anterior, aquí una de las dos copias completas sustituye siempre a
+   la otra entera — reutiliza
+   `BackupImportRepository.importDestructively()` (ya construido para
+   H06) para el lado "la nube gana". Esto además resuelve gratis el
+   problema que quedaba pendiente en la segunda vuelta (contenido de
+   playlists coincidentes por nombre sin comparar): ya no hace falta
+   comparar contenido, se sustituye entero.
+
+**Distinto de Exportar/Importar (H06):** aquellos siguen siendo
+manuales, a petición explícita desde Ajustes, generan un archivo nuevo
+con timestamp cada vez (histórico de snapshots), y usan un
+`BackupBundle` pelado. La copia de respaldo automática de H07 usa un
+**archivo fijo** (`mimoo_sync_state.json`, carpeta "MiMoo Sync") que
+se sobreescribe en su sitio, envuelto en un `SyncEnvelope`
+(`deviceId`+`deviceLabel`+`timestamp`+`bundle`).
+
+**Hallazgo técnico que desbloqueó el diseño (verificado en línea,
+S008):** `Identity.getAuthorizationClient()` acepta un `Context`
+normal, no exige una `Activity` real (confirmado contra un ejemplo
+oficial de Google que lo invoca con `context` a secas) — esto permite
+que `DownloadWorker`, un `CoroutineWorker` en segundo plano sin
+`Activity` disponible, pueda pedir el token y empujar el cambio él
+mismo. Antes se asumía que esto era imposible; no lo era.
+`DriveAuthorizationHelper.requestAuthorization()` pasó de aceptar
+`Activity` a aceptar `Context`.
 
 ### PARTE 2 — Actualizaciones in-app vía repositorio GitHub dedicado + PIN de acceso
 
@@ -232,82 +271,90 @@ está disponible, o inspección manual), borrar su fila de Room a mano
 y forzar un refresco de Biblioteca — confirmar que recupera el
 `youtubeId` real, no uno `local:`.
 
-### PARTE 1 — Sincronización automática
+### PARTE 1 — Sincronización automática (tercera vuelta, regla de negocio completa)
 
-**PASO 1.1 ✅ (S008)** — Carpeta fija "MiMoo Sync" + archivo fijo
-`mimoo_sync_state.json` en `BackupDriveRepository`
-(`ensureSyncFolder()`/`findSyncFile()`/`pushSyncState()`/
-`pullSyncState()`) — busca por nombre y sobreescribe en su sitio
-(`PATCH` sobre el mismo `fileId`, reutilizando
-`uploadMediaContent()`), nunca genera un archivo nuevo. Distinta de
-"MiMoo Backups" (H06, snapshots manuales con timestamp).
+**PASO 1.1 ✅ (S008, tercera vuelta)** — `DeviceIdentityManager`
+(UUID estable por dispositivo, persistido en SharedPreferences) +
+`SyncEnvelope` (`BackupDto.kt`: `deviceId`+`deviceLabel`+`timestamp`+
+`bundle`) + `BackupRepository.toSyncJson()`/`fromSyncJson()`. Carpeta
+fija "MiMoo Sync" + archivo fijo `mimoo_sync_state.json` en
+`BackupDriveRepository` (`ensureSyncFolder()`/`findSyncFile()`/
+`pushSyncState()`/`pullSyncState()`) — sin cambios respecto a la
+segunda vuelta, solo que ahora el JSON que viaja es un `SyncEnvelope`,
+no un `BackupBundle` pelado.
 
-**PASO 1.2 ⚠️ PARCIAL (S008)** — Resuelto el problema de fondo
-(`DriveAuthorizationHelper` pensado para acción puntual desde
-Activity): `AutoSyncPusher.pushIfAuthorized(activity)`, nuevo,
-reutilizable desde cualquier ViewModel de pantalla — construye el
-bundle actual y lo sube al archivo fijo si ya hay autorización
-concedida; si hace falta consentimiento, se salta en silencio sin
-interrumpir al usuario (la sincronización real de todos modos ocurre
-al siguiente arranque, PASO 1.3).
+**PASO 1.2 ✅ (S008, tercera vuelta)** — `NetworkConnectivityChecker`
+(`ConnectivityManager`, nuevo permiso `ACCESS_NETWORK_STATE`) +
+`AutoSyncPusher.executeIfConnected(context, mutation)`, que sustituye
+por completo a `pushIfAuthorized()` de la segunda vuelta: comprueba
+conexión **antes** de ejecutar la mutación (si no hay, la mutación NO
+se ejecuta, ni siquiera en local — `MutationOutcome.NoConnection`), y
+si la hay, ejecuta la mutación y sube el estado completo como
+`SyncEnvelope` con la identidad de este dispositivo.
 
-**Enganchado ya:**
-- `LibraryViewModel.toggleFavoriteAlbum()` (favoritos de álbum) —
-  patrón de referencia.
-- `PlaylistsViewModel.createPlaylist()`/`deletePlaylist()` (S008,
-  misma sesión) — crear/borrar una playlist entera empuja el cambio.
-  `renamePlaylist()` deliberadamente NO empuja: el diff compara
-  playlists por `name`, así que un renombrado ya se refleja solo la
-  próxima vez que se compare (aparecería como "una playlist nueva con
-  el nombre nuevo"), sin necesidad de un push especial para ese caso.
+**Hallazgo que desbloqueó el punto más difícil:** verificado en línea
+que `Identity.getAuthorizationClient()` acepta `Context`, no exige
+`Activity` — `DriveAuthorizationHelper.requestAuthorization()` pasó de
+`Activity` a `Context`. Esto permitió enganchar también a
+`DownloadWorker` (antes descartado como "imposible sin Activity").
 
-**Pendiente de enganchar, sesión futura:**
-- Añadir/quitar una pista suelta dentro de una playlist ya existente
-  (`PlaylistDetailViewModel`/`AddToPlaylistDialogViewModel`) —
-  **deliberadamente aplazado, no solo por falta de tiempo:** el
-  `MirrorDiff` actual, cuando el nombre de la playlist ya coincide en
-  ambos lados, no compara ni fusiona su contenido (ver comentario de
-  `BackupMirrorRepository`). Empujar un push en cada
-  añadir/quitar-pista de hoy no serviría de nada todavía en el otro
-  extremo — haría falta primero ampliar el propio algoritmo de diff
-  para comparar contenido de playlists coincidentes por nombre, lo
-  cual sí que es una decisión de producto pendiente de verdad (ver
-  las 3 opciones descritas en la versión S007 de este documento,
-  todavía sin resolver).
-- Descarga de una pista suelta completada (`DownloadWorker`) — caso
-  especial sin solución trivial: `DownloadWorker` es un
-  `CoroutineWorker` en segundo plano, sin `Activity` disponible en
-  absoluto (a diferencia de un toggle de favorito, que siempre parte
-  de una pantalla abierta) — no puede llamar a `AutoSyncPusher`
-  directamente. Se apoya en la sincronización del siguiente arranque
-  (PASO 1.3) en vez de push instantáneo — cubre el caso de uso real
-  igual, solo sin la inmediatez.
+**Enganchado, todos con el mismo patrón (`executeIfConnected` +
+`MutationOutcome.NoConnection` mostrado como Snackbar/aviso):**
+- `LibraryViewModel`: `toggleFavoriteAlbum()`, `deleteDownload()`,
+  `deleteAlbum()`, `deleteArtist()`.
+- `PlaylistsViewModel`: `createPlaylist()`, `deletePlaylist()`.
+  `renamePlaylist()` sigue sin empujar a propósito — ya no importa el
+  motivo original (el diff por nombre), ahora es irrelevante porque
+  todo-o-nada sustituye la copia entera igualmente en el siguiente
+  arranque si hay cualquier otro cambio; un renombrado solo, aislado,
+  sin ningún otro cambio, seguiría sin reflejarse hasta la próxima
+  mutación real -- aceptado como limitación menor, no bloqueante.
+- `PlaylistDetailViewModel.removeTrack()` — **ya NO aplazado** (a
+  diferencia de la segunda vuelta): con el diseño todo-o-nada ya no
+  hace falta comparar contenido de playlists, así que dejó de ser un
+  problema.
+- `AddToPlaylistDialogViewModel.addToExistingPlaylist()`/
+  `createPlaylistAndAdd()` — el diálogo ya no se cierra solo al
+  pulsar; espera a que la operación aplique de verdad antes de
+  cerrarse, y muestra el aviso de sin conexión dentro del propio
+  diálogo si hace falta.
+- `DownloadWorker` — **ya NO aplazado** (a diferencia de la segunda
+  vuelta, donde se creía imposible sin `Activity`): los dos puntos
+  donde se marca una pista `DONE` (descarga real completada, y el
+  caso idempotente de archivo ya existente) pasan por
+  `executeIfConnected(applicationContext)`; si no hay conexión justo
+  en ese instante, no se compromete en Room y el `Worker` devuelve
+  `Result.retry()` en vez de `Result.success()`.
 
-**PASO 1.3 ✅ (S008)** — `BackupMirrorRepository.computeDiff()`:
-descarga la copia de respaldo (`pullSyncState()`), compara contra
-Room por PK real de cada tabla (`youtubeId` / `artist`+`album` /
-`name` de playlist — nunca por índice), y separa el resultado en dos
-mitades independientes (`applyAdditions()`, sin confirmación,
-`applyDeletions()`, solo tras confirmación explícita). Si es la
-primera sincronización de la cuenta (archivo fijo inexistente
-todavía), sube el estado local tal cual sin comparar.
-`AutoSyncViewModel` dispara esto una vez por arranque de app (ver
-`MainActivity.kt`), solo si ya hay carpeta SAF elegida.
+**PASO 1.3 ✅ (S008, tercera vuelta)** — `AutoSyncViewModel.runSync()`
+reescrito por completo con la máquina de 3 casos:
+1. Sin copia en Drive → se crea (`pushAsNewEnvelope()`), sin preguntar.
+2. Copia de este mismo dispositivo, no coincide → la nube gana
+   siempre, sin preguntar (`importRepository.importDestructively()`,
+   reutilizado tal cual de H06).
+3. Copia de otro dispositivo → `AutoSyncUiState.ConflictOtherDevice`,
+   espera respuesta explícita.
 
-**PASO 1.4 ✅ (S008)** — `AutoSyncUiState.ConfirmDeletions` +
-`AlertDialog` en `MainActivity.kt`: lista cuántas pistas/álbumes
-favoritos/playlists se borrarían, y solo actúa si Miguel Ángel confirma
-explícitamente ("Borrar aquí también" / "No, dejarlo como está") — las
-altas del mismo diff ya se aplicaron antes de mostrar el diálogo (no
-bloquean en espera de la misma confirmación que las bajas).
+`BackupMirrorRepository` ya no calcula un diff granular
+(`MirrorDiff` retirado por completo) — solo compara dos
+`BackupBundle` completos por conjuntos de claves y devuelve un
+`BundleComparison` (¿son iguales?, cuántas pistas/favoritos/playlists
+tiene cada lado), usado solo para saber si hay diferencia y para el
+texto del aviso.
+
+**PASO 1.4 ✅ (S008, tercera vuelta)** — Tres `AlertDialog` en
+`MainActivity.kt`, uno por caso: `ConflictOtherDevice` (pregunta
+sí/no, no descartable sin responder — `onDismissRequest = {}`),
+`RestoredFromCloud` (informativo, un botón "Vale"), `Done` con mensaje
+opcional (solo se muestra si hay mensaje que dar; el caso 1
+silencioso y el caso "idéntico, nada que hacer" no muestran nada).
 
 **PASO 1.5** — Verificación funcional end-to-end con dos dispositivos
-reales: añadir/borrar en uno, confirmar que el otro se sincroniza al
-iniciar sesión, incluyendo el diálogo de confirmación de borrado.
-**Pendiente por Miguel Ángel** — nota importante para la prueba: la
-primera vez que arranque la app con esto instalado, va a pedir
-autorización de Drive automáticamente al abrir (antes lo pedía solo al
-pulsar "Exportar"/"Importar" en Ajustes) — esperado, no es un fallo.
+reales: descargar una pista suelta en uno (sin tocar favoritos ni
+playlists) y confirmar que el otro la ve al siguiente arranque —
+**el escenario exacto que falló en la segunda vuelta**, ahora debería
+funcionar de punta a punta gracias al enganche de `DownloadWorker`.
+**Pendiente por Miguel Ángel.**
 
 ### PARTE 2 — Actualizaciones in-app + PIN de acceso
 

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.assisted.Assisted
@@ -56,6 +57,7 @@ class DownloadWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val repository: SearchResultTrackRepository,
     private val storageManager: StorageManager,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -185,12 +187,32 @@ class DownloadWorker @AssistedInject constructor(
         // exists, nothing is downloaded: it's marked DONE with that
         // existing file as-is and we return here.
         trackDir.findFile(outputFileName)?.let { existing ->
-            repository.updateDownloadResult(
-                youtubeId,
-                filePath = existing.uri.toString(),
-                status = DownloadStatus.DONE,
-            )
-            return Result.success()
+            // H07 PARTE 1 -- si no hay conexión justo en este
+            // instante (poco probable, el archivo ya estaba
+            // descargado de una vez anterior), no se compromete en
+            // Room -- se deja el trabajo para que WorkManager lo
+            // reintente más tarde, en vez de dejar un estado "solo
+            // local, sin subir" (regla de negocio de Miguel Ángel,
+            // S008).
+            // ---
+            // H07 PART 1 -- if there's no connection right at this
+            // instant (unlikely, the file was already downloaded from
+            // a previous run), it doesn't get committed to Room -- the
+            // work is left for WorkManager to retry later, instead of
+            // leaving a "local-only, not uploaded" state (Miguel
+            // Ángel's business rule, S008).
+            val outcome = autoSyncPusher.executeIfConnected(applicationContext) {
+                repository.updateDownloadResult(
+                    youtubeId,
+                    filePath = existing.uri.toString(),
+                    status = DownloadStatus.DONE,
+                )
+            }
+            return if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.Success) {
+                Result.success()
+            } else {
+                Result.retry()
+            }
         }
 
         // Temp file in app cache dir: no permission needed.
@@ -278,12 +300,34 @@ class DownloadWorker @AssistedInject constructor(
 
             actualTemp.delete()
 
-            repository.updateDownloadResult(
-                youtubeId,
-                filePath = outputDoc.uri.toString(),
-                status = DownloadStatus.DONE,
-            )
-            Result.success()
+            // H07 PARTE 1 -- fix real del bug reportado por Miguel
+            // Ángel (S008, segunda vuelta): antes, esto solo escribía
+            // en Room, sin avisar nunca a Drive -- una pista
+            // descargada aquí era invisible para cualquier otro
+            // dispositivo hasta que alguna otra acción (favorito,
+            // playlist) empujara un cambio por casualidad. Ahora
+            // empuja como parte de la misma operación, igual que
+            // cualquier otra mutación de la app.
+            // ---
+            // H07 PART 1 -- real fix for the bug reported by Miguel
+            // Ángel (S008, second round): before, this only wrote to
+            // Room, never telling Drive about it -- a track downloaded
+            // here was invisible to every other device until some
+            // other action (favorite, playlist) happened to push a
+            // change. Now it pushes as part of the same operation,
+            // same as any other mutation in the app.
+            val outcome = autoSyncPusher.executeIfConnected(applicationContext) {
+                repository.updateDownloadResult(
+                    youtubeId,
+                    filePath = outputDoc.uri.toString(),
+                    status = DownloadStatus.DONE,
+                )
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.Success) {
+                Result.success()
+            } else {
+                Result.retry()
+            }
         } catch (e: Exception) {
             // Clean up temp files.
             // Limpiar archivos temporales.

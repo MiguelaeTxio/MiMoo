@@ -1,6 +1,5 @@
 package com.miguelaetxio.mimoo.data.backup
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -70,32 +69,51 @@ class DriveAuthorizationHelper @Inject constructor(
 
     /**
      * Pide (o renueva silenciosamente) el access token para el scope
-     * `drive.file`. Debe llamarse con una Activity real -- el token
-     * NUNCA se cachea aquí; cada llamada consulta a Google, que a su
-     * vez cachea internamente (ver "Clear the token cache" en la doc
-     * oficial si algún día hiciera falta invalidar uno a mano).
+     * `drive.file`. Acepta cualquier `Context` -- `Identity.getAuthorizationClient()`
+     * no exige una `Activity` real (verificado en línea, S008, contra
+     * un ejemplo oficial de Google que lo llama con `context` a
+     * secas), lo que permite invocar esto también desde
+     * `DownloadWorker` en segundo plano, sin `Activity` disponible.
+     * Si hace falta consentimiento del usuario (`NeedsUserConsent`),
+     * mostrar ese diálogo SÍ requiere una `Activity` real -- eso sigue
+     * siendo responsabilidad de quien llama, y en segundo plano
+     * simplemente no se puede resolver (ver `AutoSyncPusher`/
+     * `DownloadWorker`, que se saltan la subida en silencio en ese
+     * caso). El token NUNCA se cachea aquí; cada llamada consulta a
+     * Google, que a su vez cachea internamente (ver "Clear the token
+     * cache" en la doc oficial si algún día hiciera falta invalidar
+     * uno a mano).
      * ---
      * Requests (or silently renews) the access token for the
-     * `drive.file` scope. Must be called with a real Activity -- the
-     * token is NEVER cached here; each call asks Google, which
-     * caches internally (see "Clear the token cache" in the official
-     * docs if a manual invalidation is ever needed).
+     * `drive.file` scope. Accepts any `Context` -- `Identity.getAuthorizationClient()`
+     * doesn't require a real `Activity` (verified online, S008,
+     * against an official Google example that calls it with a plain
+     * `context`), which allows this to also be called from
+     * `DownloadWorker` in the background, with no `Activity`
+     * available. If user consent is needed (`NeedsUserConsent`),
+     * showing that dialog DOES require a real `Activity` -- that
+     * remains the caller's responsibility, and in the background it
+     * simply can't be resolved (see `AutoSyncPusher`/`DownloadWorker`,
+     * which silently skip the upload in that case). The token is
+     * NEVER cached here; each call asks Google, which caches
+     * internally (see "Clear the token cache" in the official docs
+     * if a manual invalidation is ever needed).
      */
-    suspend fun requestAuthorization(activity: Activity): DriveAuthorizationOutcome =
+    suspend fun requestAuthorization(context: Context): DriveAuthorizationOutcome =
         suspendCancellableCoroutine { continuation ->
             val request = AuthorizationRequest.builder()
                 .setRequestedScopes(listOf(Scope(DRIVE_FILE_SCOPE_URL)))
                 .build()
 
             Log.d(TAG, "authorize(): pidiendo scope drive.file")
-            BackupDebugLogger.log(activity, storageManager, "authorize() -- pidiendo scope drive.file")
-            Identity.getAuthorizationClient(activity)
+            BackupDebugLogger.log(context, storageManager, "authorize() -- pidiendo scope drive.file")
+            Identity.getAuthorizationClient(context)
                 .authorize(request)
                 .addOnSuccessListener { result: AuthorizationResult ->
                     val summary = "authorize() OK -- hasResolution=${result.hasResolution()} " +
                         "accessToken=${if (result.accessToken != null) "presente" else "null"}"
                     Log.d(TAG, summary)
-                    BackupDebugLogger.log(activity, storageManager, summary)
+                    BackupDebugLogger.log(context, storageManager, summary)
                     val outcome = resultToOutcome(result)
                     if (continuation.isActive) continuation.resume(outcome)
                 }
@@ -110,7 +128,7 @@ class DriveAuthorizationHelper @Inject constructor(
                         "authorize() FALLÓ -- ${e::class.java.name}"
                     }
                     Log.e(TAG, detail, e)
-                    BackupDebugLogger.logError(activity, storageManager, detail, e)
+                    BackupDebugLogger.logError(context, storageManager, detail, e)
                     if (continuation.isActive) continuation.resumeWithException(e)
                 }
         }

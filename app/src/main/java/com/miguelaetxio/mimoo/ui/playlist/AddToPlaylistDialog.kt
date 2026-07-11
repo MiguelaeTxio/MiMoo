@@ -1,11 +1,13 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -36,6 +38,7 @@ fun AddToPlaylistDialog(
     viewModel: AddToPlaylistDialogViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activity = LocalContext.current as Activity
     var newPlaylistName by remember { mutableStateOf("") }
     val title = if (youtubeIds.size > 1) {
         "Añadir ${youtubeIds.size} pistas a lista"
@@ -48,6 +51,24 @@ fun AddToPlaylistDialog(
         title = { Text(title) },
         text = {
             Column {
+                // H07 PARTE 1 -- si la última operación se rechazó
+                // por falta de conexión, el diálogo NO se cierra solo
+                // (ver los onClick de abajo); esto es lo que informa
+                // de por qué no pasó nada.
+                // ---
+                // H07 PART 1 -- if the last operation got rejected
+                // for lack of connection, the dialog does NOT close
+                // itself (see the onClick handlers below); this is
+                // what explains why nothing happened.
+                uiState.syncBlockedMessage?.let { message ->
+                    Text(
+                        message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 if (uiState.playlists.isEmpty()) {
                     Text(
                         "Todavía no tienes listas de reproducción.",
@@ -61,11 +82,13 @@ fun AddToPlaylistDialog(
                         items(uiState.playlists, key = { it.id }) { playlist ->
                             TextButton(
                                 onClick = {
+                                    viewModel.dismissSyncBlockedMessage()
                                     viewModel.addToExistingPlaylist(
+                                        activity,
                                         playlist.id,
                                         youtubeIds,
+                                        onSuccess = onDismiss,
                                     )
-                                    onDismiss()
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
@@ -94,8 +117,13 @@ fun AddToPlaylistDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    viewModel.createPlaylistAndAdd(newPlaylistName, youtubeIds)
-                    onDismiss()
+                    viewModel.dismissSyncBlockedMessage()
+                    viewModel.createPlaylistAndAdd(
+                        activity,
+                        newPlaylistName,
+                        youtubeIds,
+                        onSuccess = onDismiss,
+                    )
                 },
                 enabled = newPlaylistName.isNotBlank(),
             ) {

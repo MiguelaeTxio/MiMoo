@@ -7,11 +7,14 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.BackupDriveRepository
+import com.miguelaetxio.mimoo.data.backup.BackupImportRepository
 import com.miguelaetxio.mimoo.data.backup.BackupMirrorRepository
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
+import com.miguelaetxio.mimoo.data.backup.BundleComparison
+import com.miguelaetxio.mimoo.data.backup.DeviceIdentityManager
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
-import com.miguelaetxio.mimoo.data.backup.MirrorDiff
+import com.miguelaetxio.mimoo.data.backup.SyncEnvelope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,51 +25,78 @@ import javax.inject.Inject
 private const val TAG = "MiMoo-AutoSync-Pull"
 
 /**
- * H07 PARTE 1: estado de la comprobación de sincronización automática
- * al arrancar la app. `Idle` es el estado normal de reposo -- no hay
- * nada que mostrar ni antes de arrancar ni después de terminar sin
- * incidencias.
+ * H07 PARTE 1 (redefinición S008, regla de negocio completa de
+ * Miguel Ángel). Al arrancar la app, exactamente uno de estos tres
+ * casos:
+ *
+ * 1. **No hay copia en Drive todavía** -- este dispositivo crea la
+ *    copia (con su identidad y la hora), sin preguntar nada.
+ * 2. **Hay copia, y la hizo ESTE MISMO dispositivo** -- deberían
+ *    coincidir. Si no coinciden, el disco local se desincronizó por
+ *    su cuenta (archivos tocados a mano, etc.) -- la nube SIEMPRE
+ *    manda en este caso, sin preguntar: se restaura y se avisa
+ *    ([RestoredFromCloud]).
+ * 3. **Hay copia, y la hizo OTRO dispositivo** -- aquí sí se
+ *    pregunta explícitamente ([ConflictOtherDevice]): "¿se han
+ *    añadido o eliminado pistas desde otro dispositivo?". Responder
+ *    que sí sustituye local por la nube; responder que no sustituye
+ *    la nube por local.
+ *
+ * Todo-o-nada: a diferencia del primer diseño (S008, primera vuelta,
+ * `MirrorDiff` con altas/bajas independientes), aquí una de las dos
+ * copias completas sustituye siempre a la otra entera
+ * (`BackupImportRepository.importDestructively()`, ya construido para
+ * H06) -- nunca una fusión parcial.
  * ---
- * H07 PART 1: state for the automatic sync check on app startup.
- * `Idle` is the normal resting state -- nothing to show either before
- * starting or after finishing with no issues.
+ * H07 PART 1 (S008 redefinition, Miguel Ángel's full business rule).
+ * On app startup, exactly one of these three cases:
+ *
+ * 1. **There's no copy on Drive yet** -- this device creates the
+ *    copy (with its identity and the time), without asking anything.
+ * 2. **There's a copy, and THIS SAME device made it** -- they should
+ *    match. If they don't, the local disk got out of sync on its own
+ *    (files touched by hand, etc.) -- the cloud ALWAYS wins in this
+ *    case, no asking: it gets restored and a notice is shown
+ *    ([RestoredFromCloud]).
+ * 3. **There's a copy, and ANOTHER device made it** -- here it DOES
+ *    ask explicitly ([ConflictOtherDevice]): "were tracks added or
+ *    removed from another device?". Answering yes replaces local
+ *    with the cloud copy; answering no replaces the cloud copy with
+ *    local.
+ *
+ * All-or-nothing: unlike the first design (S008, first round,
+ * `MirrorDiff` with independent additions/deletions), here one of the
+ * two full copies always replaces the other entirely
+ * (`BackupImportRepository.importDestructively()`, already built for
+ * H06) -- never a partial merge.
  */
 sealed class AutoSyncUiState {
     object Idle : AutoSyncUiState()
     object Checking : AutoSyncUiState()
-    data class ConfirmDeletions(val diff: MirrorDiff) : AutoSyncUiState()
-    data class Done(val addedCount: Int, val removedCount: Int) : AutoSyncUiState()
+
+    /** Caso 2: mismo dispositivo desincronizado -- la nube ya se restauró, solo se informa. */
+    data class RestoredFromCloud(val comparison: BundleComparison) : AutoSyncUiState()
+
+    /** Caso 3: copia de otro dispositivo -- pendiente de que Miguel Ángel responda sí/no. */
+    data class ConflictOtherDevice(
+        val envelope: SyncEnvelope,
+        val comparison: BundleComparison,
+    ) : AutoSyncUiState()
+
+    /** Nada que hacer (copias idénticas), o resolución ya aplicada tras el caso 3. */
+    data class Done(val message: String? = null) : AutoSyncUiState()
+
     data class Error(val message: String) : AutoSyncUiState()
 }
 
-/**
- * H07 PARTE 1: se dispara una vez por arranque de app (ver
- * MainActivity) -- descarga la copia de respaldo automática, calcula
- * el `MirrorDiff` contra el estado local, aplica las altas sin pedir
- * nada (nunca borran), y si hay bajas, para y pide confirmación
- * explícita antes de tocar nada local -- nunca borra en silencio.
- *
- * Si es la primera sincronización de la cuenta (todavía no existe
- * `mimoo_sync_state.json` en Drive), sube el estado local tal cual en
- * vez de comparar contra nada.
- * ---
- * H07 PART 1: fires once per app startup (see MainActivity) --
- * downloads the automatic backup copy, computes the `MirrorDiff`
- * against local state, applies additions without asking anything
- * (they never delete), and if there are deletions, stops and asks for
- * explicit confirmation before touching anything local -- never
- * deletes silently.
- *
- * If this is the account's first-ever sync (`mimoo_sync_state.json`
- * doesn't exist on Drive yet), it uploads the local state as-is
- * instead of comparing against anything.
- */
 @HiltViewModel
 class AutoSyncViewModel @Inject constructor(
     private val authorizationHelper: DriveAuthorizationHelper,
     private val driveRepository: BackupDriveRepository,
     private val backupRepository: BackupRepository,
     private val mirrorRepository: BackupMirrorRepository,
+    private val importRepository: BackupImportRepository,
+    private val deviceIdentityManager: DeviceIdentityManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AutoSyncUiState>(AutoSyncUiState.Idle)
@@ -75,7 +105,8 @@ class AutoSyncViewModel @Inject constructor(
     private val _pendingConsent = MutableStateFlow<IntentSenderRequest?>(null)
     val pendingConsent: StateFlow<IntentSenderRequest?> = _pendingConsent.asStateFlow()
 
-    private var pendingDiff: MirrorDiff? = null
+    /** Access token ya conseguido, guardado solo mientras se espera la respuesta del caso 3. */
+    private var pendingAccessToken: String? = null
 
     /** Llamado una vez al arrancar MainActivity, si ya hay carpeta SAF elegida. */
     fun startAutoSync(activity: Activity) {
@@ -116,16 +147,14 @@ class AutoSyncViewModel @Inject constructor(
     private suspend fun runSync(accessToken: String) {
         val remoteJson = driveRepository.pullSyncState(accessToken)
         if (remoteJson == null) {
-            // Primera sincronización de la cuenta -- nada que comparar
-            // todavía, se sube el estado local tal cual.
-            val bundle = backupRepository.buildCurrentBundle()
-            driveRepository.pushSyncState(accessToken, backupRepository.toJson(bundle))
-            _uiState.value = AutoSyncUiState.Done(addedCount = 0, removedCount = 0)
+            // Caso 1: no hay copia todavía -- se crea, sin preguntar nada.
+            pushAsNewEnvelope(accessToken)
+            _uiState.value = AutoSyncUiState.Done()
             return
         }
 
-        val remoteBundle = try {
-            backupRepository.fromJson(remoteJson)
+        val envelope = try {
+            backupRepository.fromSyncJson(remoteJson)
         } catch (e: BackupRepository.BackupParseException) {
             _uiState.value = AutoSyncUiState.Error(
                 e.message ?: "La copia de respaldo automática de Drive no es válida."
@@ -133,46 +162,61 @@ class AutoSyncViewModel @Inject constructor(
             return
         }
 
-        val diff = mirrorRepository.computeDiff(remoteBundle)
-        if (diff.isEmpty) {
-            _uiState.value = AutoSyncUiState.Done(addedCount = 0, removedCount = 0)
+        val localBundle = backupRepository.buildCurrentBundle()
+        val comparison = mirrorRepository.compare(localBundle, envelope.bundle)
+
+        if (comparison.identical) {
+            _uiState.value = AutoSyncUiState.Done()
             return
         }
 
-        val addedCount = diff.tracksToDownload.size + diff.favoritesToAdd.size + diff.playlistsToCreate.size
-        mirrorRepository.applyAdditions(diff)
-
-        if (diff.hasDeletions) {
-            pendingDiff = diff
-            _uiState.value = AutoSyncUiState.ConfirmDeletions(diff)
+        if (envelope.deviceId == deviceIdentityManager.deviceId) {
+            // Caso 2: mismo dispositivo, desincronizado -- la nube manda siempre, sin preguntar.
+            importRepository.importDestructively(envelope.bundle)
+            _uiState.value = AutoSyncUiState.RestoredFromCloud(comparison)
         } else {
-            _uiState.value = AutoSyncUiState.Done(addedCount = addedCount, removedCount = 0)
+            // Caso 3: otro dispositivo -- se pregunta antes de tocar nada.
+            pendingAccessToken = accessToken
+            _uiState.value = AutoSyncUiState.ConflictOtherDevice(envelope, comparison)
         }
     }
 
-    /** Confirmación explícita del usuario -- solo aquí se ejecuta cualquier borrado. */
-    fun confirmDeletions() {
-        val diff = pendingDiff ?: return
-        val removedCount = diff.tracksToDelete.size + diff.favoritesToRemove.size + diff.playlistsToDelete.size
-        val addedCount = diff.tracksToDownload.size + diff.favoritesToAdd.size + diff.playlistsToCreate.size
+    /** Caso 3, respuesta "sí, se añadieron/borraron pistas en otro dispositivo" -- la nube sustituye a local. */
+    fun confirmCloudWins() {
+        val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
         viewModelScope.launch {
-            mirrorRepository.applyDeletions(diff)
-            pendingDiff = null
-            _uiState.value = AutoSyncUiState.Done(addedCount = addedCount, removedCount = removedCount)
+            importRepository.importDestructively(state.envelope.bundle)
+            pendingAccessToken = null
+            _uiState.value = AutoSyncUiState.Done(
+                "Restaurado desde la copia de ${state.envelope.deviceLabel}."
+            )
         }
     }
 
-    /** El usuario rechaza los borrados -- las altas ya aplicadas se quedan, los borrados no se tocan. */
-    fun dismissDeletions() {
-        val diff = pendingDiff
-        pendingDiff = null
-        val addedCount = diff?.let {
-            it.tracksToDownload.size + it.favoritesToAdd.size + it.playlistsToCreate.size
-        } ?: 0
-        _uiState.value = AutoSyncUiState.Done(addedCount = addedCount, removedCount = 0)
+    /** Caso 3, respuesta "no" -- local sustituye a la nube (y se sube). */
+    fun confirmLocalWins() {
+        val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
+        val accessToken = pendingAccessToken ?: return
+        viewModelScope.launch {
+            pushAsNewEnvelope(accessToken)
+            pendingAccessToken = null
+            _uiState.value = AutoSyncUiState.Done("Tu copia local ha sustituido a la de Drive.")
+        }
     }
 
     fun dismiss() {
+        pendingAccessToken = null
         _uiState.value = AutoSyncUiState.Idle
+    }
+
+    private suspend fun pushAsNewEnvelope(accessToken: String) {
+        val bundle = backupRepository.buildCurrentBundle()
+        val envelope = SyncEnvelope(
+            deviceId = deviceIdentityManager.deviceId,
+            deviceLabel = deviceIdentityManager.deviceLabel,
+            timestamp = System.currentTimeMillis(),
+            bundle = bundle,
+        )
+        driveRepository.pushSyncState(accessToken, backupRepository.toSyncJson(envelope))
     }
 }

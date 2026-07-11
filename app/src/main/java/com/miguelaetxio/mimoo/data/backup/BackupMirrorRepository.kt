@@ -1,228 +1,83 @@
 package com.miguelaetxio.mimoo.data.backup
 
-import android.content.Context
-import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
-import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
-import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
-import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
-import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
-import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
-import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
-import com.miguelaetxio.mimoo.data.local.entity.Playlist
-import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
-import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Diferencia entre la copia de respaldo automática (Drive) y el
- * estado local (H07 PARTE 1). "Espejo": lo que está en la copia y no
- * en local se añade; lo que está en local y ya no está en la copia se
- * borra -- nunca al revés, la copia de Drive siempre manda.
+ * Resumen de comparar dos [BackupBundle] completos -- H07 PARTE 1
+ * (redefinición S008, regla de negocio de Miguel Ángel): la
+ * sincronización automática ya NO fusiona altas/bajas por separado
+ * como en el primer diseño (S008, primera vuelta); es todo-o-nada,
+ * una de las dos copias completas sustituye a la otra. Esto solo hace
+ * falta para saber SI hay diferencia y darle a Miguel Ángel un número
+ * aproximado que mostrar en el aviso -- la decisión real
+ * (sustituir/mantener) la toma [AutoSyncViewModel] completa, no
+ * pista a pista.
+ *
+ * Comparación por conjuntos de claves, no por posición/orden:
+ * pistas por `youtubeId`, favoritos por `artist`+`album`, playlists
+ * por `name`. No compara metadatos dentro de una pista que ya
+ * coincide por id (título editado, etc.) ni el contenido de una
+ * playlist que ya coincide por nombre -- no hace falta para decidir
+ * "sustituir entero o no", solo importaría si algún día se quisiera
+ * fusionar en vez de sustituir, que es justo lo que esta regla de
+ * negocio evita a propósito.
  * ---
- * Difference between the automatic backup copy (Drive) and the local
- * state (H07 PART 1). "Mirror": whatever is in the copy and not
- * locally gets added; whatever is local and no longer in the copy
- * gets removed -- never the other way around, the Drive copy always
- * wins.
+ * Summary of comparing two full [BackupBundle]s -- H07 PART 1 (S008
+ * redefinition, Miguel Ángel's business rule): automatic sync no
+ * longer merges additions/deletions separately like the first design
+ * (S008, first round); it's all-or-nothing, one of the two full
+ * copies replaces the other. This is only needed to know WHETHER
+ * there's a difference and give Miguel Ángel an approximate number to
+ * show in the notice -- the actual decision (replace/keep) is made by
+ * the full [AutoSyncViewModel], not track by track.
+ *
+ * Compared by key sets, not by position/order: tracks by `youtubeId`,
+ * favorites by `artist`+`album`, playlists by `name`. Doesn't compare
+ * metadata within a track that already matches by id (edited title,
+ * etc.) nor the content of a playlist that already matches by name --
+ * not needed to decide "replace the whole thing or not", would only
+ * matter if merging instead of replacing were ever wanted, which is
+ * exactly what this business rule avoids on purpose.
  */
-data class MirrorDiff(
-    val tracksToDownload: List<TrackBackupDto>,
-    val tracksToDelete: List<SearchResultTrack>,
-    val favoritesToAdd: List<FavoriteAlbumBackupDto>,
-    val favoritesToRemove: List<FavoriteAlbum>,
-    val playlistsToCreate: List<PlaylistBackupDto>,
-    val playlistsToDelete: List<Playlist>,
+data class BundleComparison(
+    val identical: Boolean,
+    val localTrackCount: Int,
+    val remoteTrackCount: Int,
+    val localFavoriteCount: Int,
+    val remoteFavoriteCount: Int,
+    val localPlaylistCount: Int,
+    val remotePlaylistCount: Int,
 ) {
-    /** true si aplicar este diff borraría algo local -- exige confirmación explícita antes de aplicarse. */
-    val hasDeletions: Boolean
-        get() = tracksToDelete.isNotEmpty() || favoritesToRemove.isNotEmpty() || playlistsToDelete.isNotEmpty()
-
-    val isEmpty: Boolean
-        get() = tracksToDownload.isEmpty() && tracksToDelete.isEmpty() &&
-            favoritesToAdd.isEmpty() && favoritesToRemove.isEmpty() &&
-            playlistsToCreate.isEmpty() && playlistsToDelete.isEmpty()
+    /** Diferencia absoluta total, para el aviso ("X pistas/álbumes/listas de diferencia"). */
+    val totalDifference: Int
+        get() = kotlin.math.abs(localTrackCount - remoteTrackCount) +
+            kotlin.math.abs(localFavoriteCount - remoteFavoriteCount) +
+            kotlin.math.abs(localPlaylistCount - remotePlaylistCount)
 }
 
-/**
- * H07 PARTE 1: calcula el `MirrorDiff` entre un `BackupBundle`
- * descargado de Drive y el estado real de Room/disco, y aplica cada
- * mitad del diff por separado -- altas (`applyAdditions`, nunca
- * necesita confirmación) y bajas (`applyDeletions`, solo se llama tras
- * confirmación explícita del usuario, ver AutoSyncViewModel). Nunca
- * las aplica juntas de golpe para que la UI pueda interponer el
- * diálogo de confirmación entre calcular y borrar.
- *
- * Comparación por PK real y estable en cada tabla -- nunca por índice
- * ni por posición:
- *   - Pistas: `youtubeId` (tras H07 PARTE 0, ya no depende de que la
- *     fila sea "sintética" o no -- un archivo reconciliado con link
- *     real recuperado del propio .opus cuenta igual que una fila
- *     normal).
- *   - Favoritos de álbum: `artist`+`album`.
- *   - Playlists: `name` -- el `id` autogenerado no es estable entre
- *     dispositivos. Si el nombre coincide en ambos lados, esta
- *     primera versión NO compara ni fusiona el contenido -- se deja
- *     tal cual está en local, sin tocar (ver ANNEX_H07.md, "Fuera de
- *     Alcance": no hay fusión de cambios concurrentes más allá de
- *     "no existe -> se añade").
- * ---
- * H07 PART 1: computes the `MirrorDiff` between a `BackupBundle`
- * downloaded from Drive and the real Room/disk state, and applies
- * each half of the diff separately -- additions (`applyAdditions`,
- * never needs confirmation) and deletions (`applyDeletions`, only
- * called after explicit user confirmation, see AutoSyncViewModel).
- * Never applies both at once so the UI can interpose the confirmation
- * dialog between computing and deleting.
- *
- * Compared by each table's real, stable PK -- never by index or
- * position:
- *   - Tracks: `youtubeId` (after H07 PART 0, no longer depends on
- *     whether the row is "synthetic" or not -- a reconciled file with
- *     a real link recovered from the .opus itself counts the same as
- *     a normal row).
- *   - Album favorites: `artist`+`album`.
- *   - Playlists: `name` -- the autogenerated `id` isn't stable across
- *     devices. If the name matches on both sides, this first version
- *     does NOT compare or merge content -- it's left as-is locally,
- *     untouched (see ANNEX_H07.md, "Out of Scope": no merging of
- *     concurrent changes beyond "doesn't exist -> gets added").
- */
 @Singleton
-class BackupMirrorRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val trackDao: SearchResultTrackDao,
-    private val favoriteAlbumDao: FavoriteAlbumDao,
-    private val playlistDao: PlaylistDao,
-    private val downloadQueueManager: DownloadQueueManager,
-) {
-    suspend fun computeDiff(remote: BackupBundle): MirrorDiff {
-        val localTracks = trackDao.getAllOnce()
-        val localTrackIds = localTracks.map { it.youtubeId }.toSet()
+class BackupMirrorRepository @Inject constructor() {
+    fun compare(local: BackupBundle, remote: BackupBundle): BundleComparison {
+        val localTrackIds = local.tracks.map { it.youtubeId }.toSet()
         val remoteTrackIds = remote.tracks.map { it.youtubeId }.toSet()
-
-        val localFavorites = favoriteAlbumDao.getAllOnce()
-        val localFavoriteKeys = localFavorites.map { it.artist to it.album }.toSet()
+        val localFavoriteKeys = local.favoriteAlbums.map { it.artist to it.album }.toSet()
         val remoteFavoriteKeys = remote.favoriteAlbums.map { it.artist to it.album }.toSet()
-
-        val localPlaylists = playlistDao.getAllPlaylistsOnce()
-        val localPlaylistNames = localPlaylists.map { it.name }.toSet()
+        val localPlaylistNames = local.playlists.map { it.name }.toSet()
         val remotePlaylistNames = remote.playlists.map { it.name }.toSet()
 
-        return MirrorDiff(
-            tracksToDownload = remote.tracks.filter { it.youtubeId !in localTrackIds },
-            tracksToDelete = localTracks.filter { it.youtubeId !in remoteTrackIds },
-            favoritesToAdd = remote.favoriteAlbums.filter {
-                (it.artist to it.album) !in localFavoriteKeys
-            },
-            favoritesToRemove = localFavorites.filter {
-                (it.artist to it.album) !in remoteFavoriteKeys
-            },
-            playlistsToCreate = remote.playlists.filter { it.name !in localPlaylistNames },
-            playlistsToDelete = localPlaylists.filter { it.name !in remotePlaylistNames },
+        val identical = localTrackIds == remoteTrackIds &&
+            localFavoriteKeys == remoteFavoriteKeys &&
+            localPlaylistNames == remotePlaylistNames
+
+        return BundleComparison(
+            identical = identical,
+            localTrackCount = local.tracks.size,
+            remoteTrackCount = remote.tracks.size,
+            localFavoriteCount = local.favoriteAlbums.size,
+            remoteFavoriteCount = remote.favoriteAlbums.size,
+            localPlaylistCount = local.playlists.size,
+            remotePlaylistCount = remote.playlists.size,
         )
     }
-
-    /**
-     * Aplica solo las altas del diff -- pistas nuevas insertadas y
-     * encoladas para descarga (mismo patrón que
-     * `BackupImportRepository`/H06 PASO 5), favoritos y playlists
-     * nuevos insertados tal cual. Nunca borra nada -- seguro de
-     * llamar sin confirmación previa.
-     * ---
-     * Applies only the diff's additions -- new tracks inserted and
-     * queued for download (same pattern as
-     * `BackupImportRepository`/H06 STEP 5), new favorites and
-     * playlists inserted as-is. Never deletes anything -- safe to
-     * call without prior confirmation.
-     */
-    suspend fun applyAdditions(diff: MirrorDiff) {
-        val newTracks = diff.tracksToDownload.map { it.toMirrorEntity() }
-        if (newTracks.isNotEmpty()) {
-            trackDao.insertAll(newTracks)
-            newTracks.forEach { track ->
-                downloadQueueManager.enqueue(
-                    youtubeId = track.youtubeId,
-                    title = track.title,
-                    artist = track.artist ?: track.channelTitle,
-                    album = track.album,
-                    trackPosition = track.trackPosition,
-                )
-            }
-        }
-
-        diff.favoritesToAdd.forEach { dto ->
-            favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
-        }
-
-        diff.playlistsToCreate.forEach { dto ->
-            val newPlaylistId = playlistDao.insertPlaylist(
-                Playlist(name = dto.name, createdAt = dto.createdAt)
-            )
-            dto.trackYoutubeIdsInOrder.forEachIndexed { index, youtubeId ->
-                playlistDao.addTrackToPlaylist(
-                    PlaylistTrackCrossRef(
-                        playlistId = newPlaylistId,
-                        youtubeId = youtubeId,
-                        position = index,
-                    )
-                )
-            }
-        }
-    }
-
-    /**
-     * Aplica solo las bajas del diff -- SOLO se llama tras
-     * confirmación explícita del usuario (ver AutoSyncViewModel).
-     * Borra también el archivo físico de cada pista eliminada, igual
-     * que `BackupImportRepository.deleteExistingPhysicalFiles()`,
-     * pero pista a pista en vez de la carpeta entera.
-     * ---
-     * Applies only the diff's deletions -- ONLY called after explicit
-     * user confirmation (see AutoSyncViewModel). Also deletes the
-     * physical file for each removed track, same as
-     * `BackupImportRepository.deleteExistingPhysicalFiles()`, but
-     * track by track instead of the whole folder.
-     */
-    suspend fun applyDeletions(diff: MirrorDiff) {
-        diff.tracksToDelete.forEach { track ->
-            track.filePath?.let { deletePhysicalFile(it) }
-            trackDao.delete(track)
-        }
-        diff.favoritesToRemove.forEach { favoriteAlbumDao.delete(it) }
-        diff.playlistsToDelete.forEach { playlistDao.deletePlaylist(it.id) }
-    }
-
-    private fun deletePhysicalFile(uriString: String) {
-        try {
-            DocumentFile.fromSingleUri(context, Uri.parse(uriString))?.delete()
-        } catch (e: Exception) {
-            // Un archivo que ya no existe o un Uri inválido no debe
-            // abortar el resto de la sincronización -- mismo criterio
-            // que el resto de operaciones de archivo de la app.
-            // ---
-            // A file that's already gone or an invalid Uri shouldn't
-            // abort the rest of the sync -- same criterion as the
-            // rest of the app's file operations.
-        }
-    }
 }
-
-private fun TrackBackupDto.toMirrorEntity(): SearchResultTrack = SearchResultTrack(
-    youtubeId = youtubeId,
-    title = title,
-    channelTitle = channelTitle,
-    durationSeconds = durationSeconds,
-    thumbnailUrl = thumbnailUrl,
-    filePath = null,
-    downloadStatus = DownloadStatus.PENDING,
-    downloadProgress = 0,
-    artist = artist,
-    album = album,
-    isFavorite = isFavorite,
-    coverArtUrl = coverArtUrl,
-    trackPosition = trackPosition,
-    sourceUrl = sourceUrl,
-)

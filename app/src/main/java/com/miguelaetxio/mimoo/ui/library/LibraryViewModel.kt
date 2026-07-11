@@ -247,6 +247,14 @@ data class LibraryUiState(
     // AlbumsDrillLevel.FavoriteAlbums's flat list.
     val favoriteAlbumKeys: Set<Pair<String, String>> = emptySet(),
     val favoriteAlbumsFlat: List<Pair<String, String>> = emptyList(),
+    // H07 PARTE 1 -- aviso cuando una acción de añadir/borrar se
+    // rechaza por falta de conexión (regla de negocio de Miguel
+    // Ángel, S008: sin red, ni siquiera se aplica en local).
+    // ---
+    // H07 PART 1 -- notice when an add/remove action gets rejected
+    // for lack of connection (Miguel Ángel's business rule, S008: no
+    // network, doesn't even apply locally).
+    val syncBlockedMessage: String? = null,
 )
 
 /**
@@ -335,13 +343,29 @@ class LibraryViewModel @Inject constructor(
      */
     fun toggleFavoriteAlbum(activity: Activity, artist: String, album: String) {
         viewModelScope.launch {
-            favoriteAlbumRepository.toggle(artist, album)
-            // H07 PARTE 1, PASO 1.2 -- empuja el cambio a la copia de
-            // respaldo automática. No bloquea ni falla la acción de
-            // favorito en sí si la subida no puede completarse -- ver
-            // comentario de AutoSyncPusher.
-            autoSyncPusher.pushIfAuthorized(activity)
+            // H07 PARTE 1 -- la mutación NO se aplica en absoluto si
+            // no hay conexión (regla de negocio de Miguel Ángel,
+            // S008), en vez de aplicarla en local y empujar aparte
+            // como en el primer diseño.
+            // ---
+            // H07 PART 1 -- the mutation is NOT applied at all if
+            // there's no connection (Miguel Ángel's business rule,
+            // S008), instead of applying it locally and pushing
+            // separately like in the first design.
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                favoriteAlbumRepository.toggle(artist, album)
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede cambiar favoritos ahora mismo."
+                )
+            }
         }
+    }
+
+    /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1). */
+    fun dismissSyncBlockedMessage() {
+        _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
     }
 
     /** Descarta el aviso de limpieza de arranque tras mostrarlo. */
@@ -768,18 +792,25 @@ class LibraryViewModel @Inject constructor(
      * (synthetic rows from LibraryReconciler) or resets it to PENDING
      * (real rows, which can be re-downloaded).
      */
-    fun deleteDownload(track: SearchResultTrack) {
+    fun deleteDownload(activity: Activity, track: SearchResultTrack) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                track.filePath?.let { path ->
-                    DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                withContext(Dispatchers.IO) {
+                    track.filePath?.let { path ->
+                        DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                    }
+                    cleanupEmptyFolders(track.artist ?: track.channelTitle, track.album)
+                    if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                        repository.delete(track)
+                    } else {
+                        repository.clearDownload(track.youtubeId)
+                    }
                 }
-                cleanupEmptyFolders(track.artist ?: track.channelTitle, track.album)
-                if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
-                    repository.delete(track)
-                } else {
-                    repository.clearDownload(track.youtubeId)
-                }
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede borrar ahora mismo."
+                )
             }
         }
     }
@@ -797,23 +828,31 @@ class LibraryViewModel @Inject constructor(
      * Miguel Ángel (2026-07-04) to manage the library from within an
      * artist.
      */
-    fun deleteAlbum(artist: String, album: String) {
+    fun deleteAlbum(activity: Activity, artist: String, album: String) {
         viewModelScope.launch {
             val tracks = _uiState.value.albumsByArtist[artist]?.get(album)
                 ?: return@launch
-            withContext(Dispatchers.IO) {
-                tracks.forEach { track ->
-                    track.filePath?.let { path ->
-                        DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                withContext(Dispatchers.IO) {
+                    tracks.forEach { track ->
+                        track.filePath?.let { path ->
+                            DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                        }
+                        if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                            repository.delete(track)
+                        } else {
+                            repository.clearDownload(track.youtubeId)
+                        }
                     }
-                    if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
-                        repository.delete(track)
-                    } else {
-                        repository.clearDownload(track.youtubeId)
-                    }
+                    deleteFolderIfExists(artist, album)
+                    cleanupEmptyFolders(artist, album)
                 }
-                deleteFolderIfExists(artist, album)
-                cleanupEmptyFolders(artist, album)
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede borrar ahora mismo."
+                )
+                return@launch
             }
 
             if (_uiState.value.albumsDrill is AlbumsDrillLevel.Tracks) {
@@ -833,30 +872,38 @@ class LibraryViewModel @Inject constructor(
      * file + Room row) and the whole artist folder. Explicit action
      * requested by Miguel Ángel (2026-07-04).
      */
-    fun deleteArtist(artist: String) {
+    fun deleteArtist(activity: Activity, artist: String) {
         viewModelScope.launch {
             val albumTracks = _uiState.value.albumsByArtist[artist]
                 ?.values?.flatten() ?: emptyList()
             val singleTracks = _uiState.value.singlesByArtist[artist] ?: emptyList()
 
-            withContext(Dispatchers.IO) {
-                (albumTracks + singleTracks).forEach { track ->
-                    track.filePath?.let { path ->
-                        DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                withContext(Dispatchers.IO) {
+                    (albumTracks + singleTracks).forEach { track ->
+                        track.filePath?.let { path ->
+                            DocumentFile.fromSingleUri(context, Uri.parse(path))?.delete()
+                        }
+                        if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
+                            repository.delete(track)
+                        } else {
+                            repository.clearDownload(track.youtubeId)
+                        }
                     }
-                    if (track.youtubeId.startsWith(LibraryReconciler.LOCAL_ID_PREFIX)) {
-                        repository.delete(track)
-                    } else {
-                        repository.clearDownload(track.youtubeId)
-                    }
-                }
 
-                val rootUri = storageManager.getRootUri()
-                if (rootUri != null) {
-                    DocumentFile.fromTreeUri(context, rootUri)
-                        ?.findFile(DownloadDirManager.sanitize(artist))
-                        ?.delete()
+                    val rootUri = storageManager.getRootUri()
+                    if (rootUri != null) {
+                        DocumentFile.fromTreeUri(context, rootUri)
+                            ?.findFile(DownloadDirManager.sanitize(artist))
+                            ?.delete()
+                    }
                 }
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede borrar ahora mismo."
+                )
+                return@launch
             }
 
             if (_uiState.value.albumsDrill !is AlbumsDrillLevel.Letters &&

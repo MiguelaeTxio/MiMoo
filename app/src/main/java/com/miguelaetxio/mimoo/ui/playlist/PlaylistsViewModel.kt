@@ -15,6 +15,10 @@ import javax.inject.Inject
 
 data class PlaylistsUiState(
     val playlists: List<Playlist> = emptyList(),
+    // H07 PARTE 1 -- aviso cuando una acción de crear/borrar se
+    // rechaza por falta de conexión (regla de negocio de Miguel
+    // Ángel, S008).
+    val syncBlockedMessage: String? = null,
 )
 
 /**
@@ -47,9 +51,14 @@ class PlaylistsViewModel @Inject constructor(
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return
         viewModelScope.launch {
-            repository.createPlaylist(trimmed)
-            // H07 PARTE 1, PASO 1.2.
-            autoSyncPusher.pushIfAuthorized(activity)
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                repository.createPlaylist(trimmed)
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede crear la lista ahora mismo."
+                )
+            }
         }
     }
 
@@ -61,9 +70,19 @@ class PlaylistsViewModel @Inject constructor(
 
     fun deletePlaylist(activity: Activity, playlistId: Long) {
         viewModelScope.launch {
-            repository.deletePlaylist(playlistId)
-            // H07 PARTE 1, PASO 1.2.
-            autoSyncPusher.pushIfAuthorized(activity)
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                repository.deletePlaylist(playlistId)
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede borrar la lista ahora mismo."
+                )
+            }
         }
+    }
+
+    /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1). */
+    fun dismissSyncBlockedMessage() {
+        _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
     }
 }

@@ -32,8 +32,18 @@ fun PlaylistsScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistPendingRename by remember { mutableStateOf<Playlist?>(null) }
     var playlistPendingDelete by remember { mutableStateOf<Playlist?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // H07 PARTE 1 -- aviso cuando crear/borrar se rechaza por falta de conexión.
+    LaunchedEffect(uiState.syncBlockedMessage) {
+        uiState.syncBlockedMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissSyncBlockedMessage()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Listas de reproducción") },

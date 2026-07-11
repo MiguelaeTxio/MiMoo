@@ -68,6 +68,7 @@ fun LibraryScreen(
     onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val screenActivity = LocalContext.current as Activity
     var trackPendingDelete by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
@@ -122,6 +123,15 @@ fun LibraryScreen(
         uiState.startupMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.dismissStartupMessage()
+        }
+    }
+
+    // H07 PARTE 1 -- aviso cuando una acción de añadir/borrar se
+    // rechaza por falta de conexión.
+    LaunchedEffect(uiState.syncBlockedMessage) {
+        uiState.syncBlockedMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissSyncBlockedMessage()
         }
     }
 
@@ -362,7 +372,7 @@ fun LibraryScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteDownload(track)
+                    viewModel.deleteDownload(screenActivity, track)
                     trackPendingDelete = null
                 }) {
                     Text("Borrar")
@@ -389,7 +399,7 @@ fun LibraryScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteAlbum(artist, album)
+                    viewModel.deleteAlbum(screenActivity, artist, album)
                     albumPendingDelete = null
                 }) {
                     Text("Borrar álbum")
@@ -428,7 +438,7 @@ fun LibraryScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteArtist(artist)
+                    viewModel.deleteArtist(screenActivity, artist)
                     artistPendingDelete = null
                 }) {
                     Text("Borrar artista")

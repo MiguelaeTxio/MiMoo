@@ -1,7 +1,10 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
@@ -18,6 +21,8 @@ data class PlaylistDetailUiState(
     val tracks: List<SearchResultTrack> = emptyList(),
     val isResolving: Boolean = false,
     val resolveError: String? = null,
+    // H07 PARTE 1 -- aviso cuando quitar una pista se rechaza por falta de conexión.
+    val syncBlockedMessage: String? = null,
 )
 
 /**
@@ -47,6 +52,7 @@ class PlaylistDetailViewModel @Inject constructor(
     private val repository: PlaylistRepository,
     private val playerManager: PlayerManager,
     private val streamResolver: StreamResolver,
+    private val autoSyncPusher: AutoSyncPusher,
     savedStateHandle: androidx.lifecycle.SavedStateHandle,
 ) : ViewModel() {
 
@@ -66,10 +72,22 @@ class PlaylistDetailViewModel @Inject constructor(
         }
     }
 
-    fun removeTrack(youtubeId: String) {
+    fun removeTrack(activity: Activity, youtubeId: String) {
         viewModelScope.launch {
-            repository.removeTrackFromPlaylist(playlistId, youtubeId)
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                repository.removeTrackFromPlaylist(playlistId, youtubeId)
+            }
+            if (outcome is MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede quitar la pista ahora mismo."
+                )
+            }
         }
+    }
+
+    /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1). */
+    fun dismissSyncBlockedMessage() {
+        _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
     }
 
     /**

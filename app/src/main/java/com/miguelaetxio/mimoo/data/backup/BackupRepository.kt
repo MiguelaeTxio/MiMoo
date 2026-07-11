@@ -87,6 +87,50 @@ class BackupRepository @Inject constructor(
     fun toJson(bundle: BackupBundle): String = gson.toJson(bundle)
 
     /**
+     * Serializa un [SyncEnvelope] completo (bundle + quién + cuándo)
+     * -- usado solo por la copia de respaldo automática (H07 PARTE 1),
+     * nunca por Exportar/Importar manual (H06), que sigue usando
+     * `toJson(bundle)` a secas.
+     * ---
+     * Serializes a full [SyncEnvelope] (bundle + who + when) -- used
+     * only by the automatic backup copy (H07 PART 1), never by manual
+     * Export/Import (H06), which keeps using plain `toJson(bundle)`.
+     */
+    fun toSyncJson(envelope: SyncEnvelope): String = gson.toJson(envelope)
+
+    /**
+     * Deserializa un [SyncEnvelope]. Reutiliza el mismo criterio de
+     * `version` que `fromJson()` -- si el `bundle` interno trae una
+     * versión que esta app no reconoce, falla con el mismo mensaje
+     * claro en vez de intentar leerlo a ciegas.
+     * ---
+     * Deserializes a [SyncEnvelope]. Reuses the same `version`
+     * criterion as `fromJson()` -- if the inner `bundle` carries a
+     * version this app doesn't recognize, it fails with the same
+     * clear message instead of trying to read it blindly.
+     */
+    fun fromSyncJson(json: String): SyncEnvelope {
+        val envelope = try {
+            gson.fromJson(json, SyncEnvelope::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw BackupParseException(
+                "La copia de respaldo automática de Drive no es válida (JSON malformado).", e
+            )
+        } ?: throw BackupParseException(
+            "La copia de respaldo automática de Drive está vacía o no tiene el formato esperado."
+        )
+
+        if (envelope.bundle.version != BackupBundle.CURRENT_VERSION) {
+            throw BackupParseException(
+                "Esta copia de respaldo automática es de la versión ${envelope.bundle.version}, " +
+                    "pero esta versión de MiMoo solo sabe leer la versión " +
+                    "${BackupBundle.CURRENT_VERSION}."
+            )
+        }
+        return envelope
+    }
+
+    /**
      * Excepción propia para no propagar JsonSyntaxException/
      * IllegalStateException de Gson tal cual hasta la UI -- PASO 4
      * (pantalla Importar) debe poder mostrar un mensaje claro sin

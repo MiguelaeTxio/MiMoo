@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -24,8 +26,19 @@ fun PlaylistDetailScreen(
     onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activity = LocalContext.current as Activity
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // H07 PARTE 1 -- aviso cuando quitar una pista se rechaza por falta de conexión.
+    LaunchedEffect(uiState.syncBlockedMessage) {
+        uiState.syncBlockedMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissSyncBlockedMessage()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Lista de reproducción") },
@@ -82,7 +95,7 @@ fun PlaylistDetailScreen(
                         isLast = index == uiState.tracks.lastIndex,
                         onMoveUp = { viewModel.moveTrack(index, -1) },
                         onMoveDown = { viewModel.moveTrack(index, 1) },
-                        onRemove = { viewModel.removeTrack(track.youtubeId) },
+                        onRemove = { viewModel.removeTrack(activity, track.youtubeId) },
                     )
                 }
             }

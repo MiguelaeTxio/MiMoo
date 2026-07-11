@@ -387,73 +387,82 @@ class MainActivity : ComponentActivity() {
                     autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
                 }
 
-                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.ConfirmDeletions)
-                    ?.let { confirmState ->
-                        val diff = confirmState.diff
+                // Caso 3 (regla de negocio S008): copia de OTRO
+                // dispositivo -- se pregunta explícitamente antes de
+                // tocar nada, con la pregunta tal cual la formuló
+                // Miguel Ángel.
+                // ---
+                // Case 3 (S008 business rule): ANOTHER device's copy
+                // -- explicitly asks before touching anything, with
+                // the question phrased exactly as Miguel Ángel
+                // stated it.
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.ConflictOtherDevice)
+                    ?.let { conflictState ->
+                        val c = conflictState.comparison
                         AlertDialog(
-                            onDismissRequest = autoSyncViewModel::dismissDeletions,
-                            title = { Text("¿Actualizar este dispositivo?") },
+                            onDismissRequest = {},
+                            title = { Text("Copia de otro dispositivo") },
                             text = {
                                 Text(
-                                    "La copia de respaldo automática de Drive ya no tiene " +
-                                        "${diff.tracksToDelete.size} pista(s), " +
-                                        "${diff.favoritesToRemove.size} álbum(es) favorito(s) y " +
-                                        "${diff.playlistsToDelete.size} lista(s) de reproducción " +
-                                        "que sí tienes aquí -- probablemente se borraron desde " +
-                                        "otro dispositivo. ¿Los borro también en este, para " +
-                                        "dejarlo igual que la copia de respaldo?"
+                                    "La última copia de respaldo en Drive la hizo " +
+                                        "${conflictState.envelope.deviceLabel}, y no coincide " +
+                                        "con lo que tienes aquí (tú: ${c.localTrackCount} " +
+                                        "pistas / Drive: ${c.remoteTrackCount} pistas). " +
+                                        "¿Se han añadido o eliminado pistas desde ese otro " +
+                                        "dispositivo?"
                                 )
                             },
                             confirmButton = {
-                                TextButton(onClick = autoSyncViewModel::confirmDeletions) {
-                                    Text("Borrar aquí también")
+                                TextButton(onClick = autoSyncViewModel::confirmCloudWins) {
+                                    Text("Sí -- usar la copia de Drive")
                                 }
                             },
                             dismissButton = {
-                                TextButton(onClick = autoSyncViewModel::dismissDeletions) {
-                                    Text("No, dejarlo como está")
+                                TextButton(onClick = autoSyncViewModel::confirmLocalWins) {
+                                    Text("No -- usar lo que tengo aquí")
                                 }
                             },
                         )
                     }
 
-                // H07 PARTE 1 -- aviso visible cuando la
-                // sincronización terminó con algún cambio real
-                // (altas aplicadas y/o bajas ya confirmadas). Antes
-                // de esto, un dispositivo que solo recibía altas (sin
-                // ningún borrado que confirmar) no mostraba nada en
-                // absoluto -- reportado por Miguel Ángel: parecía que
-                // no estaba haciendo nada aunque por debajo sí
-                // funcionara. Si no hubo ningún cambio (addedCount y
-                // removedCount ambos 0), no se muestra nada -- no
-                // hace falta molestar cuando ya estaba todo al día.
+                // Caso 2 (regla de negocio S008): este MISMO
+                // dispositivo estaba desincronizado -- la nube ya se
+                // restauró sola, aquí solo se informa, sin preguntar
+                // nada (nunca se pregunta cuando el desfase es contra
+                // la propia copia del dispositivo).
                 // ---
-                // H07 PART 1 -- visible notice when the sync finished
-                // with any real change (additions applied and/or
-                // deletions already confirmed). Before this, a device
-                // that only received additions (no deletion to
-                // confirm) showed nothing at all -- reported by
-                // Miguel Ángel: it looked like it wasn't doing
-                // anything even though it was working underneath. If
-                // there was no change at all (addedCount and
-                // removedCount both 0), nothing is shown -- no need
-                // to bother when everything was already up to date.
+                // Case 2 (S008 business rule): this SAME device was
+                // out of sync -- the cloud copy was already restored
+                // on its own, this only informs, without asking
+                // anything (never asks when the gap is against the
+                // device's own copy).
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.RestoredFromCloud)
+                    ?.let { restoredState ->
+                        val c = restoredState.comparison
+                        AlertDialog(
+                            onDismissRequest = autoSyncViewModel::dismiss,
+                            title = { Text("Restaurado desde Drive") },
+                            text = {
+                                Text(
+                                    "Este dispositivo no coincidía con su propia copia de " +
+                                        "respaldo en Drive (tenías ${c.localTrackCount} pistas, " +
+                                        "la copia tenía ${c.remoteTrackCount}) -- probablemente " +
+                                        "algo se tocó fuera de la app. Se ha restaurado desde " +
+                                        "Drive."
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
+                            },
+                        )
+                    }
+
                 (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Done)
-                    ?.takeIf { it.addedCount > 0 || it.removedCount > 0 }
-                    ?.let { doneState ->
+                    ?.message?.let { message ->
                         AlertDialog(
                             onDismissRequest = autoSyncViewModel::dismiss,
                             title = { Text("Sincronizado con Drive") },
-                            text = {
-                                val parts = mutableListOf<String>()
-                                if (doneState.addedCount > 0) {
-                                    parts += "${doneState.addedCount} elemento(s) nuevo(s) añadido(s)"
-                                }
-                                if (doneState.removedCount > 0) {
-                                    parts += "${doneState.removedCount} elemento(s) borrado(s)"
-                                }
-                                Text(parts.joinToString(" y ") + " desde otro dispositivo.")
-                            },
+                            text = { Text(message) },
                             confirmButton = {
                                 TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
                             },
