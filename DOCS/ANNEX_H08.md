@@ -114,7 +114,17 @@ Miguel Ángel:
    las listas, los álbumes y los sencillos... descargar una lista que
    se va autogenerando sería una brutalidad".
 
-### Implementación (S009)
+### Implementación (S009, corregida tras prueba real)
+
+**Corrección tras probarlo en dispositivo (S009):** la primera versión
+tenía dos fallos.
+1. Añadía la pista siguiente pero no arrancaba sola — `player.play()`
+   no basta para salir de `Player.STATE_ENDED`; hacía falta volver a
+   llamar a `prepare()`, documentado por Media3. Corregido.
+2. Una sola pista no era "radio" de verdad. Petición explícita tras
+   probarlo: mantener siempre hasta **10 pistas** de Radio por
+   delante en la cola, reponiendo una cada vez que la que suena
+   termina, no esperar a quedarse sin nada para buscar la siguiente.
 
 - `MusicBrainzApiService.searchArtists()`/`lookupArtist(inc=genres)`
   — nuevos endpoints, verificados contra la documentación oficial de
@@ -127,30 +137,27 @@ Miguel Ángel:
   `CoverArtRepository`).
 - `QueueItem` gana `artist: String?` e `isFromRadio: Boolean` — hilado
   por todos los puntos de la app que construyen la cola (Biblioteca,
-  Playlists, Importar enlace, Búsqueda), para que la Radio siempre
-  tenga semilla si esa pista termina siendo la última.
-- `PlayerManager`: nuevo listener `onPlaybackStateChanged` — dispara
-  en `Player.STATE_ENDED` con `repeatMode == REPEAT_MODE_OFF` (estado
-  que ExoPlayer solo alcanza sin cíclico activado). Busca el
-  relacionado, lo busca gratis en YouTube
-  (`ExternalLinkResolver.searchYoutube()`, motor ya existente),
-  resuelve el stream, y lo añade a la cola — todo en un
-  `CoroutineScope` propio del singleton (`managerScope`), con vuelta a
-  `Dispatchers.Main` antes de tocar el `ExoPlayer` (no es seguro
-  llamarlo desde otro hilo). Comprueba que el player siga en
-  `STATE_ENDED` antes de reproducir, por si Miguel Ángel ya arrancó
-  otra cosa manualmente mientras se resolvía. Completamente
-  silenciosa si no encuentra nada — la Radio es una mejora, nunca debe
-  romper la reproducción ni mostrar un error.
+  Playlists, Importar enlace, Búsqueda).
+- `PlayerManager.topUpRadioQueueIfNeeded()` (RADIO_QUEUE_SIZE = 10):
+  mientras el backlog de pistas `isFromRadio` por delante de la
+  actual sea menor que 10 y el cíclico esté desactivado, sigue
+  pidiendo una más (`fetchOneRadioTrack()`: relacionado vía
+  MusicBrainz → búsqueda gratuita en YouTube → resolución de stream)
+  y la añade a la cola. Se llama desde `onPlaybackStateChanged`
+  (STATE_ENDED — arranque inicial) y desde `onMediaItemTransition`
+  (solo si la pista a la que se acaba de saltar es ella misma de
+  Radio — sin necesitar ningún flag de "modo Radio" aparte). Guardia
+  `isRadioTopUpRunning` para no relanzar la corrutina si ya hay una
+  en marcha. Todo en el `CoroutineScope` propio del singleton
+  (`managerScope`), con vuelta a `Dispatchers.Main` antes de tocar el
+  `ExoPlayer`. Completamente silenciosa si no encuentra nada.
 
 ### Pendiente
 
-**PASO 2.2 — PENDIENTE.** Verificación en dispositivo real: dejar
-sonar una cola hasta el final sin cíclico y confirmar que arranca algo
-relacionado en streaming. Ningún endpoint nuevo de MusicBrainz se
-puede probar en vivo desde el entorno del modelo (`musicbrainz.org`
-no está en la lista de dominios permitidos), así que esta es la
-primera verificación real de todo el mecanismo.
+**PASO 2.2 — PENDIENTE.** Volver a verificar en dispositivo real tras
+esta corrección: confirmar que ahora sí arranca sola al llegar al
+final, y que la cola mantiene ~10 pistas de Radio por delante de
+forma sostenida (varias reposiciones seguidas, no solo la primera).
 
 ---
 

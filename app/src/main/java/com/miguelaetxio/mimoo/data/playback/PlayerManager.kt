@@ -288,6 +288,16 @@ class PlayerManager @Inject constructor(
             // from this same class.
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 syncStateFromPlayer()
+                // H08 PARTE 2 (S009) -- solo repone si lo que empieza
+                // a sonar ahora es ya una pista de Radio; ver
+                // docstring de topUpRadioQueueIfNeeded().
+                // ---
+                // H08 PARTE 2 (S009) -- only tops up if what's now
+                // playing is itself a Radio track; see
+                // topUpRadioQueueIfNeeded()'s docstring.
+                if (queueItems.getOrNull(player.currentMediaItemIndex)?.isFromRadio == true) {
+                    topUpRadioQueueIfNeeded()
+                }
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -340,85 +350,164 @@ class PlayerManager @Inject constructor(
                 if (playbackState == Player.STATE_ENDED &&
                     player.repeatMode == Player.REPEAT_MODE_OFF
                 ) {
-                    triggerRadioContinuation()
+                    topUpRadioQueueIfNeeded()
                 }
             }
         })
     }
 
     /**
-     * H08 PARTE 2 (S009). Solo streaming, nunca descarga -- decisión
-     * explícita de Miguel Ángel: "para eso están las listas, los
-     * álbumes y los sencillos; descargar una lista que se va
-     * autogenerando sería una brutalidad". Silenciosa por completo si
-     * no encuentra nada (RadioRepository/búsqueda/stream fallan) -- la
-     * Radio es una mejora, nunca debe mostrar un error ni interrumpir
-     * al usuario por no encontrar continuación.
+     * H08 PARTE 2 (S009, corrección tras prueba real de Miguel Ángel).
+     * Dos fallos del primer diseño (una sola pista añadida al llegar
+     * a STATE_ENDED):
      *
-     * Comprobación final (`player.playbackState == Player.STATE_ENDED`)
-     * antes de añadir/reproducir: la búsqueda + resolución de stream
-     * tarda (llamadas de red secuenciales), y si Miguel Ángel ya
-     * arrancó otra cosa manualmente mientras tanto, la Radio no debe
-     * secuestrar esa reproducción nueva.
+     * 1. **No reanudaba sola.** `player.play()` no basta para salir
+     *    de `Player.STATE_ENDED` -- Media3 documenta que hay que
+     *    volver a llamar a `prepare()` para reanudar desde ese
+     *    estado terminal. Sin esto, la pista se añadía a la cola
+     *    pero se quedaba esperando a que Miguel Ángel pulsara
+     *    reproducir a mano.
+     * 2. **Una sola pista no es "radio".** Petición explícita tras
+     *    probarlo: mantener siempre hasta `RADIO_QUEUE_SIZE` (10)
+     *    pistas de Radio por delante en la cola, reponiendo una cada
+     *    vez que la que suena termina -- no esperar a quedarse sin
+     *    nada para buscar la siguiente.
+     *
+     * `topUpRadioQueueIfNeeded()` se llama desde dos sitios del
+     * listener de ExoPlayer:
+     *   - `onPlaybackStateChanged` en STATE_ENDED -- arranque inicial,
+     *     cuando la cola de verdad se queda sin nada.
+     *   - `onMediaItemTransition`, pero SOLO si la pista a la que se
+     *     acaba de saltar es ella misma de Radio (`isFromRadio`) --
+     *     así nunca se dispara mientras todavía queda contenido propio
+     *     del usuario en cola, sin necesitar ningún flag de modo
+     *     aparte: "estamos reproduciendo algo que puso la Radio" ya
+     *     es la señal de que estamos en territorio de Radio.
+     *
+     * `isRadioTopUpRunning` evita relanzar la corrutina de reposición
+     * si ya hay una en marcha (p.ej. el propio seekTo() del primer
+     * disparo provoca un onMediaItemTransition que llamaría otra vez).
      * ---
-     * H08 PARTE 2 (S009). Streaming only, never download -- explicit
-     * decision from Miguel Ángel: "that's what playlists, albums and
-     * singles are for; downloading a self-generating list would be
-     * overkill". Completely silent if nothing is found
-     * (RadioRepository/search/stream all fail) -- Radio is an
-     * enhancement, it must never show an error or interrupt the user
-     * over finding no continuation.
+     * H08 PARTE 2 (S009, fix after Miguel Ángel's real-device test).
+     * Two failures of the first design (a single track added on
+     * reaching STATE_ENDED):
      *
-     * Final check (`player.playbackState == Player.STATE_ENDED`)
-     * before adding/playing: the search + stream resolution takes time
-     * (sequential network calls), and if Miguel Ángel already started
-     * something else manually in the meantime, Radio must not hijack
-     * that new playback.
+     * 1. **Didn't resume on its own.** `player.play()` alone isn't
+     *    enough to leave `Player.STATE_ENDED` -- Media3 documents
+     *    that `prepare()` must be called again to resume from that
+     *    terminal state. Without this, the track got added to the
+     *    queue but sat waiting for Miguel Ángel to tap play by hand.
+     * 2. **A single track isn't "radio".** Explicit request after
+     *    testing it: always keep up to `RADIO_QUEUE_SIZE` (10) Radio
+     *    tracks queued ahead, replenishing one every time the
+     *    currently-playing one finishes -- don't wait to run
+     *    completely dry before looking for the next one.
+     *
+     * `topUpRadioQueueIfNeeded()` is called from two places in
+     * ExoPlayer's listener:
+     *   - `onPlaybackStateChanged` on STATE_ENDED -- initial kickoff,
+     *     when the queue truly has nothing left.
+     *   - `onMediaItemTransition`, but ONLY if the track just jumped
+     *     to is itself a Radio one (`isFromRadio`) -- this way it
+     *     never fires while the user's own content is still queued,
+     *     with no separate mode flag needed: "we're playing something
+     *     Radio added" is itself the signal that we're in Radio
+     *     territory.
+     *
+     * `isRadioTopUpRunning` avoids relaunching the top-up coroutine if
+     * one is already running (e.g. the first trigger's own seekTo()
+     * causes an onMediaItemTransition that would call it again).
      */
-    private fun triggerRadioContinuation() {
-        val lastArtist = queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }
-            ?: return
+    private var isRadioTopUpRunning = false
 
+    private fun topUpRadioQueueIfNeeded() {
+        if (player.repeatMode != Player.REPEAT_MODE_OFF) return
+        if (isRadioTopUpRunning) return
+        if (currentRadioBacklog() >= RADIO_QUEUE_SIZE) return
+
+        isRadioTopUpRunning = true
         managerScope.launch {
             try {
-                val relatedArtist = radioRepository.suggestRelatedArtist(lastArtist)
-                    ?: return@launch
-                val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 1)
-                val track = searchResult.tracks.firstOrNull() ?: return@launch
-                val streamUrl = streamResolver.resolveAudioStreamUrl(
-                    "https://youtu.be/${track.youtubeId}",
-                )
+                while (true) {
+                    val (shouldContinue, seedArtist) = withContext(Dispatchers.Main) {
+                        val keepGoing = player.repeatMode == Player.REPEAT_MODE_OFF &&
+                            currentRadioBacklog() < RADIO_QUEUE_SIZE
+                        keepGoing to queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }
+                    }
+                    if (!shouldContinue || seedArtist == null) break
 
-                withContext(Dispatchers.Main) {
-                    // Comprobación en el hilo principal, el único
-                    // desde el que es seguro leer/tocar `player` --
-                    // el estado pudo cambiar mientras se resolvía el
-                    // stream (ver docstring de la función).
-                    // ---
-                    // Checked on the main thread, the only one safe to
-                    // read/touch `player` from -- the state could have
-                    // changed while the stream was being resolved (see
-                    // the function's docstring).
-                    if (player.playbackState == Player.STATE_ENDED) {
-                        addToQueue(
-                            listOf(
-                                QueueItem(
-                                    uri = streamUrl,
-                                    title = track.title,
-                                    isLocal = false,
-                                    artist = relatedArtist,
-                                    isFromRadio = true,
-                                )
-                            )
-                        )
-                        player.play()
+                    val newItem = fetchOneRadioTrack(seedArtist) ?: break
+
+                    withContext(Dispatchers.Main) {
+                        val wasEnded = player.playbackState == Player.STATE_ENDED
+                        val insertIndex = queueItems.size
+                        queueItems.add(newItem)
+                        player.addMediaItems(listOf(toMediaItem(newItem)))
+                        if (wasEnded) {
+                            // Fix del fallo de autoplay -- ver docstring.
+                            player.prepare()
+                            player.seekTo(insertIndex, 0)
+                            player.play()
+                        }
+                        syncStateFromPlayer()
                     }
                 }
-            } catch (e: Exception) {
-                // Silencioso a propósito -- ver docstring de la función.
+            } finally {
+                withContext(Dispatchers.Main) {
+                    isRadioTopUpRunning = false
+                }
             }
         }
     }
+
+    /** Pistas de Radio (isFromRadio) que quedan por sonar, sin contar la actual. */
+    private fun currentRadioBacklog(): Int {
+        val currentIndex = player.currentMediaItemIndex
+        if (currentIndex < 0) return 0
+        return queueItems.drop(currentIndex + 1).count { it.isFromRadio }
+    }
+
+    /**
+     * Un único ciclo búsqueda-de-relacionado + búsqueda-gratuita-en-
+     * YouTube + resolución-de-stream (ver RadioRepository y
+     * ExternalLinkResolver.searchYoutube()). Nunca lanza -- cualquier
+     * fallo en cualquiera de los tres pasos se trata como "no hay
+     * pista", dejando que topUpRadioQueueIfNeeded() pare de intentar
+     * en vez de reventar.
+     * ---
+     * A single suggest-related + free-YouTube-search + stream-
+     * resolution cycle (see RadioRepository and
+     * ExternalLinkResolver.searchYoutube()). Never throws -- any
+     * failure in any of the three steps is treated as "no track",
+     * letting topUpRadioQueueIfNeeded() stop trying instead of
+     * blowing up.
+     */
+    private suspend fun fetchOneRadioTrack(seedArtist: String): QueueItem? =
+        try {
+            val relatedArtist = radioRepository.suggestRelatedArtist(seedArtist)
+            if (relatedArtist == null) {
+                null
+            } else {
+                val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 1)
+                val track = searchResult.tracks.firstOrNull()
+                if (track == null) {
+                    null
+                } else {
+                    val streamUrl = streamResolver.resolveAudioStreamUrl(
+                        "https://youtu.be/${track.youtubeId}",
+                    )
+                    QueueItem(
+                        uri = streamUrl,
+                        title = track.title,
+                        isLocal = false,
+                        artist = relatedArtist,
+                        isFromRadio = true,
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            null
+        }
 
     private fun syncStateFromPlayer() {
         val index = player.currentMediaItemIndex
@@ -697,5 +786,21 @@ class PlayerManager @Inject constructor(
     fun release() {
         managerScope.cancel()
         player.release()
+    }
+
+    private companion object {
+        /**
+         * H08 PARTE 2 (S009) -- cuántas pistas de Radio se mantienen
+         * siempre por delante en la cola. Petición explícita de
+         * Miguel Ángel tras probar la primera versión (una sola
+         * pista): "iría añadiendo temas hasta 10 más... manteniendo
+         * 10 más siempre".
+         * ---
+         * H08 PARTE 2 (S009) -- how many Radio tracks are always kept
+         * queued ahead. Explicit request from Miguel Ángel after
+         * testing the first version (a single track): "I'd keep
+         * adding tracks up to 10 more... always keeping 10 more".
+         */
+        const val RADIO_QUEUE_SIZE = 10
     }
 }
