@@ -417,6 +417,60 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                // H07 PARTE 1 -- aviso visible cuando la
+                // sincronización terminó con algún cambio real
+                // (altas aplicadas y/o bajas ya confirmadas). Antes
+                // de esto, un dispositivo que solo recibía altas (sin
+                // ningún borrado que confirmar) no mostraba nada en
+                // absoluto -- reportado por Miguel Ángel: parecía que
+                // no estaba haciendo nada aunque por debajo sí
+                // funcionara. Si no hubo ningún cambio (addedCount y
+                // removedCount ambos 0), no se muestra nada -- no
+                // hace falta molestar cuando ya estaba todo al día.
+                // ---
+                // H07 PART 1 -- visible notice when the sync finished
+                // with any real change (additions applied and/or
+                // deletions already confirmed). Before this, a device
+                // that only received additions (no deletion to
+                // confirm) showed nothing at all -- reported by
+                // Miguel Ángel: it looked like it wasn't doing
+                // anything even though it was working underneath. If
+                // there was no change at all (addedCount and
+                // removedCount both 0), nothing is shown -- no need
+                // to bother when everything was already up to date.
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Done)
+                    ?.takeIf { it.addedCount > 0 || it.removedCount > 0 }
+                    ?.let { doneState ->
+                        AlertDialog(
+                            onDismissRequest = autoSyncViewModel::dismiss,
+                            title = { Text("Sincronizado con Drive") },
+                            text = {
+                                val parts = mutableListOf<String>()
+                                if (doneState.addedCount > 0) {
+                                    parts += "${doneState.addedCount} elemento(s) nuevo(s) añadido(s)"
+                                }
+                                if (doneState.removedCount > 0) {
+                                    parts += "${doneState.removedCount} elemento(s) borrado(s)"
+                                }
+                                Text(parts.joinToString(" y ") + " desde otro dispositivo.")
+                            },
+                            confirmButton = {
+                                TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
+                            },
+                        )
+                    }
+
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Error)?.let { errorState ->
+                    AlertDialog(
+                        onDismissRequest = autoSyncViewModel::dismiss,
+                        title = { Text("No se pudo sincronizar con Drive") },
+                        text = { Text(errorState.message) },
+                        confirmButton = {
+                            TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
+                        },
+                    )
+                }
+
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {

@@ -154,17 +154,22 @@ class AutoSyncViewModel @Inject constructor(
     fun confirmDeletions() {
         val diff = pendingDiff ?: return
         val removedCount = diff.tracksToDelete.size + diff.favoritesToRemove.size + diff.playlistsToDelete.size
+        val addedCount = diff.tracksToDownload.size + diff.favoritesToAdd.size + diff.playlistsToCreate.size
         viewModelScope.launch {
             mirrorRepository.applyDeletions(diff)
             pendingDiff = null
-            _uiState.value = AutoSyncUiState.Done(addedCount = 0, removedCount = removedCount)
+            _uiState.value = AutoSyncUiState.Done(addedCount = addedCount, removedCount = removedCount)
         }
     }
 
     /** El usuario rechaza los borrados -- las altas ya aplicadas se quedan, los borrados no se tocan. */
     fun dismissDeletions() {
+        val diff = pendingDiff
         pendingDiff = null
-        _uiState.value = AutoSyncUiState.Idle
+        val addedCount = diff?.let {
+            it.tracksToDownload.size + it.favoritesToAdd.size + it.playlistsToCreate.size
+        } ?: 0
+        _uiState.value = AutoSyncUiState.Done(addedCount = addedCount, removedCount = 0)
     }
 
     fun dismiss() {
