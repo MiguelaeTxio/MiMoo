@@ -156,9 +156,26 @@ class AutoSyncViewModel @Inject constructor(
         val envelope = try {
             backupRepository.fromSyncJson(remoteJson)
         } catch (e: BackupRepository.BackupParseException) {
-            _uiState.value = AutoSyncUiState.Error(
-                e.message ?: "La copia de respaldo automática de Drive no es válida."
-            )
+            // No hay forma útil de recuperar nada de un archivo que
+            // no se puede leer (formato antiguo, corrupto, etc.) --
+            // en vez de dejar a Miguel Ángel atascado con el mismo
+            // error cada vez que abre la app (bug real reportado,
+            // reproducido con un archivo del formato anterior a esta
+            // sesión ya en Drive), se trata igual que el caso 1: se
+            // sobreescribe con el estado actual de este dispositivo y
+            // se sigue adelante, sin preguntar nada raro.
+            // ---
+            // There's no useful way to recover anything from a file
+            // that can't be read (old format, corrupt, etc.) --
+            // instead of leaving Miguel Ángel stuck with the same
+            // error every time the app opens (real bug reported,
+            // reproduced with a file from before this session's
+            // format already in Drive), it's treated the same as
+            // case 1: overwritten with this device's current state
+            // and moves on, without asking anything odd.
+            Log.w(TAG, "runSync() -- copia remota ilegible (${e.message}), se sobreescribe", e)
+            pushAsNewEnvelope(accessToken)
+            _uiState.value = AutoSyncUiState.Done()
             return
         }
 

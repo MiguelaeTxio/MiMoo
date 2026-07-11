@@ -120,6 +120,37 @@ class BackupRepository @Inject constructor(
             "La copia de respaldo automática de Drive está vacía o no tiene el formato esperado."
         )
 
+        // Gson no respeta la nulabilidad de Kotlin: si el JSON no
+        // tiene el campo "bundle" (p.ej. un archivo del formato
+        // ANTERIOR a esta sesión -- BackupBundle pelado, sin sobre --
+        // que ya hubiera en Drive de pruebas previas), envelope.bundle
+        // queda en null en tiempo de ejecución pese a estar declarado
+        // no-nulo, y acceder a .version revienta con un
+        // NullPointerException críptico en vez de un error claro --
+        // bug real reportado por Miguel Ángel, reproducido con un
+        // archivo de sesión anterior en Drive. Se comprueba explícito
+        // aquí para convertirlo en un BackupParseException legible y
+        // capturable, igual que cualquier otro fallo de formato.
+        // ---
+        // Gson doesn't respect Kotlin's nullability: if the JSON is
+        // missing the "bundle" field (e.g. a file from the format
+        // BEFORE this session -- a bare BackupBundle, no envelope --
+        // already sitting in Drive from earlier testing),
+        // envelope.bundle ends up null at runtime despite being
+        // declared non-null, and accessing .version blows up with a
+        // cryptic NullPointerException instead of a clear error --
+        // real bug reported by Miguel Ángel, reproduced with a file
+        // left over from an earlier session in Drive. Checked
+        // explicitly here to turn it into a readable, catchable
+        // BackupParseException, same as any other format failure.
+        @Suppress("SENSELESS_COMPARISON")
+        if (envelope.bundle == null) {
+            throw BackupParseException(
+                "La copia de respaldo automática de Drive tiene un formato antiguo o " +
+                    "incompleto (sin datos de dispositivo)."
+            )
+        }
+
         if (envelope.bundle.version != BackupBundle.CURRENT_VERSION) {
             throw BackupParseException(
                 "Esta copia de respaldo automática es de la versión ${envelope.bundle.version}, " +
