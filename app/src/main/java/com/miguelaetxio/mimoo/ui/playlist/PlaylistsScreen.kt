@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,16 +73,60 @@ fun PlaylistsScreen(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
             ) {
-                items(uiState.playlists, key = { it.id }) { playlist ->
-                    PlaylistRow(
-                        playlist = playlist,
-                        onOpen = { onOpenPlaylist(playlist.id) },
-                        onRename = { playlistPendingRename = playlist },
-                        onDelete = { playlistPendingDelete = playlist },
-                    )
+                Spacer(Modifier.height(8.dp))
+
+                // H08 PARTE 1 -- mismo patrón visual que "Filtrar
+                // biblioteca" (LibraryScreen.kt). A diferencia de
+                // Biblioteca, Playlists no tiene niveles de navegación
+                // por capas, así que el filtro está siempre visible
+                // mientras haya al menos una playlist creada. El
+                // margen horizontal se aplica solo aquí (y en el
+                // mensaje de "sin resultados"), no a la Column ni a
+                // PlaylistRow, que ya trae su propio padding
+                // horizontal de 16dp -- evita duplicar el margen.
+                OutlinedTextField(
+                    value = uiState.filterQuery,
+                    onValueChange = viewModel::onFilterQueryChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    label = { Text("Filtrar listas") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Search, contentDescription = null)
+                    },
+                    singleLine = true,
+                )
+                Spacer(Modifier.height(8.dp))
+
+                if (uiState.filteredPlaylists.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "Ninguna lista coincide con \"${uiState.filterQuery}\".",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(uiState.filteredPlaylists, key = { it.id }) { playlist ->
+                            PlaylistRow(
+                                playlist = playlist,
+                                onOpen = { onOpenPlaylist(playlist.id) },
+                                onRename = { playlistPendingRename = playlist },
+                                onDelete = { playlistPendingDelete = playlist },
+                            )
+                        }
+                    }
                 }
             }
         }
