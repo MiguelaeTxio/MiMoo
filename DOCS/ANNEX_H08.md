@@ -99,86 +99,58 @@ enlace" con la lista/canal ya resuelto.
 
 ## PARTE 2 — Música relacionada ("Radio")
 
-**Alcance deliberadamente sin cerrar.** Miguel Ángel lo planteó
-explícitamente como una idea sin resolver, no como un encargo con
-diseño ya decidido — cita textual resumida: *"esto es algo muy
-subjetivo, no sé cómo lo podríamos abordar (...) no lo tengo muy
-claro"*. Este anexo documenta el objetivo y dos posibles mecanismos
-técnicos, pero **ninguna decisión de diseño está tomada todavía** —
-la sesión que retome esta parte debe cerrarlas con Miguel Ángel antes
-de escribir código, no asumirlas.
+**Diseño cerrado y CONSTRUIDO (S009).** Decisiones explícitas de
+Miguel Ángel:
 
-### Objetivo
+1. **Disparo:** al terminar la última canción de la cola, con cíclico
+   desactivado. Sin tercer control aparte que activar/desactivar.
+2. **Fuente del "relacionado":** MusicBrainz (géneros compartidos).
+   Descartado el Mix automático de YouTube (`list=RD...`) — el
+   tracker de yt-dlp muestra errores documentados ("This playlist
+   type is unviewable") y reportes recientes que sugieren necesidad
+   de sesión/cookies de YouTube iniciada, infraestructura que MiMoo no
+   tiene ni tenía previsto tener.
+3. **Solo streaming, nunca descarga** — cita textual: "para eso están
+   las listas, los álbumes y los sencillos... descargar una lista que
+   se va autogenerando sería una brutalidad".
 
-Cuando la cola de reproducción se queda sin nada más que reproducir
-(la última pista de una playlist/álbum/sencillo termina, sin cíclico
-activado — ver H07 PARTE 3), en vez de simplemente parar, sugerir o
-encolar automáticamente música "relacionada" con lo que se estaba
-escuchando.
+### Implementación (S009)
 
-Ejemplo dado por Miguel Ángel: escuchando Led Zeppelin, lo razonable
-es seguir con Black Sabbath, Deep Purple o Rolling Stones — nunca con
-Tiësto. Escuchando Fangoria, en cambio, música electrónica sí podría
-encajar. La relación "artista A se parece a artista B" es
-inherentemente subjetiva y no está resuelta por MiMoo hoy de ninguna
-forma (no hay ningún dato de género/similitud en el modelo actual).
+- `MusicBrainzApiService.searchArtists()`/`lookupArtist(inc=genres)`
+  — nuevos endpoints, verificados contra la documentación oficial de
+  MusicBrainz (API estable, sin el riesgo de inestabilidad de
+  yt-dlp/YouTube).
+- `RadioRepository.suggestRelatedArtist(artista)`: resuelve MBID →
+  géneros → busca otros artistas con uno de esos géneros → elige uno
+  al azar entre los candidatos, excluyendo al propio artista de
+  origen. Nunca lanza excepción (mismo patrón que
+  `CoverArtRepository`).
+- `QueueItem` gana `artist: String?` e `isFromRadio: Boolean` — hilado
+  por todos los puntos de la app que construyen la cola (Biblioteca,
+  Playlists, Importar enlace, Búsqueda), para que la Radio siempre
+  tenga semilla si esa pista termina siendo la última.
+- `PlayerManager`: nuevo listener `onPlaybackStateChanged` — dispara
+  en `Player.STATE_ENDED` con `repeatMode == REPEAT_MODE_OFF` (estado
+  que ExoPlayer solo alcanza sin cíclico activado). Busca el
+  relacionado, lo busca gratis en YouTube
+  (`ExternalLinkResolver.searchYoutube()`, motor ya existente),
+  resuelve el stream, y lo añade a la cola — todo en un
+  `CoroutineScope` propio del singleton (`managerScope`), con vuelta a
+  `Dispatchers.Main` antes de tocar el `ExoPlayer` (no es seguro
+  llamarlo desde otro hilo). Comprueba que el player siga en
+  `STATE_ENDED` antes de reproducir, por si Miguel Ángel ya arrancó
+  otra cosa manualmente mientras se resolvía. Completamente
+  silenciosa si no encuentra nada — la Radio es una mejora, nunca debe
+  romper la reproducción ni mostrar un error.
 
-### Preguntas de diseño abiertas (sin resolver, textual de Miguel Ángel)
+### Pendiente
 
-1. **¿Cuándo se dispara exactamente?**
-   - ¿Solo cuando termina la cola entera (última pista, sin cíclico)?
-   - ¿También cuando termina una única pista reproducida suelta (no
-     parte de una cola con más contenido)?
-   - ¿Hace falta un tercer control explícito (algo así como "modo
-     exploración"), al lado de cíclico/aleatorio (H07 PARTE 3), para
-     activar/desactivar esto explícitamente? Miguel Ángel lo propuso
-     y a la vez dudó de si hace falta o si debería ser automático sin
-     más, condicionado solo a que cíclico esté desactivado.
-
-2. **¿De dónde sale la relación artista↔artista/tema↔tema?** MiMoo no
-   tiene hoy ninguna fuente de datos de género/similitud musical.
-   Candidatos a investigar en línea (§4.5) cuando se retome esta
-   parte, ninguno confirmado todavía:
-   - **Mix automático de YouTube** ("Mix" / listas `RD{videoId}`
-     autogeneradas por YouTube a partir de un vídeo) — si `yt-dlp`
-     puede resolver esa lista para un `youtubeId` dado, daría
-     "relacionados" ya calculados por YouTube mismo, sin que MiMoo
-     tenga que modelar similitud musical por su cuenta. Coherente con
-     el principio ya establecido del proyecto ("el dato nace de
-     YouTube", ver `MASTER_DOCUMENT.md` §0) y con que toda la
-     búsqueda actual ya pasa por `yt-dlp` sin cuota (ver §2.3). **Sin
-     verificar todavía** si `yt-dlp` expone esto de forma fiable — es
-     el primer sitio por donde mirar.
-   - Alguna noción de género/etiqueta vía MusicBrainz (ya integrado
-     para álbumes, H05) — MusicBrainz tiene relaciones artista↔artista
-     y tags de género, pero requeriría diseño propio de "qué tan
-     relacionado es esto" en vez de recibirlo ya resuelto.
-   - Cualquier heurística propia sobre lo que Miguel Ángel ya tiene en
-     su biblioteca/favoritos — no explorado, no se sabe si tiene
-     sentido.
-
-3. **¿Se descarga, o solo se reproduce en streaming?** Dado que es
-   "exploración" (contenido que igual no interesa conservar), podría
-   tener sentido que la música relacionada solo se reproduzca en
-   streaming (como H01) sin pasar por el flujo de descarga (H02) a
-   menos que Miguel Ángel decida quedársela explícitamente — sin
-   decidir.
-
-### Hoja de ruta
-
-**PASO 2.1 (bloqueante, primero de todo)** — Sesión de diseño con
-Miguel Ángel para cerrar las tres preguntas de arriba antes de escribir
-ninguna línea de código. Sin esto, cualquier implementación estaría
-adivinando una decisión de producto que Miguel Ángel dijo explícitamente
-que no tiene tomada.
-
-**PASO 2.2** — Una vez cerrado el diseño: verificación en línea (§4.5)
-del mecanismo técnico elegido (Mix de YouTube vía `yt-dlp`, MusicBrainz,
-u otro) antes de implementar — mismo criterio que el resto del
-proyecto con servicios externos.
-
-**PASO 2.3 en adelante** — Sin definir todavía; depende por completo
-de lo que salga de PASO 2.1 y 2.2.
+**PASO 2.2 — PENDIENTE.** Verificación en dispositivo real: dejar
+sonar una cola hasta el final sin cíclico y confirmar que arranca algo
+relacionado en streaming. Ningún endpoint nuevo de MusicBrainz se
+puede probar en vivo desde el entorno del modelo (`musicbrainz.org`
+no está en la lista de dominios permitidos), así que esta es la
+primera verificación real de todo el mecanismo.
 
 ---
 

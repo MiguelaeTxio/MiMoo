@@ -148,7 +148,12 @@ class PlaylistDetailViewModel @Inject constructor(
                 val localPath = track.filePath
                 val remoteUrl = track.youtubeUrl
                 if (localPath != null) {
-                    QueueItem(uri = localPath, title = track.title, isLocal = true)
+                    QueueItem(
+                        uri = localPath,
+                        title = track.title,
+                        isLocal = true,
+                        artist = track.artist ?: track.channelTitle,
+                    )
                 } else if (remoteUrl == null) {
                     // Pista sintética (local:) sin filePath -- caso
                     // extremo que no debería darse nunca en la
@@ -166,7 +171,12 @@ class PlaylistDetailViewModel @Inject constructor(
                 } else {
                     try {
                         val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                        QueueItem(uri = streamUrl, title = track.title, isLocal = false)
+                        QueueItem(
+                            uri = streamUrl,
+                            title = track.title,
+                            isLocal = false,
+                            artist = track.artist ?: track.channelTitle,
+                        )
                     } catch (e: Exception) {
                         resolutionFailures++
                         null

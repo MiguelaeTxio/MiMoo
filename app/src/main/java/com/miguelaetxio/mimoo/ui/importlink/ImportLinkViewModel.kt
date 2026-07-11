@@ -343,7 +343,12 @@ class ImportLinkViewModel @Inject constructor(
                     val streamUrl = streamResolver.resolveAudioStreamUrl(
                         "https://youtu.be/${track.youtubeId}",
                     )
-                    QueueItem(uri = streamUrl, title = track.title, isLocal = false)
+                    QueueItem(
+                        uri = streamUrl,
+                        title = track.title,
+                        isLocal = false,
+                        artist = track.channelTitle,
+                    )
                 }
                 playerManager.playQueue(items)
                 _uiState.value = _uiState.value.copy(isResolvingQueue = false)

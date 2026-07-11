@@ -286,14 +286,14 @@ conversación, no por dependencia técnica entre ellas.
    Ver `DOCS/ANNEX_H08.md` para el detalle y la corrección de alcance
    de S009.
 2. **Música relacionada ("Radio")** — cuando la cola de reproducción
-   se queda sin nada más que reproducir, sugerir/encolar
-   automáticamente música relacionada con lo que se estaba
-   escuchando, en vez de simplemente parar. **Alcance deliberadamente
-   sin cerrar** — ver `DOCS/ANNEX_H08.md` para las preguntas de diseño
-   abiertas que Miguel Ángel planteó explícitamente sin resolver
-   (cuándo se dispara exactamente, de dónde sale la relación
-   artista↔artista, si hace falta un tercer control además de
-   cíclico/aleatorio).
+   se queda sin nada más que reproducir sin cíclico activado,
+   continúa sola en streaming con un artista relacionado (géneros
+   compartidos vía MusicBrainz). Diseño cerrado y construido en S009
+   — ver `DOCS/ANNEX_H08.md` para el detalle completo (por qué se
+   descartó el Mix de YouTube, algoritmo de selección, enganche en
+   `PlayerManager`). Solo streaming, nunca descarga (decisión
+   explícita de Miguel Ángel). Verificación en dispositivo real
+   pendiente.
 
 ---
 

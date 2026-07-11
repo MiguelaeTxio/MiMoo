@@ -1098,7 +1098,12 @@ class LibraryViewModel @Inject constructor(
     /** Plays a single track from the library (always local). */
     fun playTrack(track: SearchResultTrack) {
         val filePath = track.filePath ?: return
-        playerManager.play(filePath, track.title, isLocal = true)
+        playerManager.play(
+            filePath,
+            track.title,
+            isLocal = true,
+            artist = track.artist ?: track.channelTitle,
+        )
     }
 
     /**
@@ -1119,7 +1124,14 @@ class LibraryViewModel @Inject constructor(
     fun addTrackToQueue(track: SearchResultTrack) {
         val filePath = track.filePath ?: return
         playerManager.addToQueue(
-            listOf(QueueItem(uri = filePath, title = track.title, isLocal = true))
+            listOf(
+                QueueItem(
+                    uri = filePath,
+                    title = track.title,
+                    isLocal = true,
+                    artist = track.artist ?: track.channelTitle,
+                )
+            )
         )
     }
 
@@ -1133,7 +1145,14 @@ class LibraryViewModel @Inject constructor(
     fun insertTrackNext(track: SearchResultTrack) {
         val filePath = track.filePath ?: return
         playerManager.insertNext(
-            listOf(QueueItem(uri = filePath, title = track.title, isLocal = true))
+            listOf(
+                QueueItem(
+                    uri = filePath,
+                    title = track.title,
+                    isLocal = true,
+                    artist = track.artist ?: track.channelTitle,
+                )
+            )
         )
     }
 
@@ -1209,7 +1228,12 @@ class LibraryViewModel @Inject constructor(
     private fun List<SearchResultTrack>.toQueueItems(): List<QueueItem> =
         mapNotNull { track ->
             track.filePath?.let { path ->
-                QueueItem(uri = path, title = track.title, isLocal = true)
+                QueueItem(
+                    uri = path,
+                    title = track.title,
+                    isLocal = true,
+                    artist = track.artist ?: track.channelTitle,
+                )
             }
         }
 }

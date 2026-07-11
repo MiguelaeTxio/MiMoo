@@ -9,21 +9,52 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
+import com.miguelaetxio.mimoo.data.remote.RadioRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * A single entry in the playback queue.
+ *
+ * artist (H08 PARTE 2, S009): opcional porque QueueItem se usaba
+ * antes solo para reproducción, sin necesitar saber el artista de
+ * cada pista -- ahora hace falta para poder buscar "algo relacionado
+ * con X" al terminar la cola (ver PlayerManager). Los llamantes que sí
+ * conocen el artista (Biblioteca, Importar enlace, Búsqueda,
+ * Playlists) lo pasan; ningún llamante existente se rompe al quedar
+ * con el valor por defecto null.
+ * isFromRadio: true solo en la pista que la propia Radio añadió --
+ * distingue "esto lo elegiste tú" de "esto lo sugirió la Radio", por
+ * si la UI quiere mostrarlo alguna vez (no usado todavía en pantalla).
  * ---
- * Una entrada de la cola de reproducción.
+ * A single entry in the playback queue.
+ *
+ * artist (H08 PARTE 2, S009): optional because QueueItem was only
+ * used for playback before, with no need to know each track's artist
+ * -- now needed to be able to search "something related to X" when
+ * the queue ends (see PlayerManager). Callers that do know the artist
+ * (Biblioteca, Importar enlace, Búsqueda, Playlists) pass it; no
+ * existing caller breaks by falling back to the default null value.
+ * isFromRadio: true only on the track Radio itself added -- tells
+ * apart "you chose this" from "Radio suggested this", in case the UI
+ * ever wants to show it (not used on screen yet).
  */
 data class QueueItem(
     val uri: String,
     val title: String,
     val isLocal: Boolean,
+    val artist: String? = null,
+    val isFromRadio: Boolean = false,
 )
 
 data class PlaybackState(
@@ -122,6 +153,24 @@ data class PlaybackState(
 class PlayerManager @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val storageManager: StorageManager,
+    // H08 PARTE 2 (S009) -- dependencias de red que PlayerManager no
+    // necesitaba hasta ahora (era pura infraestructura de
+    // reproducción). Se aceptan aquí, en vez de crear un coordinador
+    // aparte, porque PlayerManager es el único sitio que sabe de
+    // verdad cuándo la cola termina de verdad sin cíclico
+    // (onPlaybackStateChanged) -- un ViewModel no sirve, se destruye
+    // al salir de pantalla y el enganche dejaría de disparar.
+    // ---
+    // H08 PARTE 2 (S009) -- network dependencies PlayerManager didn't
+    // need until now (it was pure playback infrastructure). Accepted
+    // here, instead of a separate coordinator, because PlayerManager
+    // is the only place that truly knows when the queue really ends
+    // without cyclic (onPlaybackStateChanged) -- a ViewModel won't do,
+    // it gets destroyed on leaving the screen and the hook would stop
+    // firing.
+    private val radioRepository: RadioRepository,
+    private val externalLinkResolver: ExternalLinkResolver,
+    private val streamResolver: StreamResolver,
 ) {
     /**
      * Público (antes privado) para que MiMooPlaybackService pueda
@@ -170,6 +219,22 @@ class PlayerManager @Inject constructor(
      * separately.
      */
     private val queueItems: MutableList<QueueItem> = mutableListOf()
+
+    /**
+     * H08 PARTE 2 (S009) -- CoroutineScope propio, no viewModelScope
+     * (PlayerManager no es un ViewModel), para la búsqueda de "artista
+     * relacionado" + resolución de stream al terminar la cola.
+     * SupervisorJob: un fallo en una continuación de Radio no debe
+     * cancelar la capacidad de disparar la siguiente. Cancelado en
+     * release().
+     * ---
+     * H08 PARTE 2 (S009) -- own CoroutineScope, not viewModelScope
+     * (PlayerManager isn't a ViewModel), for the "related artist"
+     * search + stream resolution when the queue ends. SupervisorJob:
+     * a failure in one Radio continuation must not cancel the ability
+     * to fire the next one. Cancelled in release().
+     */
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
         player.addListener(object : Player.Listener {
@@ -251,7 +316,108 @@ class PlayerManager @Inject constructor(
             override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                 syncStateFromPlayer()
             }
+
+            /**
+             * H08 PARTE 2 (S009) -- disparo de Radio: cuando la cola
+             * termina de verdad (Player.STATE_ENDED, que ExoPlayer solo
+             * alcanza al terminar la última pista SIN que haya
+             * cíclico activado -- con REPEAT_MODE_ALL nunca se llega
+             * a este estado, vuelve a la primera pista en su lugar).
+             * Decisión explícita de Miguel Ángel: se dispara al acabar
+             * la última canción, sin cíclico, sin ningún control
+             * aparte que activar/desactivar.
+             * ---
+             * H08 PARTE 2 (S009) -- Radio trigger: when the queue
+             * truly ends (Player.STATE_ENDED, which ExoPlayer only
+             * reaches after the last track finishes WITHOUT cyclic
+             * enabled -- with REPEAT_MODE_ALL this state is never
+             * reached, it goes back to the first track instead).
+             * Explicit decision from Miguel Ángel: fires when the last
+             * song ends, no cyclic, no separate control to turn it on
+             * or off.
+             */
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED &&
+                    player.repeatMode == Player.REPEAT_MODE_OFF
+                ) {
+                    triggerRadioContinuation()
+                }
+            }
         })
+    }
+
+    /**
+     * H08 PARTE 2 (S009). Solo streaming, nunca descarga -- decisión
+     * explícita de Miguel Ángel: "para eso están las listas, los
+     * álbumes y los sencillos; descargar una lista que se va
+     * autogenerando sería una brutalidad". Silenciosa por completo si
+     * no encuentra nada (RadioRepository/búsqueda/stream fallan) -- la
+     * Radio es una mejora, nunca debe mostrar un error ni interrumpir
+     * al usuario por no encontrar continuación.
+     *
+     * Comprobación final (`player.playbackState == Player.STATE_ENDED`)
+     * antes de añadir/reproducir: la búsqueda + resolución de stream
+     * tarda (llamadas de red secuenciales), y si Miguel Ángel ya
+     * arrancó otra cosa manualmente mientras tanto, la Radio no debe
+     * secuestrar esa reproducción nueva.
+     * ---
+     * H08 PARTE 2 (S009). Streaming only, never download -- explicit
+     * decision from Miguel Ángel: "that's what playlists, albums and
+     * singles are for; downloading a self-generating list would be
+     * overkill". Completely silent if nothing is found
+     * (RadioRepository/search/stream all fail) -- Radio is an
+     * enhancement, it must never show an error or interrupt the user
+     * over finding no continuation.
+     *
+     * Final check (`player.playbackState == Player.STATE_ENDED`)
+     * before adding/playing: the search + stream resolution takes time
+     * (sequential network calls), and if Miguel Ángel already started
+     * something else manually in the meantime, Radio must not hijack
+     * that new playback.
+     */
+    private fun triggerRadioContinuation() {
+        val lastArtist = queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }
+            ?: return
+
+        managerScope.launch {
+            try {
+                val relatedArtist = radioRepository.suggestRelatedArtist(lastArtist)
+                    ?: return@launch
+                val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 1)
+                val track = searchResult.tracks.firstOrNull() ?: return@launch
+                val streamUrl = streamResolver.resolveAudioStreamUrl(
+                    "https://youtu.be/${track.youtubeId}",
+                )
+
+                withContext(Dispatchers.Main) {
+                    // Comprobación en el hilo principal, el único
+                    // desde el que es seguro leer/tocar `player` --
+                    // el estado pudo cambiar mientras se resolvía el
+                    // stream (ver docstring de la función).
+                    // ---
+                    // Checked on the main thread, the only one safe to
+                    // read/touch `player` from -- the state could have
+                    // changed while the stream was being resolved (see
+                    // the function's docstring).
+                    if (player.playbackState == Player.STATE_ENDED) {
+                        addToQueue(
+                            listOf(
+                                QueueItem(
+                                    uri = streamUrl,
+                                    title = track.title,
+                                    isLocal = false,
+                                    artist = relatedArtist,
+                                    isFromRadio = true,
+                                )
+                            )
+                        )
+                        player.play()
+                    }
+                }
+            } catch (e: Exception) {
+                // Silencioso a propósito -- ver docstring de la función.
+            }
+        }
     }
 
     private fun syncStateFromPlayer() {
@@ -289,8 +455,8 @@ class PlayerManager @Inject constructor(
      * playQueue() (see class comment), with a one-item list. Used by
      * the individual play button in SearchScreen/Biblioteca.
      */
-    fun play(streamUrl: String, title: String, isLocal: Boolean = false) {
-        playQueue(listOf(QueueItem(streamUrl, title, isLocal)), startIndex = 0)
+    fun play(streamUrl: String, title: String, isLocal: Boolean = false, artist: String? = null) {
+        playQueue(listOf(QueueItem(streamUrl, title, isLocal, artist)), startIndex = 0)
     }
 
     /**
@@ -528,5 +694,8 @@ class PlayerManager @Inject constructor(
 
     fun durationMs(): Long = player.duration.coerceAtLeast(0L)
 
-    fun release() = player.release()
+    fun release() {
+        managerScope.cancel()
+        player.release()
+    }
 }

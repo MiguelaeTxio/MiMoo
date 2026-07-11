@@ -223,7 +223,12 @@ class SearchViewModel @Inject constructor(
     fun playTrack(track: SearchResultTrack) {
         val localFilePath = track.filePath
         if (track.downloadStatus == DownloadStatus.DONE && localFilePath != null) {
-            playerManager.play(localFilePath, track.title, isLocal = true)
+            playerManager.play(
+                localFilePath,
+                track.title,
+                isLocal = true,
+                artist = track.artist ?: track.channelTitle,
+            )
             return
         }
 
@@ -236,7 +241,12 @@ class SearchViewModel @Inject constructor(
             )
             try {
                 val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                playerManager.play(streamUrl, track.title, isLocal = false)
+                playerManager.play(
+                    streamUrl,
+                    track.title,
+                    isLocal = false,
+                    artist = track.artist ?: track.channelTitle,
+                )
                 _uiState.value = _uiState.value.copy(isResolvingStream = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

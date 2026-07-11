@@ -1,5 +1,7 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistDetail
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSearchResponse
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseDetail
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzSearchResponse
 import retrofit2.http.GET
@@ -49,4 +51,40 @@ interface MusicBrainzApiService {
         @Query("inc") inc: String = "recordings",
         @Query("fmt") format: String = "json",
     ): MusicBrainzReleaseDetail
+
+    /**
+     * H08 PARTE 2 (S009) -- busca un artista por nombre, para resolver
+     * su MBID antes de poder consultar sus géneros. Primer paso de la
+     * Radio: dado el artista que estaba sonando, encontrar "artistas
+     * relacionados" vía géneros compartidos.
+     * ---
+     * H08 PARTE 2 (S009) -- searches an artist by name, to resolve
+     * its MBID before genres can be looked up. First step of Radio:
+     * given the artist that was playing, find "related artists" via
+     * shared genres.
+     */
+    @GET("artist/")
+    suspend fun searchArtists(
+        @Query("query") query: String,
+        @Query("fmt") format: String = "json",
+        @Query("limit") limit: Int = 5,
+    ): MusicBrainzArtistSearchResponse
+
+    /**
+     * H08 PARTE 2 (S009) -- lookup de un artista por MBID con
+     * `inc=genres`, verificado contra los ejemplos oficiales de la API
+     * (musicbrainz.org/doc/MusicBrainz_API/Examples): sin `inc=genres`
+     * el artista vuelve sin ningún género en la respuesta.
+     * ---
+     * H08 PARTE 2 (S009) -- artist lookup by MBID with `inc=genres`,
+     * verified against the API's official examples
+     * (musicbrainz.org/doc/MusicBrainz_API/Examples): without
+     * `inc=genres` the artist comes back with no genre data at all.
+     */
+    @GET("artist/{mbid}")
+    suspend fun lookupArtist(
+        @Path("mbid") mbid: String,
+        @Query("inc") inc: String = "genres",
+        @Query("fmt") format: String = "json",
+    ): MusicBrainzArtistDetail
 }

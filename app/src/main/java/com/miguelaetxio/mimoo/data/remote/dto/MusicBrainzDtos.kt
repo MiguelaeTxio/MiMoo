@@ -74,3 +74,31 @@ data class MusicBrainzTrack(
     @SerializedName("title") val title: String,
     @SerializedName("length") val length: Int? = null,
 )
+
+/**
+ * H08 PARTE 2 (S009) -- DTOs para búsqueda y lookup de artista, usados
+ * por RadioRepository para encontrar "artistas relacionados" vía
+ * géneros compartidos de MusicBrainz.
+ * ---
+ * H08 PARTE 2 (S009) -- DTOs for artist search and lookup, used by
+ * RadioRepository to find "related artists" via MusicBrainz's shared
+ * genres.
+ */
+data class MusicBrainzArtistSearchResponse(
+    @SerializedName("artists") val artists: List<MusicBrainzArtistSummary> = emptyList(),
+)
+
+data class MusicBrainzArtistSummary(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+)
+
+data class MusicBrainzArtistDetail(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("genres") val genres: List<MusicBrainzGenre> = emptyList(),
+)
+
+data class MusicBrainzGenre(
+    @SerializedName("name") val name: String,
+)
