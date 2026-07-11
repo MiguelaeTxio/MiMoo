@@ -29,7 +29,7 @@ sealed class UpdateUiState {
     object Checking : UpdateUiState()
     object UpToDate : UpdateUiState()
     data class UpdateAvailable(val manifest: UpdateManifest) : UpdateUiState()
-    object Downloading : UpdateUiState()
+    data class Downloading(val bytesDownloaded: Long, val totalBytes: Long) : UpdateUiState()
     data class ReadyToInstall(val apkUri: android.net.Uri) : UpdateUiState()
     data class Error(val message: String) : UpdateUiState()
 }
@@ -57,10 +57,13 @@ class AppUpdateViewModel @Inject constructor(
     }
 
     fun downloadUpdate(manifest: UpdateManifest) {
-        _uiState.value = UpdateUiState.Downloading
+        _uiState.value = UpdateUiState.Downloading(bytesDownloaded = 0L, totalBytes = 0L)
         viewModelScope.launch {
             _uiState.value = try {
-                UpdateUiState.ReadyToInstall(appUpdateRepository.downloadApk(manifest))
+                val apkUri = appUpdateRepository.downloadApk(manifest) { bytesDownloaded, totalBytes ->
+                    _uiState.value = UpdateUiState.Downloading(bytesDownloaded, totalBytes)
+                }
+                UpdateUiState.ReadyToInstall(apkUri)
             } catch (e: Exception) {
                 UpdateUiState.Error(e.message ?: "No se pudo descargar la actualización.")
             }

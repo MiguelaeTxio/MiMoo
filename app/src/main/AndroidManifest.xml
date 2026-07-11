@@ -35,6 +35,26 @@
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--
+        H07 PARTE 2: obligatorio desde Android 7.1 (API 25) para que
+        el sistema reconozca la petición de instalar un APK vía
+        Intent(ACTION_VIEW) + FileProvider. Sin este permiso
+        declarado, el intent no hace absolutamente nada: ni error,
+        ni aviso, ni ActivityNotFoundException, exactamente el
+        síntoma reportado por Miguel Ángel. No es una permission
+        peligrosa/runtime; el sistema pide su propia confirmación
+        aparte (ACTION_MANAGE_UNKNOWN_APP_SOURCES) la primera vez.
+
+        H07 PART 2: mandatory since Android 7.1 (API 25) for the
+        system to recognize the request to install an APK via
+        Intent(ACTION_VIEW) + FileProvider. Without this permission
+        declared, the intent does absolutely nothing: no error, no
+        notice, no ActivityNotFoundException, exactly the symptom
+        Miguel Ángel reported. Not a dangerous/runtime permission; the
+        system asks its own separate confirmation
+        (ACTION_MANAGE_UNKNOWN_APP_SOURCES) the first time.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!--
         Requeridos para que la reproducción corra en un
         MediaSessionService en primer plano y el sistema no mate el
         proceso mientras suena música en segundo plano — causa real

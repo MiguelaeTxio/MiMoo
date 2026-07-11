@@ -66,6 +66,12 @@ class AppUpdateRepository @Inject constructor(
      * para `Intent(ACTION_VIEW)`. Sobrescribe cualquier descarga
      * anterior con el mismo nombre -- no hace falta conservar
      * versiones viejas de este archivo temporal.
+     *
+     * `onProgress` se llama en cada trozo leído con
+     * (bytes descargados, bytes totales) -- `totalBytes` puede ser
+     * `-1` si el servidor no informa `Content-Length` (poco probable
+     * para un asset de Release de GitHub, pero la UI debe tratarlo
+     * como "progreso indeterminado" si ocurre).
      * ---
      * Downloads `manifest.apkUrl` to `cacheDir/apk_updates/` (the only
      * subfolder exposed by FileProvider, see
@@ -73,15 +79,33 @@ class AppUpdateRepository @Inject constructor(
      * for `Intent(ACTION_VIEW)`. Overwrites any previous download
      * with the same name -- no need to keep old versions of this temp
      * file around.
+     *
+     * `onProgress` is called on every chunk read with
+     * (bytes downloaded, total bytes) -- `totalBytes` can be `-1` if
+     * the server doesn't report `Content-Length` (unlikely for a
+     * GitHub Release asset, but the UI should treat it as
+     * "indeterminate progress" if it happens).
      */
-    suspend fun downloadApk(manifest: UpdateManifest): Uri = withContext(Dispatchers.IO) {
+    suspend fun downloadApk(
+        manifest: UpdateManifest,
+        onProgress: (bytesDownloaded: Long, totalBytes: Long) -> Unit,
+    ): Uri = withContext(Dispatchers.IO) {
         val updatesDir = File(context.cacheDir, "apk_updates").apply { mkdirs() }
         val apkFile = File(updatesDir, "MiMoo-update.apk")
 
         val body = appUpdateApiService.downloadApk(manifest.apkUrl)
+        val totalBytes = body.contentLength()
+        var bytesDownloaded = 0L
+
         body.byteStream().use { input ->
             apkFile.outputStream().use { output ->
-                input.copyTo(output)
+                val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+                var bytesRead: Int
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    output.write(buffer, 0, bytesRead)
+                    bytesDownloaded += bytesRead
+                    onProgress(bytesDownloaded, totalBytes)
+                }
             }
         }
 
@@ -92,6 +116,8 @@ class AppUpdateRepository @Inject constructor(
         )
     }
 }
+
+private const val DOWNLOAD_BUFFER_SIZE = 8 * 1024
 
 sealed class UpdateCheckResult {
     object UpToDate : UpdateCheckResult()

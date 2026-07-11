@@ -276,6 +276,7 @@ private fun UpdateCheckSection(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var installErrorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -334,26 +335,83 @@ private fun UpdateCheckSection(
                 }
             }
             is UpdateUiState.Downloading -> {
-                Row {
-                    CircularProgressIndicator(modifier = Modifier.height(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text("Descargando...")
+                val hasTotal = state.totalBytes > 0
+                val downloadedMb = state.bytesDownloaded / (1024f * 1024f)
+                val totalMb = state.totalBytes / (1024f * 1024f)
+                val percent = if (hasTotal) {
+                    (state.bytesDownloaded * 100 / state.totalBytes).toInt()
+                } else {
+                    null
+                }
+                Column {
+                    if (hasTotal) {
+                        LinearProgressIndicator(
+                            progress = { state.bytesDownloaded.toFloat() / state.totalBytes.toFloat() },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        // Servidor sin Content-Length (poco probable
+                        // para un asset de Release) -- progreso
+                        // indeterminado en vez de una barra falsa.
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        if (hasTotal) {
+                            "Descargando... %.1f / %.1f MB (%d%%)".format(
+                                downloadedMb, totalMb, percent,
+                            )
+                        } else {
+                            "Descargando... %.1f MB".format(downloadedMb)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
             is UpdateUiState.ReadyToInstall -> {
                 Text("Descarga completa.")
+                installErrorMessage?.let { msg ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
                 Spacer(Modifier.height(8.dp))
                 TextButton(
                     onClick = {
-                        // Fuentes desconocidas: MiMoo no está en
-                        // Google Play, Android pide confirmación
-                        // aparte si no se ha concedido ya -- fuera
-                        // del control de esta app.
+                        installErrorMessage = null
+                        // H07 PARTE 2, fix real: sin
+                        // REQUEST_INSTALL_PACKAGES concedido para
+                        // MiMoo, el Intent de instalación no hacía
+                        // absolutamente nada -- ni error ni aviso.
+                        // Se comprueba antes y, si falta, se manda a
+                        // Miguel Ángel directamente a la pantalla de
+                        // Ajustes del sistema donde concederlo, en
+                        // vez de dejar que el botón "Instalar" no
+                        // haga nada en silencio.
                         // ---
-                        // Unknown sources: MiMoo isn't on Google
-                        // Play, Android asks for separate
-                        // confirmation if not already granted --
-                        // outside this app's control.
+                        // H07 PART 2, real fix: without
+                        // REQUEST_INSTALL_PACKAGES granted for MiMoo,
+                        // the install Intent did absolutely nothing --
+                        // no error, no notice. Checked beforehand and,
+                        // if missing, sends Miguel Ángel straight to
+                        // the system Settings screen to grant it,
+                        // instead of letting the "Instalar" button
+                        // silently do nothing.
+                        if (!context.packageManager.canRequestPackageInstalls()) {
+                            try {
+                                context.startActivity(
+                                    android.content.Intent(
+                                        android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                        android.net.Uri.parse("package:${context.packageName}"),
+                                    ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                                installErrorMessage = "Concede el permiso y vuelve a pulsar Instalar."
+                            } catch (e: Exception) {
+                                installErrorMessage = "Activa \"Instalar apps desconocidas\" " +
+                                    "para MiMoo en Ajustes del sistema, y vuelve a intentarlo."
+                            }
+                            return@TextButton
+                        }
+
                         val installIntent = android.content.Intent(
                             android.content.Intent.ACTION_VIEW,
                         ).apply {
@@ -364,8 +422,12 @@ private fun UpdateCheckSection(
                             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
-                        context.startActivity(installIntent)
-                        viewModel.dismiss()
+                        try {
+                            context.startActivity(installIntent)
+                            viewModel.dismiss()
+                        } catch (e: Exception) {
+                            installErrorMessage = "No se pudo abrir el instalador: ${e.message}"
+                        }
                     },
                 ) {
                     Text("Instalar")
