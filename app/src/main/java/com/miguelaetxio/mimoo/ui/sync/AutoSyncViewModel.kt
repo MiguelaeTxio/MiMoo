@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.BackupBundle
 import com.miguelaetxio.mimoo.data.backup.BackupDriveRepository
 import com.miguelaetxio.mimoo.data.backup.BackupImportRepository
 import com.miguelaetxio.mimoo.data.backup.BackupMirrorRepository
@@ -15,6 +16,7 @@ import com.miguelaetxio.mimoo.data.backup.DeviceIdentityManager
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.SyncEnvelope
+import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,6 +98,7 @@ class AutoSyncViewModel @Inject constructor(
     private val backupRepository: BackupRepository,
     private val mirrorRepository: BackupMirrorRepository,
     private val importRepository: BackupImportRepository,
+    private val downloadQueueManager: DownloadQueueManager,
     private val deviceIdentityManager: DeviceIdentityManager,
 ) : ViewModel() {
 
@@ -189,7 +192,7 @@ class AutoSyncViewModel @Inject constructor(
 
         if (envelope.deviceId == deviceIdentityManager.deviceId) {
             // Caso 2: mismo dispositivo, desincronizado -- la nube manda siempre, sin preguntar.
-            importRepository.importDestructively(envelope.bundle)
+            restoreFromCloud(envelope.bundle)
             _uiState.value = AutoSyncUiState.RestoredFromCloud(comparison)
         } else {
             // Caso 3: otro dispositivo -- se pregunta antes de tocar nada.
@@ -202,10 +205,49 @@ class AutoSyncViewModel @Inject constructor(
     fun confirmCloudWins() {
         val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
         viewModelScope.launch {
-            importRepository.importDestructively(state.envelope.bundle)
+            restoreFromCloud(state.envelope.bundle)
             pendingAccessToken = null
             _uiState.value = AutoSyncUiState.Done(
                 "Restaurado desde la copia de ${state.envelope.deviceLabel}."
+            )
+        }
+    }
+
+    /**
+     * Sustituye el repositorio local por `bundle` (destructivo, ver
+     * `BackupImportRepository.importDestructively()`) y encola la
+     * descarga de todas las pistas resultantes -- **fix real tras el
+     * bug reportado por Miguel Ángel**: `importDestructively()` deja
+     * cada pista insertada como `PENDING`, sin `filePath` (mismo
+     * comportamiento que la importación manual de H06), pero nunca
+     * dispara la descarga real por sí sola. La importación manual
+     * (`SettingsViewModel.importNow()`, H06 PASO 5) sí lo hacía a
+     * continuación con `DownloadQueueManager.enqueue()`; aquí faltaba
+     * ese mismo paso, así que tras confirmar "usar la copia de
+     * Drive" no pasaba nada visible -- ni pantalla de descarga, ni
+     * nada en Biblioteca.
+     * ---
+     * Replaces the local repository with `bundle` (destructive, see
+     * `BackupImportRepository.importDestructively()`) and queues the
+     * download of every resulting track -- **real fix after the bug
+     * Miguel Ángel reported**: `importDestructively()` leaves each
+     * track inserted as `PENDING`, with no `filePath` (same behavior
+     * as H06's manual import), but never triggers the actual download
+     * on its own. Manual import
+     * (`SettingsViewModel.importNow()`, H06 STEP 5) did follow up with
+     * `DownloadQueueManager.enqueue()`; that same step was missing
+     * here, so after confirming "use the Drive copy" nothing visible
+     * happened -- no download screen, nothing in Library.
+     */
+    private suspend fun restoreFromCloud(bundle: BackupBundle) {
+        val result = importRepository.importDestructively(bundle)
+        result.importedTracks.forEach { track ->
+            downloadQueueManager.enqueue(
+                youtubeId = track.youtubeId,
+                title = track.title,
+                artist = track.artist ?: track.channelTitle,
+                album = track.album,
+                trackPosition = track.trackPosition,
             )
         }
     }
