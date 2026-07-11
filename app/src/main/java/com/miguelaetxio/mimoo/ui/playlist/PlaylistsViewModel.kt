@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,11 +16,15 @@ import javax.inject.Inject
 
 data class PlaylistsUiState(
     val playlists: List<Playlist> = emptyList(),
-    // H08 PARTE 1 -- filtro de texto sobre el nombre de la playlist.
-    // playlists conserva SIEMPRE la lista completa; filteredPlaylists
-    // es la vista derivada que consume PlaylistsScreen.kt, mismo
-    // patrón que Biblioteca (LibraryViewModel no sustituye su lista
-    // base al filtrar).
+    // H08 PARTE 1 -- filteredPlaylists is a derived view consumed by
+    // PlaylistsScreen.kt; playlists ALWAYS keeps the full list, same
+    // pattern as Biblioteca (LibraryViewModel never replaces its base
+    // list when filtering).
+    // ---
+    // H08 PARTE 1 -- filteredPlaylists es la vista derivada que
+    // consume PlaylistsScreen.kt; playlists conserva SIEMPRE la lista
+    // completa, mismo patrón que Biblioteca (LibraryViewModel no
+    // sustituye su lista base al filtrar).
     val filterQuery: String = "",
     val filteredPlaylists: List<Playlist> = emptyList(),
     // H07 PARTE 1 -- aviso cuando una acción de crear/borrar se
@@ -95,11 +100,16 @@ class PlaylistsViewModel @Inject constructor(
     }
 
     /**
+     * H08 PARTE 1 -- text filter for the Playlists screen. Matches
+     * accent- and case-insensitively via `SearchNormalizer` (fixes a
+     * real gap found in the equivalent Biblioteca filter, which only
+     * lowercased -- corrected there too, not just avoided here).
+     * ---
      * H08 PARTE 1 -- filtro de texto de la pantalla de Playlists.
-     * Mismo criterio que LibraryViewModel.recompute(): trim + lowercase
-     * + contains sobre el nombre, sin normalizar acentos (el filtro de
-     * Biblioteca tampoco lo hace -- verificado leyendo el código real
-     * antes de asumirlo, §4.1).
+     * Coincide sin distinguir acentos ni mayúsculas vía
+     * `SearchNormalizer` (corrige un hueco real encontrado en el
+     * filtro equivalente de Biblioteca, que solo hacía lowercase --
+     * corregido también allí, no solo evitado aquí).
      */
     fun onFilterQueryChange(query: String) {
         _uiState.value = _uiState.value.copy(filterQuery = query)
@@ -107,12 +117,12 @@ class PlaylistsViewModel @Inject constructor(
     }
 
     private fun recompute() {
-        val query = _uiState.value.filterQuery.trim().lowercase()
+        val query = SearchNormalizer.normalize(_uiState.value.filterQuery)
         val playlists = _uiState.value.playlists
         val filtered = if (query.isEmpty()) {
             playlists
         } else {
-            playlists.filter { it.name.lowercase().contains(query) }
+            playlists.filter { SearchNormalizer.normalize(it.name).contains(query) }
         }
         _uiState.value = _uiState.value.copy(filteredPlaylists = filtered)
     }

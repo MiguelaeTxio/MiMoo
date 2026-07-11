@@ -19,6 +19,7 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -992,17 +993,33 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    /**
+     * H08 -- fixed to use `SearchNormalizer` (accent-insensitive),
+     * same fix applied to the equivalent Playlists filter. Previously
+     * only did `trim().lowercase()`, so an accented query like
+     * "canción" never matched a track titled "Cancion" (or the other
+     * way around) -- a real usability gap, not a design choice worth
+     * keeping just because it predates this session.
+     * ---
+     * H08 -- corregido para usar `SearchNormalizer` (insensible a
+     * acentos), mismo arreglo aplicado al filtro equivalente de
+     * Playlists. Antes solo hacía `trim().lowercase()`, así que una
+     * búsqueda con tilde como "canción" nunca encontraba una pista
+     * titulada "Cancion" (o al revés) -- un hueco de usabilidad real,
+     * no una decisión de diseño que mereciera conservarse solo por
+     * ser anterior a esta sesión.
+     */
     private fun recompute() {
-        val query = _uiState.value.filterQuery.trim().lowercase()
+        val query = SearchNormalizer.normalize(_uiState.value.filterQuery)
 
         val filtered = if (query.isEmpty()) {
             allDownloaded
         } else {
             allDownloaded.filter { track ->
-                track.title.lowercase().contains(query) ||
-                    (track.artist ?: track.channelTitle).lowercase()
+                SearchNormalizer.normalize(track.title).contains(query) ||
+                    SearchNormalizer.normalize(track.artist ?: track.channelTitle)
                         .contains(query) ||
-                    (track.album ?: "").lowercase().contains(query)
+                    SearchNormalizer.normalize(track.album ?: "").contains(query)
             }
         }
 

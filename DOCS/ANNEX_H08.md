@@ -32,27 +32,35 @@ falta lo mismo que ya existe en Biblioteca.
 sin ambigüedad real):**
 - Un campo de texto en `PlaylistsScreen.kt`, mismo patrón visual que
   "Filtrar biblioteca".
-- Filtra por nombre de playlist — coincidencia parcial, sin distinguir
-  mayúsculas/acentos (mismo criterio que el filtro de Biblioteca, si
-  ya normaliza así — releer código real antes de asumirlo, §4.1).
+- Filtra por nombre de playlist — coincidencia parcial, insensible a
+  mayúsculas y a acentos vía `util/SearchNormalizer.kt` (NFD +
+  eliminación de marcas combinantes). **Corrección de criterio
+  (S009):** el filtro de Biblioteca en el que se iba a basar este
+  únicamente hacía `trim().lowercase()`, sin normalizar acentos — un
+  fallo real de usabilidad, no un patrón a copiar. Se creó
+  `SearchNormalizer` como utilidad compartida y se corrigió también
+  retroactivamente `LibraryViewModel.recompute()`, no solo el filtro
+  nuevo de Playlists.
 - Filtrado en memoria sobre la lista ya cargada
   (`PlaylistsViewModel.uiState.playlists`), sin tocar Room — mismo
   patrón que Biblioteca, no hace falta una query nueva.
 
 ### Hoja de ruta
 
-**PASO 1.1** — Añadir `filterQuery: String` a `PlaylistsUiState` +
-`onFilterQueryChange()` en `PlaylistsViewModel`, calculando una lista
-filtrada derivada (no sustituir `playlists`, igual que Biblioteca
-mantiene la lista completa y filtra en la UI/un derived state).
+**PASO 1.1 — HECHO (S009).** `filterQuery`/`filteredPlaylists` en
+`PlaylistsUiState` + `onFilterQueryChange()`/`recompute()` en
+`PlaylistsViewModel`, lista filtrada derivada (no sustituye
+`playlists`).
 
-**PASO 1.2** — Campo de texto en `PlaylistsScreen.kt`, mismo estilo
-que `LibraryScreen.kt`.
+**PASO 1.2 — HECHO (S009).** Campo "Filtrar listas" en
+`PlaylistsScreen.kt`, mismo estilo que `LibraryScreen.kt`; visible
+mientras haya al menos una playlist. Distingue "no hay listas" de
+"el filtro no encuentra nada".
 
-**PASO 1.3** — Verificación funcional: crear varias playlists con
-nombres parecidos, confirmar que el filtro reduce la lista
-correctamente y que crear/borrar/renombrar sigue funcionando con el
-filtro activo.
+**PASO 1.3 — PENDIENTE.** Verificación funcional en dispositivo real:
+crear varias playlists con nombres parecidos (con y sin acentos),
+confirmar que el filtro reduce la lista correctamente y que
+crear/borrar/renombrar sigue funcionando con el filtro activo.
 
 ---
 
