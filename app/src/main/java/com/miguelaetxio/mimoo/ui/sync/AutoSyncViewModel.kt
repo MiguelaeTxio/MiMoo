@@ -307,33 +307,22 @@ class AutoSyncViewModel @Inject constructor(
     }
 
     /**
-     * Sustituye el repositorio local por `bundle` (destructivo, ver
-     * `BackupImportRepository.importDestructively()`) y encola la
-     * descarga de todas las pistas resultantes -- **fix real tras el
-     * bug reportado por Miguel Ángel**: `importDestructively()` deja
-     * cada pista insertada como `PENDING`, sin `filePath` (mismo
-     * comportamiento que la importación manual de H06), pero nunca
-     * dispara la descarga real por sí sola. La importación manual
-     * (`SettingsViewModel.importNow()`, H06 PASO 5) sí lo hacía a
-     * continuación con `DownloadQueueManager.enqueue()`; aquí faltaba
-     * ese mismo paso, así que tras confirmar "usar la copia de
-     * Drive" no pasaba nada visible -- ni pantalla de descarga, ni
-     * nada en Biblioteca.
+     * Reconcilia el repositorio local contra `bundle` de forma
+     * SELECTIVA (`BackupImportRepository.applyCloudWinsTargeted()`,
+     * S008 sexta vuelta -- nunca `importDestructively()`, esa es solo
+     * para H06 manual) y encola la descarga únicamente de las pistas
+     * nuevas resultantes -- las que ya se tenían `DONE` no se tocan ni
+     * se redescargan.
      * ---
-     * Replaces the local repository with `bundle` (destructive, see
-     * `BackupImportRepository.importDestructively()`) and queues the
-     * download of every resulting track -- **real fix after the bug
-     * Miguel Ángel reported**: `importDestructively()` leaves each
-     * track inserted as `PENDING`, with no `filePath` (same behavior
-     * as H06's manual import), but never triggers the actual download
-     * on its own. Manual import
-     * (`SettingsViewModel.importNow()`, H06 STEP 5) did follow up with
-     * `DownloadQueueManager.enqueue()`; that same step was missing
-     * here, so after confirming "use the Drive copy" nothing visible
-     * happened -- no download screen, nothing in Library.
+     * Reconciles the local repository against `bundle` SELECTIVELY
+     * (`BackupImportRepository.applyCloudWinsTargeted()`, S008 sixth
+     * round -- never `importDestructively()`, that one's only for
+     * manual H06) and queues the download of only the resulting new
+     * tracks -- the ones already `DONE` aren't touched or
+     * re-downloaded.
      */
     private suspend fun restoreFromCloud(bundle: BackupBundle) {
-        val result = importRepository.importDestructively(bundle)
+        val result = importRepository.applyCloudWinsTargeted(bundle)
         val step = "restoreFromCloud() -- encolando ${result.importedTracks.size} descarga(s)..."
         Log.d(TAG, step)
         BackupDebugLogger.log(applicationContext, storageManager, step)

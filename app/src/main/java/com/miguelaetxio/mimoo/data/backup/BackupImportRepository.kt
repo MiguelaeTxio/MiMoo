@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.backup
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.room.withTransaction
@@ -162,6 +163,115 @@ class BackupImportRepository @Inject constructor(
             }
             result
         }
+
+    /**
+     * H07 PARTE 1 (S008, sexta vuelta) -- versión SELECTIVA de
+     * "la nube gana", para la sincronización automática. Fallo real
+     * reportado por Miguel Ángel: `importDestructively()` (arriba) fue
+     * pensada para H06 (importación MANUAL, ocasional, "sustituye todo
+     * por la copia") y hasta ahora se reutilizaba tal cual también
+     * aquí -- pero en H07 eso significaba que, teniendo 29 de 43
+     * pistas ya descargadas, confirmar "usar la copia de Drive"
+     * borraba las 29 que ya tenía y las volvía a descargar todas, en
+     * vez de traer solo las 14 que faltaban.
+     *
+     * Solo toca lo que realmente difiere, comparando por `youtubeId`
+     * (nunca por índice/posición):
+     * - Pistas que tengo `DONE` y ya no están en la copia ganadora →
+     *   se borran (fila + archivo físico).
+     * - Pistas de la copia ganadora que no tengo `DONE` todavía → se
+     *   insertan como `PENDING` para que el llamante las encole.
+     * - Pistas presentes en ambos lados → **no se tocan en absoluto**,
+     *   ni la fila ni el archivo -- exactamente lo que faltaba.
+     *
+     * Favoritos y playlists sí se siguen reemplazando enteros (sin
+     * archivos físicos de por medio, es barato y no tiene el mismo
+     * problema).
+     * ---
+     * H07 PART 1 (S008, sixth round) -- SELECTIVE version of "cloud
+     * wins", for automatic sync. Real bug reported by Miguel Ángel:
+     * `importDestructively()` (above) was designed for H06 (MANUAL,
+     * occasional import, "replace everything with the copy") and until
+     * now was reused as-is here too -- but in H07 that meant that,
+     * having 29 of 43 tracks already downloaded, confirming "use the
+     * Drive copy" deleted the 29 already there and re-downloaded all
+     * of them, instead of only fetching the 14 that were missing.
+     *
+     * Only touches what genuinely differs, comparing by `youtubeId`
+     * (never by index/position):
+     * - Tracks I have `DONE` that are no longer in the winning copy →
+     *   deleted (row + physical file).
+     * - Tracks in the winning copy I don't have `DONE` yet → inserted
+     *   as `PENDING` for the caller to queue.
+     * - Tracks present on both sides → **not touched at all**, neither
+     *   the row nor the file -- exactly what was missing.
+     *
+     * Favorites and playlists are still replaced wholesale (no
+     * physical files involved, cheap, doesn't have the same problem).
+     */
+    suspend fun applyCloudWinsTargeted(bundle: BackupBundle): BackupImportResult =
+        withContext(Dispatchers.IO) {
+            val localTracks = trackDao.getAllOnce()
+            val localDoneByYoutubeId = localTracks
+                .filter { it.downloadStatus == DownloadStatus.DONE }
+                .associateBy { it.youtubeId }
+            val remoteIds = bundle.tracks.map { it.youtubeId }.toSet()
+
+            val toDelete = localDoneByYoutubeId.values.filter { it.youtubeId !in remoteIds }
+            val toDownloadDtos = bundle.tracks.filter { it.youtubeId !in localDoneByYoutubeId.keys }
+            val newRows = toDownloadDtos.map { it.toEntity() }
+
+            val stepMsg = "applyCloudWinsTargeted() -- ${toDelete.size} pista(s) a borrar, " +
+                "${newRows.size} a descargar, " +
+                "${localDoneByYoutubeId.size - toDelete.size} sin tocar"
+            Log.d(TAG, stepMsg)
+            BackupDebugLogger.log(context, storageManager, stepMsg)
+
+            toDelete.forEach { track -> track.filePath?.let { deleteSingleFile(it) } }
+
+            database.withTransaction {
+                toDelete.forEach { trackDao.delete(it) }
+                if (newRows.isNotEmpty()) {
+                    trackDao.insertAll(newRows)
+                }
+
+                playlistDao.deleteAllCrossRefs()
+                playlistDao.deleteAllPlaylists()
+                favoriteAlbumDao.deleteAll()
+                bundle.favoriteAlbums.forEach { dto ->
+                    favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
+                }
+                bundle.playlists.forEach { playlistDto ->
+                    val newPlaylistId = playlistDao.insertPlaylist(
+                        Playlist(name = playlistDto.name, createdAt = playlistDto.createdAt)
+                    )
+                    playlistDto.trackYoutubeIdsInOrder.forEachIndexed { index, youtubeId ->
+                        playlistDao.addTrackToPlaylist(
+                            PlaylistTrackCrossRef(
+                                playlistId = newPlaylistId,
+                                youtubeId = youtubeId,
+                                position = index,
+                            )
+                        )
+                    }
+                }
+            }
+
+            BackupImportResult(
+                importedTracks = newRows,
+                favoriteAlbumCount = bundle.favoriteAlbums.size,
+                playlistCount = bundle.playlists.size,
+            )
+        }
+
+    /** Borra un único archivo por su Uri -- fallo puntual no debe abortar el resto del diff. */
+    private fun deleteSingleFile(uriString: String) {
+        try {
+            DocumentFile.fromSingleUri(context, Uri.parse(uriString))?.delete()
+        } catch (e: Exception) {
+            Log.w(TAG, "deleteSingleFile() -- no se pudo borrar $uriString", e)
+        }
+    }
 
     /**
      * Borra el CONTENIDO de la raíz SAF (no la raíz en sí -- solo sus

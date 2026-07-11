@@ -432,8 +432,29 @@ class LibraryViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(mergeResultMessage = null)
     }
 
+    /**
+     * Al pulsar una pestaña, vuelve siempre a su lista raíz --
+     * bug real reportado por Miguel Ángel: antes solo cambiaba qué
+     * pestaña estaba activa, dejando el nivel de navegación (`drill`)
+     * de esa pestaña tal cual estaba (p.ej. dentro de un álbum
+     * concreto), así que pulsar "Álbumes"/"Sencillos" desde dentro de
+     * un artista/álbum no llevaba a ningún sitio nuevo -- había que
+     * salir a mano con la flecha atrás repetidas veces.
+     * ---
+     * Tapping a tab always goes back to its root list -- real bug
+     * reported by Miguel Ángel: before, this only changed which tab
+     * was active, leaving that tab's navigation level (`drill`) as it
+     * was (e.g. inside a specific album), so tapping
+     * "Álbumes"/"Sencillos" from inside an artist/album didn't go
+     * anywhere new -- you had to back out by hand with the back arrow
+     * repeatedly.
+     */
     fun setTab(tab: LibraryTab) {
-        _uiState.value = _uiState.value.copy(tab = tab)
+        _uiState.value = _uiState.value.copy(
+            tab = tab,
+            albumsDrill = if (tab == LibraryTab.ALBUMS) rootAlbumsLevel() else _uiState.value.albumsDrill,
+            singlesDrill = if (tab == LibraryTab.SINGLES) rootSinglesLevel() else _uiState.value.singlesDrill,
+        )
     }
 
     fun onFilterQueryChange(query: String) {

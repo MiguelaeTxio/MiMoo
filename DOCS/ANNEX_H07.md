@@ -370,6 +370,19 @@ caso 3) — antes `rescan()` solo se disparaba al elegir la carpeta SAF
 por primera vez o pulsar "Actualizar" en Biblioteca, nunca en cada
 sincronización automática.
 
+**PASO 1.7 ✅ (S008, sexta vuelta)** — Fallo real señalado por Miguel
+Ángel: teniendo 29 de 43 pistas ya descargadas, confirmar "usar la
+copia de Drive" (caso 3) borraba las 29 que ya tenía y las
+redescargaba todas, porque reutilizaba `importDestructively()` (H06,
+pensada para importación manual "sustituye todo"). Nueva
+`BackupImportRepository.applyCloudWinsTargeted()`: compara por
+`youtubeId`, solo borra pistas `DONE` que ya no están en la copia
+ganadora y solo descarga las que faltan — las presentes en ambos
+lados no se tocan ni se redescargan. Favoritos/playlists siguen con
+reemplazo completo (sin archivos físicos de por medio, no tiene el
+mismo problema). `importDestructively()` se mantiene intacta para su
+uso original de H06 (Importar manual desde Ajustes).
+
 ### PARTE 2 — Actualizaciones in-app + PIN de acceso
 
 **PASO 2.1** — Pendiente de Miguel Ángel: nombre y creación del
