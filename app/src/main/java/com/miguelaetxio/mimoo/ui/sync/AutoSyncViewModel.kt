@@ -1,12 +1,14 @@
 package com.miguelaetxio.mimoo.ui.sync
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.BackupBundle
+import com.miguelaetxio.mimoo.data.backup.BackupDebugLogger
 import com.miguelaetxio.mimoo.data.backup.BackupDriveRepository
 import com.miguelaetxio.mimoo.data.backup.BackupImportRepository
 import com.miguelaetxio.mimoo.data.backup.BackupMirrorRepository
@@ -17,7 +19,9 @@ import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.SyncEnvelope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -100,6 +104,8 @@ class AutoSyncViewModel @Inject constructor(
     private val importRepository: BackupImportRepository,
     private val downloadQueueManager: DownloadQueueManager,
     private val deviceIdentityManager: DeviceIdentityManager,
+    private val storageManager: StorageManager,
+    @ApplicationContext private val applicationContext: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AutoSyncUiState>(AutoSyncUiState.Idle)
@@ -184,6 +190,11 @@ class AutoSyncViewModel @Inject constructor(
 
         val localBundle = backupRepository.buildCurrentBundle()
         val comparison = mirrorRepository.compare(localBundle, envelope.bundle)
+        val compareMsg = "runSync() -- comparación: local=${comparison.localTrackCount} " +
+            "remoto=${comparison.remoteTrackCount} idéntico=${comparison.identical} " +
+            "mismoDispositivo=${envelope.deviceId == deviceIdentityManager.deviceId}"
+        Log.d(TAG, compareMsg)
+        BackupDebugLogger.log(applicationContext, storageManager, compareMsg)
 
         if (comparison.identical) {
             _uiState.value = AutoSyncUiState.Done()
@@ -241,6 +252,9 @@ class AutoSyncViewModel @Inject constructor(
      */
     private suspend fun restoreFromCloud(bundle: BackupBundle) {
         val result = importRepository.importDestructively(bundle)
+        val step = "restoreFromCloud() -- encolando ${result.importedTracks.size} descarga(s)..."
+        Log.d(TAG, step)
+        BackupDebugLogger.log(applicationContext, storageManager, step)
         result.importedTracks.forEach { track ->
             downloadQueueManager.enqueue(
                 youtubeId = track.youtubeId,
@@ -250,6 +264,9 @@ class AutoSyncViewModel @Inject constructor(
                 trackPosition = track.trackPosition,
             )
         }
+        val done = "restoreFromCloud() -- ${result.importedTracks.size} descarga(s) encoladas"
+        Log.d(TAG, done)
+        BackupDebugLogger.log(applicationContext, storageManager, done)
     }
 
     /** Caso 3, respuesta "no" -- local sustituye a la nube (y se sube). */
