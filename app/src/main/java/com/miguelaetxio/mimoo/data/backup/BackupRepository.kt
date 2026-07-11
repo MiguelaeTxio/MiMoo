@@ -6,6 +6,7 @@ import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,7 +58,36 @@ class BackupRepository @Inject constructor(
      */
     suspend fun buildCurrentBundle(): BackupBundle {
         val allTracks = trackDao.getAllOnce()
-        val exportableTracks = allTracks.filterNot { it.isSyntheticLocalTrack() }
+        // Fix real (S008, quinta vuelta): buildCurrentBundle() cogía
+        // TODA la tabla de pistas, incluidas las que solo están
+        // cacheadas de una búsqueda y nunca se han descargado
+        // (DownloadStatus.PENDING/QUEUED/ERROR) -- caché normal de
+        // cada búsqueda, ver
+        // SearchResultTrackRepository.cacheSearchResults(). Nunca se
+        // notó en H06 (Exportar/Importar manual, uso ocasional), pero
+        // con la sincronización automática de H07 -- que reencola
+        // TODO lo importado, ver AutoSyncViewModel.restoreFromCloud()
+        // -- esto disparaba la descarga de decenas de resultados de
+        // búsqueda irrelevantes nunca elegidos por Miguel Ángel, con
+        // cada ciclo de sincronización. Exportar/sincronizar "tu
+        // biblioteca" debe significar lo que de verdad tienes
+        // descargado, no el historial de búsquedas.
+        // ---
+        // Real fix (S008, fifth round): buildCurrentBundle() grabbed
+        // the ENTIRE tracks table, including rows only cached from a
+        // search and never downloaded
+        // (DownloadStatus.PENDING/QUEUED/ERROR) -- normal cache from
+        // every search, see
+        // SearchResultTrackRepository.cacheSearchResults(). Never
+        // noticed in H06 (manual Export/Import, occasional use), but
+        // with H07's automatic sync -- which re-queues EVERYTHING
+        // imported, see AutoSyncViewModel.restoreFromCloud() -- this
+        // triggered downloading dozens of irrelevant search results
+        // Miguel Ángel never chose, on every sync cycle. Exporting/
+        // syncing "your library" should mean what you actually have
+        // downloaded, not your search history.
+        val downloadedTracks = allTracks.filter { it.downloadStatus == DownloadStatus.DONE }
+        val exportableTracks = downloadedTracks.filterNot { it.isSyntheticLocalTrack() }
         val exportableYoutubeIds = exportableTracks.map { it.youtubeId }.toSet()
 
         val favoriteAlbums = favoriteAlbumDao.getAllOnce()
