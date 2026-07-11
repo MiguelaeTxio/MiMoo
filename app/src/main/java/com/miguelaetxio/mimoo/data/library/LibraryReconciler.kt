@@ -276,6 +276,55 @@ class LibraryReconciler @Inject constructor(
     }
 
     /**
+     * H07 PARTE 1 -- fallo real señalado por Miguel Ángel: todo el
+     * diseño de sincronización compara base de datos (local) contra
+     * base de datos (Drive), pero en ningún punto comprueba que lo
+     * que Room dice "descargado" (`DownloadStatus.DONE` con
+     * `filePath`) siga existiendo de verdad en disco. `rescan()` de
+     * arriba solo cubre la dirección contraria (archivo huérfano en
+     * disco → fila nueva en Room); esta función cubre la que faltaba.
+     *
+     * Devuelve las pistas cuyo archivo ya no está, ya marcadas de
+     * vuelta como `PENDING` (mismo mecanismo que
+     * `SearchResultTrackRepository.clearDownload()`) -- este
+     * reconciliador nunca encola descargas él mismo (igual que
+     * `rescan()` nunca descarga los archivos que descubre), eso es
+     * responsabilidad de quien llama.
+     * ---
+     * H07 PART 1 -- real gap flagged by Miguel Ángel: the whole sync
+     * design compares database (local) against database (Drive), but
+     * at no point checks whether what Room calls "downloaded"
+     * (`DownloadStatus.DONE` with `filePath`) still actually exists on
+     * disk. `rescan()` above only covers the opposite direction
+     * (orphaned file on disk → new Room row); this function covers the
+     * one that was missing.
+     *
+     * Returns the tracks whose file is gone, already marked back as
+     * `PENDING` (same mechanism as
+     * `SearchResultTrackRepository.clearDownload()`) -- this
+     * reconciler never queues downloads itself (same as `rescan()`
+     * never downloads the files it discovers), that's the caller's
+     * responsibility.
+     */
+    suspend fun verifyDiskState(): List<SearchResultTrack> = withContext(Dispatchers.IO) {
+        val doneTracks = repository.getAll().first().filter {
+            it.downloadStatus == DownloadStatus.DONE && it.filePath != null
+        }
+
+        val missing = doneTracks.filter { track ->
+            val exists = try {
+                DocumentFile.fromSingleUri(context, Uri.parse(track.filePath))?.exists() == true
+            } catch (e: Exception) {
+                false
+            }
+            !exists
+        }
+
+        missing.forEach { track -> repository.clearDownload(track.youtubeId) }
+        missing
+    }
+
+    /**
      * Borra recursivamente cualquier archivo que NO sea de audio
      * (extensión fuera de AUDIO_EXTENSIONS) dentro de una subcarpeta
      * -- nunca en `dir` cuando `isRoot=true` (ahí viven a propósito

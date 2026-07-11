@@ -356,6 +356,20 @@ playlists) y confirmar que el otro la ve al siguiente arranque —
 funcionar de punta a punta gracias al enganche de `DownloadWorker`.
 **Pendiente por Miguel Ángel.**
 
+**PASO 1.6 ✅ (S008, cuarta vuelta)** — Fallo real señalado por Miguel
+Ángel tras probar en dos dispositivos: todo el pipeline comparaba base
+de datos (local) contra base de datos (Drive), sin comprobar nunca que
+el disco físico coincidiera con lo que Room decía —
+`LibraryReconciler.verifyDiskState()` (nuevo, dirección que faltaba:
+filas `DONE` sin archivo real → `PENDING` + reencolar) +
+`rescan()` (ya existía, dirección contraria: archivo huérfano → fila
+nueva) orquestados juntos en `AutoSyncViewModel.verifyDiskAndReconcile()`,
+llamado en los cinco puntos de salida de una sincronización (caso 1,
+copia ilegible, caso "idéntico", caso 2, y ambas resoluciones del
+caso 3) — antes `rescan()` solo se disparaba al elegir la carpeta SAF
+por primera vez o pulsar "Actualizar" en Biblioteca, nunca en cada
+sincronización automática.
+
 ### PARTE 2 — Actualizaciones in-app + PIN de acceso
 
 **PASO 2.1** — Pendiente de Miguel Ángel: nombre y creación del

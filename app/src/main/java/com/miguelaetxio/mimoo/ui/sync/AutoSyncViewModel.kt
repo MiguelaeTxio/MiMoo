@@ -20,6 +20,7 @@ import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.SyncEnvelope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.library.LibraryReconciler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,6 +104,7 @@ class AutoSyncViewModel @Inject constructor(
     private val mirrorRepository: BackupMirrorRepository,
     private val importRepository: BackupImportRepository,
     private val downloadQueueManager: DownloadQueueManager,
+    private val libraryReconciler: LibraryReconciler,
     private val deviceIdentityManager: DeviceIdentityManager,
     private val storageManager: StorageManager,
     @ApplicationContext private val applicationContext: Context,
@@ -158,6 +160,7 @@ class AutoSyncViewModel @Inject constructor(
         if (remoteJson == null) {
             // Caso 1: no hay copia todavía -- se crea, sin preguntar nada.
             pushAsNewEnvelope(accessToken)
+            verifyDiskAndReconcile()
             _uiState.value = AutoSyncUiState.Done()
             return
         }
@@ -184,6 +187,7 @@ class AutoSyncViewModel @Inject constructor(
             // and moves on, without asking anything odd.
             Log.w(TAG, "runSync() -- copia remota ilegible (${e.message}), se sobreescribe", e)
             pushAsNewEnvelope(accessToken)
+            verifyDiskAndReconcile()
             _uiState.value = AutoSyncUiState.Done()
             return
         }
@@ -197,6 +201,21 @@ class AutoSyncViewModel @Inject constructor(
         BackupDebugLogger.log(applicationContext, storageManager, compareMsg)
 
         if (comparison.identical) {
+            // H07 PARTE 1 -- fallo real señalado por Miguel Ángel:
+            // que la base de datos coincida con Drive NO significa
+            // que el disco coincida con la base de datos. Se
+            // verifica siempre, incluso cuando no hay nada que
+            // resolver contra la nube (p.ej. alguien borró un
+            // archivo a mano con el explorador de archivos sin
+            // tocar Room para nada).
+            // ---
+            // H07 PART 1 -- real gap flagged by Miguel Ángel: the
+            // database matching Drive does NOT mean the disk matches
+            // the database. Always verified, even when there's
+            // nothing to resolve against the cloud (e.g. someone
+            // deleted a file by hand with a file explorer without
+            // touching Room at all).
+            verifyDiskAndReconcile()
             _uiState.value = AutoSyncUiState.Done()
             return
         }
@@ -204,11 +223,73 @@ class AutoSyncViewModel @Inject constructor(
         if (envelope.deviceId == deviceIdentityManager.deviceId) {
             // Caso 2: mismo dispositivo, desincronizado -- la nube manda siempre, sin preguntar.
             restoreFromCloud(envelope.bundle)
+            verifyDiskAndReconcile()
             _uiState.value = AutoSyncUiState.RestoredFromCloud(comparison)
         } else {
-            // Caso 3: otro dispositivo -- se pregunta antes de tocar nada.
+            // Caso 3: otro dispositivo -- se pregunta antes de tocar
+            // nada (la verificación de disco se hace después de
+            // resolver, en confirmCloudWins()/confirmLocalWins()).
             pendingAccessToken = accessToken
             _uiState.value = AutoSyncUiState.ConflictOtherDevice(envelope, comparison)
+        }
+    }
+
+    /**
+     * H07 PARTE 1 -- cierra el hueco señalado por Miguel Ángel: hasta
+     * ahora todo el pipeline comparaba base de datos (local) contra
+     * base de datos (Drive), sin comprobar nunca que el disco físico
+     * coincidiera con lo que Room decía. Dos direcciones, ambas ya
+     * construidas por separado (`LibraryReconciler`), aquí solo se
+     * orquestan juntas en cada sincronización:
+     *
+     * 1. `verifyDiskState()`: filas `DONE` cuyo archivo ya no existe
+     *    -- se marcan `PENDING` y se reencolan aquí mismo.
+     * 2. `rescan()`: archivos huérfanos en disco sin fila en Room --
+     *    se recuperan (mismo mecanismo que al elegir la carpeta SAF
+     *    por primera vez o pulsar "Actualizar" en Biblioteca, ahora
+     *    también en cada sincronización automática, no solo en esos
+     *    dos momentos).
+     * ---
+     * H07 PART 1 -- closes the gap Miguel Ángel flagged: until now the
+     * whole pipeline compared database (local) against database
+     * (Drive), never checking whether the physical disk matched what
+     * Room claimed. Two directions, both already built separately
+     * (`LibraryReconciler`), just orchestrated together here on every
+     * sync:
+     *
+     * 1. `verifyDiskState()`: `DONE` rows whose file no longer exists
+     *    -- marked `PENDING` and re-queued right here.
+     * 2. `rescan()`: orphaned files on disk with no Room row -- get
+     *    recovered (same mechanism as first picking the SAF folder or
+     *    tapping "Refresh" in Library, now also on every automatic
+     *    sync, not just those two moments).
+     */
+    private suspend fun verifyDiskAndReconcile() {
+        val missing = libraryReconciler.verifyDiskState()
+        missing.forEach { track ->
+            downloadQueueManager.enqueue(
+                youtubeId = track.youtubeId,
+                title = track.title,
+                artist = track.artist ?: track.channelTitle,
+                album = track.album,
+                trackPosition = track.trackPosition,
+            )
+        }
+        if (missing.isNotEmpty()) {
+            val msg = "verifyDiskAndReconcile() -- ${missing.size} pista(s) DONE sin " +
+                "archivo real, reencoladas"
+            Log.d(TAG, msg)
+            BackupDebugLogger.log(applicationContext, storageManager, msg)
+        }
+
+        storageManager.getRootUri()?.let { rootUri ->
+            val result = libraryReconciler.rescan(rootUri)
+            if (result.tracksDiscovered > 0) {
+                val msg = "verifyDiskAndReconcile() -- ${result.tracksDiscovered} " +
+                    "archivo(s) huérfano(s) recuperado(s) en disco"
+                Log.d(TAG, msg)
+                BackupDebugLogger.log(applicationContext, storageManager, msg)
+            }
         }
     }
 
@@ -217,6 +298,7 @@ class AutoSyncViewModel @Inject constructor(
         val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
         viewModelScope.launch {
             restoreFromCloud(state.envelope.bundle)
+            verifyDiskAndReconcile()
             pendingAccessToken = null
             _uiState.value = AutoSyncUiState.Done(
                 "Restaurado desde la copia de ${state.envelope.deviceLabel}."
@@ -274,6 +356,7 @@ class AutoSyncViewModel @Inject constructor(
         val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
         val accessToken = pendingAccessToken ?: return
         viewModelScope.launch {
+            verifyDiskAndReconcile()
             pushAsNewEnvelope(accessToken)
             pendingAccessToken = null
             _uiState.value = AutoSyncUiState.Done("Tu copia local ha sustituido a la de Drive.")
