@@ -23,7 +23,8 @@ la vez. Cambiar de hito es editar esta tabla y commitear — ver
 | H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | |
 | H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | |
 | H07 | Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción | `DOCS/ANNEX_H07.md` | |
-| H08 | Búsqueda de Listas de Reproducción + Música Relacionada ("Radio") | `DOCS/ANNEX_H08.md` | ← EN PROGRESO |
+| H08 | Búsqueda de Listas de Reproducción + Música Relacionada ("Radio") | `DOCS/ANNEX_H08.md` | |
+| H09 | SHOUTcast — Radios Online del Mundo por Género/Tema/Década | `DOCS/ANNEX_H09.md` | ← EN PROGRESO |
 
 **Resultado actual (migrado desde la sesión skill-based, 2026-07-02;
 actualizado 2026-07-11 S008):**
@@ -273,9 +274,9 @@ repositorio GitHub dedicado (`AndroidReleases`); PIN de acceso; y
 controles de reproducción cíclico/aleatorio.
 
 ### Hito 8: Búsqueda de Listas de Reproducción + Música Relacionada ("Radio")
-(Ver `DOCS/ANNEX_H08.md`) — EN PROGRESO. Hito nuevo abierto en S008:
-dos funciones distintas comparten hito por surgir de la misma
-conversación, no por dependencia técnica entre ellas.
+(Ver `DOCS/ANNEX_H08.md`) — Pausado (S009). Dos funciones distintas
+comparten hito por surgir de la misma conversación, no por
+dependencia técnica entre ellas.
 1. **Búsqueda de listas de reproducción y canales (online)** — buscar
    por texto y encontrar listas/canales ya creados por otros usuarios
    en YouTube (no las playlists propias del usuario, que ya tienen su
@@ -283,8 +284,9 @@ conversación, no por dependencia técnica entre ellas.
    nativos de YouTube (Listas/Canales), mismo mecanismo gratuito que
    la búsqueda de vídeos actual. Podcasts/audiolibros descartados como
    filtro dedicado: YouTube no los distingue como tipo de búsqueda.
-   Ver `DOCS/ANNEX_H08.md` para el detalle y la corrección de alcance
-   de S009.
+   Construido; verificación en dispositivo real pendiente. Ver
+   `DOCS/ANNEX_H08.md` para el detalle y la corrección de alcance de
+   S009.
 2. **Música relacionada ("Radio")** — cuando la cola de reproducción
    se queda sin nada más que reproducir sin cíclico activado,
    continúa sola en streaming con un artista relacionado (géneros
@@ -292,8 +294,20 @@ conversación, no por dependencia técnica entre ellas.
    — ver `DOCS/ANNEX_H08.md` para el detalle completo (por qué se
    descartó el Mix de YouTube, algoritmo de selección, enganche en
    `PlayerManager`). Solo streaming, nunca descarga (decisión
-   explícita de Miguel Ángel). Verificación en dispositivo real
-   pendiente.
+   explícita de Miguel Ángel). **Verificado funcionando en dispositivo
+   real por Miguel Ángel (S009)**, tras tres rondas de corrección
+   (autoplay real, filtro de compilaciones, "Various Artists" sin
+   géneros matando la cadena de relacionados).
+
+### Hito 9: SHOUTcast — Radios Online del Mundo por Género/Tema/Década
+(Ver `DOCS/ANNEX_H09.md`) — EN PROGRESO. Hito nuevo abierto en S009.
+Vista para escuchar emisoras de radio online de todo el mundo,
+navegables por género/tema/país/década. Solo streaming, nunca
+descarga (decisión explícita de Miguel Ángel, mismo principio que
+Radio). Backend: Radio-Browser.info (directorio comunitario gratuito,
+sin API key) en vez del Shoutcast real (marca de iHeartMedia, requiere
+clave de desarrollador) — decisión técnica tomada en S009, ver
+`DOCS/ANNEX_H09.md`.
 
 ---
 
