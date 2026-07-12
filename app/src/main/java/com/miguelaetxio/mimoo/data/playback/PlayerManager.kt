@@ -288,14 +288,48 @@ class PlayerManager @Inject constructor(
             // from this same class.
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 syncStateFromPlayer()
-                // H08 PARTE 2 (S009) -- solo repone si lo que empieza
-                // a sonar ahora es ya una pista de Radio; ver
-                // docstring de topUpRadioQueueIfNeeded().
+                // H08 PARTE 2 (S009, corrección tras prueba real --
+                // el autoplay seguía sin funcionar). Se repone en dos
+                // casos, no solo uno:
+                //   - la pista que empieza a sonar es ya de Radio
+                //     (reposición continua, igual que antes).
+                //   - la pista que empieza a sonar es la ÚLTIMA de la
+                //     cola (aunque sea la única, aunque no sea de
+                //     Radio todavía) -- esto es lo que faltaba: en vez
+                //     de esperar a STATE_ENDED para reaccionar
+                //     (reactivo, y ExoPlayer no reanuda solo desde ahí
+                //     de forma fiable), se empieza a rellenar la Radio
+                //     EN CUANTO arranca la última pista (proactivo),
+                //     mientras todavía está sonando. Así, cuando esa
+                //     pista termina, ExoPlayer ya tiene la siguiente
+                //     en su propia lista y avanza solo -- el mismo
+                //     mecanismo de avance automático que ya funciona
+                //     siempre para cualquier cola normal, sin
+                //     necesitar resucitar el player desde
+                //     STATE_ENDED.
                 // ---
-                // H08 PARTE 2 (S009) -- only tops up if what's now
-                // playing is itself a Radio track; see
-                // topUpRadioQueueIfNeeded()'s docstring.
-                if (queueItems.getOrNull(player.currentMediaItemIndex)?.isFromRadio == true) {
+                // H08 PARTE 2 (S009, fix after real-device test --
+                // autoplay still wasn't working). Tops up in two
+                // cases now, not just one:
+                //   - the track that starts playing is already a
+                //     Radio one (same continuous top-up as before).
+                //   - the track that starts playing is the LAST one
+                //     in the queue (even if it's the only one, even if
+                //     it isn't Radio yet) -- this was the missing
+                //     piece: instead of waiting for STATE_ENDED to
+                //     react (reactive, and ExoPlayer doesn't reliably
+                //     resume from there on its own), Radio starts
+                //     filling in AS SOON AS the last track starts
+                //     (proactive), while it's still playing. So by the
+                //     time that track finishes, ExoPlayer already has
+                //     the next one in its own list and advances on its
+                //     own -- the same auto-advance mechanism that
+                //     already works for any normal queue, no need to
+                //     resurrect the player from STATE_ENDED.
+                val currentIndex = player.currentMediaItemIndex
+                val currentItem = queueItems.getOrNull(currentIndex)
+                val isLastItem = queueItems.isNotEmpty() && currentIndex == queueItems.lastIndex
+                if (currentItem?.isFromRadio == true || isLastItem) {
                     topUpRadioQueueIfNeeded()
                 }
             }
@@ -488,8 +522,35 @@ class PlayerManager @Inject constructor(
             if (relatedArtist == null) {
                 null
             } else {
-                val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 1)
-                val track = searchResult.tracks.firstOrNull()
+                // H08 -- limit=6 en vez de 1, y se descartan
+                // candidatos que huelen a compilación (detectado en
+                // pruebas reales: buscar solo el nombre del artista
+                // devuelve muchas veces un "Greatest Hits Full Album"
+                // de 1-2 horas como primer resultado -- si se cogiera
+                // tal cual, "ocuparía" un hueco del backlog de Radio
+                // durante horas, rompiendo el propio modelo de
+                // "mantener 10 temas". RADIO_MAX_TRACK_SECONDS (15 min)
+                // es generoso a propósito -- hay canciones sueltas
+                // legítimas largas (rock progresivo, etc.), no se
+                // quiere descartarlas por error.
+                // ---
+                // H08 -- limit=6 instead of 1, and candidates that
+                // smell like a compilation are discarded (found in
+                // real testing: searching just the artist's name often
+                // returns a 1-2 hour "Greatest Hits Full Album" as the
+                // first result -- if taken as-is, it would "occupy" a
+                // slot in Radio's backlog for hours, breaking the very
+                // "keep 10 tracks" model. RADIO_MAX_TRACK_SECONDS
+                // (15 min) is deliberately generous -- there are
+                // legitimate long standalone songs (prog rock etc.),
+                // don't want to wrongly discard those.
+                val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 6)
+                val track = searchResult.tracks.firstOrNull { candidate ->
+                    candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
+                        COMPILATION_TITLE_HINTS.none { hint ->
+                            candidate.title.contains(hint, ignoreCase = true)
+                        }
+                }
                 if (track == null) {
                     null
                 } else {
@@ -520,6 +581,19 @@ class PlayerManager @Inject constructor(
             queueSize = queueItems.size,
             repeatModeEnabled = player.repeatMode == Player.REPEAT_MODE_ALL,
             shuffleModeEnabled = player.shuffleModeEnabled,
+            // H08 -- durationMs ya existía en PlaybackState pero nunca
+            // se rellenaba aquí; positionMs se deja tal cual (0L) --
+            // cambia continuamente mientras suena, así que se consulta
+            // por sondeo desde la UI (currentPositionMs()), no por
+            // este StateFlow que solo se actualiza en eventos puntuales.
+            // ---
+            // H08 -- durationMs already existed in PlaybackState but
+            // was never populated here; positionMs is left as-is (0L)
+            // -- it changes continuously while playing, so it's
+            // polled from the UI (currentPositionMs()) instead of
+            // through this StateFlow, which only updates on discrete
+            // events.
+            durationMs = player.duration.coerceAtLeast(0L),
         )
     }
 
@@ -653,11 +727,40 @@ class PlayerManager @Inject constructor(
         }
     }
 
-    /** Goes back to the previous queue item, if any. */
+    /**
+     * H08 -- si no hay una pista anterior de verdad en la cola (p.ej.
+     * un único tema suelto, o la primera de la cola sin cíclico),
+     * reinicia la actual desde el principio en vez de no hacer nada.
+     * Petición explícita de Miguel Ángel tras probar la Radio con un
+     * solo tema: "no aparece el control de ir atrás... pero debería
+     * aparecer para poder escuchar el tema desde el principio".
+     * ---
+     * H08 -- if there's no real previous track in the queue (e.g. a
+     * single lone track, or the first one with cyclic off), restarts
+     * the current one from the beginning instead of doing nothing.
+     * Explicit request from Miguel Ángel after testing Radio with a
+     * single track: "the back control doesn't show up... but it
+     * should, to be able to listen to the track from the start".
+     */
     fun playPrevious() {
         if (player.hasPreviousMediaItem()) {
             player.seekToPreviousMediaItem()
+        } else {
+            player.seekTo(0)
         }
+    }
+
+    /**
+     * H08 -- seek manual, para la barra de progreso arrastrable de
+     * PlayerBar. Sin comprobación de límites: ExoPlayer ya recorta
+     * solo a [0, duración] si se pasa un valor fuera de rango.
+     * ---
+     * H08 -- manual seek, for PlayerBar's draggable progress bar. No
+     * bounds checking: ExoPlayer already clamps to [0, duration] on
+     * out-of-range values.
+     */
+    fun seekTo(positionMs: Long) {
+        player.seekTo(positionMs)
     }
 
     /**
@@ -802,5 +905,47 @@ class PlayerManager @Inject constructor(
          * adding tracks up to 10 more... always keeping 10 more".
          */
         const val RADIO_QUEUE_SIZE = 10
+
+        /**
+         * H08 -- por encima de esto, un resultado de búsqueda se
+         * descarta como candidato de Radio por sospecha de ser una
+         * compilación, no una canción suelta. 15 min es generoso a
+         * propósito, ver docstring de fetchOneRadioTrack().
+         * ---
+         * H08 -- above this, a search result is discarded as a Radio
+         * candidate on suspicion of being a compilation, not a single
+         * song. 15 min is deliberately generous, see
+         * fetchOneRadioTrack()'s docstring.
+         */
+        const val RADIO_MAX_TRACK_SECONDS = 15 * 60
+
+        /**
+         * H08 -- palabras en el título que delatan una compilación
+         * (álbum completo, mejores éxitos, playlist ajena) en vez de
+         * una canción suelta. Detectado en pruebas reales (S009):
+         * "Elvis Presley Greatest Hits Playlist Full Album", "The
+         * Beatles - Greatest Hits Full Album", "Led Zeppelin -
+         * Mothership (Full Album)". Complementa el filtro de
+         * duración, no lo sustituye -- una compilación corta (p.ej.
+         * un "Top 10" de 14 minutos) podría colarse solo por
+         * duración.
+         * ---
+         * H08 -- title words that give away a compilation (full
+         * album, greatest hits, someone else's playlist) instead of a
+         * single song. Found in real testing (S009): "Elvis Presley
+         * Greatest Hits Playlist Full Album", "The Beatles - Greatest
+         * Hits Full Album", "Led Zeppelin - Mothership (Full Album)".
+         * Complements the duration filter, doesn't replace it -- a
+         * short compilation (e.g. a 14-minute "Top 10") could slip
+         * through on duration alone.
+         */
+        val COMPILATION_TITLE_HINTS = listOf(
+            "full album",
+            "greatest hits",
+            "playlist",
+            "compilation",
+            "best songs of",
+            "best of",
+        )
     }
 }

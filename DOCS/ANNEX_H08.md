@@ -152,12 +152,54 @@ tenía dos fallos.
   (`managerScope`), con vuelta a `Dispatchers.Main` antes de tocar el
   `ExoPlayer`. Completamente silenciosa si no encuentra nada.
 
+### Segunda corrección (S009, tras capturas reales de la cola)
+
+El primer intento de corregir el autoplay (`prepare()` +
+`seekTo()` + `play()` al detectar `STATE_ENDED`) **seguía sin
+funcionar** — Miguel Ángel confirmó que la pista siguiente se veía en
+cola pero no arrancaba sola. Diagnóstico real, no repetir el mismo
+parche: reanudar un ExoPlayer que ya ha llegado a `STATE_ENDED` es
+frágil de por sí, mejor evitar llegar a ese estado.
+
+**Fix de fondo:** `topUpRadioQueueIfNeeded()` ya no se dispara solo
+al llegar a `STATE_ENDED` (reactivo) — se dispara también en cuanto
+empieza a sonar la ÚLTIMA pista de la cola, aunque sea la única
+(proactivo, en `onMediaItemTransition`). Así, cuando esa pista
+termina de verdad, ExoPlayer ya tiene la siguiente en su propia
+lista y avanza solo con el mecanismo de auto-avance normal (el mismo
+que ya funciona siempre para cualquier cola con más de una pista) —
+sin depender de resucitar el player desde un estado terminal. El
+disparo en `STATE_ENDED` se conserva como red de seguridad (por si la
+red tardó más que la propia canción), pero deja de ser el mecanismo
+principal.
+
+**Detectado por el propio modelo en las capturas aportadas, no
+reportado por Miguel Ángel:** varios de los "temas" que añadía la
+Radio eran en realidad vídeos de "Greatest Hits Full Album" de 1-2
+horas (Elvis, Beatles, Led Zeppelin, Grateful Dead...) — el motivo:
+`searchYoutube(artista, limit=1)` se quedaba con el primer resultado
+sin más criterio, y el primer resultado al buscar solo el nombre de
+un artista es a menudo una compilación. Corregido: `limit=6` +
+filtro de duración (`RADIO_MAX_TRACK_SECONDS`, 15 min, generoso a
+propósito) + lista de palabras que delatan compilación en el título
+(`COMPILATION_TITLE_HINTS`).
+
+**Mejoras de `PlayerBar` en la misma pasada (peticiones explícitas):**
+- Botón "anterior" siempre visible, no solo con cola de más de una
+  pista — `PlayerManager.playPrevious()` reinicia la pista actual
+  desde el principio si no hay una anterior real.
+- Tiempo transcurrido/restante + barra de progreso arrastrable
+  (`PlayerManager.seekTo()` nuevo, `positionMs` sondeado cada 500ms
+  desde `PlayerBarViewModel` — ExoPlayer no notifica la posición de
+  forma continua, solo eventos puntuales).
+
 ### Pendiente
 
 **PASO 2.2 — PENDIENTE.** Volver a verificar en dispositivo real tras
-esta corrección: confirmar que ahora sí arranca sola al llegar al
-final, y que la cola mantiene ~10 pistas de Radio por delante de
-forma sostenida (varias reposiciones seguidas, no solo la primera).
+esta segunda corrección: confirmar que ahora sí arranca sola sin
+tocar nada, que la cola mantiene ~10 pistas de Radio de forma
+sostenida, y que ya no aparecen vídeos de álbum completo/greatest
+hits como si fueran una sola canción.
 
 ---
 
