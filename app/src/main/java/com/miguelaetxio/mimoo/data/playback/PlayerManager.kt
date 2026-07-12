@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
@@ -404,6 +405,76 @@ class PlayerManager @Inject constructor(
                     player.repeatMode == Player.REPEAT_MODE_OFF
                 ) {
                     topUpRadioQueueIfNeeded()
+                }
+            }
+
+            /**
+             * S010 -- reportado por Miguel Ángel: tras rellenar la cola
+             * de Radio con éxito (10 pistas, confirmado en
+             * radio_relacionados_debug.txt), al terminar el primer
+             * tema el indicador de "sonando ahora" saltaba a la
+             * segunda pista pero no llegaba a sonar nada -- y ni
+             * siquiera el botón "Siguiente" conseguía arrancarla.
+             *
+             * Causa real: este listener nunca implementaba
+             * `onPlayerError()`. Cuando una URL de stream falla (una
+             * de las pistas de Radio venía de una búsqueda de YouTube
+             * dudosa -- "Charli xcx - Wink Wink" en vez del DJ "Wink"
+             * buscado, posible causa del fallo de stream aunque no
+             * confirmada), ExoPlayer dispara `onPlayerError` y pasa a
+             * `Player.STATE_IDLE` -- un estado terminal del que
+             * `player.play()` solo no saca al player, exactamente el
+             * mismo problema ya documentado para `STATE_ENDED`
+             * (`prepare()` obligatorio para reanudar, ver
+             * `topUpRadioQueueIfNeeded()` más abajo). Como nadie
+             * escuchaba el error, el player se quedaba callado sin
+             * ningún aviso, y `playNext()` (que solo llama a
+             * `seekToNextMediaItem()`, sin `prepare()`/`play()`)
+             * tampoco lo resucitaba.
+             *
+             * Recuperación automática: se registra el error (con el
+             * título de la pista que falló) y, si hay una pista
+             * siguiente en la cola, se salta a ella y se fuerza
+             * `prepare()` + `play()` -- mismo patrón exacto que el
+             * fix de autoplay de S009. Así una URL rota no deja la
+             * Radio muda entera, sigue con la siguiente pista sola.
+             * ---
+             * S010 -- reported by Miguel Ángel: after successfully
+             * filling the Radio queue (10 tracks, confirmed in
+             * radio_relacionados_debug.txt), when the first track
+             * ended the "now playing" indicator jumped to the second
+             * track but nothing actually played -- and not even the
+             * "Next" button could get it going.
+             *
+             * Real cause: this listener never implemented
+             * `onPlayerError()`. When a stream URL fails, ExoPlayer
+             * fires `onPlayerError` and moves to `Player.STATE_IDLE` --
+             * a terminal state that `player.play()` alone can't
+             * recover from, the exact same gotcha already documented
+             * for `STATE_ENDED`. Since nothing listened for the error,
+             * the player just went silent with no warning, and
+             * `playNext()` (which only calls `seekToNextMediaItem()`,
+             * no `prepare()`/`play()`) couldn't resurrect it either.
+             *
+             * Automatic recovery: logs the error (with the title of
+             * the track that failed) and, if there's a next track in
+             * the queue, skips to it and forces `prepare()` + `play()`
+             * -- the exact same pattern as the S009 autoplay fix. This
+             * way one broken URL doesn't leave all of Radio silent, it
+             * just continues with the next track on its own.
+             */
+            override fun onPlayerError(error: PlaybackException) {
+                val failedItem = queueItems.getOrNull(player.currentMediaItemIndex)
+                NotificationDebugLogger.log(
+                    appContext, storageManager,
+                    "onPlayerError() -- pista='${failedItem?.title}' " +
+                        "isFromRadio=${failedItem?.isFromRadio} -- " +
+                        "${error.errorCodeName}: ${error.message}",
+                )
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    player.prepare()
+                    player.play()
                 }
             }
         })
@@ -830,17 +901,35 @@ class PlayerManager @Inject constructor(
     }
 
     /**
-     * Avanza a la siguiente pista de la cola, si la hay -- ahora
-     * delega en el seekToNextMediaItem() real de ExoPlayer (2026-07-05,
-     * ver comentario de clase) en vez de mantener el índice a mano.
+     * Avanza a la siguiente pista de la cola, si la hay -- delega en
+     * el seekToNextMediaItem() real de ExoPlayer (2026-07-05, ver
+     * comentario de clase).
+     *
+     * `prepare()` + `play()` añadidos en S010 -- defensa adicional
+     * ante cualquier estado terminal del player (STATE_ENDED,
+     * STATE_IDLE tras un onPlayerError sin gestionar como el
+     * reportado por Miguel Ángel esta sesión): sin esto, pulsar
+     * "Siguiente" cambiaba la pista marcada como actual pero no
+     * arrancaba nada. `prepare()` es seguro de llamar aunque el
+     * player ya esté preparado -- no reinicia nada si no hace falta.
      * ---
-     * Advances to the next queue item, if any -- now delegates to
+     * Advances to the next queue item, if any -- delegates to
      * ExoPlayer's real seekToNextMediaItem() (2026-07-05, see class
-     * comment) instead of hand-tracking the index.
+     * comment).
+     *
+     * `prepare()` + `play()` added in S010 -- extra defense against
+     * any terminal player state (STATE_ENDED, STATE_IDLE after an
+     * unhandled onPlayerError like the one reported by Miguel Ángel
+     * this session): without this, pressing "Next" changed which
+     * track was marked current but nothing actually started.
+     * `prepare()` is safe to call even if the player is already
+     * prepared -- it's a no-op in that case.
      */
     fun playNext() {
         if (player.hasNextMediaItem()) {
             player.seekToNextMediaItem()
+            player.prepare()
+            player.play()
         }
     }
 
@@ -865,6 +954,16 @@ class PlayerManager @Inject constructor(
         } else {
             player.seekTo(0)
         }
+        // S010 -- mismo refuerzo defensivo que playNext(): si el
+        // player estaba en un estado terminal (STATE_ENDED,
+        // STATE_IDLE tras un error sin gestionar), un seek solo no
+        // basta para que vuelva a sonar.
+        // ---
+        // S010 -- same defensive reinforcement as playNext(): if the
+        // player was in a terminal state, a seek alone isn't enough
+        // to make it play again.
+        player.prepare()
+        player.play()
     }
 
     /**
