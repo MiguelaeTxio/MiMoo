@@ -75,6 +75,29 @@ data class QueueItem(
     val artist: String? = null,
     val isFromRadio: Boolean = false,
     val youtubeId: String? = null,
+    /**
+     * S010 -- distinto de `artist`. `artist` es el "artista
+     * estructurado" de H05 (AlbumMatchRepository): un emparejamiento
+     * heurístico contra releases de MusicBrainz por título, útil para
+     * organizar la Biblioteca pero con falsos positivos reales en
+     * títulos ambiguos/poco conocidos (reportado por Miguel Ángel,
+     * S010: "EL PISTOLERO -pistones" emparejó con un release
+     * atribuido a "Kris", sin relación real). `channelTitle` es el
+     * nombre del canal de YouTube de ESE vídeo concreto (ya limpio de
+     * sufijos "- Topic"/"VEVO"/"Oficial", ver link_resolver.py) --
+     * mucho más fiable como ancla para la Radio (H08), que necesita
+     * precisión, no solo una etiqueta aproximada para mostrar.
+     * ---
+     * S010 -- different from `artist`. `artist` is H05's "structured
+     * artist" (AlbumMatchRepository): a heuristic match against
+     * MusicBrainz releases by title, useful for organizing the
+     * Library but with real false positives on ambiguous/obscure
+     * titles. `channelTitle` is that specific video's YouTube channel
+     * name (already cleaned of "- Topic"/"VEVO"/"Oficial" suffixes) --
+     * much more reliable as Radio's anchor, which needs precision, not
+     * just an approximate display label.
+     */
+    val channelTitle: String? = null,
 )
 
 data class PlaybackState(
@@ -366,7 +389,25 @@ class PlayerManager @Inject constructor(
                     // MusicBrainz), it retries from here instead of
                     // giving up entirely -- see
                     // topUpRadioQueueIfNeeded().
-                    radioAnchorArtist = currentItem?.artist?.takeIf { it.isNotBlank() }
+                    // S010 -- se prefiere channelTitle sobre artist
+                    // como ancla: artist es el emparejamiento
+                    // heurístico de H05 (AlbumMatchRepository), con
+                    // falsos positivos reales en títulos ambiguos
+                    // (ver QueueItem.channelTitle); channelTitle es
+                    // el nombre de canal real de ese vídeo concreto,
+                    // más fiable para esto en concreto aunque para
+                    // mostrar en pantalla siga prefiriéndose artist
+                    // (ver el resto de la app: artist ?: channelTitle).
+                    // ---
+                    // S010 -- channelTitle is preferred over artist as
+                    // the anchor: artist is H05's heuristic match, with
+                    // real false positives on ambiguous titles;
+                    // channelTitle is that specific video's real
+                    // channel name, more reliable for this specific
+                    // purpose even though display elsewhere still
+                    // prefers artist.
+                    radioAnchorArtist = currentItem?.channelTitle?.takeIf { it.isNotBlank() }
+                        ?: currentItem?.artist?.takeIf { it.isNotBlank() }
                     // S010 -- nueva sesión de Radio: invalida el
                     // género+país cacheado y la lista de ya-usados de
                     // la sesión anterior, se recalculan de cero desde
@@ -793,6 +834,7 @@ class PlayerManager @Inject constructor(
                             artist = relatedArtist,
                             isFromRadio = true,
                             youtubeId = track.youtubeId,
+                            channelTitle = track.channelTitle,
                         )
                     }
                 }
@@ -860,8 +902,12 @@ class PlayerManager @Inject constructor(
         isLocal: Boolean = false,
         artist: String? = null,
         youtubeId: String? = null,
+        channelTitle: String? = null,
     ) {
-        playQueue(listOf(QueueItem(streamUrl, title, isLocal, artist, youtubeId = youtubeId)), startIndex = 0)
+        playQueue(
+            listOf(QueueItem(streamUrl, title, isLocal, artist, youtubeId = youtubeId, channelTitle = channelTitle)),
+            startIndex = 0,
+        )
     }
 
     /**

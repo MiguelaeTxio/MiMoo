@@ -1104,6 +1104,7 @@ class LibraryViewModel @Inject constructor(
             isLocal = true,
             artist = track.artist ?: track.channelTitle,
             youtubeId = track.youtubeId,
+            channelTitle = track.channelTitle,
         )
     }
 
@@ -1132,6 +1133,7 @@ class LibraryViewModel @Inject constructor(
                     isLocal = true,
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
+                    channelTitle = track.channelTitle,
                 )
             )
         )
@@ -1154,6 +1156,7 @@ class LibraryViewModel @Inject constructor(
                     isLocal = true,
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
+                    channelTitle = track.channelTitle,
                 )
             )
         )
@@ -1237,6 +1240,7 @@ class LibraryViewModel @Inject constructor(
                     isLocal = true,
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
+                    channelTitle = track.channelTitle,
                 )
             }
         }
