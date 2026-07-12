@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.playback
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -14,6 +15,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionToken
+import com.miguelaetxio.mimoo.MainActivity
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -104,7 +106,41 @@ class MiMooPlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        mediaSession = MediaSession.Builder(this, playerManager.player).build()
+
+        // H09 -- PendingIntent que abre MainActivity al tocar el
+        // cuerpo de la notificación (no los botones de control, que
+        // ya funcionaban). Petición explícita de Miguel Ángel: podía
+        // controlar la reproducción desde la notificación, pero
+        // tocarla no abría la app. FLAG_ACTIVITY_SINGLE_TOP +
+        // FLAG_ACTIVITY_CLEAR_TOP: si MainActivity ya está en la pila
+        // de tareas, la trae al frente en vez de crear una instancia
+        // nueva encima. FLAG_IMMUTABLE obligatorio desde Android 12
+        // (API 31) para cualquier PendingIntent que la propia app no
+        // vaya a mutar después -- este no se muta nunca.
+        // ---
+        // H09 -- PendingIntent that opens MainActivity when the body
+        // of the notification is tapped (not the control buttons,
+        // which already worked). Explicit request from Miguel Ángel:
+        // he could control playback from the notification, but
+        // tapping it didn't open the app. FLAG_ACTIVITY_SINGLE_TOP +
+        // FLAG_ACTIVITY_CLEAR_TOP: if MainActivity is already on the
+        // task stack, brings it to front instead of creating a new
+        // instance on top. FLAG_IMMUTABLE mandatory since Android 12
+        // (API 31) for any PendingIntent the app itself won't mutate
+        // later -- this one never is.
+        val sessionActivityIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val sessionActivityPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            sessionActivityIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        mediaSession = MediaSession.Builder(this, playerManager.player)
+            .setSessionActivity(sessionActivityPendingIntent)
+            .build()
         NotificationDebugLogger.log(
             this, storageManager,
             "onCreate() -- MediaSession creada, player=${playerManager.player}",
@@ -170,7 +206,7 @@ class MiMooPlaybackService : MediaSessionService() {
         // synchronously in onCreate(), guarantees the deadline is
         // always met; Media3 keeps updating this same notification
         // with real controls/metadata once it processes the session.
-        startForegroundImmediately()
+        startForegroundImmediately(sessionActivityPendingIntent)
 
         // El fix real (2026-07-05, ver comentario de debugController
         // más arriba): conectamos un MediaController a nuestra propia
@@ -204,7 +240,7 @@ class MiMooPlaybackService : MediaSessionService() {
         )
     }
 
-    private fun startForegroundImmediately() {
+    private fun startForegroundImmediately(sessionActivityPendingIntent: PendingIntent) {
         // ID y canal IDÉNTICOS a los que usa DefaultMediaNotificationProvider
         // por defecto (androidx.media3.session.DefaultMediaNotificationProvider.
         // DEFAULT_NOTIFICATION_ID = 1001, DEFAULT_CHANNEL_ID =
@@ -261,6 +297,7 @@ class MiMooPlaybackService : MediaSessionService() {
             .setContentTitle("miMoo")
             .setContentText("Reproduciendo música")
             .setOngoing(true)
+            .setContentIntent(sessionActivityPendingIntent)
             .build()
 
         ServiceCompat.startForeground(

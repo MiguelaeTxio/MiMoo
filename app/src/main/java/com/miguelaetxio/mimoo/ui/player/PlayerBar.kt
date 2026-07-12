@@ -3,6 +3,8 @@ package com.miguelaetxio.mimoo.ui.player
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
@@ -15,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -54,22 +57,49 @@ fun PlayerBar(
                     Text(
                         text = title,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Text(
-                        text = if (state.isLocal) {
-                            "Reproduciendo en local"
-                        } else {
-                            "Reproduciendo en streaming"
-                        },
-                        maxLines = 1,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (state.isLocal) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.tertiary
-                        },
-                    )
+                    // H09 -- icono + etiqueta corta en vez de una frase
+                    // larga ("Reproduciendo en streaming"), que se
+                    // recortaba a lo bruto en pantallas estrechas al
+                    // competir por espacio con los iconos de control.
+                    // Petición explícita: que se vea claramente cómo
+                    // se está reproduciendo.
+                    // ---
+                    // H09 -- icon + short label instead of a long
+                    // sentence ("Reproduciendo en streaming"), which
+                    // got clipped abruptly on narrow screens while
+                    // competing for space with the control icons.
+                    // Explicit request: it should be clear at a glance
+                    // how playback is happening.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (state.isLocal) {
+                                Icons.Filled.Download
+                            } else {
+                                Icons.Filled.Cloud
+                            },
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = if (state.isLocal) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.tertiary
+                            },
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = if (state.isLocal) "Local" else "Streaming",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (state.isLocal) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.tertiary
+                            },
+                        )
+                    }
                 }
 
                 if (state.queueSize > 1) {
