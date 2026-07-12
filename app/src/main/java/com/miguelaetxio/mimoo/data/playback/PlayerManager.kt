@@ -729,11 +729,42 @@ class PlayerManager @Inject constructor(
                     newItem.artist?.let { radioUsedArtists.add(it) }
 
                     withContext(Dispatchers.Main) {
-                        val wasEnded = player.playbackState == Player.STATE_ENDED
+                        // S010 -- reportado por Miguel Ángel con log real
+                        // (notification_debug.txt: onPlayerError para
+                        // "Radio Futura - Escuela de Calor",
+                        // ERROR_CODE_IO_BAD_HTTP_STATUS): si el error de
+                        // reproducción llega ANTES de que la Radio haya
+                        // añadido nada a la cola, onPlayerError() no
+                        // podía recuperarse solo (hasNextMediaItem() era
+                        // false, no había nada a lo que saltar todavía).
+                        // Cuando topUpRadioQueueIfNeeded() por fin
+                        // añadía las pistas nuevas, esta comprobación
+                        // solo miraba STATE_ENDED -- el player seguía en
+                        // estado de ERROR, no en ENDED, así que nunca se
+                        // le decía que arrancara con las pistas recién
+                        // insertadas: se quedaban ahí sin sonar. Ahora
+                        // también se reanuda si hay un error pendiente,
+                        // no solo si terminó de forma normal.
+                        // ---
+                        // S010 -- reported by Miguel Ángel with a real
+                        // log: if the playback error arrives BEFORE
+                        // Radio has added anything to the queue,
+                        // onPlayerError() couldn't recover on its own
+                        // (hasNextMediaItem() was false, nothing to jump
+                        // to yet). When topUpRadioQueueIfNeeded()
+                        // finally added the new tracks, this check only
+                        // looked at STATE_ENDED -- the player was still
+                        // in an ERROR state, not ENDED, so it was never
+                        // told to start with the newly inserted tracks:
+                        // they just sat there unplayed. Now it also
+                        // resumes if there's a pending error, not just
+                        // on a normal end.
+                        val needsResume = player.playbackState == Player.STATE_ENDED ||
+                            player.playerError != null
                         val insertIndex = queueItems.size
                         queueItems.add(newItem)
                         player.addMediaItems(listOf(toMediaItem(newItem)))
-                        if (wasEnded) {
+                        if (needsResume) {
                             // Fix del fallo de autoplay -- ver docstring.
                             player.prepare()
                             player.seekTo(insertIndex, 0)
