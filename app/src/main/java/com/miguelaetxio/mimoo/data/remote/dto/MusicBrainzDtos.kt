@@ -79,10 +79,25 @@ data class MusicBrainzTrack(
  * H08 PARTE 2 (S009) -- DTOs para búsqueda y lookup de artista, usados
  * por RadioRepository para encontrar "artistas relacionados" vía
  * géneros compartidos de MusicBrainz.
+ *
+ * `country` (S010, fix del sesgo hacia música inglesa): código ISO de
+ * país del artista -- campo de primer nivel, SIEMPRE presente en la
+ * respuesta si MusicBrainz lo tiene, sin necesitar ningún `inc=`
+ * especial (verificado en vivo esta sesión contra el ejemplo oficial
+ * de Nirvana en musicbrainz.org/doc/MusicBrainz_API/Examples, que
+ * trae "country":"US" con solo inc=aliases). Puede venir null -- no
+ * todos los artistas tienen país registrado en MusicBrainz.
  * ---
  * H08 PARTE 2 (S009) -- DTOs for artist search and lookup, used by
  * RadioRepository to find "related artists" via MusicBrainz's shared
  * genres.
+ *
+ * `country` (S010, fix for the English-music bias): the artist's ISO
+ * country code -- a top-level field, ALWAYS present in the response
+ * if MusicBrainz has it, no special `inc=` needed (verified live this
+ * session against the official Nirvana example, which shows
+ * "country":"US" with just inc=aliases). Can come back null -- not
+ * every artist has a country on file in MusicBrainz.
  */
 data class MusicBrainzArtistSearchResponse(
     @SerializedName("artists") val artists: List<MusicBrainzArtistSummary> = emptyList(),
@@ -91,12 +106,14 @@ data class MusicBrainzArtistSearchResponse(
 data class MusicBrainzArtistSummary(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
+    @SerializedName("country") val country: String? = null,
 )
 
 data class MusicBrainzArtistDetail(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
     @SerializedName("genres") val genres: List<MusicBrainzGenre> = emptyList(),
+    @SerializedName("country") val country: String? = null,
 )
 
 data class MusicBrainzGenre(
