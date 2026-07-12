@@ -30,6 +30,7 @@ this, not the quota-limited Data API -- zero quota cost no matter how
 many times it is used.
 """
 
+import re
 import yt_dlp
 
 
@@ -337,6 +338,28 @@ def _entry_to_track(entry: dict):
     # artists/languages.
     if channel_title.endswith(" - Topic"):
         channel_title = channel_title[: -len(" - Topic")].strip()
+
+    # S010 (continuación) -- dos sufijos más de canal que rompen la
+    # búsqueda de "relacionados" de la Radio exactamente igual que
+    # " - Topic", encontrados con datos reales en la misma sesión
+    # (radio_relacionados_debug.txt): "PISTONES Oficial" y
+    # "PistonesVEVO" -- MusicBrainz tampoco tiene ningún artista con
+    # esos nombres. A diferencia de "- Topic" (sufijo literal que
+    # YouTube pone él solo), "VEVO" y "Oficial" los elige el propio
+    # dueño del canal al nombrarlo, así que el separador varía
+    # (" VEVO", " - VEVO", "VEVO" pegado sin espacio...) -- de ahí la
+    # regex en vez de un endswith() literal como con Topic.
+    # ---
+    # S010 (continued) -- two more channel suffixes that break Radio's
+    # "related artist" lookup exactly like " - Topic" did, found with
+    # real data in the same session: "PISTONES Oficial" and
+    # "PistonesVEVO" -- MusicBrainz has no artist under those names
+    # either. Unlike "- Topic" (a literal suffix YouTube adds by
+    # itself), "VEVO"/"Oficial" are chosen by the channel owner, so the
+    # separator varies -- hence the regex instead of a literal
+    # endswith() like with Topic.
+    for suffix_pattern in (r"\s*-?\s*VEVO$", r"\s*-?\s*Oficial$"):
+        channel_title = re.sub(suffix_pattern, "", channel_title, flags=re.IGNORECASE).strip()
 
     return {
         "youtube_id": video_id,
