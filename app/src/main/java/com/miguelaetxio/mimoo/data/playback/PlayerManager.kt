@@ -11,6 +11,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
+import com.miguelaetxio.mimoo.data.remote.RadioAnchor
 import com.miguelaetxio.mimoo.data.remote.RadioDebugLogger
 import com.miguelaetxio.mimoo.data.remote.RadioRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -366,6 +367,17 @@ class PlayerManager @Inject constructor(
                     // giving up entirely -- see
                     // topUpRadioQueueIfNeeded().
                     radioAnchorArtist = currentItem?.artist?.takeIf { it.isNotBlank() }
+                    // S010 -- nueva sesión de Radio: invalida el
+                    // género+país cacheado y la lista de ya-usados de
+                    // la sesión anterior, se recalculan de cero desde
+                    // este nuevo artista en el próximo topUp.
+                    // ---
+                    // S010 -- new Radio session: invalidates the
+                    // cached genre+country and the previous session's
+                    // used-artists list, recalculated from scratch
+                    // from this new artist on the next top-up.
+                    radioAnchor = null
+                    radioUsedArtists.clear()
                 }
                 if (currentItem?.isFromRadio == true || isLastItem) {
                     topUpRadioQueueIfNeeded()
@@ -565,17 +577,38 @@ class PlayerManager @Inject constructor(
     /**
      * H08 (S009) -- el artista que arrancó la Radio (el último tema
      * "propio" del usuario, no de Radio, antes de que empezara a
-     * reponer). Se usa como respaldo si la cadena de "relacionados"
-     * muere en un artista sin géneros -- ver onMediaItemTransition y
-     * topUpRadioQueueIfNeeded().
+     * reponer).
+     *
+     * `radioAnchor` (S010, rediseño de sesión-ancla) -- género+país
+     * calculados UNA SOLA VEZ a partir de `radioAnchorArtist`, ver
+     * RadioRepository.resolveAnchor(). Se cachea aquí para no volver a
+     * resolverlo en cada salto de la cadena -- justo el bug que
+     * arregla este rediseño (antes se recalculaba el género del
+     * artista recién añadido en cada salto, y "derivaba" con el
+     * tiempo: Jeff Mills, techno, acababa en Led Zeppelin, rock,
+     * varios saltos después).
+     *
+     * `radioUsedArtists` -- nombres ya sugeridos en esta sesión, para
+     * no repetir siempre el mismo puñado de candidatos del mismo
+     * género+país fijo.
+     *
+     * Los tres se resetean juntos cuando arranca una sesión de Radio
+     * genuinamente nueva (ver onMediaItemTransition más arriba).
      * ---
-     * H08 (S009) -- the artist that started Radio (the last "own"
-     * track from the user, not a Radio one, before it started topping
-     * up). Used as a fallback if the "related" chain dies on an
-     * artist with no genres -- see onMediaItemTransition and
-     * topUpRadioQueueIfNeeded().
+     * H08 (S009) -- the artist that started Radio.
+     *
+     * `radioAnchor` (S010, anchor-session redesign) -- genre+country
+     * computed ONCE from `radioAnchorArtist`. Cached here so it's not
+     * re-resolved on every hop of the chain.
+     *
+     * `radioUsedArtists` -- names already suggested this session.
+     *
+     * All three get reset together when a genuinely new Radio session
+     * starts.
      */
     private var radioAnchorArtist: String? = null
+    private var radioAnchor: RadioAnchor? = null
+    private val radioUsedArtists = mutableSetOf<String>()
 
     private fun topUpRadioQueueIfNeeded() {
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
@@ -586,11 +619,11 @@ class PlayerManager @Inject constructor(
         managerScope.launch {
             try {
                 while (true) {
-                    val (shouldContinue, seedArtist, backlogNow) = withContext(Dispatchers.Main) {
+                    val (shouldContinue, backlogNow) = withContext(Dispatchers.Main) {
                         val backlog = currentRadioBacklog()
                         val keepGoing = player.repeatMode == Player.REPEAT_MODE_OFF &&
                             backlog < RADIO_QUEUE_SIZE
-                        Triple(keepGoing, queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }, backlog)
+                        keepGoing to backlog
                     }
                     if (!shouldContinue) {
                         RadioDebugLogger.log(
@@ -600,57 +633,40 @@ class PlayerManager @Inject constructor(
                         )
                         break
                     }
-                    if (seedArtist == null) {
+                    val anchorArtistName = radioAnchorArtist
+                    if (anchorArtistName == null) {
                         RadioDebugLogger.log(
                             appContext, storageManager,
-                            "topUpRadioQueueIfNeeded() -- parado: la última pista de la cola no " +
-                                "tiene artista (campo 'artist' vacío/null), no hay semilla para buscar relacionados",
+                            "topUpRadioQueueIfNeeded() -- parado: no hay artista ancla (la última " +
+                                "pista propia del usuario no tiene 'artist'), no hay sesión de Radio que anclar",
                         )
                         break
                     }
 
-                    // H08 (S009, fix del corte a los 3 temas) -- si el
-                    // eslabón inmediato de la cadena muere (artista sin
-                    // géneros en MusicBrainz, como pasó con "Various
-                    // Artists"), no se rinde del todo: reintenta una
-                    // vez desde el ancla (el artista que arrancó la
-                    // Radio) antes de parar. Con el filtro de
-                    // "Various Artists" ya añadido en RadioRepository
-                    // esto no debería hacer falta para ese caso
-                    // concreto, pero deja la Radio protegida ante
-                    // cualquier otro artista igual de "genre-less" en
-                    // el futuro.
+                    // S010 (rediseño de ancla de sesión) -- ya NO se
+                    // encadena desde el artista recién añadido en cada
+                    // vuelta (eso era la causa real de la deriva de
+                    // género, ver RadioRepository). fetchOneRadioTrack()
+                    // resuelve el ancla (género+país) UNA SOLA VEZ, la
+                    // cachea en radioAnchor, y la reutiliza en todas las
+                    // vueltas siguientes de esta misma sesión.
                     // ---
-                    // H08 (S009, fix for the 3-track cutoff) -- if the
-                    // immediate chain link dies (an artist with no
-                    // genres in MusicBrainz, as happened with "Various
-                    // Artists"), it doesn't give up entirely: retries
-                    // once from the anchor (the artist that started
-                    // Radio) before stopping. With the "Various
-                    // Artists" filter already added in RadioRepository
-                    // this shouldn't be needed for that specific case,
-                    // but it keeps Radio protected against any other
-                    // equally "genre-less" artist in the future.
-                    val anchor = radioAnchorArtist
-                    val newItem = fetchOneRadioTrack(seedArtist)
-                        ?: anchor?.takeIf { !it.equals(seedArtist, ignoreCase = true) }
-                            ?.let {
-                                RadioDebugLogger.log(
-                                    appContext, storageManager,
-                                    "topUpRadioQueueIfNeeded() -- seedArtist='$seedArtist' sin " +
-                                        "resultado, reintentando desde el ancla '$it'",
-                                )
-                                fetchOneRadioTrack(it)
-                            }
+                    // S010 (anchor-session redesign) -- no longer
+                    // chains from the just-added artist each round.
+                    // fetchOneRadioTrack() resolves the anchor ONCE,
+                    // caches it, and reuses it every following round of
+                    // this same session.
+                    val newItem = fetchOneRadioTrack(anchorArtistName)
                     if (newItem == null) {
                         val backlogFinal = withContext(Dispatchers.Main) { currentRadioBacklog() }
                         RadioDebugLogger.log(
                             appContext, storageManager,
-                            "topUpRadioQueueIfNeeded() -- parado del todo: ni seedArtist='$seedArtist' " +
-                                "ni el ancla='$anchor' dieron ninguna pista -- backlog final: $backlogFinal",
+                            "topUpRadioQueueIfNeeded() -- parado del todo: sin más candidatos para " +
+                                "el ancla de '$anchorArtistName' -- backlog final: $backlogFinal",
                         )
                         break
                     }
+                    newItem.artist?.let { radioUsedArtists.add(it) }
 
                     withContext(Dispatchers.Main) {
                         val wasEnded = player.playbackState == Player.STATE_ENDED
@@ -696,83 +712,95 @@ class PlayerManager @Inject constructor(
      * letting topUpRadioQueueIfNeeded() stop trying instead of
      * blowing up.
      */
-    private suspend fun fetchOneRadioTrack(seedArtist: String): QueueItem? =
+    private suspend fun fetchOneRadioTrack(anchorArtistName: String): QueueItem? =
         try {
-            val relatedArtist = radioRepository.suggestRelatedArtist(seedArtist)
-            if (relatedArtist == null) {
-                // Sin log aquí -- RadioRepository.suggestRelatedArtist()
-                // ya registra el motivo exacto en
+            val anchor = radioAnchor ?: radioRepository.resolveAnchor(anchorArtistName)?.also {
+                radioAnchor = it
+            }
+            if (anchor == null) {
+                // Sin log aquí -- RadioRepository.resolveAnchor() ya
+                // registra el motivo exacto en
                 // radio_relacionados_debug.txt antes de devolver null.
                 null
             } else {
-                // H08 -- limit=6 en vez de 1, y se descartan
-                // candidatos que huelen a compilación (detectado en
-                // pruebas reales: buscar solo el nombre del artista
-                // devuelve muchas veces un "Greatest Hits Full Album"
-                // de 1-2 horas como primer resultado -- si se cogiera
-                // tal cual, "ocuparía" un hueco del backlog de Radio
-                // durante horas, rompiendo el propio modelo de
-                // "mantener 10 temas". RADIO_MAX_TRACK_SECONDS (15 min)
-                // es generoso a propósito -- hay canciones sueltas
-                // legítimas largas (rock progresivo, etc.), no se
-                // quiere descartarlas por error.
-                // ---
-                // H08 -- limit=6 instead of 1, and candidates that
-                // smell like a compilation are discarded (found in
-                // real testing: searching just the artist's name often
-                // returns a 1-2 hour "Greatest Hits Full Album" as the
-                // first result -- if taken as-is, it would "occupy" a
-                // slot in Radio's backlog for hours, breaking the very
-                // "keep 10 tracks" model. RADIO_MAX_TRACK_SECONDS
-                // (15 min) is deliberately generous -- there are
-                // legitimate long standalone songs (prog rock etc.),
-                // don't want to wrongly discard those.
-                val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 6)
-                val track = searchResult.tracks.firstOrNull { candidate ->
-                    candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
-                        COMPILATION_TITLE_HINTS.none { hint ->
-                            candidate.title.contains(hint, ignoreCase = true)
-                        }
-                }
-                if (track == null) {
-                    RadioDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchOneRadioTrack('$seedArtist') -> relacionado='$relatedArtist' pero " +
-                            "0 de ${searchResult.tracks.size} resultados de YouTube pasaron el filtro " +
-                            "de duración/compilación -- eslabón roto",
-                    )
+                val relatedArtist = radioRepository.suggestRelatedArtist(
+                    anchor,
+                    excludeArtists = radioUsedArtists + anchorArtistName,
+                )
+                if (relatedArtist == null) {
+                    // Sin log aquí -- suggestRelatedArtist() ya
+                    // registra el motivo exacto.
                     null
                 } else {
-                    val streamUrl = try {
-                        streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
-                    } catch (e: Exception) {
+                    // H08 -- limit=6 en vez de 1, y se descartan
+                    // candidatos que huelen a compilación (detectado en
+                    // pruebas reales: buscar solo el nombre del artista
+                    // devuelve muchas veces un "Greatest Hits Full Album"
+                    // de 1-2 horas como primer resultado -- si se cogiera
+                    // tal cual, "ocuparía" un hueco del backlog de Radio
+                    // durante horas, rompiendo el propio modelo de
+                    // "mantener 10 temas". RADIO_MAX_TRACK_SECONDS (15 min)
+                    // es generoso a propósito -- hay canciones sueltas
+                    // legítimas largas (rock progresivo, etc.), no se
+                    // quiere descartarlas por error.
+                    // ---
+                    // H08 -- limit=6 instead of 1, and candidates that
+                    // smell like a compilation are discarded (found in
+                    // real testing: searching just the artist's name often
+                    // returns a 1-2 hour "Greatest Hits Full Album" as the
+                    // first result -- if taken as-is, it would "occupy" a
+                    // slot in Radio's backlog for hours, breaking the very
+                    // "keep 10 tracks" model. RADIO_MAX_TRACK_SECONDS
+                    // (15 min) is deliberately generous -- there are
+                    // legitimate long standalone songs (prog rock etc.),
+                    // don't want to wrongly discard those.
+                    val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 6)
+                    val track = searchResult.tracks.firstOrNull { candidate ->
+                        candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
+                            COMPILATION_TITLE_HINTS.none { hint ->
+                                candidate.title.contains(hint, ignoreCase = true)
+                            }
+                    }
+                    if (track == null) {
                         RadioDebugLogger.log(
                             appContext, storageManager,
-                            "fetchOneRadioTrack('$seedArtist') -> relacionado='$relatedArtist', " +
-                                "vídeo='${track.title}' -- resolveAudioStreamUrl() falló: " +
-                                "${e::class.java.simpleName}: ${e.message}",
+                            "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist' pero " +
+                                "0 de ${searchResult.tracks.size} resultados de YouTube pasaron el filtro " +
+                                "de duración/compilación -- eslabón roto",
                         )
-                        throw e
+                        null
+                    } else {
+                        val streamUrl = try {
+                            streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
+                        } catch (e: Exception) {
+                            RadioDebugLogger.log(
+                                appContext, storageManager,
+                                "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist', " +
+                                    "vídeo='${track.title}' -- resolveAudioStreamUrl() falló: " +
+                                    "${e::class.java.simpleName}: ${e.message}",
+                            )
+                            throw e
+                        }
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist', " +
+                                "añadido: '${track.title}'",
+                        )
+                        QueueItem(
+                            uri = streamUrl,
+                            title = track.title,
+                            isLocal = false,
+                            artist = relatedArtist,
+                            isFromRadio = true,
+                            youtubeId = track.youtubeId,
+                        )
                     }
-                    RadioDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchOneRadioTrack('$seedArtist') -> relacionado='$relatedArtist', " +
-                            "añadido: '${track.title}'",
-                    )
-                    QueueItem(
-                        uri = streamUrl,
-                        title = track.title,
-                        isLocal = false,
-                        artist = relatedArtist,
-                        isFromRadio = true,
-                        youtubeId = track.youtubeId,
-                    )
                 }
             }
         } catch (e: Exception) {
             RadioDebugLogger.log(
                 appContext, storageManager,
-                "fetchOneRadioTrack('$seedArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}",
+                "fetchOneRadioTrack(ancla='$anchorArtistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}",
             )
             null
         }
