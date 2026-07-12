@@ -92,7 +92,19 @@ class RadioBrowserViewModel @Inject constructor(
             // revisión: una lista de cientos de países no cabe como
             // chips, y `/json/countries` ya llega ordenado por
             // stationcount descendente (ver RadioBrowserApiService).
-            val countries = radioBrowserRepository.getCountries().take(60)
+            //
+            // distinctBy() (S010, tras crash real: "Key '1' was
+            // already used" en el LazyRow) -- la base de datos
+            // comunitaria de Radio-Browser.info es conocida por tener
+            // filas duplicadas (ver documentación de terceros:
+            // "API is brittle... returns duplicate stations"), y aquí
+            // pasaba lo mismo con países: dos filas con el mismo
+            // isoCode/name -- daba el mismo key en items(), y Compose
+            // exige claves únicas dentro de un mismo LazyRow o lanza
+            // excepción y revienta la pantalla entera.
+            val countries = radioBrowserRepository.getCountries()
+                .distinctBy { it.isoCode ?: it.name }
+                .take(60)
             _uiState.value = _uiState.value.copy(
                 countries = countries,
                 isLoadingFilters = false,
