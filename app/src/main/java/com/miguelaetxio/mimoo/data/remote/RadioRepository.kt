@@ -1,17 +1,20 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import android.content.Context
+import com.miguelaetxio.mimoo.data.download.StorageManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * H08 PARTE 2 (S009, fix de sesgo hacia música inglesa en S010) --
- * "Radio": dado el artista que estaba sonando, sugiere otro
- * relacionado, para continuar la reproducción en streaming cuando la
- * cola se queda sin nada más y el cíclico está desactivado
- * (PlayerManager). Decisión de diseño explícita de Miguel Ángel:
- * MusicBrainz (géneros compartidos), no el Mix automático de YouTube
- * -- descartado por inestabilidad documentada de yt-dlp en esa área
- * (ver ANNEX_H08.md).
+ * H08 PARTE 2 (S009, fix de sesgo hacia música inglesa e
+ * instrumentación de diagnóstico en S010) -- "Radio": dado el artista
+ * que estaba sonando, sugiere otro relacionado, para continuar la
+ * reproducción en streaming cuando la cola se queda sin nada más y el
+ * cíclico está desactivado (PlayerManager). Decisión de diseño
+ * explícita de Miguel Ángel: MusicBrainz (géneros compartidos), no el
+ * Mix automático de YouTube -- descartado por inestabilidad
+ * documentada de yt-dlp en esa área (ver ANNEX_H08.md).
  *
  * Algoritmo (deliberadamente simple, sin pretender ser un motor de
  * recomendación real):
@@ -44,94 +47,94 @@ import javax.inject.Singleton
  * oficial en musicbrainz.org/doc/Search_Server:
  * "artist:fred AND type:group AND country:US").
  *
+ * Instrumentado con RadioDebugLogger (S010, tras reporte real de
+ * Miguel Ángel: la Radio se cortaba tras una sola pista y "no sé qué
+ * es lo que está fallando"). Un fallo AQUÍ (artista no encontrado, sin
+ * géneros propios, sin candidatos ni con país ni sin él) es
+ * exactamente el tipo de eslabón roto que corta la cadena de
+ * "relacionados" -- cada motivo de fallo se registra explícitamente en
+ * vez de devolver null en silencio.
+ *
  * El nombre elegido NO se reproduce directamente desde MusicBrainz
  * (que no aloja audio) -- quien llama (PlayerManager) lo busca
  * después con el motor gratuito ya existente
  * (ExternalLinkResolver.searchYoutube()), igual que cualquier otra
  * búsqueda de la app.
  *
- * Nunca lanza excepción -- cualquier fallo de red, de parseo, o
- * simplemente "MusicBrainz no tiene géneros para este artista" se
- * trata igual que "no hay sugerencia", mismo patrón que
+ * Nunca lanza excepción hacia quien llama -- cualquier fallo de red,
+ * de parseo, o simplemente "MusicBrainz no tiene géneros para este
+ * artista" se trata igual que "no hay sugerencia", mismo patrón que
  * CoverArtRepository. La Radio es una mejora de la experiencia, no
- * debe poder romper la reproducción si no encuentra nada.
+ * debe poder romper la reproducción si no encuentra nada -- pero ahora
+ * el motivo queda registrado antes de devolver null.
  * ---
- * H08 PARTE 2 (S009, English-music bias fix in S010) -- "Radio":
- * given the artist that was playing, suggests a related one, to
- * continue streaming playback once the queue runs out and repeat is
- * off (PlayerManager).
+ * H08 PART 2 (S009, English-music bias fix + diagnostic
+ * instrumentation in S010) -- "Radio": given the artist that was
+ * playing, suggests a related one, to continue streaming playback
+ * once the queue runs out and repeat is off (PlayerManager).
  *
- * Algorithm:
- *   1. Search the source artist on MusicBrainz -> MBID + country.
- *   2. Look up its genres (`inc=genres`) and confirm its country
- *      (top-level field, always present if MusicBrainz has it).
- *   3. Search other artists sharing one of those genres AND the SAME
- *      country. If the source artist has no country on file, or the
- *      country-scoped search returns no candidates, retry without the
- *      country constraint (genre only) -- must never block Radio by
- *      being too strict.
- *   4. Pick one at random among the candidates.
- *
- * Real bug fixed in S010 (reported by Miguel Ángel with concrete
- * examples: seeding with Spanish music or a techno track still ended
- * up as an "English music hodgepodge" either way). Root cause: genre
- * alone doesn't filter by language/region at all -- MusicBrainz's
- * genre tags are global and heavily dominated by Anglo-American
- * artists (a real, documented bias of that database, not a coding
- * bug), so `tag:"pop"` or `tag:"techno"` alone returns mostly
- * English/American artists no matter the source's origin. Country DOES
- * correctly narrow by region/language, and MusicBrainz supports it
- * natively in its Lucene syntax.
- *
- * Never throws -- any network failure, parse failure, or simply
- * "MusicBrainz has no genres for this artist" is treated the same as
- * "no suggestion", same pattern as CoverArtRepository.
+ * Never throws to the caller -- any network failure, parse failure, or
+ * simply "MusicBrainz has no genres for this artist" is treated the
+ * same as "no suggestion", same pattern as CoverArtRepository -- but
+ * now the reason is logged before returning null.
  */
 @Singleton
 class RadioRepository @Inject constructor(
     private val musicBrainzApiService: MusicBrainzApiService,
+    @ApplicationContext private val appContext: Context,
+    private val storageManager: StorageManager,
 ) {
     suspend fun suggestRelatedArtist(sourceArtist: String): String? {
-        if (sourceArtist.isBlank() || isPlaceholderArtist(sourceArtist)) return null
+        if (sourceArtist.isBlank() || isPlaceholderArtist(sourceArtist)) {
+            log("suggestRelatedArtist('$sourceArtist') -- origen vacío o placeholder, se descarta sin buscar")
+            return null
+        }
         return try {
             val sourceMbid = musicBrainzApiService
                 .searchArtists(query = buildArtistQuery(sourceArtist))
                 .artists
                 .firstOrNull()
-                ?.id ?: return null
+                ?.id
+            if (sourceMbid == null) {
+                log("suggestRelatedArtist('$sourceArtist') -- MusicBrainz no encontró NINGÚN artista con ese nombre (searchArtists vacío)")
+                return null
+            }
 
             val sourceDetail = musicBrainzApiService.lookupArtist(sourceMbid)
             val genres = sourceDetail.genres
                 .map { it.name }
                 .filter { it.isNotBlank() }
-            if (genres.isEmpty()) return null
+            if (genres.isEmpty()) {
+                log("suggestRelatedArtist('$sourceArtist', mbid=$sourceMbid) -- encontrado en MusicBrainz pero SIN géneros propios (inc=genres vacío) -- eslabón roto")
+                return null
+            }
             val chosenGenre = genres.random()
             val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
 
-            // Primer intento: género + mismo país que el origen (fix
-            // S010 del sesgo hacia música inglesa). Si el origen no
-            // tiene país registrado, o esta búsqueda acotada no
-            // encuentra a nadie, se reintenta solo por género -- nunca
-            // debe dejar la Radio sin sugerencia por ser demasiado
-            // estricta.
-            // ---
-            // First attempt: genre + same country as the source (S010
-            // fix for the English-music bias). If the source has no
-            // country on file, or this narrowed search finds nobody,
-            // retry genre-only -- must never leave Radio without a
-            // suggestion by being too strict.
             val countryScopedCandidates = if (sourceCountry != null) {
                 findCandidates(chosenGenre, sourceMbid, sourceArtist, sourceCountry)
             } else {
                 emptyList()
             }
 
-            val candidates = countryScopedCandidates.ifEmpty {
+            val candidates = if (countryScopedCandidates.isNotEmpty()) {
+                countryScopedCandidates
+            } else {
+                if (sourceCountry != null) {
+                    log("suggestRelatedArtist('$sourceArtist', género='$chosenGenre', país=$sourceCountry) -- 0 candidatos CON país, reintentando solo por género")
+                }
                 findCandidates(chosenGenre, sourceMbid, sourceArtist, countryCode = null)
             }
 
-            candidates.randomOrNull()
+            val chosen = candidates.randomOrNull()
+            if (chosen == null) {
+                log("suggestRelatedArtist('$sourceArtist', género='$chosenGenre', país=$sourceCountry) -- 0 candidatos NI con país NI sin él -- eslabón roto")
+            } else {
+                log("suggestRelatedArtist('$sourceArtist', género='$chosenGenre', país=$sourceCountry) -> '$chosen' (${candidates.size} candidatos, filtrado por país: ${countryScopedCandidates.isNotEmpty()})")
+            }
+            chosen
         } catch (e: Exception) {
+            log("suggestRelatedArtist('$sourceArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
         }
     }
@@ -153,6 +156,8 @@ class RadioRepository @Inject constructor(
                     !isPlaceholderArtist(it.name)
             }
             .map { it.name }
+
+    private fun log(line: String) = RadioDebugLogger.log(appContext, storageManager, line)
 
     /**
      * H08 -- descarta entidades "cajón de sastre" de MusicBrainz que

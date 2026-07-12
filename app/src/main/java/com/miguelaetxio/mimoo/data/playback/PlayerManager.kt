@@ -501,7 +501,22 @@ class PlayerManager @Inject constructor(
                             currentRadioBacklog() < RADIO_QUEUE_SIZE
                         keepGoing to queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }
                     }
-                    if (!shouldContinue || seedArtist == null) break
+                    if (!shouldContinue) {
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió o backlog ya " +
+                                "llegó a $RADIO_QUEUE_SIZE (backlog actual: ${currentRadioBacklog()})",
+                        )
+                        break
+                    }
+                    if (seedArtist == null) {
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "topUpRadioQueueIfNeeded() -- parado: la última pista de la cola no " +
+                                "tiene artista (campo 'artist' vacío/null), no hay semilla para buscar relacionados",
+                        )
+                        break
+                    }
 
                     // H08 (S009, fix del corte a los 3 temas) -- si el
                     // eslabón inmediato de la cadena muere (artista sin
@@ -528,8 +543,22 @@ class PlayerManager @Inject constructor(
                     val anchor = radioAnchorArtist
                     val newItem = fetchOneRadioTrack(seedArtist)
                         ?: anchor?.takeIf { !it.equals(seedArtist, ignoreCase = true) }
-                            ?.let { fetchOneRadioTrack(it) }
-                        ?: break
+                            ?.let {
+                                RadioDebugLogger.log(
+                                    appContext, storageManager,
+                                    "topUpRadioQueueIfNeeded() -- seedArtist='$seedArtist' sin " +
+                                        "resultado, reintentando desde el ancla '$it'",
+                                )
+                                fetchOneRadioTrack(it)
+                            }
+                    if (newItem == null) {
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "topUpRadioQueueIfNeeded() -- parado del todo: ni seedArtist='$seedArtist' " +
+                                "ni el ancla='$anchor' dieron ninguna pista -- backlog final: ${currentRadioBacklog()}",
+                        )
+                        break
+                    }
 
                     withContext(Dispatchers.Main) {
                         val wasEnded = player.playbackState == Player.STATE_ENDED
@@ -579,6 +608,9 @@ class PlayerManager @Inject constructor(
         try {
             val relatedArtist = radioRepository.suggestRelatedArtist(seedArtist)
             if (relatedArtist == null) {
+                // Sin log aquí -- RadioRepository.suggestRelatedArtist()
+                // ya registra el motivo exacto en
+                // radio_relacionados_debug.txt antes de devolver null.
                 null
             } else {
                 // H08 -- limit=6 en vez de 1, y se descartan
@@ -611,10 +643,29 @@ class PlayerManager @Inject constructor(
                         }
                 }
                 if (track == null) {
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchOneRadioTrack('$seedArtist') -> relacionado='$relatedArtist' pero " +
+                            "0 de ${searchResult.tracks.size} resultados de YouTube pasaron el filtro " +
+                            "de duración/compilación -- eslabón roto",
+                    )
                     null
                 } else {
-                    val streamUrl = streamResolver.resolveAudioStreamUrl(
-                        "https://youtu.be/${track.youtubeId}",
+                    val streamUrl = try {
+                        streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
+                    } catch (e: Exception) {
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "fetchOneRadioTrack('$seedArtist') -> relacionado='$relatedArtist', " +
+                                "vídeo='${track.title}' -- resolveAudioStreamUrl() falló: " +
+                                "${e::class.java.simpleName}: ${e.message}",
+                        )
+                        throw e
+                    }
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchOneRadioTrack('$seedArtist') -> relacionado='$relatedArtist', " +
+                            "añadido: '${track.title}'",
                     )
                     QueueItem(
                         uri = streamUrl,
@@ -626,6 +677,10 @@ class PlayerManager @Inject constructor(
                 }
             }
         } catch (e: Exception) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchOneRadioTrack('$seedArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}",
+            )
             null
         }
 
