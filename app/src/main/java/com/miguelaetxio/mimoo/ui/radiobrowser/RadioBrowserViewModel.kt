@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.remote.RadioBrowserRepository
+import com.miguelaetxio.mimoo.data.remote.RadioDecade
+import com.miguelaetxio.mimoo.data.remote.RadioGenreCatalog
+import com.miguelaetxio.mimoo.data.remote.RadioGenreCategory
 import com.miguelaetxio.mimoo.data.remote.dto.RadioCountry
 import com.miguelaetxio.mimoo.data.remote.dto.RadioStation
-import com.miguelaetxio.mimoo.data.remote.dto.RadioTag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,47 +18,53 @@ import javax.inject.Inject
 
 data class RadioBrowserUiState(
     val query: String = "",
-    val tags: List<RadioTag> = emptyList(),
     val countries: List<RadioCountry> = emptyList(),
-    val selectedTag: String? = null,
+    val selectedGenre: RadioGenreCategory? = null,
+    val selectedDecade: RadioDecade? = null,
     val selectedCountryCode: String? = null,
     val stations: List<RadioStation> = emptyList(),
     val isLoadingFilters: Boolean = false,
     val isSearching: Boolean = false,
-)
+) {
+    val genres: List<RadioGenreCategory> get() = RadioGenreCatalog.genreCategories
+    val decades: List<RadioDecade> get() = RadioGenreCatalog.decades
+}
 
 /**
- * ViewModel de la pantalla "Radio Online" (H09 PASO 3, S010).
+ * ViewModel de la pantalla "Radio Online" (H09 PASO 3, S010; géneros
+ * y décadas curados añadidos en la misma sesión a petición explícita
+ * de Miguel Ángel).
  *
- * Al abrir la pantalla se cargan los chips de género (`/json/tags`) y
- * la lista de países (`/json/countries`), y se lanza una búsqueda
- * inicial sin filtros (orden por votos) para que la pantalla no
- * aparezca vacía -- mismo criterio que cualquier directorio de radio.
- * Tocar un chip de género o elegir un país relanza la búsqueda de
- * inmediato (a diferencia del campo de texto, que sigue el patrón ya
- * establecido en SearchScreen: pulsar el icono de buscar). Todos los
- * filtros -- nombre, género, país -- se combinan en la misma llamada
- * a `searchStations()`, igual que hace la propia API.
+ * Género y década son catálogos propios (RadioGenreCatalog), no los
+ * tags crudos de Radio-Browser.info -- cada uno agrupa varios
+ * términos de búsqueda reales. País sigue viniendo en vivo de
+ * `/json/countries`, ya que ahí sí hay una lista oficial y acotada
+ * que tiene sentido usar tal cual.
  *
- * `playStation()` reproduce directamente `urlResolved` -- a diferencia
- * de SearchViewModel.playTrack(), no hace falta StreamResolver: la
- * URL que da Radio-Browser.info ya viene resuelta (playlists/
- * redirecciones ya procesadas por el propio servicio). `artist` se
- * deja a null a propósito -- una emisora no es "una canción de un
- * artista", y pasar el país o el género ahí dispararía sin sentido la
- * lógica de "Radio" de H08 (sugerencia de artista relacionado) si
- * esta emisora fuera lo último en la cola.
+ * Combinación de filtros: género y década se buscan cada uno con
+ * `searchByAnyTag()` (fusión OR de sus propios términos) y, si ambos
+ * están activos a la vez, el resultado final es la INTERSECCIÓN de
+ * los dos conjuntos por `stationuuid` -- "Electrónica de los 80" es
+ * el cruce de "cualquier término de Electrónica" con "cualquier
+ * término de los 80", no la unión de ambos. Si solo hay uno activo,
+ * se usa directamente su resultado. Si no hay ninguno, se hace una
+ * búsqueda simple (searchStations(), orden por votos) igual que
+ * antes de tener el catálogo curado.
  * ---
- * ViewModel for the "Radio Online" screen (H09 STEP 3, S010).
+ * ViewModel for the "Radio Online" screen (H09 STEP 3, S010; curated
+ * genres/decades added in the same session per Miguel Ángel's
+ * explicit request).
  *
- * On opening the screen, genre chips (`/json/tags`) and the country
- * list (`/json/countries`) are loaded, and an initial filter-less
- * search (ordered by votes) runs so the screen isn't empty on open --
- * same approach any radio directory takes. Tapping a genre chip or
- * picking a country re-runs the search immediately (unlike the text
- * field, which follows SearchScreen's established pattern: press the
- * search icon). All filters -- name, genre, country -- combine into
- * the same `searchStations()` call, same as the API itself does.
+ * Genre and decade are our own catalogs (RadioGenreCatalog), not
+ * Radio-Browser.info's raw tags. Country still comes live from
+ * `/json/countries`.
+ *
+ * Filter combination: genre and decade each search with
+ * `searchByAnyTag()` (OR merge of their own terms) and, if both are
+ * active at once, the final result is the INTERSECTION of the two
+ * sets by `stationuuid`. If only one is active, its result is used
+ * directly. If neither is active, a plain search runs (same as
+ * before the curated catalog existed).
  */
 @HiltViewModel
 class RadioBrowserViewModel @Inject constructor(
@@ -68,23 +76,20 @@ class RadioBrowserViewModel @Inject constructor(
     val uiState: StateFlow<RadioBrowserUiState> = _uiState.asStateFlow()
 
     init {
-        loadFilters()
+        loadCountries()
         search()
     }
 
-    private fun loadFilters() {
+    private fun loadCountries() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingFilters = true)
-            // Top 40 por número real de emisoras -- una lista de miles
-            // de etiquetas/países no cabe como chips en pantalla, y las
-            // menos usadas no aportan nada como filtro rápido. La API
-            // ya las devuelve ordenadas por stationcount descendente
-            // (ver RadioBrowserApiService), así que tomar los primeros
-            // 40 ya da las más relevantes.
-            val tags = radioBrowserRepository.getTags().take(40)
+            // Top 60 por número real de emisoras -- ver comentario
+            // equivalente ya existente para tags antes de esta
+            // revisión: una lista de cientos de países no cabe como
+            // chips, y `/json/countries` ya llega ordenado por
+            // stationcount descendente (ver RadioBrowserApiService).
             val countries = radioBrowserRepository.getCountries().take(60)
             _uiState.value = _uiState.value.copy(
-                tags = tags,
                 countries = countries,
                 isLoadingFilters = false,
             )
@@ -95,13 +100,28 @@ class RadioBrowserViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(query = query)
     }
 
-    fun onTagSelect(tag: String?) {
-        _uiState.value = _uiState.value.copy(selectedTag = tag)
+    fun onGenreSelect(genre: RadioGenreCategory?) {
+        _uiState.value = _uiState.value.copy(
+            selectedGenre = if (_uiState.value.selectedGenre == genre) null else genre,
+        )
+        search()
+    }
+
+    fun onDecadeSelect(decade: RadioDecade?) {
+        _uiState.value = _uiState.value.copy(
+            selectedDecade = if (_uiState.value.selectedDecade == decade) null else decade,
+        )
         search()
     }
 
     fun onCountrySelect(countryCode: String?) {
-        _uiState.value = _uiState.value.copy(selectedCountryCode = countryCode)
+        _uiState.value = _uiState.value.copy(
+            selectedCountryCode = if (_uiState.value.selectedCountryCode == countryCode) {
+                null
+            } else {
+                countryCode
+            },
+        )
         search()
     }
 
@@ -109,11 +129,42 @@ class RadioBrowserViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSearching = true)
             val state = _uiState.value
-            val stations = radioBrowserRepository.searchStations(
-                name = state.query,
-                tag = state.selectedTag,
-                countryCode = state.selectedCountryCode,
-            )
+            val name = state.query
+            val countryCode = state.selectedCountryCode
+            val genre = state.selectedGenre
+            val decade = state.selectedDecade
+
+            val stations = when {
+                genre != null && decade != null -> {
+                    val genreMatches = radioBrowserRepository.searchByAnyTag(
+                        genre.matchTerms,
+                        name = name,
+                        countryCode = countryCode,
+                    )
+                    val decadeIds = radioBrowserRepository.searchByAnyTag(
+                        decade.matchTerms,
+                        name = name,
+                        countryCode = countryCode,
+                    ).map { it.stationUuid }.toSet()
+                    genreMatches.filter { it.stationUuid in decadeIds }
+                }
+                genre != null -> radioBrowserRepository.searchByAnyTag(
+                    genre.matchTerms,
+                    name = name,
+                    countryCode = countryCode,
+                )
+                decade != null -> radioBrowserRepository.searchByAnyTag(
+                    decade.matchTerms,
+                    name = name,
+                    countryCode = countryCode,
+                )
+                else -> radioBrowserRepository.searchStations(
+                    name = name,
+                    tag = null,
+                    countryCode = countryCode,
+                )
+            }
+
             _uiState.value = _uiState.value.copy(
                 stations = stations,
                 isSearching = false,

@@ -81,7 +81,7 @@ fun RadioBrowserScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            if (uiState.tags.isNotEmpty()) {
+            if (uiState.genres.isNotEmpty()) {
                 Text(
                     "Género",
                     style = MaterialTheme.typography.labelMedium,
@@ -89,22 +89,30 @@ fun RadioBrowserScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item {
+                    items(uiState.genres, key = { it.label }) { genre ->
                         RadioFilterChip(
-                            label = "Todos",
-                            selected = uiState.selectedTag == null,
-                            onClick = { viewModel.onTagSelect(null) },
+                            label = genre.label,
+                            selected = uiState.selectedGenre == genre,
+                            onClick = { viewModel.onGenreSelect(genre) },
                         )
                     }
-                    items(uiState.tags, key = { it.name }) { tag ->
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            if (uiState.decades.isNotEmpty()) {
+                Text(
+                    "Década",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(4.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(uiState.decades, key = { it.label }) { decade ->
                         RadioFilterChip(
-                            label = tag.name,
-                            selected = uiState.selectedTag == tag.name,
-                            onClick = {
-                                viewModel.onTagSelect(
-                                    if (uiState.selectedTag == tag.name) null else tag.name,
-                                )
-                            },
+                            label = decade.label,
+                            selected = uiState.selectedDecade == decade,
+                            onClick = { viewModel.onDecadeSelect(decade) },
                         )
                     }
                 }
@@ -130,12 +138,7 @@ fun RadioBrowserScreen(
                         RadioFilterChip(
                             label = country.name,
                             selected = uiState.selectedCountryCode == country.isoCode,
-                            onClick = {
-                                val code = country.isoCode
-                                viewModel.onCountrySelect(
-                                    if (uiState.selectedCountryCode == code) null else code,
-                                )
-                            },
+                            onClick = { viewModel.onCountrySelect(country.isoCode) },
                         )
                     }
                 }

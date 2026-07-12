@@ -3,6 +3,8 @@ package com.miguelaetxio.mimoo.data.remote
 import com.miguelaetxio.mimoo.data.remote.dto.RadioCountry
 import com.miguelaetxio.mimoo.data.remote.dto.RadioStation
 import com.miguelaetxio.mimoo.data.remote.dto.RadioTag
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -65,5 +67,55 @@ class RadioBrowserRepository @Inject constructor(
         radioBrowserApiService.getCountries()
     } catch (e: Exception) {
         emptyList()
+    }
+
+    /**
+     * Búsqueda "género/década curado" (H09, S010) -- catálogo propio
+     * en RadioGenreCatalog: cada categoría es un grupo de varios
+     * términos de tag reales de Radio-Browser.info (p. ej.
+     * "Electrónica" = house/techno/trance/dance/minimal...). La API
+     * solo permite un `tag=` por llamada, así que se lanza una
+     * búsqueda por término EN PARALELO (`async`, más rápido que
+     * secuencial con varios términos) y se fusionan los resultados sin
+     * duplicados por `stationuuid`, ordenados por votos descendente.
+     *
+     * Nunca lanza -- si un término concreto falla o no tiene
+     * coincidencias, sus resultados simplemente no aportan nada; el
+     * resto de términos sigue funcionando igual (mismo principio
+     * defensivo que searchStations()).
+     * ---
+     * "Curated genre/decade" search (H09, S010) -- own catalog in
+     * RadioGenreCatalog: each category is a group of several real
+     * Radio-Browser.info tag terms. The API only allows one `tag=` per
+     * call, so one search per term runs IN PARALLEL (`async`, faster
+     * than sequential for several terms) and results are merged
+     * without duplicates by `stationuuid`, sorted by votes descending.
+     *
+     * Never throws -- if a given term fails or has no matches, its
+     * results simply contribute nothing; the rest of the terms keep
+     * working the same (same defensive principle as searchStations()).
+     */
+    suspend fun searchByAnyTag(
+        matchTerms: List<String>,
+        name: String? = null,
+        countryCode: String? = null,
+    ): List<RadioStation> = coroutineScope {
+        matchTerms
+            .map { term ->
+                async {
+                    try {
+                        radioBrowserApiService.searchStations(
+                            name = name?.trim()?.ifBlank { null },
+                            tag = term,
+                            countryCode = countryCode?.trim()?.ifBlank { null },
+                        )
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                }
+            }
+            .flatMap { it.await() }
+            .distinctBy { it.stationUuid }
+            .sortedByDescending { it.votes ?: 0 }
     }
 }
