@@ -38,6 +38,15 @@ import javax.inject.Singleton
  * isFromRadio: true solo en la pista que la propia Radio añadió --
  * distingue "esto lo elegiste tú" de "esto lo sugirió la Radio", por
  * si la UI quiere mostrarlo alguna vez (no usado todavía en pantalla).
+ * youtubeId (S010, favoritos desde el reproductor): opcional por el
+ * mismo motivo que artist -- permite marcar/quitar de favoritos la
+ * pista que está sonando o en cola reutilizando
+ * SearchResultTrackRepository.updateFavorite() (H03), sin duplicar el
+ * concepto de favorito. Queda null para pistas sin equivalente real en
+ * la biblioteca (nada distinto cambia para ellas: simplemente no se
+ * ofrece el botón de favorito). Los llamantes que sí conocen el
+ * youtubeId (Biblioteca, Importar enlace, Búsqueda, Playlists, y la
+ * propia Radio de H08 vía ExternalLinkTrack) lo pasan.
  * ---
  * A single entry in the playback queue.
  *
@@ -50,6 +59,13 @@ import javax.inject.Singleton
  * isFromRadio: true only on the track Radio itself added -- tells
  * apart "you chose this" from "Radio suggested this", in case the UI
  * ever wants to show it (not used on screen yet).
+ * youtubeId (S010, favorites from the player): optional for the same
+ * reason as artist -- lets the currently playing/queued track be
+ * favorited/unfavorited by reusing
+ * SearchResultTrackRepository.updateFavorite() (H03), without
+ * duplicating the favorite concept. Stays null for tracks with no real
+ * library equivalent (nothing changes for them: the favorite button is
+ * simply not offered). Callers that do know the youtubeId pass it.
  */
 data class QueueItem(
     val uri: String,
@@ -57,11 +73,13 @@ data class QueueItem(
     val isLocal: Boolean,
     val artist: String? = null,
     val isFromRadio: Boolean = false,
+    val youtubeId: String? = null,
 )
 
 data class PlaybackState(
     val isPlaying: Boolean = false,
     val currentTitle: String? = null,
+    val currentYoutubeId: String? = null,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
     val isLocal: Boolean = false,
@@ -747,6 +765,7 @@ class PlayerManager @Inject constructor(
                         isLocal = false,
                         artist = relatedArtist,
                         isFromRadio = true,
+                        youtubeId = track.youtubeId,
                     )
                 }
             }
@@ -764,6 +783,7 @@ class PlayerManager @Inject constructor(
         _queue.value = queueItems.toList()
         _state.value = _state.value.copy(
             currentTitle = item?.title,
+            currentYoutubeId = item?.youtubeId,
             isLocal = item?.isLocal ?: false,
             queueIndex = if (queueItems.isEmpty()) -1 else index,
             queueSize = queueItems.size,
@@ -806,8 +826,14 @@ class PlayerManager @Inject constructor(
      * playQueue() (see class comment), with a one-item list. Used by
      * the individual play button in SearchScreen/Biblioteca.
      */
-    fun play(streamUrl: String, title: String, isLocal: Boolean = false, artist: String? = null) {
-        playQueue(listOf(QueueItem(streamUrl, title, isLocal, artist)), startIndex = 0)
+    fun play(
+        streamUrl: String,
+        title: String,
+        isLocal: Boolean = false,
+        artist: String? = null,
+        youtubeId: String? = null,
+    ) {
+        playQueue(listOf(QueueItem(streamUrl, title, isLocal, artist, youtubeId = youtubeId)), startIndex = 0)
     }
 
     /**

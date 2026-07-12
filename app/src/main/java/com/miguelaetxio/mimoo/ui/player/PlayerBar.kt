@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
@@ -39,6 +41,7 @@ fun PlayerBar(
 ) {
     val state by viewModel.state.collectAsState()
     val positionMs by viewModel.positionMs.collectAsState()
+    val isCurrentFavorite by viewModel.isCurrentFavorite.collectAsState()
     val title = state.currentTitle ?: return
 
     Surface(tonalElevation = 4.dp) {
@@ -132,6 +135,24 @@ fun PlayerBar(
                 // possible to restart from the beginning even with no
                 // real previous track (see
                 // PlayerManager.playPrevious()).
+                if (state.currentYoutubeId != null) {
+                    IconButton(onClick = viewModel::toggleCurrentFavorite) {
+                        Icon(
+                            if (isCurrentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = if (isCurrentFavorite) {
+                                "Quitar de favoritos"
+                            } else {
+                                "Añadir a favoritos"
+                            },
+                            tint = if (isCurrentFavorite) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                LocalContentColor.current
+                            },
+                        )
+                    }
+                }
+
                 IconButton(onClick = viewModel::playPrevious) {
                     Icon(
                         Icons.Filled.SkipPrevious,

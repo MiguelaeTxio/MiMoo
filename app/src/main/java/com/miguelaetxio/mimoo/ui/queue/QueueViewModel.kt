@@ -1,11 +1,17 @@
 package com.miguelaetxio.mimoo.ui.queue
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlaybackState
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -23,10 +29,34 @@ import javax.inject.Inject
 @HiltViewModel
 class QueueViewModel @Inject constructor(
     private val playerManager: PlayerManager,
+    private val searchResultTrackRepository: SearchResultTrackRepository,
 ) : ViewModel() {
 
     val queue: StateFlow<List<QueueItem>> = playerManager.queue
     val playbackState: StateFlow<PlaybackState> = playerManager.state
+
+    /**
+     * Favoritos por youtubeId (S010, favoritos desde la cola --
+     * petición explícita de Miguel Ángel: "que aparezca en todos
+     * sitios"). Un Set en vez de una consulta por pista: la cola ya
+     * puede tener hasta 10 pistas de Radio a la vez, un Set evita
+     * repetir la consulta a Room fila por fila en cada recomposición.
+     * ---
+     * Favorites by youtubeId (S010, favorites from the queue). A Set
+     * instead of a per-track query: the queue can already have up to
+     * 10 Radio tracks at once, a Set avoids repeating the Room query
+     * row by row on every recomposition.
+     */
+    val favoriteYoutubeIds: StateFlow<Set<String>> = searchResultTrackRepository.getAll()
+        .map { tracks -> tracks.filter { it.isFavorite }.map { it.youtubeId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    fun toggleFavorite(youtubeId: String) {
+        viewModelScope.launch {
+            val isFavorite = youtubeId in favoriteYoutubeIds.value
+            searchResultTrackRepository.updateFavorite(youtubeId, !isFavorite)
+        }
+    }
 
     fun playAtIndex(index: Int) = playerManager.playAtIndex(index)
 

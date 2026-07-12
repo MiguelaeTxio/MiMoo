@@ -228,6 +228,7 @@ class SearchViewModel @Inject constructor(
                 track.title,
                 isLocal = true,
                 artist = track.artist ?: track.channelTitle,
+                youtubeId = track.youtubeId,
             )
             return
         }
@@ -246,6 +247,7 @@ class SearchViewModel @Inject constructor(
                     track.title,
                     isLocal = false,
                     artist = track.artist ?: track.channelTitle,
+                    youtubeId = track.youtubeId,
                 )
                 _uiState.value = _uiState.value.copy(isResolvingStream = false)
             } catch (e: Exception) {

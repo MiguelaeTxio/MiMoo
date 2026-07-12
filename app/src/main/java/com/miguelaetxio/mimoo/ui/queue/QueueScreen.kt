@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -52,6 +54,7 @@ fun QueueScreen(
 ) {
     val queue by viewModel.queue.collectAsState()
     val playbackState by viewModel.playbackState.collectAsState()
+    val favoriteYoutubeIds by viewModel.favoriteYoutubeIds.collectAsState()
     var showClearConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -93,11 +96,13 @@ fun QueueScreen(
             DraggableQueueList(
                 queue = queue,
                 playbackState = playbackState,
+                favoriteYoutubeIds = favoriteYoutubeIds,
                 modifier = Modifier.padding(padding),
                 onClick = viewModel::playAtIndex,
                 onTogglePlayPause = viewModel::togglePlayPause,
                 onRemove = viewModel::removeFromQueue,
                 onMove = viewModel::moveTo,
+                onToggleFavorite = viewModel::toggleFavorite,
             )
         }
     }
@@ -161,11 +166,13 @@ fun QueueScreen(
 private fun DraggableQueueList(
     queue: List<QueueItem>,
     playbackState: com.miguelaetxio.mimoo.data.playback.PlaybackState,
+    favoriteYoutubeIds: Set<String>,
     modifier: Modifier = Modifier,
     onClick: (Int) -> Unit,
     onTogglePlayPause: () -> Unit,
     onRemove: (Int) -> Unit,
     onMove: (Int, Int) -> Unit,
+    onToggleFavorite: (String) -> Unit,
 ) {
     var rowHeightPx by remember { mutableStateOf(0f) }
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
@@ -180,9 +187,11 @@ private fun DraggableQueueList(
                 item = item,
                 isCurrent = index == playbackState.queueIndex,
                 isPlaying = playbackState.isPlaying,
+                isFavorite = item.youtubeId != null && item.youtubeId in favoriteYoutubeIds,
                 onClick = { if (!isBeingDragged) onClick(index) },
                 onTogglePlayPause = onTogglePlayPause,
                 onRemove = { onRemove(index) },
+                onToggleFavorite = { item.youtubeId?.let(onToggleFavorite) },
                 modifier = Modifier
                     .zIndex(if (isBeingDragged) 1f else 0f)
                     .offset { IntOffset(0, offsetY) }
@@ -227,9 +236,11 @@ private fun QueueTrackRow(
     item: QueueItem,
     isCurrent: Boolean,
     isPlaying: Boolean,
+    isFavorite: Boolean,
     onClick: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onRemove: () -> Unit,
+    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier,
     dragHandleModifier: Modifier = Modifier,
 ) {
@@ -276,6 +287,23 @@ private fun QueueTrackRow(
                 Icon(
                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     contentDescription = if (isPlaying) "Pausar" else "Reproducir",
+                )
+            }
+        }
+        // S010 -- favoritos desde la cola (petición explícita de
+        // Miguel Ángel: "que aparezca en todos sitios"). Solo si la
+        // pista tiene equivalente real en la biblioteca (youtubeId no
+        // nulo) -- una emisora de radio, por ejemplo, nunca llega
+        // aquí porque su cola es aparte.
+        // ---
+        // S010 -- favorites from the queue. Only if the track has a
+        // real library equivalent (non-null youtubeId).
+        if (item.youtubeId != null) {
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = if (isFavorite) "Quitar de favoritos" else "Añadir a favoritos",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.error else LocalContentColor.current,
                 )
             }
         }

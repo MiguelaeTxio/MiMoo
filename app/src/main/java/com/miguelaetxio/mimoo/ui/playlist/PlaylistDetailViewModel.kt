@@ -153,6 +153,7 @@ class PlaylistDetailViewModel @Inject constructor(
                         title = track.title,
                         isLocal = true,
                         artist = track.artist ?: track.channelTitle,
+                        youtubeId = track.youtubeId,
                     )
                 } else if (remoteUrl == null) {
                     // Pista sintética (local:) sin filePath -- caso
@@ -176,6 +177,7 @@ class PlaylistDetailViewModel @Inject constructor(
                             title = track.title,
                             isLocal = false,
                             artist = track.artist ?: track.channelTitle,
+                            youtubeId = track.youtubeId,
                         )
                     } catch (e: Exception) {
                         resolutionFailures++

@@ -348,6 +348,7 @@ class ImportLinkViewModel @Inject constructor(
                         title = track.title,
                         isLocal = false,
                         artist = track.channelTitle,
+                        youtubeId = track.youtubeId,
                     )
                 }
                 playerManager.playQueue(items)
