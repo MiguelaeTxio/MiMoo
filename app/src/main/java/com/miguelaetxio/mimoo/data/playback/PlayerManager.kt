@@ -786,13 +786,22 @@ class PlayerManager @Inject constructor(
                 // structured artist before giving up -- an imperfect
                 // second chance beats no Radio at all.
                 radioRepository.resolveAnchor(anchorArtistName)
-                    ?: radioAnchorArtistFallback?.let { fallback ->
+                    ?: if (radioAnchorArtistFallback != null) {
+                        val fallback = radioAnchorArtistFallback!!
                         RadioDebugLogger.log(
                             appContext, storageManager,
                             "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
                                 "reintentando con el artista estructurado '$fallback'",
                         )
                         radioRepository.resolveAnchor(fallback)
+                    } else {
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
+                                "y esta pista no tiene artista estructurado (H05) guardado -- " +
+                                "sin ningún respaldo que probar",
+                        )
+                        null
                     }
             }?.also { radioAnchor = it }
             if (anchor == null) {
