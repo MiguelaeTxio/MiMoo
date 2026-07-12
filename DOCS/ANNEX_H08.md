@@ -262,13 +262,48 @@ misma PARTE 2 en S008.
 
 ### Pendiente
 
-**PASO 2.2 — PENDIENTE.** Volver a verificar en dispositivo real:
-confirmar que ahora sí llega a mantener ~10 pistas de forma sostenida
-sin cortarse, con el autoplay ya confirmado funcionando.
+**PASO 2.2 — RESUELTO (S010).** Verificado en dispositivo real por
+Miguel Ángel: la Radio mantiene ~10 pistas de forma sostenida sin
+cortarse.
 
-**PASO 2.3 — PENDIENTE, pospuesto explícitamente.** Mejorar el
-"baremo" de relacionado (ver observación de arriba) — no antes de
-cerrar H09.
+**PASO 2.3 — RESUELTO (S010).** "Baremo" de relacionado mejorado:
+además del género, `RadioRepository.suggestRelatedArtist()` ahora
+también filtra por país del artista de origen (`country:<código>`,
+campo nativo de MusicBrainz), con reintento sin país si esa búsqueda
+acotada no encuentra candidatos. Confirmado por Miguel Ángel tras
+prueba real: sembrar con techno da techno, con rock da rock — ya no
+sale el "popurrí de música inglesa" reportado en la observación
+anterior.
+
+Dos bugs reales adicionales encontrados y corregidos en la misma
+sesión, con evidencia de log real (`radio_relacionados_debug.txt`
+nuevo en S010, mismo patrón que `RadioBrowserDebugLogger`/
+`BackupDebugLogger`):
+
+- **Sufijo `" - Topic"` sin limpiar.** YouTube nombra automáticamente
+  los canales de audio autogenerado como `"<Artista> - Topic"`, y ese
+  sufijo se colaba tal cual como `channel_title`/`artist` en toda la
+  app (no solo Radio) — causa real de que la cola no se generase la
+  primera vez que se probó tras el fix de país. Corregido en el origen
+  único de ese dato, `link_resolver.py` (mismo bloque donde ya se
+  normalizaba el caso `"-"` como uploader, precedente de H03/S006).
+- **`onPlayerError` sin gestionar.** El `Player.Listener` de
+  `PlayerManager` nunca implementaba `onPlayerError()` — si el stream
+  de una pista fallaba, ExoPlayer pasaba a `Player.STATE_IDLE` (mismo
+  tipo de estado terminal que `STATE_ENDED`, requiere `prepare()` para
+  reanudar) y el reproductor se quedaba mudo sin ningún aviso, sin que
+  ni el botón "Siguiente" lo resucitara. Corregido con recuperación
+  automática (salta a la siguiente pista + `prepare()`+`play()`) y
+  refuerzo defensivo en `playNext()`/`playPrevious()`.
+
+---
+
+## Cerrado (S010)
+
+Confirmado por Miguel Ángel tras prueba real sostenida: la Radio
+funciona de principio a fin -- autoplay, buffer de 10, país+género
+coherentes, recuperación ante fallos de stream. Se da por zanjado salvo
+que surja un nuevo fallo en uso real.
 
 ---
 
