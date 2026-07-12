@@ -312,6 +312,31 @@ def _entry_to_track(entry: dict):
     channel_title = entry.get("uploader") or entry.get("channel") or ""
     if channel_title.strip() == "-":
         channel_title = ""
+    # YouTube nombra automáticamente los canales "Topic" (subida
+    # automática de audio, sin vídeo real) como "<Artista> - Topic" --
+    # NO es parte del nombre del artista. Sin esto se colaba tal cual
+    # como artista/canal en toda la app (Biblioteca, Búsqueda,
+    # Playlists...) y, en particular, rompía por completo la búsqueda
+    # de "relacionados" de la Radio (H08): MusicBrainz no tiene ningún
+    # artista llamado "Jeff Mills - Topic" (reportado por Miguel Ángel,
+    # S010, con log real de radio_relacionados_debug.txt). El sufijo es
+    # siempre literal " - Topic" en inglés, independientemente del
+    # idioma de la interfaz de YouTube -- verificado contra ejemplos
+    # reales de canales "Topic" de distintos artistas/idiomas.
+    # ---
+    # YouTube auto-names "Topic" channels (auto-uploaded audio, no real
+    # video) as "<Artist> - Topic" -- NOT part of the artist's actual
+    # name. Without this it leaked through as-is as the artist/channel
+    # everywhere in the app (Library, Search, Playlists...) and, in
+    # particular, completely broke Radio's (H08) "related artist"
+    # lookup: MusicBrainz has no artist named "Jeff Mills - Topic"
+    # (reported by Miguel Ángel, S010, with a real log from
+    # radio_relacionados_debug.txt). The suffix is always the literal
+    # English " - Topic" regardless of YouTube's UI language --
+    # verified against real "Topic" channel examples from different
+    # artists/languages.
+    if channel_title.endswith(" - Topic"):
+        channel_title = channel_title[: -len(" - Topic")].strip()
 
     return {
         "youtube_id": video_id,

@@ -497,16 +497,17 @@ class PlayerManager @Inject constructor(
         managerScope.launch {
             try {
                 while (true) {
-                    val (shouldContinue, seedArtist) = withContext(Dispatchers.Main) {
+                    val (shouldContinue, seedArtist, backlogNow) = withContext(Dispatchers.Main) {
+                        val backlog = currentRadioBacklog()
                         val keepGoing = player.repeatMode == Player.REPEAT_MODE_OFF &&
-                            currentRadioBacklog() < RADIO_QUEUE_SIZE
-                        keepGoing to queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }
+                            backlog < RADIO_QUEUE_SIZE
+                        Triple(keepGoing, queueItems.lastOrNull()?.artist?.takeIf { it.isNotBlank() }, backlog)
                     }
                     if (!shouldContinue) {
                         RadioDebugLogger.log(
                             appContext, storageManager,
                             "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió o backlog ya " +
-                                "llegó a $RADIO_QUEUE_SIZE (backlog actual: ${currentRadioBacklog()})",
+                                "llegó a $RADIO_QUEUE_SIZE (backlog actual: $backlogNow)",
                         )
                         break
                     }
@@ -553,10 +554,11 @@ class PlayerManager @Inject constructor(
                                 fetchOneRadioTrack(it)
                             }
                     if (newItem == null) {
+                        val backlogFinal = withContext(Dispatchers.Main) { currentRadioBacklog() }
                         RadioDebugLogger.log(
                             appContext, storageManager,
                             "topUpRadioQueueIfNeeded() -- parado del todo: ni seedArtist='$seedArtist' " +
-                                "ni el ancla='$anchor' dieron ninguna pista -- backlog final: ${currentRadioBacklog()}",
+                                "ni el ancla='$anchor' dieron ninguna pista -- backlog final: $backlogFinal",
                         )
                         break
                     }
