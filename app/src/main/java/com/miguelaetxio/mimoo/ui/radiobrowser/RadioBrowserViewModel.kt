@@ -2,6 +2,8 @@ package com.miguelaetxio.mimoo.ui.radiobrowser
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.local.repository.FavoriteRadioStationRepository
+import com.miguelaetxio.mimoo.data.local.repository.toRadioStation
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.remote.RadioBrowserRepository
 import com.miguelaetxio.mimoo.data.remote.RadioDecade
@@ -25,6 +27,8 @@ data class RadioBrowserUiState(
     val stations: List<RadioStation> = emptyList(),
     val isLoadingFilters: Boolean = false,
     val isSearching: Boolean = false,
+    val favoriteUuids: Set<String> = emptySet(),
+    val showFavoritesOnly: Boolean = false,
 ) {
     val genres: List<RadioGenreCategory> get() = RadioGenreCatalog.genreCategories
     val decades: List<RadioDecade> get() = RadioGenreCatalog.decades
@@ -69,6 +73,7 @@ data class RadioBrowserUiState(
 @HiltViewModel
 class RadioBrowserViewModel @Inject constructor(
     private val radioBrowserRepository: RadioBrowserRepository,
+    private val favoriteRadioStationRepository: FavoriteRadioStationRepository,
     private val playerManager: PlayerManager,
 ) : ViewModel() {
 
@@ -78,6 +83,11 @@ class RadioBrowserViewModel @Inject constructor(
     init {
         loadCountries()
         search()
+        viewModelScope.launch {
+            favoriteRadioStationRepository.getAllUuids().collect { uuids ->
+                _uiState.value = _uiState.value.copy(favoriteUuids = uuids.toSet())
+            }
+        }
     }
 
     fun retryLoadCountries() {
@@ -141,10 +151,55 @@ class RadioBrowserViewModel @Inject constructor(
         search()
     }
 
+    fun toggleFavorite(station: RadioStation) {
+        viewModelScope.launch {
+            favoriteRadioStationRepository.toggle(station)
+            // S010 -- si estamos viendo solo favoritas y se quita una,
+            // debe desaparecer de la lista al momento, no esperar a la
+            // próxima búsqueda manual.
+            // ---
+            // S010 -- if we're viewing favorites-only and one gets
+            // unfavorited, it should disappear from the list right
+            // away, not wait for the next manual search.
+            if (_uiState.value.showFavoritesOnly) {
+                search()
+            }
+        }
+    }
+
+    fun toggleShowFavoritesOnly() {
+        _uiState.value = _uiState.value.copy(
+            showFavoritesOnly = !_uiState.value.showFavoritesOnly,
+        )
+        search()
+    }
+
     fun search() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSearching = true)
             val state = _uiState.value
+
+            if (state.showFavoritesOnly) {
+                // S010 -- "favoritas" es una vista aparte, no una
+                // búsqueda: lee directamente de Room, sin tocar la red
+                // ni depender de que la emisora siga apareciendo en un
+                // resultado de búsqueda. Los demás filtros (género,
+                // década, país, texto) se ignoran en este modo -- ver
+                // favoritas es "todas las que he guardado", no un
+                // subconjunto filtrado más.
+                // ---
+                // S010 -- "favorites" is a separate view, not a search:
+                // reads directly from Room, no network, doesn't depend
+                // on the station still showing up in a search result.
+                // The other filters are ignored in this mode.
+                val favorites = favoriteRadioStationRepository.getAllOnce()
+                _uiState.value = _uiState.value.copy(
+                    stations = favorites.map { it.toRadioStation() },
+                    isSearching = false,
+                )
+                return@launch
+            }
+
             val name = state.query
             val countryCode = state.selectedCountryCode
             val genre = state.selectedGenre

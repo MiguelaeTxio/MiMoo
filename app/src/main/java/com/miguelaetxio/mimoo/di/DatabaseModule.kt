@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.miguelaetxio.mimoo.data.local.AppDatabase
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import dagger.Module
@@ -34,6 +35,7 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_6_7,
                 AppDatabase.MIGRATION_7_8,
                 AppDatabase.MIGRATION_8_9,
+                AppDatabase.MIGRATION_9_10,
             )
             .build()
 
@@ -58,4 +60,8 @@ object DatabaseModule {
     @Provides
     fun provideFavoriteAlbumDao(db: AppDatabase): FavoriteAlbumDao =
         db.favoriteAlbumDao()
+
+    @Provides
+    fun provideFavoriteRadioStationDao(db: AppDatabase): FavoriteRadioStationDao =
+        db.favoriteRadioStationDao()
 }

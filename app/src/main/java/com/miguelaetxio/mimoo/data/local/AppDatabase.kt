@@ -8,7 +8,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -19,8 +21,9 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         Playlist::class,
         PlaylistTrackCrossRef::class,
         FavoriteAlbum::class,
+        FavoriteRadioStation::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -28,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun searchResultTrackDao(): SearchResultTrackDao
     abstract fun playlistDao(): PlaylistDao
     abstract fun favoriteAlbumDao(): FavoriteAlbumDao
+    abstract fun favoriteRadioStationDao(): FavoriteRadioStationDao
 
     companion object {
         /**
@@ -252,6 +256,37 @@ abstract class AppDatabase : RoomDatabase() {
                         "`artist` TEXT NOT NULL, " +
                         "`album` TEXT NOT NULL, " +
                         "PRIMARY KEY(`artist`, `album`))"
+                )
+            }
+        }
+
+        /**
+         * Crea favorite_radio_stations (H09, S010) -- petición
+         * explícita de Miguel Ángel: favoritos de EMISORA de
+         * Radio-Browser.info, concepto nuevo y separado del favorito
+         * por pista (isFavorite en search_result_tracks) y del
+         * favorito de álbum (favorite_albums). Clave primaria
+         * stationUuid -- el identificador estable que la propia
+         * documentación de Radio-Browser.info exige usar en vez de
+         * "id". Tabla nueva, no toca ninguna tabla existente.
+         * ---
+         * Creates favorite_radio_stations (H09, S010) -- explicit
+         * request from Miguel Ángel: STATION-level favorites for
+         * Radio-Browser.info, a new concept separate from the
+         * per-track favorite and the per-album favorite. Primary key
+         * stationUuid. New table, doesn't touch any existing table.
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `favorite_radio_stations` (" +
+                        "`stationUuid` TEXT NOT NULL, " +
+                        "`name` TEXT NOT NULL, " +
+                        "`urlResolved` TEXT NOT NULL, " +
+                        "`favicon` TEXT, " +
+                        "`country` TEXT, " +
+                        "`tags` TEXT, " +
+                        "PRIMARY KEY(`stationUuid`))"
                 )
             }
         }

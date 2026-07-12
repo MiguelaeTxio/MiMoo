@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Public
@@ -56,6 +58,23 @@ fun RadioBrowserScreen(
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")
                     }
                 },
+                actions = {
+                    IconButton(onClick = viewModel::toggleShowFavoritesOnly) {
+                        Icon(
+                            if (uiState.showFavoritesOnly) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = if (uiState.showFavoritesOnly) {
+                                "Mostrando solo favoritas"
+                            } else {
+                                "Mostrar solo favoritas"
+                            },
+                            tint = if (uiState.showFavoritesOnly) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                LocalContentColor.current
+                            },
+                        )
+                    }
+                },
             )
         },
     ) { padding ->
@@ -67,6 +86,7 @@ fun RadioBrowserScreen(
         ) {
             Spacer(Modifier.height(8.dp))
 
+            if (!uiState.showFavoritesOnly) {
             OutlinedTextField(
                 value = uiState.query,
                 onValueChange = viewModel::onQueryChange,
@@ -181,6 +201,7 @@ fun RadioBrowserScreen(
                 }
                 Spacer(Modifier.height(8.dp))
             }
+            }
 
             if (uiState.isSearching || uiState.isLoadingFilters) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -199,7 +220,9 @@ fun RadioBrowserScreen(
                 items(uiState.stations, key = { it.stationUuid }) { station ->
                     RadioStationRow(
                         station = station,
+                        isFavorite = station.stationUuid in uiState.favoriteUuids,
                         onPlay = { viewModel.playStation(station) },
+                        onToggleFavorite = { viewModel.toggleFavorite(station) },
                     )
                     HorizontalDivider()
                 }
@@ -239,7 +262,9 @@ private fun RadioFilterChip(
 @Composable
 private fun RadioStationRow(
     station: RadioStation,
+    isFavorite: Boolean,
     onPlay: () -> Unit,
+    onToggleFavorite: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -306,6 +331,14 @@ private fun RadioStationRow(
         }
 
         Spacer(Modifier.width(8.dp))
+
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = if (isFavorite) "Quitar de favoritas" else "Añadir a favoritas",
+                tint = if (isFavorite) MaterialTheme.colorScheme.error else LocalContentColor.current,
+            )
+        }
 
         IconButton(onClick = onPlay) {
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
