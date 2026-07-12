@@ -80,6 +80,10 @@ class RadioBrowserViewModel @Inject constructor(
         search()
     }
 
+    fun retryLoadCountries() {
+        loadCountries()
+    }
+
     private fun loadCountries() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingFilters = true)

@@ -143,6 +143,39 @@ fun RadioBrowserScreen(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
+            } else if (!uiState.isLoadingFilters) {
+                // S010 -- antes desaparecía sin ningún aviso si
+                // getCountries() fallaba (RadioBrowserRepository es
+                // defensivo, nunca lanza, así que un fallo de red se
+                // veía exactamente igual que "no hay países", y la
+                // fila entera se esfumaba sin que Miguel Ángel supiera
+                // por qué). Ahora, si tras terminar de cargar la lista
+                // sigue vacía, se avisa explícitamente con opción de
+                // reintentar en vez de desaparecer.
+                // ---
+                // S010 -- used to vanish with no warning at all if
+                // getCountries() failed (RadioBrowserRepository is
+                // defensive, never throws, so a network failure looked
+                // exactly like "there are no countries", and the whole
+                // row disappeared without any indication why). Now, if
+                // the list is still empty after loading finished, it's
+                // explicitly flagged with a retry option instead of
+                // vanishing.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "No se pudo cargar la lista de países.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = viewModel::retryLoadCountries) {
+                        Text("Reintentar")
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
             }
 
             if (uiState.isSearching || uiState.isLoadingFilters) {

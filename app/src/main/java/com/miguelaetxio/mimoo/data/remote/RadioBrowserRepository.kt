@@ -1,8 +1,11 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import android.content.Context
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.remote.dto.RadioCountry
 import com.miguelaetxio.mimoo.data.remote.dto.RadioStation
 import com.miguelaetxio.mimoo.data.remote.dto.RadioTag
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
@@ -12,25 +15,34 @@ import javax.inject.Singleton
  * Repositorio de Radio-Browser.info (H09 PASO 2, S010) -- emisoras de
  * radio online por género/tema/país/búsqueda de texto. Mismo patrón
  * defensivo que CoverArtRepository y RadioRepository (H08): nunca
- * lanza excepción, cualquier fallo de red o de parseo se trata igual
- * que "sin resultados", devolviendo lista vacía en vez de romper la
- * pantalla que llama.
+ * lanza excepción hacia quien llama, cualquier fallo de red o de
+ * parseo se trata igual que "sin resultados", devolviendo lista vacía
+ * en vez de romper la pantalla.
  *
- * `getTags()`/`getCountries()` alimentan los filtros de la UI (PASO 3)
- * con datos reales del servicio, nunca una lista escrita a mano --
- * ordenados por número de emisoras descendente (ver
- * RadioBrowserApiService, `order=stationcount&reverse=true`).
+ * Instrumentado con RadioBrowserDebugLogger (S010, tras reporte real
+ * de Miguel Ángel: la fila "País" desaparecía sin ningún aviso) --
+ * "defensivo" significa que el fallo no rompe la UI, NO que deba
+ * quedar invisible para siempre. Cada `catch` registra la excepción
+ * real en radio_debug.txt antes de devolver la lista vacía, así que
+ * un fallo repetido deja rastro diagnosticable sin necesitar `adb`.
  * ---
  * Radio-Browser.info repository (H09 STEP 2, S010) -- online radio
  * stations by genre/topic/country/free-text search. Same defensive
  * pattern as CoverArtRepository and RadioRepository (H08): never
- * throws, any network or parsing failure is treated the same as "no
- * results", returning an empty list instead of breaking the calling
- * screen.
+ * throws to the caller, any network or parsing failure is treated the
+ * same as "no results".
+ *
+ * Instrumented with RadioBrowserDebugLogger (S010, after a real report
+ * from Miguel Ángel: the "País" row vanished with no warning at all)
+ * -- "defensive" means the failure doesn't break the UI, NOT that it
+ * should stay invisible forever. Each `catch` logs the real exception
+ * to radio_debug.txt before returning the empty list.
  */
 @Singleton
 class RadioBrowserRepository @Inject constructor(
     private val radioBrowserApiService: RadioBrowserApiService,
+    @ApplicationContext private val appContext: Context,
+    private val storageManager: StorageManager,
 ) {
     /**
      * Búsqueda combinada -- todos los parámetros son opcionales y se
@@ -54,18 +66,23 @@ class RadioBrowserRepository @Inject constructor(
             countryCode = countryCode?.trim()?.ifBlank { null },
         )
     } catch (e: Exception) {
+        RadioBrowserDebugLogger.logError(
+            appContext, storageManager, "searchStations() fallo (name=$name tag=$tag country=$countryCode)", e,
+        )
         emptyList()
     }
 
     suspend fun getTags(): List<RadioTag> = try {
         radioBrowserApiService.getTags()
     } catch (e: Exception) {
+        RadioBrowserDebugLogger.logError(appContext, storageManager, "getTags() fallo", e)
         emptyList()
     }
 
     suspend fun getCountries(): List<RadioCountry> = try {
         radioBrowserApiService.getCountries()
     } catch (e: Exception) {
+        RadioBrowserDebugLogger.logError(appContext, storageManager, "getCountries() fallo", e)
         emptyList()
     }
 
@@ -110,6 +127,9 @@ class RadioBrowserRepository @Inject constructor(
                             countryCode = countryCode?.trim()?.ifBlank { null },
                         )
                     } catch (e: Exception) {
+                        RadioBrowserDebugLogger.logError(
+                            appContext, storageManager, "searchByAnyTag() fallo en término '$term'", e,
+                        )
                         emptyList()
                     }
                 }
