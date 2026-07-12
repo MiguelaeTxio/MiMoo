@@ -80,6 +80,28 @@ sin prometer más de lo que hay.
 
 ---
 
+## COMPLETADAS EN S009
+
+- Investigación de ambas opciones técnicas (Shoutcast real vs
+  Radio-Browser.info) y decisión documentada arriba.
+- Miguel Ángel preguntó explícitamente por el coste del Shoutcast
+  real (pensando que su cuenta de desarrollador de Google Play
+  pagada podría aplicar) — aclarado que son sistemas sin relación:
+  el registro de Google Play Console no da ningún acceso al API de
+  Shoutcast. Investigado también el coste real del Shoutcast
+  (Developer ID del directorio real, `shoutcast.com/Developer`):
+  gratuito de registrar, pero sujeto a aprobación a su criterio y a
+  condiciones de marca/uso — distinto de "Shoutcast Net"
+  (shoutcastnet.com, ~4$/mes), que es un servicio de *hosting* para
+  emitir una emisora propia, no para consultar el directorio, y por
+  tanto no aplica a este caso de uso.
+- **Confirmación final de Miguel Ángel: Radio-Browser.info.** Ningún
+  código escrito todavía en este hito — la sesión se cerró justo
+  tras la confirmación, con la hoja de ruta de abajo lista para
+  ejecutar en la siguiente sesión sin necesitar más contexto.
+
+---
+
 ## Alcance
 
 - Vista nueva para explorar emisoras por género/tema (`/json/tags`),

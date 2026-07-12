@@ -10,99 +10,96 @@ completo. Para el detalle exacto de qué cambió en cada paso, consultar
 
 ---
 
-## Última actualización: 2026-07-11 (cierre de sesión S008 NewFlow)
+## Última actualización: 2026-07-12 (cierre de sesión S009 NewFlow)
 
-**Hito EN PROGRESO: H08 — Búsqueda de Listas de Reproducción +
-Música Relacionada** (`DOCS/ANNEX_H08.md`, recién abierto, PCH al
-cierre de esta misma sesión). Ver `DOCS/MASTER_DOCUMENT.md` para la
-tabla completa. **H07 queda pausado, completado y verificado en
-dispositivo real con dos dispositivos** (ver abajo).
+**Hito EN PROGRESO: H09 — SHOUTcast, Radios Online del Mundo por
+Género/Tema/Década** (`DOCS/ANNEX_H09.md`, recién abierto, PCH durante
+esta misma sesión). Ver `DOCS/MASTER_DOCUMENT.md` para la tabla
+completa. **H08 queda pausado — Radio confirmada funcionando en
+dispositivo real; búsqueda de listas/canales construida, pendiente
+solo de confirmación final** (ver abajo).
 
-**S008 en resumen — sesión larga, H07 construido de cero a verificado
-funcionalmente, con varias vueltas de fixes reales tras pruebas en
-dispositivo:**
+**S009 en resumen — sesión larga, H08 cerrado de verdad (las dos
+partes) y H09 abierto y documentado, sin código todavía:**
 
-1. **H07 completo, las cuatro partes:**
-   - PARTE 0: persistencia del `youtubeId` embebido como metadato
-     Vorbis Comment en cada `.opus` + recuperación en
-     `LibraryReconciler`.
-   - PARTE 1: sincronización automática entre dispositivos —
-     rediseñada tres veces sobre la marcha a partir de bugs reales
-     encontrados probando en dispositivo (no de fallos de
-     compilación): identidad estable por dispositivo
-     (`DeviceIdentityManager`), bloqueo de altas/bajas sin conexión
-     (`NetworkConnectivityChecker` + `AutoSyncPusher.executeIfConnected()`),
-     máquina de 3 casos al arrancar (sin copia / mismo dispositivo
-     desincronizado / otro dispositivo con pregunta explícita),
-     verificación disco↔BBDD en cada sincronización
-     (`LibraryReconciler.verifyDiskState()`), y restauración
-     **selectiva** (`applyCloudWinsTargeted()`, solo toca lo que
-     difiere) tras descubrir que la primera versión redescargaba todo
-     el repositorio en cada restauración.
-   - PARTE 2: actualizaciones in-app — descartada la vía inicial
-     (ruta oculta en EnterpriseBot) por decisión explícita de Miguel
-     Ángel de no mezclar proyectos; sustituida por un repositorio
-     GitHub nuevo y dedicado, público, solo para Releases
-     (`MiguelaeTxio/AndroidReleases`), con `manifest.json` generado
-     por el propio workflow de MiMoo.
-   - PARTE 3: reproducción cíclica y aleatoria sobre ExoPlayer.
-2. **PIN de acceso** ("Introduce tu PIN, Silvia") añadido dentro de la
-   misma sesión, independiente del resto.
-3. **Bugs reales encontrados y corregidos tras pruebas en
-   dispositivo** (no adivinados, todos con evidencia — logs o
-   capturas de Miguel Ángel):
-   - `REQUEST_INSTALL_PACKAGES` faltante — el botón "Instalar" no
-     hacía nada, sin error visible.
-   - `buildCurrentBundle()` subía a la sincronización **toda** la
-     caché de resultados de búsqueda, no solo lo realmente
-     descargado — causaba que la sincronización disparase la
-     descarga de decenas de pistas ajenas nunca elegidas por Miguel
-     Ángel.
-   - `setTab()` en Biblioteca no reseteaba el nivel de navegación al
-     pulsar una pestaña ya activa.
-   - Formato del archivo de sincronización cambiado a mitad de sesión
-     (de `BackupBundle` pelado a `SyncEnvelope` con identidad) sin
-     manejo defensivo — dejaba a la app en bucle de error si Drive
-     tenía un archivo del formato anterior.
-4. **H08 abierto (PCH)**: búsqueda de listas de reproducción (alcance
-   cerrado, sin ambigüedad) + música relacionada/"Radio" (alcance
-   deliberadamente sin cerrar — Miguel Ángel lo planteó como idea sin
-   resolver, con preguntas de diseño abiertas documentadas en el
-   anexo, no como encargo ya decidido).
+1. **Investigación previa (antes de tocar código):** verificado que
+   con un token de fine-grained PAT con permiso `Actions: Read` se
+   pueden leer los logs de GitHub Actions directamente vía API REST
+   (`api.github.com` en dominios permitidos) — ya documentado en
+   `android-build`/`newflow-android-token`, es el método por defecto
+   desde esta sesión.
+2. **H08 PARTE 1 — corrección de alcance real.** Primer intento
+   (filtro sobre playlists *locales*) fue un malentendido — el
+   encargo real era buscar listas y canales creados por **otros
+   usuarios** en YouTube. El filtro local se conservó como mejora
+   aparte (bienvenida, no se revirtió). Implementado el alcance
+   correcto: búsqueda filtrada por Listas/Canales vía los filtros
+   nativos y gratuitos de YouTube (`sp=`), verificados con captura
+   real de la app de YouTube; podcasts/audiolibros descartados (sin
+   filtro nativo). Tocar un resultado abre "Importar enlace" con la
+   URL ya resuelta, reutilizando el 100% de ese flujo.
+3. **H08 PARTE 2 — Radio, diseño cerrado y construido, con tres
+   rondas de corrección real tras pruebas en dispositivo:**
+   - Diseño: se dispara al terminar la última canción sin cíclico;
+     fuente del "relacionado" MusicBrainz (géneros compartidos),
+     descartado el Mix de YouTube por inestabilidad documentada de
+     yt-dlp; solo streaming, nunca descarga.
+   - 1ª corrección: el autoplay no arrancaba solo (hacía falta
+     `prepare()`, no solo `play()`, para salir de `STATE_ENDED`); y
+     una sola pista no era "radio" — rediseñado a mantener hasta 10
+     pistas por delante, reponiendo una al terminar cada una.
+   - 2ª corrección: el autoplay *seguía* sin funcionar de verdad —
+     causa de fondo: reanudar desde `STATE_ENDED` es frágil. Fix
+     real: la reposición se dispara *proactivamente* en cuanto
+     empieza a sonar la última pista (no reactivamente al llegar al
+     final), para que ExoPlayer nunca llegue a `STATE_ENDED` en el
+     camino normal. De paso, detectado por el propio modelo (no
+     reportado): varios "temas" añadidos eran vídeos de "Greatest
+     Hits Full Album" de 1-2 horas — corregido con filtro de
+     duración + palabras clave de compilación.
+   - 3ª corrección: la Radio se paraba a los 3-4 temas y no
+     reponía más. Causa raíz: "Various Artists" (entidad de
+     MusicBrainz sin géneros propios) se coló como "relacionado" y
+     mató la cadena. Corregido: excluida explícitamente, más un
+     respaldo (reintento desde el artista que arrancó la Radio si
+     algún otro eslabón futuro resulta ser un callejón sin salida).
+   - **Confirmado funcionando por Miguel Ángel en dispositivo real**
+     tras la tercera corrección.
+4. **Dos arreglos del reproductor, sin hito concreto:** indicador
+   "Streaming"/"Local" con icono en vez de frase larga (se recortaba
+   en pantallas estrechas); notificación ahora abre la app al tocarla
+   (le faltaba `MediaSession.setSessionActivity()`). De paso se
+   añadieron tiempo transcurrido/restante + barra de progreso
+   arrastrable al `PlayerBar`, y el botón "anterior" ahora siempre
+   visible (reinicia la pista actual si no hay una anterior real).
+5. **H09 abierto (PCH CASO D).** Investigado el "Shoutcast" real
+   (requiere clave de desarrollador de iHeartMedia, con
+   aprobación/condiciones de marca) vs **Radio-Browser.info**
+   (directorio comunitario gratuito, sin clave, +25.000 emisoras) —
+   elegido este último, decisión confirmada explícitamente por Miguel
+   Ángel tras preguntar por el coste real del Shoutcast (aclarado que
+   su cuenta de Google Play Console no tiene ninguna relación con
+   ello). Ver `DOCS/ANNEX_H09.md` para los endpoints/campos reales
+   verificados y la hoja de ruta en 5 pasos. **Sin código escrito
+   todavía en este hito.**
 
-**Siguiente sesión — orden sugerido (a decidir con Miguel Ángel, no
-asumido):**
-1. H08 PARTE 1 (búsqueda de listas) — se puede empezar directamente,
-   sin decisiones pendientes.
-2. H08 PARTE 2 (música relacionada) — **empezar por una conversación
-   de diseño con Miguel Ángel**, no por código; ver "Preguntas de
-   diseño abiertas" en `DOCS/ANNEX_H08.md`.
-3. H07 PASO 1.5/3.3 (verificación funcional que quedó pendiente antes
-   de que aparecieran los bugs reales que se llevaron el resto de la
-   sesión) — comprobar cíclico/aleatorio con una cola larga en
-   dispositivo real, si no se hizo ya.
+**Siguiente sesión — orden sugerido:**
+1. H09 PASO 1 en adelante (capa de red → repositorio → UI →
+   navegación → verificación), ver `DOCS/ANNEX_H09.md`. Dos cosas a
+   confirmar con Miguel Ángel antes de programar la UI (PASO 3): el
+   nombre visible en la app (propuesto "Radios Online" en vez de
+   "SHOUTcast", que es jerga técnica) y qué mostrar en la barra de
+   progreso cuando suena una radio en directo sin duración real.
+2. H08 PARTE 1 (búsqueda de listas/canales): pendiente de que Miguel
+   Ángel la pruebe en dispositivo real y confirme si funciona bien —
+   no se ha reportado ningún problema, pero tampoco confirmación
+   explícita como sí la hubo para Radio.
 
-**Pendientes de H07 documentados como aceptados, no bloqueantes** (ver
-`DOCS/ANNEX_H07.md` para el detalle): añadir/quitar pista de una
-playlist ya existente y borrado de pista desde Biblioteca sí están
-enganchados a la sincronización (S008 tercera vuelta); lo que queda
-fuera de alcance a propósito es cualquier fusión de contenido de
-playlists coincidentes por nombre entre dispositivos — el diseño
-todo-o-nada de la sincronización lo hace innecesario, no es un hueco
-pendiente.
+**Pendientes antiguos, sin tocar en S009, no bloquean nada:**
+- H03 PASO 8 y H04 PASO 6 (verificación funcional en dispositivo).
+- H05 PASO 6c (Lou Reed, búsqueda por artista/título suelto, Importar
+  enlace) — pausado.
+- H06 (Importar desde Drive) — implementado, verificación pendiente.
+- Decisión de producto pendiente: ¿menú de configuración para
+  tema/color de la app? Sin decisión tomada.
 
-**Pendiente original de H05 (PASO 6c), pausado, no bloquea nada:**
-1. Reimportar Lou Reed - Transformer (búsqueda por álbum) y confirmar
-   emparejamiento.
-2. Probar búsqueda de álbum por artista o título sueltos
-   ("Beethoven"/"Sinfonía"), confirmando también el orden real de
-   pistas.
-3. Probar "Importar enlace" con playlist normal de YouTube y con
-   vídeo suelto.
-
-**Decisión pendiente de Miguel Ángel (no técnica, de producto):**
-¿hace falta un menú de configuración para elegir tema/color de la
-app? Confirmado que nunca existió; sin decisión tomada.
-
-**H03 PASO 8 y H04 PASO 6** (verificación funcional en dispositivo)
-siguen pendientes — no tocados en S008, sin bloquear nada.
