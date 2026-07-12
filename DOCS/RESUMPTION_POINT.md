@@ -103,3 +103,15 @@ partes) y H09 abierto y documentado, sin código todavía:**
 - Decisión de producto pendiente: ¿menú de configuración para
   tema/color de la app? Sin decisión tomada.
 
+**Observación añadida tras el cierre de S009 (H08, Radio) —
+explícitamente pospuesta, NO tocar en la sesión de H09:** probando
+tras el cierre, Miguel Ángel confirmó que el "relacionado" de la
+Radio no es real — tras un tema de Héroes del Silencio (rock
+español), siguió sugiriendo temas al azar en inglés. Diagnóstico
+técnico y siguiente paso anotados en `DOCS/ANNEX_H08.md` (PASO 2.3,
+nueva sección "Cuarta observación"): el algoritmo solo mira género,
+nunca idioma, y un género tan amplio como "rock" es
+predominantemente anglosajón en MusicBrainz. Hace falta una
+conversación de diseño sobre el "baremo" real antes de tocar
+código — cuando se retome H08, no antes.
+

@@ -222,11 +222,53 @@ nunca más.
   cualquier otro artista igual de "sin géneros" que pueda aparecer en
   el futuro, no solo para este caso concreto.
 
+### Cuarta observación (S009, calidad del "relacionado" — POSPUESTA, no ejecutar en H09)
+
+Tras confirmar que el mecanismo funciona de forma sostenida (autoplay
+real, buffer de 10, sin cortes), Miguel Ángel probó la calidad real de
+las sugerencias: puso un tema de Héroes del Silencio (rock español) y
+la Radio, tras esa pista, volvió a sugerir temas al azar en inglés —
+nada relacionado con rock en español ni con el idioma de la pista de
+origen.
+
+**Diagnóstico de Miguel Ángel, textual:** "no hay un relacionado real
+[...] lo que estamos haciendo es poner temas, una radio de poner
+temas, poner temas, poner temas. Pero tendríamos que tener un baremo
+para elegir esos temas que se van a poner."
+
+**Lectura técnica de por qué pasa esto (no verificado a fondo
+todavía, para la sesión que retome esto):** el algoritmo actual de
+`RadioRepository.suggestRelatedArtist()` solo mira **género** de
+MusicBrainz (`tag:"<género>"`) — nunca **idioma**, ni ningún otro eje
+de similitud. Un género tan amplio como "rock" agrupa por igual a
+Héroes del Silencio, Nirvana o AC/DC, así que estadísticamente es
+totalmente esperable que la mayoría de resultados salgan en inglés,
+simplemente porque hay muchísimo más rock anglosajón que hispanohablante
+catalogado en MusicBrainz con esa etiqueta. No es un bug puntual — es
+que el "baremo" actual (un único género compartido, elegido al azar
+entre los que tenga el artista de origen) es demasiado pobre para lo
+que Miguel Ángel espera de un "relacionado real".
+
+**Explícitamente pospuesto — NO se toca en la próxima sesión.** La
+siguiente sesión se dedica en exclusiva a H09 (SHOUTcast vía
+Radio-Browser.info). Esta observación queda anotada para cuando se
+retome H08 más adelante, sin fecha decidida. Cuando se retome, hará
+falta una conversación de diseño con Miguel Ángel sobre qué "baremo"
+usar de verdad (¿idioma como filtro obligatorio, no solo género?
+¿combinar varios ejes de MusicBrainz -- género + idioma + época --
+en vez de uno solo? ¿alguna otra fuente de datos?) antes de tocar
+código, mismo criterio que ya se aplicó al diseño original de esta
+misma PARTE 2 en S008.
+
 ### Pendiente
 
 **PASO 2.2 — PENDIENTE.** Volver a verificar en dispositivo real:
 confirmar que ahora sí llega a mantener ~10 pistas de forma sostenida
 sin cortarse, con el autoplay ya confirmado funcionando.
+
+**PASO 2.3 — PENDIENTE, pospuesto explícitamente.** Mejorar el
+"baremo" de relacionado (ver observación de arriba) — no antes de
+cerrar H09.
 
 ---
 
