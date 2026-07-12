@@ -4,6 +4,7 @@ import com.miguelaetxio.mimoo.data.remote.AppUpdateApiService
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
+import com.miguelaetxio.mimoo.data.remote.RadioBrowserApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,6 +42,28 @@ object NetworkModule {
     // Manifiesto de actualizaciones (H07 PARTE 2, PASO 2.4) -- raíz de
     // github.com, sin API ni autenticación, ver AppUpdateApiService.
     private const val GITHUB_BASE_URL = "https://github.com/"
+
+    // Radio-Browser.info (H09 PASO 1, S010) -- mirror fijo, decisión
+    // deliberada de ANNEX_H09.md: un único servidor en vez de
+    // descubrimiento dinámico vía DNS de all.api.radio-browser.info.
+    // Sin API key, ver RadioBrowserApiService.
+    private const val RADIO_BROWSER_BASE_URL = "https://de1.api.radio-browser.info/"
+
+    // Buena práctica documentada por el propio servicio (no
+    // obligatoria, pero recomendada) -- identificar la app con un
+    // User-Agent significativo, mismo principio que MusicBrainz
+    // arriba, sin el rate-limiting estricto que sí exige MusicBrainz.
+    private const val RADIO_BROWSER_USER_AGENT =
+        "MiMoo/1.0 ( https://github.com/MiguelaeTxio/MiMoo )"
+
+    private class RadioBrowserUserAgentInterceptor : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request().newBuilder()
+                .header("User-Agent", RADIO_BROWSER_USER_AGENT)
+                .build()
+            return chain.proceed(request)
+        }
+    }
 
     // Required by MusicBrainz's rate-limiting rules: every request
     // needs a meaningful User-Agent identifying the app and a way to
@@ -179,4 +202,38 @@ object NetworkModule {
     fun provideAppUpdateApiService(
         @Named("githubRetrofit") retrofit: Retrofit,
     ): AppUpdateApiService = retrofit.create(AppUpdateApiService::class.java)
+
+    // Radio-Browser.info (H09 PASO 1, S010). Cliente propio solo por
+    // el interceptor de User-Agent -- sin rate limiting (no lo exige
+    // el servicio, a diferencia de MusicBrainz).
+    @Provides
+    @Singleton
+    @Named("radioBrowserOkHttpClient")
+    fun provideRadioBrowserOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(RadioBrowserUserAgentInterceptor())
+            .addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BASIC
+                }
+            )
+            .build()
+
+    @Provides
+    @Singleton
+    @Named("radioBrowserRetrofit")
+    fun provideRadioBrowserRetrofit(
+        @Named("radioBrowserOkHttpClient") okHttpClient: OkHttpClient,
+    ): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(RADIO_BROWSER_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideRadioBrowserApiService(
+        @Named("radioBrowserRetrofit") retrofit: Retrofit,
+    ): RadioBrowserApiService = retrofit.create(RadioBrowserApiService::class.java)
 }
