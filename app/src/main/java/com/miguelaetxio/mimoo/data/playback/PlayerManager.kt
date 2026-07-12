@@ -408,6 +408,22 @@ class PlayerManager @Inject constructor(
                     // prefers artist.
                     radioAnchorArtist = currentItem?.channelTitle?.takeIf { it.isNotBlank() }
                         ?: currentItem?.artist?.takeIf { it.isNotBlank() }
+                    // S010 -- respaldo para cuando el nombre de canal
+                    // no sea un artista real en absoluto (p.ej.
+                    // "OldGuitar8", un canal de recopilaciones, sin
+                    // ningún resultado en MusicBrainz -- reportado por
+                    // Miguel Ángel, S010 continuación). Solo se guarda
+                    // si es distinto del principal, para no repetir el
+                    // mismo intento fallido dos veces -- ver
+                    // fetchOneRadioTrack().
+                    // ---
+                    // S010 -- fallback for when the channel name isn't
+                    // a real artist at all (e.g. "OldGuitar8", a
+                    // compilation channel, no results in MusicBrainz).
+                    // Only stored if different from the primary one, to
+                    // avoid repeating the same failed attempt twice.
+                    radioAnchorArtistFallback = currentItem?.artist
+                        ?.takeIf { it.isNotBlank() && !it.equals(radioAnchorArtist, ignoreCase = true) }
                     // S010 -- nueva sesión de Radio: invalida el
                     // género+país cacheado y la lista de ya-usados de
                     // la sesión anterior, se recalculan de cero desde
@@ -648,6 +664,7 @@ class PlayerManager @Inject constructor(
      * starts.
      */
     private var radioAnchorArtist: String? = null
+    private var radioAnchorArtistFallback: String? = null
     private var radioAnchor: RadioAnchor? = null
     private val radioUsedArtists = mutableSetOf<String>()
 
@@ -755,9 +772,29 @@ class PlayerManager @Inject constructor(
      */
     private suspend fun fetchOneRadioTrack(anchorArtistName: String): QueueItem? =
         try {
-            val anchor = radioAnchor ?: radioRepository.resolveAnchor(anchorArtistName)?.also {
-                radioAnchor = it
-            }
+            val anchor = radioAnchor ?: run {
+                // S010 -- intento principal con el nombre de canal; si
+                // no resuelve NINGÚN artista en MusicBrainz (canal
+                // genérico/de recopilaciones, p.ej. "OldGuitar8"), un
+                // segundo intento con el artista estructurado de H05
+                // antes de rendirse -- mejor una segunda oportunidad
+                // imperfecta que ninguna Radio en absoluto.
+                // ---
+                // S010 -- primary attempt with the channel name; if it
+                // resolves NO artist at all in MusicBrainz (a generic/
+                // compilation channel), a second attempt with H05's
+                // structured artist before giving up -- an imperfect
+                // second chance beats no Radio at all.
+                radioRepository.resolveAnchor(anchorArtistName)
+                    ?: radioAnchorArtistFallback?.let { fallback ->
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
+                                "reintentando con el artista estructurado '$fallback'",
+                        )
+                        radioRepository.resolveAnchor(fallback)
+                    }
+            }?.also { radioAnchor = it }
             if (anchor == null) {
                 // Sin log aquí -- RadioRepository.resolveAnchor() ya
                 // registra el motivo exacto en
