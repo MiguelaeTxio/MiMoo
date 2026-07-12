@@ -193,13 +193,40 @@ propósito) + lista de palabras que delatan compilación en el título
   desde `PlayerBarViewModel` — ExoPlayer no notifica la posición de
   forma continua, solo eventos puntuales).
 
+### Tercera corrección (S009, tras confirmar autoplay funcionando)
+
+**Buena noticia confirmada por Miguel Ángel:** el autoplay ya
+funciona de verdad — la cola avanza sola sin tocar nada.
+
+**Fallo nuevo, distinto:** la Radio solo llegó a añadir 3 temas
+(nunca los 10) y luego dejó de reponer por completo, incluida la
+última pista sin nada detrás de ella. Causa raíz confirmada leyendo
+el código: **"Various Artists"** es una entidad real de MusicBrainz
+(usada para créditos de compilaciones), sin géneros propios. Cuando
+`RadioRepository.suggestRelatedArtist()` la eligió como "relacionada"
+(posible porque estaba etiquetada con el género buscado), la
+siguiente iteración intentó buscar los géneros de "Various Artists"
+— vacío, `suggestRelatedArtist()` devolvió `null`, y el bucle de
+`topUpRadioQueueIfNeeded()` se detuvo con un `break` sin reintentar
+nunca más.
+
+**Corrección:**
+- `RadioRepository.isPlaceholderArtist()`: descarta "Various Artists"
+  (y otras entidades placeholder equivalentes:
+  `[unknown]`/`[anonymous]`/`[traditional]`) tanto como origen como
+  candidato.
+- `PlayerManager`: nuevo `radioAnchorArtist` — el artista que de
+  verdad arrancó la Radio (el último tema propio del usuario, no de
+  Radio). Si el eslabón inmediato de la cadena muere, se reintenta
+  una vez desde el ancla antes de rendirse — defensa adicional para
+  cualquier otro artista igual de "sin géneros" que pueda aparecer en
+  el futuro, no solo para este caso concreto.
+
 ### Pendiente
 
-**PASO 2.2 — PENDIENTE.** Volver a verificar en dispositivo real tras
-esta segunda corrección: confirmar que ahora sí arranca sola sin
-tocar nada, que la cola mantiene ~10 pistas de Radio de forma
-sostenida, y que ya no aparecen vídeos de álbum completo/greatest
-hits como si fueran una sola canción.
+**PASO 2.2 — PENDIENTE.** Volver a verificar en dispositivo real:
+confirmar que ahora sí llega a mantener ~10 pistas de forma sostenida
+sin cortarse, con el autoplay ya confirmado funcionando.
 
 ---
 

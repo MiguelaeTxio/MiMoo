@@ -329,6 +329,24 @@ class PlayerManager @Inject constructor(
                 val currentIndex = player.currentMediaItemIndex
                 val currentItem = queueItems.getOrNull(currentIndex)
                 val isLastItem = queueItems.isNotEmpty() && currentIndex == queueItems.lastIndex
+                if (isLastItem && currentItem?.isFromRadio != true) {
+                    // H08 (S009, corrección tras corte a los 3 temas)
+                    // -- se fija el "ancla": el artista que de verdad
+                    // arrancó la Radio. Si la cadena de "relacionados"
+                    // llega a un callejón sin salida más adelante
+                    // (artista sin géneros en MusicBrainz), se
+                    // reintenta desde aquí en vez de rendirse del
+                    // todo -- ver topUpRadioQueueIfNeeded().
+                    // ---
+                    // H08 (S009, fix after cutting off at 3 tracks) --
+                    // sets the "anchor": the artist that actually
+                    // started Radio. If the "related" chain hits a
+                    // dead end later on (an artist with no genres in
+                    // MusicBrainz), it retries from here instead of
+                    // giving up entirely -- see
+                    // topUpRadioQueueIfNeeded().
+                    radioAnchorArtist = currentItem?.artist?.takeIf { it.isNotBlank() }
+                }
                 if (currentItem?.isFromRadio == true || isLastItem) {
                     topUpRadioQueueIfNeeded()
                 }
@@ -454,6 +472,21 @@ class PlayerManager @Inject constructor(
      */
     private var isRadioTopUpRunning = false
 
+    /**
+     * H08 (S009) -- el artista que arrancó la Radio (el último tema
+     * "propio" del usuario, no de Radio, antes de que empezara a
+     * reponer). Se usa como respaldo si la cadena de "relacionados"
+     * muere en un artista sin géneros -- ver onMediaItemTransition y
+     * topUpRadioQueueIfNeeded().
+     * ---
+     * H08 (S009) -- the artist that started Radio (the last "own"
+     * track from the user, not a Radio one, before it started topping
+     * up). Used as a fallback if the "related" chain dies on an
+     * artist with no genres -- see onMediaItemTransition and
+     * topUpRadioQueueIfNeeded().
+     */
+    private var radioAnchorArtist: String? = null
+
     private fun topUpRadioQueueIfNeeded() {
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
@@ -470,7 +503,33 @@ class PlayerManager @Inject constructor(
                     }
                     if (!shouldContinue || seedArtist == null) break
 
-                    val newItem = fetchOneRadioTrack(seedArtist) ?: break
+                    // H08 (S009, fix del corte a los 3 temas) -- si el
+                    // eslabón inmediato de la cadena muere (artista sin
+                    // géneros en MusicBrainz, como pasó con "Various
+                    // Artists"), no se rinde del todo: reintenta una
+                    // vez desde el ancla (el artista que arrancó la
+                    // Radio) antes de parar. Con el filtro de
+                    // "Various Artists" ya añadido en RadioRepository
+                    // esto no debería hacer falta para ese caso
+                    // concreto, pero deja la Radio protegida ante
+                    // cualquier otro artista igual de "genre-less" en
+                    // el futuro.
+                    // ---
+                    // H08 (S009, fix for the 3-track cutoff) -- if the
+                    // immediate chain link dies (an artist with no
+                    // genres in MusicBrainz, as happened with "Various
+                    // Artists"), it doesn't give up entirely: retries
+                    // once from the anchor (the artist that started
+                    // Radio) before stopping. With the "Various
+                    // Artists" filter already added in RadioRepository
+                    // this shouldn't be needed for that specific case,
+                    // but it keeps Radio protected against any other
+                    // equally "genre-less" artist in the future.
+                    val anchor = radioAnchorArtist
+                    val newItem = fetchOneRadioTrack(seedArtist)
+                        ?: anchor?.takeIf { !it.equals(seedArtist, ignoreCase = true) }
+                            ?.let { fetchOneRadioTrack(it) }
+                        ?: break
 
                     withContext(Dispatchers.Main) {
                         val wasEnded = player.playbackState == Player.STATE_ENDED

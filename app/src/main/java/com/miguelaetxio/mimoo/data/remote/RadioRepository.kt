@@ -68,7 +68,7 @@ class RadioRepository @Inject constructor(
     private val musicBrainzApiService: MusicBrainzApiService,
 ) {
     suspend fun suggestRelatedArtist(sourceArtist: String): String? {
-        if (sourceArtist.isBlank()) return null
+        if (sourceArtist.isBlank() || isPlaceholderArtist(sourceArtist)) return null
         return try {
             val sourceMbid = musicBrainzApiService
                 .searchArtists(query = buildArtistQuery(sourceArtist))
@@ -90,12 +90,44 @@ class RadioRepository @Inject constructor(
                     limit = 10,
                 )
                 .artists
-                .filter { !it.name.equals(sourceArtist, ignoreCase = true) }
+                .filter {
+                    !it.name.equals(sourceArtist, ignoreCase = true) &&
+                        !isPlaceholderArtist(it.name)
+                }
             candidates.randomOrNull()?.name
         } catch (e: Exception) {
             null
         }
     }
+
+    /**
+     * H08 -- descarta entidades "cajón de sastre" de MusicBrainz que
+     * no son un artista real, no tienen géneros propios, y por tanto
+     * rompen la cadena de "relacionado" en cuanto se eligen (causa
+     * raíz confirmada en pruebas reales, S009: la Radio se paró en 3
+     * temas porque MusicBrainz sugirió "Various Artists", que no
+     * tiene géneros -- la siguiente búsqueda falló y nadie volvió a
+     * intentarlo). "Various Artists" es una entidad real de
+     * MusicBrainz (MBID fijo `89ad4ac3-39f7-470e-963a-56509c546377`,
+     * usada para créditos de compilaciones), así que puede aparecer
+     * legítimamente en resultados de búsqueda por género.
+     * ---
+     * H08 -- discards MusicBrainz "catch-all" entities that aren't a
+     * real artist, have no genres of their own, and therefore break
+     * the "related" chain as soon as one gets picked (confirmed root
+     * cause in real testing, S009: Radio stopped after 3 tracks
+     * because MusicBrainz suggested "Various Artists", which has no
+     * genres -- the next search failed and nothing ever retried).
+     * "Various Artists" is a real MusicBrainz entity (fixed MBID
+     * `89ad4ac3-39f7-470e-963a-56509c546377`, used for compilation
+     * credits), so it can legitimately show up in genre-based search
+     * results.
+     */
+    private fun isPlaceholderArtist(name: String): Boolean =
+        name.equals("Various Artists", ignoreCase = true) ||
+            name.equals("[unknown]", ignoreCase = true) ||
+            name.equals("[anonymous]", ignoreCase = true) ||
+            name.equals("[traditional]", ignoreCase = true)
 
     private fun buildArtistQuery(artist: String): String {
         fun escape(value: String) = value.replace("\"", "")
