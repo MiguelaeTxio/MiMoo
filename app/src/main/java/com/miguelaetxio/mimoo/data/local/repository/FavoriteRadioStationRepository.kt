@@ -82,4 +82,3 @@ fun FavoriteRadioStation.toRadioStation() = RadioStation(
     votes = null,
     lastCheckOk = 1,
 )
-}
