@@ -215,6 +215,18 @@ dependencies {
     implementation(libs.coil.compose)
 
     implementation(libs.androidx.media3.exoplayer)
+    // H09 (S010) -- fix de crash real: DefaultMediaSourceFactory
+    // (usado por defecto en ExoPlayer.Builder(context).build(), ver
+    // PlayerManager) detecta el tipo de contenido de la URL y, si es
+    // un stream HLS (.m3u8 -- muy común en emisoras de Radio-Browser,
+    // nunca visto antes con YouTube), intenta cargar
+    // HlsMediaSource$Factory por reflexión. Sin este módulo esa clase
+    // no existe en el APK -> ClassNotFoundException -> crash al tocar
+    // la emisora (crash_log.txt real, S010). dash se añade también
+    // como medida preventiva barata: mismo tipo de fallo, distinta
+    // clase, y algunas emisoras de radio también sirven DASH.
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.session)
 
