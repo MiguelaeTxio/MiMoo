@@ -19,6 +19,19 @@ import javax.inject.Singleton
  * parseo se trata igual que "sin resultados", devolviendo lista vacía
  * en vez de romper la pantalla.
  *
+ * Filtro de disponibilidad (S010, petición explícita de Miguel Ángel:
+ * "da muy mal rollo elegir una emisora y que no esté emitiendo") --
+ * DOS capas, no solo una: `hidebroken=true` en la propia petición a la
+ * API (ver RadioBrowserApiService) más un filtro `lastCheckOk == 1`
+ * aquí, en el cliente, como red de seguridad redundante. Limitación
+ * honesta, verificada en vivo esta sesión contra la documentación
+ * oficial (de1.api.radio-browser.info): Radio-Browser.info comprueba
+ * cada emisora "al menos una vez al día", no en tiempo real -- es la
+ * mejor señal de disponibilidad que la API ofrece, no una garantía
+ * absoluta de que esté emitiendo en este preciso instante. Una
+ * emisora sin `lastCheckOk` (null) se trata como no disponible --
+ * mismo criterio conservador que "si hay duda, no se muestra".
+ *
  * Instrumentado con RadioBrowserDebugLogger (S010, tras reporte real
  * de Miguel Ángel: la fila "País" desaparecía sin ningún aviso) --
  * "defensivo" significa que el fallo no rompe la UI, NO que deba
@@ -31,6 +44,18 @@ import javax.inject.Singleton
  * pattern as CoverArtRepository and RadioRepository (H08): never
  * throws to the caller, any network or parsing failure is treated the
  * same as "no results".
+ *
+ * Availability filter (S010, explicit request from Miguel Ángel:
+ * "it's a bad experience to pick a station that isn't broadcasting")
+ * -- TWO layers, not just one: `hidebroken=true` on the API request
+ * itself, plus a `lastCheckOk == 1` filter here client-side as a
+ * redundant safety net. Honest limitation, verified live this session
+ * against the official docs: Radio-Browser.info checks each station
+ * "at least once a day", not in real time -- it's the best
+ * availability signal the API offers, not an absolute guarantee it's
+ * broadcasting at this exact instant. A station with no `lastCheckOk`
+ * (null) is treated as unavailable -- same conservative "if in doubt,
+ * don't show it" rule.
  *
  * Instrumented with RadioBrowserDebugLogger (S010, after a real report
  * from Miguel Ángel: the "País" row vanished with no warning at all)
@@ -64,7 +89,7 @@ class RadioBrowserRepository @Inject constructor(
             name = name?.trim()?.ifBlank { null },
             tag = tag?.trim()?.ifBlank { null },
             countryCode = countryCode?.trim()?.ifBlank { null },
-        )
+        ).filter { it.lastCheckOk == 1 }
     } catch (e: Exception) {
         RadioBrowserDebugLogger.logError(
             appContext, storageManager, "searchStations() fallo (name=$name tag=$tag country=$countryCode)", e,
@@ -125,7 +150,7 @@ class RadioBrowserRepository @Inject constructor(
                             name = name?.trim()?.ifBlank { null },
                             tag = term,
                             countryCode = countryCode?.trim()?.ifBlank { null },
-                        )
+                        ).filter { it.lastCheckOk == 1 }
                     } catch (e: Exception) {
                         RadioBrowserDebugLogger.logError(
                             appContext, storageManager, "searchByAnyTag() fallo en término '$term'", e,
