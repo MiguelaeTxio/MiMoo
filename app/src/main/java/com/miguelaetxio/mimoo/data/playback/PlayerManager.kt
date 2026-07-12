@@ -424,6 +424,7 @@ class PlayerManager @Inject constructor(
                     // avoid repeating the same failed attempt twice.
                     radioAnchorArtistFallback = currentItem?.artist
                         ?.takeIf { it.isNotBlank() && !it.equals(radioAnchorArtist, ignoreCase = true) }
+                    radioAnchorTrackTitle = currentItem?.title
                     // S010 -- nueva sesión de Radio: invalida el
                     // género+país cacheado y la lista de ya-usados de
                     // la sesión anterior, se recalculan de cero desde
@@ -665,6 +666,7 @@ class PlayerManager @Inject constructor(
      */
     private var radioAnchorArtist: String? = null
     private var radioAnchorArtistFallback: String? = null
+    private var radioAnchorTrackTitle: String? = null
     private var radioAnchor: RadioAnchor? = null
     private val radioUsedArtists = mutableSetOf<String>()
 
@@ -756,6 +758,82 @@ class PlayerManager @Inject constructor(
     }
 
     /**
+     * S010 -- tres intentos en cadena para fijar el ancla de una
+     * sesión de Radio, cada uno solo si el anterior no encontró NADA
+     * en MusicBrainz:
+     *   1. Nombre de canal de YouTube (más fiable en general, pero
+     *      inútil si el canal es una resubida ajena -- p.ej. "Radio
+     *      Futura - Escuela de Calor" subida por un canal random
+     *      llamado "OldGuitar8", nada que ver con la banda real).
+     *   2. Artista estructurado de H05 (emparejamiento heurístico
+     *      contra MusicBrainz por título -- puede no existir para esa
+     *      pista en absoluto).
+     *   3. NUEVO -- parseado del propio título del vídeo, patrón
+     *      "Artista - Canción" (extremadamente común en YouTube,
+     *      incluso en resubidas de canales random como el caso de
+     *      arriba). Última red de seguridad antes de rendirse del
+     *      todo.
+     * ---
+     * S010 -- three chained attempts to fix a Radio session's anchor,
+     * each only if the previous one found NOTHING in MusicBrainz:
+     *   1. YouTube channel name.
+     *   2. H05's structured artist.
+     *   3. NEW -- parsed from the video title itself, "Artist - Song"
+     *      pattern (extremely common on YouTube, even on reuploads
+     *      from random channels).
+     */
+    private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
+        radioRepository.resolveAnchor(anchorArtistName)?.let { return it }
+
+        radioAnchorArtistFallback?.let { fallback ->
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
+                    "reintentando con el artista estructurado '$fallback'",
+            )
+            radioRepository.resolveAnchor(fallback)?.let { return it }
+        }
+
+        val titleGuess = parseArtistFromTitle(radioAnchorTrackTitle)
+            ?.takeIf { !it.equals(anchorArtistName, ignoreCase = true) &&
+                !it.equals(radioAnchorArtistFallback, ignoreCase = true) }
+        if (titleGuess != null) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchOneRadioTrack() -- ancla '$anchorArtistName' y artista estructurado sin " +
+                    "resultado, último intento con el título parseado ('${radioAnchorTrackTitle}' -> '$titleGuess')",
+            )
+            radioRepository.resolveAnchor(titleGuess)?.let { return it }
+        }
+
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado en NINGUNO de los " +
+                "intentos (canal, H05, título) -- sin más respaldos que probar",
+        )
+        return null
+    }
+
+    /**
+     * "Artista - Canción" -- patrón de nombrado extremadamente común
+     * en YouTube. Solo el primer " - " cuenta (un título como "AC/DC
+     * - Back In Black - Live" debe dar "AC/DC", no cortar por el
+     * segundo guion). Se descarta si el resultado es sospechosamente
+     * corto (1-2 caracteres) o si no hay separador en absoluto.
+     * ---
+     * "Artist - Song" -- extremely common YouTube naming pattern. Only
+     * the first " - " counts. Discarded if the result is suspiciously
+     * short or if there's no separator at all.
+     */
+    private fun parseArtistFromTitle(title: String?): String? {
+        if (title.isNullOrBlank()) return null
+        val separatorIndex = title.indexOf(" - ")
+        if (separatorIndex <= 0) return null
+        val candidate = title.substring(0, separatorIndex).trim()
+        return candidate.takeIf { it.length > 2 }
+    }
+
+    /**
      * Un único ciclo búsqueda-de-relacionado + búsqueda-gratuita-en-
      * YouTube + resolución-de-stream (ver RadioRepository y
      * ExternalLinkResolver.searchYoutube()). Nunca lanza -- cualquier
@@ -772,38 +850,9 @@ class PlayerManager @Inject constructor(
      */
     private suspend fun fetchOneRadioTrack(anchorArtistName: String): QueueItem? =
         try {
-            val anchor = radioAnchor ?: run {
-                // S010 -- intento principal con el nombre de canal; si
-                // no resuelve NINGÚN artista en MusicBrainz (canal
-                // genérico/de recopilaciones, p.ej. "OldGuitar8"), un
-                // segundo intento con el artista estructurado de H05
-                // antes de rendirse -- mejor una segunda oportunidad
-                // imperfecta que ninguna Radio en absoluto.
-                // ---
-                // S010 -- primary attempt with the channel name; if it
-                // resolves NO artist at all in MusicBrainz (a generic/
-                // compilation channel), a second attempt with H05's
-                // structured artist before giving up -- an imperfect
-                // second chance beats no Radio at all.
-                radioRepository.resolveAnchor(anchorArtistName)
-                    ?: if (radioAnchorArtistFallback != null) {
-                        val fallback = radioAnchorArtistFallback!!
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
-                            "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
-                                "reintentando con el artista estructurado '$fallback'",
-                        )
-                        radioRepository.resolveAnchor(fallback)
-                    } else {
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
-                            "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
-                                "y esta pista no tiene artista estructurado (H05) guardado -- " +
-                                "sin ningún respaldo que probar",
-                        )
-                        null
-                    }
-            }?.also { radioAnchor = it }
+            val anchor = radioAnchor ?: resolveAnchorWithFallbacks(anchorArtistName)?.also {
+                radioAnchor = it
+            }
             if (anchor == null) {
                 // Sin log aquí -- RadioRepository.resolveAnchor() ya
                 // registra el motivo exacto en
