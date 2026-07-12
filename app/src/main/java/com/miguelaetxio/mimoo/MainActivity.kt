@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -586,6 +587,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Queue.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Radio Online") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Radio,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.RadioBrowser.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.RadioBrowser.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

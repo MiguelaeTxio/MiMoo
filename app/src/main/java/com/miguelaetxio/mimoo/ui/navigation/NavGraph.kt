@@ -14,6 +14,7 @@ import com.miguelaetxio.mimoo.ui.library.LibraryScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistsScreen
 import com.miguelaetxio.mimoo.ui.queue.QueueScreen
+import com.miguelaetxio.mimoo.ui.radiobrowser.RadioBrowserScreen
 import com.miguelaetxio.mimoo.ui.search.SearchScreen
 import com.miguelaetxio.mimoo.ui.settings.SettingsScreen
 
@@ -39,6 +40,7 @@ sealed class Screen(val route: String) {
     }
     object Downloads : Screen("downloads")
     object Queue : Screen("queue")
+    object RadioBrowser : Screen("radio_browser")
     object Settings : Screen("settings")
 }
 
@@ -110,6 +112,9 @@ fun MiMooNavGraph(
         }
         composable(Screen.Queue.route) {
             QueueScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.RadioBrowser.route) {
+            RadioBrowserScreen(onOpenDrawer = onOpenDrawer)
         }
         composable(Screen.Settings.route) {
             SettingsScreen(onOpenDrawer = onOpenDrawer)
