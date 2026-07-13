@@ -26,6 +26,9 @@ class SearchResultTrackRepository @Inject constructor(
         status: DownloadStatus,
     ): Flow<List<SearchResultTrack>> = dao.getByStatus(status)
 
+    /** Todas las favoritas, descargadas o no (S010) -- ver SearchResultTrackDao.getFavorites(). */
+    fun getFavorites(): Flow<List<SearchResultTrack>> = dao.getFavorites()
+
     /**
      * Pistas con una descarga QUEUED o DOWNLOADING (pantalla
      * "Descargas").

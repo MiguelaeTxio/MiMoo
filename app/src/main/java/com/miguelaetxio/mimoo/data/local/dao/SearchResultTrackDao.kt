@@ -38,6 +38,22 @@ interface SearchResultTrackDao {
     fun getByStatus(status: DownloadStatus): Flow<List<SearchResultTrack>>
 
     /**
+     * TODAS las pistas marcadas favoritas, descargadas o no (S010,
+     * reportado por Miguel Ángel: una pista favoritada desde el
+     * reproductor/cola sin descargar no aparecía en ningún sitio de
+     * la Biblioteca, porque el resto de la pantalla solo carga
+     * getByStatus(DONE) -- un catálogo de lo descargado, por diseño).
+     * Esta consulta es la única fuente de la sección "Favoritos" de la
+     * Biblioteca, independiente de si están descargadas.
+     * ---
+     * ALL tracks marked favorite, downloaded or not (S010). This is
+     * the sole source for the Library's "Favorites" section,
+     * independent of download status.
+     */
+    @Query("SELECT * FROM search_result_tracks WHERE isFavorite = 1 ORDER BY title")
+    fun getFavorites(): Flow<List<SearchResultTrack>>
+
+    /**
      * Pistas con una descarga en curso o esperando turno (pantalla
      * "Descargas"). QUEUED y DOWNLOADING son los dos únicos estados
      * que representan una descarga realmente pedida y no terminada

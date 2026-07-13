@@ -18,6 +18,7 @@ import com.miguelaetxio.mimoo.data.local.repository.FavoriteAlbumRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -290,6 +291,7 @@ class LibraryViewModel @Inject constructor(
     private val trackFileRelocator: TrackFileRelocator,
     private val favoriteAlbumRepository: FavoriteAlbumRepository,
     private val autoSyncPusher: AutoSyncPusher,
+    private val streamResolver: StreamResolver,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -297,6 +299,7 @@ class LibraryViewModel @Inject constructor(
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     private var allDownloaded: List<SearchResultTrack> = emptyList()
+    private var allFavorites: List<SearchResultTrack> = emptyList()
     // Set en memoria de (artist, album) marcados favoritos -- ver
     // comentario de LibraryUiState.favoriteAlbumKeys.
     // ---
@@ -315,6 +318,22 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getByStatus(DownloadStatus.DONE).collect { tracks ->
                 allDownloaded = tracks
+                recompute()
+            }
+        }
+        // S010 -- independiente de allDownloaded a propósito: una
+        // pista favoritada desde el reproductor/cola puede no estar
+        // descargada, y aun así debe verse (y poder reproducirse en
+        // streaming) en la sección "Favoritos" de la Biblioteca. Ver
+        // SearchResultTrackDao.getFavorites().
+        // ---
+        // S010 -- deliberately independent of allDownloaded: a track
+        // favorited from the player/queue may not be downloaded, and
+        // should still show up (and be playable via streaming) in the
+        // Library's "Favorites" section.
+        viewModelScope.launch {
+            repository.getFavorites().collect { tracks ->
+                allFavorites = tracks
                 recompute()
             }
         }
@@ -1054,9 +1073,27 @@ class LibraryViewModel @Inject constructor(
             .toSortedMap()
             .mapValues { (_, tracks) -> tracks.sortedBy { it.title } }
 
-        val favorites = filtered
-            .filter { it.isFavorite }
-            .sortedBy { it.title }
+        // S010 -- allFavorites, no "filtered" -- filtered viene de
+        // allDownloaded (solo lo descargado), y una pista favoritada
+        // desde el reproductor/cola puede no estarlo. El filtro de
+        // búsqueda (si hay texto en la barra) se aplica igual, sobre
+        // el conjunto correcto.
+        // ---
+        // S010 -- allFavorites, not "filtered" -- filtered comes from
+        // allDownloaded (downloaded-only), and a track favorited from
+        // the player/queue might not be. The search filter (if any
+        // text in the bar) still applies, just over the right set.
+        val favorites = (
+            if (query.isEmpty()) {
+                allFavorites
+            } else {
+                allFavorites.filter { track ->
+                    SearchNormalizer.normalize(track.title).contains(query) ||
+                        SearchNormalizer.normalize(track.artist ?: track.channelTitle)
+                            .contains(query)
+                }
+            }
+        ).sortedBy { it.title }
 
         val albumLetters = albumsByArtist.keys
             .map { sortLetterFor(it) }
@@ -1096,16 +1133,51 @@ class LibraryViewModel @Inject constructor(
     }
 
     /** Plays a single track from the library (always local). */
+    /**
+     * S010 -- gana la rama de streaming (reutiliza el mismo patrón que
+     * SearchViewModel.playTrack()): una pista favoritada desde el
+     * reproductor/cola puede no estar descargada, y la sección
+     * "Favoritos" de la Biblioteca ahora la muestra igualmente -- tiene
+     * que poder sonar en streaming, no solo aparecer en la lista.
+     * ---
+     * S010 -- gains the streaming branch (reuses the same pattern as
+     * SearchViewModel.playTrack()): a track favorited from the
+     * player/queue might not be downloaded, and the Library's
+     * "Favorites" section now shows it anyway -- it has to actually
+     * play via streaming, not just appear in the list.
+     */
     fun playTrack(track: SearchResultTrack) {
-        val filePath = track.filePath ?: return
-        playerManager.play(
-            filePath,
-            track.title,
-            isLocal = true,
-            artist = track.artist ?: track.channelTitle,
-            youtubeId = track.youtubeId,
-            channelTitle = track.channelTitle,
-        )
+        val filePath = track.filePath
+        if (filePath != null) {
+            playerManager.play(
+                filePath,
+                track.title,
+                isLocal = true,
+                artist = track.artist ?: track.channelTitle,
+                youtubeId = track.youtubeId,
+                channelTitle = track.channelTitle,
+            )
+            return
+        }
+
+        val remoteUrl = track.youtubeUrl ?: return
+        viewModelScope.launch {
+            try {
+                val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
+                playerManager.play(
+                    streamUrl,
+                    track.title,
+                    isLocal = false,
+                    artist = track.artist ?: track.channelTitle,
+                    youtubeId = track.youtubeId,
+                    channelTitle = track.channelTitle,
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    mergeResultMessage = "No se pudo reproducir en streaming: ${e.message}",
+                )
+            }
+        }
     }
 
     /**
