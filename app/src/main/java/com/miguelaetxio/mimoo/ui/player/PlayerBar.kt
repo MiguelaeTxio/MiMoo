@@ -1,12 +1,15 @@
 package com.miguelaetxio.mimoo.ui.player
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
@@ -19,9 +22,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
 
 /**
  * onOpenQueue: tocar el título/artista abre la pantalla de gestión de
@@ -42,6 +47,7 @@ fun PlayerBar(
     val state by viewModel.state.collectAsState()
     val positionMs by viewModel.positionMs.collectAsState()
     val isCurrentFavorite by viewModel.isCurrentFavorite.collectAsState()
+    val coverArtUrl by viewModel.coverArtUrl.collectAsState()
     val title = state.currentTitle ?: return
 
     Surface(tonalElevation = 4.dp) {
@@ -52,6 +58,38 @@ fun PlayerBar(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // S010 -- "reproductor expandido" (petición explícita
+                // de Miguel Ángel): carátula cuadrada siempre visible
+                // en la propia barra persistente, sin tener que tocar
+                // nada para verla. 56dp -- lo bastante grande para
+                // notarse frente a la barra compacta anterior, sin
+                // comerse tanto alto que reste sitio de verdad al
+                // contenido de la pantalla que hay detrás.
+                // ---
+                // S010 -- "expanded player": square cover art always
+                // visible in the persistent bar itself, no tap needed.
+                // 56dp -- big enough to feel like an upgrade over the
+                // old compact bar, without eating into the screen
+                // content behind it.
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                ) {
+                    if (coverArtUrl != null) {
+                        SubcomposeAsyncImage(
+                            model = coverArtUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            error = { PlayerBarArtPlaceholder() },
+                        )
+                    } else {
+                        PlayerBarArtPlaceholder()
+                    }
+                }
+
+                Spacer(Modifier.width(12.dp))
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -63,6 +101,23 @@ fun PlayerBar(
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    // S010 -- línea de artista, parte de los
+                    // "metadatos" que pidió Miguel Ángel junto a la
+                    // carátula. Solo si hay dato real -- una emisora de
+                    // Radio-Browser.info, por ejemplo, no tiene.
+                    // ---
+                    // S010 -- artist line, part of the "metadata"
+                    // requested alongside the cover art. Only shown
+                    // when there's real data.
+                    if (!state.currentArtist.isNullOrBlank()) {
+                        Text(
+                            text = state.currentArtist!!,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     // H09 -- icono + etiqueta corta en vez de una frase
                     // larga ("Reproduciendo en streaming"), que se
                     // recortaba a lo bruto en pantallas estrechas al
@@ -249,6 +304,23 @@ fun PlayerBar(
                 Spacer(Modifier.height(4.dp))
             }
         }
+    }
+}
+
+/** S010 -- icono genérico cuando no hay carátula real (pistas transitorias de Radio sin favoritar, emisoras...). */
+@Composable
+private fun PlayerBarArtPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.Filled.MusicNote,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

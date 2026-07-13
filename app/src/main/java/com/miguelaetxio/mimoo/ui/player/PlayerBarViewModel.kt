@@ -65,6 +65,25 @@ class PlayerBarViewModel @Inject constructor(
     private val _isCurrentFavorite = MutableStateFlow(false)
     val isCurrentFavorite: StateFlow<Boolean> = _isCurrentFavorite.asStateFlow()
 
+    /**
+     * S010 -- carátula del "reproductor expandido" (petición explícita
+     * de Miguel Ángel: "carátula cuadrada a la izquierda, metadatos a
+     * la derecha", sin tener que tocar nada -- directamente en la
+     * barra persistente, no en una pantalla aparte). Misma consulta
+     * que isCurrentFavorite (SearchResultTrackRepository.getById()),
+     * fusionadas en un único refresh para no duplicar la lectura de
+     * Room en cada cambio de pista. Null para pistas transitorias de
+     * Radio sin fila en la base de datos todavía (sin favoritar) -- la
+     * UI muestra un icono genérico en ese caso, no un hueco vacío.
+     * ---
+     * S010 -- "expanded player" cover art. Same query as
+     * isCurrentFavorite, merged into a single refresh to avoid
+     * duplicating the Room read on every track change. Null for
+     * transient Radio tracks with no database row yet.
+     */
+    private val _coverArtUrl = MutableStateFlow<String?>(null)
+    val coverArtUrl: StateFlow<String?> = _coverArtUrl.asStateFlow()
+
     init {
         viewModelScope.launch {
             while (isActive) {
@@ -80,8 +99,9 @@ class PlayerBarViewModel @Inject constructor(
     }
 
     private suspend fun refreshFavoriteState(youtubeId: String?) {
-        _isCurrentFavorite.value = youtubeId != null &&
-            searchResultTrackRepository.getById(youtubeId)?.isFavorite == true
+        val track = youtubeId?.let { searchResultTrackRepository.getById(it) }
+        _isCurrentFavorite.value = track?.isFavorite == true
+        _coverArtUrl.value = track?.coverArtUrl
     }
 
     fun toggleCurrentFavorite() {
