@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.ui.settings
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,11 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -72,6 +75,41 @@ fun SettingsScreen(
     // diálogo de confirmación por encima de la lista sin perder cuál
     // se eligió.
     var backupPendingConfirmation by remember { mutableStateOf<DriveBackupFile?>(null) }
+
+    // S010 -- "Importar desde archivo": nombre + contenido JSON ya
+    // leídos del archivo elegido con el selector de Android, pendiente
+    // de la misma confirmación destructiva que el resto de
+    // importaciones. Independiente de Drive del todo -- ver
+    // SettingsViewModel.importFromFile().
+    // ---
+    // S010 -- "Import from file": name + JSON content already read
+    // from the file picked with Android's file picker, pending the
+    // same destructive confirmation as any other import. Completely
+    // independent from Drive.
+    var filePendingConfirmation by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var fileImportError by remember { mutableStateOf<String?>(null) }
+
+    val fileImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        try {
+            val displayName = context.contentResolver.query(uri, null, null, null, null)
+                ?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (cursor.moveToFirst() && nameIndex >= 0) cursor.getString(nameIndex) else null
+                } ?: "el archivo elegido"
+            val json = context.contentResolver.openInputStream(uri)
+                ?.bufferedReader()?.use { it.readText() }
+            if (json.isNullOrBlank()) {
+                fileImportError = "No se pudo leer el archivo elegido."
+            } else {
+                filePendingConfirmation = displayName to json
+            }
+        } catch (e: Exception) {
+            fileImportError = e.message ?: "No se pudo leer el archivo elegido."
+        }
+    }
 
     // Lanza el diálogo de consentimiento de Google cuando
     // DriveAuthorizationHelper devuelve NeedsUserConsent -- solo la
@@ -144,7 +182,9 @@ fun SettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 TextButton(
@@ -162,6 +202,14 @@ fun SettingsScreen(
                     Icon(Icons.Filled.CloudDownload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Importar desde Drive")
+                }
+                TextButton(
+                    onClick = { fileImportLauncher.launch(arrayOf("*/*")) },
+                    enabled = !isWorking,
+                ) {
+                    Icon(Icons.Filled.FileOpen, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Importar desde archivo")
                 }
             }
             if (isWorking) {
@@ -255,6 +303,56 @@ fun SettingsScreen(
                 TextButton(onClick = { backupPendingConfirmation = null }) {
                     Text("Cancelar")
                 }
+            },
+        )
+    }
+
+    // S010 -- misma confirmación destructiva que el resto de
+    // importaciones (ANNEX_H06.md), aplicada también al archivo
+    // local -- borra el repositorio igual que un import de Drive, así
+    // que necesita el mismo aviso explícito.
+    // ---
+    // S010 -- same destructive confirmation as any other import,
+    // applied to the local file too -- it erases the repository the
+    // same way a Drive import does, so it needs the same explicit
+    // warning.
+    filePendingConfirmation?.let { (displayName, json) ->
+        AlertDialog(
+            onDismissRequest = { filePendingConfirmation = null },
+            title = { Text("¿Sustituir tu repositorio?") },
+            text = {
+                Text(
+                    "Esto borrará por completo tu biblioteca actual en " +
+                        "este dispositivo (pistas, favoritos de álbum y " +
+                        "listas de reproducción) y la sustituirá por " +
+                        "\"$displayName\". Todas las pistas se pondrán " +
+                        "a descargar de nuevo. Esta acción no se puede " +
+                        "deshacer."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    filePendingConfirmation = null
+                    viewModel.importFromFile(activity, json)
+                }) {
+                    Text("Sustituir")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { filePendingConfirmation = null }) {
+                    Text("Cancelar")
+                }
+            },
+        )
+    }
+
+    fileImportError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { fileImportError = null },
+            title = { Text("No se pudo leer el archivo") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = { fileImportError = null }) { Text("Cerrar") }
             },
         )
     }

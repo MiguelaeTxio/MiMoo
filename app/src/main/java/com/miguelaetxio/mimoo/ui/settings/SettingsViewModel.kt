@@ -295,6 +295,76 @@ class SettingsViewModel @Inject constructor(
         Log.d(TAG, step5)
         BackupDebugLogger.log(activity, storageManager, step5)
 
-        _uiState.value = BackupUiState.ImportSuccess(result.importedTracks.size)
+    /**
+     * "Importar desde archivo" (S010, petición explícita de Miguel
+     * Ángel): la app pide el scope `drive.file` de Drive a propósito
+     * (ver DriveAuthorizationHelper), el más restringido posible --
+     * con eso, la app SOLO puede ver los archivos que ella misma ha
+     * creado en Drive, nunca uno que otra persona haya subido a mano
+     * a una carpeta, aunque sea la carpeta correcta. Caso real: Miguel
+     * Ángel exportó desde su móvil, compartió el archivo por mensaje a
+     * su mujer, ella lo subió a Drive a mano -- "Importar desde Drive"
+     * nunca iba a poder verlo, sea cual sea la cuenta.
+     *
+     * Esta vía no toca Drive para nada: lee el JSON que ya se ha leído
+     * del archivo elegido con el selector de Android (fuera del scope
+     * restringido de Drive, así que sin esa limitación), y a partir de
+     * ahí reutiliza exactamente el mismo camino que importNow() desde
+     * el paso de deserializar -- misma sustitución destructiva, mismo
+     * encolado de descargas.
+     * ---
+     * "Import from file" (S010, explicit request from Miguel Ángel):
+     * the app deliberately requests Drive's `drive.file` scope, the
+     * most restricted one -- with it, the app can ONLY see files it
+     * created itself in Drive, never one another person manually
+     * uploaded to a folder, even the right one. Real case: Miguel
+     * Ángel exported from his phone, shared the file via message to
+     * his wife, she manually uploaded it to Drive -- "Import from
+     * Drive" was never going to see it, regardless of account.
+     *
+     * This path never touches Drive at all: reads the JSON already
+     * read from the file picked with Android's file picker (outside
+     * Drive's restricted scope, so unaffected by that limitation), and
+     * from there reuses the exact same path as importNow() from the
+     * deserialize step onward.
+     */
+    fun importFromFile(activity: Activity, json: String) {
+        _uiState.value = BackupUiState.Working
+        viewModelScope.launch {
+            try {
+                val step1 = "importFromFile() -- ${json.length} caracteres leídos. Deserializando..."
+                Log.d(TAG, step1)
+                BackupDebugLogger.log(activity, storageManager, step1)
+                val bundle = backupRepository.fromJson(json)
+                val step2 = "importFromFile() -- bundle válido: ${bundle.tracks.size} pistas, " +
+                    "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists. " +
+                    "Ejecutando sustitución destructiva..."
+                Log.d(TAG, step2)
+                BackupDebugLogger.log(activity, storageManager, step2)
+                val result = importRepository.importDestructively(bundle)
+
+                result.importedTracks.forEach { track ->
+                    downloadQueueManager.enqueue(
+                        youtubeId = track.youtubeId,
+                        title = track.title,
+                        artist = track.artist ?: track.channelTitle,
+                        album = track.album,
+                        trackPosition = track.trackPosition,
+                    )
+                }
+                val step3 = "importFromFile() -- ${result.importedTracks.size} pistas insertadas, descargas encoladas"
+                Log.d(TAG, step3)
+                BackupDebugLogger.log(activity, storageManager, step3)
+
+                _uiState.value = BackupUiState.ImportSuccess(result.importedTracks.size)
+            } catch (e: Exception) {
+                Log.e(TAG, "importFromFile() FALLÓ", e)
+                BackupDebugLogger.logError(activity, storageManager, "importFromFile() FALLÓ", e)
+                _uiState.value = BackupUiState.Error(
+                    e.message ?: "El archivo no es un backup de MiMoo válido."
+                )
+            }
+        }
     }
+
 }
