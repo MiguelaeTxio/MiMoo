@@ -1283,10 +1283,36 @@ class PlayerManager @Inject constructor(
      * Empties the whole queue and stops playback -- explicit
      * management action from QueueScreen.
      */
+    /**
+     * S010 -- petición explícita de Miguel Ángel: al vaciar la cola
+     * también hay que borrar la sesión de Radio (ancla de género+país,
+     * artista de respaldo, título, y los ya-usados), no solo dejarla
+     * viva a la espera de que el próximo topUp reutilice un ancla
+     * vieja que ya no tiene ningún sentido con nada de lo que suene a
+     * partir de ahora. Sin este reseteo, vaciar la cola no bastaba
+     * para "empezar otra Radio" de verdad -- la siguiente vez que la
+     * Radio topara con el final de la cola, seguiría anclada al
+     * artista de la sesión anterior.
+     * ---
+     * S010 -- explicit request from Miguel Ángel: clearing the queue
+     * must also clear the Radio session (genre+country anchor,
+     * fallback artist, title, and already-used artists), not just
+     * leave it alive waiting for the next top-up to reuse a stale
+     * anchor that no longer makes sense with anything played from now
+     * on. Without this reset, clearing the queue wasn't really enough
+     * to "start another Radio" -- the next time Radio hit the end of
+     * the queue, it would still be anchored to the previous session's
+     * artist.
+     */
     fun clearQueue() {
         queueItems.clear()
         player.clearMediaItems()
         player.stop()
+        radioAnchorArtist = null
+        radioAnchorArtistFallback = null
+        radioAnchorTrackTitle = null
+        radioAnchor = null
+        radioUsedArtists.clear()
         syncStateFromPlayer()
     }
 
