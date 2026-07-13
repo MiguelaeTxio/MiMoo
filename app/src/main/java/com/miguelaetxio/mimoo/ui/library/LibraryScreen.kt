@@ -135,6 +135,15 @@ fun LibraryScreen(
         }
     }
 
+    // S010 -- aviso si "Reproducir todo"/"Aleatorio" de Favoritos no
+    // pudo resolver el stream de alguna pista sin descargar.
+    LaunchedEffect(uiState.favoritesResolveError) {
+        uiState.favoritesResolveError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissFavoritesResolveError()
+        }
+    }
+
     // Nivel de profundidad actual de la pestaña activa -- 0 = Letras
     // (nivel raíz de esa pestaña, no hay nada que subir).
     // ---
@@ -726,6 +735,10 @@ private fun ColumnScope.FavoritesTabContent(
         onPlayAll = viewModel::playFavorites,
         onShuffle = viewModel::playFavoritesShuffled,
     )
+
+    if (uiState.isResolvingFavorites) {
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+    }
 
     LazyColumn(modifier = Modifier.weight(1f)) {
         items(uiState.favorites, key = { "track:${it.youtubeId}" }) { track ->

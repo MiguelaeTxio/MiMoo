@@ -257,6 +257,20 @@ data class LibraryUiState(
     // for lack of connection (Miguel Ángel's business rule, S008: no
     // network, doesn't even apply locally).
     val syncBlockedMessage: String? = null,
+    /**
+     * S010 -- "Reproducir todo"/"Aleatorio" de Favoritos ahora resuelve
+     * en streaming las que no están descargadas antes de reproducir la
+     * cola completa (mismo patrón que PlaylistDetailViewModel). Mientras
+     * resuelve, la UI puede mostrar un indicador; si alguna falla, el
+     * aviso aparece aquí en vez de desaparecer en silencio.
+     * ---
+     * S010 -- Favorites "Play all"/"Shuffle" now resolves streaming for
+     * non-downloaded tracks before playing the full queue. While
+     * resolving, the UI can show an indicator; if any fail, the warning
+     * shows up here instead of silently vanishing.
+     */
+    val isResolvingFavorites: Boolean = false,
+    val favoritesResolveError: String? = null,
 )
 
 /**
@@ -386,6 +400,10 @@ class LibraryViewModel @Inject constructor(
     /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1). */
     fun dismissSyncBlockedMessage() {
         _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
+    }
+
+    fun dismissFavoritesResolveError() {
+        _uiState.value = _uiState.value.copy(favoritesResolveError = null)
     }
 
     /** Descarta el aviso de limpieza de arranque tras mostrarlo. */
@@ -1294,13 +1312,80 @@ class LibraryViewModel @Inject constructor(
     }
 
     /** Plays every favorite, title order, as a queue (pestaña Favoritos). */
+    /**
+     * "Reproducir todo" de la pestaña Favoritos (S010) -- ya no se
+     * salta en silencio las favoritas sin descargar. Mismo patrón
+     * exacto que PlaylistDetailViewModel.playPlaylist(): resuelve el
+     * stream de cada pista sin filePath antes de reproducir la cola
+     * completa de una vez, con aviso si alguna falla en vez de
+     * desaparecer sin más.
+     * ---
+     * "Play all" for the Favorites tab (S010) -- no longer silently
+     * skips non-downloaded favorites. Exact same pattern as
+     * PlaylistDetailViewModel.playPlaylist(): resolves each
+     * non-downloaded track's stream before playing the full queue at
+     * once, with a warning if any fail instead of just vanishing.
+     */
     fun playFavorites() {
-        playerManager.playQueue(_uiState.value.favorites.toQueueItems())
+        playResolvedFavorites(_uiState.value.favorites)
     }
 
     /** Plays every favorite in random order (pestaña Favoritos). */
     fun playFavoritesShuffled() {
-        playerManager.playQueue(_uiState.value.favorites.shuffled().toQueueItems())
+        playResolvedFavorites(_uiState.value.favorites.shuffled())
+    }
+
+    private fun playResolvedFavorites(tracks: List<SearchResultTrack>) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isResolvingFavorites = true,
+                favoritesResolveError = null,
+            )
+            var resolutionFailures = 0
+            val items = tracks.mapNotNull { track ->
+                val localPath = track.filePath
+                val remoteUrl = track.youtubeUrl
+                if (localPath != null) {
+                    QueueItem(
+                        uri = localPath,
+                        title = track.title,
+                        isLocal = true,
+                        artist = track.artist ?: track.channelTitle,
+                        youtubeId = track.youtubeId,
+                        channelTitle = track.channelTitle,
+                    )
+                } else if (remoteUrl == null) {
+                    resolutionFailures++
+                    null
+                } else {
+                    try {
+                        val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
+                        QueueItem(
+                            uri = streamUrl,
+                            title = track.title,
+                            isLocal = false,
+                            artist = track.artist ?: track.channelTitle,
+                            youtubeId = track.youtubeId,
+                            channelTitle = track.channelTitle,
+                        )
+                    } catch (e: Exception) {
+                        resolutionFailures++
+                        null
+                    }
+                }
+            }
+            _uiState.value = _uiState.value.copy(
+                isResolvingFavorites = false,
+                favoritesResolveError = if (resolutionFailures > 0) {
+                    "No se pudieron resolver $resolutionFailures pista(s); se reproduce el resto."
+                } else {
+                    null
+                },
+            )
+            if (items.isNotEmpty()) {
+                playerManager.playQueue(items)
+            }
+        }
     }
 
     private fun List<SearchResultTrack>.toQueueItems(): List<QueueItem> =
