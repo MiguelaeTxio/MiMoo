@@ -68,6 +68,7 @@ interface MusicBrainzApiService {
         @Query("query") query: String,
         @Query("fmt") format: String = "json",
         @Query("limit") limit: Int = 5,
+        @Query("offset") offset: Int = 0,
     ): MusicBrainzArtistSearchResponse
 
     /**

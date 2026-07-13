@@ -183,8 +183,35 @@ class RadioRepository @Inject constructor(
         countryCode: String?,
         excludeLower: Set<String>,
     ): List<String> = try {
+        // S010 -- offset aleatorio, no siempre 0 (petición explícita
+        // de Miguel Ángel: "siempre mete las mismas canciones").
+        // MusicBrainz devuelve los resultados de búsqueda en un orden
+        // ESTABLE por puntuación de relevancia -- sin variar el
+        // offset, cualquier sesión de Radio con el mismo género+país
+        // recibe SIEMPRE el mismo top-10 fijo, así que distintas
+        // sesiones acaban cayendo en el mismo puñado de artistas una y
+        // otra vez. Tramo elegido al azar dentro de un rango moderado
+        // (0-90, saltos de 10) -- lo bastante amplio para dar
+        // variedad real, sin arriesgarse a pedir un tramo tan lejano
+        // que ya no tenga resultados para géneros menos poblados (si
+        // el offset se pasa del total, MusicBrainz simplemente
+        // devuelve una página vacía, que el resto del código ya trata
+        // igual que "sin candidatos").
+        // ---
+        // S010 -- random offset, not always 0 (explicit request from
+        // Miguel Ángel: "it always brings back the same songs").
+        // MusicBrainz returns search results in a STABLE
+        // relevance-score order -- without varying the offset, any
+        // Radio session with the same genre+country always gets the
+        // exact same fixed top-10, so different sessions keep landing
+        // on the same handful of artists over and over. Range chosen
+        // to give real variety without risking an offset so far out
+        // that less-populated genres run out of results (an
+        // out-of-range offset just returns an empty page, already
+        // handled the same as "no candidates").
+        val randomOffset = (0..90 step 10).random()
         musicBrainzApiService
-            .searchArtists(query = buildGenreQuery(genre, countryCode), limit = 10)
+            .searchArtists(query = buildGenreQuery(genre, countryCode), limit = 10, offset = randomOffset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
