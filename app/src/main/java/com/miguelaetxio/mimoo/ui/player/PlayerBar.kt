@@ -262,6 +262,17 @@ fun PlayerBar(
                     }
                 }
             }
+
+            // S010 -- pequeña franja vacía del color de fondo debajo
+            // de la carátula, para que no quede pegada al filo
+            // inferior de la pantalla. Petición explícita: la mitad de
+            // alta que la franja de controles de arriba.
+            // ---
+            // S010 -- small empty strip in the background color below
+            // the cover art, so it doesn't sit flush against the
+            // bottom edge of the screen. Explicit request: half as
+            // tall as the controls strip above.
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
