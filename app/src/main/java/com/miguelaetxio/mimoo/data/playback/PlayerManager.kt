@@ -104,6 +104,9 @@ data class PlaybackState(
     val isPlaying: Boolean = false,
     val currentTitle: String? = null,
     val currentYoutubeId: String? = null,
+    /** S010 -- necesarios junto a currentYoutubeId para poder crear la fila de favorito de una pista transitoria de Radio (SearchResultTrackRepository.setFavoriteEnsuringRow()). */
+    val currentArtist: String? = null,
+    val currentChannelTitle: String? = null,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
     val isLocal: Boolean = false,
@@ -980,6 +983,8 @@ class PlayerManager @Inject constructor(
         _state.value = _state.value.copy(
             currentTitle = item?.title,
             currentYoutubeId = item?.youtubeId,
+            currentArtist = item?.artist,
+            currentChannelTitle = item?.channelTitle,
             isLocal = item?.isLocal ?: false,
             queueIndex = if (queueItems.isEmpty()) -1 else index,
             queueSize = queueItems.size,

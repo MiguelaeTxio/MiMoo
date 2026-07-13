@@ -172,7 +172,7 @@ private fun DraggableQueueList(
     onTogglePlayPause: () -> Unit,
     onRemove: (Int) -> Unit,
     onMove: (Int, Int) -> Unit,
-    onToggleFavorite: (String) -> Unit,
+    onToggleFavorite: (QueueItem) -> Unit,
 ) {
     var rowHeightPx by remember { mutableStateOf(0f) }
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
@@ -191,7 +191,7 @@ private fun DraggableQueueList(
                 onClick = { if (!isBeingDragged) onClick(index) },
                 onTogglePlayPause = onTogglePlayPause,
                 onRemove = { onRemove(index) },
-                onToggleFavorite = { item.youtubeId?.let(onToggleFavorite) },
+                onToggleFavorite = { onToggleFavorite(item) },
                 modifier = Modifier
                     .zIndex(if (isBeingDragged) 1f else 0f)
                     .offset { IntOffset(0, offsetY) }

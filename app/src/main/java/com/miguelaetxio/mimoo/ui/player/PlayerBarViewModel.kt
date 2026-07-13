@@ -85,9 +85,17 @@ class PlayerBarViewModel @Inject constructor(
     }
 
     fun toggleCurrentFavorite() {
-        val youtubeId = state.value.currentYoutubeId ?: return
+        val current = state.value
+        val youtubeId = current.currentYoutubeId ?: return
+        val title = current.currentTitle ?: return
         viewModelScope.launch {
-            searchResultTrackRepository.updateFavorite(youtubeId, !_isCurrentFavorite.value)
+            searchResultTrackRepository.setFavoriteEnsuringRow(
+                youtubeId = youtubeId,
+                isFavorite = !_isCurrentFavorite.value,
+                title = title,
+                channelTitle = current.currentChannelTitle ?: title,
+                artist = current.currentArtist,
+            )
             refreshFavoriteState(youtubeId)
         }
     }

@@ -138,6 +138,59 @@ class SearchResultTrackRepository @Inject constructor(
         dao.updateFavorite(youtubeId, isFavorite)
 
     /**
+     * Igual que updateFavorite(), pero a prueba de pistas que nunca
+     * llegaron a tener fila en la base de datos (S010, reportado por
+     * Miguel Ángel: "añadir a favoritos solo funciona con algunas
+     * canciones de la cola"). Causa real: las pistas que añade la
+     * Radio (H08, fetchOneRadioTrack) son transitorias -- viven solo
+     * en la cola en memoria de PlayerManager, nunca se insertan en
+     * Room. updateFavorite() es un UPDATE puro por youtubeId (ver
+     * SearchResultTrackDao) -- si no hay fila con ese youtubeId, el
+     * UPDATE no toca 0 filas y no pasa nada, en silencio total, sin
+     * ningún error que avisara del fallo.
+     *
+     * Usar SIEMPRE que el favorito se marque desde el reproductor/cola
+     * (PlayerBar, QueueScreen) en vez de desde una pantalla que ya
+     * garantiza que la fila existe (Búsqueda, Biblioteca, donde el
+     * propio SearchResultTrack ya viene de una fila real de Room).
+     * ---
+     * Same as updateFavorite(), but safe for tracks that never got a
+     * database row at all (S010). Real cause: tracks Radio adds (H08,
+     * fetchOneRadioTrack) are transient -- they only live in
+     * PlayerManager's in-memory queue, never inserted into Room.
+     * updateFavorite() is a plain UPDATE by youtubeId -- if no row
+     * exists, it silently updates 0 rows, with no error to signal the
+     * failure.
+     *
+     * ALWAYS use when the favorite is toggled from the player/queue
+     * (PlayerBar, QueueScreen) instead of from a screen that already
+     * guarantees the row exists (Search, Library).
+     */
+    suspend fun setFavoriteEnsuringRow(
+        youtubeId: String,
+        isFavorite: Boolean,
+        title: String,
+        channelTitle: String,
+        artist: String?,
+    ) {
+        if (dao.getById(youtubeId) != null) {
+            dao.updateFavorite(youtubeId, isFavorite)
+        } else {
+            dao.insert(
+                SearchResultTrack(
+                    youtubeId = youtubeId,
+                    title = title,
+                    channelTitle = channelTitle,
+                    durationSeconds = 0,
+                    thumbnailUrl = null,
+                    artist = artist,
+                    isFavorite = isFavorite,
+                ),
+            )
+        }
+    }
+
+    /**
      * Persists a resolved cover art URL for every track of the given
      * artist+album (PASO 6, H03).
      * ---

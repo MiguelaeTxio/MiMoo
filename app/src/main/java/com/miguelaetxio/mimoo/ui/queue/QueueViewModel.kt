@@ -51,10 +51,34 @@ class QueueViewModel @Inject constructor(
         .map { tracks -> tracks.filter { it.isFavorite }.map { it.youtubeId }.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
-    fun toggleFavorite(youtubeId: String) {
+    /**
+     * Recibe el QueueItem completo, no solo el youtubeId (S010,
+     * reportado por Miguel Ángel: "añadir a favoritos solo funciona
+     * con algunas canciones de la cola") -- las pistas que añade la
+     * Radio (H08) son transitorias, nunca llegan a tener fila en Room,
+     * así que un UPDATE simple por youtubeId no tocaba ninguna fila y
+     * el favorito se perdía en silencio. setFavoriteEnsuringRow() crea
+     * la fila si hace falta, con los datos que ya trae el propio
+     * QueueItem.
+     * ---
+     * Takes the full QueueItem, not just the youtubeId (S010,
+     * reported by Miguel Ángel: favoriting only worked for some queue
+     * tracks) -- tracks Radio (H08) adds are transient, never get a
+     * Room row, so a plain UPDATE by youtubeId touched nothing and the
+     * favorite silently vanished. setFavoriteEnsuringRow() creates the
+     * row if needed, using the data the QueueItem already carries.
+     */
+    fun toggleFavorite(item: QueueItem) {
+        val youtubeId = item.youtubeId ?: return
         viewModelScope.launch {
             val isFavorite = youtubeId in favoriteYoutubeIds.value
-            searchResultTrackRepository.updateFavorite(youtubeId, !isFavorite)
+            searchResultTrackRepository.setFavoriteEnsuringRow(
+                youtubeId = youtubeId,
+                isFavorite = !isFavorite,
+                title = item.title,
+                channelTitle = item.channelTitle ?: item.title,
+                artist = item.artist,
+            )
         }
     }
 
