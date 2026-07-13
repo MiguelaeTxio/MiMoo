@@ -295,6 +295,9 @@ class SettingsViewModel @Inject constructor(
         Log.d(TAG, step5)
         BackupDebugLogger.log(activity, storageManager, step5)
 
+        _uiState.value = BackupUiState.ImportSuccess(result.importedTracks.size)
+    }
+
     /**
      * "Importar desde archivo" (S010, petición explícita de Miguel
      * Ángel): la app pide el scope `drive.file` de Drive a propósito
