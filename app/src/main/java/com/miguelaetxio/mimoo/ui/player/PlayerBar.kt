@@ -23,21 +23,40 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 
 /**
- * onOpenQueue: tocar el título/artista abre la pantalla de gestión de
- * la cola de sesión (QueueScreen) -- petición explícita de Miguel
- * Ángel (2026-07-05), patrón habitual de mini-reproductor -> pantalla
- * de cola en cualquier app de música.
+ * S010 -- "reproductor expandido", rediseño completo pedido por
+ * Miguel Ángel tras un primer intento fallido (carátula pequeña
+ * mezclada con los controles, no era lo pedido). Orden EXACTO,
+ * confirmado explícitamente:
+ *   1. Controles arriba del todo (aleatorio/favorito/anterior/
+ *      play-pausa/siguiente/repetir).
+ *   2. Barra de progreso + tiempos, debajo de los controles.
+ *   3. Carátula cuadrada GRANDE a la izquierda, metadatos (título,
+ *      artista, streaming/local) a su derecha -- la fila más abajo
+ *      del todo.
+ * Tamaño de la carátula: lado = ancho de pantalla ÷ 2 (fórmula
+ * explícita de Miguel Ángel), no un valor fijo en dp -- así escala
+ * igual de bien en un móvil pequeño que en una tablet.
+ *
+ * onOpenQueue: tocar el bloque de metadatos abre la cola de sesión
+ * (QueueScreen) -- mismo patrón ya existente, ahora sobre el bloque de
+ * metadatos en vez de sobre el título suelto.
  * ---
- * onOpenQueue: tapping the title/artist opens the session queue
- * management screen (QueueScreen) -- explicit request from Miguel
- * Ángel (2026-07-05), the usual mini-player -> queue screen pattern in
- * any music app.
+ * S010 -- "expanded player", full redesign requested by Miguel Ángel
+ * after a first failed attempt. EXACT order, explicitly confirmed:
+ *   1. Controls at the very top.
+ *   2. Progress bar + times, below the controls.
+ *   3. Big square cover art on the left, metadata on its right -- the
+ *      bottom-most row.
+ * Cover art size: side = screen width ÷ 2 (Miguel Ángel's explicit
+ * formula), not a fixed dp value -- scales the same on a small phone
+ * and a tablet.
  */
 @Composable
 fun PlayerBar(
@@ -49,117 +68,19 @@ fun PlayerBar(
     val isCurrentFavorite by viewModel.isCurrentFavorite.collectAsState()
     val coverArtUrl by viewModel.coverArtUrl.collectAsState()
     val title = state.currentTitle ?: return
+    val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
 
     Surface(tonalElevation = 4.dp) {
         Column(modifier = Modifier.fillMaxWidth()) {
+
+            // 1 -- Controles, arriba del todo.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                // S010 -- "reproductor expandido" (petición explícita
-                // de Miguel Ángel): carátula cuadrada siempre visible
-                // en la propia barra persistente, sin tener que tocar
-                // nada para verla. 56dp -- lo bastante grande para
-                // notarse frente a la barra compacta anterior, sin
-                // comerse tanto alto que reste sitio de verdad al
-                // contenido de la pantalla que hay detrás.
-                // ---
-                // S010 -- "expanded player": square cover art always
-                // visible in the persistent bar itself, no tap needed.
-                // 56dp -- big enough to feel like an upgrade over the
-                // old compact bar, without eating into the screen
-                // content behind it.
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                ) {
-                    if (coverArtUrl != null) {
-                        SubcomposeAsyncImage(
-                            model = coverArtUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            error = { PlayerBarArtPlaceholder() },
-                        )
-                    } else {
-                        PlayerBarArtPlaceholder()
-                    }
-                }
-
-                Spacer(Modifier.width(12.dp))
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = onOpenQueue),
-                ) {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    // S010 -- línea de artista, parte de los
-                    // "metadatos" que pidió Miguel Ángel junto a la
-                    // carátula. Solo si hay dato real -- una emisora de
-                    // Radio-Browser.info, por ejemplo, no tiene.
-                    // ---
-                    // S010 -- artist line, part of the "metadata"
-                    // requested alongside the cover art. Only shown
-                    // when there's real data.
-                    if (!state.currentArtist.isNullOrBlank()) {
-                        Text(
-                            text = state.currentArtist!!,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    // H09 -- icono + etiqueta corta en vez de una frase
-                    // larga ("Reproduciendo en streaming"), que se
-                    // recortaba a lo bruto en pantallas estrechas al
-                    // competir por espacio con los iconos de control.
-                    // Petición explícita: que se vea claramente cómo
-                    // se está reproduciendo.
-                    // ---
-                    // H09 -- icon + short label instead of a long
-                    // sentence ("Reproduciendo en streaming"), which
-                    // got clipped abruptly on narrow screens while
-                    // competing for space with the control icons.
-                    // Explicit request: it should be clear at a glance
-                    // how playback is happening.
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = if (state.isLocal) {
-                                Icons.Filled.Download
-                            } else {
-                                Icons.Filled.Cloud
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = if (state.isLocal) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.tertiary
-                            },
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = if (state.isLocal) "Local" else "Streaming",
-                            maxLines = 1,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (state.isLocal) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.tertiary
-                            },
-                        )
-                    }
-                }
-
                 if (state.queueSize > 1) {
                     IconButton(onClick = viewModel::toggleShuffle) {
                         Icon(
@@ -178,18 +99,6 @@ fun PlayerBar(
                     }
                 }
 
-                // H08 -- "anterior" ya no depende de que haya más de
-                // una pista en cola. Petición explícita tras probar
-                // la Radio con un único tema: debe poder reiniciarse
-                // desde el principio aunque no haya pista anterior de
-                // verdad (ver PlayerManager.playPrevious()).
-                // ---
-                // H08 -- "previous" no longer depends on the queue
-                // having more than one track. Explicit request after
-                // testing Radio with a single track: it should be
-                // possible to restart from the beginning even with no
-                // real previous track (see
-                // PlayerManager.playPrevious()).
                 if (state.currentYoutubeId != null) {
                     IconButton(onClick = viewModel::toggleCurrentFavorite) {
                         Icon(
@@ -208,25 +117,16 @@ fun PlayerBar(
                     }
                 }
 
+                // H08 -- "anterior" no depende de que haya más de una
+                // pista en cola, ver PlayerManager.playPrevious().
                 IconButton(onClick = viewModel::playPrevious) {
-                    Icon(
-                        Icons.Filled.SkipPrevious,
-                        contentDescription = "Anterior",
-                    )
+                    Icon(Icons.Filled.SkipPrevious, contentDescription = "Anterior")
                 }
 
                 IconButton(onClick = viewModel::togglePlayPause) {
                     Icon(
-                        imageVector = if (state.isPlaying) {
-                            Icons.Filled.Pause
-                        } else {
-                            Icons.Filled.PlayArrow
-                        },
-                        contentDescription = if (state.isPlaying) {
-                            "Pausar"
-                        } else {
-                            "Reproducir"
-                        },
+                        imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = if (state.isPlaying) "Pausar" else "Reproducir",
                     )
                 }
 
@@ -236,10 +136,7 @@ fun PlayerBar(
                         enabled = state.repeatModeEnabled ||
                             state.queueIndex < state.queueSize - 1,
                     ) {
-                        Icon(
-                            Icons.Filled.SkipNext,
-                            contentDescription = "Siguiente",
-                        )
+                        Icon(Icons.Filled.SkipNext, contentDescription = "Siguiente")
                     }
                 }
 
@@ -262,24 +159,12 @@ fun PlayerBar(
                 }
             }
 
-            // H08 -- tiempo transcurrido/restante + barra de progreso
-            // arrastrable. Petición explícita: "deberíamos de
-            // presentar el tiempo de reproducción, el total y el que
-            // queda, y una barra de progreso". Solo se muestra con
-            // duración conocida (duration > 0) -- un stream recién
-            // arrancado puede no tener duración resuelta todavía.
-            // ---
-            // H08 -- elapsed/remaining time + draggable progress bar.
-            // Explicit request: "we should show the playback time, the
-            // total, and what's left, and a progress bar". Only shown
-            // once the duration is known (duration > 0) -- a
-            // just-started stream might not have its duration resolved
-            // yet.
+            // 2 -- Barra de progreso + tiempos, debajo de los controles.
             if (state.durationMs > 0) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 0.dp),
+                        .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -301,7 +186,81 @@ fun PlayerBar(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // 3 -- Carátula grande (lado = ancho de pantalla / 2) a la
+            // izquierda, metadatos a su derecha. Fila más abajo del todo.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clickable(onClick = onOpenQueue),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(artSize)
+                        .clip(RoundedCornerShape(8.dp)),
+                ) {
+                    if (coverArtUrl != null) {
+                        SubcomposeAsyncImage(
+                            model = coverArtUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            error = { PlayerBarArtPlaceholder() },
+                        )
+                    } else {
+                        PlayerBarArtPlaceholder()
+                    }
+                }
+
+                Spacer(Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    if (!state.currentArtist.isNullOrBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = state.currentArtist!!,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    // H09 -- icono + etiqueta corta en vez de una frase
+                    // larga, ver historial de esta misma fila más abajo.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (state.isLocal) Icons.Filled.Download else Icons.Filled.Cloud,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = if (state.isLocal) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.tertiary
+                            },
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = if (state.isLocal) "Local" else "Streaming",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (state.isLocal) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.tertiary
+                            },
+                        )
+                    }
+                }
             }
         }
     }
