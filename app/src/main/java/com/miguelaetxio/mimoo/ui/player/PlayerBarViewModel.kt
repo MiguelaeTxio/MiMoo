@@ -6,16 +6,20 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlaybackState
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlayerBarViewModel @Inject constructor(
     private val playerManager: PlayerManager,
@@ -91,10 +95,34 @@ class PlayerBarViewModel @Inject constructor(
                 delay(500)
             }
         }
+        // S010 -- flatMapLatest en vez de un simple collect+lookup de
+        // un solo disparo: si la Biblioteca resuelve la carátula EN
+        // SEGUNDO PLANO después de que esta pista ya haya empezado a
+        // sonar (requestCoverArtIfMissing() es asíncrono), esta pista
+        // sigue observando su propia fila y se entera del cambio en
+        // cuanto llega -- no se queda con el valor null que tenía al
+        // arrancar.
+        // ---
+        // S010 -- flatMapLatest instead of a simple one-shot
+        // collect+lookup: if the Library resolves the cover art IN THE
+        // BACKGROUND after this track has already started playing,
+        // this keeps observing that row and finds out as soon as it
+        // arrives -- doesn't stay stuck with the null value it had at
+        // start.
         viewModelScope.launch {
-            state.map { it.currentYoutubeId }.distinctUntilChanged().collect { youtubeId ->
-                refreshFavoriteState(youtubeId)
-            }
+            state.map { it.currentYoutubeId }
+                .distinctUntilChanged()
+                .flatMapLatest { youtubeId ->
+                    if (youtubeId == null) {
+                        flowOf(null)
+                    } else {
+                        searchResultTrackRepository.getByIdFlow(youtubeId)
+                    }
+                }
+                .collect { track ->
+                    _isCurrentFavorite.value = track?.isFavorite == true
+                    _coverArtUrl.value = track?.coverArtUrl
+                }
         }
     }
 

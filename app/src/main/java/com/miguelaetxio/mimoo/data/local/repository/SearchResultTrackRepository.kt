@@ -52,6 +52,10 @@ class SearchResultTrackRepository @Inject constructor(
     suspend fun getById(youtubeId: String): SearchResultTrack? =
         dao.getById(youtubeId)
 
+    /** Versión reactiva de getById() (S010) -- ver SearchResultTrackDao.getByIdFlow(). */
+    fun getByIdFlow(youtubeId: String): Flow<SearchResultTrack?> =
+        dao.getByIdFlow(youtubeId)
+
     suspend fun cacheSearchResults(tracks: List<SearchResultTrack>) =
         dao.insertAll(tracks)
 

@@ -23,6 +23,23 @@ interface SearchResultTrackDao {
     suspend fun getById(youtubeId: String): SearchResultTrack?
 
     /**
+     * Versión reactiva de getById() (S010) -- la Biblioteca resuelve y
+     * guarda la carátula (requestCoverArtIfMissing() ->
+     * updateCoverArtForAlbum()) de forma asíncrona, en segundo plano.
+     * Si una pista empieza a sonar antes de que eso termine,
+     * getById() (una sola lectura) nunca se entera de que la carátula
+     * llegó después -- necesario para que PlayerBar la muestre en
+     * cuanto esté disponible.
+     * ---
+     * Reactive version of getById() (S010) -- the Library resolves and
+     * saves cover art asynchronously, in the background. If a track
+     * starts playing before that finishes, getById() (a single read)
+     * never finds out the cover arrived later.
+     */
+    @Query("SELECT * FROM search_result_tracks WHERE youtubeId = :youtubeId")
+    fun getByIdFlow(youtubeId: String): Flow<SearchResultTrack?>
+
+    /**
      * Borra TODAS las filas -- solo para la importación destructiva de
      * H06 PASO 4 (sustitución completa del repositorio). Se llama
      * dentro de AppDatabase.withTransaction junto al borrado de las
