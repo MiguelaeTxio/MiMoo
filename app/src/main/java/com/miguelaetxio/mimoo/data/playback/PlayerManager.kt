@@ -792,7 +792,7 @@ class PlayerManager @Inject constructor(
     }
 
     /**
-     * S010 -- tres intentos en cadena para fijar el ancla de una
+     * S010 -- CUATRO intentos en cadena para fijar el ancla de una
      * sesión de Radio, cada uno solo si el anterior no encontró NADA
      * en MusicBrainz:
      *   1. Nombre de canal de YouTube (más fiable en general, pero
@@ -802,19 +802,34 @@ class PlayerManager @Inject constructor(
      *   2. Artista estructurado de H05 (emparejamiento heurístico
      *      contra MusicBrainz por título -- puede no existir para esa
      *      pista en absoluto).
-     *   3. NUEVO -- parseado del propio título del vídeo, patrón
+     *   3. Parseado del propio título del vídeo, patrón
      *      "Artista - Canción" (extremadamente común en YouTube,
      *      incluso en resubidas de canales random como el caso de
-     *      arriba). Última red de seguridad antes de rendirse del
-     *      todo.
+     *      arriba).
+     *   4. NUEVO -- si ninguno de los tres anteriores encontró NADA
+     *      (caso real: "Def Con Dos Armas pal pueblo", subida por un
+     *      canal random sin relación, sin artista de H05, sin guion en
+     *      el título que parsear), ancla FIJA a género "classical" sin
+     *      país -- petición explícita de Miguel Ángel: mejor seguir
+     *      con algo, aunque no tenga relación real con el origen, que
+     *      dejar la Radio muerta del todo. Género elegido a propósito:
+     *      "classical" es una etiqueta enorme y estable en MusicBrainz
+     *      (miles de artistas con géneros bien poblados), así que este
+     *      último escalón prácticamente nunca falla también.
      * ---
-     * S010 -- three chained attempts to fix a Radio session's anchor,
+     * S010 -- FOUR chained attempts to fix a Radio session's anchor,
      * each only if the previous one found NOTHING in MusicBrainz:
      *   1. YouTube channel name.
      *   2. H05's structured artist.
-     *   3. NEW -- parsed from the video title itself, "Artist - Song"
-     *      pattern (extremely common on YouTube, even on reuploads
-     *      from random channels).
+     *   3. Parsed from the video title itself, "Artist - Song" pattern.
+     *   4. NEW -- if none of the three above found ANYTHING, a FIXED
+     *      anchor to genre "classical" with no country -- explicit
+     *      request from Miguel Ángel: better to keep Radio going with
+     *      something, even unrelated to the actual origin, than leave
+     *      it dead entirely. Genre chosen on purpose: "classical" is a
+     *      huge, stable MusicBrainz tag (thousands of well-populated
+     *      artists), so this last resort essentially never fails
+     *      either.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
         radioRepository.resolveAnchor(anchorArtistName)?.let { return it }
@@ -843,9 +858,9 @@ class PlayerManager @Inject constructor(
         RadioDebugLogger.log(
             appContext, storageManager,
             "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado en NINGUNO de los " +
-                "intentos (canal, H05, título) -- sin más respaldos que probar",
+                "intentos (canal, H05, título) -- cayendo a género fijo 'classical' sin país",
         )
-        return null
+        return RadioAnchor(genre = FALLBACK_GENRE, country = null)
     }
 
     /**
@@ -1352,6 +1367,22 @@ class PlayerManager @Inject constructor(
          * adding tracks up to 10 more... always keeping 10 more".
          */
         const val RADIO_QUEUE_SIZE = 10
+
+        /**
+         * S010 -- último escalón cuando canal, artista de H05 y título
+         * fallan los tres a la vez (ver resolveAnchorWithFallbacks()).
+         * Petición explícita de Miguel Ángel: mejor seguir con algo que
+         * dejar la Radio muerta. "classical" elegido por ser una
+         * etiqueta enorme y estable en MusicBrainz -- prácticamente
+         * nunca se queda sin candidatos.
+         * ---
+         * S010 -- last resort when channel, H05 artist and title all
+         * fail at once. Explicit request from Miguel Ángel: better to
+         * keep going with something than leave Radio dead. "classical"
+         * chosen for being a huge, stable MusicBrainz tag -- it
+         * essentially never runs out of candidates.
+         */
+        const val FALLBACK_GENRE = "classical"
 
         /**
          * H08 -- por encima de esto, un resultado de búsqueda se
