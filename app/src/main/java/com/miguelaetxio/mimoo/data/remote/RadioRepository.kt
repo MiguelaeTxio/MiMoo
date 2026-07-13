@@ -209,7 +209,7 @@ class RadioRepository @Inject constructor(
         // that less-populated genres run out of results (an
         // out-of-range offset just returns an empty page, already
         // handled the same as "no candidates").
-        val randomOffset = (0..90 step 10).random()
+        val randomOffset = (0..90 step 10).toList().random()
         musicBrainzApiService
             .searchArtists(query = buildGenreQuery(genre, countryCode), limit = 10, offset = randomOffset)
             .artists
