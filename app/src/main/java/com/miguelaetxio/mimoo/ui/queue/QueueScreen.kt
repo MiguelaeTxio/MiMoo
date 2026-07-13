@@ -179,7 +179,25 @@ private fun DraggableQueueList(
     var dragOffsetY by remember { mutableStateOf(0f) }
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
-        itemsIndexed(queue, key = { index, _ -> index }) { index, item ->
+        // S010 -- crash real (IllegalArgumentException: Key "1" was
+        // already used), mismo tipo de fallo ya visto y arreglado en
+        // los chips de país de RadioBrowserScreen: el índice puro como
+        // key es frágil en un LazyColumn con contenido dinámico
+        // (arrastrar-para-reordenar, Radio añadiendo pistas nuevas
+        // mientras la pantalla está abierta) -- la subcomposición
+        // "beyond bounds" de Compose puede llegar a pedir el mismo
+        // índice dos veces en el mismo pase. Clave compuesta
+        // índice+uri, mismo criterio que el fix anterior.
+        // ---
+        // S010 -- real crash (IllegalArgumentException: Key "1" was
+        // already used), same class of bug already seen and fixed in
+        // RadioBrowserScreen's country chips: a bare index as key is
+        // fragile in a LazyColumn with dynamic content (drag-to-reorder,
+        // Radio adding new tracks while the screen is open) -- Compose's
+        // "beyond bounds" subcomposition can end up requesting the same
+        // index twice in the same pass. Composite index+uri key, same
+        // approach as the earlier fix.
+        itemsIndexed(queue, key = { index, item -> "$index-${item.uri}" }) { index, item ->
             val isBeingDragged = draggedIndex == index
             val offsetY = if (isBeingDragged) dragOffsetY.roundToInt() else 0
 
