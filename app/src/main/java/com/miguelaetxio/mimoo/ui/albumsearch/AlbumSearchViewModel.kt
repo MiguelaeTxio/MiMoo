@@ -240,10 +240,31 @@ class AlbumSearchViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(manualSearchCandidates = emptyList())
     }
 
-    /** Applies a manually chosen candidate to one track (PASO 4). */
-    fun applyManualMatch(position: Int, candidate: TrackDto) {
+    /**
+     * Applies a manually chosen candidate to one track (PASO 4).
+     *
+     * S010 -- identifica la pista objetivo por IGUALDAD DE REFERENCIA
+     * (el propio objeto AlbumTrackMatch, no su position) -- position
+     * es un campo de MusicBrainz por disco, no global (ver
+     * AlbumMatchRepository: .media.flatMap { it.tracks }), así que en
+     * una edición de varios CDs corregir "pista 1" a mano corregía A
+     * LA VEZ la pista 1 del disco 1 Y la pista 1 del disco 2. El
+     * objeto que llega aquí es siempre la instancia exacta que ya
+     * estaba en uiState.matches (viene de ahí mismo, sin copiar), así
+     * que compararlo por referencia identifica sin ambigüedad la fila
+     * correcta.
+     * ---
+     * S010 -- identifies the target track by REFERENCE EQUALITY (the
+     * AlbumTrackMatch object itself, not its position) -- position is
+     * a per-disc MusicBrainz field, not global, so on a multi-disc
+     * release manually correcting "track 1" corrected disc 1 track 1
+     * AND disc 2 track 1 at once. The object arriving here is always
+     * the exact instance already in uiState.matches, so comparing by
+     * reference unambiguously identifies the right row.
+     */
+    fun applyManualMatch(target: AlbumTrackMatch, candidate: TrackDto) {
         val updated = _uiState.value.matches.map { match ->
-            if (match.position == position) {
+            if (match === target) {
                 match.copy(matchedTrack = candidate, isAutoMatched = false)
             } else {
                 match

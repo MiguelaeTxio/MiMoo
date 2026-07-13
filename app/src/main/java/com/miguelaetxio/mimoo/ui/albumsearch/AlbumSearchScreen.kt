@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
@@ -153,7 +154,30 @@ fun AlbumSearchScreen(
                     Spacer(Modifier.height(8.dp))
 
                     LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(uiState.matches, key = { it.position }) { match ->
+                        // S010 -- crash real ("Key 1 was already
+                        // used"): AlbumMatchRepository aplana todos
+                        // los discos de una edición con
+                        // .media.flatMap { it.tracks } y usa
+                        // mbTrack.position tal cual -- ese campo de
+                        // MusicBrainz es por disco, no global (la
+                        // pista 1 del disco 1 y la pista 1 del disco 2
+                        // comparten position=1). Clave compuesta
+                        // índice+position, mismo criterio que las
+                        // demás listas dinámicas de la app.
+                        // ---
+                        // S010 -- real crash ("Key 1 was already
+                        // used"): AlbumMatchRepository flattens every
+                        // disc of a release with .media.flatMap { it.
+                        // tracks } and uses mbTrack.position as-is --
+                        // that MusicBrainz field is per-disc, not
+                        // global (disc 1 track 1 and disc 2 track 1
+                        // share position=1). Composite index+position
+                        // key, same approach as the app's other
+                        // dynamic lists.
+                        itemsIndexed(
+                            uiState.matches,
+                            key = { index, match -> "$index-${match.position}" },
+                        ) { _, match ->
                             AlbumTrackMatchRow(
                                 match = match,
                                 downloadStatus = match.matchedTrack?.let {
@@ -263,7 +287,7 @@ fun AlbumSearchScreen(
             isSearching = uiState.isSearchingManualCandidates,
             onSearch = viewModel::searchManualCandidates,
             onPick = { candidate ->
-                viewModel.applyManualMatch(match.position, candidate)
+                viewModel.applyManualMatch(match, candidate)
                 trackPendingManualMatch = null
             },
             onDismiss = {
