@@ -293,16 +293,56 @@ class AutoSyncViewModel @Inject constructor(
         }
     }
 
-    /** Caso 3, respuesta "sí, se añadieron/borraron pistas en otro dispositivo" -- la nube sustituye a local. */
+    /**
+     * Caso 3, respuesta "sí, se añadieron/borraron pistas en otro
+     * dispositivo" -- la nube sustituye a local.
+     *
+     * Fallo real detectado en logs de Miguel Ángel (2026-07-14): esta
+     * función lanzaba la llamada de red sin `try/catch`, a diferencia
+     * de `startAutoSync()`/`onConsentResolved()`. Un timeout real de
+     * Drive (confirmado en `crash_log`) dejaba la excepción sin
+     * capturar -- la app se caía, y al reabrirse volvía a preguntar
+     * lo mismo desde cero, en bucle. Además, como el estado no
+     * cambiaba hasta que la llamada de red terminaba, nada impedía
+     * pulsar otra vez mientras la anterior seguía en vuelo (varias
+     * subidas concurrentes). Fix: capturar el fallo como ya se hacía
+     * en `startAutoSync()`, y pasar a `Checking` de forma síncrona en
+     * cuanto se pulsa, para que el diálogo desaparezca al instante y
+     * un segundo toque no dispare otra llamada.
+     * ---
+     * Case 3, "yes, tracks were added/removed on another device" --
+     * cloud replaces local.
+     *
+     * Real bug found in Miguel Ángel's logs (2026-07-14): this
+     * function fired the network call with no `try/catch`, unlike
+     * `startAutoSync()`/`onConsentResolved()`. A real Drive timeout
+     * (confirmed in `crash_log`) left the exception uncaught -- the
+     * app crashed, and on reopening asked the same question again
+     * from scratch, in a loop. Also, since the state didn't change
+     * until the network call finished, nothing stopped a second tap
+     * while the first was still in flight (multiple concurrent
+     * uploads). Fix: catch the failure the same way
+     * `startAutoSync()` already does, and move to `Checking`
+     * synchronously the moment it's tapped, so the dialog disappears
+     * instantly and a second tap can't fire another call.
+     */
     fun confirmCloudWins() {
         val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
+        _uiState.value = AutoSyncUiState.Checking
         viewModelScope.launch {
-            restoreFromCloud(state.envelope.bundle)
-            verifyDiskAndReconcile()
-            pendingAccessToken = null
-            _uiState.value = AutoSyncUiState.Done(
-                "Restaurado desde la copia de ${state.envelope.deviceLabel}."
-            )
+            try {
+                restoreFromCloud(state.envelope.bundle)
+                verifyDiskAndReconcile()
+                pendingAccessToken = null
+                _uiState.value = AutoSyncUiState.Done(
+                    "Restaurado desde la copia de ${state.envelope.deviceLabel}."
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "confirmCloudWins() -- fallo restaurando desde Drive", e)
+                _uiState.value = AutoSyncUiState.Error(
+                    e.message ?: "No se pudo restaurar la copia de Drive."
+                )
+            }
         }
     }
 
@@ -340,15 +380,27 @@ class AutoSyncViewModel @Inject constructor(
         BackupDebugLogger.log(applicationContext, storageManager, done)
     }
 
-    /** Caso 3, respuesta "no" -- local sustituye a la nube (y se sube). */
+    /**
+     * Caso 3, respuesta "no" -- local sustituye a la nube (y se
+     * sube). Mismo fix que `confirmCloudWins()` -- ver comentario ahí
+     * para el diagnóstico completo (2026-07-14).
+     */
     fun confirmLocalWins() {
         val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
         val accessToken = pendingAccessToken ?: return
+        _uiState.value = AutoSyncUiState.Checking
         viewModelScope.launch {
-            verifyDiskAndReconcile()
-            pushAsNewEnvelope(accessToken)
-            pendingAccessToken = null
-            _uiState.value = AutoSyncUiState.Done("Tu copia local ha sustituido a la de Drive.")
+            try {
+                verifyDiskAndReconcile()
+                pushAsNewEnvelope(accessToken)
+                pendingAccessToken = null
+                _uiState.value = AutoSyncUiState.Done("Tu copia local ha sustituido a la de Drive.")
+            } catch (e: Exception) {
+                Log.w(TAG, "confirmLocalWins() -- fallo subiendo la copia local", e)
+                _uiState.value = AutoSyncUiState.Error(
+                    e.message ?: "No se pudo subir tu copia a Drive."
+                )
+            }
         }
     }
 
