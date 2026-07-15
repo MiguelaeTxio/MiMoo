@@ -67,22 +67,26 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val pendingConsent by viewModel.pendingConsent.collectAsState()
-    val generatedShareCode by viewModel.generatedShareCode.collectAsState()
+    val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
     val context = LocalContext.current
     val activity = context as Activity
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // H10 (S011) -- en cuanto el código "miMoo+hash" está generado,
-    // abre el selector de "Compartir" del sistema con ese texto y lo
-    // consume, para no relanzarlo en la siguiente recomposición.
-    LaunchedEffect(generatedShareCode) {
-        generatedShareCode?.let { code ->
+    // H10 (S011) -- en cuanto el archivo .mimoo está generado, abre
+    // el selector de "Compartir" del sistema con ese ARCHIVO
+    // (EXTRA_STREAM), no texto -- necesario para que el receptor
+    // tenga algo que tocar-para-abrir al recibirlo. Permiso de
+    // lectura otorgado explícitamente al chooser -- FileProvider
+    // exige esto para cualquier app que reciba el Uri content://.
+    LaunchedEffect(generatedShareFileUri) {
+        generatedShareFileUri?.let { uri ->
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_TEXT, code)
+                type = "application/octet-stream"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             context.startActivity(android.content.Intent.createChooser(intent, null))
-            viewModel.consumeGeneratedShareCode()
+            viewModel.consumeGeneratedShareFileUri()
         }
     }
 
@@ -248,7 +252,7 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Genera un código que se abre directamente con MiMoo al " +
+                "Genera un archivo que se abre directamente con MiMoo al " +
                     "enviarlo por WhatsApp o cualquier otro medio. Se añade " +
                     "a la biblioteca de quien lo abre sin borrar nada de lo " +
                     "que ya tenía, y descarga el contenido directamente " +

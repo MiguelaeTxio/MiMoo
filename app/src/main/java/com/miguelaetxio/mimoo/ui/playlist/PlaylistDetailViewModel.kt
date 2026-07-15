@@ -65,18 +65,18 @@ class PlaylistDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlaylistDetailUiState())
     val uiState: StateFlow<PlaylistDetailUiState> = _uiState.asStateFlow()
 
-    /** H10 (S011, niveles 7/8) -- código "miMoo+hash" de esta lista, mismo patrón que Ajustes/Biblioteca. */
-    private val _generatedShareCode = MutableStateFlow<String?>(null)
-    val generatedShareCode: StateFlow<String?> = _generatedShareCode.asStateFlow()
+    /** H10 (S011, niveles 7/8) -- Uri del archivo .mimoo de esta lista, mismo patrón que Ajustes/Biblioteca. */
+    private val _generatedShareFileUri = MutableStateFlow<android.net.Uri?>(null)
+    val generatedShareFileUri: StateFlow<android.net.Uri?> = _generatedShareFileUri.asStateFlow()
 
     fun shareReplica() {
         viewModelScope.launch {
-            _generatedShareCode.value = shareCodeRepository.buildPlaylistShareCode(playlistId)
+            _generatedShareFileUri.value = shareCodeRepository.buildPlaylistShareFile(playlistId)
         }
     }
 
-    fun consumeGeneratedShareCode() {
-        _generatedShareCode.value = null
+    fun consumeGeneratedShareFileUri() {
+        _generatedShareFileUri.value = null
     }
 
     init {

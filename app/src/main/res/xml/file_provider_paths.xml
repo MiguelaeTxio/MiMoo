@@ -10,4 +10,5 @@
 -->
 <paths xmlns:android="http://schemas.android.com/apk/res-auto">
     <cache-path name="apk_updates" path="apk_updates/" />
+    <cache-path name="share_files" path="share_files/" />
 </paths>

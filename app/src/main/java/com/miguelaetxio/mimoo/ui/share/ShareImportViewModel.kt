@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.share
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,18 +18,18 @@ import javax.inject.Inject
 private const val TAG = "MiMoo-ShareImport"
 
 /**
- * H10 -- estado de la pantalla/diálogo que recibe un código
- * "miMoo+hash" compartido por otra persona (vía el intent-filter
- * ACTION_SEND de MainActivity, ver AndroidManifest.xml). Mismo patrón
- * de UiState + confirmación explícita que `AutoSyncUiState` (H07),
- * pero sin autorización de por medio -- todo el contenido va ya
- * dentro del propio texto recibido, sin hablar con Drive ni con
- * ningún servidor.
+ * H10 -- estado de la pantalla/diálogo que recibe un archivo `.mimoo`
+ * compartido por otra persona (vía el intent-filter ACTION_VIEW de
+ * MainActivity, ver AndroidManifest.xml). Mismo patrón de UiState +
+ * confirmación explícita que `AutoSyncUiState` (H07), pero sin
+ * autorización de por medio -- todo el contenido va ya dentro del
+ * propio archivo recibido, sin hablar con Drive ni con ningún
+ * servidor.
  */
 sealed class ShareImportUiState {
     object Idle : ShareImportUiState()
 
-    /** Código decodificado, esperando que el receptor confirme antes de tocar su repositorio. */
+    /** Archivo decodificado, esperando que el receptor confirme antes de tocar su repositorio. */
     data class Confirm(val shareBundle: ShareBundle) : ShareImportUiState()
 
     object Importing : ShareImportUiState()
@@ -49,19 +50,21 @@ class ShareImportViewModel @Inject constructor(
     val uiState: StateFlow<ShareImportUiState> = _uiState.asStateFlow()
 
     /**
-     * Llamado desde MainActivity cuando llega un ACTION_SEND de texto
-     * plano que empieza por "miMoo+". Solo decodifica y muestra la
+     * Llamado desde MainActivity cuando el sistema abre MiMoo con un
+     * archivo `.mimoo` (ACTION_VIEW). Solo decodifica y muestra la
      * confirmación -- nunca toca el repositorio todavía, eso es
      * `confirmImport()`.
      */
-    fun handleIncomingShareCode(text: String) {
-        try {
-            val shareBundle = shareCodeRepository.decode(text)
-            Log.d(TAG, "handleIncomingShareCode() -- decodificado OK: ${shareBundle.scopeLabel}")
-            _uiState.value = ShareImportUiState.Confirm(shareBundle)
-        } catch (e: ShareCodeRepository.ShareParseException) {
-            Log.w(TAG, "handleIncomingShareCode() -- código inválido", e)
-            _uiState.value = ShareImportUiState.Error(e.message ?: "Código de compartición no válido.")
+    fun handleIncomingShareFile(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val shareBundle = shareCodeRepository.decodeFile(uri)
+                Log.d(TAG, "handleIncomingShareFile() -- decodificado OK: ${shareBundle.scopeLabel}")
+                _uiState.value = ShareImportUiState.Confirm(shareBundle)
+            } catch (e: ShareCodeRepository.ShareParseException) {
+                Log.w(TAG, "handleIncomingShareFile() -- archivo inválido", e)
+                _uiState.value = ShareImportUiState.Error(e.message ?: "Archivo de compartición no válido.")
+            }
         }
     }
 

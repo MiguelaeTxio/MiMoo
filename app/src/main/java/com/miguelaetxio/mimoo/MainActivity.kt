@@ -248,6 +248,7 @@ class MainActivity : ComponentActivity() {
     private fun handleViewIntent(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
+        if (isMimooShareFile(uri)) return
         val title = uri.lastPathSegment ?: "Pista externa"
         playerManager.play(uri.toString(), title, isLocal = true)
     }
@@ -260,21 +261,42 @@ class MainActivity : ComponentActivity() {
      * inyectan como campos de la Activity en vez de leerse solo
      * dentro de setContent().
      */
-    private val incomingShareText = mutableStateOf<String?>(null)
+    private val incomingShareFileUri = mutableStateOf<android.net.Uri?>(null)
 
     /**
-     * H10 (S011) -- ruta de entrada de un código "miMoo+hash"
-     * recibido vía el intent-filter ACTION_SEND (ver
-     * AndroidManifest.xml). Comprobación de prefijo aquí mismo, antes
-     * de tocar ningún ViewModel -- cualquier otro texto compartido a
-     * MiMoo por error (una URL cualquiera, texto suelto) se ignora en
-     * silencio, no genera ningún diálogo de error.
+     * H10 (S011, rediseñado tras la prueba real de Miguel Ángel --
+     * "eso así no sirve" con el texto plano) -- ruta de entrada de un
+     * archivo `.mimoo` recibido vía el intent-filter ACTION_VIEW (ver
+     * AndroidManifest.xml). `isMimooShareFile()` comprueba el nombre
+     * real del archivo antes de tocar ningún ViewModel -- necesario
+     * porque el intent-filter usa `mimeType="*/*"` (WhatsApp con
+     * frecuencia no informa bien el tipo MIME de una extensión
+     * desconocida), así que no basta con confiar en `intent.type`.
      */
-    private fun handleShareIntent(intent: Intent?) {
-        if (intent?.action != Intent.ACTION_SEND || intent.type != "text/plain") return
-        val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
-        if (text.trim().startsWith(com.miguelaetxio.mimoo.data.share.SHARE_CODE_PREFIX)) {
-            incomingShareText.value = text
+    private fun handleShareFileIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        if (isMimooShareFile(uri)) {
+            incomingShareFileUri.value = uri
+        }
+    }
+
+    private fun isMimooShareFile(uri: android.net.Uri): Boolean {
+        uri.lastPathSegment
+            ?.takeIf { it.endsWith(com.miguelaetxio.mimoo.data.share.SHARE_FILE_EXTENSION, ignoreCase = true) }
+            ?.let { return true }
+        // content:// URIs no siempre exponen la extensión real en el
+        // path -- mismo patrón de consulta que ya usa SettingsScreen
+        // para "Importar desde archivo" (OpenableColumns.DISPLAY_NAME).
+        return try {
+            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                cursor.moveToFirst() && nameIndex >= 0 &&
+                    cursor.getString(nameIndex)
+                        ?.endsWith(com.miguelaetxio.mimoo.data.share.SHARE_FILE_EXTENSION, ignoreCase = true) == true
+            } ?: false
+        } catch (e: Exception) {
+            false
         }
     }
 
@@ -282,13 +304,13 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleViewIntent(intent)
-        handleShareIntent(intent)
+        handleShareFileIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleViewIntent(intent)
-        handleShareIntent(intent)
+        handleShareFileIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(
@@ -417,21 +439,20 @@ class MainActivity : ComponentActivity() {
                     autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
                 }
 
-                // H10 (S011) -- código "miMoo+hash" recibido vía
-                // ACTION_SEND (handleShareIntent). LaunchedEffect
-                // reacciona en cuanto incomingShareText cambia de
-                // valor (recepción en frío en onCreate() o con la app
-                // ya abierta vía onNewIntent(), launchMode
-                // singleTask), decodifica, y limpia el valor para no
-                // reprocesar el mismo texto en una recomposición
-                // posterior.
+                // H10 (S011) -- archivo .mimoo recibido vía ACTION_VIEW
+                // (handleShareFileIntent). LaunchedEffect reacciona en
+                // cuanto incomingShareFileUri cambia de valor (recepción
+                // en frío en onCreate() o con la app ya abierta vía
+                // onNewIntent(), launchMode singleTask), decodifica, y
+                // limpia el valor para no reprocesar el mismo archivo en
+                // una recomposición posterior.
                 val shareImportViewModel: com.miguelaetxio.mimoo.ui.share.ShareImportViewModel =
                     androidx.hilt.navigation.compose.hiltViewModel()
                 val shareImportState by shareImportViewModel.uiState.collectAsState()
-                LaunchedEffect(incomingShareText.value) {
-                    incomingShareText.value?.let { text ->
-                        shareImportViewModel.handleIncomingShareCode(text)
-                        incomingShareText.value = null
+                LaunchedEffect(incomingShareFileUri.value) {
+                    incomingShareFileUri.value?.let { uri ->
+                        shareImportViewModel.handleIncomingShareFile(uri)
+                        incomingShareFileUri.value = null
                     }
                 }
 

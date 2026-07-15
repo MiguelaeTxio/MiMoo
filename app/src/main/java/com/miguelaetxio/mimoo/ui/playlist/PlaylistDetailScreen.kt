@@ -38,18 +38,19 @@ fun PlaylistDetailScreen(
         }
     }
 
-    // H10 (S011, niveles 7/8) -- en cuanto se genera el código
-    // "miMoo+hash" de esta lista, abre el selector de Compartir del
-    // sistema con ese texto.
-    val generatedShareCode by viewModel.generatedShareCode.collectAsState()
-    LaunchedEffect(generatedShareCode) {
-        generatedShareCode?.let { code ->
+    // H10 (S011, niveles 7/8) -- en cuanto se genera el archivo .mimoo
+    // de esta lista, abre el selector de Compartir del sistema con
+    // ese ARCHIVO (EXTRA_STREAM), no texto.
+    val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
+    LaunchedEffect(generatedShareFileUri) {
+        generatedShareFileUri?.let { uri ->
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_TEXT, code)
+                type = "application/octet-stream"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             activity.startActivity(android.content.Intent.createChooser(intent, null))
-            viewModel.consumeGeneratedShareCode()
+            viewModel.consumeGeneratedShareFileUri()
         }
     }
 

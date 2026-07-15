@@ -83,25 +83,28 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
 
     /**
-     * H10 (S011) -- código "miMoo+hash" ya generado, listo para que
-     * la UI abra el selector de "Compartir" del sistema
-     * (`Intent.ACTION_SEND`). `null` = nada pendiente. Separado por
-     * completo de `_uiState` (H06/Drive) -- generar un código es
-     * puramente local, sin autorización ni red de por medio.
+     * H10 (S011) -- Uri `content://` del archivo `.mimoo` ya
+     * generado, listo para que la UI abra el selector de "Compartir"
+     * del sistema (`Intent.ACTION_SEND` con `EXTRA_STREAM`, no
+     * `EXTRA_TEXT` -- rediseñado tras la prueba real de Miguel Ángel:
+     * un texto plano no se puede "tocar para abrir", un archivo sí).
+     * `null` = nada pendiente. Separado por completo de `_uiState`
+     * (H06/Drive) -- generar el archivo es puramente local, sin
+     * autorización ni red de por medio.
      */
-    private val _generatedShareCode = MutableStateFlow<String?>(null)
-    val generatedShareCode: StateFlow<String?> = _generatedShareCode.asStateFlow()
+    private val _generatedShareFileUri = MutableStateFlow<android.net.Uri?>(null)
+    val generatedShareFileUri: StateFlow<android.net.Uri?> = _generatedShareFileUri.asStateFlow()
 
     /** Nivel 1 de compartición (S011): Biblioteca completa. Ver ShareCodeRepository. */
     fun onShareLibraryClicked() {
         viewModelScope.launch {
-            _generatedShareCode.value = shareCodeRepository.buildLibraryShareCode()
+            _generatedShareFileUri.value = shareCodeRepository.buildLibraryShareFile()
         }
     }
 
     /** Llamado por la UI justo después de lanzar el Intent.ACTION_SEND, para no relanzarlo en la siguiente recomposición. */
-    fun consumeGeneratedShareCode() {
-        _generatedShareCode.value = null
+    fun consumeGeneratedShareFileUri() {
+        _generatedShareFileUri.value = null
     }
 
     /**

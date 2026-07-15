@@ -61,6 +61,22 @@ private fun shareLink(context: android.content.Context, url: String) {
     context.startActivity(Intent.createChooser(intent, null))
 }
 
+/**
+ * H10 (S011) -- comparte un archivo `.mimoo` real (EXTRA_STREAM), no
+ * texto -- rediseñado tras la prueba real de Miguel Ángel: un texto
+ * plano no se puede "tocar para abrir", un archivo sí. Permiso de
+ * lectura otorgado explícitamente al chooser -- FileProvider lo exige
+ * para cualquier app que reciba el Uri `content://`.
+ */
+private fun shareFile(context: android.content.Context, uri: android.net.Uri) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/octet-stream"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(intent, null))
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
@@ -70,16 +86,16 @@ fun LibraryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val screenActivity = LocalContext.current as Activity
 
-    // H10 (S011) -- en cuanto se genera un código "miMoo+hash" (álbum
-    // o pista, "Compartir con réplica total"), abre el selector de
-    // Compartir del sistema con ese texto y lo consume, reutilizando
-    // el mismo shareLink() de arriba (es agnóstico de si el texto es
-    // una URL o un código -- ambos son ACTION_SEND text/plain).
-    val generatedShareCode by viewModel.generatedShareCode.collectAsState()
-    LaunchedEffect(generatedShareCode) {
-        generatedShareCode?.let { code ->
-            shareLink(screenActivity, code)
-            viewModel.consumeGeneratedShareCode()
+    // H10 (S011) -- en cuanto se genera un archivo .mimoo (álbum,
+    // pista, artista o sencillos favoritos, "Compartir con réplica
+    // total"), abre el selector de Compartir del sistema con ese
+    // ARCHIVO (shareFile(), no shareLink() -- ver comentario de esa
+    // función más abajo para el porqué del cambio).
+    val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
+    LaunchedEffect(generatedShareFileUri) {
+        generatedShareFileUri?.let { uri ->
+            shareFile(screenActivity, uri)
+            viewModel.consumeGeneratedShareFileUri()
         }
     }
     var trackPendingDelete by remember {

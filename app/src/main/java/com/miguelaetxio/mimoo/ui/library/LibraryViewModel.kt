@@ -314,44 +314,43 @@ class LibraryViewModel @Inject constructor(
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     /**
-     * H10 (S011) -- código "miMoo+hash" ya generado para el álbum o
-     * pista sobre el que se pulsó "Compartir con réplica total",
-     * listo para que la UI abra el selector de "Compartir" del
-     * sistema. `null` = nada pendiente. Mismo patrón que
-     * SettingsViewModel.generatedShareCode (nivel Biblioteca), aquí a
-     * nivel de álbum (nivel 3) o pista (niveles 4/6).
+     * H10 (S011) -- Uri del archivo `.mimoo` ya generado para el
+     * álbum/pista/artista/colección sobre el que se pulsó "Compartir
+     * con réplica total", listo para que la UI abra el selector de
+     * "Compartir" del sistema. `null` = nada pendiente. Mismo patrón
+     * que SettingsViewModel.generatedShareFileUri (nivel Biblioteca).
      */
-    private val _generatedShareCode = MutableStateFlow<String?>(null)
-    val generatedShareCode: StateFlow<String?> = _generatedShareCode.asStateFlow()
+    private val _generatedShareFileUri = MutableStateFlow<android.net.Uri?>(null)
+    val generatedShareFileUri: StateFlow<android.net.Uri?> = _generatedShareFileUri.asStateFlow()
 
     fun shareAlbumReplica(artist: String, album: String) {
         viewModelScope.launch {
-            _generatedShareCode.value = shareCodeRepository.buildAlbumShareCode(artist, album)
+            _generatedShareFileUri.value = shareCodeRepository.buildAlbumShareFile(artist, album)
         }
     }
 
     fun shareTrackReplica(youtubeId: String) {
         viewModelScope.launch {
-            _generatedShareCode.value = shareCodeRepository.buildSingleTrackShareCode(youtubeId)
+            _generatedShareFileUri.value = shareCodeRepository.buildSingleTrackShareFile(youtubeId)
         }
     }
 
     /** H10 (S011, nivel 2). */
     fun shareArtistReplica(artist: String) {
         viewModelScope.launch {
-            _generatedShareCode.value = shareCodeRepository.buildArtistShareCode(artist)
+            _generatedShareFileUri.value = shareCodeRepository.buildArtistShareFile(artist)
         }
     }
 
     /** H10 (S011, nivel 5). */
     fun shareFavoriteSinglesReplica() {
         viewModelScope.launch {
-            _generatedShareCode.value = shareCodeRepository.buildFavoriteSinglesShareCode()
+            _generatedShareFileUri.value = shareCodeRepository.buildFavoriteSinglesShareFile()
         }
     }
 
-    fun consumeGeneratedShareCode() {
-        _generatedShareCode.value = null
+    fun consumeGeneratedShareFileUri() {
+        _generatedShareFileUri.value = null
     }
 
     private var allDownloaded: List<SearchResultTrack> = emptyList()

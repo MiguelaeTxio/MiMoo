@@ -1,64 +1,64 @@
 package com.miguelaetxio.mimoo.data.share
 
+import android.content.Context
+import android.net.Uri
+import androidx.core.content.FileProvider
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.backup.BackupBundle
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
-import java.io.ByteArrayOutputStream
-import java.util.Base64
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Prefijo literal del código de compartición (H10, S011, formato
- * pedido por Miguel Ángel: "miMoo+hash"). Se comprueba con
- * `startsWith` tanto al generar como al recibir -- es lo que permite
- * distinguir un texto compartido que es un código real de MiMoo de
- * cualquier otro texto/enlace que alguien comparta con la app (una
- * vez registrada como destino de "Compartir" de texto plano, ver
- * AndroidManifest.xml).
- */
-const val SHARE_CODE_PREFIX = "miMoo+"
+/** Extensión real del archivo de compartición H10 -- ver comentario de clase para el porqué del cambio de formato. */
+const val SHARE_FILE_EXTENSION = ".mimoo"
 
 /**
- * Codifica/decodifica códigos de compartición H10 y construye el
- * [ShareBundle] para cada nivel. Deliberadamente separado de
- * `BackupRepository` (H06) aunque reutiliza su `BackupBundle` --
- * `BackupRepository` habla de exportar/importar TODO el repositorio a
- * Drive; este repositorio habla de compartir un subconjunto arbitrario
- * por cualquier medio (WhatsApp, etc.), con su propio formato de texto
- * comprimido en vez de un archivo JSON subido a Drive.
+ * Construye el [ShareBundle] para cada nivel de compartición y lo
+ * materializa como un ARCHIVO real (H10, S011 -- rediseñado tras
+ * probarlo Miguel Ángel en dispositivo real: *"He hecho una prueba a
+ * compartir el link, eso así no sirve... Tendremos que generar un
+ * archivo... que solo se pudiera abrir desde la aplicación"*).
  *
- * Formato real del código: `"miMoo+" + Base64URL(GZIP(JSON(ShareBundle)))`.
- * GZIP porque un bundle de Biblioteca completa (cientos de pistas)
- * como JSON plano sería un texto larguísimo para pegar/compartir --
- * comprimido baja sustancialmente. Base64 URL-safe sin relleno de
- * saltos de línea (`NO_WRAP`) para que el resultado sea una única
- * línea de texto pegable en cualquier sitio (WhatsApp, SMS, etc.) sin
- * que el propio medio la corte o la reformatee.
+ * **Por qué texto plano no servía:** un `Intent.ACTION_SEND` de
+ * `text/plain` no le da al receptor nada que "tocar para abrir" --
+ * WhatsApp/SMS lo pegan como texto suelto, sin ninguna acción
+ * asociada. Un archivo real, en cambio, sí se puede tocar para
+ * abrirlo -- y si MiMoo es la única app registrada para su
+ * extensión, el sistema lo abre directamente con MiMoo (ver
+ * `AndroidManifest.xml`, intent-filter de `.mimoo`).
+ *
+ * Formato del archivo: `GZIP(JSON(ShareBundle))`, en crudo -- sin
+ * Base64 (ya no hace falta sobrevivir como texto de un solo bloque,
+ * es contenido binario de un archivo real) y sin ningún prefijo
+ * "miMoo+" (era una lectura mía equivocada de lo que pedía Miguel
+ * Ángel -- él no quería el carácter "+" literal. La propia extensión
+ * del archivo es ahora el identificador, no hace falta ningún
+ * marcador dentro del contenido).
+ *
+ * Deliberadamente separado de `BackupRepository` (H06) aunque
+ * reutiliza su `BackupBundle` -- `BackupRepository` habla de
+ * exportar/importar TODO el repositorio a Drive; este repositorio
+ * habla de compartir un subconjunto arbitrario por cualquier medio.
  * ---
- * Encodes/decodes H10 share codes and builds the [ShareBundle] for
- * each level. Deliberately separate from `BackupRepository` (H06)
- * even though it reuses its `BackupBundle` -- `BackupRepository` is
- * about exporting/importing the WHOLE repository to Drive; this
- * repository is about sharing an arbitrary subset through any channel
- * (WhatsApp, etc.), with its own compressed text format instead of a
- * JSON file uploaded to Drive.
- *
- * Real code format: `"miMoo+" + Base64URL(GZIP(JSON(ShareBundle)))`.
- * GZIP because a whole-Library bundle (hundreds of tracks) as plain
- * JSON would be a very long text to paste/share -- compression cuts
- * that substantially. URL-safe Base64 with no line-wrap (`NO_WRAP`)
- * so the result is a single pasteable line of text anywhere
- * (WhatsApp, SMS, etc.) without the channel itself breaking or
- * reformatting it.
+ * Builds the [ShareBundle] for each sharing level and materializes it
+ * as a real FILE (H10, S011 -- redesigned after Miguel Ángel tested it
+ * on a real device: plain-text sharing gave the recipient nothing to
+ * tap-to-open, just pasted text with no associated action. A real
+ * file, registered to open exclusively with MiMoo via its own
+ * extension, can actually be tapped to open.
  */
 @Singleton
 class ShareCodeRepository @Inject constructor(
     private val backupRepository: BackupRepository,
+    @ApplicationContext private val context: Context,
 ) {
     private val gson: Gson = GsonBuilder().create()
 
@@ -67,42 +67,44 @@ class ShareCodeRepository @Inject constructor(
      * Reutiliza `BackupRepository.buildCurrentBundle()` tal cual --
      * "compartir toda la biblioteca" es, por definición, el mismo
      * contenido que "exportar todo" (H06), solo que el destino es un
-     * código de texto en vez de un archivo en Drive.
+     * archivo `.mimoo` en vez de un archivo en Drive.
      */
-    suspend fun buildLibraryShareCode(): String {
+    suspend fun buildLibraryShareFile(): Uri {
         val bundle = backupRepository.buildCurrentBundle()
-        val shareBundle = ShareBundle(
-            scopeLabel = "Biblioteca completa (${bundle.tracks.size} pistas)",
-            sharedAt = System.currentTimeMillis(),
-            bundle = bundle,
+        return writeShareFile(
+            ShareBundle(
+                scopeLabel = "Biblioteca completa (${bundle.tracks.size} pistas)",
+                sharedAt = System.currentTimeMillis(),
+                bundle = bundle,
+            ),
+            fileNameHint = "biblioteca_completa",
         )
-        return encode(shareBundle)
     }
 
     /**
      * Niveles 2-8 (S011): todos parten del mismo bundle completo que
      * ya construye `buildCurrentBundle()` (solo pistas realmente
      * descargadas, sin filas sintéticas -- mismo filtro que H06/H07)
-     * y lo recortan al subconjunto pedido. Ninguno hace una consulta
-     * nueva a Room -- reutiliza el bundle entero y filtra en Kotlin,
-     * igual de correcto para el tamaño real de una biblioteca personal
-     * y sin duplicar la lógica de exclusión de pistas sintéticas/no
-     * descargadas que ya tiene `buildCurrentBundle()`. `label` recibe
-     * el bundle YA filtrado, para poder incluir el recuento real de
-     * pistas en la etiqueta.
+     * y lo recortan al subconjunto pedido. `label` recibe el bundle
+     * YA filtrado, para poder incluir el recuento real de pistas.
      */
-    private suspend fun buildScopedShareCode(
+    private suspend fun buildScopedShareFile(
+        fileNameHint: String,
         filter: (BackupBundle) -> BackupBundle,
         label: (BackupBundle) -> String,
-    ): String {
+    ): Uri {
         val full = backupRepository.buildCurrentBundle()
         val scoped = filter(full)
-        return encode(ShareBundle(scopeLabel = label(scoped), sharedAt = System.currentTimeMillis(), bundle = scoped))
+        return writeShareFile(
+            ShareBundle(scopeLabel = label(scoped), sharedAt = System.currentTimeMillis(), bundle = scoped),
+            fileNameHint = fileNameHint,
+        )
     }
 
     /** Nivel 2: Artista -- todas las pistas descargadas de ese artista, sin playlists. */
-    suspend fun buildArtistShareCode(artist: String): String =
-        buildScopedShareCode(
+    suspend fun buildArtistShareFile(artist: String): Uri =
+        buildScopedShareFile(
+            fileNameHint = artist,
             filter = { full ->
                 full.copy(
                     tracks = full.tracks.filter { it.artist == artist },
@@ -114,8 +116,9 @@ class ShareCodeRepository @Inject constructor(
         )
 
     /** Nivel 3: Álbum -- pistas de ese artista+álbum, en orden real de disco. */
-    suspend fun buildAlbumShareCode(artist: String, album: String): String =
-        buildScopedShareCode(
+    suspend fun buildAlbumShareFile(artist: String, album: String): Uri =
+        buildScopedShareFile(
+            fileNameHint = "${artist}_$album",
             filter = { full ->
                 full.copy(
                     tracks = full.tracks
@@ -129,8 +132,9 @@ class ShareCodeRepository @Inject constructor(
         )
 
     /** Niveles 4 y 6: Tema de álbum / Sencillo -- una única pista, mismo mecanismo para ambos. */
-    suspend fun buildSingleTrackShareCode(youtubeId: String): String =
-        buildScopedShareCode(
+    suspend fun buildSingleTrackShareFile(youtubeId: String): Uri =
+        buildScopedShareFile(
+            fileNameHint = "tema",
             filter = { full ->
                 val track = full.tracks.firstOrNull { it.youtubeId == youtubeId }
                 full.copy(tracks = listOfNotNull(track), favoriteAlbums = emptyList(), playlists = emptyList())
@@ -139,8 +143,9 @@ class ShareCodeRepository @Inject constructor(
         )
 
     /** Nivel 5: Sencillos -- pistas favoritas sin álbum asignado (sueltas, no parte de ningún disco). */
-    suspend fun buildFavoriteSinglesShareCode(): String =
-        buildScopedShareCode(
+    suspend fun buildFavoriteSinglesShareFile(): Uri =
+        buildScopedShareFile(
+            fileNameHint = "sencillos_favoritos",
             filter = { full ->
                 full.copy(
                     tracks = full.tracks.filter { it.isFavorite && it.album.isNullOrBlank() },
@@ -152,15 +157,16 @@ class ShareCodeRepository @Inject constructor(
         )
 
     /** Niveles 7 y 8: Listas de reproducción / Lista de reproducción -- una playlist concreta, con su orden real. */
-    suspend fun buildPlaylistShareCode(playlistId: Long): String {
+    suspend fun buildPlaylistShareFile(playlistId: Long): Uri {
         val full = backupRepository.buildCurrentBundle()
         val playlistDto = full.playlists.firstOrNull { it.originalId == playlistId }
-            ?: return encode(
+            ?: return writeShareFile(
                 ShareBundle(
                     scopeLabel = "Lista de reproducción (vacía o sin pistas descargadas)",
                     sharedAt = System.currentTimeMillis(),
                     bundle = full.copy(tracks = emptyList(), favoriteAlbums = emptyList(), playlists = emptyList()),
-                )
+                ),
+                fileNameHint = "lista",
             )
         val trackIds = playlistDto.trackYoutubeIdsInOrder.toSet()
         val scoped = full.copy(
@@ -168,63 +174,68 @@ class ShareCodeRepository @Inject constructor(
             favoriteAlbums = emptyList(),
             playlists = listOf(playlistDto),
         )
-        return encode(
+        return writeShareFile(
             ShareBundle(
                 scopeLabel = "Lista de reproducción: ${playlistDto.name} (${scoped.tracks.size} pistas)",
                 sharedAt = System.currentTimeMillis(),
                 bundle = scoped,
-            )
+            ),
+            fileNameHint = playlistDto.name,
         )
     }
 
-    private fun encode(shareBundle: ShareBundle): String {
-        val json = gson.toJson(shareBundle)
-        val gzipped = ByteArrayOutputStream().use { byteStream ->
-            GZIPOutputStream(byteStream).use { it.write(json.toByteArray(Charsets.UTF_8)) }
-            byteStream.toByteArray()
+    /**
+     * Escribe `cacheDir/share_files/{nombre}.mimoo` (GZIP de JSON, sin
+     * Base64/prefijo) y devuelve un `content://` Uri vía FileProvider
+     * -- mismo patrón exacto que `AppUpdateRepository.downloadApk()`
+     * ya usa para compartir el APK de actualización. `fileNameHint` se
+     * limpia de caracteres no válidos para nombre de archivo (nunca se
+     * usa tal cual: viene de datos reales de usuario -- artista,
+     * álbum, nombre de playlist -- que pueden llevar "/", ":", etc.).
+     */
+    private suspend fun writeShareFile(shareBundle: ShareBundle, fileNameHint: String): Uri =
+        withContext(Dispatchers.IO) {
+            val json = gson.toJson(shareBundle)
+            val shareDir = File(context.cacheDir, "share_files").apply { mkdirs() }
+            val safeName = fileNameHint
+                .ifBlank { "compartido" }
+                .replace(Regex("[^A-Za-z0-9À-ÿ _-]"), "_")
+                .take(60)
+            val file = File(shareDir, "$safeName$SHARE_FILE_EXTENSION")
+            GZIPOutputStream(file.outputStream()).use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         }
-        val base64 = Base64.getUrlEncoder().withoutPadding().encodeToString(gzipped)
-        return SHARE_CODE_PREFIX + base64
-    }
-
-    /** `true` si `text` tiene pinta de ser un código de compartición H10 -- comprobación barata antes de intentar decodificar. */
-    fun looksLikeShareCode(text: String): Boolean = text.trim().startsWith(SHARE_CODE_PREFIX)
 
     /**
-     * Decodifica un código de compartición. Nunca lanza excepciones de
-     * bajo nivel (Base64/GZIP/Gson) hasta la UI -- todas se envuelven
-     * en [ShareParseException] con un mensaje legible, mismo criterio
-     * que `BackupRepository.fromJson()`.
+     * Decodifica un archivo `.mimoo` recibido, por su Uri (típicamente
+     * `content://`, ver `MainActivity.handleShareFileIntent()`). Nunca
+     * lanza excepciones de bajo nivel (GZIP/Gson) hasta la UI -- todas
+     * se envuelven en [ShareParseException] con un mensaje legible,
+     * mismo criterio que `BackupRepository.fromJson()`.
      */
-    fun decode(text: String): ShareBundle {
-        val trimmed = text.trim()
-        if (!trimmed.startsWith(SHARE_CODE_PREFIX)) {
-            throw ShareParseException("Este texto no es un código de compartición de MiMoo.")
-        }
-        val base64 = trimmed.removePrefix(SHARE_CODE_PREFIX)
-        val gzipped = try {
-            Base64.getUrlDecoder().decode(base64)
-        } catch (e: IllegalArgumentException) {
-            throw ShareParseException("El código de compartición está corrupto o incompleto.", e)
-        }
+    suspend fun decodeFile(uri: Uri): ShareBundle = withContext(Dispatchers.IO) {
         val json = try {
-            GZIPInputStream(gzipped.inputStream()).use { it.readBytes().toString(Charsets.UTF_8) }
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                GZIPInputStream(input).use { it.readBytes().toString(Charsets.UTF_8) }
+            } ?: throw ShareParseException("No se pudo abrir el archivo compartido.")
+        } catch (e: ShareParseException) {
+            throw e
         } catch (e: Exception) {
-            throw ShareParseException("El código de compartición está corrupto o incompleto.", e)
+            throw ShareParseException("El archivo está corrupto o incompleto.", e)
         }
         val shareBundle = try {
             gson.fromJson(json, ShareBundle::class.java)
         } catch (e: JsonSyntaxException) {
-            throw ShareParseException("El código de compartición no tiene un formato válido.", e)
-        } ?: throw ShareParseException("El código de compartición está vacío.")
+            throw ShareParseException("El archivo no tiene un formato válido de MiMoo.", e)
+        } ?: throw ShareParseException("El archivo está vacío.")
 
         if (shareBundle.version != ShareBundle.CURRENT_VERSION) {
             throw ShareParseException(
-                "Este código es de la versión ${shareBundle.version}, pero esta versión de " +
+                "Este archivo es de la versión ${shareBundle.version}, pero esta versión de " +
                     "MiMoo solo sabe leer la versión ${ShareBundle.CURRENT_VERSION}."
             )
         }
-        return shareBundle
+        shareBundle
     }
 
     class ShareParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
