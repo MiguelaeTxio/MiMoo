@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -86,10 +87,26 @@ class SearchViewModel @Inject constructor(
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
     private val downloadQueueManager: DownloadQueueManager,
+    private val channelSubscriptionRepository: com.miguelaetxio.mimoo.data.local.repository.ChannelSubscriptionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+
+    /**
+     * H11 (S011) -- ids de canal ya suscritos, para pintar
+     * "Suscribirse"/"Suscrito" en `SearchTypeResultRow` (modo
+     * Canales) sin tener que consultar Room fila a fila.
+     */
+    val subscribedChannelIds: StateFlow<List<String>> =
+        channelSubscriptionRepository.getAllChannelIds()
+            .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
+
+    fun toggleChannelSubscription(result: com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult) {
+        viewModelScope.launch {
+            channelSubscriptionRepository.toggle(result)
+        }
+    }
 
     private val _currentYoutubeIds = MutableStateFlow<List<String>>(emptyList())
 

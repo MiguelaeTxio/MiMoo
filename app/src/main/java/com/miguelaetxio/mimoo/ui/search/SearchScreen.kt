@@ -37,6 +37,7 @@ fun SearchScreen(
     onOpenExternalLink: (url: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val subscribedChannelIds by viewModel.subscribedChannelIds.collectAsState()
     var trackPendingAddToPlaylist by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
@@ -166,6 +167,9 @@ fun SearchScreen(
                         SearchTypeResultRow(
                             result = result,
                             onOpen = { onOpenExternalLink(result.url) },
+                            isChannel = uiState.mode == SearchMode.CHANNELS,
+                            isSubscribed = result.id in subscribedChannelIds,
+                            onToggleSubscription = { viewModel.toggleChannelSubscription(result) },
                         )
                         HorizontalDivider()
                     }
@@ -438,6 +442,9 @@ private fun SearchModeChip(
 private fun SearchTypeResultRow(
     result: SearchTypeResult,
     onOpen: () -> Unit,
+    isChannel: Boolean = false,
+    isSubscribed: Boolean = false,
+    onToggleSubscription: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -464,6 +471,27 @@ private fun SearchTypeResultRow(
                     result.subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        // H11 (S011) -- "Suscribirse" solo en modo Canales. Vive junto
+        // al icono de "Abrir" en vez de sustituirlo -- suscribirse no
+        // reemplaza poder entrar al canal a mano con "Importar
+        // enlace", son dos acciones independientes.
+        if (isChannel) {
+            IconButton(onClick = onToggleSubscription) {
+                Icon(
+                    imageVector = if (isSubscribed) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = if (isSubscribed) {
+                        "Cancelar suscripción al canal"
+                    } else {
+                        "Suscribirse al canal"
+                    },
+                    tint = if (isSubscribed) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
             }
         }
