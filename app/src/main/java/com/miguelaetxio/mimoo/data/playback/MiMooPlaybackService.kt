@@ -7,17 +7,35 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
 import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.miguelaetxio.mimoo.MainActivity
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -66,6 +84,8 @@ import javax.inject.Inject
  * service is purely lifecycle infrastructure, not a new entry point
  * into playback.
  */
+@UnstableApi
+@OptIn(ExperimentalCoroutinesApi::class)
 @AndroidEntryPoint
 class MiMooPlaybackService : MediaSessionService() {
 
@@ -75,7 +95,121 @@ class MiMooPlaybackService : MediaSessionService() {
     @Inject
     lateinit var storageManager: StorageManager
 
+    @Inject
+    lateinit var searchResultTrackRepository: SearchResultTrackRepository
+
+    /**
+     * S011 -- ámbito propio del servicio para observar la pista actual
+     * y mantener el botón de favoritos de la notificación
+     * sincronizado. Cancelado en onDestroy() -- nunca viewModelScope
+     * (esto es un Service, no un ViewModel).
+     */
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     private var mediaSession: MediaSession? = null
+
+    /**
+     * S011 -- botón de favoritos en la notificación (petición
+     * explícita de Miguel Ángel: "Notificación: añadir favoritos").
+     * API oficial y actual de Media3 confirmada contra la
+     * documentación de Android Developers
+     * (developer.android.com/media/implement/surfaces/mobile,
+     * sección "Customize command buttons", verificado 2026-07-15,
+     * directriz §4.5): `CommandButton` con un icono predefinido
+     * (`ICON_HEART_FILLED`/`ICON_HEART_UNFILLED`, sin necesidad de
+     * ningún drawable propio) + `SessionCommand` personalizado,
+     * autorizado en `onConnect()` y gestionado en `onCustomCommand()`.
+     * El icono se reconstruye (`updateFavoriteCommandButton()`) tanto
+     * al conectar como cada vez que cambia la pista actual o se
+     * alterna el favorito, para que refleje siempre el estado real de
+     * la pista que suena.
+     */
+    private val favoriteSessionCommand = SessionCommand(ACTION_TOGGLE_FAVORITE, Bundle.EMPTY)
+
+    private fun buildFavoriteCommandButton(isFavorite: Boolean, enabled: Boolean): CommandButton =
+        CommandButton.Builder(
+            if (isFavorite) CommandButton.ICON_HEART_FILLED else CommandButton.ICON_HEART_UNFILLED
+        )
+            .setDisplayName(if (isFavorite) "Quitar de favoritos" else "Añadir a favoritos")
+            .setSessionCommand(favoriteSessionCommand)
+            .setEnabled(enabled)
+            .build()
+
+    /**
+     * Reconstruye y publica el botón de favoritos con el estado real
+     * de la pista actual. `enabled = false` para pistas sin
+     * equivalente real en la biblioteca (p.ej. una emisora de
+     * Radio-Browser.info, H09) -- mismo criterio que
+     * `PlayerBarViewModel.isCurrentFavorite`, que tampoco ofrece el
+     * botón en ese caso.
+     */
+    private fun updateFavoriteCommandButton(isFavorite: Boolean, enabled: Boolean) {
+        mediaSession?.setCustomLayout(listOf(buildFavoriteCommandButton(isFavorite, enabled)))
+    }
+
+    /** Misma operación que PlayerBarViewModel.toggleCurrentFavorite() -- ver ese comentario para el porqué de cada campo. */
+    private suspend fun toggleFavoriteForCurrentTrack() {
+        val current = playerManager.state.value
+        val youtubeId = current.currentYoutubeId ?: return
+        val title = current.currentTitle ?: return
+        val isFavoriteNow = searchResultTrackRepository.getById(youtubeId)?.isFavorite == true
+        searchResultTrackRepository.setFavoriteEnsuringRow(
+            youtubeId = youtubeId,
+            isFavorite = !isFavoriteNow,
+            title = title,
+            channelTitle = current.currentChannelTitle ?: title,
+            artist = current.currentArtist,
+        )
+    }
+
+    private val sessionCallback = object : MediaSession.Callback {
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+        ): MediaSession.ConnectionResult {
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(
+                    MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                        .add(favoriteSessionCommand)
+                        .build()
+                )
+                .build()
+        }
+
+        override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
+            super.onPostConnect(session, controller)
+            val current = playerManager.state.value
+            val youtubeId = current.currentYoutubeId
+            if (youtubeId == null) {
+                updateFavoriteCommandButton(isFavorite = false, enabled = false)
+            } else {
+                serviceScope.launch {
+                    val isFavorite = searchResultTrackRepository.getById(youtubeId)?.isFavorite == true
+                    updateFavoriteCommandButton(isFavorite, enabled = true)
+                }
+            }
+        }
+
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle,
+        ): ListenableFuture<SessionResult> {
+            if (customCommand.customAction == ACTION_TOGGLE_FAVORITE) {
+                serviceScope.launch {
+                    toggleFavoriteForCurrentTrack()
+                    val youtubeId = playerManager.state.value.currentYoutubeId
+                    val isFavorite = youtubeId?.let {
+                        searchResultTrackRepository.getById(it)?.isFavorite == true
+                    } == true
+                    updateFavoriteCommandButton(isFavorite, enabled = youtubeId != null)
+                }
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
+            return super.onCustomCommand(session, controller, customCommand, args)
+        }
+    }
 
     /**
      * MediaController conectado a NUESTRA PROPIA sesión -- confirmado
@@ -140,11 +274,32 @@ class MiMooPlaybackService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(this, playerManager.player)
             .setSessionActivity(sessionActivityPendingIntent)
+            .setCallback(sessionCallback)
             .build()
         NotificationDebugLogger.log(
             this, storageManager,
             "onCreate() -- MediaSession creada, player=${playerManager.player}",
         )
+
+        // S011 -- mantiene el botón de favoritos sincronizado durante
+        // toda la vida de la sesión, no solo al conectar
+        // (onPostConnect): si la pista cambia sola (siguiente de la
+        // cola, Radio) sin que ningún controller se reconecte, el
+        // botón debe reflejar igualmente el favorito real de la
+        // pista nueva.
+        serviceScope.launch {
+            playerManager.state.map { it.currentYoutubeId }
+                .distinctUntilChanged()
+                .flatMapLatest { youtubeId ->
+                    if (youtubeId == null) flowOf(null) else searchResultTrackRepository.getByIdFlow(youtubeId)
+                }
+                .collect { track ->
+                    updateFavoriteCommandButton(
+                        isFavorite = track?.isFavorite == true,
+                        enabled = playerManager.state.value.currentYoutubeId != null,
+                    )
+                }
+        }
 
         // Registrado explícitamente (aunque MediaSessionService ya usa
         // este mismo provider por defecto si no se llama a este método)
@@ -366,6 +521,7 @@ class MiMooPlaybackService : MediaSessionService() {
      */
     override fun onDestroy() {
         NotificationDebugLogger.log(this, storageManager, "onDestroy()")
+        serviceScope.cancel()
         debugController?.release()
         debugController = null
         mediaSession?.release()
@@ -373,3 +529,5 @@ class MiMooPlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 }
+
+private const val ACTION_TOGGLE_FAVORITE = "com.miguelaetxio.mimoo.TOGGLE_FAVORITE"
