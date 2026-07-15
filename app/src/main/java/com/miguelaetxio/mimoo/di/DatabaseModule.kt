@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.miguelaetxio.mimoo.data.local.AppDatabase
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
+import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import dagger.Module
@@ -65,4 +66,9 @@ object DatabaseModule {
     @Provides
     fun provideFavoriteRadioStationDao(db: AppDatabase): FavoriteRadioStationDao =
         db.favoriteRadioStationDao()
+
+    /** H11 (S011) -- mismo patrón que el resto de DAOs de este módulo, para no repetir el fallo [Dagger/MissingBinding] documentado arriba. */
+    @Provides
+    fun provideChannelSubscriptionDao(db: AppDatabase): ChannelSubscriptionDao =
+        db.channelSubscriptionDao()
 }
