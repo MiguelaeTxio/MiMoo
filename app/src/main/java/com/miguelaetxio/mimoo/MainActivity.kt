@@ -248,7 +248,7 @@ class MainActivity : ComponentActivity() {
     private fun handleViewIntent(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
-        if (isMimooShareFile(uri)) return
+        if (isMimooShareFile(intent)) return
         val title = uri.lastPathSegment ?: "Pista externa"
         playerManager.play(uri.toString(), title, isLocal = true)
     }
@@ -264,41 +264,23 @@ class MainActivity : ComponentActivity() {
     private val incomingShareFileUri = mutableStateOf<android.net.Uri?>(null)
 
     /**
-     * H10 (S011, rediseñado tras la prueba real de Miguel Ángel --
-     * "eso así no sirve" con el texto plano) -- ruta de entrada de un
-     * archivo `.mimoo` recibido vía el intent-filter ACTION_VIEW (ver
-     * AndroidManifest.xml). `isMimooShareFile()` comprueba el nombre
-     * real del archivo antes de tocar ningún ViewModel -- necesario
-     * porque el intent-filter no exige un tipo MIME concreto (WhatsApp con
-     * frecuencia no informa bien el tipo MIME de una extensión
-     * desconocida), así que no basta con confiar en `intent.type`.
+     * H10 (S011, segundo rediseño -- ver AndroidManifest.xml para el
+     * porqué) -- ruta de entrada de un archivo `.mimoo` recibido vía
+     * el intent-filter ACTION_VIEW, emparejado por tipo MIME propio
+     * (`SHARE_MIME_TYPE`), no por extensión de archivo -- las URIs
+     * `content://` que da WhatsApp al abrir un documento recibido son
+     * opacas y no contienen el nombre real del archivo.
      */
     private fun handleShareFileIntent(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
-        if (isMimooShareFile(uri)) {
+        if (isMimooShareFile(intent)) {
             incomingShareFileUri.value = uri
         }
     }
 
-    private fun isMimooShareFile(uri: android.net.Uri): Boolean {
-        uri.lastPathSegment
-            ?.takeIf { it.endsWith(com.miguelaetxio.mimoo.data.share.SHARE_FILE_EXTENSION, ignoreCase = true) }
-            ?.let { return true }
-        // content:// URIs no siempre exponen la extensión real en el
-        // path -- mismo patrón de consulta que ya usa SettingsScreen
-        // para "Importar desde archivo" (OpenableColumns.DISPLAY_NAME).
-        return try {
-            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                cursor.moveToFirst() && nameIndex >= 0 &&
-                    cursor.getString(nameIndex)
-                        ?.endsWith(com.miguelaetxio.mimoo.data.share.SHARE_FILE_EXTENSION, ignoreCase = true) == true
-            } ?: false
-        } catch (e: Exception) {
-            false
-        }
-    }
+    private fun isMimooShareFile(intent: Intent): Boolean =
+        intent.type == com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

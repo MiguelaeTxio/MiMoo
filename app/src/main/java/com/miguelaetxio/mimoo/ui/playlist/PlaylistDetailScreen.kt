@@ -45,7 +45,7 @@ fun PlaylistDetailScreen(
     LaunchedEffect(generatedShareFileUri) {
         generatedShareFileUri?.let { uri ->
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "application/octet-stream"
+                type = com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
                 putExtra(android.content.Intent.EXTRA_STREAM, uri)
                 addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }

@@ -17,8 +17,34 @@ import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Extensión real del archivo de compartición H10 -- ver comentario de clase para el porqué del cambio de formato. */
+/**
+ * Extensión real del archivo de compartición H10. Ver comentario de
+ * clase para el porqué del cambio de formato.
+ */
 const val SHARE_FILE_EXTENSION = ".mimoo"
+
+/**
+ * Tipo MIME propio del archivo de compartición (H10, S011 -- segundo
+ * rediseño, tras confirmar en dispositivo real que MiMoo ni siquiera
+ * aparecía en el selector "Abrir con" de WhatsApp). Causa real: las
+ * URIs `content://` que da WhatsApp al abrir un documento recibido
+ * son OPACAS -- no contienen el nombre de archivo real en la propia
+ * URI (`.../item/12345`, no `.../algo.mimoo`), así que un
+ * `pathPattern=".*\.mimoo"` en el manifiesto NUNCA puede coincidir
+ * contra ellas, por mucho que el archivo real sí se llame `.mimoo` --
+ * el nombre solo es recuperable en tiempo de ejecución consultando
+ * `OpenableColumns.DISPLAY_NAME`, que el sistema de resolución de
+ * intents no usa para decidir qué apps ofrecer.
+ *
+ * El tipo MIME, en cambio, SÍ viaja con el propio Intent de un
+ * extremo a otro (se fija al compartir con `Intent.ACTION_SEND`,
+ * WhatsApp lo conserva al guardar el archivo recibido, y lo reutiliza
+ * en el `Intent.ACTION_VIEW` que dispara al tocarlo) -- por eso este
+ * repositorio y `AndroidManifest.xml` usan ahora un tipo MIME propio
+ * en vez de la extensión del nombre de archivo como mecanismo de
+ * emparejamiento real.
+ */
+const val SHARE_MIME_TYPE = "application/x-mimoo-share"
 
 /**
  * Construye el [ShareBundle] para cada nivel de compartición y lo

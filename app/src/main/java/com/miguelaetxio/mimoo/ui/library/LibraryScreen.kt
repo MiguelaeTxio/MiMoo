@@ -70,7 +70,7 @@ private fun shareLink(context: android.content.Context, url: String) {
  */
 private fun shareFile(context: android.content.Context, uri: android.net.Uri) {
     val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "application/octet-stream"
+        type = com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }

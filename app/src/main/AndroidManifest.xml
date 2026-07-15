@@ -192,50 +192,47 @@
                 <data android:mimeType="audio/*" />
             </intent-filter>
             <!--
-                H10 (S011, corregido tras prueba real de Miguel Ángel
-                — "eso así no sirve"): un texto compartido por
-                ACTION_SEND no se abre solo al tocarlo en WhatsApp/SMS,
-                solo llega como texto plano pegado sin ninguna
-                interacción especial — no era lo que Miguel Ángel
-                pedía ("que lo abra la aplicación" al tocarlo). Se
-                sustituye por un archivo real con extensión propia
-                (".mimoo"), registrado aquí vía ACTION_VIEW — así el
-                sistema SÍ ofrece abrirlo con MiMoo al tocar el
-                archivo recibido, igual que cualquier tipo de archivo
-                con una app asociada. mimeType="*/*" + pathPattern es
-                el patrón estándar para asociarse a una extensión
-                propia sin depender de que la app que comparte
-                informe bien el tipo MIME (WhatsApp con frecuencia no
-                lo hace para extensiones desconocidas) — MainActivity
-                comprueba igualmente el nombre real del archivo antes
-                de intentar decodificar nada.
+                H10 (S011, segundo rediseño — confirmado en
+                dispositivo real que MiMoo ni siquiera aparecía en el
+                selector "Abrir con" de WhatsApp): pathPattern contra
+                la extensión ".mimoo" nunca podía funcionar — las
+                URIs content:// que da WhatsApp al abrir un documento
+                recibido son OPACAS (".../item/12345", no
+                ".../algo.mimoo"), el nombre real del archivo no está
+                en la URI, solo es recuperable en tiempo de ejecución
+                (OpenableColumns.DISPLAY_NAME), que el sistema de
+                resolución de intents no consulta para decidir qué
+                apps ofrecer. El tipo MIME, en cambio, SÍ viaja con el
+                Intent de un extremo a otro — se fija al compartir
+                (Intent.ACTION_SEND), WhatsApp lo conserva al guardar
+                el archivo recibido, y lo reutiliza en el
+                Intent.ACTION_VIEW que dispara al tocarlo. Mismo
+                patrón exacto que ya usa el filtro audio/* de arriba
+                (sin scheme declarado, coincide implícitamente con
+                content: y file:).
                 ===
-                H10 (S011, corrected after Miguel Ángel's real test —
-                "that doesn't work like this"): text shared via
-                ACTION_SEND doesn't open itself when tapped in
-                WhatsApp/SMS, it only arrives as plain pasted text
-                with no special interaction — not what Miguel Ángel
-                asked for ("have the app open it" on tap). Replaced
-                with a real file with its own extension (".mimoo"),
-                registered here via ACTION_VIEW — this way the system
-                DOES offer opening it with MiMoo when the received
-                file is tapped, like any file type with an associated
-                app. mimeType="*/*" + pathPattern is the standard
-                pattern for associating with a custom extension
-                without depending on the sharing app correctly
-                reporting the MIME type (WhatsApp often doesn't for
-                unknown extensions) — MainActivity still checks the
-                real file name before attempting to decode anything.
+                H10 (S011, second redesign — confirmed on a real
+                device that MiMoo didn't even show up in WhatsApp's
+                "Open with" picker): matching by pathPattern against
+                the ".mimoo" extension could never work — the
+                content:// URIs WhatsApp hands over when opening a
+                received document are OPAQUE (".../item/12345", not
+                ".../something.mimoo"), the real file name isn't in
+                the URI at all, only recoverable at runtime via
+                OpenableColumns.DISPLAY_NAME, which intent resolution
+                doesn't consult when deciding which apps to offer. The
+                MIME type, on the other hand, DOES travel with the
+                Intent end to end — set when sharing
+                (Intent.ACTION_SEND), kept by WhatsApp when it stores
+                the received file, and reused in the
+                Intent.ACTION_VIEW fired on tap. Exact same pattern
+                the audio/* filter above already uses (no scheme
+                declared, implicitly matches content: and file:).
             -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:host="*" />
-                <data android:mimeType="*/*" />
-                <data android:pathPattern=".*\.mimoo" />
+                <data android:mimeType="application/x-mimoo-share" />
             </intent-filter>
         </activity>
 
