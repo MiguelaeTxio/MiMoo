@@ -269,7 +269,7 @@ class MainActivity : ComponentActivity() {
      * archivo `.mimoo` recibido vía el intent-filter ACTION_VIEW (ver
      * AndroidManifest.xml). `isMimooShareFile()` comprueba el nombre
      * real del archivo antes de tocar ningún ViewModel -- necesario
-     * porque el intent-filter usa `mimeType="*/*"` (WhatsApp con
+     * porque el intent-filter no exige un tipo MIME concreto (WhatsApp con
      * frecuencia no informa bien el tipo MIME de una extensión
      * desconocida), así que no basta con confiar en `intent.type`.
      */
