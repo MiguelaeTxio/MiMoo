@@ -4,8 +4,14 @@ import android.app.Application
 import androidx.documentfile.provider.DocumentFile
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Constraints
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.miguelaetxio.mimoo.data.channels.ChannelCheckWorker
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import dagger.hilt.android.HiltAndroidApp
@@ -13,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -78,6 +85,30 @@ class MiMooApp : Application(), Configuration.Provider {
         appScope.launch {
             downloadQueueManager.reconcileOrphanedDownloads()
         }
+
+        // H11 PASO 4 (S011) -- comprobación periódica de contenido
+        // nuevo en canales suscritos, "como un guardado de podcast"
+        // (petición explícita de Miguel Ángel). Periodicidad de
+        // partida: una vez al día -- ver DOCS/ANNEX_H11.md, ajustable
+        // si Miguel Ángel quiere otra cosa. ExistingPeriodicWorkPolicy.KEEP
+        // para no reprogramar (y perder el ciclo en curso) en cada
+        // arranque de la app, mismo criterio que WorkManager recomienda
+        // para trabajo periódico registrado desde Application.onCreate().
+        // Requiere red -- sin conexión no tiene sentido intentarlo.
+        val channelCheckRequest = PeriodicWorkRequestBuilder<ChannelCheckWorker>(
+            1, TimeUnit.DAYS,
+        )
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "channel_check",
+            ExistingPeriodicWorkPolicy.KEEP,
+            channelCheckRequest,
+        )
     }
 
     /**

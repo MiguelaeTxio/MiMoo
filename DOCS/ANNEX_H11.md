@@ -109,6 +109,12 @@ canal suscrito, consulta sus últimos vídeos vía yt-dlp
 existan en `search_result_tracks`, y encola el resto vía
 `DownloadQueueManager.enqueue()`. Releer `DownloadWorker.kt` (§4.1)
 antes de replicar su patrón de registro/gestión de WorkManager.
+**Completado en S011:** reutiliza `ExternalLinkResolver.resolveLink()`
+(H08 PARTE 1) tal cual contra `https://www.youtube.com/channel/{id}/videos`
+-- sin Python nuevo. Primera comprobación de un canal: guarda sus
+vídeos actuales como línea base (`PENDING`, sin encolar) en vez de
+descargar el catálogo entero de golpe. Periodicidad: una vez al día,
+registrado en `MiMooApp.onCreate()` con `ExistingPeriodicWorkPolicy.KEEP`.
 
 **PASO 5 — Verificación en dispositivo real.** Confirmar que
 suscribirse funciona, que el contenido inicial se descarga según lo

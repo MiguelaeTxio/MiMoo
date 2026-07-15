@@ -22,6 +22,9 @@ class SearchResultTrackRepository @Inject constructor(
 ) {
     fun getAll(): Flow<List<SearchResultTrack>> = dao.getAll()
 
+    /** H11 (S011) -- usado por ChannelCheckWorker para diferenciar "vídeo nuevo" de "ya existía". Ya existía en el DAO, solo faltaba exponerlo aquí. */
+    suspend fun getAllOnce(): List<SearchResultTrack> = dao.getAllOnce()
+
     fun getByStatus(
         status: DownloadStatus,
     ): Flow<List<SearchResultTrack>> = dao.getByStatus(status)
