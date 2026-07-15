@@ -2,7 +2,7 @@
 # SHOUTcast — Radios Online del Mundo por Género/Tema/Década
 
 *Vive en `DOCS/ANNEX_H09.md` — flujo NewFlow Android. Ver estado en
-`DOCS/MASTER_DOCUMENT.md`. EN PROGRESO.*
+`DOCS/ANNEX_ROUTER.md`.*
 
 ---
 
@@ -33,6 +33,15 @@ MusicBrainz: todo gratis, sin cuota, sin registro).
 con más de 25.000 emisoras activas de todo el mundo (dato real de las
 estadísticas del propio servicio, verificado S009). Encaja
 perfectamente con la filosofía del proyecto.
+
+**Nota de brecha documental (S011, 2026-07-15):** entre el cierre
+documentado de S009 y esta nota, S010 implementó por completo la
+hoja de ruta de 5 pasos de abajo (más ampliaciones no previstas) en
+35 commits reales, pero la sesión no ejecutó PCS -- probablemente un
+corte de conexión -- y este anexo, `RESUMPTION_POINT.md` y la tabla
+de `MASTER_DOCUMENT.md` se quedaron describiendo el hito como si no
+tuviera código todavía. Reconciliado ahora leyendo el `git log` y el
+código real, no de memoria. Ver "COMPLETADAS EN S010" más abajo.
 
 **Verificado contra la documentación oficial (S009), no asumido:**
 - Base URL: hay varios servidores espejo (`de1.api.radio-browser.info`,
@@ -102,6 +111,53 @@ sin prometer más de lo que hay.
 
 ---
 
+## COMPLETADAS EN S010 (reconciliado en S011, ver nota de brecha arriba)
+
+- **PASO 1 (capa de red):** `RadioBrowserApiService`, instancia de
+  Retrofit en `NetworkModule.kt` contra `de1.api.radio-browser.info`
+  con interceptor de User-Agent, DTOs `RadioStation`/`RadioTag`/
+  `RadioCountry` (`RadioBrowserDtos.kt`).
+- **PASO 2 (repositorio):** `RadioBrowserRepository`, defensivo (nunca
+  lanza, lista vacía en fallo de red).
+- **PASO 3+4 (UI + navegación):** pantalla "Radios Online"
+  (`RadioBrowserScreen.kt`/`RadioBrowserViewModel.kt`), entrada en el
+  drawer y ruta en `NavGraph.kt`. Confirmado en código: **ningún**
+  botón de descarga en ninguna fila.
+- **Desviación real del plan original, a petición explícita de
+  Miguel Ángel (S010):** en vez de listar `/json/tags` en bruto
+  (miles de etiquetas libres de la comunidad, inservibles como filtro
+  directo), se construyó un catálogo curado a mano
+  (`RadioGenreCatalog.kt`) -- 12 categorías de género (Electrónica,
+  Rock, Metal, Pop, Hip-Hop/Rap, Jazz, Clásica, Reggae/Ska, Latina,
+  Folk/Country, Blues, Noticias/Charla), cada una con sus términos de
+  búsqueda reales verificados, más una lista fija de décadas (50s a
+  2010s + Oldies). No pretende ser exhaustivo, ampliable si en uso
+  real aparecen géneros importantes sin cubrir.
+- **Ampliación no prevista en el plan original de 5 pasos:**
+  favoritos de emisora (`FavoriteRadioStation`,
+  `FavoriteRadioStationDao`, `FavoriteRadioStationRepository`,
+  `MIGRATION_9_10`).
+- **Fixes reales tras uso en dispositivo** (solo salen de probarlo,
+  no de leer código): crash real reproduciendo emisoras HLS
+  (`ClassNotFoundException`), crash real "Key already used" en los
+  chips de país, fila de país que se quedaba invisible sin aviso si
+  fallaba `getCountries()`, blindaje contra emisoras que la propia
+  API devuelve pero que no están emitiendo realmente.
+- **PASO 3, decisión pendiente sin resolver:** qué mostrar en la
+  barra de progreso para una radio en directo sin duración real. En
+  la práctica quedó resuelto por omisión -- `PlayerBar` oculta la
+  barra entera cuando `durationMs <= 0` -- pero nunca se implementó
+  el indicador "En directo" que este anexo dejaba pendiente de
+  confirmar. Funciona, pero sigue siendo una decisión de diseño sin
+  tomar explícitamente.
+- **PASO 5 (verificación en dispositivo real):** los fixes de crashes
+  reales de arriba solo pueden salir de haberlo probado en
+  dispositivo, pero no hay ningún commit ni confirmación explícita de
+  Miguel Ángel tipo "esto ya funciona entero" (a diferencia de H08,
+  que sí tiene ese commit de cierre -- `11237a4`). Pendiente.
+
+---
+
 ## Alcance
 
 - Vista nueva para explorar emisoras por género/tema (`/json/tags`),
@@ -122,7 +178,7 @@ sin prometer más de lo que hay.
 
 ---
 
-## Hoja de ruta
+## Hoja de ruta (histórica -- los 5 pasos ya se ejecutaron en S010, ver COMPLETADAS arriba)
 
 **PASO 1 — Capa de red.** Nuevo `RadioBrowserApiService` (interfaz
 Retrofit), nueva instancia de Retrofit en `NetworkModule.kt` con base
@@ -164,5 +220,18 @@ Búsqueda, Importar enlace).
 emisoras suenan, que el favicon carga, que el filtro por
 género/país/búsqueda funciona, y que ninguna opción de descarga
 aparece en ningún punto de esta pantalla.
+
+---
+
+## Hoja de ruta para la siguiente sesión (real, S011 en adelante)
+
+1. Confirmación explícita de Miguel Ángel de que "Radios Online"
+   funciona entero en dispositivo real tras los fixes de S010 (o
+   reportar lo que falle).
+2. Decidir con Miguel Ángel si se implementa el indicador "En
+   directo" en `PlayerBar` para radios, o si se deja como está
+   (barra de progreso oculta, sin texto sustitutivo).
+3. Ampliar `RadioGenreCatalog.kt` si en uso real aparecen géneros
+   importantes sin cubrir por las 12 categorías actuales.
 
 ---

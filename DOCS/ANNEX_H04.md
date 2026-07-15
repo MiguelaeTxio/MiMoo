@@ -2,7 +2,7 @@
 # Listas de Reproducción Locales
 
 *Vive en `DOCS/ANNEX_H04.md` — flujo NewFlow Android. Ver estado en
-`DOCS/MASTER_DOCUMENT.md`.*
+`DOCS/ANNEX_ROUTER.md`.*
 
 ---
 

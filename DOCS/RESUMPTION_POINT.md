@@ -6,112 +6,77 @@ NewFlow, cada paso ya queda registrado como un commit individual con
 mensaje detallado en el propio `git log`, así que este archivo es
 solo un resumen corto de "dónde estamos" y "qué sigue", no un diario
 completo. Para el detalle exacto de qué cambió en cada paso, consultar
-`git log` directamente sobre el repo clonado.*
+`git log` directamente sobre el repo clonado. Este archivo nunca dice
+qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-12 (cierre de sesión S009 NewFlow)
+## Última actualización: 2026-07-15 (sesión S011 NewFlow, en curso)
 
-**Hito EN PROGRESO: H09 — SHOUTcast, Radios Online del Mundo por
-Género/Tema/Década** (`DOCS/ANNEX_H09.md`, recién abierto, PCH durante
-esta misma sesión). Ver `DOCS/MASTER_DOCUMENT.md` para la tabla
-completa. **H08 queda pausado — Radio confirmada funcionando en
-dispositivo real; búsqueda de listas/canales construida, pendiente
-solo de confirmación final** (ver abajo).
+**S010 se cerró sin ejecutar PCS** (probablemente un corte de
+conexión) -- 35 commits reales de H09 (capa de red, repositorio,
+pantalla, navegación, catálogo curado de géneros/décadas, favoritos
+de emisora, varios fixes de crashes reales) y de H08 (cierre real de
+Radio confirmado en dispositivo) quedaron sin reflejarse en este
+archivo, en `DOCS/ANNEX_H09.md` ni en `DOCS/MASTER_DOCUMENT.md`.
+Reconciliado en S011 leyendo el `git log` real, no de memoria -- ver
+`DOCS/ANNEX_H09.md` sección "COMPLETADAS EN S010" para el detalle
+completo.
 
-**S009 en resumen — sesión larga, H08 cerrado de verdad (las dos
-partes) y H09 abierto y documentado, sin código todavía:**
-
-1. **Investigación previa (antes de tocar código):** verificado que
-   con un token de fine-grained PAT con permiso `Actions: Read` se
-   pueden leer los logs de GitHub Actions directamente vía API REST
-   (`api.github.com` en dominios permitidos) — ya documentado en
-   `android-build`/`newflow-android-token`, es el método por defecto
-   desde esta sesión.
-2. **H08 PARTE 1 — corrección de alcance real.** Primer intento
-   (filtro sobre playlists *locales*) fue un malentendido — el
-   encargo real era buscar listas y canales creados por **otros
-   usuarios** en YouTube. El filtro local se conservó como mejora
-   aparte (bienvenida, no se revirtió). Implementado el alcance
-   correcto: búsqueda filtrada por Listas/Canales vía los filtros
-   nativos y gratuitos de YouTube (`sp=`), verificados con captura
-   real de la app de YouTube; podcasts/audiolibros descartados (sin
-   filtro nativo). Tocar un resultado abre "Importar enlace" con la
-   URL ya resuelta, reutilizando el 100% de ese flujo.
-3. **H08 PARTE 2 — Radio, diseño cerrado y construido, con tres
-   rondas de corrección real tras pruebas en dispositivo:**
-   - Diseño: se dispara al terminar la última canción sin cíclico;
-     fuente del "relacionado" MusicBrainz (géneros compartidos),
-     descartado el Mix de YouTube por inestabilidad documentada de
-     yt-dlp; solo streaming, nunca descarga.
-   - 1ª corrección: el autoplay no arrancaba solo (hacía falta
-     `prepare()`, no solo `play()`, para salir de `STATE_ENDED`); y
-     una sola pista no era "radio" — rediseñado a mantener hasta 10
-     pistas por delante, reponiendo una al terminar cada una.
-   - 2ª corrección: el autoplay *seguía* sin funcionar de verdad —
-     causa de fondo: reanudar desde `STATE_ENDED` es frágil. Fix
-     real: la reposición se dispara *proactivamente* en cuanto
-     empieza a sonar la última pista (no reactivamente al llegar al
-     final), para que ExoPlayer nunca llegue a `STATE_ENDED` en el
-     camino normal. De paso, detectado por el propio modelo (no
-     reportado): varios "temas" añadidos eran vídeos de "Greatest
-     Hits Full Album" de 1-2 horas — corregido con filtro de
-     duración + palabras clave de compilación.
-   - 3ª corrección: la Radio se paraba a los 3-4 temas y no
-     reponía más. Causa raíz: "Various Artists" (entidad de
-     MusicBrainz sin géneros propios) se coló como "relacionado" y
-     mató la cadena. Corregido: excluida explícitamente, más un
-     respaldo (reintento desde el artista que arrancó la Radio si
-     algún otro eslabón futuro resulta ser un callejón sin salida).
-   - **Confirmado funcionando por Miguel Ángel en dispositivo real**
-     tras la tercera corrección.
-4. **Dos arreglos del reproductor, sin hito concreto:** indicador
-   "Streaming"/"Local" con icono en vez de frase larga (se recortaba
-   en pantallas estrechas); notificación ahora abre la app al tocarla
-   (le faltaba `MediaSession.setSessionActivity()`). De paso se
-   añadieron tiempo transcurrido/restante + barra de progreso
-   arrastrable al `PlayerBar`, y el botón "anterior" ahora siempre
-   visible (reinicia la pista actual si no hay una anterior real).
-5. **H09 abierto (PCH CASO D).** Investigado el "Shoutcast" real
-   (requiere clave de desarrollador de iHeartMedia, con
-   aprobación/condiciones de marca) vs **Radio-Browser.info**
-   (directorio comunitario gratuito, sin clave, +25.000 emisoras) —
-   elegido este último, decisión confirmada explícitamente por Miguel
-   Ángel tras preguntar por el coste real del Shoutcast (aclarado que
-   su cuenta de Google Play Console no tiene ninguna relación con
-   ello). Ver `DOCS/ANNEX_H09.md` para los endpoints/campos reales
-   verificados y la hoja de ruta en 5 pasos. **Sin código escrito
-   todavía en este hito.**
+**S011 en resumen (hasta el momento):**
+1. Reconciliación de la brecha documental de S010 (arriba).
+2. Fix real en H07: `confirmCloudWins()`/`confirmLocalWins()` en
+   `AutoSyncViewModel.kt` lanzaban la llamada de red a Drive sin
+   `try/catch`, a diferencia de `startAutoSync()`. Un
+   `SocketTimeoutException` real (confirmado en logs de Miguel Ángel)
+   dejaba la excepción sin capturar -- crash en bucle al reabrir la
+   app, preguntando el mismo conflicto de sincronización una y otra
+   vez. Corregido con el mismo patrón `try/catch` más bloqueo síncrono
+   de doble pulsación (commit `4784c9d`). Verificación en dispositivo
+   pendiente.
+3. **Cambio de metodología, instrucción explícita y repetida de
+   Miguel Ángel:** los hitos solo tienen dos estados posibles, EN
+   PROGRESO y PAUSADO -- nunca "completado" -- y esa información vive
+   ahora exclusivamente en `DOCS/ANNEX_ROUTER.md`, archivo nuevo
+   creado en esta sesión. Ni `MASTER_DOCUMENT.md` ni ningún
+   `ANNEX_H0X.md` ni este archivo vuelven a mencionar su propio
+   estado. `MASTER_DOCUMENT.md` y los anexos quedaron reescritos para
+   quitar toda palabra de estado.
+4. H10 abierto (`DOCS/ANNEX_H10.md`, nuevo): hash de compartición de
+   contenido. Planteamiento inicial recibido de Miguel Ángel, pero
+   **el diseño no está cerrado** -- ver ese anexo, sección "Lo que
+   queda por cerrar de diseño", antes de escribir código.
 
 **Siguiente sesión — orden sugerido:**
-1. H09 PASO 1 en adelante (capa de red → repositorio → UI →
-   navegación → verificación), ver `DOCS/ANNEX_H09.md`. Dos cosas a
-   confirmar con Miguel Ángel antes de programar la UI (PASO 3): el
-   nombre visible en la app (propuesto "Radios Online" en vez de
-   "SHOUTcast", que es jerga técnica) y qué mostrar en la barra de
-   progreso cuando suena una radio en directo sin duración real.
-2. H08 PARTE 1 (búsqueda de listas/canales): pendiente de que Miguel
-   Ángel la pruebe en dispositivo real y confirme si funciona bien —
-   no se ha reportado ningún problema, pero tampoco confirmación
-   explícita como sí la hubo para Radio.
+1. Ver `DOCS/ANNEX_ROUTER.md` para el hito EN PROGRESO real en el
+   momento de arrancar (no asumir que sigue siendo H09 sin comprobar).
+2. Si sigue H09: hoja de ruta real en `DOCS/ANNEX_H09.md` (sección
+   final) -- confirmación de Miguel Ángel de que funciona entero en
+   dispositivo, decisión sobre el indicador "En directo", ampliar el
+   catálogo de géneros si hace falta.
+3. Verificación en dispositivo del fix de sync de H07 (punto 2 de
+   arriba).
+4. H10: conversación de diseño con Miguel Ángel antes de tocar código
+   (ver `DOCS/ANNEX_H10.md`).
 
-**Pendientes antiguos, sin tocar en S009, no bloquean nada:**
+**Pendientes antiguos, sin tocar en S010/S011, no bloquean nada:**
 - H03 PASO 8 y H04 PASO 6 (verificación funcional en dispositivo).
 - H05 PASO 6c (Lou Reed, búsqueda por artista/título suelto, Importar
-  enlace) — pausado.
+  enlace).
 - H06 (Importar desde Drive) — implementado, verificación pendiente.
+- H08: fallo real de idioma en la Radio (relacionados) -- ver
+  `DOCS/ANNEX_H08.md` PASO 2.3, sección "Cuarta observación".
+  Explícitamente pospuesto, no tocar salvo que se retome H08.
+- H08 PARTE 1 (búsqueda de listas/canales): pendiente de que Miguel
+  Ángel la pruebe en dispositivo real y confirme si funciona bien.
 - Decisión de producto pendiente: ¿menú de configuración para
   tema/color de la app? Sin decisión tomada.
-
-**Observación añadida tras el cierre de S009 (H08, Radio) —
-explícitamente pospuesta, NO tocar en la sesión de H09:** probando
-tras el cierre, Miguel Ángel confirmó que el "relacionado" de la
-Radio no es real — tras un tema de Héroes del Silencio (rock
-español), siguió sugiriendo temas al azar en inglés. Diagnóstico
-técnico y siguiente paso anotados en `DOCS/ANNEX_H08.md` (PASO 2.3,
-nueva sección "Cuarta observación"): el algoritmo solo mira género,
-nunca idioma, y un género tan amplio como "rock" es
-predominantemente anglosajón en MusicBrainz. Hace falta una
-conversación de diseño sobre el "baremo" real antes de tocar
-código — cuando se retome H08, no antes.
-
+- Frentes de MiMoo pendientes de concretar (mensaje de Miguel Ángel,
+  S011): carátulas que no se ven en el ExoPlayer aunque el disco sí
+  las tenga; carátulas realmente ausentes que habría que
+  proporcionar; posible necesidad de un segundo binario de
+  descarga/codificación (algunas canciones fallan con el actual,
+  pendiente de log real con el error exacto); notificación --
+  añadir favoritos + carátula de fondo de la canción sonando;
+  favoritos persistidos al subir a Drive (a confirmar leyendo el
+  modelo de datos real si ya está cubierto por H07).

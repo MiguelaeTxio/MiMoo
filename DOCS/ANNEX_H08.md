@@ -2,7 +2,7 @@
 # Búsqueda de Listas de Reproducción + Música Relacionada ("Radio")
 
 *Vive en `DOCS/ANNEX_H08.md` — flujo NewFlow Android. Ver estado en
-`DOCS/MASTER_DOCUMENT.md`. EN PROGRESO.*
+`DOCS/ANNEX_ROUTER.md`.*
 
 ---
 

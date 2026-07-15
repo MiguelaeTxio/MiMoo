@@ -2,7 +2,7 @@
 # Exportar/Importar Repositorio de Música vía Google Drive
 
 *Vive en `DOCS/ANNEX_H06.md` — flujo NewFlow Android. Ver estado en
-`DOCS/MASTER_DOCUMENT.md`. EN PROGRESO.*
+`DOCS/ANNEX_ROUTER.md`.*
 
 ---
 

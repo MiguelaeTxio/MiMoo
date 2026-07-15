@@ -2,7 +2,7 @@
 # Biblioteca Local: Reproducción Offline, CRUD, Favoritos y Carátulas
 
 *Vive en `DOCS/ANNEX_H03.md` — flujo NewFlow Android. Ver estado en
-`DOCS/MASTER_DOCUMENT.md`.*
+`DOCS/ANNEX_ROUTER.md`.*
 
 ---
 

@@ -2,7 +2,7 @@
 # Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción
 
 *Vive en `DOCS/ANNEX_H07.md` — flujo NewFlow Android. Ver estado en
-`DOCS/MASTER_DOCUMENT.md`. EN PROGRESO.*
+`DOCS/ANNEX_ROUTER.md`.*
 
 ---
 

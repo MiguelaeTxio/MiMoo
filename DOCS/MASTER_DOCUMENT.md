@@ -7,51 +7,57 @@ commitear como cualquier otro archivo del proyecto, vía
 
 ---
 
-## TABLA DE HITOS Y ESTADO
+## TABLA DE HITOS
 
-El estado (`EN PROGRESO` / vacío) vive **aquí, en esta tabla**, no en
-ningún enrutador aparte. Solo un hito puede estar `← EN PROGRESO` a
-la vez. Cambiar de hito es editar esta tabla y commitear — ver
-`newflow-android-pch`.
+**El estado de cada hito (EN PROGRESO / PAUSADO) vive exclusivamente
+en `DOCS/ANNEX_ROUTER.md` — este archivo nunca lo menciona.** Este
+documento es puramente descriptivo: qué es cada hito y, más abajo en
+la Hoja de Ruta Estratégica, qué hay construido/verificado y qué
+queda abierto en cada uno.
 
-| Hito | Título | Anexo | Estado |
-|---|---|---|---|
-| H01 | Buscar y Escuchar: Streaming de Audio bajo Demanda | `DOCS/ANNEX_H01.md` | |
-| H02 | Descarga a Local: yt-dlp + Opus + Queue | `DOCS/ANNEX_H02.md` | |
-| H03 | Biblioteca Local: Reproducción Offline, CRUD, Favoritos y Carátulas | `DOCS/ANNEX_H03.md` | |
-| H04 | Listas de Reproducción Locales | `DOCS/ANNEX_H04.md` | |
-| H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` | |
-| H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` | |
-| H07 | Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción | `DOCS/ANNEX_H07.md` | |
-| H08 | Búsqueda de Listas de Reproducción + Música Relacionada ("Radio") | `DOCS/ANNEX_H08.md` | |
-| H09 | SHOUTcast — Radios Online del Mundo por Género/Tema/Década | `DOCS/ANNEX_H09.md` | ← EN PROGRESO |
+| Hito | Título | Anexo |
+|---|---|---|
+| H01 | Buscar y Escuchar: Streaming de Audio bajo Demanda | `DOCS/ANNEX_H01.md` |
+| H02 | Descarga a Local: yt-dlp + Opus + Queue | `DOCS/ANNEX_H02.md` |
+| H03 | Biblioteca Local: Reproducción Offline, CRUD, Favoritos y Carátulas | `DOCS/ANNEX_H03.md` |
+| H04 | Listas de Reproducción Locales | `DOCS/ANNEX_H04.md` |
+| H05 | Búsqueda de Álbumes Completos vía MusicBrainz | `DOCS/ANNEX_H05.md` |
+| H06 | Exportar/Importar Repositorio de Música vía Google Drive | `DOCS/ANNEX_H06.md` |
+| H07 | Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción | `DOCS/ANNEX_H07.md` |
+| H08 | Búsqueda de Listas de Reproducción + Música Relacionada ("Radio") | `DOCS/ANNEX_H08.md` |
+| H09 | Radios Online del Mundo por Género/Tema/Década (Radio-Browser.info) | `DOCS/ANNEX_H09.md` |
+| H10 | Hash de Compartición de Contenido | `DOCS/ANNEX_H10.md` |
 
-**Resultado actual (migrado desde la sesión skill-based, 2026-07-02;
-actualizado 2026-07-11 S008):**
-H01 y H02 completados y verificados funcionalmente. H03 (PASOS 6, 7,
-9 hechos en la sesión del 2026-07-02) y H04 (PASOS 1-6 hechos, mismo
-día) tienen todo el código escrito pero comparten un pendiente:
-verificación física en el dispositivo de Miguel Ángel (H03 PASO 8,
-H04 PASO 6) — no bloquea nada, simplemente no se ha hecho. H05 tiene
-los PASOS 1-5 implementados y el toggle de vista + "Editar álbum" de
-S005 ya verificados en dispositivo (S006); **PASO 6c queda pausado sin
-tocar** (Lou Reed, búsqueda por artista/título suelto, Importar
-enlace — ver `DOCS/ANNEX_H05.md`, no es el hito activo). H06 queda
-**pausado, no completado**: "Exportar a Drive" verificado en
-dispositivo real (proyecto Google Cloud `mimoo-drive`, tras resolver
-en S007 un bloqueo de registro OAuth irresoluble en el proyecto
-original `mimoo-501004` — ver `DOCS/ANNEX_H06.md`); **"Importar desde
-Drive" queda sin probar**, pendiente para cuando se retome H06. **H07
-queda pausado, completado y verificado en dispositivo real con dos
-dispositivos** (S008): persistencia del link en metadatos + DB,
-sincronización automática con regla de negocio completa (identidad de
-dispositivo, bloqueo de mutaciones sin conexión, verificación
-disco↔BBDD, restauración selectiva), actualizaciones in-app vía
-GitHub Releases dedicado, PIN de acceso, y controles de reproducción
-cíclico/aleatorio — ver `DOCS/ANNEX_H07.md` para el detalle completo
-de las seis vueltas de fixes reales de esta sesión. H08 es hito nuevo,
-sin código todavía, abierto en S008 a petición explícita de Miguel
-Ángel.
+**Resumen de qué hay construido en cada hito (migrado desde la sesión
+skill-based, 2026-07-02; actualizado 2026-07-15):**
+H01 y H02, verificados funcionalmente. H03 (PASOS 6, 7, 9) y H04
+(PASOS 1-6) tienen todo el código escrito, con un pendiente
+compartido: verificación física en el dispositivo de Miguel Ángel
+(H03 PASO 8, H04 PASO 6) — no bloquea nada, simplemente no se ha
+hecho. H05 tiene los PASOS 1-5 implementados y el toggle de vista +
+"Editar álbum" de S005 verificados en dispositivo (S006); **PASO 6c
+sin tocar** (Lou Reed, búsqueda por artista/título suelto, Importar
+enlace — ver `DOCS/ANNEX_H05.md`). H06: "Exportar a Drive" verificado
+en dispositivo real (proyecto Google Cloud `mimoo-drive`, tras
+resolver en S007 un bloqueo de registro OAuth irresoluble en el
+proyecto original `mimoo-501004` — ver `DOCS/ANNEX_H06.md`);
+**"Importar desde Drive" sin probar**. H07: persistencia del link en
+metadatos + DB, sincronización automática con regla de negocio
+completa (identidad de dispositivo, bloqueo de mutaciones sin
+conexión, verificación disco↔BBDD, restauración selectiva),
+actualizaciones in-app vía GitHub Releases dedicado, PIN de acceso, y
+controles de reproducción cíclico/aleatorio, verificado en
+dispositivo real con dos dispositivos (S008) — ver
+`DOCS/ANNEX_H07.md`; **fix real de un `SocketTimeoutException` sin
+capturar en el diálogo de conflicto de sync, 2026-07-15, pendiente de
+verificación en dispositivo**. H08: búsqueda de listas/canales
+construida (verificación pendiente de confirmación explícita) y Radio
+(música relacionada) verificada en dispositivo real (S009-S010),
+aunque con un fallo de idioma detectado y pospuesto sin tocar (ver
+`DOCS/ANNEX_H08.md`). H09: ver `DOCS/ANNEX_H09.md` para el detalle
+completo, incluido lo construido en S010 que no había quedado
+documentado hasta ahora. H10: hito nuevo, abierto 2026-07-15, sin
+código todavía — ver `DOCS/ANNEX_H10.md`.
 
 ---
 
@@ -234,10 +240,10 @@ standalone de yt-dlp — es un script Python). El mismo módulo
 ## 3. Hoja de Ruta Estratégica
 
 ### Hito 1: Buscar y Escuchar — Streaming de Audio bajo Demanda
-(Ver `DOCS/ANNEX_H01.md`) — Completado y verificado.
+(Ver `DOCS/ANNEX_H01.md`) — Verificado funcionalmente.
 
 ### Hito 2: Descarga a Local — yt-dlp + Opus + Queue
-(Ver `DOCS/ANNEX_H02.md`) — Completado y verificado.
+(Ver `DOCS/ANNEX_H02.md`) — Verificado funcionalmente.
 
 ### Hito 3: Biblioteca Local — Reproducción Offline, CRUD, Favoritos y Carátulas
 (Ver `DOCS/ANNEX_H03.md`) — Código completo, PASO 8 (verificación
@@ -248,13 +254,13 @@ funcional en dispositivo) pendiente.
 funcional en dispositivo) pendiente.
 
 ### Hito 5: Búsqueda de Álbumes Completos vía MusicBrainz
-(Ver `DOCS/ANNEX_H05.md`) — Pausado (no completado). PASOS 1-5 hechos,
-S005 (toggle Biblioteca + Editar álbum) verificado en dispositivo en
-S006. PASO 6c pendiente sin tocar: Lou Reed, búsqueda por
-artista/título suelto, Importar enlace.
+(Ver `DOCS/ANNEX_H05.md`) — PASOS 1-5 hechos, S005 (toggle Biblioteca
++ Editar álbum) verificado en dispositivo en S006. PASO 6c pendiente
+sin tocar: Lou Reed, búsqueda por artista/título suelto, Importar
+enlace.
 
 ### Hito 6: Exportar/Importar Repositorio de Música vía Google Drive
-(Ver `DOCS/ANNEX_H06.md`) — Pausado. Exportar toda la biblioteca local
+(Ver `DOCS/ANNEX_H06.md`) — Exportar toda la biblioteca local
 (metadatos, no audio) a un archivo en Google Drive, e importarla en
 otro dispositivo sustituyendo por completo el repositorio local
 destino y encolando la descarga de cada pista con los metadatos ya
@@ -264,19 +270,25 @@ independiente de la búsqueda de listas de reproducción y la música
 relacionada (Hito 08).
 
 ### Hito 7: Persistencia de Enlaces + Sincronización Automática + Actualizaciones In-App + Controles de Reproducción
-(Ver `DOCS/ANNEX_H07.md`) — Pausado, completado y verificado en
-dispositivo real con dos dispositivos (S008). Persistencia del
-`youtubeId` en metadatos del archivo + base de datos; sincronización
-automática entre dispositivos con regla de negocio completa (identidad
-de dispositivo, bloqueo de mutaciones sin conexión, verificación
-disco↔BBDD, restauración selectiva); actualizaciones in-app vía
-repositorio GitHub dedicado (`AndroidReleases`); PIN de acceso; y
-controles de reproducción cíclico/aleatorio.
+(Ver `DOCS/ANNEX_H07.md`) — Persistencia del `youtubeId` en metadatos
+del archivo + base de datos; sincronización automática entre
+dispositivos con regla de negocio completa (identidad de dispositivo,
+bloqueo de mutaciones sin conexión, verificación disco↔BBDD,
+restauración selectiva); actualizaciones in-app vía repositorio
+GitHub dedicado (`AndroidReleases`); PIN de acceso; y controles de
+reproducción cíclico/aleatorio. Verificado en dispositivo real con
+dos dispositivos (S008). Fix real 2026-07-15: el diálogo de conflicto
+de sync (`confirmCloudWins()`/`confirmLocalWins()`) lanzaba la
+llamada de red sin `try/catch`, y un `SocketTimeoutException` real
+dejaba la app en bucle de crash-reapertura preguntando lo mismo;
+corregido con el mismo patrón de `try/catch` que ya tenía
+`startAutoSync()` más bloqueo síncrono de doble pulsación —
+verificación en dispositivo pendiente.
 
 ### Hito 8: Búsqueda de Listas de Reproducción + Música Relacionada ("Radio")
-(Ver `DOCS/ANNEX_H08.md`) — Pausado (S009). Dos funciones distintas
-comparten hito por surgir de la misma conversación, no por
-dependencia técnica entre ellas.
+(Ver `DOCS/ANNEX_H08.md`) — Dos funciones distintas comparten hito
+por surgir de la misma conversación, no por dependencia técnica entre
+ellas.
 1. **Búsqueda de listas de reproducción y canales (online)** — buscar
    por texto y encontrar listas/canales ya creados por otros usuarios
    en YouTube (no las playlists propias del usuario, que ya tienen su
@@ -290,24 +302,46 @@ dependencia técnica entre ellas.
 2. **Música relacionada ("Radio")** — cuando la cola de reproducción
    se queda sin nada más que reproducir sin cíclico activado,
    continúa sola en streaming con un artista relacionado (géneros
-   compartidos vía MusicBrainz). Diseño cerrado y construido en S009
-   — ver `DOCS/ANNEX_H08.md` para el detalle completo (por qué se
-   descartó el Mix de YouTube, algoritmo de selección, enganche en
-   `PlayerManager`). Solo streaming, nunca descarga (decisión
-   explícita de Miguel Ángel). **Verificado funcionando en dispositivo
-   real por Miguel Ángel (S009)**, tras tres rondas de corrección
-   (autoplay real, filtro de compilaciones, "Various Artists" sin
-   géneros matando la cadena de relacionados).
+   compartidos vía MusicBrainz). Solo streaming, nunca descarga
+   (decisión explícita de Miguel Ángel). Verificado funcionando en
+   dispositivo real por Miguel Ángel (S009-S010), tras varias rondas
+   de corrección (autoplay real, filtro de compilaciones, "Various
+   Artists" sin géneros matando la cadena de relacionados, sufijos de
+   canal VEVO/Oficial/Topic, ancla de género+país al primer tema). **Un
+   fallo real sigue abierto y explícitamente pospuesto (no tocar salvo
+   que se retome H08):** el "relacionado" solo mira género, nunca
+   idioma, así que un género amplio como "rock" sugiere
+   predominantemente artistas anglosajones aunque el tema de partida
+   sea en español — ver `DOCS/ANNEX_H08.md` PASO 2.3.
 
-### Hito 9: SHOUTcast — Radios Online del Mundo por Género/Tema/Década
-(Ver `DOCS/ANNEX_H09.md`) — EN PROGRESO. Hito nuevo abierto en S009.
-Vista para escuchar emisoras de radio online de todo el mundo,
-navegables por género/tema/país/década. Solo streaming, nunca
-descarga (decisión explícita de Miguel Ángel, mismo principio que
-Radio). Backend: Radio-Browser.info (directorio comunitario gratuito,
-sin API key) en vez del Shoutcast real (marca de iHeartMedia, requiere
-clave de desarrollador) — decisión técnica tomada en S009, ver
-`DOCS/ANNEX_H09.md`.
+### Hito 9: Radios Online del Mundo por Género/Tema/Década
+(Ver `DOCS/ANNEX_H09.md` para el detalle completo, incluida una
+brecha real de documentación de S010 que este archivo tenía sin
+reflejar hasta 2026-07-15). Vista para escuchar emisoras de radio
+online de todo el mundo, navegables por género/tema/país/década. Solo
+streaming, nunca descarga (decisión explícita de Miguel Ángel, mismo
+principio que Radio). Backend: Radio-Browser.info (directorio
+comunitario gratuito, sin API key) en vez del Shoutcast real (marca de
+iHeartMedia, requiere clave de desarrollador) — decisión técnica
+tomada en S009. Capa de red, repositorio, pantalla y navegación
+construidos y con varios crashes reales corregidos tras uso en
+dispositivo; catálogo de géneros/décadas curado a mano (petición
+explícita de Miguel Ángel, S010) en vez del `/json/tags` en bruto;
+favoritos de emisora añadidos como ampliación no prevista en el plan
+original. Sin confirmación explícita todavía de que funciona entero
+en dispositivo, y sin decidir si una radio en directo debería mostrar
+algún indicador tipo "En directo" en el reproductor (hoy simplemente
+no muestra barra de progreso).
+
+### Hito 10: Hash de Compartición de Contenido
+(Ver `DOCS/ANNEX_H10.md`) — Hito nuevo, abierto 2026-07-15, sin código
+todavía. Generar un hash/enlace de compartición que, abierto desde
+MiMoo en otro dispositivo, importe una réplica de lo compartido vía
+los enlaces de descarga ya conocidos. El alcance de qué se comparte
+(favoritos, un álbum, un sencillo, una lista, o todo) depende de
+**desde dónde y con qué nivel** se genera el hash — no es un modo
+único fijo; ver `DOCS/ANNEX_H10.md` para el planteamiento recibido y
+lo que queda por cerrar de diseño.
 
 ---
 

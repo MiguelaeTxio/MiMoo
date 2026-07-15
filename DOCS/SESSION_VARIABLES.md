@@ -14,6 +14,7 @@ de reinstalar nada en el cliente.*
 | `ANDROID_GITHUB_BRANCH` | main |
 | `LOCAL_CLONE_PATH` (workspace del modelo) | `/home/claude/repo/MiMoo` |
 | `MASTER_DOCUMENT_PATH` | `DOCS/MASTER_DOCUMENT.md` |
+| `ROUTER_PATH` (única fuente de verdad del hito EN PROGRESO) | `DOCS/ANNEX_ROUTER.md` |
 | `ANNEX_PATH_PATTERN` | `DOCS/ANNEX_H{NN}.md` |
 | `RESUMPTION_POINT_PATH` | `DOCS/RESUMPTION_POINT.md` |
 | `APK_DEPLOY_PATH` (PythonAnywhere, gestionado por el workflow) | `/home/MiguelAeTxio/ANDROID/MiMoo/apk/MiMoo.apk` |
