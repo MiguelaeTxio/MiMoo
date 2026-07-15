@@ -85,6 +85,20 @@ construir una búsqueda de canales nueva.
 
 ---
 
+## COMPLETADAS EN S011
+
+PASOS 1-4 construidos en la misma sesión que se abrió el hito:
+entidad/persistencia, suscribirse desde la búsqueda de canales ya
+existente (H08 PARTE 1), pantalla "Canales" (ver/reproducir/dar de
+baja), y comprobación periódica en segundo plano con descarga
+automática de contenido nuevo (sin descargar el catálogo histórico al
+suscribirse). Ver el detalle real en cada PASO más abajo.
+
+Solo queda **PASO 5, verificación en dispositivo real** -- nada de
+esto se ha probado fuera de que compile.
+
+---
+
 ## Hoja de ruta
 
 **PASO 1 — Entidad y persistencia.** `ChannelSubscription` (Room),

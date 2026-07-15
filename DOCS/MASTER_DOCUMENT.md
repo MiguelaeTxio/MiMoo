@@ -60,8 +60,9 @@ completo, incluido lo construido en S010 que no había quedado
 documentado hasta ahora. H10: 8 de 10 niveles de compartición
 construidos (ver `DOCS/ANNEX_H10.md`), sin verificar en dispositivo
 real todavía; los niveles 9-10 (Canales) dependen de que exista H11.
-H11: hito nuevo, abierto 2026-07-15, sin código todavía -- ver
-`DOCS/ANNEX_H11.md`.
+H11: hito nuevo, construido (suscripciones, pantalla
+de gestión, descarga automática en segundo plano) -- ver
+`DOCS/ANNEX_H11.md`, sin verificar en dispositivo real todavía.
 
 ---
 
@@ -351,13 +352,17 @@ hito. Sin verificación en dispositivo real del flujo completo
 todavía.
 
 ### Hito 11: Canales — Suscripciones y Descarga Automática
-(Ver `DOCS/ANNEX_H11.md`) — Hito nuevo, abierto 2026-07-15 a petición
-explícita de Miguel Ángel al aclarar qué significaba "Canal" en H10:
-"lo mismo que canal en YouTube... suscripciones y búsqueda de canales
-para suscribirse y descargar contenido de esos canales para verlo
-cuando se quiera. Es como un guardado de podcast." Sin código
-todavía -- ver `DOCS/ANNEX_H11.md` para el planteamiento y la hoja de
-ruta inicial.
+(Ver `DOCS/ANNEX_H11.md`) — Abierto 2026-07-15 a petición explícita de
+Miguel Ángel al aclarar qué significaba "Canal" en H10: "lo mismo que
+canal en YouTube... suscripciones y búsqueda de canales para
+suscribirse y descargar contenido de esos canales para verlo cuando
+se quiera. Es como un guardado de podcast." Construido en la misma
+sesión: suscribirse desde la búsqueda de canales ya existente (H08
+PARTE 1), pantalla "Canales" para ver/reproducir/dar de baja lo
+suscrito, y comprobación periódica en segundo plano (una vez al día)
+que encola automáticamente el contenido nuevo -- sin descargar de
+golpe el catálogo histórico al suscribirse. Sin verificación en
+dispositivo real todavía.
 
 ---
 

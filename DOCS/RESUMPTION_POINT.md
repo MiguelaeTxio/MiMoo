@@ -82,6 +82,25 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
    incluye `isFavorite` por pista y `favoriteAlbums` -- confirmado al
    reutilizarlo tal cual para H10. No hacía falta ningún cambio, ya
    estaba cubierto.
+10. **H11 abierto y construido entero (4 de 5 pasos):** al aclarar
+    qué significaba "Canal" en H10, Miguel Ángel describió una
+    funcionalidad nueva de verdad -- suscripciones a canal + descarga
+    automática, "como un guardado de podcast". Abierto como hito
+    nuevo (no forzado dentro de H10). Construido: entidad/persistencia,
+    suscribirse desde la búsqueda de canales ya existente (H08 PARTE
+    1, sin duplicar búsqueda), pantalla "Canales", y comprobación
+    periódica en segundo plano (`ChannelCheckWorker`, WorkManager,
+    una vez al día) que reutiliza `ExternalLinkResolver.resolveLink()`
+    tal cual contra la URL de vídeos del canal -- sin Python nuevo.
+    Decisión de diseño clave: la primera comprobación de un canal
+    recién suscrito NO descarga nada (línea base), solo a partir de
+    la segunda se encola contenido genuinamente nuevo -- evita
+    descargar de golpe el catálogo histórico entero al suscribirse.
+    **Sin verificar en dispositivo real.** Un fallo real de Dagger
+    (`ChannelSubscriptionDao` sin proveedor en `DatabaseModule`) se
+    coló en el primer commit de H11 y rompió el build -- corregido en
+    el siguiente commit, mismo patrón que un fallo idéntico ya
+    documentado en ese archivo (2026-07-05, `FavoriteAlbumDao`).
 
 ## Siguiente sesión — orden sugerido
 
@@ -90,13 +109,17 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
 2. Verificación en dispositivo de todo lo construido en S011: flujo
    completo de H10 (generar/enviar/recibir/importar un código), fix
    de sync de H07, carátula en reproductor/notificación, botón de
-   favoritos en notificación.
+   favoritos en notificación, y H11 (suscribirse a un canal, esperar
+   a la comprobación periódica o forzarla, confirmar que la primera
+   pasada no descarga nada y la segunda sí encola contenido nuevo).
 3. Si sigue H09: hoja de ruta real en `DOCS/ANNEX_H09.md` (sección
    final) -- confirmación de que funciona entero en dispositivo,
    decisión sobre el indicador "En directo", ampliar catálogo de
    géneros si hace falta.
-4. H10: conversación de diseño sobre Canales/Canal (niveles 9-10)
-   antes de tocar código ahí.
+4. H11: confirmar con Miguel Ángel las asunciones tomadas al
+   construirlo (audio vs vídeo, cuántos vídeos atrás al suscribirse,
+   notificación de contenido nuevo o no, Shorts sí/no) -- ver
+   `DOCS/ANNEX_H11.md`, sección "Lo que queda por confirmar".
 
 ## Pendientes antiguos, sin tocar en S011, no bloquean nada
 
