@@ -264,6 +264,133 @@ class BackupImportRepository @Inject constructor(
             )
         }
 
+    /**
+     * Importación ADITIVA para H10 (compartir contenido entre
+     * personas distintas, no entre dispositivos del mismo usuario).
+     * Decisión explícita tomada al construir esto, a falta de que
+     * Miguel Ángel diga lo contrario: recibir un código de
+     * compartición **nunca** borra nada de lo que el receptor ya
+     * tenía -- ni `importDestructively()` (H06, sustitución total,
+     * pensada para "mi propio backup") ni
+     * `applyCloudWinsTargeted()` (H07, sincronización entre MIS
+     * propios dispositivos) encajan aquí: ambas asumen que el
+     * contenido que se importa es "toda mi biblioteca real" y actúan
+     * en consecuencia borrando lo que sobra. Un código de
+     * compartición de otra persona es justo lo contrario -- un
+     * añadido, nunca una sustitución de lo que el receptor ya tiene.
+     *
+     * Por pista (comparando por `youtubeId`, la clave real):
+     * - Si no existe localmente: se inserta nueva, `PENDING` (se
+     *   redescarga desde el mismo sitio de origen, YouTube --
+     *   petición explícita de Miguel Ángel, S011: "el contenido se
+     *   debe descargar del mismo sitio de donde lo descargó el
+     *   original").
+     * - Si ya existe localmente: se actualizan los metadatos
+     *   (título/artista/álbum/carátula/posición/enlace de origen) con
+     *   los del código recibido -- "réplica total" incluye ediciones y
+     *   renombrados (S011) -- pero el archivo físico y el estado de
+     *   descarga NUNCA se tocan si ya estaba `DONE`; solo se encola
+     *   descarga si no lo estaba.
+     * - `isFavorite` nunca lo desmarca: `existing.isFavorite ||
+     *   incoming.isFavorite` -- recibir un código no debería
+     *   quitarle un favorito propio al receptor.
+     *
+     * Favoritos de álbum: se insertan los que falten (clave compuesta
+     * artist+album, `OnConflictStrategy.REPLACE` ya es idempotente).
+     *
+     * Playlists: cada playlist del código llega SIEMPRE como una
+     * playlist NUEVA (id autogenerado nuevo, nunca se fusiona con una
+     * existente aunque el nombre coincida) -- fusionar automáticamente
+     * dentro de una playlist ya existente por nombre sería una
+     * suposición arriesgada (¿y si el nombre coincide por casualidad
+     * con una playlist sin relación?). Si el nombre ya existe
+     * localmente, se añade el sufijo " (compartida)" para que quede
+     * claro cuál es cuál sin preguntar nada.
+     * ---
+     * ADDITIVE import for H10 (sharing content between different
+     * people, not between the same user's devices). Explicit decision
+     * made while building this, absent Miguel Ángel saying otherwise:
+     * receiving a share code **never** deletes anything the receiver
+     * already had -- neither `importDestructively()` (H06, full
+     * replace, meant for "my own backup") nor
+     * `applyCloudWinsTargeted()` (H07, sync between MY OWN devices)
+     * fit here -- both assume the imported content is "my whole real
+     * library" and act accordingly by deleting whatever's extra. A
+     * share code from someone else is the opposite -- an addition,
+     * never a replacement of what the receiver already has.
+     */
+    suspend fun importSharedBundle(bundle: BackupBundle): BackupImportResult =
+        withContext(Dispatchers.IO) {
+            val toEnqueue = mutableListOf<SearchResultTrack>()
+
+            database.withTransaction {
+                bundle.tracks.forEach { dto ->
+                    val existing = trackDao.getById(dto.youtubeId)
+                    if (existing == null) {
+                        val newTrack = dto.toEntity()
+                        trackDao.insert(newTrack)
+                        toEnqueue += newTrack
+                    } else {
+                        val merged = existing.copy(
+                            title = dto.title,
+                            channelTitle = dto.channelTitle,
+                            durationSeconds = dto.durationSeconds,
+                            thumbnailUrl = dto.thumbnailUrl,
+                            artist = dto.artist,
+                            album = dto.album,
+                            isFavorite = existing.isFavorite || dto.isFavorite,
+                            coverArtUrl = dto.coverArtUrl ?: existing.coverArtUrl,
+                            trackPosition = dto.trackPosition,
+                            sourceUrl = dto.sourceUrl ?: existing.sourceUrl,
+                            // filePath/downloadStatus/downloadProgress NUNCA se tocan aquí --
+                            // ver comentario de la función.
+                        )
+                        trackDao.insert(merged)
+                        if (existing.downloadStatus != DownloadStatus.DONE) {
+                            toEnqueue += merged
+                        }
+                    }
+                }
+
+                bundle.favoriteAlbums.forEach { dto ->
+                    favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
+                }
+
+                val existingPlaylistNames = playlistDao.getAllPlaylistsOnce().map { it.name }.toSet()
+                bundle.playlists.forEach { playlistDto ->
+                    val name = if (playlistDto.name in existingPlaylistNames) {
+                        "${playlistDto.name} (compartida)"
+                    } else {
+                        playlistDto.name
+                    }
+                    val newPlaylistId = playlistDao.insertPlaylist(
+                        Playlist(name = name, createdAt = System.currentTimeMillis())
+                    )
+                    playlistDto.trackYoutubeIdsInOrder.forEachIndexed { index, youtubeId ->
+                        playlistDao.addTrackToPlaylist(
+                            PlaylistTrackCrossRef(
+                                playlistId = newPlaylistId,
+                                youtubeId = youtubeId,
+                                position = index,
+                            )
+                        )
+                    }
+                }
+            }
+
+            val stepDone = "importSharedBundle() -- ${bundle.tracks.size} pista(s) del código procesadas, " +
+                "${toEnqueue.size} a encolar, ${bundle.favoriteAlbums.size} favoritos de álbum, " +
+                "${bundle.playlists.size} playlist(s) nueva(s)"
+            Log.d(TAG, stepDone)
+            BackupDebugLogger.log(context, storageManager, stepDone)
+
+            BackupImportResult(
+                importedTracks = toEnqueue,
+                favoriteAlbumCount = bundle.favoriteAlbums.size,
+                playlistCount = bundle.playlists.size,
+            )
+        }
+
     /** Borra un único archivo por su Uri -- fallo puntual no debe abortar el resto del diff. */
     private fun deleteSingleFile(uriString: String) {
         try {

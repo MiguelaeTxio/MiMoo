@@ -15,6 +15,7 @@ import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.DriveBackupFile
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.share.ShareCodeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,10 +76,33 @@ class SettingsViewModel @Inject constructor(
     private val importRepository: BackupImportRepository,
     private val downloadQueueManager: DownloadQueueManager,
     private val storageManager: StorageManager,
+    private val shareCodeRepository: ShareCodeRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
+
+    /**
+     * H10 (S011) -- código "miMoo+hash" ya generado, listo para que
+     * la UI abra el selector de "Compartir" del sistema
+     * (`Intent.ACTION_SEND`). `null` = nada pendiente. Separado por
+     * completo de `_uiState` (H06/Drive) -- generar un código es
+     * puramente local, sin autorización ni red de por medio.
+     */
+    private val _generatedShareCode = MutableStateFlow<String?>(null)
+    val generatedShareCode: StateFlow<String?> = _generatedShareCode.asStateFlow()
+
+    /** Nivel 1 de compartición (S011): Biblioteca completa. Ver ShareCodeRepository. */
+    fun onShareLibraryClicked() {
+        viewModelScope.launch {
+            _generatedShareCode.value = shareCodeRepository.buildLibraryShareCode()
+        }
+    }
+
+    /** Llamado por la UI justo después de lanzar el Intent.ACTION_SEND, para no relanzarlo en la siguiente recomposición. */
+    fun consumeGeneratedShareCode() {
+        _generatedShareCode.value = null
+    }
 
     /**
      * Cuando la autorización necesita confirmación del usuario

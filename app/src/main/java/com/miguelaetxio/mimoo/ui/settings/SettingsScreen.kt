@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,9 +67,24 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val pendingConsent by viewModel.pendingConsent.collectAsState()
+    val generatedShareCode by viewModel.generatedShareCode.collectAsState()
     val context = LocalContext.current
     val activity = context as Activity
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // H10 (S011) -- en cuanto el código "miMoo+hash" está generado,
+    // abre el selector de "Compartir" del sistema con ese texto y lo
+    // consume, para no relanzarlo en la siguiente recomposición.
+    LaunchedEffect(generatedShareCode) {
+        generatedShareCode?.let { code ->
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_TEXT, code)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, null))
+            viewModel.consumeGeneratedShareCode()
+        }
+    }
 
     // Backup elegido de la lista, pendiente de confirmación
     // destructiva -- separado de BackupsListed para poder mostrar el
@@ -215,6 +231,36 @@ fun SettingsScreen(
             if (isWorking) {
                 Spacer(Modifier.height(12.dp))
                 CircularProgressIndicator(modifier = Modifier.height(20.dp))
+            }
+
+            Spacer(Modifier.height(32.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+
+            // H10 (S011) -- primer nivel de compartición implementado
+            // (Biblioteca completa); el resto (Artista, Álbum, Tema
+            // suelto, Sencillos, Listas de reproducción, Canales) vive
+            // en DOCS/ANNEX_H10.md para sesiones siguientes, mismo
+            // mecanismo.
+            Text(
+                "Compartir",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Genera un código que se abre directamente con MiMoo al " +
+                    "enviarlo por WhatsApp o cualquier otro medio. Se añade " +
+                    "a la biblioteca de quien lo abre sin borrar nada de lo " +
+                    "que ya tenía, y descarga el contenido directamente " +
+                    "desde YouTube.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = viewModel::onShareLibraryClicked) {
+                Icon(Icons.Filled.Share, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Compartir biblioteca completa")
             }
 
             Spacer(Modifier.height(32.dp))

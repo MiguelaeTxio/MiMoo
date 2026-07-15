@@ -251,15 +251,43 @@ class MainActivity : ComponentActivity() {
         playerManager.play(uri.toString(), title, isLocal = true)
     }
 
+    /**
+     * H10 (S011) -- estado leído por el Composable de setContent()
+     * vía LaunchedEffect. No puede vivir dentro de la composición
+     * porque onNewIntent()/onCreate() se ejecutan fuera de ella;
+     * mismo motivo por el que StorageManager/PlayerManager se
+     * inyectan como campos de la Activity en vez de leerse solo
+     * dentro de setContent().
+     */
+    private val incomingShareText = mutableStateOf<String?>(null)
+
+    /**
+     * H10 (S011) -- ruta de entrada de un código "miMoo+hash"
+     * recibido vía el intent-filter ACTION_SEND (ver
+     * AndroidManifest.xml). Comprobación de prefijo aquí mismo, antes
+     * de tocar ningún ViewModel -- cualquier otro texto compartido a
+     * MiMoo por error (una URL cualquiera, texto suelto) se ignora en
+     * silencio, no genera ningún diálogo de error.
+     */
+    private fun handleShareIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND || intent.type != "text/plain") return
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+        if (text.trim().startsWith(com.miguelaetxio.mimoo.data.share.SHARE_CODE_PREFIX)) {
+            incomingShareText.value = text
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleViewIntent(intent)
+        handleShareIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleViewIntent(intent)
+        handleShareIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(
@@ -387,6 +415,79 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(autoSyncPendingConsent) {
                     autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
                 }
+
+                // H10 (S011) -- código "miMoo+hash" recibido vía
+                // ACTION_SEND (handleShareIntent). LaunchedEffect
+                // reacciona en cuanto incomingShareText cambia de
+                // valor (recepción en frío en onCreate() o con la app
+                // ya abierta vía onNewIntent(), launchMode
+                // singleTask), decodifica, y limpia el valor para no
+                // reprocesar el mismo texto en una recomposición
+                // posterior.
+                val shareImportViewModel: com.miguelaetxio.mimoo.ui.share.ShareImportViewModel =
+                    androidx.hilt.navigation.compose.hiltViewModel()
+                val shareImportState by shareImportViewModel.uiState.collectAsState()
+                LaunchedEffect(incomingShareText.value) {
+                    incomingShareText.value?.let { text ->
+                        shareImportViewModel.handleIncomingShareCode(text)
+                        incomingShareText.value = null
+                    }
+                }
+
+                (shareImportState as? com.miguelaetxio.mimoo.ui.share.ShareImportUiState.Confirm)
+                    ?.let { confirmState ->
+                        val b = confirmState.shareBundle.bundle
+                        AlertDialog(
+                            onDismissRequest = shareImportViewModel::dismiss,
+                            title = { Text("Contenido compartido") },
+                            text = {
+                                Text(
+                                    "Alguien te ha compartido: ${confirmState.shareBundle.scopeLabel}. " +
+                                        "Se añadirá a tu biblioteca (${b.tracks.size} pista(s), " +
+                                        "${b.playlists.size} playlist(s), ${b.favoriteAlbums.size} " +
+                                        "álbum(es) favorito(s)) sin borrar nada de lo que ya tienes. " +
+                                        "¿Importar?"
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(onClick = shareImportViewModel::confirmImport) {
+                                    Text("Importar")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = shareImportViewModel::dismiss) { Text("Cancelar") }
+                            },
+                        )
+                    }
+
+                (shareImportState as? com.miguelaetxio.mimoo.ui.share.ShareImportUiState.Done)
+                    ?.let { doneState ->
+                        AlertDialog(
+                            onDismissRequest = shareImportViewModel::dismiss,
+                            title = { Text("Contenido importado") },
+                            text = {
+                                Text(
+                                    "${doneState.trackCount} pista(s) del código recibidas, " +
+                                        "${doneState.newDownloadsCount} descarga(s) nueva(s) encolada(s)."
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(onClick = shareImportViewModel::dismiss) { Text("Vale") }
+                            },
+                        )
+                    }
+
+                (shareImportState as? com.miguelaetxio.mimoo.ui.share.ShareImportUiState.Error)
+                    ?.let { errorState ->
+                        AlertDialog(
+                            onDismissRequest = shareImportViewModel::dismiss,
+                            title = { Text("No se pudo importar") },
+                            text = { Text(errorState.message) },
+                            confirmButton = {
+                                TextButton(onClick = shareImportViewModel::dismiss) { Text("Vale") }
+                            },
+                        )
+                    }
 
                 // Caso 3 (regla de negocio S008): copia de OTRO
                 // dispositivo -- se pregunta explícitamente antes de

@@ -191,6 +191,31 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="audio/*" />
             </intent-filter>
+            <!--
+                H10 (S011): registra MiMoo como destino cuando el
+                usuario pulsa "Compartir" sobre un texto plano en
+                cualquier otra app (WhatsApp, SMS, etc.) — es lo que
+                permite que un código "miMoo+hash" "se habrá con la
+                aplicación al enviarlo por cualquier medio", tal como
+                lo pidió Miguel Ángel. El propio código lleva el
+                prefijo "miMoo+" que MainActivity comprueba antes de
+                intentar decodificar nada — cualquier otro texto
+                compartido a MiMoo por error se ignora sin más.
+                ===
+                H10 (S011): registers MiMoo as a target when the user
+                taps "Share" on plain text in any other app (WhatsApp,
+                SMS, etc.) — this is what lets a "miMoo+hash" code
+                "open with the app when sent through any channel", as
+                Miguel Ángel asked. The code itself carries the
+                "miMoo+" prefix MainActivity checks before attempting
+                to decode anything — any other text shared to MiMoo
+                by mistake is simply ignored.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <!--
