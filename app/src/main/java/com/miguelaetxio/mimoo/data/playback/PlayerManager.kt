@@ -98,6 +98,30 @@ data class QueueItem(
      * just an approximate display label.
      */
     val channelTitle: String? = null,
+    /**
+     * S011 -- fallo real reportado por Miguel Ángel ("carátula canción
+     * tocándose, de fondo" en la notificación): `toMediaItem()` nunca
+     * ponía artista ni carátula en el `MediaMetadata`, así que
+     * `DefaultMediaNotificationProvider` (que fabrica la notificación
+     * DIRECTAMENTE a partir de esos metadatos) nunca tenía nada que
+     * mostrar. `coverArtUrl` real de MusicBrainz si ya está resuelto,
+     * si no la miniatura de YouTube como respaldo -- así la
+     * notificación muestra algo desde el primer segundo en vez de
+     * esperar a que Biblioteca resuelva la carátula real. Los
+     * llamantes que conocen la pista pasan
+     * `track.coverArtUrl ?: track.thumbnailUrl`.
+     * ---
+     * S011 -- real bug reported by Miguel Ángel ("song artwork playing
+     * in the background" of the notification): `toMediaItem()` never
+     * set artist or artwork on `MediaMetadata`, so
+     * `DefaultMediaNotificationProvider` (which builds the
+     * notification DIRECTLY from that metadata) never had anything to
+     * show. Real MusicBrainz `coverArtUrl` if already resolved,
+     * otherwise the YouTube thumbnail as a fallback -- so the
+     * notification shows something from the first second instead of
+     * waiting for the Library to resolve the real cover art.
+     */
+    val artworkUri: String? = null,
 )
 
 data class PlaybackState(
@@ -979,6 +1003,7 @@ class PlayerManager @Inject constructor(
                             isFromRadio = true,
                             youtubeId = track.youtubeId,
                             channelTitle = track.channelTitle,
+                            artworkUri = track.thumbnailUrl,
                         )
                     }
                 }
@@ -1028,6 +1053,12 @@ class PlayerManager @Inject constructor(
                 MediaMetadata.Builder()
                     .setTitle(item.title)
                     .setDisplayTitle(item.title)
+                    .apply {
+                        if (!item.artist.isNullOrBlank()) setArtist(item.artist)
+                        if (!item.artworkUri.isNullOrBlank()) {
+                            setArtworkUri(android.net.Uri.parse(item.artworkUri))
+                        }
+                    }
                     .build()
             )
             .build()
@@ -1049,9 +1080,20 @@ class PlayerManager @Inject constructor(
         artist: String? = null,
         youtubeId: String? = null,
         channelTitle: String? = null,
+        artworkUri: String? = null,
     ) {
         playQueue(
-            listOf(QueueItem(streamUrl, title, isLocal, artist, youtubeId = youtubeId, channelTitle = channelTitle)),
+            listOf(
+                QueueItem(
+                    streamUrl,
+                    title,
+                    isLocal,
+                    artist,
+                    youtubeId = youtubeId,
+                    channelTitle = channelTitle,
+                    artworkUri = artworkUri,
+                )
+            ),
             startIndex = 0,
         )
     }

@@ -1174,6 +1174,7 @@ class LibraryViewModel @Inject constructor(
                 artist = track.artist ?: track.channelTitle,
                 youtubeId = track.youtubeId,
                 channelTitle = track.channelTitle,
+                artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
             )
             return
         }
@@ -1189,6 +1190,7 @@ class LibraryViewModel @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
                     channelTitle = track.channelTitle,
+                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -1224,6 +1226,7 @@ class LibraryViewModel @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
                     channelTitle = track.channelTitle,
+                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                 )
             )
         )
@@ -1247,6 +1250,7 @@ class LibraryViewModel @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
                     channelTitle = track.channelTitle,
+                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                 )
             )
         )
@@ -1353,6 +1357,7 @@ class LibraryViewModel @Inject constructor(
                         artist = track.artist ?: track.channelTitle,
                         youtubeId = track.youtubeId,
                         channelTitle = track.channelTitle,
+                        artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                     )
                 } else if (remoteUrl == null) {
                     resolutionFailures++
@@ -1367,6 +1372,7 @@ class LibraryViewModel @Inject constructor(
                             artist = track.artist ?: track.channelTitle,
                             youtubeId = track.youtubeId,
                             channelTitle = track.channelTitle,
+                            artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                         )
                     } catch (e: Exception) {
                         resolutionFailures++
@@ -1398,6 +1404,7 @@ class LibraryViewModel @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                     youtubeId = track.youtubeId,
                     channelTitle = track.channelTitle,
+                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                 )
             }
         }

@@ -350,6 +350,7 @@ class ImportLinkViewModel @Inject constructor(
                         artist = track.channelTitle,
                         youtubeId = track.youtubeId,
                         channelTitle = track.channelTitle,
+                        artworkUri = track.thumbnailUrl,
                     )
                 }
                 playerManager.playQueue(items)

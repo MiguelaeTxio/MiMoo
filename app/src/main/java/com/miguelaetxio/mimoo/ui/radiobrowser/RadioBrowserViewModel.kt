@@ -249,6 +249,7 @@ class RadioBrowserViewModel @Inject constructor(
             title = station.name,
             isLocal = false,
             artist = null,
+            artworkUri = station.favicon?.takeIf { it.isNotBlank() },
         )
     }
 }
