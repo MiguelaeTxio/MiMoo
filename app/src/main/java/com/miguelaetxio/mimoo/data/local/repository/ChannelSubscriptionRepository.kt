@@ -36,6 +36,9 @@ class ChannelSubscriptionRepository @Inject constructor(
     suspend fun updateLastCheckedAt(channelId: String, checkedAt: Long) =
         dao.updateLastCheckedAt(channelId, checkedAt)
 
+    /** Baja directa por channelId -- usado por la pantalla "Canales" (PASO 3), donde ya se sabe con certeza que está suscrito. */
+    suspend fun unsubscribe(channelId: String) = dao.deleteByChannelId(channelId)
+
     suspend fun toggle(channel: SearchTypeResult) {
         if (dao.isSubscribed(channel.id)) {
             dao.delete(

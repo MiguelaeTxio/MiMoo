@@ -23,6 +23,10 @@ interface ChannelSubscriptionDao {
     @Delete
     suspend fun delete(subscription: ChannelSubscription)
 
+    /** Query directa por channelId -- evita reconstruir un ChannelSubscription completo solo para borrar. */
+    @Query("DELETE FROM channel_subscriptions WHERE channelId = :channelId")
+    suspend fun deleteByChannelId(channelId: String)
+
     @Query("SELECT EXISTS(SELECT 1 FROM channel_subscriptions WHERE channelId = :channelId)")
     suspend fun isSubscribed(channelId: String): Boolean
 

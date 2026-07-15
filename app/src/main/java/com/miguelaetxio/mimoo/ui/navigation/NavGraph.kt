@@ -41,6 +41,7 @@ sealed class Screen(val route: String) {
     object Downloads : Screen("downloads")
     object Queue : Screen("queue")
     object RadioBrowser : Screen("radio_browser")
+    object Channels : Screen("channels")
     object Settings : Screen("settings")
 }
 
@@ -115,6 +116,9 @@ fun MiMooNavGraph(
         }
         composable(Screen.RadioBrowser.route) {
             RadioBrowserScreen(onOpenDrawer = onOpenDrawer)
+        }
+        composable(Screen.Channels.route) {
+            com.miguelaetxio.mimoo.ui.channels.ChannelsScreen(onOpenDrawer = onOpenDrawer)
         }
         composable(Screen.Settings.route) {
             SettingsScreen(onOpenDrawer = onOpenDrawer)

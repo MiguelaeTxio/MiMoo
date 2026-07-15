@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.Podcasts
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
@@ -705,6 +706,23 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.RadioBrowser.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Canales") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Podcasts,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Channels.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Channels.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
