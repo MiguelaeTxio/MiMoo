@@ -37,6 +37,7 @@ abierto, sin mencionar jamás su propio estado.
 | H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
 | H09 | `DOCS/ANNEX_H09.md` | ← **EN PROGRESO** |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
+| H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 
 ---
 
@@ -47,3 +48,7 @@ abierto, sin mencionar jamás su propio estado.
   Miguel Ángel). H09 se mantiene EN PROGRESO sin interrupción; H10 se
   abre PAUSADO en la misma sesión (planteamiento inicial recibido,
   sin hoja de ruta ejecutable todavía).
+- **2026-07-15 (misma sesión S011)** — H11 abierto PAUSADO: Canales
+  (suscripciones + descarga automática tipo podcast), a petición
+  explícita de Miguel Ángel al aclarar qué significaba "Canal" en los
+  niveles 9-10 de H10. H09 se mantiene EN PROGRESO.

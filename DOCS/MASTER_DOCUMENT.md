@@ -27,6 +27,7 @@ queda abierto en cada uno.
 | H08 | Búsqueda de Listas de Reproducción + Música Relacionada ("Radio") | `DOCS/ANNEX_H08.md` |
 | H09 | Radios Online del Mundo por Género/Tema/Década (Radio-Browser.info) | `DOCS/ANNEX_H09.md` |
 | H10 | Hash de Compartición de Contenido | `DOCS/ANNEX_H10.md` |
+| H11 | Canales — Suscripciones y Descarga Automática | `DOCS/ANNEX_H11.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -56,8 +57,11 @@ construida (verificación pendiente de confirmación explícita) y Radio
 aunque con un fallo de idioma detectado y pospuesto sin tocar (ver
 `DOCS/ANNEX_H08.md`). H09: ver `DOCS/ANNEX_H09.md` para el detalle
 completo, incluido lo construido en S010 que no había quedado
-documentado hasta ahora. H10: hito nuevo, abierto 2026-07-15, sin
-código todavía — ver `DOCS/ANNEX_H10.md`.
+documentado hasta ahora. H10: 8 de 10 niveles de compartición
+construidos (ver `DOCS/ANNEX_H10.md`), sin verificar en dispositivo
+real todavía; los niveles 9-10 (Canales) dependen de que exista H11.
+H11: hito nuevo, abierto 2026-07-15, sin código todavía -- ver
+`DOCS/ANNEX_H11.md`.
 
 ---
 
@@ -342,10 +346,18 @@ redescargando cada pista desde YouTube -- nunca destructivo, nunca
 toca lo que el receptor ya tenía. 8 de los 10 niveles de compartición
 construidos y con punto de entrada en la UI: Biblioteca completa,
 Artista, Álbum, Tema de álbum, Sencillo, Sencillos favoritos, Listas
-de reproducción. Canales/Canal sin construir -- no existe ese
-concepto en el modelo de datos actual, pendiente de una conversación
-de diseño. Sin verificación en dispositivo real del flujo completo
+de reproducción. Canales/Canal dependen de que exista H11 -- ver ese
+hito. Sin verificación en dispositivo real del flujo completo
 todavía.
+
+### Hito 11: Canales — Suscripciones y Descarga Automática
+(Ver `DOCS/ANNEX_H11.md`) — Hito nuevo, abierto 2026-07-15 a petición
+explícita de Miguel Ángel al aclarar qué significaba "Canal" en H10:
+"lo mismo que canal en YouTube... suscripciones y búsqueda de canales
+para suscribirse y descargar contenido de esos canales para verlo
+cuando se quiera. Es como un guardado de podcast." Sin código
+todavía -- ver `DOCS/ANNEX_H11.md` para el planteamiento y la hoja de
+ruta inicial.
 
 ---
 
