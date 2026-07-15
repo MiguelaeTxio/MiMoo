@@ -102,13 +102,41 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
     el siguiente commit, mismo patrón que un fallo idéntico ya
     documentado en ese archivo (2026-07-05, `FavoriteAlbumDao`).
 
+11. **H10 rediseñado de texto a archivo real, tras prueba de Miguel
+    Ángel en dispositivo:** el código "miMoo+hash" compartido como
+    texto plano (`ACTION_SEND`) no daba nada que "tocar para abrir"
+    en WhatsApp/SMS -- solo texto pegado sin ninguna acción asociada.
+    Además el hash resultaba excesivamente largo, y el prefijo
+    "miMoo+" fue una lectura mía equivocada de la instrucción
+    original (el "+" nunca se refería al carácter literal). Rediseño
+    completo: MiMoo genera y comparte ahora un ARCHIVO real con
+    extensión propia `.mimoo` (GZIP crudo de JSON, sin Base64/prefijo
+    -- ya no hace falta sobrevivir como texto), registrado en
+    `AndroidManifest.xml` vía `ACTION_VIEW` + `pathPattern` (mismo
+    patrón que usan apps reales para asociarse a una extensión
+    propia). Se comparte con `EXTRA_STREAM` (no `EXTRA_TEXT`), vía
+    `FileProvider` (mismo mecanismo que ya usa
+    `AppUpdateRepository.downloadApk()` para el APK de actualización).
+    **Cacería de un build roto sin poder leer el log real** (Azure
+    Blob redirigió de forma consistente a subdominios no permitidos
+    en la red durante varios intentos, hasta dar con `sa17` al quinto
+    commit de esta cacería): la causa real, tras diagnóstico manual
+    exhaustivo comparando cada diff línea a línea, fue un comentario
+    KDoc en `MainActivity.kt` que citaba literalmente `mimeType="*/*"`
+    entre comillas -- la secuencia `*/` cierra cualquier bloque
+    `/** */` de Kotlin sin importar que esté entre comillas, lo que
+    convertía el resto del comentario en código real y generaba
+    decenas de errores en cascada. Un `pathPattern` sobre-escapado (4
+    barras invertidas en vez de 1) también se corrigió por el camino,
+    aunque no era la causa del fallo.
+
 ## Siguiente sesión — orden sugerido
 
 1. Ver `DOCS/ANNEX_ROUTER.md` para el hito EN PROGRESO real al
    arrancar (no asumir que sigue siendo H09 sin comprobar).
 2. Verificación en dispositivo de todo lo construido en S011: flujo
-   completo de H10 (generar/enviar/recibir/importar un código), fix
-   de sync de H07, carátula en reproductor/notificación, botón de
+   completo de H10 (generar/enviar/recibir/importar un archivo .mimoo),
+   fix de sync de H07, carátula en reproductor/notificación, botón de
    favoritos en notificación, y H11 (suscribirse a un canal, esperar
    a la comprobación periódica o forzarla, confirmar que la primera
    pasada no descarga nada y la segunda sí encola contenido nuevo).
