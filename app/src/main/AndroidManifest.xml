@@ -235,7 +235,7 @@
                 <data android:scheme="file" />
                 <data android:host="*" />
                 <data android:mimeType="*/*" />
-                <data android:pathPattern=".*\\.mimoo" />
+                <data android:pathPattern=".*\.mimoo" />
             </intent-filter>
         </activity>
 
