@@ -9,8 +9,10 @@ import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
+import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
+import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -22,8 +24,9 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         PlaylistTrackCrossRef::class,
         FavoriteAlbum::class,
         FavoriteRadioStation::class,
+        ChannelSubscription::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -32,6 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun playlistDao(): PlaylistDao
     abstract fun favoriteAlbumDao(): FavoriteAlbumDao
     abstract fun favoriteRadioStationDao(): FavoriteRadioStationDao
+    abstract fun channelSubscriptionDao(): ChannelSubscriptionDao
 
     companion object {
         /**
@@ -287,6 +291,35 @@ abstract class AppDatabase : RoomDatabase() {
                         "`country` TEXT, " +
                         "`tags` TEXT, " +
                         "PRIMARY KEY(`stationUuid`))"
+                )
+            }
+        }
+
+        /**
+         * Crea channel_subscriptions (H11, S011) -- petición explícita
+         * de Miguel Ángel: suscripciones a canal, concepto nuevo y
+         * separado de `channelTitle` (que es solo un campo de texto en
+         * cada pista, no una entidad propia). Clave primaria
+         * `channelId`, el identificador estable de YouTube -- viene de
+         * `SearchTypeResult.id` (H08 PARTE 1), no del título, que puede
+         * cambiar. Tabla nueva, no toca ninguna tabla existente.
+         * ---
+         * Creates channel_subscriptions (H11, S011) -- explicit
+         * request from Miguel Ángel: channel subscriptions, a new
+         * concept separate from `channelTitle`. Primary key
+         * `channelId`, YouTube's stable identifier. New table, doesn't
+         * touch any existing table.
+         */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `channel_subscriptions` (" +
+                        "`channelId` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`thumbnailUrl` TEXT, " +
+                        "`subscribedAt` INTEGER NOT NULL, " +
+                        "`lastCheckedAt` INTEGER, " +
+                        "PRIMARY KEY(`channelId`))"
                 )
             }
         }
