@@ -269,6 +269,15 @@ fun LibraryScreen(
                                     )
                                 }
                             }
+                            // H10 (S011, nivel 5) -- réplica total de
+                            // todos los sencillos favoritos (pistas
+                            // favoritas sin álbum asignado).
+                            IconButton(onClick = viewModel::shareFavoriteSinglesReplica) {
+                                Icon(
+                                    Icons.Filled.Share,
+                                    contentDescription = "Compartir sencillos favoritos",
+                                )
+                            }
                         }
                         IconButton(onClick = viewModel::mergeDuplicateFolders) {
                             Icon(
@@ -591,6 +600,7 @@ private fun ColumnScope.AlbumsTabContent(
                 onPlayAll = viewModel::playArtistAlbums,
                 onShuffle = viewModel::playArtistAlbumsShuffled,
                 onDelete = onDeleteArtist,
+                onShare = { artist -> viewModel.shareArtistReplica(artist) },
             )
         }
         is AlbumsDrillLevel.ArtistsFlat -> {
@@ -609,6 +619,7 @@ private fun ColumnScope.AlbumsTabContent(
                     onPlayAll = viewModel::playArtistAlbums,
                     onShuffle = viewModel::playArtistAlbumsShuffled,
                     onDelete = onDeleteArtist,
+                    onShare = { artist -> viewModel.shareArtistReplica(artist) },
                 )
             }
         }
@@ -687,6 +698,7 @@ private fun ColumnScope.SinglesTabContent(
                 onPlayAll = viewModel::playArtistSingles,
                 onShuffle = viewModel::playArtistSinglesShuffled,
                 onDelete = onDeleteArtist,
+                onShare = { artist -> viewModel.shareArtistReplica(artist) },
             )
         }
         is SinglesDrillLevel.ArtistsFlat -> {
@@ -705,6 +717,7 @@ private fun ColumnScope.SinglesTabContent(
                     onPlayAll = viewModel::playArtistSingles,
                     onShuffle = viewModel::playArtistSinglesShuffled,
                     onDelete = onDeleteArtist,
+                    onShare = { artist -> viewModel.shareArtistReplica(artist) },
                 )
             }
         }
@@ -823,6 +836,7 @@ private fun ColumnScope.ArtistList(
     onPlayAll: (String) -> Unit,
     onShuffle: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onShare: (String) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.weight(1f)) {
         items(artists, key = { "artist:$it" }) { artist ->
@@ -846,6 +860,11 @@ private fun ColumnScope.ArtistList(
                 }
                 IconButton(onClick = { onShuffle(artist) }) {
                     Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
+                }
+                // H10 (S011, nivel 2) -- réplica total de todas las
+                // pistas descargadas de este artista.
+                IconButton(onClick = { onShare(artist) }) {
+                    Icon(Icons.Filled.Share, contentDescription = "Compartir artista con réplica total")
                 }
                 IconButton(onClick = { onDelete(artist) }) {
                     Icon(

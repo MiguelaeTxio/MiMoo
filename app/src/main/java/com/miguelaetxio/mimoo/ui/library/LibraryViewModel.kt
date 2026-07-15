@@ -336,6 +336,20 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    /** H10 (S011, nivel 2). */
+    fun shareArtistReplica(artist: String) {
+        viewModelScope.launch {
+            _generatedShareCode.value = shareCodeRepository.buildArtistShareCode(artist)
+        }
+    }
+
+    /** H10 (S011, nivel 5). */
+    fun shareFavoriteSinglesReplica() {
+        viewModelScope.launch {
+            _generatedShareCode.value = shareCodeRepository.buildFavoriteSinglesShareCode()
+        }
+    }
+
     fun consumeGeneratedShareCode() {
         _generatedShareCode.value = null
     }
