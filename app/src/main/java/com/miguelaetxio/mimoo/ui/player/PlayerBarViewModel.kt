@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlaybackState
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
+import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.Collections
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -24,6 +26,7 @@ import javax.inject.Inject
 class PlayerBarViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val searchResultTrackRepository: SearchResultTrackRepository,
+    private val coverArtRepository: CoverArtRepository,
 ) : ViewModel() {
 
     val state: StateFlow<PlaybackState> = playerManager.state
@@ -88,6 +91,56 @@ class PlayerBarViewModel @Inject constructor(
     private val _coverArtUrl = MutableStateFlow<String?>(null)
     val coverArtUrl: StateFlow<String?> = _coverArtUrl.asStateFlow()
 
+    /**
+     * Fallo real diagnosticado leyendo el código (Miguel Ángel,
+     * 2026-07-15: "a veces tiene carátula un disco pero no se ve en
+     * el exoplayer"): hasta ahora este ViewModel solo LEÍA
+     * `coverArtUrl` de Room de forma pasiva -- la resolución real
+     * contra MusicBrainz/Cover Art Archive
+     * (`CoverArtRepository.resolveCoverArtUrl()` +
+     * `SearchResultTrackRepository.updateCoverArtForAlbum()`) solo se
+     * disparaba desde `LibraryViewModel.requestCoverArtIfMissing()` --
+     * ver LibraryScreen. Si Miguel Ángel reproducía un tema de un
+     * álbum que SÍ tiene carátula real en MusicBrainz pero nunca había
+     * visitado Biblioteca para ese álbum, `coverArtUrl` seguía `null`
+     * en Room para siempre, y el reproductor mostraba el marcador
+     * genérico aunque la carátula existiera de verdad.
+     *
+     * Mismo mecanismo de deduplicación que Biblioteca
+     * (`coverArtRequested`, un `Set` sincronizado por artist+album,
+     * vida de proceso) para no repetir la búsqueda en MusicBrainz cada
+     * vez que cambia de pista dentro del mismo álbum. No hace falta
+     * escribir `_coverArtUrl.value` a mano tras resolver -- el
+     * `flatMapLatest` de más abajo sigue observando la misma fila de
+     * Room y se entera solo en cuanto `updateCoverArtForAlbum()`
+     * escribe el resultado.
+     * ---
+     * Real bug diagnosed by reading the code (Miguel Ángel, 2026-07-15:
+     * "sometimes an album has cover art but it doesn't show in the
+     * ExoPlayer"): until now this ViewModel only passively READ
+     * `coverArtUrl` from Room -- the actual resolution against
+     * MusicBrainz/Cover Art Archive only ever fired from
+     * `LibraryViewModel.requestCoverArtIfMissing()`. If Miguel Ángel
+     * played a track from an album that genuinely has real cover art
+     * in MusicBrainz but had never visited the Library for that album,
+     * `coverArtUrl` stayed `null` in Room forever, and the player kept
+     * showing the generic placeholder even though the art really
+     * existed.
+     */
+    private val coverArtRequested = Collections.synchronizedSet(mutableSetOf<String>())
+
+    private fun requestCoverArtIfMissing(artist: String?, album: String?) {
+        if (artist.isNullOrBlank() || album.isNullOrBlank()) return
+        val key = "$artist|$album"
+        if (!coverArtRequested.add(key)) return
+        viewModelScope.launch {
+            val url = coverArtRepository.resolveCoverArtUrl(artist, album)
+            if (url != null) {
+                searchResultTrackRepository.updateCoverArtForAlbum(artist, album, url)
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
             while (isActive) {
@@ -122,6 +175,9 @@ class PlayerBarViewModel @Inject constructor(
                 .collect { track ->
                     _isCurrentFavorite.value = track?.isFavorite == true
                     _coverArtUrl.value = track?.coverArtUrl
+                    if (track != null && track.coverArtUrl == null) {
+                        requestCoverArtIfMissing(track.artist, track.album)
+                    }
                 }
         }
     }
@@ -130,6 +186,9 @@ class PlayerBarViewModel @Inject constructor(
         val track = youtubeId?.let { searchResultTrackRepository.getById(it) }
         _isCurrentFavorite.value = track?.isFavorite == true
         _coverArtUrl.value = track?.coverArtUrl
+        if (track != null && track.coverArtUrl == null) {
+            requestCoverArtIfMissing(track.artist, track.album)
+        }
     }
 
     fun toggleCurrentFavorite() {
