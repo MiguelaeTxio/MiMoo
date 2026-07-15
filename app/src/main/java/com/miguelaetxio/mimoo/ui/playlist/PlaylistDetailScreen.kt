@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +35,21 @@ fun PlaylistDetailScreen(
         uiState.syncBlockedMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.dismissSyncBlockedMessage()
+        }
+    }
+
+    // H10 (S011, niveles 7/8) -- en cuanto se genera el código
+    // "miMoo+hash" de esta lista, abre el selector de Compartir del
+    // sistema con ese texto.
+    val generatedShareCode by viewModel.generatedShareCode.collectAsState()
+    LaunchedEffect(generatedShareCode) {
+        generatedShareCode?.let { code ->
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_TEXT, code)
+            }
+            activity.startActivity(android.content.Intent.createChooser(intent, null))
+            viewModel.consumeGeneratedShareCode()
         }
     }
 
@@ -65,6 +81,15 @@ fun PlaylistDetailScreen(
                             Icon(
                                 Icons.Filled.PlayArrow,
                                 contentDescription = "Reproducir todo",
+                            )
+                        }
+                        IconButton(
+                            onClick = viewModel::shareReplica,
+                            enabled = uiState.tracks.isNotEmpty(),
+                        ) {
+                            Icon(
+                                Icons.Filled.Share,
+                                contentDescription = "Compartir lista con réplica total",
                             )
                         }
                     }

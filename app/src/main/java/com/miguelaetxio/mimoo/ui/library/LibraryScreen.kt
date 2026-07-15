@@ -69,6 +69,19 @@ fun LibraryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val screenActivity = LocalContext.current as Activity
+
+    // H10 (S011) -- en cuanto se genera un código "miMoo+hash" (álbum
+    // o pista, "Compartir con réplica total"), abre el selector de
+    // Compartir del sistema con ese texto y lo consume, reutilizando
+    // el mismo shareLink() de arriba (es agnóstico de si el texto es
+    // una URL o un código -- ambos son ACTION_SEND text/plain).
+    val generatedShareCode by viewModel.generatedShareCode.collectAsState()
+    LaunchedEffect(generatedShareCode) {
+        generatedShareCode?.let { code ->
+            shareLink(screenActivity, code)
+            viewModel.consumeGeneratedShareCode()
+        }
+    }
     var trackPendingDelete by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
@@ -563,6 +576,7 @@ private fun ColumnScope.AlbumsTabContent(
                         onInsertNext = { viewModel.insertAlbumNext(artist, album) },
                         onToggleFavorite = { viewModel.toggleFavoriteAlbum(activity, artist, album) },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
+                        onShareReplica = { viewModel.shareAlbumReplica(artist, album) },
                     )
                 }
             }
@@ -621,6 +635,7 @@ private fun ColumnScope.AlbumsTabContent(
                             viewModel.toggleFavoriteAlbum(activity, drill.artist, album)
                         },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
+                        onShareReplica = { viewModel.shareAlbumReplica(drill.artist, album) },
                     )
                 }
             }
@@ -639,6 +654,7 @@ private fun ColumnScope.AlbumsTabContent(
                         onAddToPlaylist = { onAddToPlaylist(track) },
                         onAddToQueue = { viewModel.addTrackToQueue(track) },
                         onInsertNext = { viewModel.insertTrackNext(track) },
+                        onShareReplica = { viewModel.shareTrackReplica(track.youtubeId) },
                     )
                 }
             }
@@ -705,6 +721,7 @@ private fun ColumnScope.SinglesTabContent(
                         onAddToPlaylist = { onAddToPlaylist(track) },
                         onAddToQueue = { viewModel.addTrackToQueue(track) },
                         onInsertNext = { viewModel.insertTrackNext(track) },
+                        onShareReplica = { viewModel.shareTrackReplica(track.youtubeId) },
                     )
                 }
             }
@@ -751,6 +768,7 @@ private fun ColumnScope.FavoritesTabContent(
                 onAddToPlaylist = { onAddToPlaylist(track) },
                 onAddToQueue = { viewModel.addTrackToQueue(track) },
                 onInsertNext = { viewModel.insertTrackNext(track) },
+                onShareReplica = { viewModel.shareTrackReplica(track.youtubeId) },
             )
         }
     }
@@ -903,6 +921,7 @@ private fun AlbumHeaderRow(
     onInsertNext: () -> Unit,
     onToggleFavorite: () -> Unit,
     onRequestCoverArt: (artist: String, album: String) -> Unit,
+    onShareReplica: () -> Unit,
     showArtistSubtitle: Boolean = false,
 ) {
     LaunchedEffect(artist, album) {
@@ -1039,6 +1058,21 @@ private fun AlbumHeaderRow(
                         },
                     )
                 }
+                // H10 (S011, nivel 3) -- "réplica total": código
+                // miMoo+hash con favoritos/orden/enlaces originales,
+                // que se añade a la biblioteca de quien lo abre --
+                // distinto de "Compartir enlace" de arriba, que solo
+                // comparte la URL de origen en YouTube.
+                DropdownMenuItem(
+                    text = { Text("Compartir con réplica total") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Share, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onShareReplica()
+                    },
+                )
             }
         }
         IconButton(onClick = onDelete) {
@@ -1117,6 +1151,7 @@ private fun LibraryTrackRow(
     onAddToPlaylist: () -> Unit,
     onAddToQueue: () -> Unit,
     onInsertNext: () -> Unit,
+    onShareReplica: () -> Unit,
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -1205,6 +1240,17 @@ private fun LibraryTrackRow(
                         },
                     )
                 }
+                // H10 (S011, niveles 4/6) -- réplica total de esta única pista.
+                DropdownMenuItem(
+                    text = { Text("Compartir con réplica total") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Share, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onShareReplica()
+                    },
+                )
             }
         }
         IconButton(onClick = onToggleFavorite) {

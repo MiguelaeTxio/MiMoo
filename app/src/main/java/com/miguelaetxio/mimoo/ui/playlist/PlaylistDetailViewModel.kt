@@ -53,6 +53,7 @@ class PlaylistDetailViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val streamResolver: StreamResolver,
     private val autoSyncPusher: AutoSyncPusher,
+    private val shareCodeRepository: com.miguelaetxio.mimoo.data.share.ShareCodeRepository,
     savedStateHandle: androidx.lifecycle.SavedStateHandle,
 ) : ViewModel() {
 
@@ -63,6 +64,20 @@ class PlaylistDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(PlaylistDetailUiState())
     val uiState: StateFlow<PlaylistDetailUiState> = _uiState.asStateFlow()
+
+    /** H10 (S011, niveles 7/8) -- código "miMoo+hash" de esta lista, mismo patrón que Ajustes/Biblioteca. */
+    private val _generatedShareCode = MutableStateFlow<String?>(null)
+    val generatedShareCode: StateFlow<String?> = _generatedShareCode.asStateFlow()
+
+    fun shareReplica() {
+        viewModelScope.launch {
+            _generatedShareCode.value = shareCodeRepository.buildPlaylistShareCode(playlistId)
+        }
+    }
+
+    fun consumeGeneratedShareCode() {
+        _generatedShareCode.value = null
+    }
 
     init {
         viewModelScope.launch {

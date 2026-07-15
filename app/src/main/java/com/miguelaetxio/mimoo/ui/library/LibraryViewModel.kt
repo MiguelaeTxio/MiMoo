@@ -306,11 +306,39 @@ class LibraryViewModel @Inject constructor(
     private val favoriteAlbumRepository: FavoriteAlbumRepository,
     private val autoSyncPusher: AutoSyncPusher,
     private val streamResolver: StreamResolver,
+    private val shareCodeRepository: com.miguelaetxio.mimoo.data.share.ShareCodeRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
+
+    /**
+     * H10 (S011) -- código "miMoo+hash" ya generado para el álbum o
+     * pista sobre el que se pulsó "Compartir con réplica total",
+     * listo para que la UI abra el selector de "Compartir" del
+     * sistema. `null` = nada pendiente. Mismo patrón que
+     * SettingsViewModel.generatedShareCode (nivel Biblioteca), aquí a
+     * nivel de álbum (nivel 3) o pista (niveles 4/6).
+     */
+    private val _generatedShareCode = MutableStateFlow<String?>(null)
+    val generatedShareCode: StateFlow<String?> = _generatedShareCode.asStateFlow()
+
+    fun shareAlbumReplica(artist: String, album: String) {
+        viewModelScope.launch {
+            _generatedShareCode.value = shareCodeRepository.buildAlbumShareCode(artist, album)
+        }
+    }
+
+    fun shareTrackReplica(youtubeId: String) {
+        viewModelScope.launch {
+            _generatedShareCode.value = shareCodeRepository.buildSingleTrackShareCode(youtubeId)
+        }
+    }
+
+    fun consumeGeneratedShareCode() {
+        _generatedShareCode.value = null
+    }
 
     private var allDownloaded: List<SearchResultTrack> = emptyList()
     private var allFavorites: List<SearchResultTrack> = emptyList()

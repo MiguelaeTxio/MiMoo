@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.data.share
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
+import com.miguelaetxio.mimoo.data.backup.BackupBundle
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -76,6 +77,104 @@ class ShareCodeRepository @Inject constructor(
             bundle = bundle,
         )
         return encode(shareBundle)
+    }
+
+    /**
+     * Niveles 2-8 (S011): todos parten del mismo bundle completo que
+     * ya construye `buildCurrentBundle()` (solo pistas realmente
+     * descargadas, sin filas sintéticas -- mismo filtro que H06/H07)
+     * y lo recortan al subconjunto pedido. Ninguno hace una consulta
+     * nueva a Room -- reutiliza el bundle entero y filtra en Kotlin,
+     * igual de correcto para el tamaño real de una biblioteca personal
+     * y sin duplicar la lógica de exclusión de pistas sintéticas/no
+     * descargadas que ya tiene `buildCurrentBundle()`. `label` recibe
+     * el bundle YA filtrado, para poder incluir el recuento real de
+     * pistas en la etiqueta.
+     */
+    private suspend fun buildScopedShareCode(
+        filter: (BackupBundle) -> BackupBundle,
+        label: (BackupBundle) -> String,
+    ): String {
+        val full = backupRepository.buildCurrentBundle()
+        val scoped = filter(full)
+        return encode(ShareBundle(scopeLabel = label(scoped), sharedAt = System.currentTimeMillis(), bundle = scoped))
+    }
+
+    /** Nivel 2: Artista -- todas las pistas descargadas de ese artista, sin playlists. */
+    suspend fun buildArtistShareCode(artist: String): String =
+        buildScopedShareCode(
+            filter = { full ->
+                full.copy(
+                    tracks = full.tracks.filter { it.artist == artist },
+                    favoriteAlbums = full.favoriteAlbums.filter { it.artist == artist },
+                    playlists = emptyList(),
+                )
+            },
+            label = { scoped -> "Artista: $artist (${scoped.tracks.size} pistas)" },
+        )
+
+    /** Nivel 3: Álbum -- pistas de ese artista+álbum, en orden real de disco. */
+    suspend fun buildAlbumShareCode(artist: String, album: String): String =
+        buildScopedShareCode(
+            filter = { full ->
+                full.copy(
+                    tracks = full.tracks
+                        .filter { it.artist == artist && it.album == album }
+                        .sortedBy { it.trackPosition ?: Int.MAX_VALUE },
+                    favoriteAlbums = full.favoriteAlbums.filter { it.artist == artist && it.album == album },
+                    playlists = emptyList(),
+                )
+            },
+            label = { scoped -> "Álbum: $artist – $album (${scoped.tracks.size} pistas)" },
+        )
+
+    /** Niveles 4 y 6: Tema de álbum / Sencillo -- una única pista, mismo mecanismo para ambos. */
+    suspend fun buildSingleTrackShareCode(youtubeId: String): String =
+        buildScopedShareCode(
+            filter = { full ->
+                val track = full.tracks.firstOrNull { it.youtubeId == youtubeId }
+                full.copy(tracks = listOfNotNull(track), favoriteAlbums = emptyList(), playlists = emptyList())
+            },
+            label = { scoped -> "Tema: ${scoped.tracks.firstOrNull()?.title ?: "(no encontrado)"}" },
+        )
+
+    /** Nivel 5: Sencillos -- pistas favoritas sin álbum asignado (sueltas, no parte de ningún disco). */
+    suspend fun buildFavoriteSinglesShareCode(): String =
+        buildScopedShareCode(
+            filter = { full ->
+                full.copy(
+                    tracks = full.tracks.filter { it.isFavorite && it.album.isNullOrBlank() },
+                    favoriteAlbums = emptyList(),
+                    playlists = emptyList(),
+                )
+            },
+            label = { scoped -> "Sencillos favoritos (${scoped.tracks.size} pistas)" },
+        )
+
+    /** Niveles 7 y 8: Listas de reproducción / Lista de reproducción -- una playlist concreta, con su orden real. */
+    suspend fun buildPlaylistShareCode(playlistId: Long): String {
+        val full = backupRepository.buildCurrentBundle()
+        val playlistDto = full.playlists.firstOrNull { it.originalId == playlistId }
+            ?: return encode(
+                ShareBundle(
+                    scopeLabel = "Lista de reproducción (vacía o sin pistas descargadas)",
+                    sharedAt = System.currentTimeMillis(),
+                    bundle = full.copy(tracks = emptyList(), favoriteAlbums = emptyList(), playlists = emptyList()),
+                )
+            )
+        val trackIds = playlistDto.trackYoutubeIdsInOrder.toSet()
+        val scoped = full.copy(
+            tracks = full.tracks.filter { it.youtubeId in trackIds },
+            favoriteAlbums = emptyList(),
+            playlists = listOf(playlistDto),
+        )
+        return encode(
+            ShareBundle(
+                scopeLabel = "Lista de reproducción: ${playlistDto.name} (${scoped.tracks.size} pistas)",
+                sharedAt = System.currentTimeMillis(),
+                bundle = scoped,
+            )
+        )
     }
 
     private fun encode(shareBundle: ShareBundle): String {
