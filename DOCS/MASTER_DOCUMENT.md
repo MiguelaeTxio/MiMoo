@@ -334,14 +334,18 @@ algún indicador tipo "En directo" en el reproductor (hoy simplemente
 no muestra barra de progreso).
 
 ### Hito 10: Hash de Compartición de Contenido
-(Ver `DOCS/ANNEX_H10.md`) — Hito nuevo, abierto 2026-07-15, sin código
-todavía. Generar un hash/enlace de compartición que, abierto desde
-MiMoo en otro dispositivo, importe una réplica de lo compartido vía
-los enlaces de descarga ya conocidos. El alcance de qué se comparte
-(favoritos, un álbum, un sencillo, una lista, o todo) depende de
-**desde dónde y con qué nivel** se genera el hash — no es un modo
-único fijo; ver `DOCS/ANNEX_H10.md` para el planteamiento recibido y
-lo que queda por cerrar de diseño.
+(Ver `DOCS/ANNEX_H10.md`) — Genera un código "miMoo+hash" que, enviado
+por cualquier medio (WhatsApp, etc.), se abre directamente con MiMoo
+y añade una réplica de lo compartido a la biblioteca de quien lo abre
+(favoritos, orden, ediciones de nombre, enlaces originales incluidos),
+redescargando cada pista desde YouTube -- nunca destructivo, nunca
+toca lo que el receptor ya tenía. 8 de los 10 niveles de compartición
+construidos y con punto de entrada en la UI: Biblioteca completa,
+Artista, Álbum, Tema de álbum, Sencillo, Sencillos favoritos, Listas
+de reproducción. Canales/Canal sin construir -- no existe ese
+concepto en el modelo de datos actual, pendiente de una conversación
+de diseño. Sin verificación en dispositivo real del flujo completo
+todavía.
 
 ---
 
