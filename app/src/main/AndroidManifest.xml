@@ -227,6 +227,7 @@
                 unknown extensions) — MainActivity still checks the
                 real file name before attempting to decode anything.
             -->
+            <!-- DIAGNOSTICO TEMPORAL: intent-filter .mimoo retirado para aislar el fallo de build (ver commit siguiente).
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -237,6 +238,7 @@
                 <data android:mimeType="*/*" />
                 <data android:pathPattern=".*\.mimoo" />
             </intent-filter>
+            -->
         </activity>
 
         <!--
