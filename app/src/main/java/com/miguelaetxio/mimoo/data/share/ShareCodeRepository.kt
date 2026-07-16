@@ -18,68 +18,51 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Extensión real del archivo de compartición H10. Ver comentario de
- * clase para el porqué del cambio de formato.
+ * Extensión real del archivo de compartición H10 (tercer rediseño,
+ * S011). `.txt` en vez de `.mimoo` -- ver comentario de
+ * [SHARE_FILE_MARKER] para el porqué.
  */
-const val SHARE_FILE_EXTENSION = ".mimoo"
+const val SHARE_FILE_EXTENSION = ".txt"
 
 /**
- * Tipo MIME propio del archivo de compartición (H10, S011 -- segundo
- * rediseño, tras confirmar en dispositivo real que MiMoo ni siquiera
- * aparecía en el selector "Abrir con" de WhatsApp). Causa real: las
- * URIs `content://` que da WhatsApp al abrir un documento recibido
- * son OPACAS -- no contienen el nombre de archivo real en la propia
- * URI (`.../item/12345`, no `.../algo.mimoo`), así que un
- * `pathPattern=".*\.mimoo"` en el manifiesto NUNCA puede coincidir
- * contra ellas, por mucho que el archivo real sí se llame `.mimoo` --
- * el nombre solo es recuperable en tiempo de ejecución consultando
- * `OpenableColumns.DISPLAY_NAME`, que el sistema de resolución de
- * intents no usa para decidir qué apps ofrecer.
+ * Marca interna al principio del archivo que identifica un `.txt`
+ * como un archivo de compartición real de MiMoo (H10, S011, tercer
+ * rediseño -- propuesta de Miguel Ángel tras confirmar en dispositivo
+ * real que ni el tipo MIME propio ni la extensión propia
+ * funcionaban, ver `DOCS/ANNEX_H10.md` para el diagnóstico completo:
+ * desde Android 7, las URIs `content://` que dan WhatsApp/el
+ * explorador de archivos al abrir un documento recibido son opacas y
+ * `MimeTypeMap` no reconoce extensiones propias como `.mimoo`, así
+ * que Android nunca sabe qué tipo asignarle y ninguna app aparece en
+ * "Abrir con").
  *
- * El tipo MIME, en cambio, SÍ viaja con el propio Intent de un
- * extremo a otro (se fija al compartir con `Intent.ACTION_SEND`,
- * WhatsApp lo conserva al guardar el archivo recibido, y lo reutiliza
- * en el `Intent.ACTION_VIEW` que dispara al tocarlo) -- por eso este
- * repositorio y `AndroidManifest.xml` usan ahora un tipo MIME propio
- * en vez de la extensión del nombre de archivo como mecanismo de
- * emparejamiento real.
+ * `.txt` sí es un tipo reconocido de fábrica por Android
+ * (`text/plain`, a veces `application/txt` según la app que lo
+ * comparta -- de ahí que el manifiesto registre ambos), así que el
+ * problema de fondo desaparece. Esta marca es lo que distingue un
+ * `.txt` real de MiMoo de cualquier otro `.txt` que le llegue a
+ * Miguel Ángel por error -- sin ella, MiMoo aparecería en "Abrir con"
+ * para CUALQUIER texto suelto sin forma de saber si es suyo.
  */
-const val SHARE_MIME_TYPE = "application/x-mimoo-share"
+const val SHARE_FILE_MARKER = "MIMOO-SHARE-V1:"
 
 /**
  * Construye el [ShareBundle] para cada nivel de compartición y lo
- * materializa como un ARCHIVO real (H10, S011 -- rediseñado tras
- * probarlo Miguel Ángel en dispositivo real: *"He hecho una prueba a
- * compartir el link, eso así no sirve... Tendremos que generar un
- * archivo... que solo se pudiera abrir desde la aplicación"*).
+ * materializa como un archivo `.txt` real (H10, S011 -- tercer
+ * rediseño, ver [SHARE_FILE_MARKER]). Historial completo del porqué
+ * de cada vuelta en `DOCS/ANNEX_H10.md`.
  *
- * **Por qué texto plano no servía:** un `Intent.ACTION_SEND` de
- * `text/plain` no le da al receptor nada que "tocar para abrir" --
- * WhatsApp/SMS lo pegan como texto suelto, sin ninguna acción
- * asociada. Un archivo real, en cambio, sí se puede tocar para
- * abrirlo -- y si MiMoo es la única app registrada para su
- * extensión, el sistema lo abre directamente con MiMoo (ver
- * `AndroidManifest.xml`, intent-filter de `.mimoo`).
- *
- * Formato del archivo: `GZIP(JSON(ShareBundle))`, en crudo -- sin
- * Base64 (ya no hace falta sobrevivir como texto de un solo bloque,
- * es contenido binario de un archivo real) y sin ningún prefijo
- * "miMoo+" (era una lectura mía equivocada de lo que pedía Miguel
- * Ángel -- él no quería el carácter "+" literal. La propia extensión
- * del archivo es ahora el identificador, no hace falta ningún
- * marcador dentro del contenido).
+ * Formato del archivo: texto plano UTF-8,
+ * `"MIMOO-SHARE-V1:" + Base64URL(GZIP(JSON(ShareBundle)))` -- Base64
+ * porque un `.txt` de verdad debe contener texto válido, no bytes
+ * binarios crudos (a diferencia del rediseño anterior, que al ya no
+ * depender de sobrevivir como texto había quitado el Base64; vuelve
+ * a hacer falta ahora que el contenedor es un `.txt`).
  *
  * Deliberadamente separado de `BackupRepository` (H06) aunque
  * reutiliza su `BackupBundle` -- `BackupRepository` habla de
  * exportar/importar TODO el repositorio a Drive; este repositorio
  * habla de compartir un subconjunto arbitrario por cualquier medio.
- * ---
- * Builds the [ShareBundle] for each sharing level and materializes it
- * as a real FILE (H10, S011 -- redesigned after Miguel Ángel tested it
- * on a real device: plain-text sharing gave the recipient nothing to
- * tap-to-open, just pasted text with no associated action. A real
- * file, registered to open exclusively with MiMoo via its own
- * extension, can actually be tapped to open.
  */
 @Singleton
 class ShareCodeRepository @Inject constructor(
@@ -93,7 +76,7 @@ class ShareCodeRepository @Inject constructor(
      * Reutiliza `BackupRepository.buildCurrentBundle()` tal cual --
      * "compartir toda la biblioteca" es, por definición, el mismo
      * contenido que "exportar todo" (H06), solo que el destino es un
-     * archivo `.mimoo` en vez de un archivo en Drive.
+     * archivo `.txt` en vez de un archivo en Drive.
      */
     suspend fun buildLibraryShareFile(): Uri {
         val bundle = backupRepository.buildCurrentBundle()
@@ -211,41 +194,65 @@ class ShareCodeRepository @Inject constructor(
     }
 
     /**
-     * Escribe `cacheDir/share_files/{nombre}.mimoo` (GZIP de JSON, sin
-     * Base64/prefijo) y devuelve un `content://` Uri vía FileProvider
-     * -- mismo patrón exacto que `AppUpdateRepository.downloadApk()`
-     * ya usa para compartir el APK de actualización. `fileNameHint` se
-     * limpia de caracteres no válidos para nombre de archivo (nunca se
-     * usa tal cual: viene de datos reales de usuario -- artista,
-     * álbum, nombre de playlist -- que pueden llevar "/", ":", etc.).
+     * Escribe `cacheDir/share_files/{nombre}.txt` (texto UTF-8: marca
+     * + Base64 de GZIP de JSON) y devuelve un `content://` Uri vía
+     * FileProvider -- mismo patrón exacto que
+     * `AppUpdateRepository.downloadApk()` ya usa para compartir el
+     * APK de actualización. `fileNameHint` se limpia de caracteres no
+     * válidos para nombre de archivo (nunca se usa tal cual: viene de
+     * datos reales de usuario -- artista, álbum, nombre de playlist --
+     * que pueden llevar "/", ":", etc.).
      */
     private suspend fun writeShareFile(shareBundle: ShareBundle, fileNameHint: String): Uri =
         withContext(Dispatchers.IO) {
             val json = gson.toJson(shareBundle)
+            val gzipped = java.io.ByteArrayOutputStream().use { byteStream ->
+                GZIPOutputStream(byteStream).use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                byteStream.toByteArray()
+            }
+            val base64 = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(gzipped)
+            val text = SHARE_FILE_MARKER + base64
+
             val shareDir = File(context.cacheDir, "share_files").apply { mkdirs() }
             val safeName = fileNameHint
                 .ifBlank { "compartido" }
                 .replace(Regex("[^A-Za-z0-9À-ÿ _-]"), "_")
                 .take(60)
             val file = File(shareDir, "$safeName$SHARE_FILE_EXTENSION")
-            GZIPOutputStream(file.outputStream()).use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            file.writeText(text, Charsets.UTF_8)
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         }
 
     /**
-     * Decodifica un archivo `.mimoo` recibido, por su Uri (típicamente
-     * `content://`, ver `MainActivity.handleShareFileIntent()`). Nunca
-     * lanza excepciones de bajo nivel (GZIP/Gson) hasta la UI -- todas
-     * se envuelven en [ShareParseException] con un mensaje legible,
-     * mismo criterio que `BackupRepository.fromJson()`.
+     * Decodifica un archivo `.txt` recibido, por su Uri (típicamente
+     * `content://`, ver `MainActivity.handleShareFileIntent()`).
+     * Comprueba primero la marca [SHARE_FILE_MARKER] -- si no está,
+     * es un `.txt` cualquiera que no es de MiMoo, y se rechaza con un
+     * mensaje amable en vez de intentar decodificarlo (petición
+     * implícita de Miguel Ángel: MiMoo va a aparecer en "Abrir con"
+     * para cualquier `.txt`, así que tiene que distinguir con
+     * elegancia). Nunca lanza excepciones de bajo nivel
+     * (Base64/GZIP/Gson) hasta la UI -- todas se envuelven en
+     * [ShareParseException] con un mensaje legible.
      */
     suspend fun decodeFile(uri: Uri): ShareBundle = withContext(Dispatchers.IO) {
-        val json = try {
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                GZIPInputStream(input).use { it.readBytes().toString(Charsets.UTF_8) }
-            } ?: throw ShareParseException("No se pudo abrir el archivo compartido.")
+        val text = try {
+            context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                ?: throw ShareParseException("No se pudo abrir el archivo compartido.")
         } catch (e: ShareParseException) {
             throw e
+        } catch (e: Exception) {
+            throw ShareParseException("No se pudo leer el archivo compartido.", e)
+        }
+
+        if (!text.startsWith(SHARE_FILE_MARKER)) {
+            throw ShareParseException("Este archivo de texto no es un archivo de compartición de MiMoo.")
+        }
+        val base64 = text.removePrefix(SHARE_FILE_MARKER).trim()
+
+        val json = try {
+            val gzipped = java.util.Base64.getUrlDecoder().decode(base64)
+            GZIPInputStream(gzipped.inputStream()).use { it.readBytes().toString(Charsets.UTF_8) }
         } catch (e: Exception) {
             throw ShareParseException("El archivo está corrupto o incompleto.", e)
         }

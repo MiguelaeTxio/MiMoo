@@ -192,47 +192,56 @@
                 <data android:mimeType="audio/*" />
             </intent-filter>
             <!--
-                H10 (S011, segundo rediseño — confirmado en
-                dispositivo real que MiMoo ni siquiera aparecía en el
-                selector "Abrir con" de WhatsApp): pathPattern contra
-                la extensión ".mimoo" nunca podía funcionar — las
-                URIs content:// que da WhatsApp al abrir un documento
-                recibido son OPACAS (".../item/12345", no
-                ".../algo.mimoo"), el nombre real del archivo no está
-                en la URI, solo es recuperable en tiempo de ejecución
-                (OpenableColumns.DISPLAY_NAME), que el sistema de
-                resolución de intents no consulta para decidir qué
-                apps ofrecer. El tipo MIME, en cambio, SÍ viaja con el
-                Intent de un extremo a otro — se fija al compartir
-                (Intent.ACTION_SEND), WhatsApp lo conserva al guardar
-                el archivo recibido, y lo reutiliza en el
-                Intent.ACTION_VIEW que dispara al tocarlo. Mismo
-                patrón exacto que ya usa el filtro audio/* de arriba
-                (sin scheme declarado, coincide implícitamente con
-                content: y file:).
+                H10 (S011, tercer rediseño — propuesta de Miguel
+                Ángel tras confirmar en dispositivo real que ni la
+                extensión propia ni el tipo MIME propio funcionaban,
+                ni siquiera fuera de WhatsApp (el propio explorador
+                de archivos de Android tampoco reconocía el archivo):
+                desde Android 7, las URIs content:// son opacas y
+                MimeTypeMap no reconoce extensiones propias como
+                ".mimoo" — Android nunca sabe qué tipo asignarle.
+                Solución real: usar ".txt" (tipo YA reconocido de
+                fábrica) en vez de una extensión inventada, con una
+                marca interna al principio del archivo
+                (SHARE_FILE_MARKER, ver ShareCodeRepository) para que
+                MiMoo sepa distinguir sus propios archivos de
+                cualquier otro .txt. Coste asumido: MiMoo va a
+                aparecer en "Abrir con" para cualquier .txt, no solo
+                los suyos — si no lleva la marca, se rechaza con un
+                aviso amable en vez de intentar decodificarlo.
+                Registrados ambos tipos MIME reales que un .txt puede
+                llevar según qué app lo comparta (text/plain es el
+                estándar; application/txt es una variante no
+                estándar mal habitual de algunas apps, documentada
+                por otros desarrolladores con el mismo síntoma).
                 ===
-                H10 (S011, second redesign — confirmed on a real
-                device that MiMoo didn't even show up in WhatsApp's
-                "Open with" picker): matching by pathPattern against
-                the ".mimoo" extension could never work — the
-                content:// URIs WhatsApp hands over when opening a
-                received document are OPAQUE (".../item/12345", not
-                ".../something.mimoo"), the real file name isn't in
-                the URI at all, only recoverable at runtime via
-                OpenableColumns.DISPLAY_NAME, which intent resolution
-                doesn't consult when deciding which apps to offer. The
-                MIME type, on the other hand, DOES travel with the
-                Intent end to end — set when sharing
-                (Intent.ACTION_SEND), kept by WhatsApp when it stores
-                the received file, and reused in the
-                Intent.ACTION_VIEW fired on tap. Exact same pattern
-                the audio/* filter above already uses (no scheme
-                declared, implicitly matches content: and file:).
+                H10 (S011, third redesign — Miguel Ángel's proposal
+                after confirming on a real device that neither the
+                custom extension nor the custom MIME type worked, not
+                even outside WhatsApp (Android's own file explorer
+                didn't recognize the file either): since Android 7,
+                content:// URIs are opaque and MimeTypeMap doesn't
+                recognize custom extensions like ".mimoo" — Android
+                never knows what type to assign it. Real fix: use
+                ".txt" (a type already recognized out of the box)
+                instead of a made-up extension, with an internal
+                marker at the start of the file (SHARE_FILE_MARKER,
+                see ShareCodeRepository) so MiMoo can tell its own
+                files apart from any other .txt. Accepted cost: MiMoo
+                will show up in "Open with" for any .txt, not just its
+                own — if it lacks the marker, it's rejected with a
+                friendly notice instead of attempting to decode it.
+                Both real MIME types a .txt can carry depending on
+                which app shares it are registered (text/plain is the
+                standard; application/txt is a non-standard variant
+                some apps mistakenly use, documented by other
+                developers hitting the same symptom).
             -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="application/x-mimoo-share" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/txt" />
             </intent-filter>
         </activity>
 

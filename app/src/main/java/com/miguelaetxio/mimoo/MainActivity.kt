@@ -264,12 +264,16 @@ class MainActivity : ComponentActivity() {
     private val incomingShareFileUri = mutableStateOf<android.net.Uri?>(null)
 
     /**
-     * H10 (S011, segundo rediseño -- ver AndroidManifest.xml para el
-     * porqué) -- ruta de entrada de un archivo `.mimoo` recibido vía
-     * el intent-filter ACTION_VIEW, emparejado por tipo MIME propio
-     * (`SHARE_MIME_TYPE`), no por extensión de archivo -- las URIs
-     * `content://` que da WhatsApp al abrir un documento recibido son
-     * opacas y no contienen el nombre real del archivo.
+     * H10 (S011, tercer rediseño -- ver `DOCS/ANNEX_H10.md` y
+     * `ShareCodeRepository` para el porqué completo) -- ruta de
+     * entrada de un archivo `.txt` recibido vía el intent-filter
+     * ACTION_VIEW. Emparejado por tipo `text/plain`/`application/txt`
+     * (ambos -- algunas apps etiquetan los adjuntos `.txt` con el
+     * segundo, no estándar, en vez del primero). MiMoo va a aparecer
+     * en "Abrir con" para CUALQUIER `.txt`, no solo los suyos -- la
+     * comprobación real de si es un archivo de MiMoo de verdad (marca
+     * `SHARE_FILE_MARKER`) vive en `ShareCodeRepository.decodeFile()`,
+     * async, con un mensaje amable si no lo es.
      */
     private fun handleShareFileIntent(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
@@ -280,7 +284,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun isMimooShareFile(intent: Intent): Boolean =
-        intent.type == com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
+        intent.type == "text/plain" || intent.type == "application/txt"
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -421,7 +425,7 @@ class MainActivity : ComponentActivity() {
                     autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
                 }
 
-                // H10 (S011) -- archivo .mimoo recibido vía ACTION_VIEW
+                // H10 (S011) -- archivo .txt recibido vía ACTION_VIEW
                 // (handleShareFileIntent). LaunchedEffect reacciona en
                 // cuanto incomingShareFileUri cambia de valor (recepción
                 // en frío en onCreate() o con la app ya abierta vía

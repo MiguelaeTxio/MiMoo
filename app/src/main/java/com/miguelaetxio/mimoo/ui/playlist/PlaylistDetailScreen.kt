@@ -38,14 +38,14 @@ fun PlaylistDetailScreen(
         }
     }
 
-    // H10 (S011, niveles 7/8) -- en cuanto se genera el archivo .mimoo
+    // H10 (S011, niveles 7/8) -- en cuanto se genera el archivo .txt
     // de esta lista, abre el selector de Compartir del sistema con
     // ese ARCHIVO (EXTRA_STREAM), no texto.
     val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
     LaunchedEffect(generatedShareFileUri) {
         generatedShareFileUri?.let { uri ->
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
+                type = "text/plain"
                 putExtra(android.content.Intent.EXTRA_STREAM, uri)
                 addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }

@@ -72,7 +72,7 @@ fun SettingsScreen(
     val activity = context as Activity
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // H10 (S011) -- en cuanto el archivo .mimoo está generado, abre
+    // H10 (S011) -- en cuanto el archivo .txt está generado, abre
     // el selector de "Compartir" del sistema con ese ARCHIVO
     // (EXTRA_STREAM), no texto -- necesario para que el receptor
     // tenga algo que tocar-para-abrir al recibirlo. Permiso de
@@ -81,7 +81,7 @@ fun SettingsScreen(
     LaunchedEffect(generatedShareFileUri) {
         generatedShareFileUri?.let { uri ->
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
+                type = "text/plain"
                 putExtra(android.content.Intent.EXTRA_STREAM, uri)
                 addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
@@ -131,7 +131,7 @@ fun SettingsScreen(
         }
     }
 
-    // H10 (S011) -- selector manual del archivo .mimoo recibido, vía
+    // H10 (S011) -- selector manual del archivo .txt recibido, vía
     // de emergencia independiente de la apertura automática. Usa el
     // MISMO ShareImportViewModel de ámbito Activity que MainActivity
     // ya usa para el diálogo de confirmación -- se le pide

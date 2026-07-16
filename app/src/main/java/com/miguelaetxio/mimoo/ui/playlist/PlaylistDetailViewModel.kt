@@ -65,7 +65,7 @@ class PlaylistDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlaylistDetailUiState())
     val uiState: StateFlow<PlaylistDetailUiState> = _uiState.asStateFlow()
 
-    /** H10 (S011, niveles 7/8) -- Uri del archivo .mimoo de esta lista, mismo patrón que Ajustes/Biblioteca. */
+    /** H10 (S011, niveles 7/8) -- Uri del archivo .txt de esta lista, mismo patrón que Ajustes/Biblioteca. */
     private val _generatedShareFileUri = MutableStateFlow<android.net.Uri?>(null)
     val generatedShareFileUri: StateFlow<android.net.Uri?> = _generatedShareFileUri.asStateFlow()
 

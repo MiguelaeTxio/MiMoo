@@ -70,7 +70,7 @@ private fun shareLink(context: android.content.Context, url: String) {
  */
 private fun shareFile(context: android.content.Context, uri: android.net.Uri) {
     val intent = Intent(Intent.ACTION_SEND).apply {
-        type = com.miguelaetxio.mimoo.data.share.SHARE_MIME_TYPE
+        type = "text/plain"
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
@@ -86,7 +86,7 @@ fun LibraryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val screenActivity = LocalContext.current as Activity
 
-    // H10 (S011) -- en cuanto se genera un archivo .mimoo (álbum,
+    // H10 (S011) -- en cuanto se genera un archivo .txt (álbum,
     // pista, artista o sencillos favoritos, "Compartir con réplica
     // total"), abre el selector de Compartir del sistema con ese
     // ARCHIVO (shareFile(), no shareLink() -- ver comentario de esa
