@@ -54,29 +54,58 @@ poder borrarle nada.
 
 ---
 
-## Formato del código (S011)
+## Formato del código (S011, tercer rediseño)
 
-`"miMoo+" + Base64URL(GZIP(JSON(ShareBundle)))` — autocontenido, sin
-depender de Drive ni de ningún servidor propio: todo el contenido
-compartido viaja dentro del propio texto. GZIP porque un bundle de
-Biblioteca completa como JSON plano sería un texto larguísimo;
-Base64 URL-safe sin relleno para que sea una única línea pegable en
-cualquier sitio (WhatsApp, SMS...) sin que el medio la corte o la
-reformatee.
+Extensión real: **`.txt`** (no `.mimoo`) — decisión de Miguel Ángel
+tras confirmar en dispositivo real que ni la extensión propia ni un
+tipo MIME propio funcionaban, ni siquiera fuera de WhatsApp (el
+explorador de archivos de Android tampoco reconocía el archivo).
+Causa de fondo: desde Android 7, las URIs `content://` son opacas y
+`MimeTypeMap` no reconoce extensiones inventadas — Android nunca sabe
+qué tipo asignarle, así que ninguna app aparece en "Abrir con". `.txt`
+sí es un tipo reconocido de fábrica (`text/plain`), así que ese
+problema de fondo desaparece.
 
-MiMoo está registrado como destino de "Compartir" de texto plano en
-el sistema (`AndroidManifest.xml`, `ACTION_SEND` + `text/plain`) — el
-código "se abre con la aplicación al enviarlo por cualquier medio",
-tal como se pidió. Comprueba el prefijo `miMoo+` antes de intentar
-decodificar nada; cualquier otro texto compartido por error se
-ignora en silencio.
+Contenido del archivo: texto UTF-8, `"MIMOO-SHARE-V1:" +
+Base64URL(GZIP(JSON(ShareBundle)))`. La marca al principio es lo que
+distingue un `.txt` real de MiMoo de cualquier otro `.txt` recibido
+por error — sin ella, se rechaza con un aviso amable en vez de
+intentar decodificarlo. Coste asumido: MiMoo aparece en "Abrir con"
+para cualquier `.txt`, no solo los suyos.
 
-Ver `data/share/ShareCodeRepository.kt` (generación/decodificación),
+MiMoo está registrado en `AndroidManifest.xml` para `text/plain` y
+`application/txt` (variante no estándar que algunas apps usan para
+adjuntos `.txt`, documentada por otros desarrolladores con el mismo
+síntoma).
+
+Vía manual de emergencia, independiente de todo lo anterior: Ajustes
+→ Compartir → "Importar código recibido (elegir archivo)" — usa el
+selector de archivos de Android directamente
+(`ACTION_OPEN_DOCUMENT`), funciona sea cual sea el motivo por el que
+la apertura automática no dispare.
+
+Ver `data/share/ShareCodeRepository.kt` (generación/decodificación,
+constantes `SHARE_FILE_EXTENSION`/`SHARE_FILE_MARKER`),
 `data/share/ShareDto.kt` (`ShareBundle`, envuelve el mismo
 `BackupBundle` ya usado por H06/H07), `data/backup/
 BackupImportRepository.kt` → `importSharedBundle()` (importación
 aditiva), `ui/share/ShareImportViewModel.kt` (confirmación antes de
 tocar el repositorio del receptor).
+
+**Línea de solución alternativa, explorada pero no construida (S011):**
+Miguel Ángel tiene dominio propio (`www.campusstudioonline.com`) y
+hosting en PythonAnywhere -- suficiente para montar Android App Links
+verificados (enlace `https://` real, tocable de forma fiable en
+cualquier app, sin depender de MimeTypeMap). Requeriría: un endpoint
+en el servidor que reciba y sirva el contenido compartido por un
+id corto, el archivo `/.well-known/assetlinks.json` con la huella
+SHA-256 de la keystore de MiMoo (el workflow de Actions ya la imprime),
+e intent-filter con `autoVerify="true"` en el manifiesto. Diferencia
+real a asumir: el receptor necesitaría conexión a internet en el
+momento de abrir el enlace (el archivo `.txt` no depende de eso, todo
+va dentro). Queda pendiente decidir dónde vive esto en el servidor
+(¿ruta nueva dentro de EnterpriseBot, o subdominio aparte tipo
+`share.campusstudioonline.com`?) antes de construir nada ahí.
 
 ---
 
