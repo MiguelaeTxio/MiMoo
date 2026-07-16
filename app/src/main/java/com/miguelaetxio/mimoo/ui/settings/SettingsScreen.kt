@@ -131,6 +131,22 @@ fun SettingsScreen(
         }
     }
 
+    // H10 (S011) -- selector manual del archivo .mimoo recibido, vía
+    // de emergencia independiente de la apertura automática. Usa el
+    // MISMO ShareImportViewModel de ámbito Activity que MainActivity
+    // ya usa para el diálogo de confirmación -- se le pide
+    // explícitamente por viewModelStoreOwner=activity para no
+    // obtener una instancia nueva de ámbito NavBackStackEntry, que
+    // sería una instancia distinta a la de MainActivity y no
+    // compartiría estado con su diálogo.
+    val shareImportViewModel: com.miguelaetxio.mimoo.ui.share.ShareImportViewModel =
+        androidx.hilt.navigation.compose.hiltViewModel(activity as androidx.activity.ComponentActivity)
+    val shareFileImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        uri?.let { shareImportViewModel.handleIncomingShareFile(it) }
+    }
+
     // Lanza el diálogo de consentimiento de Google cuando
     // DriveAuthorizationHelper devuelve NeedsUserConsent -- solo la
     // primera vez que se pide el scope drive.file, o si el usuario
@@ -265,6 +281,23 @@ fun SettingsScreen(
                 Icon(Icons.Filled.Share, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Compartir biblioteca completa")
+            }
+
+            // H10 (S011) -- vía manual de emergencia. La apertura
+            // automática al tocar el archivo en WhatsApp depende de
+            // que WhatsApp conserve/informe bien el tipo de
+            // contenido al abrirlo, algo que en la práctica es
+            // conocido por ser poco fiable incluso para tipos de
+            // archivo muy comunes (PDF, DOCX). Este selector usa el
+            // selector de archivos de Android directamente
+            // (ACTION_OPEN_DOCUMENT) y no depende de nada de eso --
+            // funciona siempre, sea cual sea el motivo por el que la
+            // apertura automática no dispare.
+            Spacer(Modifier.height(4.dp))
+            TextButton(onClick = { shareFileImportLauncher.launch(arrayOf("*/*")) }) {
+                Icon(Icons.Filled.FileOpen, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Importar código recibido (elegir archivo)")
             }
 
             Spacer(Modifier.height(32.dp))
