@@ -255,4 +255,25 @@ interface SearchResultTrackDao {
         album: String,
         coverArtUrl: String,
     )
+
+    /**
+     * S011 -- fallo real: antes de los fixes de hoy en
+     * CoverArtRepository (verificación real contra Cover Art Archive
+     * antes de aceptar un release, reintento con "The "),
+     * `updateCoverArtForAlbum()` podía guardar una URL rota (un
+     * release de MusicBrainz sin carátula archivada, aceptado sin
+     * comprobar). Esa URL rota queda escrita en Room desde entonces
+     * -- `requestCoverArtIfMissing()` solo reintenta si `coverArtUrl`
+     * es `null`, así que una URL rota ya guardada bloquea cualquier
+     * reintento para siempre, aunque la lógica de resolución ya esté
+     * arreglada. Este método limpia esa fila para forzar un
+     * reintento real -- ver "Actualizar carátula" en el menú de la
+     * fila de álbum, LibraryScreen.
+     */
+    @Query(
+        "UPDATE search_result_tracks " +
+        "SET coverArtUrl = NULL " +
+        "WHERE artist = :artist AND album = :album"
+    )
+    suspend fun clearCoverArtForAlbum(artist: String, album: String)
 }

@@ -601,6 +601,7 @@ private fun ColumnScope.AlbumsTabContent(
                         onInsertNext = { viewModel.insertAlbumNext(artist, album) },
                         onToggleFavorite = { viewModel.toggleFavoriteAlbum(activity, artist, album) },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
+                        onRetryCoverArt = viewModel::retryCoverArt,
                         onShareReplica = { viewModel.shareAlbumReplica(artist, album) },
                     )
                 }
@@ -662,6 +663,7 @@ private fun ColumnScope.AlbumsTabContent(
                             viewModel.toggleFavoriteAlbum(activity, drill.artist, album)
                         },
                         onRequestCoverArt = viewModel::requestCoverArtIfMissing,
+                        onRetryCoverArt = viewModel::retryCoverArt,
                         onShareReplica = { viewModel.shareAlbumReplica(drill.artist, album) },
                     )
                 }
@@ -956,6 +958,7 @@ private fun AlbumHeaderRow(
     onInsertNext: () -> Unit,
     onToggleFavorite: () -> Unit,
     onRequestCoverArt: (artist: String, album: String) -> Unit,
+    onRetryCoverArt: (artist: String, album: String) -> Unit,
     onShareReplica: () -> Unit,
     showArtistSubtitle: Boolean = false,
 ) {
@@ -1106,6 +1109,20 @@ private fun AlbumHeaderRow(
                     onClick = {
                         showOverflowMenu = false
                         onShareReplica()
+                    },
+                )
+                // S011 -- fallo real: una URL de carátula rota
+                // guardada antes de los fixes de hoy bloqueaba
+                // cualquier reintento automático para siempre. Fuerza
+                // uno manual, limpiando la fila y la caché de sesión.
+                DropdownMenuItem(
+                    text = { Text("Actualizar carátula") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Refresh, contentDescription = null)
+                    },
+                    onClick = {
+                        showOverflowMenu = false
+                        onRetryCoverArt(artist, album)
                     },
                 )
             }

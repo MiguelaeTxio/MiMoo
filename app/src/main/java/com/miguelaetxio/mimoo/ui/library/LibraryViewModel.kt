@@ -721,6 +721,27 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
+     * S011 -- "Actualizar carátula" (menú de la fila de álbum).
+     * Fallo real: una URL rota guardada en Room antes de los fixes de
+     * hoy en `CoverArtRepository` bloqueaba cualquier reintento
+     * automático para siempre, aunque la resolución ya estuviera
+     * arreglada -- `requestCoverArtIfMissing()` solo actúa si
+     * `coverArtUrl` es `null`. Limpia la fila (`clearCoverArtForAlbum`)
+     * y también el deduplicador en memoria de esta sesión
+     * (`coverArtRequested`, que también bloquearía un segundo intento
+     * dentro del mismo proceso) antes de forzar la resolución real.
+     */
+    fun retryCoverArt(artist: String, album: String) {
+        val key = "$artist|$album"
+        coverArtRequested.remove(key)
+        coverArtRepository.invalidateCache(artist, album)
+        viewModelScope.launch {
+            repository.clearCoverArtForAlbum(artist, album)
+            requestCoverArtIfMissing(artist, album)
+        }
+    }
+
+    /**
      * Applies a manual metadata edit to a track (PASO 7, H03). Title
      * always updates in place with no file move. Artist/album changes
      * additionally relocate the physical .opus file to the new

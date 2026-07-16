@@ -114,6 +114,17 @@ class CoverArtRepository @Inject constructor(
     }
 
     /**
+     * S011 -- "Actualizar carátula" (LibraryViewModel.retryCoverArt()).
+     * `sessionCache` es aparte de lo guardado en Room -- limpiar solo
+     * la fila de Room no basta dentro del mismo proceso, porque esta
+     * caché de sesión seguiría devolviendo el resultado (bueno o
+     * malo) de la primera vez sin volver a intentar la red.
+     */
+    fun invalidateCache(artist: String, album: String) {
+        sessionCache.remove("$artist|$album")
+    }
+
+    /**
      * S011 -- segundo fallo real diagnosticado con el mismo caso
      * (Crystal Method / Vegas, tras el fix del prefijo "The"): la
      * versión anterior aceptaba el PRIMER release que devolvía

@@ -212,4 +212,8 @@ class SearchResultTrackRepository @Inject constructor(
         album: String,
         coverArtUrl: String,
     ) = dao.updateCoverArtForAlbum(artist, album, coverArtUrl)
+
+    /** S011 -- fuerza un reintento real cuando la URL guardada estaba rota. Ver comentario del DAO. */
+    suspend fun clearCoverArtForAlbum(artist: String, album: String) =
+        dao.clearCoverArtForAlbum(artist, album)
 }
