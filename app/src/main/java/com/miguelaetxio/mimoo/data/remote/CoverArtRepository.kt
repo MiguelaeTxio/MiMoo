@@ -1,5 +1,9 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -61,6 +65,7 @@ import javax.inject.Singleton
 class CoverArtRepository @Inject constructor(
     private val musicBrainzApiService: MusicBrainzApiService,
     private val itunesApiService: ItunesApiService,
+    private val okHttpClient: OkHttpClient,
 ) {
     /**
      * ConcurrentHashMap.put() lanza NullPointerException si el valor
@@ -109,19 +114,22 @@ class CoverArtRepository @Inject constructor(
     }
 
     /**
-     * S011 -- fallo real diagnosticado con "Crystal Method" / "Vegas"
-     * (Miguel Ángel): el grupo se llama oficialmente "The Crystal
-     * Method" -- MusicBrainz sí tiene su carátula real archivada,
-     * verificado -- pero MiMoo guarda el artista sin el "The" (viene
-     * del nombre de canal/artista de YouTube, que rara vez lo
-     * incluye). Una búsqueda exacta por campo (`artist:"Crystal
-     * Method"`) no encuentra un release cuyo artista real es "The
-     * Crystal Method". Mismo problema le afecta a cualquier grupo
-     * cuyo nombre canónico empiece por "The" (The Prodigy, The
-     * Chemical Brothers, The Rolling Stones...) -- no es un caso
-     * aislado. Si la búsqueda directa falla y el artista no empieza
-     * ya por "The ", se reintenta anteponiéndoselo antes de dar el
-     * álbum por perdido.
+     * S011 -- segundo fallo real diagnosticado con el mismo caso
+     * (Crystal Method / Vegas, tras el fix del prefijo "The"): la
+     * versión anterior aceptaba el PRIMER release que devolvía
+     * MusicBrainz como si ya fuera la carátula real, sin comprobar
+     * nunca si Cover Art Archive tenía de verdad una imagen para ese
+     * release concreto. MusicBrainz suele tener varias ediciones de
+     * un mismo álbum (CD, vinilo, reediciones...), y no todas tienen
+     * carátula archivada -- si la primera que devuelve la búsqueda no
+     * la tiene, antes se aceptaba igual como "encontrada" y nunca se
+     * intentaba ni con otra edición ni con el fallback de iTunes.
+     *
+     * Ahora se piden varios candidatos (`limit=5`) y se comprueba de
+     * verdad, con una petición HEAD real contra Cover Art Archive, cuál
+     * de ellos tiene la imagen -- el primero que responda 200 gana; si
+     * ninguno la tiene, se sigue con el reintento "The " y después con
+     * iTunes, en vez de quedarse con una URL que en realidad da 404.
      */
     private suspend fun resolveViaMusicBrainz(artist: String, album: String): String? {
         val direct = searchMusicBrainzOnce(artist, album)
@@ -133,16 +141,35 @@ class CoverArtRepository @Inject constructor(
     }
 
     private suspend fun searchMusicBrainzOnce(artist: String, album: String): String? {
-        val mbid = try {
+        val mbids = try {
             musicBrainzApiService
-                .searchReleases(query = buildMusicBrainzQuery(artist, album))
+                .searchReleases(query = buildMusicBrainzQuery(artist, album), limit = 5)
                 .releases
-                .firstOrNull()
-                ?.id
+                .map { it.id }
         } catch (e: Exception) {
-            null
+            emptyList()
         }
-        return mbid?.let { "https://coverartarchive.org/release/$it/front" }
+        for (mbid in mbids) {
+            val url = "https://coverartarchive.org/release/$mbid/front"
+            if (caaHasFrontCover(url)) return url
+        }
+        return null
+    }
+
+    /**
+     * Petición HEAD real contra Cover Art Archive -- 200/307 significa
+     * que sí hay imagen, 404 que ese release concreto no tiene
+     * carátula archivada. HEAD en vez de GET: mismo resultado de
+     * estado, sin descargarse la imagen entera solo para comprobarlo
+     * (Coil ya la descarga de verdad después, al pintarla).
+     */
+    private suspend fun caaHasFrontCover(url: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder().url(url).head().build()
+            okHttpClient.newCall(request).execute().use { it.isSuccessful }
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /**
