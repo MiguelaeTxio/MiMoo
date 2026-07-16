@@ -40,6 +40,27 @@ jobs:
         with:
           python-version: '3.11'
 
+      # S011 -- Miguel Ángel se quedó al 90% de su cuota gratuita de
+      # Actions (repos privados: 2.000 min/mes en el plan Free) sin
+      # ninguna caché configurada -- cada build volvía a descargar
+      # dependencias de Gradle y paquetes de Chaquopy/pip desde cero.
+      # setup-gradle es la acción oficial y mantenida para cachear
+      # Gradle (dependencias + wrapper + build cache), reemplaza a
+      # configurar actions/cache a mano. La caché de pip es aparte --
+      # Chaquopy instala yt-dlp vía pip durante el propio build de
+      # Gradle (ver app/build.gradle.kts, sin versión fijada), y esa
+      # descarga no pasa por la caché de Gradle.
+      - name: Cachear Gradle (dependencias + wrapper + build cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cachear pip (paquetes de Chaquopy, yt-dlp)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('app/build.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Crear local.properties
         run: |
           echo "GOOGLE_OAUTH_ANDROID_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_ANDROID_CLIENT_ID }}" \
