@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
@@ -842,12 +843,14 @@ private fun ColumnScope.LetterGrid(
                 text = letter.toString(),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .glassChip()
                     .clickable { onSelect(letter) }
                     .padding(vertical = 12.dp),
             )
-            HorizontalDivider()
         }
     }
 }
