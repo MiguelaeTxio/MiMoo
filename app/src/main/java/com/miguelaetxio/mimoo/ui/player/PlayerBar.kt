@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
@@ -20,6 +22,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +62,21 @@ import coil.compose.SubcomposeAsyncImage
  * Cover art size: side = screen width ÷ 2 (Miguel Ángel's explicit
  * formula), not a fixed dp value -- scales the same on a small phone
  * and a tablet.
+ *
+ * S011 -- fallo real reportado por Miguel Ángel: al ser fijo y grande
+ * (petición explícita suya en S010, ver arriba), en pantallas con
+ * poco contenido propio -- Ajustes es el caso real que lo destapó --
+ * el reproductor expandido tapaba opciones enteras de la pantalla sin
+ * dejar ninguna forma de acceder a ellas mientras algo estuviera
+ * sonando. *"habría que hacer el exoplayer que sea ocultable"* --
+ * ahora es colapsable: un botón (flecha) alterna entre el diseño
+ * expandido de arriba (sin tocar su orden ni tamaños, tal cual se
+ * pidió) y una mini-barra de una sola fila (~56dp) con carátula
+ * pequeña, título/artista y play/pausa. Estado en memoria del propio
+ * Composable (`remember`) -- no sobrevive a matar la app, pero sí a
+ * navegar entre pantallas, porque este Composable nunca sale de
+ * composición al cambiar de pantalla (vive en el nivel de
+ * MainActivity, fuera del NavHost).
  */
 @Composable
 fun PlayerBar(
@@ -69,8 +89,20 @@ fun PlayerBar(
     val coverArtUrl by viewModel.coverArtUrl.collectAsState()
     val title = state.currentTitle ?: return
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
+    var isExpanded by remember { mutableStateOf(true) }
 
     Surface(tonalElevation = 4.dp) {
+        if (!isExpanded) {
+            PlayerBarCollapsed(
+                title = title,
+                artist = state.currentArtist,
+                coverArtUrl = coverArtUrl,
+                isPlaying = state.isPlaying,
+                onTogglePlayPause = viewModel::togglePlayPause,
+                onExpand = { isExpanded = true },
+            )
+            return@Surface
+        }
         Column(modifier = Modifier.fillMaxWidth()) {
 
             // 1 -- Controles, arriba del todo.
@@ -156,6 +188,12 @@ fun PlayerBar(
                             },
                         )
                     }
+                }
+
+                // S011 -- botón para colapsar el reproductor a la
+                // mini-barra, ver comentario de cabecera.
+                IconButton(onClick = { isExpanded = false }) {
+                    Icon(Icons.Filled.ExpandMore, contentDescription = "Contraer reproductor")
                 }
             }
 
@@ -273,6 +311,69 @@ fun PlayerBar(
             // bottom edge of the screen. Explicit request: half as
             // tall as the controls strip above.
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+/** S011 -- mini-barra cuando el reproductor está contraído, ver comentario de cabecera de PlayerBar(). Una sola fila, ~56dp. */
+@Composable
+private fun PlayerBarCollapsed(
+    title: String,
+    artist: String?,
+    coverArtUrl: String?,
+    isPlaying: Boolean,
+    onTogglePlayPause: () -> Unit,
+    onExpand: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onExpand)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(6.dp)),
+        ) {
+            if (coverArtUrl != null) {
+                SubcomposeAsyncImage(
+                    model = coverArtUrl,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    error = { PlayerBarArtPlaceholder() },
+                )
+            } else {
+                PlayerBarArtPlaceholder()
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (!artist.isNullOrBlank()) {
+                Text(
+                    text = artist,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        IconButton(onClick = onTogglePlayPause) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                contentDescription = if (isPlaying) "Pausar" else "Reproducir",
+            )
+        }
+        IconButton(onClick = onExpand) {
+            Icon(Icons.Filled.ExpandLess, contentDescription = "Expandir reproductor")
         }
     }
 }
