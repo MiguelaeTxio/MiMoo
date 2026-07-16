@@ -234,6 +234,7 @@ fun SettingsScreen(
                 TextButton(
                     onClick = { viewModel.onExportClicked(activity) },
                     enabled = !isWorking,
+                    modifier = Modifier.glassChip(),
                 ) {
                     Icon(Icons.Filled.CloudUpload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -242,6 +243,7 @@ fun SettingsScreen(
                 TextButton(
                     onClick = { viewModel.onImportRequested(activity) },
                     enabled = !isWorking,
+                    modifier = Modifier.glassChip(),
                 ) {
                     Icon(Icons.Filled.CloudDownload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -250,6 +252,7 @@ fun SettingsScreen(
                 TextButton(
                     onClick = { fileImportLauncher.launch(arrayOf("*/*")) },
                     enabled = !isWorking,
+                    modifier = Modifier.glassChip(),
                 ) {
                     Icon(Icons.Filled.FileOpen, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -285,7 +288,7 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(16.dp))
-            TextButton(onClick = viewModel::onShareLibraryClicked) {
+            TextButton(onClick = viewModel::onShareLibraryClicked, modifier = Modifier.glassChip()) {
                 Icon(Icons.Filled.Share, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Compartir biblioteca completa")
@@ -302,7 +305,10 @@ fun SettingsScreen(
             // funciona siempre, sea cual sea el motivo por el que la
             // apertura automática no dispare.
             Spacer(Modifier.height(4.dp))
-            TextButton(onClick = { shareFileImportLauncher.launch(arrayOf("*/*")) }) {
+            TextButton(
+                onClick = { shareFileImportLauncher.launch(arrayOf("*/*")) },
+                modifier = Modifier.glassChip(),
+            ) {
                 Icon(Icons.Filled.FileOpen, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Importar código recibido (elegir archivo)")
@@ -326,7 +332,8 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .glassChip()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -525,6 +532,7 @@ private fun UpdateCheckSection(
                             com.miguelaetxio.mimoo.BuildConfig.VERSION_CODE,
                         )
                     },
+                    modifier = Modifier.glassChip(),
                 ) {
                     Icon(Icons.Filled.CloudDownload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
