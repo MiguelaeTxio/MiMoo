@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,8 +51,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -594,11 +598,17 @@ class MainActivity : ComponentActivity() {
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet {
-                            Text(
-                                text = "miMoo",
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.padding(16.dp),
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .glassChip(),
+                            ) {
+                                Text(
+                                    text = "miMoo",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                )
+                            }
                             NavigationDrawerItem(
                                 label = { Text("Búsqueda") },
                                 icon = {
@@ -614,7 +624,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Biblioteca") },
@@ -631,7 +647,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Listas") },
@@ -648,7 +670,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Buscar álbum") },
@@ -665,7 +693,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Importar enlace") },
@@ -682,7 +716,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Cola de reproducción") },
@@ -699,7 +739,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Radio Online") },
@@ -716,7 +762,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Canales") },
@@ -733,7 +785,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Descargas") },
@@ -750,7 +808,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                             NavigationDrawerItem(
                                 label = { Text("Ajustes") },
@@ -767,7 +831,13 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
                             )
                         }
                     },

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -221,7 +222,11 @@ fun LibraryScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text(title, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     if (canGoBack) {
                         IconButton(onClick = {
@@ -861,8 +866,10 @@ private fun ColumnScope.ArtistList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .glassChip()
                     .clickable { onArtistClick(artist) }
-                    .padding(vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -892,7 +899,6 @@ private fun ColumnScope.ArtistList(
                     )
                 }
             }
-            HorizontalDivider()
         }
     }
 }
@@ -982,8 +988,10 @@ private fun AlbumHeaderRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip()
             .clickable { onClick() }
-            .padding(vertical = 6.dp),
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AlbumCoverThumbnail(coverArtUrl, fallbackThumbnailUrl)
