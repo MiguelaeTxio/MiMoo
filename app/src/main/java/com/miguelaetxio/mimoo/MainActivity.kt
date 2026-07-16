@@ -627,6 +627,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -650,6 +653,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -673,6 +679,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -696,6 +705,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -719,6 +731,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -742,6 +757,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -765,6 +783,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -788,6 +809,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -811,6 +835,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),
@@ -834,6 +861,9 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                     .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     unselectedContainerColor = Color.Transparent,
                                     selectedContainerColor = Color.White.copy(alpha = 0.22f),

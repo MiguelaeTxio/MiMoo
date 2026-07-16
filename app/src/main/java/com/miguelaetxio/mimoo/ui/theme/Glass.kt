@@ -49,11 +49,24 @@ object GlassTokens {
  * S011 -- sin sombra/elevación a propósito: petición explícita de
  * Miguel Ángel tras ver el primer pase ("sin darle volumen") -- el
  * cristal queda plano en vez de leer como una tarjeta en relieve.
+ *
+ * `showBorder = false` -- variante minimalista pedida por Miguel
+ * Ángel para probar ("estaría bien probar sin borde"), solo el
+ * degradado translúcido, sin el trazo fino alrededor.
  */
-fun Modifier.glassChip(shape: Shape = RoundedCornerShape(GlassTokens.cornerRadius)): Modifier =
+fun Modifier.glassChip(
+    shape: Shape = RoundedCornerShape(GlassTokens.cornerRadius),
+    showBorder: Boolean = false,
+): Modifier =
     this
         .clip(shape)
         .background(
             brush = Brush.verticalGradient(listOf(GlassTokens.fillTop, GlassTokens.fillBottom))
         )
-        .border(width = GlassTokens.borderWidth, color = GlassTokens.border, shape = shape)
+        .let {
+            if (showBorder) {
+                it.border(width = GlassTokens.borderWidth, color = GlassTokens.border, shape = shape)
+            } else {
+                it
+            }
+        }
