@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.ui.channels
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,7 +41,11 @@ fun ChannelsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Canales") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text("Canales", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")

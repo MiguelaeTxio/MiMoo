@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 import kotlin.math.roundToInt
 
 /**
@@ -60,7 +61,14 @@ fun QueueScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Cola de reproducción") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text(
+                            "Cola de reproducción",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")

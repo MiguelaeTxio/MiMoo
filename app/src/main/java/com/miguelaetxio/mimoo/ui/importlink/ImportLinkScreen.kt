@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import com.miguelaetxio.mimoo.ui.library.displayArtistName
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
  * Comparte un texto (un enlace, en nuestro caso) vía el selector
@@ -62,7 +63,11 @@ fun ImportLinkScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Importar enlace") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text("Importar enlace", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")

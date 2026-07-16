@@ -1219,7 +1219,9 @@ private fun LibraryTrackRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 32.dp, top = 8.dp, bottom = 8.dp),
+            .padding(start = 24.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
+            .glassChip()
+            .padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {

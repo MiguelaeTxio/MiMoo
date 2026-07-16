@@ -27,6 +27,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,7 +58,11 @@ fun SearchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("miMoo") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text("miMoo", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")

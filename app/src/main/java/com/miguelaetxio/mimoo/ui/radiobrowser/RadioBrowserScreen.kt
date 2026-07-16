@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.remote.dto.RadioStation
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
  * Pantalla "Radio Online" (H09 PASO 3, S010) -- emisoras de radio de
@@ -52,7 +53,11 @@ fun RadioBrowserScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Radio Online") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text("Radio Online", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")
@@ -269,8 +274,10 @@ private fun RadioStationRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip()
             .clickable(onClick = onPlay)
-            .padding(vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!station.favicon.isNullOrBlank()) {

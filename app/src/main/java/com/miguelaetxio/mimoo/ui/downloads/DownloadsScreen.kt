@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.ui.library.displayArtistName
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
  * "Descargas" — pantalla dedicada a lo que está pasando ahora mismo
@@ -50,7 +51,11 @@ fun DownloadsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Descargas") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text("Descargas", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")

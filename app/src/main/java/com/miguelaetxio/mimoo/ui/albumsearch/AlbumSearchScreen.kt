@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.remote.AlbumCandidate
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 
@@ -58,7 +59,11 @@ fun AlbumSearchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Buscar álbum") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text("Buscar álbum", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menú")

@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +59,14 @@ fun PlaylistDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Lista de reproducción") },
+                title = {
+                    Box(modifier = Modifier.glassChip()) {
+                        Text(
+                            "Lista de reproducción",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
@@ -154,7 +162,9 @@ private fun PlaylistDetailTrackRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip()
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
