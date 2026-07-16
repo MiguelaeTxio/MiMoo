@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -38,7 +37,6 @@ object GlassTokens {
     val fillBottom: Color = Color.White.copy(alpha = 0.06f)
     val border: Color = Color.White.copy(alpha = 0.32f)
     val borderWidth: Dp = 1.dp
-    val elevation: Dp = 3.dp
     val cornerRadius: Dp = 16.dp
 }
 
@@ -47,10 +45,13 @@ object GlassTokens {
  * defecto la chapita estándar de la app (`GlassTokens.cornerRadius`),
  * pero cada superficie puede pedir la suya (p.ej. una chapita circular
  * para el icono de hamburguesa).
+ *
+ * S011 -- sin sombra/elevación a propósito: petición explícita de
+ * Miguel Ángel tras ver el primer pase ("sin darle volumen") -- el
+ * cristal queda plano en vez de leer como una tarjeta en relieve.
  */
 fun Modifier.glassChip(shape: Shape = RoundedCornerShape(GlassTokens.cornerRadius)): Modifier =
     this
-        .shadow(elevation = GlassTokens.elevation, shape = shape, clip = false)
         .clip(shape)
         .background(
             brush = Brush.verticalGradient(listOf(GlassTokens.fillTop, GlassTokens.fillBottom))
