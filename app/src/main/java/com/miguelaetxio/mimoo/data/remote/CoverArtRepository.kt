@@ -108,7 +108,31 @@ class CoverArtRepository @Inject constructor(
         return url
     }
 
+    /**
+     * S011 -- fallo real diagnosticado con "Crystal Method" / "Vegas"
+     * (Miguel Ángel): el grupo se llama oficialmente "The Crystal
+     * Method" -- MusicBrainz sí tiene su carátula real archivada,
+     * verificado -- pero MiMoo guarda el artista sin el "The" (viene
+     * del nombre de canal/artista de YouTube, que rara vez lo
+     * incluye). Una búsqueda exacta por campo (`artist:"Crystal
+     * Method"`) no encuentra un release cuyo artista real es "The
+     * Crystal Method". Mismo problema le afecta a cualquier grupo
+     * cuyo nombre canónico empiece por "The" (The Prodigy, The
+     * Chemical Brothers, The Rolling Stones...) -- no es un caso
+     * aislado. Si la búsqueda directa falla y el artista no empieza
+     * ya por "The ", se reintenta anteponiéndoselo antes de dar el
+     * álbum por perdido.
+     */
     private suspend fun resolveViaMusicBrainz(artist: String, album: String): String? {
+        val direct = searchMusicBrainzOnce(artist, album)
+        if (direct != null) return direct
+        if (!artist.startsWith("The ", ignoreCase = true)) {
+            return searchMusicBrainzOnce("The $artist", album)
+        }
+        return null
+    }
+
+    private suspend fun searchMusicBrainzOnce(artist: String, album: String): String? {
         val mbid = try {
             musicBrainzApiService
                 .searchReleases(query = buildMusicBrainzQuery(artist, album))
@@ -126,9 +150,22 @@ class CoverArtRepository @Inject constructor(
      * autenticación, verificada 2026-07-16 contra
      * performance-partners.apple.com/search-api. Solo se llega aquí
      * si MusicBrainz ya ha fallado -- volumen de peticiones bajo, no
-     * hace falta rate limiting propio.
+     * hace falta rate limiting propio. Mismo reintento con "The " que
+     * MusicBrainz -- ver comentario de `resolveViaMusicBrainz()`; la
+     * búsqueda de iTunes es por término libre, no por campo exacto,
+     * pero el nombre real del artista sigue siendo el más fiable de
+     * probar primero.
      */
     private suspend fun resolveViaItunes(artist: String, album: String): String? {
+        val direct = searchItunesOnce(artist, album)
+        if (direct != null) return direct
+        if (!artist.startsWith("The ", ignoreCase = true)) {
+            return searchItunesOnce("The $artist", album)
+        }
+        return null
+    }
+
+    private suspend fun searchItunesOnce(artist: String, album: String): String? {
         val artworkUrl100 = try {
             itunesApiService
                 .searchAlbums(term = "$artist $album")
