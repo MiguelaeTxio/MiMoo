@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.di
 import com.miguelaetxio.mimoo.data.remote.AppUpdateApiService
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
+import com.miguelaetxio.mimoo.data.remote.ItunesApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
 import com.miguelaetxio.mimoo.data.remote.RadioBrowserApiService
 import dagger.Module
@@ -48,6 +49,11 @@ object NetworkModule {
     // descubrimiento dinámico vía DNS de all.api.radio-browser.info.
     // Sin API key, ver RadioBrowserApiService.
     private const val RADIO_BROWSER_BASE_URL = "https://de1.api.radio-browser.info/"
+
+    // API de búsqueda de iTunes (H03, S011) -- fallback de carátula
+    // cuando MusicBrainz/Cover Art Archive no tiene coincidencia. Sin
+    // API key, ver ItunesApiService.
+    private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
 
     // Buena práctica documentada por el propio servicio (no
     // obligatoria, pero recomendada) -- identificar la app con un
@@ -236,4 +242,23 @@ object NetworkModule {
     fun provideRadioBrowserApiService(
         @Named("radioBrowserRetrofit") retrofit: Retrofit,
     ): RadioBrowserApiService = retrofit.create(RadioBrowserApiService::class.java)
+
+    // iTunes Search API (H03, S011) -- sin interceptor propio, el
+    // OkHttpClient base ya vale (sin User-Agent ni rate-limiting
+    // exigido, a diferencia de MusicBrainz/Radio-Browser).
+    @Provides
+    @Singleton
+    @Named("itunesRetrofit")
+    fun provideItunesRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(ITUNES_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideItunesApiService(
+        @Named("itunesRetrofit") retrofit: Retrofit,
+    ): ItunesApiService = retrofit.create(ItunesApiService::class.java)
 }
