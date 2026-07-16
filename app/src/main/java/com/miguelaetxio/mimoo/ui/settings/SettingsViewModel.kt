@@ -77,10 +77,18 @@ class SettingsViewModel @Inject constructor(
     private val downloadQueueManager: DownloadQueueManager,
     private val storageManager: StorageManager,
     private val shareCodeRepository: ShareCodeRepository,
+    private val uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
+
+    /** S011 -- interruptor de borde del cristal ("añade un toggle en ajustes para cambiar de borde a sin borde"). */
+    val glassBorderEnabled: StateFlow<Boolean> = uiPreferencesManager.glassBorderEnabled
+
+    fun setGlassBorderEnabled(enabled: Boolean) {
+        uiPreferencesManager.setGlassBorderEnabled(enabled)
+    }
 
     /**
      * H10 (S011) -- Uri `content://` del archivo `.mimoo` ya

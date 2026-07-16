@@ -84,6 +84,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var playerManager: PlayerManager
 
+    @Inject
+    lateinit var uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager
+
     /**
      * SAF folder picker. Launched only after the user confirms the
      * explanation dialog below, so it is clear what the picker is
@@ -325,6 +328,11 @@ class MainActivity : ComponentActivity() {
                 navController.currentBackStackEntryAsState()
             val currentRoute = currentBackStackEntry?.destination?.route
 
+            val glassBorderEnabled by uiPreferencesManager.glassBorderEnabled.collectAsState()
+
+            androidx.compose.runtime.CompositionLocalProvider(
+                com.miguelaetxio.mimoo.ui.theme.LocalGlassBorderEnabled provides glassBorderEnabled,
+            ) {
             MaterialTheme(colorScheme = com.miguelaetxio.mimoo.ui.theme.MiMooColorScheme) {
                 // H07 PARTE 2, PASO 2.7 -- bloquea TODO lo demás
                 // (incluida la explicación de almacenamiento y el
@@ -918,6 +926,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
             }
         }
     }

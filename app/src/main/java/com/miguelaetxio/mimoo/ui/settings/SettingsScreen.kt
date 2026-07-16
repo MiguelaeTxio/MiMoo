@@ -33,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -43,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -298,6 +300,41 @@ fun SettingsScreen(
                 Icon(Icons.Filled.FileOpen, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Importar código recibido (elegir archivo)")
+            }
+
+            Spacer(Modifier.height(32.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+
+            // S011 -- interruptor de borde del cristal ("añade un
+            // toggle en ajustes para cambiar de borde a sin borde").
+            // glassBorderEnabled es un StateFlow reactivo -- el
+            // cambio se ve en toda la app al instante, sin reiniciar
+            // (ver LocalGlassBorderEnabled, ui/theme/Glass.kt).
+            val glassBorderEnabled by viewModel.glassBorderEnabled.collectAsState()
+            Text(
+                "Apariencia",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(Modifier.height(4.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Borde en las chapitas de cristal")
+                    Text(
+                        "Contorno fino alrededor de títulos, menús y filas.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = glassBorderEnabled,
+                    onCheckedChange = viewModel::setGlassBorderEnabled,
+                )
             }
 
             Spacer(Modifier.height(32.dp))
