@@ -3,10 +3,12 @@ package com.miguelaetxio.mimoo.ui.settings
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +16,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
@@ -209,114 +214,138 @@ fun SettingsScreen(
     ) { padding ->
         val isWorking = uiState is BackupUiState.Working
 
-        Column(modifier = Modifier.fillMaxWidth().padding(padding).padding(16.dp)) {
-            Text(
-                "Repositorio de música",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Exporta toda tu biblioteca (pistas, favoritos de " +
-                    "álbum y listas de reproducción -- nunca el audio " +
-                    "en sí) a un archivo en tu Google Drive, o " +
-                    "impórtala en otro dispositivo.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
+        // S011 -- petición explícita de Miguel Ángel: "hay que
+        // ponerlo como acordeón, ya que con el reproductor no se
+        // pueden instalar actualizaciones" -- con el PlayerBar
+        // expandido ocupando la parte de abajo de la pantalla, el
+        // contenido de Ajustes (cuatro secciones largas seguidas) no
+        // dejaba sitio para llegar a "Buscar actualizaciones" sin
+        // contraer antes el reproductor a mano. Todas las secciones
+        // empiezan contraídas -- solo el título (con cristal) más una
+        // flecha, así la pantalla entera es corta por defecto y
+        // cualquier sección (incluida Actualizaciones) queda a un
+        // toque, quepa o no el resto debajo del reproductor.
+        // Comportamiento de acordeón real (Miguel Ángel: "como
+        // acordeón"): solo una sección abierta a la vez, abrir otra
+        // cierra la anterior.
+        var expandedSection by remember { mutableStateOf<String?>(null) }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        ) {
+            SettingsAccordionSection(
+                title = "Repositorio de música",
+                expanded = expandedSection == "repositorio",
+                onToggle = {
+                    expandedSection = if (expandedSection == "repositorio") null else "repositorio"
+                },
             ) {
-                TextButton(
-                    onClick = { viewModel.onExportClicked(activity) },
-                    enabled = !isWorking,
-                    modifier = Modifier.glassChip(),
+                Text(
+                    "Exporta toda tu biblioteca (pistas, favoritos de " +
+                        "álbum y listas de reproducción -- nunca el audio " +
+                        "en sí) a un archivo en tu Google Drive, o " +
+                        "impórtala en otro dispositivo.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Icon(Icons.Filled.CloudUpload, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Exportar a Drive")
+                    TextButton(
+                        onClick = { viewModel.onExportClicked(activity) },
+                        enabled = !isWorking,
+                        modifier = Modifier.glassChip(),
+                    ) {
+                        Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Exportar a Drive")
+                    }
+                    TextButton(
+                        onClick = { viewModel.onImportRequested(activity) },
+                        enabled = !isWorking,
+                        modifier = Modifier.glassChip(),
+                    ) {
+                        Icon(Icons.Filled.CloudDownload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Importar desde Drive")
+                    }
+                    TextButton(
+                        onClick = { fileImportLauncher.launch(arrayOf("*/*")) },
+                        enabled = !isWorking,
+                        modifier = Modifier.glassChip(),
+                    ) {
+                        Icon(Icons.Filled.FileOpen, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Importar desde archivo")
+                    }
                 }
-                TextButton(
-                    onClick = { viewModel.onImportRequested(activity) },
-                    enabled = !isWorking,
-                    modifier = Modifier.glassChip(),
-                ) {
-                    Icon(Icons.Filled.CloudDownload, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Importar desde Drive")
+                if (isWorking) {
+                    Spacer(Modifier.height(12.dp))
+                    CircularProgressIndicator(modifier = Modifier.height(20.dp))
                 }
-                TextButton(
-                    onClick = { fileImportLauncher.launch(arrayOf("*/*")) },
-                    enabled = !isWorking,
-                    modifier = Modifier.glassChip(),
-                ) {
-                    Icon(Icons.Filled.FileOpen, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Importar desde archivo")
-                }
-            }
-            if (isWorking) {
-                Spacer(Modifier.height(12.dp))
-                CircularProgressIndicator(modifier = Modifier.height(20.dp))
             }
 
-            Spacer(Modifier.height(32.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             // H10 (S011) -- primer nivel de compartición implementado
             // (Biblioteca completa); el resto (Artista, Álbum, Tema
             // suelto, Sencillos, Listas de reproducción, Canales) vive
             // en DOCS/ANNEX_H10.md para sesiones siguientes, mismo
             // mecanismo.
-            Text(
-                "Compartir",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Genera un archivo que se abre directamente con MiMoo al " +
-                    "enviarlo por WhatsApp o cualquier otro medio. Se añade " +
-                    "a la biblioteca de quien lo abre sin borrar nada de lo " +
-                    "que ya tenía, y descarga el contenido directamente " +
-                    "desde YouTube.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            TextButton(onClick = viewModel::onShareLibraryClicked, modifier = Modifier.glassChip()) {
-                Icon(Icons.Filled.Share, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Compartir biblioteca completa")
-            }
-
-            // H10 (S011) -- vía manual de emergencia. La apertura
-            // automática al tocar el archivo en WhatsApp depende de
-            // que WhatsApp conserve/informe bien el tipo de
-            // contenido al abrirlo, algo que en la práctica es
-            // conocido por ser poco fiable incluso para tipos de
-            // archivo muy comunes (PDF, DOCX). Este selector usa el
-            // selector de archivos de Android directamente
-            // (ACTION_OPEN_DOCUMENT) y no depende de nada de eso --
-            // funciona siempre, sea cual sea el motivo por el que la
-            // apertura automática no dispare.
-            Spacer(Modifier.height(4.dp))
-            TextButton(
-                onClick = { shareFileImportLauncher.launch(arrayOf("*/*")) },
-                modifier = Modifier.glassChip(),
+            SettingsAccordionSection(
+                title = "Compartir",
+                expanded = expandedSection == "compartir",
+                onToggle = {
+                    expandedSection = if (expandedSection == "compartir") null else "compartir"
+                },
             ) {
-                Icon(Icons.Filled.FileOpen, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Importar código recibido (elegir archivo)")
+                Text(
+                    "Genera un archivo que se abre directamente con MiMoo al " +
+                        "enviarlo por WhatsApp o cualquier otro medio. Se añade " +
+                        "a la biblioteca de quien lo abre sin borrar nada de lo " +
+                        "que ya tenía, y descarga el contenido directamente " +
+                        "desde YouTube.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+                TextButton(onClick = viewModel::onShareLibraryClicked, modifier = Modifier.glassChip()) {
+                    Icon(Icons.Filled.Share, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Compartir biblioteca completa")
+                }
+
+                // H10 (S011) -- vía manual de emergencia. La apertura
+                // automática al tocar el archivo en WhatsApp depende de
+                // que WhatsApp conserve/informe bien el tipo de
+                // contenido al abrirlo, algo que en la práctica es
+                // conocido por ser poco fiable incluso para tipos de
+                // archivo muy comunes (PDF, DOCX). Este selector usa el
+                // selector de archivos de Android directamente
+                // (ACTION_OPEN_DOCUMENT) y no depende de nada de eso --
+                // funciona siempre, sea cual sea el motivo por el que la
+                // apertura automática no dispare.
+                Spacer(Modifier.height(4.dp))
+                TextButton(
+                    onClick = { shareFileImportLauncher.launch(arrayOf("*/*")) },
+                    modifier = Modifier.glassChip(),
+                ) {
+                    Icon(Icons.Filled.FileOpen, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Importar código recibido (elegir archivo)")
+                }
             }
 
-            Spacer(Modifier.height(32.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             // S011 -- interruptor de borde del cristal ("añade un
             // toggle en ajustes para cambiar de borde a sin borde").
@@ -324,36 +353,46 @@ fun SettingsScreen(
             // cambio se ve en toda la app al instante, sin reiniciar
             // (ver LocalGlassBorderEnabled, ui/theme/Glass.kt).
             val glassBorderEnabled by viewModel.glassBorderEnabled.collectAsState()
-            Text(
-                "Apariencia",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Spacer(Modifier.height(4.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .glassChip()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            SettingsAccordionSection(
+                title = "Apariencia",
+                expanded = expandedSection == "apariencia",
+                onToggle = {
+                    expandedSection = if (expandedSection == "apariencia") null else "apariencia"
+                },
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Borde en las chapitas de cristal")
-                    Text(
-                        "Contorno fino alrededor de títulos, menús y filas.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .glassChip()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Borde en las chapitas de cristal")
+                        Text(
+                            "Contorno fino alrededor de títulos, menús y filas.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = glassBorderEnabled,
+                        onCheckedChange = viewModel::setGlassBorderEnabled,
                     )
                 }
-                Switch(
-                    checked = glassBorderEnabled,
-                    onCheckedChange = viewModel::setGlassBorderEnabled,
-                )
             }
 
-            Spacer(Modifier.height(32.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-            UpdateCheckSection()
+            Spacer(Modifier.height(12.dp))
+
+            SettingsAccordionSection(
+                title = "Actualizaciones",
+                expanded = expandedSection == "actualizaciones",
+                onToggle = {
+                    expandedSection = if (expandedSection == "actualizaciones") null else "actualizaciones"
+                },
+            ) {
+                UpdateCheckSection()
+            }
         }
     }
 
@@ -492,6 +531,51 @@ fun SettingsScreen(
 }
 
 /**
+ * S011 -- sección plegable de Ajustes ("hay que ponerlo como
+ * acordeón, ya que con el reproductor no se pueden instalar
+ * actualizaciones"). Cabecera con cristal (petición explícita:
+ * "poner las chapas de cristal esmerilado... para los títulos de las
+ * secciones de los ajustes"), tocable entera para expandir/contraer
+ * -- una flecha a la derecha indica el estado. El acordeón real (solo
+ * una sección abierta a la vez) lo gestiona quien llama, pasando
+ * `expanded`/`onToggle` ya resueltos contra un único estado
+ * compartido -- este composable no sabe nada de las demás secciones.
+ */
+@Composable
+private fun SettingsAccordionSection(
+    title: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .glassChip()
+                .clickable(onClick = onToggle)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (expanded) "Contraer" else "Expandir",
+            )
+        }
+        androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+            Column(modifier = Modifier.padding(top = 12.dp)) {
+                content()
+            }
+        }
+    }
+}
+
+/**
  * H07 PARTE 2, PASO 2.5. Autocontenida: lee su propio
  * BuildConfig.VERSION_CODE, gestiona su propio ViewModel, y lanza
  * ella misma el Intent(ACTION_VIEW) de instalación -- no depende de
@@ -511,11 +595,6 @@ private fun UpdateCheckSection(
     var installErrorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            "Actualizaciones",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(Modifier.height(4.dp))
         Text(
             "Versión instalada: ${com.miguelaetxio.mimoo.BuildConfig.VERSION_NAME} " +
                 "(${com.miguelaetxio.mimoo.BuildConfig.VERSION_CODE})",
