@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.miguelaetxio.mimoo.ui.theme.glassChip
+import com.miguelaetxio.mimoo.ui.theme.GlassTokens
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -919,14 +920,31 @@ private fun LibraryTabButton(
     current: LibraryTab,
     onSelect: (LibraryTab) -> Unit,
 ) {
-    TextButton(onClick = { onSelect(tab) }) {
+    val isSelected = current == tab
+    TextButton(
+        onClick = { onSelect(tab) },
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .glassChip()
+            .let { base ->
+                // S011 -- mismo criterio que la pestaña seleccionada
+                // del menú lateral y la pista actual de la cola: el
+                // resaltado de "pestaña activa" es una capa extra
+                // encima del cristal, no un color de fondo sólido que
+                // lo taparía.
+                if (isSelected) {
+                    base.background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        RoundedCornerShape(GlassTokens.cornerRadius),
+                    )
+                } else {
+                    base
+                }
+            },
+    ) {
         Text(
             label,
-            fontWeight = if (current == tab) {
-                FontWeight.Bold
-            } else {
-                FontWeight.Normal
-            },
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
         )
     }
 }
