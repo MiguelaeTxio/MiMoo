@@ -27,6 +27,7 @@ class PlayerBarViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val coverArtRepository: CoverArtRepository,
+    private val downloadQueueManager: com.miguelaetxio.mimoo.data.download.DownloadQueueManager,
 ) : ViewModel() {
 
     val state: StateFlow<PlaybackState> = playerManager.state
@@ -90,6 +91,21 @@ class PlayerBarViewModel @Inject constructor(
      */
     private val _coverArtUrl = MutableStateFlow<String?>(null)
     val coverArtUrl: StateFlow<String?> = _coverArtUrl.asStateFlow()
+
+    /**
+     * S011 -- botón de descarga en el reproductor expandido (petición
+     * explícita de Miguel Ángel, junto con el mismo botón en la
+     * notificación -- ver `MiMooPlaybackService` para el límite real
+     * de huecos que tiene la notificación del sistema, que este
+     * reproductor propio no sufre). `null` cuando la pista actual no
+     * tiene equivalente real en la biblioteca (Radio Online, H09) --
+     * la UI no debería mostrar el botón en ese caso, igual que ya hace
+     * con favoritos.
+     */
+    private val _downloadStatus =
+        MutableStateFlow<com.miguelaetxio.mimoo.data.local.entity.DownloadStatus?>(null)
+    val downloadStatus: StateFlow<com.miguelaetxio.mimoo.data.local.entity.DownloadStatus?> =
+        _downloadStatus.asStateFlow()
 
     /**
      * Fallo real diagnosticado leyendo el código (Miguel Ángel,
@@ -175,6 +191,7 @@ class PlayerBarViewModel @Inject constructor(
                 .collect { track ->
                     _isCurrentFavorite.value = track?.isFavorite == true
                     _coverArtUrl.value = track?.coverArtUrl
+                    _downloadStatus.value = track?.downloadStatus
                     if (track != null && track.coverArtUrl == null) {
                         requestCoverArtIfMissing(track.artist, track.album)
                     }
@@ -186,6 +203,7 @@ class PlayerBarViewModel @Inject constructor(
         val track = youtubeId?.let { searchResultTrackRepository.getById(it) }
         _isCurrentFavorite.value = track?.isFavorite == true
         _coverArtUrl.value = track?.coverArtUrl
+        _downloadStatus.value = track?.downloadStatus
         if (track != null && track.coverArtUrl == null) {
             requestCoverArtIfMissing(track.artist, track.album)
         }
@@ -209,6 +227,24 @@ class PlayerBarViewModel @Inject constructor(
 
     fun togglePlayPause() {
         if (state.value.isPlaying) playerManager.pause() else playerManager.resume()
+    }
+
+    /** S011 -- botón de descarga del reproductor expandido, mismos campos que toggleCurrentFavorite(). */
+    fun downloadCurrentTrack() {
+        val current = state.value
+        val youtubeId = current.currentYoutubeId ?: return
+        val title = current.currentTitle ?: return
+        viewModelScope.launch {
+            val track = searchResultTrackRepository.getById(youtubeId)
+            downloadQueueManager.enqueue(
+                youtubeId = youtubeId,
+                title = title,
+                artist = track?.artist ?: current.currentChannelTitle ?: title,
+                album = track?.album,
+                trackPosition = track?.trackPosition,
+            )
+            refreshFavoriteState(youtubeId)
+        }
     }
 
     fun playNext() = playerManager.playNext()

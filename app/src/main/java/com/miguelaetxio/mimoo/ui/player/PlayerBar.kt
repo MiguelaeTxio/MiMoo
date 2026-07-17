@@ -87,6 +87,7 @@ fun PlayerBar(
     val positionMs by viewModel.positionMs.collectAsState()
     val isCurrentFavorite by viewModel.isCurrentFavorite.collectAsState()
     val coverArtUrl by viewModel.coverArtUrl.collectAsState()
+    val downloadStatus by viewModel.downloadStatus.collectAsState()
     val title = state.currentTitle ?: return
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
     var isExpanded by remember { mutableStateOf(true) }
@@ -187,6 +188,24 @@ fun PlayerBar(
                                 LocalContentColor.current
                             },
                         )
+                    }
+                }
+
+                // S011 -- botón de descarga (petición explícita de
+                // Miguel Ángel, junto con el de la notificación -- ver
+                // MiMooPlaybackService para el límite real de huecos
+                // de la notificación del sistema, que este reproductor
+                // propio no sufre). Solo visible si la pista actual
+                // tiene equivalente real en la biblioteca y todavía no
+                // está descargada -- mismo criterio que el favorito de
+                // arriba (state.currentYoutubeId != null).
+                if (state.currentYoutubeId != null &&
+                    downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
+                    downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.QUEUED &&
+                    downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DOWNLOADING
+                ) {
+                    IconButton(onClick = viewModel::downloadCurrentTrack) {
+                        Icon(Icons.Filled.Download, contentDescription = "Descargar")
                     }
                 }
 
