@@ -27,7 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.playback.QueueItem
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.miguelaetxio.mimoo.ui.theme.glassChip
+import com.miguelaetxio.mimoo.ui.theme.GlassTokens
 import kotlin.math.roundToInt
 
 /**
@@ -273,13 +275,22 @@ private fun QueueTrackRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip()
+            .let { base ->
+                // S011 -- el resaltado de "pista actual" ya no puede
+                // ser un color de fondo sólido (taparía el cristal) --
+                // se queda como una capa extra, más clara, por encima
+                // del degradado translúcido de glassChip().
                 if (isCurrent) {
-                    MaterialTheme.colorScheme.primaryContainer
+                    base.background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        RoundedCornerShape(GlassTokens.cornerRadius),
+                    )
                 } else {
-                    MaterialTheme.colorScheme.surface
+                    base
                 }
-            )
+            }
             .clickable { onClick() }
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
