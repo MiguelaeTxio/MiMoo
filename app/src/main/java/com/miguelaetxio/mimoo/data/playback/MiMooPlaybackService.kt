@@ -98,6 +98,9 @@ class MiMooPlaybackService : MediaSessionService() {
     @Inject
     lateinit var searchResultTrackRepository: SearchResultTrackRepository
 
+    @Inject
+    lateinit var downloadQueueManager: com.miguelaetxio.mimoo.data.download.DownloadQueueManager
+
     /**
      * S011 -- ámbito propio del servicio para observar la pista actual
      * y mantener el botón de favoritos de la notificación
@@ -136,15 +139,62 @@ class MiMooPlaybackService : MediaSessionService() {
             .build()
 
     /**
-     * Reconstruye y publica el botón de favoritos con el estado real
-     * de la pista actual. `enabled = false` para pistas sin
-     * equivalente real en la biblioteca (p.ej. una emisora de
-     * Radio-Browser.info, H09) -- mismo criterio que
-     * `PlayerBarViewModel.isCurrentFavorite`, que tampoco ofrece el
-     * botón en ese caso.
+     * S011 -- botón de descarga en la notificación (petición explícita
+     * de Miguel Ángel: "añadir un botón de descarga en las
+     * notificaciones"). Ningún icono predefinido de Media3
+     * (`CommandButton.ICON_*`) cubre "descargar" -- confirmado
+     * revisando la lista real en la documentación oficial antes de
+     * escribir esto, para no arriesgarme a citar una constante que no
+     * existiera. Camino oficial para ese caso: `ICON_UNDEFINED` +
+     * `setCustomIconResId()` con un drawable propio
+     * (`R.drawable.ic_download`, glifo estándar de "descargar" --
+     * flecha hacia una bandeja), documentado explícitamente en
+     * developer.android.com/media/media3/session/control-playback,
+     * sección "Icon".
+     *
+     * Habilitado solo cuando la pista actual todavía no está
+     * descargada (`DownloadStatus.PENDING`/`ERROR`) -- deshabilitado
+     * si ya está `DONE`, en cola o descargándose, o si no hay pista
+     * real (Radio Online, H09).
      */
-    private fun updateFavoriteCommandButton(isFavorite: Boolean, enabled: Boolean) {
-        mediaSession?.setCustomLayout(listOf(buildFavoriteCommandButton(isFavorite, enabled)))
+    private val downloadSessionCommand = SessionCommand(ACTION_DOWNLOAD_TRACK, Bundle.EMPTY)
+
+    private fun buildDownloadCommandButton(enabled: Boolean): CommandButton =
+        CommandButton.Builder(CommandButton.ICON_UNDEFINED)
+            .setCustomIconResId(com.miguelaetxio.mimoo.R.drawable.ic_download)
+            .setDisplayName("Descargar")
+            .setSessionCommand(downloadSessionCommand)
+            .setEnabled(enabled)
+            .build()
+
+    /**
+     * Reconstruye y publica AMBOS botones (favorito + descarga) con el
+     * estado real de la pista actual -- `setCustomLayout()` sustituye
+     * la lista entera cada vez, así que hay que pasar los dos juntos
+     * o el que no se pase desaparecería de la notificación.
+     */
+    private fun updateCommandButtons(isFavorite: Boolean, favoriteEnabled: Boolean, downloadEnabled: Boolean) {
+        mediaSession?.setCustomLayout(
+            listOf(
+                buildFavoriteCommandButton(isFavorite, favoriteEnabled),
+                buildDownloadCommandButton(downloadEnabled),
+            )
+        )
+    }
+
+    /** Mismos campos que ya usa toggleFavoriteForCurrentTrack() -- ver ese comentario. */
+    private suspend fun downloadCurrentTrack() {
+        val current = playerManager.state.value
+        val youtubeId = current.currentYoutubeId ?: return
+        val title = current.currentTitle ?: return
+        val track = searchResultTrackRepository.getById(youtubeId)
+        downloadQueueManager.enqueue(
+            youtubeId = youtubeId,
+            title = title,
+            artist = track?.artist ?: current.currentChannelTitle ?: title,
+            album = track?.album,
+            trackPosition = track?.trackPosition,
+        )
     }
 
     /** Misma operación que PlayerBarViewModel.toggleCurrentFavorite() -- ver ese comentario para el porqué de cada campo. */
@@ -171,6 +221,7 @@ class MiMooPlaybackService : MediaSessionService() {
                 .setAvailableSessionCommands(
                     MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                         .add(favoriteSessionCommand)
+                        .add(downloadSessionCommand)
                         .build()
                 )
                 .build()
@@ -181,11 +232,17 @@ class MiMooPlaybackService : MediaSessionService() {
             val current = playerManager.state.value
             val youtubeId = current.currentYoutubeId
             if (youtubeId == null) {
-                updateFavoriteCommandButton(isFavorite = false, enabled = false)
+                updateCommandButtons(isFavorite = false, favoriteEnabled = false, downloadEnabled = false)
             } else {
                 serviceScope.launch {
-                    val isFavorite = searchResultTrackRepository.getById(youtubeId)?.isFavorite == true
-                    updateFavoriteCommandButton(isFavorite, enabled = true)
+                    val track = searchResultTrackRepository.getById(youtubeId)
+                    updateCommandButtons(
+                        isFavorite = track?.isFavorite == true,
+                        favoriteEnabled = true,
+                        downloadEnabled = track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
+                            track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.QUEUED &&
+                            track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DOWNLOADING,
+                    )
                 }
             }
         }
@@ -199,16 +256,36 @@ class MiMooPlaybackService : MediaSessionService() {
             if (customCommand.customAction == ACTION_TOGGLE_FAVORITE) {
                 serviceScope.launch {
                     toggleFavoriteForCurrentTrack()
-                    val youtubeId = playerManager.state.value.currentYoutubeId
-                    val isFavorite = youtubeId?.let {
-                        searchResultTrackRepository.getById(it)?.isFavorite == true
-                    } == true
-                    updateFavoriteCommandButton(isFavorite, enabled = youtubeId != null)
+                    refreshCommandButtons()
+                }
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
+            if (customCommand.customAction == ACTION_DOWNLOAD_TRACK) {
+                serviceScope.launch {
+                    downloadCurrentTrack()
+                    refreshCommandButtons()
                 }
                 return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
             }
             return super.onCustomCommand(session, controller, customCommand, args)
         }
+    }
+
+    /** Vuelve a leer el estado real de la pista actual y publica ambos botones -- usado tras cada acción para reflejar el resultado. */
+    private suspend fun refreshCommandButtons() {
+        val youtubeId = playerManager.state.value.currentYoutubeId
+        if (youtubeId == null) {
+            updateCommandButtons(isFavorite = false, favoriteEnabled = false, downloadEnabled = false)
+            return
+        }
+        val track = searchResultTrackRepository.getById(youtubeId)
+        updateCommandButtons(
+            isFavorite = track?.isFavorite == true,
+            favoriteEnabled = true,
+            downloadEnabled = track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
+                track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.QUEUED &&
+                track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DOWNLOADING,
+        )
     }
 
     /**
@@ -294,9 +371,13 @@ class MiMooPlaybackService : MediaSessionService() {
                     if (youtubeId == null) flowOf(null) else searchResultTrackRepository.getByIdFlow(youtubeId)
                 }
                 .collect { track ->
-                    updateFavoriteCommandButton(
+                    updateCommandButtons(
                         isFavorite = track?.isFavorite == true,
-                        enabled = playerManager.state.value.currentYoutubeId != null,
+                        favoriteEnabled = playerManager.state.value.currentYoutubeId != null,
+                        downloadEnabled = playerManager.state.value.currentYoutubeId != null &&
+                            track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
+                            track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.QUEUED &&
+                            track?.downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DOWNLOADING,
                     )
                 }
         }
@@ -531,3 +612,4 @@ class MiMooPlaybackService : MediaSessionService() {
 }
 
 private const val ACTION_TOGGLE_FAVORITE = "com.miguelaetxio.mimoo.TOGGLE_FAVORITE"
+private const val ACTION_DOWNLOAD_TRACK = "com.miguelaetxio.mimoo.DOWNLOAD_TRACK"
