@@ -59,25 +59,29 @@ fun RadioBrowserScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                    Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                        }
                     }
                 },
                 actions = {
-                    IconButton(onClick = viewModel::toggleShowFavoritesOnly) {
-                        Icon(
-                            if (uiState.showFavoritesOnly) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            contentDescription = if (uiState.showFavoritesOnly) {
-                                "Mostrando solo favoritas"
-                            } else {
-                                "Mostrar solo favoritas"
-                            },
-                            tint = if (uiState.showFavoritesOnly) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                LocalContentColor.current
-                            },
-                        )
+                    Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                        IconButton(onClick = viewModel::toggleShowFavoritesOnly) {
+                            Icon(
+                                if (uiState.showFavoritesOnly) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = if (uiState.showFavoritesOnly) {
+                                    "Mostrando solo favoritas"
+                                } else {
+                                    "Mostrar solo favoritas"
+                                },
+                                tint = if (uiState.showFavoritesOnly) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    LocalContentColor.current
+                                },
+                            )
+                        }
                     }
                 },
             )

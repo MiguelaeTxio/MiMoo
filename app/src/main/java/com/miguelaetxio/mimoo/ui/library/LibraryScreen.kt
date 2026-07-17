@@ -240,8 +240,10 @@ fun LibraryScreen(
                             Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
                         }
                     } else {
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                        Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                            IconButton(onClick = onOpenDrawer) {
+                                Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                            }
                         }
                     }
                 },
@@ -301,17 +303,21 @@ fun LibraryScreen(
                                 )
                             }
                         }
-                        IconButton(onClick = viewModel::mergeDuplicateFolders) {
-                            Icon(
-                                Icons.Filled.CleaningServices,
-                                contentDescription = "Fusionar carpetas duplicadas",
-                            )
+                        Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                            IconButton(onClick = viewModel::mergeDuplicateFolders) {
+                                Icon(
+                                    Icons.Filled.CleaningServices,
+                                    contentDescription = "Fusionar carpetas duplicadas",
+                                )
+                            }
                         }
-                        IconButton(onClick = viewModel::refreshLibrary) {
-                            Icon(
-                                Icons.Filled.Refresh,
-                                contentDescription = "Refrescar biblioteca",
-                            )
+                        Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                            IconButton(onClick = viewModel::refreshLibrary) {
+                                Icon(
+                                    Icons.Filled.Refresh,
+                                    contentDescription = "Refrescar biblioteca",
+                                )
+                            }
                         }
                     }
                 },
