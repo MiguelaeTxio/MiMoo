@@ -555,26 +555,21 @@ explícitamente fuera -- credencial de dispositivo, no preferencia.
 cambiar el ajuste de cristal en uno, sincronizar, confirmar que
 aparece en el otro sin duplicar ni perder lo que ya tenía.
 
-**PASO 6 -- Hueco real detectado en esta sesión, sin cerrar
-(pendiente explícito, no bloquea el resto):** a diferencia de pistas/
-favoritos de álbum/playlists, alternar un favorito de radio
-(`RadioBrowserViewModel.toggleFavorite()`) o una suscripción de canal
-(`SearchViewModel`/`ChannelsViewModel`, `ChannelSubscriptionRepository
-.toggle()`/`.unsubscribe()`) **no pasa por `AutoSyncPusher
-.executeIfConnected()`** -- se ejecuta siempre en local, sin la
-garantía de "sin conexión, la mutación no se aplica" ni el push
-inmediato a Drive que sí tienen el resto de mutaciones (regla de
-negocio #1 de este mismo anexo). El dato SÍ acaba replicado (la
-sincronización periódica al abrir la app ya incluye radio/canal/
-ajustes, ver PASO 2-3), pero no de forma inmediata como pistas/
-favoritos. Corregirlo exige añadir infraestructura de Snackbar/Activity
-nueva en tres pantallas que hoy no la tienen
+**PASO 6 ✅ (S015, misma sesión -- Miguel Ángel exigió cerrarlo de
+inmediato, "la sincronización debe ser total"):** alternar un favorito
+de radio (`RadioBrowserViewModel.toggleFavorite()`) o una suscripción
+de canal (`SearchViewModel.toggleChannelSubscription()`,
+`ChannelsViewModel.unsubscribe()`) pasa ahora por
+`AutoSyncPusher.executeIfConnected()`, mismo patrón exacto que
+`LibraryViewModel.toggleFavoriteAlbum()`: sin conexión, la mutación no
+se aplica en absoluto; con conexión, se aplica y se sube el estado
+completo a Drive en la misma operación. Infraestructura de Snackbar/
+Activity añadida en las tres pantallas que no la tenían
 (`RadioBrowserScreen.kt`, `ChannelsScreen.kt`, `SearchScreen.kt`) --
-mismo patrón ya usado en `LibraryScreen.kt`
-(`toggleFavoriteAlbum(activity, ...)` + `syncBlockedMessage` +
-`LaunchedEffect`+`snackbarHostState`), pospuesto en esta sesión por no
-poder verificarse visualmente sin dispositivo. Retomar en la próxima
-sesión de este hito si Miguel Ángel lo confirma como prioritario.
+`snackbarHostState` + `LaunchedEffect(uiState.syncBlockedMessage)`,
+idéntico a `LibraryScreen.kt`. Sin verificación visual posible en este
+entorno (sin dispositivo) -- cubierto por build verde de GitHub
+Actions; verificación real queda dentro del PASO 5.
 
 
 

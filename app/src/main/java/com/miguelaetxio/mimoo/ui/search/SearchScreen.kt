@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.search
 
+import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
@@ -39,6 +41,8 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val subscribedChannelIds by viewModel.subscribedChannelIds.collectAsState()
+    val activity = LocalContext.current as Activity
+    val snackbarHostState = remember { SnackbarHostState() }
     var trackPendingAddToPlaylist by remember {
         mutableStateOf<SearchResultTrack?>(null)
     }
@@ -55,7 +59,17 @@ fun SearchScreen(
         mutableStateOf<SearchResultTrack?>(null)
     }
 
+    // H07 PARTE 1 (S015) -- aviso cuando suscribirse/darse de baja se
+    // rechaza por falta de conexión.
+    LaunchedEffect(uiState.syncBlockedMessage) {
+        uiState.syncBlockedMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissSyncBlockedMessage()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -176,7 +190,7 @@ fun SearchScreen(
                             onOpen = { onOpenExternalLink(result.url) },
                             isChannel = uiState.mode == SearchMode.CHANNELS,
                             isSubscribed = result.id in subscribedChannelIds,
-                            onToggleSubscription = { viewModel.toggleChannelSubscription(result) },
+                            onToggleSubscription = { viewModel.toggleChannelSubscription(activity, result) },
                         )
                         HorizontalDivider()
                     }

@@ -1,7 +1,10 @@
 package com.miguelaetxio.mimoo.ui.channels
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -10,6 +13,7 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -32,6 +36,8 @@ data class ChannelWithTracks(
 
 data class ChannelsUiState(
     val channels: List<ChannelWithTracks> = emptyList(),
+    /** H07 PARTE 1 (S015) -- aviso cuando dar de baja se rechaza por falta de conexión. */
+    val syncBlockedMessage: String? = null,
 )
 
 /**
@@ -46,12 +52,17 @@ class ChannelsViewModel @Inject constructor(
     private val channelSubscriptionRepository: ChannelSubscriptionRepository,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val playerManager: PlayerManager,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
+
+    /** H07 PARTE 1 (S015) -- separado del combine principal porque no depende de Room/Flow. */
+    private val _syncBlockedMessage = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<ChannelsUiState> = combine(
         channelSubscriptionRepository.getAll(),
         searchResultTrackRepository.getByStatus(DownloadStatus.DONE),
-    ) { subscriptions, downloadedTracks ->
+        _syncBlockedMessage,
+    ) { subscriptions, downloadedTracks, syncBlockedMessage ->
         ChannelsUiState(
             channels = subscriptions.map { subscription ->
                 ChannelWithTracks(
@@ -61,13 +72,30 @@ class ChannelsViewModel @Inject constructor(
                         .sortedByDescending { it.lastSearchedAt },
                 )
             },
+            syncBlockedMessage = syncBlockedMessage,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChannelsUiState())
 
-    fun unsubscribe(subscription: ChannelSubscription) {
+    /**
+     * H07 PARTE 1 (S015) -- réplica total: hasta ahora dar de baja se
+     * ejecutaba siempre en local, sin la garantía de conexión ni la
+     * subida inmediata a Drive que ya tienen pistas/álbumes/playlists.
+     * Mismo patrón exacto que `LibraryViewModel.toggleFavoriteAlbum()`.
+     */
+    fun unsubscribe(activity: Activity, subscription: ChannelSubscription) {
         viewModelScope.launch {
-            channelSubscriptionRepository.unsubscribe(subscription.channelId)
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                channelSubscriptionRepository.unsubscribe(subscription.channelId)
+            }
+            if (outcome is MutationOutcome.NoConnection) {
+                _syncBlockedMessage.value = "Sin conexión: no se puede dar de baja ahora mismo."
+            }
         }
+    }
+
+    /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1, S015). */
+    fun dismissSyncBlockedMessage() {
+        _syncBlockedMessage.value = null
     }
 
     fun playChannelTracks(channel: ChannelWithTracks) {

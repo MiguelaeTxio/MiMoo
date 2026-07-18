@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.channels
 
+import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import com.miguelaetxio.mimoo.ui.theme.glassChip
@@ -13,11 +14,14 @@ import androidx.compose.material.icons.filled.Podcasts
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,8 +41,19 @@ fun ChannelsScreen(
     onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activity = LocalContext.current as Activity
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // H07 PARTE 1 (S015) -- aviso cuando dar de baja se rechaza por falta de conexión.
+    LaunchedEffect(uiState.syncBlockedMessage) {
+        uiState.syncBlockedMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissSyncBlockedMessage()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -88,7 +103,7 @@ fun ChannelsScreen(
                 ChannelSection(
                     channel = channel,
                     onPlayAll = { viewModel.playChannelTracks(channel) },
-                    onUnsubscribe = { viewModel.unsubscribe(channel.subscription) },
+                    onUnsubscribe = { viewModel.unsubscribe(activity, channel.subscription) },
                     onPlayTrack = { viewModel.playTrack(it) },
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

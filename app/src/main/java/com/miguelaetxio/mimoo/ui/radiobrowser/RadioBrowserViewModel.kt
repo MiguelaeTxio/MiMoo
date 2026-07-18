@@ -1,7 +1,10 @@
 package com.miguelaetxio.mimoo.ui.radiobrowser
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.repository.FavoriteRadioStationRepository
 import com.miguelaetxio.mimoo.data.local.repository.toRadioStation
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
@@ -29,6 +32,8 @@ data class RadioBrowserUiState(
     val isSearching: Boolean = false,
     val favoriteUuids: Set<String> = emptySet(),
     val showFavoritesOnly: Boolean = false,
+    /** H07 PARTE 1 (S015) -- aviso cuando marcar/desmarcar favorita se rechaza por falta de conexión. */
+    val syncBlockedMessage: String? = null,
 ) {
     val genres: List<RadioGenreCategory> get() = RadioGenreCatalog.genreCategories
     val decades: List<RadioDecade> get() = RadioGenreCatalog.decades
@@ -75,6 +80,7 @@ class RadioBrowserViewModel @Inject constructor(
     private val radioBrowserRepository: RadioBrowserRepository,
     private val favoriteRadioStationRepository: FavoriteRadioStationRepository,
     private val playerManager: PlayerManager,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RadioBrowserUiState())
@@ -151,9 +157,30 @@ class RadioBrowserViewModel @Inject constructor(
         search()
     }
 
-    fun toggleFavorite(station: RadioStation) {
+    /**
+     * H07 PARTE 1 (S015) -- réplica total: hasta ahora marcar/desmarcar
+     * una emisora se ejecutaba siempre en local, sin la garantía de
+     * conexión ni la subida inmediata a Drive que ya tienen pistas/
+     * álbumes/playlists (mismo hueco real detectado por Miguel Ángel).
+     * Mismo patrón exacto que `LibraryViewModel.toggleFavoriteAlbum()`.
+     * ---
+     * H07 PART 1 (S015) -- total replica: until now, favoriting/
+     * unfavoriting a station ran locally only, without the same
+     * connectivity guarantee and immediate Drive push that tracks/
+     * albums/playlists already had. Exact same pattern as
+     * `LibraryViewModel.toggleFavoriteAlbum()`.
+     */
+    fun toggleFavorite(activity: Activity, station: RadioStation) {
         viewModelScope.launch {
-            favoriteRadioStationRepository.toggle(station)
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                favoriteRadioStationRepository.toggle(station)
+            }
+            if (outcome is MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede cambiar favoritos ahora mismo."
+                )
+                return@launch
+            }
             // S010 -- si estamos viendo solo favoritas y se quita una,
             // debe desaparecer de la lista al momento, no esperar a la
             // próxima búsqueda manual.
@@ -165,6 +192,11 @@ class RadioBrowserViewModel @Inject constructor(
                 search()
             }
         }
+    }
+
+    /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1, S015). */
+    fun dismissSyncBlockedMessage() {
+        _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
     }
 
     fun toggleShowFavoritesOnly() {

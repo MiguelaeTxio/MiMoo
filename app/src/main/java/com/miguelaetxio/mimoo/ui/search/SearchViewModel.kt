@@ -1,8 +1,11 @@
 package com.miguelaetxio.mimoo.ui.search
 
+import android.app.Activity
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -50,6 +53,8 @@ data class SearchUiState(
     val isSearching: Boolean = false,
     val isResolvingStream: Boolean = false,
     val errorMessage: String? = null,
+    /** H07 PARTE 1 (S015) -- aviso cuando suscribirse/darse de baja se rechaza por falta de conexión. */
+    val syncBlockedMessage: String? = null,
 )
 
 /**
@@ -88,6 +93,7 @@ class SearchViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val downloadQueueManager: DownloadQueueManager,
     private val channelSubscriptionRepository: com.miguelaetxio.mimoo.data.local.repository.ChannelSubscriptionRepository,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -102,10 +108,29 @@ class SearchViewModel @Inject constructor(
         channelSubscriptionRepository.getAllChannelIds()
             .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
 
-    fun toggleChannelSubscription(result: com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult) {
+    /**
+     * H07 PARTE 1 (S015) -- réplica total: hasta ahora suscribirse/
+     * darse de baja de un canal se ejecutaba siempre en local, sin la
+     * garantía de conexión ni la subida inmediata a Drive que ya
+     * tienen pistas/álbumes/playlists. Mismo patrón exacto que
+     * `LibraryViewModel.toggleFavoriteAlbum()`.
+     */
+    fun toggleChannelSubscription(activity: Activity, result: com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult) {
         viewModelScope.launch {
-            channelSubscriptionRepository.toggle(result)
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                channelSubscriptionRepository.toggle(result)
+            }
+            if (outcome is MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede cambiar la suscripción ahora mismo."
+                )
+            }
         }
+    }
+
+    /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1, S015). */
+    fun dismissSyncBlockedMessage() {
+        _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
     }
 
     private val _currentYoutubeIds = MutableStateFlow<List<String>>(emptyList())
