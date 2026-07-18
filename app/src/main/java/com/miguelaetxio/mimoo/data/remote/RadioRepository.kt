@@ -7,97 +7,84 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Género + país fijados UNA SOLA VEZ al arrancar una sesión de Radio
- * (S010, rediseño de sesión-ancla -- petición explícita de Miguel
- * Ángel). Se calcula del PRIMER artista (el que arrancó la Radio) y no
- * se vuelve a tocar mientras dure la sesión, aunque se vayan
- * encadenando pistas nuevas.
+ * Género + país + década + origen fijados UNA SOLA VEZ al arrancar
+ * una sesión de Radio (S010 género/país, S011 década, S013/S014
+ * origen). Se calculan del PRIMER artista y no se vuelven a tocar
+ * mientras dure la sesión.
+ *
+ * `isSpanishOrigin` (S013/S014, ver DOCS/ANNEX_H08.md sección "S013"
+ * punto 1) -- ABSOLUTO para el resto de la sesión de Radio, nunca se
+ * relaja ni siquiera en el último peldaño del fallback normal (solo
+ * el fallback de "clásica" lo ignora del todo, como red de seguridad
+ * final). true si el primer tema es de un grupo ESPAÑOL (idioma
+ * irrelevante -- hay grupos españoles que cantan en inglés, p.ej. Los
+ * Bravos). false ("modo mixto") en cualquier otro caso -- el resto de
+ * la sesión puede ser español o extranjero sin restricción de origen,
+ * pero lo extranjero debe ser CONOCIDO EN ESPAÑA (ver
+ * KnownHitsRepository, "intl"), nunca cualquier tema del Billboard
+ * sin más.
  * ---
- * Genre + country fixed ONCE when a Radio session starts (S010,
- * anchor-session redesign). Computed from the FIRST artist and never
- * recalculated for the rest of the session, no matter how many tracks
- * get chained afterward.
+ * Genre + country + decade + origin fixed ONCE when a Radio session
+ * starts. Computed from the FIRST artist and never recalculated for
+ * the rest of the session.
  */
-data class RadioAnchor(val genre: String, val country: String?, val decadeBegin: Int? = null)
+data class RadioAnchor(
+    val genre: String,
+    val country: String?,
+    val decadeBegin: Int? = null,
+    val isSpanishOrigin: Boolean = false,
+)
 
 /**
- * H08 PARTE 2 (S009, fix de sesgo hacia música inglesa e
- * instrumentación de diagnóstico en S010, REDISEÑO DE ANCLA DE SESIÓN
- * en S010 continuación) -- "Radio": dado el artista que estaba
- * sonando, sugiere otro relacionado, para continuar la reproducción en
+ * H08 PARTE 2 -- "Radio": dado el artista que estaba sonando, sugiere
+ * otro relacionado vía MusicBrainz, para continuar la reproducción en
  * streaming cuando la cola se queda sin nada más y el cíclico está
- * desactivado (PlayerManager). Decisión de diseño explícita de Miguel
- * Ángel: MusicBrainz (géneros compartidos), no el Mix automático de
- * YouTube -- descartado por inestabilidad documentada de yt-dlp en esa
- * área (ver ANNEX_H08.md).
+ * desactivado (PlayerManager).
  *
- * BUG REAL corregido en S010 (segunda vuelta, reportado por Miguel
- * Ángel con caso concreto: Radio arrancada con Jeff Mills -- techno --
- * terminó en Led Zeppelin -- rock). Causa raíz: el diseño anterior
- * volvía a elegir un género AL AZAR del artista recién añadido en
- * CADA salto de la cadena (Jeff Mills -> género de Underground
- * Resistance -> género de Wink -> ...) -- una pista puede compartir
- * varios géneros por fusión/etiquetado cruzado, así que el género
- * "deriva" salto a salto y varios saltos después ya no tiene nada que
- * ver con el género original. País tampoco basta por sí solo: Miguel
- * Ángel señaló explícitamente que "España" no es un género -- Rocío
- * Jurado, La Pantoja, Radio Futura y Loquillo son todos españoles pero
- * musicalmente no tienen nada que ver entre sí.
- *
- * Solución: el género Y el país se fijan UNA SOLA VEZ, del PRIMER
- * artista que arrancó la Radio (ver RadioAnchor, resolveAnchor()), y
- * TODOS los saltos posteriores de la misma sesión buscan candidatos
- * con ese mismo género+país fijo -- nunca se recalculan a partir de un
- * artista intermedio. Esto es justo lo que pidió Miguel Ángel: "la
- * relación tiene que ir con el primer tema con el que se inicia la
- * radio".
- *
- * Algoritmo:
- *   1. resolveAnchor(artista) -- SOLO al arrancar la sesión (PlayerManager
- *      cachea el resultado): busca el artista en MusicBrainz -> MBID,
- *      consulta sus géneros e idioma/país, elige UN género al azar de
- *      esa lista. Ese (género, país) es el ancla de TODA la sesión.
- *   2. suggestRelatedArtist(ancla, excluidos) -- en CADA salto: busca
- *      artistas con el género del ancla Y su país (reintento sin país
- *      si no hay candidatos), excluye los ya usados en esta sesión
- *      (para variar) y los "cajón de sastre" (Various Artists...),
- *      elige uno al azar entre los que queden.
- *
- * El nombre elegido NO se reproduce directamente desde MusicBrainz
- * (que no aloja audio) -- quien llama (PlayerManager) lo busca
- * después con el motor gratuito ya existente
- * (ExternalLinkResolver.searchYoutube()), igual que cualquier otra
- * búsqueda de la app.
- *
- * Instrumentado con RadioDebugLogger (S010) -- cada fallo se registra
- * con el motivo exacto en radio_relacionados_debug.txt antes de
- * devolver null; nunca lanza excepción hacia quien llama.
+ * S013/S014 -- REDISEÑO DE ORIGEN (ver DOCS/ANNEX_H08.md, sección
+ * "S013", motivación completa). `suggestRelatedArtist()` es AHORA
+ * únicamente el mecanismo del cupo de "exploración" (10% de las
+ * pistas que añade Radio, ver PlayerManager) -- ya NO decide por sí
+ * solo si un candidato es aceptable (eso lo hace el cupo 80/10/10 en
+ * PlayerManager, que combina esta clase con KnownHitsRepository y la
+ * biblioteca local). Dentro de esta búsqueda, el origen (país=ES si
+ * `anchor.isSpanishOrigin`, sin restricción de país si no) se
+ * mantiene FIJO durante toda la cascada género/década -- nunca se
+ * relaja aquí dentro (petición explícita de Miguel Ángel: "el origen
+ * NO se relaja nunca" para este cupo). Cascada (prioridad género >
+ * década, ver ANNEX_H08.md S013 punto 5):
+ *   1. género + década exacta (+ origen)
+ *   2. género, cualquier década (+ origen)
+ *   3. década exacta, cualquier género (+ origen)
+ *   4. sin candidatos -- null (el llamante decide el fallback final,
+ *      que si acaso relaja el origen, ver PlayerManager).
  * ---
- * H08 PART 2 -- "Radio": given the artist that was playing, suggests a
- * related one, to continue streaming playback once the queue runs out
- * and repeat is off.
+ * H08 PART 2 -- "Radio": given the artist that was playing, suggests
+ * a related one via MusicBrainz.
  *
- * REAL BUG fixed in S010 (second round, reported by Miguel Ángel with
- * a concrete case: Radio started with Jeff Mills -- techno -- ended up
- * at Led Zeppelin -- rock). Root cause: the previous design re-picked
- * a RANDOM genre from the just-added artist on EVERY hop of the chain
- * -- a track can share several genres via fusion/cross-tagging, so the
- * genre "drifts" hop by hop and several hops later has nothing to do
- * with the original genre anymore. Country alone isn't enough either:
- * Miguel Ángel explicitly pointed out that "Spain" isn't a genre.
- *
- * Fix: genre AND country are fixed ONCE, from the FIRST artist that
- * started Radio, and EVERY later hop in the same session searches for
- * candidates with that same fixed genre+country -- never recalculated
- * from an intermediate artist. This is exactly what Miguel Ángel asked
- * for: the relation has to go with the first track Radio started with.
+ * S013/S014 -- ORIGIN REDESIGN. `suggestRelatedArtist()` is now only
+ * the "exploration" quota's mechanism (10% of the tracks Radio adds)
+ * -- it no longer decides on its own whether a candidate is
+ * acceptable. Origin stays FIXED through the whole genre/decade
+ * cascade -- never relaxed inside this function.
  */
 @Singleton
 class RadioRepository @Inject constructor(
     private val musicBrainzApiService: MusicBrainzApiService,
+    private val knownHitsRepository: KnownHitsRepository,
     @ApplicationContext private val appContext: Context,
     private val storageManager: StorageManager,
 ) {
+    /**
+     * Perfil de un artista para la fuente de "disco" (10% de la
+     * biblioteca local, S013/S014, ver PlayerManager.pickDiscoCandidate()).
+     * A diferencia de RadioAnchor (un único género elegido al azar),
+     * aquí se devuelve el conjunto completo de géneros del artista,
+     * para poder comprobar si contiene el género del ancla sin perder
+     * información por el camino.
+     */
+    data class ArtistProfile(val genres: Set<String>, val country: String?, val decadeBegin: Int?)
+
     /**
      * SOLO se llama una vez, al arrancar una sesión de Radio -- ver
      * comentario de clase y PlayerManager.radioAnchor.
@@ -131,11 +118,23 @@ class RadioRepository @Inject constructor(
             val chosenGenre = genres.random()
             val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
             val decadeBegin = parseDecadeBegin(sourceDetail.lifeSpan?.begin)
+            // S013/S014, punto 4 -- "grupo español" se decide primero
+            // por el diccionario de éxitos (barato, sin ambigüedad de
+            // MusicBrainz) y, si el artista no está en él, por el
+            // campo country=ES de MusicBrainz como respaldo.
+            val isSpanishOrigin = knownHitsRepository.isKnownSpanishArtist(sourceArtist) ||
+                sourceCountry == "ES"
             log(
                 "resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: " +
-                    "género='$chosenGenre', país=$sourceCountry, década=$decadeBegin"
+                    "género='$chosenGenre', país=$sourceCountry, década=$decadeBegin, " +
+                    "origen español=$isSpanishOrigin"
             )
-            RadioAnchor(genre = chosenGenre, country = sourceCountry, decadeBegin = decadeBegin)
+            RadioAnchor(
+                genre = chosenGenre,
+                country = sourceCountry,
+                decadeBegin = decadeBegin,
+                isSpanishOrigin = isSpanishOrigin,
+            )
         } catch (e: Exception) {
             log("resolveAnchor('$sourceArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
@@ -143,74 +142,77 @@ class RadioRepository @Inject constructor(
     }
 
     /**
-     * Se llama en CADA salto de la cadena -- siempre busca con el
-     * mismo (género, país) del ancla, nunca recalcula nada a partir
-     * del artista recién añadido. `excludeArtists` son los nombres ya
-     * usados en esta sesión (comparación sin mayúsculas/minúsculas),
-     * para no repetir siempre el mismo puñado de candidatos.
-     * ---
-     * Called on EVERY hop of the chain -- always searches with the
-     * same anchor (genre, country), never recalculates anything from
-     * the just-added artist. `excludeArtists` are the names already
-     * used this session, to avoid repeating the same handful of
-     * candidates.
+     * Cupo de "exploración" (10%, S013/S014) -- ver comentario de
+     * clase para la cascada exacta. El origen (`anchor.isSpanishOrigin`
+     * -> país=ES fijo; si no, sin restricción de país) se mantiene
+     * FIJO en las tres vueltas de la cascada, nunca se relaja aquí.
+     * `excludeArtists` son los nombres ya usados en esta sesión.
      */
     suspend fun suggestRelatedArtist(anchor: RadioAnchor, excludeArtists: Set<String>): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
+        val originCountry = if (anchor.isSpanishOrigin) "ES" else null
 
-        // S011 -- filtro de década (petición explícita de Miguel Ángel,
-        // caso concreto: Alaska y Dinarama -- 80s -- terminó en
-        // reguetón. "Si pones una canción de los Beatles no es lógico
-        // que después te ponga reguetón"). Cascada de intentos, más
-        // estricto primero, igual que ya se hacía solo con país:
-        // género+país+década -> género+década (sin país, por si el
-        // cruce de las tres es demasiado estrecho) -> género+país (el
-        // comportamiento de antes de esta sesión) -> género solo.
-        val genreCountryDecade = if (anchor.country != null && anchor.decadeBegin != null) {
-            findCandidates(anchor.genre, anchor.country, anchor.decadeBegin, excludeLower)
+        val genreAndDecade = if (anchor.decadeBegin != null) {
+            findCandidates(anchor.genre, originCountry, anchor.decadeBegin, excludeLower)
         } else {
             emptyList()
         }
-        val genreDecade = if (genreCountryDecade.isEmpty() && anchor.decadeBegin != null) {
-            findCandidates(anchor.genre, countryCode = null, anchor.decadeBegin, excludeLower)
+        val genreAnyDecade = if (genreAndDecade.isEmpty()) {
+            findCandidates(anchor.genre, originCountry, decadeBegin = null, excludeLower)
         } else {
             emptyList()
         }
-        val genreCountry = if (genreCountryDecade.isEmpty() && genreDecade.isEmpty() && anchor.country != null) {
-            findCandidates(anchor.genre, anchor.country, decadeBegin = null, excludeLower)
+        val decadeAnyGenre = if (genreAndDecade.isEmpty() && genreAnyDecade.isEmpty() && anchor.decadeBegin != null) {
+            findCandidatesAnyGenre(originCountry, anchor.decadeBegin, excludeLower)
         } else {
             emptyList()
         }
 
-        val candidates = genreCountryDecade.ifEmpty {
-            genreDecade.ifEmpty {
-                genreCountry.ifEmpty {
-                    if (anchor.country != null || anchor.decadeBegin != null) {
-                        log(
-                            "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}, " +
-                                "década=${anchor.decadeBegin}) -- 0 candidatos en ningún cruce más " +
-                                "estricto, reintentando solo por género"
-                        )
-                    }
-                    findCandidates(anchor.genre, countryCode = null, decadeBegin = null, excludeLower)
-                }
-            }
-        }
+        val candidates = genreAndDecade.ifEmpty { genreAnyDecade.ifEmpty { decadeAnyGenre } }
 
         val chosen = candidates.randomOrNull()
         if (chosen == null) {
             log(
-                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}, " +
-                    "década=${anchor.decadeBegin}) -- 0 candidatos en ningún cruce " +
-                    "(tras excluir ${excludeArtists.size} ya usados) -- eslabón roto"
+                "suggestRelatedArtist(género='${anchor.genre}', origen_es=${anchor.isSpanishOrigin}, " +
+                    "década=${anchor.decadeBegin}) -- 0 candidatos en ninguna vuelta de la cascada " +
+                    "(tras excluir ${excludeArtists.size} ya usados) -- eslabón roto para este cupo"
             )
         } else {
             log(
-                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}, " +
+                "suggestRelatedArtist(género='${anchor.genre}', origen_es=${anchor.isSpanishOrigin}, " +
                     "década=${anchor.decadeBegin}) -> '$chosen' (${candidates.size} candidatos)"
             )
         }
         return chosen
+    }
+
+    /**
+     * S013/S014, punto 8 -- fuente de "disco" (10%, biblioteca local
+     * sin género/país/década guardados): resuelve el perfil completo
+     * de un artista bajo demanda, para que PlayerManager pueda
+     * comprobar si contiene el género del ancla sin descartar
+     * artistas por elegir un único género al azar (a diferencia de
+     * resolveAnchor(), que sí necesita reducir a uno solo).
+     */
+    suspend fun lookupArtistProfile(artistName: String): ArtistProfile? {
+        if (artistName.isBlank() || isPlaceholderArtist(artistName)) return null
+        return try {
+            val mbid = musicBrainzApiService
+                .searchArtists(query = buildArtistQuery(artistName))
+                .artists
+                .firstOrNull()
+                ?.id ?: return null
+            val detail = musicBrainzApiService.lookupArtist(mbid)
+            val genres = detail.genres.map { it.name }.filter { it.isNotBlank() }.toSet()
+            ArtistProfile(
+                genres = genres,
+                country = detail.country?.trim()?.ifBlank { null },
+                decadeBegin = parseDecadeBegin(detail.lifeSpan?.begin),
+            )
+        } catch (e: Exception) {
+            log("lookupArtistProfile('$artistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+            null
+        }
     }
 
     private suspend fun findCandidates(
@@ -219,32 +221,9 @@ class RadioRepository @Inject constructor(
         decadeBegin: Int?,
         excludeLower: Set<String>,
     ): List<String> = try {
-        // S010 -- offset aleatorio, no siempre 0 (petición explícita
-        // de Miguel Ángel: "siempre mete las mismas canciones").
-        // MusicBrainz devuelve los resultados de búsqueda en un orden
-        // ESTABLE por puntuación de relevancia -- sin variar el
-        // offset, cualquier sesión de Radio con el mismo género+país
-        // recibe SIEMPRE el mismo top-10 fijo, así que distintas
-        // sesiones acaban cayendo en el mismo puñado de artistas una y
-        // otra vez. Tramo elegido al azar dentro de un rango moderado
-        // (0-90, saltos de 10) -- lo bastante amplio para dar
-        // variedad real, sin arriesgarse a pedir un tramo tan lejano
-        // que ya no tenga resultados para géneros menos poblados (si
-        // el offset se pasa del total, MusicBrainz simplemente
-        // devuelve una página vacía, que el resto del código ya trata
-        // igual que "sin candidatos").
-        // ---
-        // S010 -- random offset, not always 0 (explicit request from
-        // Miguel Ángel: "it always brings back the same songs").
-        // MusicBrainz returns search results in a STABLE
-        // relevance-score order -- without varying the offset, any
-        // Radio session with the same genre+country always gets the
-        // exact same fixed top-10, so different sessions keep landing
-        // on the same handful of artists over and over. Range chosen
-        // to give real variety without risking an offset so far out
-        // that less-populated genres run out of results (an
-        // out-of-range offset just returns an empty page, already
-        // handled the same as "no candidates").
+        // S010 -- offset aleatorio, no siempre 0, para variar entre
+        // sesiones de Radio con el mismo ancla (ver historial de esta
+        // función en versiones anteriores del archivo).
         val randomOffset = (0..90 step 10).toList().random()
         musicBrainzApiService
             .searchArtists(query = buildGenreQuery(genre, countryCode, decadeBegin), limit = 10, offset = randomOffset)
@@ -256,17 +235,38 @@ class RadioRepository @Inject constructor(
         emptyList()
     }
 
+    /**
+     * S013/S014 -- paso 3 de la cascada de suggestRelatedArtist():
+     * abandona el género, mantiene la década (y el origen) exacta.
+     */
+    private suspend fun findCandidatesAnyGenre(
+        countryCode: String?,
+        decadeBegin: Int,
+        excludeLower: Set<String>,
+    ): List<String> = try {
+        val randomOffset = (0..90 step 10).toList().random()
+        musicBrainzApiService
+            .searchArtists(query = buildDecadeOnlyQuery(countryCode, decadeBegin), limit = 10, offset = randomOffset)
+            .artists
+            .map { it.name }
+            .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
+    } catch (e: Exception) {
+        log("findCandidatesAnyGenre(país=$countryCode, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+        emptyList()
+    }
+
     private fun buildGenreQuery(genre: String, countryCode: String?, decadeBegin: Int?): String {
         fun escape(value: String) = value.replace("\"", "")
         var query = "tag:\"${escape(genre)}\""
         if (countryCode != null) query += " AND country:${escape(countryCode)}"
-        // S011 -- rango de década sobre el campo `begin` (verificado
-        // como campo de búsqueda real de artista en MusicBrainz,
-        // musicbrainzngs docs, 2026-07-18) -- "artista que empezó su
-        // actividad entre el inicio y el final de esta década", mejor
-        // esfuerzo razonable como proxy de "época musical" ya que
-        // MusicBrainz no tiene un campo de "década" per se.
         if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
+        return query
+    }
+
+    private fun buildDecadeOnlyQuery(countryCode: String?, decadeBegin: Int): String {
+        fun escape(value: String) = value.replace("\"", "")
+        var query = "begin:[$decadeBegin TO ${decadeBegin + 9}]"
+        if (countryCode != null) query += " AND country:${escape(countryCode)}"
         return query
     }
 

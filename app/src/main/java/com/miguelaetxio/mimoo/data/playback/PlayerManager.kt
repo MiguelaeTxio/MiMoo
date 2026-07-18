@@ -243,7 +243,12 @@ class PlayerManager @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val streamResolver: StreamResolver,
     private val knownHitsRepository: com.miguelaetxio.mimoo.data.remote.KnownHitsRepository,
+    // S013/S014 -- fuente de "disco" del cupo 80/10/10 (10%, ver
+    // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
+    // descargados para poder ofrecer alguno como parte de la Radio.
+    private val searchResultTrackRepository: com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
 ) {
+
     /**
      * Público (antes privado) para que MiMooPlaybackService pueda
      * envolver esta MISMA instancia en un MediaSession -- al ser
@@ -466,6 +471,9 @@ class PlayerManager @Inject constructor(
                     radioUsedArtists.clear()
                     radioTracksAccepted = 0
                     radioExploreTracksUsed = 0
+                    radioDiscoTracksUsed = 0
+                    radioDiscoExhausted = false
+                    radioLibraryArtistProfileCache.clear()
                 }
                 if (currentItem?.isFromRadio == true || isLastItem) {
                     topUpRadioQueueIfNeeded()
@@ -714,6 +722,28 @@ class PlayerManager @Inject constructor(
     private var radioExploreTracksUsed = 0
     private val radioUsedArtists = mutableSetOf<String>()
 
+    /**
+     * S013/S014 -- cupo 80/10/10 (diccionario/exploración/disco, ver
+     * ANNEX_H08.md sección "S013" puntos 6-8). `radioDiscoTracksUsed`
+     * cuenta las pistas de disco aceptadas esta sesión.
+     * `radioDiscoExhausted` (punto 7.1): true cuando el 10% de disco
+     * ya no tiene NINGÚN candidato español -- se retira el resto de la
+     * sesión y el reparto pasa a 90/10 (diccionario+exploración). Se
+     * resetea junto con el resto del estado de Radio.
+     */
+    private var radioDiscoTracksUsed = 0
+    private var radioDiscoExhausted = false
+
+    /**
+     * S013/S014, punto 8.2 -- caché en memoria de género/país/década
+     * por artista de biblioteca local, dentro de UNA sesión de Radio
+     * (para no repetir la consulta a MusicBrainz si el mismo artista
+     * de disco vuelve a salir candidato). Se resetea junto con
+     * radioAnchor.
+     */
+    private val radioLibraryArtistProfileCache =
+        mutableMapOf<String, com.miguelaetxio.mimoo.data.remote.RadioRepository.ArtistProfile?>()
+
     private fun topUpRadioQueueIfNeeded() {
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
@@ -924,40 +954,9 @@ class PlayerManager @Inject constructor(
     }
 
     /**
-     * S011 -- cupo de exploración: 9 de cada 10 pistas que Radio añade
-     * deben ser un artista conocido (`KnownHitsRepository`, diccionario
-     * compilado una sola vez, ver esa clase); la décima puede ser
-     * cualquier cosa. `radioExploreTracksUsed * 10 < radioTracksAccepted + 1`
-     * es la comprobación de "¿toca ya una de exploración?" -- se
-     * mantiene al ritmo de 1 de cada 10 sin depender de saber de
-     * antemano cuántas pistas va a tener la sesión.
-     */
-    private fun isAcceptableByHitsQuota(artist: String, decadeBegin: Int?): Boolean {
-        if (knownHitsRepository.isKnownHitArtist(artist, decadeBegin)) {
-            radioTracksAccepted++
-            return true
-        }
-        val dueForExploration = radioExploreTracksUsed * 10 < radioTracksAccepted + 1
-        if (!dueForExploration) return false
-        radioTracksAccepted++
-        radioExploreTracksUsed++
-        return true
-    }
-
-    /**
-     * Un único ciclo búsqueda-de-relacionado + búsqueda-gratuita-en-
-     * YouTube + resolución-de-stream (ver RadioRepository y
-     * ExternalLinkResolver.searchYoutube()). Nunca lanza -- cualquier
-     * fallo en cualquiera de los tres pasos se trata como "no hay
-     * pista", dejando que topUpRadioQueueIfNeeded() pare de intentar
-     * en vez de reventar.
-     * ---
-     * A single suggest-related + free-YouTube-search + stream-
-     * resolution cycle (see RadioRepository and
-     * ExternalLinkResolver.searchYoutube()). Never throws -- any
-     * failure in any of the three steps is treated as "no track",
-     * letting topUpRadioQueueIfNeeded() stop trying instead of
-     * blowing up.
+     * S013/S014 -- punto de entrada de un ciclo de reposición de
+     * Radio. Resuelve el ancla (una sola vez por sesión) y delega en
+     * fetchRoundCandidate() el reparto de cupo 80/10/10. Nunca lanza.
      */
     private suspend fun fetchOneRadioTrack(anchorArtistName: String): QueueItem? =
         try {
@@ -965,122 +964,9 @@ class PlayerManager @Inject constructor(
                 radioAnchor = it
             }
             if (anchor == null) {
-                // Sin log aquí -- RadioRepository.resolveAnchor() ya
-                // registra el motivo exacto en
-                // radio_relacionados_debug.txt antes de devolver null.
                 null
             } else {
-                // FIX REAL (S012, regresión reportada por Miguel Ángel:
-                // "ya no se ponen 10 temas, se pone uno solo"). Antes,
-                // un candidato rechazado por el cupo de éxitos
-                // conocidos devolvía null aquí, y topUpRadioQueueIfNeeded()
-                // trataba ese null exactamente igual que "no queda
-                // ningún candidato" -- parando la Radio entera con un
-                // solo rechazo de cuota, algo que por diseño debe pasar
-                // 1 de cada 10 veces. Ahora: un rechazo de cuota pide
-                // OTRO candidato en la misma llamada (excluyendo el
-                // rechazado), sin gastar ninguna búsqueda de YouTube en
-                // él. Solo se para de verdad cuando suggestRelatedArtist()
-                // ya no tiene ningún candidato más que ofrecer -- ver log
-                // real: 'Belle and Sebastian' descartado por cuota seguido
-                // inmediatamente de "parado del todo -- backlog final: 1".
-                val rejectedByQuota = mutableSetOf<String>()
-                var relatedArtist: String? = null
-                while (true) {
-                    val candidate = radioRepository.suggestRelatedArtist(
-                        anchor,
-                        excludeArtists = radioUsedArtists + anchorArtistName + rejectedByQuota,
-                    )
-                    if (candidate == null) {
-                        // Sin log aquí -- suggestRelatedArtist() ya
-                        // registra el motivo exacto (eslabón roto de
-                        // verdad, no candidatos en ningún cruce).
-                        break
-                    }
-                    if (isAcceptableByHitsQuota(candidate, anchor.decadeBegin)) {
-                        relatedArtist = candidate
-                        break
-                    }
-                    // S011 -- rechazado por el cupo de exploración (ver
-                    // comentario de radioTracksAccepted/radioExploreTracksUsed).
-                    RadioDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$candidate' " +
-                            "descartado por el cupo de éxitos conocidos (década=${anchor.decadeBegin}, " +
-                            "aceptadas=$radioTracksAccepted, exploración=$radioExploreTracksUsed) -- " +
-                            "pidiendo otro candidato",
-                    )
-                    rejectedByQuota.add(candidate)
-                }
-                if (relatedArtist == null) {
-                    null
-                } else {
-                    // H08 -- limit=6 en vez de 1, y se descartan
-                    // candidatos que huelen a compilación (detectado en
-                    // pruebas reales: buscar solo el nombre del artista
-                    // devuelve muchas veces un "Greatest Hits Full Album"
-                    // de 1-2 horas como primer resultado -- si se cogiera
-                    // tal cual, "ocuparía" un hueco del backlog de Radio
-                    // durante horas, rompiendo el propio modelo de
-                    // "mantener 10 temas". RADIO_MAX_TRACK_SECONDS (15 min)
-                    // es generoso a propósito -- hay canciones sueltas
-                    // legítimas largas (rock progresivo, etc.), no se
-                    // quiere descartarlas por error.
-                    // ---
-                    // H08 -- limit=6 instead of 1, and candidates that
-                    // smell like a compilation are discarded (found in
-                    // real testing: searching just the artist's name often
-                    // returns a 1-2 hour "Greatest Hits Full Album" as the
-                    // first result -- if taken as-is, it would "occupy" a
-                    // slot in Radio's backlog for hours, breaking the very
-                    // "keep 10 tracks" model. RADIO_MAX_TRACK_SECONDS
-                    // (15 min) is deliberately generous -- there are
-                    // legitimate long standalone songs (prog rock etc.),
-                    // don't want to wrongly discard those.
-                    val searchResult = externalLinkResolver.searchYoutube(relatedArtist, limit = 6)
-                    val track = searchResult.tracks.firstOrNull { candidate ->
-                        candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
-                            COMPILATION_TITLE_HINTS.none { hint ->
-                                candidate.title.contains(hint, ignoreCase = true)
-                            }
-                    }
-                    if (track == null) {
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
-                            "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist' pero " +
-                                "0 de ${searchResult.tracks.size} resultados de YouTube pasaron el filtro " +
-                                "de duración/compilación -- eslabón roto",
-                        )
-                        null
-                    } else {
-                        val streamUrl = try {
-                            streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
-                        } catch (e: Exception) {
-                            RadioDebugLogger.log(
-                                appContext, storageManager,
-                                "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist', " +
-                                    "vídeo='${track.title}' -- resolveAudioStreamUrl() falló: " +
-                                    "${e::class.java.simpleName}: ${e.message}",
-                            )
-                            throw e
-                        }
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
-                            "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist', " +
-                                "añadido: '${track.title}'",
-                        )
-                        QueueItem(
-                            uri = streamUrl,
-                            title = track.title,
-                            isLocal = false,
-                            artist = relatedArtist,
-                            isFromRadio = true,
-                            youtubeId = track.youtubeId,
-                            channelTitle = track.channelTitle,
-                            artworkUri = track.thumbnailUrl,
-                        )
-                    }
-                }
+                fetchRoundCandidate(anchor, anchorArtistName)
             }
         } catch (e: Exception) {
             RadioDebugLogger.log(
@@ -1089,6 +975,284 @@ class PlayerManager @Inject constructor(
             )
             null
         }
+
+    /**
+     * S013/S014 -- un ciclo completo de selección de cupo (ver
+     * ANNEX_H08.md sección "S013" puntos 6-8): 10% disco (si toca y no
+     * está agotado para el origen de esta sesión) -> 10% exploración
+     * vía MusicBrainz (si toca) -> 80% diccionario (por defecto) ->
+     * cascada de fallback final (punto 7) si los tres fallan en la
+     * misma vuelta. Nunca lanza.
+     */
+    private suspend fun fetchRoundCandidate(anchor: RadioAnchor, anchorArtistName: String): QueueItem? {
+        val excludeNames = radioUsedArtists + anchorArtistName
+
+        if (dueForDiscoQuota()) {
+            val discoItem = pickDiscoCandidate(anchor, excludeNames)
+            if (discoItem != null) {
+                radioDiscoTracksUsed++
+                radioTracksAccepted++
+                registerUsedArtist(discoItem.artist)
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -> cupo=disco: '${discoItem.artist}' ('${discoItem.title}')",
+                )
+                return discoItem
+            } else if (anchor.isSpanishOrigin && !radioDiscoExhausted) {
+                radioDiscoExhausted = true
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- 10% de disco sin candidatos " +
+                        "españoles, retirado para el resto de la sesión (reparto pasa a 90/10)",
+                )
+            }
+        }
+
+        if (dueForExploreQuota()) {
+            val exploreArtist = radioRepository.suggestRelatedArtist(anchor, excludeNames)
+            if (exploreArtist != null) {
+                val item = resolveYoutubeCandidate(anchorArtistName, exploreArtist, songTitle = null)
+                if (item != null) {
+                    radioExploreTracksUsed++
+                    radioTracksAccepted++
+                    registerUsedArtist(exploreArtist)
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchRoundCandidate(ancla='$anchorArtistName') -> cupo=exploración: '$exploreArtist'",
+                    )
+                    return item
+                }
+            }
+        }
+
+        val dictHit = pickDictCandidate(anchor, excludeNames, allowForeignFallback = false)
+        if (dictHit != null) {
+            val item = resolveYoutubeCandidate(anchorArtistName, dictHit.artist, dictHit.song)
+            if (item != null) {
+                radioTracksAccepted++
+                registerUsedArtist(dictHit.artist)
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -> cupo=diccionario: " +
+                        "'${dictHit.artist}' - '${dictHit.song}'",
+                )
+                return item
+            }
+        }
+
+        return resolveFinalFallback(anchor, anchorArtistName, excludeNames)
+    }
+
+    private fun dueForExploreQuota(): Boolean = radioExploreTracksUsed * 10 < radioTracksAccepted + 1
+
+    private fun dueForDiscoQuota(): Boolean =
+        !radioDiscoExhausted && radioDiscoTracksUsed * 10 < radioTracksAccepted + 1
+
+    private fun registerUsedArtist(artist: String?) {
+        artist?.let { radioUsedArtists.add(it) }
+    }
+
+    /**
+     * S013 punto 7 -- se llega aquí solo cuando disco (si activo),
+     * exploración y diccionario han fallado los tres en la misma
+     * vuelta. En modo español: se permite UNA vez un tema conocido
+     * pero extranjero (punto 7.2) antes de caer al fallback final de
+     * género fijo "classical" sin país (punto 7.3, mecanismo ya
+     * existente vía resolveAnchorWithFallbacks/FALLBACK_GENRE, aquí
+     * reutilizado directamente sin sobrescribir el ancla de la
+     * sesión).
+     */
+    private suspend fun resolveFinalFallback(
+        anchor: RadioAnchor,
+        anchorArtistName: String,
+        excludeNames: Set<String>,
+    ): QueueItem? {
+        if (anchor.isSpanishOrigin) {
+            val foreignHit = pickDictCandidate(anchor, excludeNames, allowForeignFallback = true)
+            if (foreignHit != null) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveFinalFallback(ancla='$anchorArtistName') -- español agotado esta vuelta, " +
+                        "cayendo a extranjero conocido: '${foreignHit.artist}'",
+                )
+                val item = resolveYoutubeCandidate(anchorArtistName, foreignHit.artist, foreignHit.song)
+                if (item != null) {
+                    radioTracksAccepted++
+                    registerUsedArtist(foreignHit.artist)
+                    return item
+                }
+            }
+        }
+
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "resolveFinalFallback(ancla='$anchorArtistName') -- cayendo al fallback final: " +
+                "género fijo '$FALLBACK_GENRE' sin país ni restricción de origen",
+        )
+        val classicalAnchor = RadioAnchor(genre = FALLBACK_GENRE, country = null, decadeBegin = null, isSpanishOrigin = false)
+        val classicalArtist = radioRepository.suggestRelatedArtist(classicalAnchor, excludeNames) ?: run {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera el fallback final tiene " +
+                    "candidatos -- eslabón roto de verdad",
+            )
+            return null
+        }
+        val item = resolveYoutubeCandidate(anchorArtistName, classicalArtist, songTitle = null) ?: return null
+        radioTracksAccepted++
+        registerUsedArtist(classicalArtist)
+        return item
+    }
+
+    /**
+     * S013, cupo del 80% -- elige un candidato del diccionario de
+     * éxitos ampliado para la década+origen del ancla.
+     * `allowForeignFallback` (punto 7.2) ignora la restricción de
+     * origen -- solo se usa desde resolveFinalFallback(), nunca desde
+     * el cupo normal de la vuelta.
+     */
+    private fun pickDictCandidate(
+        anchor: RadioAnchor,
+        excludeArtists: Set<String>,
+        allowForeignFallback: Boolean,
+    ): com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.KnownHit? {
+        val requireEs = anchor.isSpanishOrigin && !allowForeignFallback
+        knownHitsRepository.randomHit(anchor.decadeBegin, requireEs, excludeArtists)?.let { return it }
+        if (anchor.decadeBegin != null) {
+            knownHitsRepository.randomHit(decadeBegin = null, requireEs, excludeArtists)?.let { return it }
+        }
+        return null
+    }
+
+    /**
+     * S013, punto 8 -- 10% de la biblioteca local. Lista artistas ya
+     * descargados (misma fuente que Biblioteca), en orden aleatorio,
+     * excluyendo los ya usados esta sesión; para cada uno resuelve
+     * género/país/década vía MusicBrainz bajo demanda (cacheado por
+     * artista dentro de la sesión, ver radioLibraryArtistProfileCache)
+     * y acepta el primero que cumpla género+origen+década, relajando a
+     * década+origen (sin género) y finalmente a "cualquier pista que
+     * cumpla origen" (último peldaño específico del 10% de disco) --
+     * nunca cae directa a clásica ni al extranjero-conocido desde
+     * aquí, eso lo decide fetchRoundCandidate()/resolveFinalFallback()
+     * cuando este cupo devuelve null.
+     */
+    private suspend fun pickDiscoCandidate(anchor: RadioAnchor, excludeArtists: Set<String>): QueueItem? {
+        val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
+        val downloadedTracks = searchResultTrackRepository.getAllOnce()
+            .filter {
+                it.downloadStatus == com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
+                    it.filePath != null && !it.artist.isNullOrBlank()
+            }
+        if (downloadedTracks.isEmpty()) return null
+
+        val candidateArtists = downloadedTracks
+            .mapNotNull { it.artist }
+            .distinct()
+            .filter { it.lowercase() !in excludeLower }
+            .shuffled()
+        if (candidateArtists.isEmpty()) return null
+
+        var genreMatch: String? = null
+        var originDecadeMatch: String? = null
+        var anyOriginMatch: String? = null
+
+        for (artistName in candidateArtists) {
+            val profile = radioLibraryArtistProfileCache.getOrPut(artistName) {
+                radioRepository.lookupArtistProfile(artistName)
+            } ?: continue
+            val originOk = if (anchor.isSpanishOrigin) profile.country == "ES" else true
+            if (!originOk) continue
+            if (anyOriginMatch == null) anyOriginMatch = artistName
+            val decadeOk = anchor.decadeBegin == null || profile.decadeBegin == anchor.decadeBegin
+            if (decadeOk) {
+                if (originDecadeMatch == null) originDecadeMatch = artistName
+                if (genreMatch == null && profile.genres.any { it.equals(anchor.genre, ignoreCase = true) }) {
+                    genreMatch = artistName
+                    break
+                }
+            }
+        }
+
+        val chosenArtist = genreMatch ?: originDecadeMatch ?: anyOriginMatch ?: return null
+        val track = downloadedTracks
+            .filter { it.artist.equals(chosenArtist, ignoreCase = true) }
+            .randomOrNull() ?: return null
+        return QueueItem(
+            uri = track.filePath!!,
+            title = track.title,
+            isLocal = true,
+            artist = track.artist ?: track.channelTitle,
+            isFromRadio = true,
+            youtubeId = track.youtubeId,
+            channelTitle = track.channelTitle,
+            artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
+        )
+    }
+
+    /**
+     * Búsqueda gratuita en YouTube + filtro de duración/compilación +
+     * resolución de stream -- mismo mecanismo que ya existía antes de
+     * S013, ahora reutilizado por los cupos de diccionario,
+     * exploración y el fallback final. `songTitle` no nulo
+     * (diccionario) hace la búsqueda "artista + canción concreta" --
+     * S013 punto 2 -- en vez de solo "artista" (exploración/fallback).
+     * Nunca lanza -- cualquier fallo se trata como "no hay pista".
+     */
+    private suspend fun resolveYoutubeCandidate(
+        anchorArtistName: String,
+        artist: String,
+        songTitle: String?,
+    ): QueueItem? = try {
+        val query = if (songTitle != null) "$artist $songTitle" else artist
+        val searchResult = externalLinkResolver.searchYoutube(query, limit = 6)
+        val track = searchResult.tracks.firstOrNull { candidate ->
+            candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
+                COMPILATION_TITLE_HINTS.none { hint ->
+                    candidate.title.contains(hint, ignoreCase = true)
+                }
+        }
+        if (track == null) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- 0 de " +
+                    "${searchResult.tracks.size} resultados pasaron el filtro de duración/compilación",
+            )
+            null
+        } else {
+            val streamUrl = try {
+                streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
+            } catch (e: Exception) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
+                        "resolveAudioStreamUrl() falló: ${e::class.java.simpleName}: ${e.message}",
+                )
+                return null
+            }
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -> añadido: '${track.title}'",
+            )
+            QueueItem(
+                uri = streamUrl,
+                title = track.title,
+                isLocal = false,
+                artist = artist,
+                isFromRadio = true,
+                youtubeId = track.youtubeId,
+                channelTitle = track.channelTitle,
+                artworkUri = track.thumbnailUrl,
+            )
+        }
+    } catch (e: Exception) {
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "resolveYoutubeCandidate(ancla='$anchorArtistName', artist='$artist') -- EXCEPCIÓN: " +
+                "${e::class.java.simpleName}: ${e.message}",
+        )
+        null
+    }
 
     private fun syncStateFromPlayer() {
         val index = player.currentMediaItemIndex
@@ -1431,6 +1595,9 @@ class PlayerManager @Inject constructor(
         radioUsedArtists.clear()
         radioTracksAccepted = 0
         radioExploreTracksUsed = 0
+        radioDiscoTracksUsed = 0
+        radioDiscoExhausted = false
+        radioLibraryArtistProfileCache.clear()
         syncStateFromPlayer()
     }
 
