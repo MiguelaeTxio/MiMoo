@@ -36,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -380,6 +381,59 @@ fun SettingsScreen(
                     Switch(
                         checked = glassBorderEnabled,
                         onCheckedChange = viewModel::setGlassBorderEnabled,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // S016 -- cupo 80/10/10 de Radio (H08) hecho configurable
+            // en Ajustes, a petición explícita de Miguel Ángel (ver
+            // ANNEX_H08.md punto 6). Dos sliders (exploración, disco)
+            // más un texto derivado para diccionario -- nunca un
+            // tercer slider para diccionario, así se evita que la
+            // suma pueda dejar de ser 100 desde la propia UI.
+            val radioExplorePercent by viewModel.radioExplorePercent.collectAsState()
+            val radioDiscoPercent by viewModel.radioDiscoPercent.collectAsState()
+            val radioDictPercent = 100 - radioExplorePercent - radioDiscoPercent
+            SettingsAccordionSection(
+                title = "Radio",
+                expanded = expandedSection == "radio",
+                onToggle = {
+                    expandedSection = if (expandedSection == "radio") null else "radio"
+                },
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .glassChip()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                ) {
+                    Text(
+                        "Reparto de pistas cuando la Radio (música relacionada) va sola: " +
+                            "diccionario $radioDictPercent% · exploración $radioExplorePercent% · disco $radioDiscoPercent%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Exploración (artistas nuevos vía MusicBrainz): $radioExplorePercent%")
+                    Slider(
+                        value = radioExplorePercent.toFloat(),
+                        onValueChange = { viewModel.setRadioExplorePercent(it.toInt()) },
+                        valueRange = 0f..100f,
+                        steps = 99,
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text("Disco (ya descargado en este dispositivo): $radioDiscoPercent%")
+                    Slider(
+                        value = radioDiscoPercent.toFloat(),
+                        onValueChange = { viewModel.setRadioDiscoPercent(it.toInt()) },
+                        valueRange = 0f..100f,
+                        steps = 99,
                     )
                 }
             }

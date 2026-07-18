@@ -91,6 +91,26 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * S016 -- cupo 80/10/10 de Radio (H08) configurable en Ajustes,
+     * ver `ANNEX_H08.md` punto 6. `radioExplorePercent`/
+     * `radioDiscoPercent` son los dos que se guardan de verdad
+     * (`UiPreferencesManager`); `radioDictPercent` se recalcula en
+     * cada lectura (100 - los otros dos), nunca puede desincronizarse.
+     */
+    val radioExplorePercent: StateFlow<Int> = uiPreferencesManager.radioExplorePercent
+    val radioDiscoPercent: StateFlow<Int> = uiPreferencesManager.radioDiscoPercent
+    val radioDictPercent: Int
+        get() = uiPreferencesManager.radioDictPercent
+
+    fun setRadioExplorePercent(percent: Int) {
+        uiPreferencesManager.setRadioExplorePercent(percent)
+    }
+
+    fun setRadioDiscoPercent(percent: Int) {
+        uiPreferencesManager.setRadioDiscoPercent(percent)
+    }
+
+    /**
      * H10 (S011) -- Uri `content://` del archivo `.mimoo` ya
      * generado, listo para que la UI abra el selector de "Compartir"
      * del sistema (`Intent.ACTION_SEND` con `EXTRA_STREAM`, no

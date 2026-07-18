@@ -247,6 +247,14 @@ class PlayerManager @Inject constructor(
     // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
     // descargados para poder ofrecer alguno como parte de la Radio.
     private val searchResultTrackRepository: com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
+    // S016 -- el cupo 80/10/10 deja de ser fijo: exploración y disco
+    // ahora se leen en vivo de Ajustes (ver ANNEX_H08.md punto 6,
+    // RESUMPTION_POINT.md "Siguiente sesión (H08, cupo configurable)").
+    // Se lee el StateFlow.value directamente en dueForExploreQuota()/
+    // dueForDiscoQuota() -- ambas son funciones síncronas llamadas
+    // desde una corrutina ya en marcha (fetchRoundCandidate()), no
+    // necesitan collect().
+    private val uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager,
 ) {
 
     /**
@@ -723,13 +731,16 @@ class PlayerManager @Inject constructor(
     private val radioUsedArtists = mutableSetOf<String>()
 
     /**
-     * S013/S014 -- cupo 80/10/10 (diccionario/exploración/disco, ver
-     * ANNEX_H08.md sección "S013" puntos 6-8). `radioDiscoTracksUsed`
-     * cuenta las pistas de disco aceptadas esta sesión.
-     * `radioDiscoExhausted` (punto 7.1): true cuando el 10% de disco
-     * ya no tiene NINGÚN candidato español -- se retira el resto de la
-     * sesión y el reparto pasa a 90/10 (diccionario+exploración). Se
-     * resetea junto con el resto del estado de Radio.
+     * S013/S014 -- cupo diccionario/exploración/disco (80/10/10 por
+     * defecto, ver ANNEX_H08.md sección "S013" puntos 6-8);
+     * configurable desde S016 vía Ajustes, ver
+     * `UiPreferencesManager.radioExplorePercent`/`radioDiscoPercent`.
+     * `radioDiscoTracksUsed` cuenta las pistas de disco aceptadas esta
+     * sesión. `radioDiscoExhausted` (punto 7.1): true cuando el cupo
+     * de disco ya no tiene NINGÚN candidato español -- se retira el
+     * resto de la sesión y el reparto pasa a diccionario+exploración
+     * en la proporción configurada. Se resetea junto con el resto del
+     * estado de Radio.
      */
     private var radioDiscoTracksUsed = 0
     private var radioDiscoExhausted = false
@@ -1002,8 +1013,8 @@ class PlayerManager @Inject constructor(
                 radioDiscoExhausted = true
                 RadioDebugLogger.log(
                     appContext, storageManager,
-                    "fetchRoundCandidate(ancla='$anchorArtistName') -- 10% de disco sin candidatos " +
-                        "españoles, retirado para el resto de la sesión (reparto pasa a 90/10)",
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- cupo de disco sin candidatos " +
+                        "españoles, retirado para el resto de la sesión (reparto pasa a diccionario+exploración)",
                 )
             }
         }
@@ -1043,10 +1054,26 @@ class PlayerManager @Inject constructor(
         return resolveFinalFallback(anchor, anchorArtistName, excludeNames)
     }
 
-    private fun dueForExploreQuota(): Boolean = radioExploreTracksUsed * 10 < radioTracksAccepted + 1
+    /**
+     * S016 -- generalización del cupo, antes fijo al 10% (`used * 10 <
+     * accepted + 1`, válido solo para p=10). La nueva fórmula
+     * `used * 100 < (accepted + 1) * percent` es la misma desigualdad
+     * reescrita para cualquier `percent` sin división (evita el
+     * redondeo de enteros que un `/` habría introducido con reparto no
+     * exacto, p.ej. 20/30/50) -- verificado con p=10: `used*100 <
+     * (accepted+1)*10` es literalmente `used*10 < accepted+1`
+     * multiplicado por 10 en ambos lados, mismo resultado exacto.
+     * `percent == 0` se trata aparte: nunca toca ese cupo si Miguel
+     * Ángel lo ha puesto a cero en Ajustes.
+     */
+    private fun dueForQuota(usedTracks: Int, percent: Int): Boolean =
+        percent > 0 && usedTracks * 100 < (radioTracksAccepted + 1) * percent
+
+    private fun dueForExploreQuota(): Boolean =
+        dueForQuota(radioExploreTracksUsed, uiPreferencesManager.radioExplorePercent.value)
 
     private fun dueForDiscoQuota(): Boolean =
-        !radioDiscoExhausted && radioDiscoTracksUsed * 10 < radioTracksAccepted + 1
+        !radioDiscoExhausted && dueForQuota(radioDiscoTracksUsed, uiPreferencesManager.radioDiscoPercent.value)
 
     private fun registerUsedArtist(artist: String?) {
         artist?.let { radioUsedArtists.add(it) }
