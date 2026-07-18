@@ -362,6 +362,217 @@ comentario del propio archivo).
 
 ---
 
+## Reconciliación de una brecha documental: S012 (commit sin
+## documentar, previo a esta sesión)
+
+Al arrancar S013 se detectó un commit real (`f9c7cfd`, ya en
+`origin/main` antes de que empezara esta sesión) que nunca quedó
+documentado en este anexo ni en `RESUMPTION_POINT.md` -- mismo patrón
+de brecha que ya pasó con H09/S010. Mensaje del commit: *"fix: Radio
+no se para entera por un rechazo del cupo de éxitos conocidos"*.
+
+**Bug real que arregla (evidenciado con log real de Miguel Ángel,
+`radio_relacionados_debug.txt`, caso 'Belle and Sebastian'
+rechazado -- ancla 'Lori Meyers', década=1990):** antes, cuando
+`isAcceptableByHitsQuota()` rechazaba un candidato por cupo,
+`fetchOneRadioTrack()` devolvía `null` directamente, y
+`topUpRadioQueueIfNeeded()` trataba eso exactamente igual que "no
+quedan candidatos en absoluto" -- parando la Radio entera con un solo
+rechazo de cupo, algo que por diseño debe pasar 1 de cada 10 veces.
+Corregido: un rechazo de cupo ahora pide otro candidato en la misma
+llamada (`rejectedByQuota`, excluyendo el ya rechazado), sin gastar
+ninguna búsqueda de YouTube en él. Solo se rinde de verdad cuando
+`suggestRelatedArtist()` ya no tiene ningún candidato más que ofrecer.
+
+**El log que aportó Miguel Ángel para esta sesión se generó con una
+build ANTERIOR a este commit** (no muestra el segundo intento tras el
+rechazo) -- así que este fix concreto sigue sin confirmación de
+dispositivo real, pero la causa que describe el log ya tiene
+corrección escrita y en `main`.
+
+---
+
+## S013 (2026-07-18): diseño cerrado del rediseño completo de Radio
+## -- SIN CONSTRUIR, hoja de ruta para la sesión siguiente
+
+Sesión de diseño puro a petición explícita de Miguel Ángel ("no vamos
+a hacer aquí un trabajo de este hito para no terminar... cortamos aquí
+y lo hacemos todo en la siguiente") -- se acordó el diseño completo
+con él, pero **no se ha tocado código de este rediseño en S013**. Lo
+único ya en `main` es la reconciliación de S012 (arriba) y el cambio
+de hito del PCH (H09 a PAUSADO, H08 a EN PROGRESO, ver
+`DOCS/ANNEX_ROUTER.md`).
+
+### Motivación real (evidencia de S013)
+
+Con el log `radio_relacionados_debug.txt` de Miguel Ángel se
+confirmaron DOS problemas reales, distintos del que arregla S012:
+
+1. **Sesgo hacia música inglesa pese al filtro país=ES.** La cascada
+   género+país+década de MusicBrainz cae a "género solo" con mucha
+   frecuencia (log: docenas de "0 candidatos CON país, reintentando
+   solo por género"), y en ese fallback el cupo de éxitos
+   (`isAcceptableByHitsQuota`) no distingue origen -- acepta igual de
+   contento a Queen o a The Police que a Estopa, porque
+   `known_hit_artists.json` es una lista plana sin marca de origen
+   (Billboard y LOS40 mezclados en la misma lista por década, sin
+   ningún campo que diga cuál es cuál).
+2. **Colisión de nombre entre artista y vídeo real** (mismo patrón que
+   ya se vio con "The Enid" -> tema de "Hey Duggee" en S010): buscar
+   solo el nombre del artista en YouTube a veces devuelve un vídeo de
+   otro tema homónimo de otro artista completamente distinto (caso
+   real: MusicBrainz artist "Tonto" -- pop rock, ES -- resuelto a un
+   tema de reguetón de J Balvin llamado igual; también "Cork" ->
+   vídeo turístico, "Mate" -> vídeo de cómo hacer yerba mate,
+   "Asuntos Internos" -> tráiler de película).
+
+### Diseño cerrado, punto por punto (conversación completa con Miguel
+### Ángel, S013)
+
+**1. Regla de origen -- se fija con el PRIMER tema de la sesión de
+Radio, igual que género/década, y es ABSOLUTA para el resto de la
+sesión (nunca se relaja, ni siquiera en el último peldaño del
+fallback):**
+- Primer tema de un **grupo español** -> TODA la sesión de Radio es
+  de grupos españoles, sin excepción. El idioma en que canten es
+  irrelevante -- lo que cuenta es que el grupo sea español (hay
+  grupos españoles que cantan en inglés).
+- Primer tema de un **grupo extranjero** -> el resto puede ser
+  español o extranjero sin restricción de origen, pero cuando sea
+  extranjero tiene que ser un tema CONOCIDO EN ESPAÑA de ese artista
+  (ver punto 2) -- nunca cualquier tema del Billboard sin más, porque
+  "el Billboard aquí no lo conocemos".
+
+**2. "Conocido" ya no es a nivel de artista, es a nivel de
+canción concreta.** El diccionario deja de ser
+`{década: [artistas]}` y pasa a ser, por década, una lista de pares
+`{artista, canción}` -- la canción que de verdad se conoce en España
+de ese artista en esa década. Caso guía explícito de Miguel Ángel:
+Yes en los 80 -> "Owner of a Lonely Heart" ("Dueño de un Corazón
+Solitario"), nunca "Roundabout" (que sí sería la correcta si el ancla
+fuera los 70). Cuando el cupo acepta un candidato por estar en el
+diccionario, la búsqueda en YouTube pasa a ser "artista + título de
+la canción concreta" en vez de solo "artista" -- esto además de
+acertar la canción correcta, mitiga de paso el problema 2 de la
+motivación (colisión de nombre), porque una búsqueda "artista +
+canción" es mucho más específica que solo "artista".
+
+**3. Estructura del diccionario ampliado.** Separar
+`known_hit_artists.json` en dos listas por década --
+española/internacional -- cada entrada con su canción concreta (en
+vez de una lista plana de nombres como ahora). Esto sustituye por
+completo el `Map<Int, Set<String>>` actual de `KnownHitsRepository`.
+Compilar con el mismo criterio que la primera vez (conocimiento
+propio + verificación puntual por búsqueda donde haya duda, sin
+scraping en tiempo de ejecución) -- reutilizar los ~210 artistas ya
+existentes como base y asignarles su canción por década, no empezar
+de cero.
+
+**4. Cómo se sabe si un candidato es "de aquí" que no está en el
+diccionario -- híbrido (confirmado explícitamente por Miguel Ángel):**
+primero se comprueba contra la sublista española del diccionario
+ampliado; si el candidato no aparece ahí, se cae al campo `country`
+de MusicBrainz (`lookupArtist`) como respaldo, aun sabiendo que ese
+campo falla a menudo (ver motivación, problema 1) -- mejor un dato
+imperfecto que ninguno para los casos fuera del diccionario curado
+(p.ej. el 10% de exploración o el 10% de disco).
+
+**5. Cascada género/década, prioridad género > década (aplica igual
+en modo español y en modo mixto):**
+1. Mismo género + misma década exacta (nunca década posterior a la
+   del ancla -- si el ancla es Pink Floyd años 70, rock sinfónico de
+   los 70 antes que rock sinfónico de cualquier década posterior).
+2. Se agota el género en TODAS las décadas -> se abandona el género,
+   se mantiene la década, cualquier género.
+3. Se agota también la década -> fallback final (ver punto 7).
+
+**6. Reparto de cupo por cada pista nueva que añade Radio -- 80/10/10
+base:**
+- **80%** -- artista+canción del diccionario de éxitos ampliado
+  (respetando década+origen).
+- **10%** -- "exploración" vía MusicBrainz: mismo criterio de
+  género/década/origen que el 80%, pero SIN exigir que esté en el
+  diccionario ("no conocido" se permite; el origen NO se relaja
+  nunca, confirmado explícitamente).
+- **10%** -- de la biblioteca local (lo ya descargado en el
+  dispositivo). Ver punto 8 para cómo se resuelve género/década/país
+  de un artista de disco (no hay ese dato guardado localmente, se
+  consulta a MusicBrainz bajo demanda). Misma cascada género->década,
+  con origen respetado igual que los otros dos cupos.
+- **Ratio configurable en Ajustes (80/10/10 como cualquier otro
+  reparto, p.ej. 20/30/50) -- APLAZADO explícitamente por Miguel
+  Ángel a una sesión futura, fuera del alcance de S013/S014. No
+  construir en la sesión que retome este anexo salvo que él lo pida
+  de forma explícita entonces.**
+
+**7. Fallback final -- ya NO es directamente clásica.** Orden completo
+cuando se agotan género Y década dentro de un cupo:
+1. **Español agotado (modo todo-español):** si el 10% de disco ya no
+   tiene NINGÚN candidato español que cumpla ni siquiera "cualquier
+   género, cualquier década" (ver punto 8, último peldaño), ese 10%
+   se retira sin más y el reparto pasa a **90/10** (conocido +
+   exploración, sin disco) -- no se rellena ese hueco con nada, se
+   reduce el número de fuentes activas.
+2. Si TODO lo español se agota (conocido + exploración + disco, en
+   ningún género/década quedan candidatos españoles en absoluto --
+   caso límite, poco probable): antes de caer a clásica, se permite
+   UNA vez un tema conocido pero **extranjero** del diccionario
+   (rompe la regla de origen solo en este último peldaño de
+   necesidad, confirmado explícitamente por Miguel Ángel: "pasaríamos
+   a cualquier tema ya conocido, pero extranjero, antes que caer a
+   clásica").
+3. Solo si ni siquiera eso da resultado, fallback final a género fijo
+   "classical" sin país (el mecanismo que ya existe en
+   `resolveAnchorWithFallbacks()`/`FALLBACK_GENRE` para cuando ni
+   siquiera se puede fijar un ancla -- se reutiliza aquí como red de
+   seguridad de última instancia, "non-stop": la Radio nunca debe
+   pararse del todo salvo que de verdad no haya nada, en ningún sitio,
+   que ofrecer).
+- El 10% de disco, específicamente, tiene su PROPIO último peldaño
+  antes de tocar el fallback general de arriba: si no hay ningún tema
+  en disco que cumpla género o década (respetando origen), se coge
+  **cualquier tema del disco** que cumpla el origen -- nunca cae
+  directa a clásica ni al extranjero-conocido del punto 7.2, esos dos
+  son solo para cuando de verdad no queda NADA español en ningún
+  sitio (ni conocido, ni exploración, ni disco).
+
+**8. Fuente de disco -- diseño técnico (biblioteca local sin
+género/década/país guardados, confirmado leyendo `LibraryReconciler.kt`
+real: la biblioteca se deriva en caliente de la estructura de
+carpetas `{artista}/{álbum}/{archivo}`, no hay entidad Room de pista
+con esos campos):**
+1. Listar artistas ya descargados (misma fuente que usa
+   `LibraryViewModel` para pintar la Biblioteca), excluyendo los ya
+   usados en esta sesión de Radio.
+2. Para cada candidato, en orden aleatorio: `lookupArtist(inc=genres)`
+   de MusicBrainz (mismo endpoint que ya usa `resolveAnchor()`) ->
+   género + país. Cachear el resultado por artista dentro de la
+   sesión de Radio (un `Map` en memoria, se resetea junto con
+   `radioAnchor`), para no repetir la consulta si el mismo artista de
+   disco vuelve a salir candidato.
+3. Aceptar si género coincide con el ancla y (si el modo es
+   todo-español) el país es ES. Si no hay ninguno así, relajar a
+   década+origen sin exigir género (mismo principio de la cascada
+   general). Si tampoco, coger cualquier pista de disco que cumpla
+   origen (ver punto 7, último peldaño específico del 10% de disco).
+4. Cuando se acepta un candidato de disco, se reproduce la pista tal
+   cual ya está en el dispositivo (no hace falta buscar en YouTube ni
+   resolver stream -- ya es local), igual que cualquier otra
+   reproducción desde Biblioteca.
+
+### Explícitamente fuera de alcance de la sesión que construya esto
+### (S014 o la que Miguel Ángel decida)
+
+- Porcentajes del cupo configurables en Ajustes (punto 6) -- apuntado
+  como mejora futura, no construir salvo petición explícita.
+- Sincronización de favoritos/ajustes entre dispositivos vía Drive
+  (bug real reportado por Miguel Ángel en S013: divergencia de
+  favoritos entre teléfono y tablet) -- esto es H07, no H08, y queda
+  explícitamente para otra sesión con su propio PCH. No mezclar con
+  esta hoja de ruta.
+
+---
+
 ## Fuera de Alcance de Este Hito
 
 - Cualquier forma de "me gusta"/entrenamiento de preferencias más allá

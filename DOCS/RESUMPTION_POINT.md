@@ -11,7 +11,57 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-18 (cierre de sesión S011 NewFlow, continuación larga)
+## Última actualización: 2026-07-18 (cierre de sesión S013 NewFlow)
+
+**Hito activo: H08** (Música relacionada / Radio) -- H09 se pausó al
+arrancar esta sesión (PCH explícito de Miguel Ángel), ver
+`DOCS/ANNEX_ROUTER.md`.
+
+**S013 fue una sesión de diseño puro, sin código nuevo del rediseño de
+Radio** (decisión explícita de Miguel Ángel: "no vamos a hacer aquí un
+trabajo de este hito para no terminar"). Lo único real en `main` de
+esta sesión:
+1. PCH: H09 a PAUSADO, H08 a EN PROGRESO (`DOCS/ANNEX_ROUTER.md`).
+2. Reconciliación documental de un commit sin documentar (`f9c7cfd`,
+   ya en `main` antes de arrancar S013) -- fix real de que un rechazo
+   del cupo de éxitos ya no para la Radio entera. Ver
+   `DOCS/ANNEX_H08.md` sección "Reconciliación de una brecha
+   documental: S012".
+
+**El diseño completo del rediseño de Radio (origen español/mixto,
+diccionario artista+canción por década, cupo 80/10/10 con fuente de
+disco, cascada de fallback) quedó cerrado y escrito con Miguel Ángel,
+íntegro en `DOCS/ANNEX_H08.md` sección "S013" -- es la hoja de ruta
+ejecutable de la siguiente sesión, sin necesidad de más contexto.**
+
+**Siguiente sesión (S014 o la que Miguel Ángel abra sobre H08):**
+1. Confirmar en dispositivo real el fix de S012 (backlog ya no se
+   corta a 1 pista tras un rechazo de cupo).
+2. Construir el diseño de `DOCS/ANNEX_H08.md` sección "S013" completo:
+   diccionario ampliado (artista+canción+origen por década), regla de
+   origen fijada por el primer tema, cupo 80/10/10 con degradación a
+   90/10, fuente de disco vía `lookupArtist` bajo demanda, cascada de
+   fallback (español agotado -> conocido extranjero -> clásica).
+3. Explícitamente NO construir en esa sesión salvo petición: los
+   porcentajes configurables en Ajustes (idea de Miguel Ángel,
+   apuntada como mejora futura en el propio anexo).
+
+**Pendiente sin resolver, distinto de H08 -- para otra sesión con su
+propio PCH, no mezclar con la de arriba:** Miguel Ángel reportó en
+S013 que los favoritos (y en general ajustes/estado) divergen entre su
+teléfono y su tablet tras sincronizar -- sospecha que la sincronización
+vía Drive (H07) no está reflejando una "copia total" real entre
+dispositivos. No investigado todavía en S013 (se pospuso a petición
+explícita de Miguel Ángel). Cuando se retome, empezar releyendo
+`AutoSyncViewModel`/`BackupBundle` reales antes de asumir nada -- el
+memory previo decía "Favoritos↔Drive (H07), confirmado sin tocar
+código" en S011, pero eso solo confirmaba que `BackupBundle` incluye
+el campo `isFavorite`, no que la sincronización entre dos dispositivos
+concretos esté funcionando de verdad.
+
+---
+
+## Sesión anterior (S011, contexto histórico)
 
 **S010 se cerró sin ejecutar PCS** (probablemente un corte de
 conexión) -- 35 commits reales de H09 y de H08 quedaron sin
@@ -250,9 +300,14 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
 - H06 (Importar desde Drive) — implementado, verificación pendiente.
 - H08: fallo real de idioma en la Radio (relacionados) -- ver
   `DOCS/ANNEX_H08.md` PASO 2.3, sección "Cuarta observación".
-  Explícitamente pospuesto, no tocar salvo que se retome H08.
+  **Superado por el diseño cerrado en S013** (ver sección de arriba y
+  `DOCS/ANNEX_H08.md` sección "S013") -- ya no es "pospuesto sin
+  tocar", es la hoja de ruta activa de H08.
 - H08 PARTE 1 (búsqueda de listas/canales): pendiente de que Miguel
   Ángel la pruebe en dispositivo real y confirme si funciona bien.
+- H07: sincronización de favoritos/ajustes entre dispositivos --
+  divergencia real reportada por Miguel Ángel en S013 (ver sección de
+  arriba). Sin investigar todavía, requiere su propio PCH.
 - Decisión de producto pendiente: ¿menú de configuración para
   tema/color de la app? Sin decisión tomada.
 - Carátulas realmente ausentes (álbum sin match en MusicBrainz) --
