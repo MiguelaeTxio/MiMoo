@@ -266,17 +266,19 @@ fun LibraryScreen(
                             (uiState.singlesDrill is SinglesDrillLevel.Letters ||
                                 uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat)
                         if (showAlbumsToggle) {
-                            IconButton(onClick = viewModel::toggleAlbumsViewMode) {
-                                if (uiState.albumsViewMode == AlbumsViewMode.BY_LETTER) {
-                                    Icon(
-                                        Icons.Filled.FormatListBulleted,
-                                        contentDescription = "Ver todos los artistas en una lista",
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Filled.SortByAlpha,
-                                        contentDescription = "Ver artistas agrupados por letra",
-                                    )
+                            Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                                IconButton(onClick = viewModel::toggleAlbumsViewMode) {
+                                    if (uiState.albumsViewMode == AlbumsViewMode.BY_LETTER) {
+                                        Icon(
+                                            Icons.Filled.FormatListBulleted,
+                                            contentDescription = "Ver todos los artistas en una lista",
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Filled.SortByAlpha,
+                                            contentDescription = "Ver artistas agrupados por letra",
+                                        )
+                                    }
                                 }
                             }
                         }
