@@ -622,7 +622,58 @@ guía: Alaska y Dinarama, S011), sesión arrancada con un grupo
 extranjero (modo mixto), y que el 10% de disco funcione si tiene algo
 descargado en el dispositivo de prueba.
 
-## Hoja de Ruta para la Siguiente Sesión que retome H08
+## S016 -- fix real: década no respetada en el cupo de diccionario
+
+Reportado por Miguel Ángel con `radio_relacionados_debug.txt` real
+(sesión de ~4 horas, ancla española década 1980): tras los primeros
+~15 aciertos (todo el sublistado español de esa década en
+`known_hit_artists.json` -- deliberadamente no exhaustivo), el cupo de
+diccionario empezó a devolver artistas de décadas completamente
+distintas (Rosalía, C. Tangana, Aitana, Ana Mena -- todos 2010s/2020s)
+mientras la sesión seguía anclada a 1980.
+
+**Causa raíz confirmada leyendo el código real** (no solo el log):
+`PlayerManager.pickDictCandidate()` tenía un segundo intento que, al
+agotarse el pool específico de la década del ancla, caía
+silenciosamente a `KnownHitsRepository.randomHit(decadeBegin = null,
+...)` -- CUALQUIER década -- sin ninguna marca distinta en el log
+frente a un acierto normal de década. Ese segundo intento estaba
+pensado originalmente para el caso legítimo de "ancla sin década
+conocida" (`anchor.decadeBegin == null`, sin `life-span.begin` en
+MusicBrainz), pero como esa entrada nula ya se cubre en la PRIMERA
+llamada (pasando `anchor.decadeBegin` directamente), el segundo
+intento solo se disparaba de verdad en el caso real: década SÍ
+conocida, pool agotado -- justo el escenario que rompía la promesa de
+ancla.
+
+**Corregido:** eliminado el segundo intento. Si el pool
+década+origen del diccionario está agotado, `pickDictCandidate()`
+devuelve `null` y el resto de la cascada ya existente (S013 punto 7)
+toma el relevo respetando SIEMPRE la década: primero
+`resolveFinalFallback()` intenta un "extranjero conocido" de la MISMA
+década (el sublistado `intl` de esa década, sin tocar todavía),
+después, si eso también se agota, cae al fallback final de género fijo
+"classical" (sin década ni país, mecanismo ya existente). Log nuevo
+añadido cuando el diccionario agota su pool de década, para que quede
+explícito en `radio_relacionados_debug.txt` en vez de inferirse por
+ausencia.
+
+**Consecuencia esperada, no un fallo nuevo:** en sesiones largas con
+una década muy poblada de exclusiones, la Radio recurrirá antes a
+exploración/disco (ambos ya respetan década vía MusicBrainz) y al
+"extranjero conocido" de la misma década -- reduce el ritmo al que se
+agota el diccionario español puro, pero nunca deja que la década
+derive sola, que era la queja real de Miguel Ángel.
+
+**Sin verificar en dispositivo real todavía** -- pendiente que Miguel
+Ángel confirme con una sesión larga que, tras agotar el diccionario
+español de la década, la Radio pasa a extranjero-conocido-misma-década
+y finalmente a clásica, sin mostrar nunca año/década ajena en el cupo
+de diccionario.
+
+---
+
+
 
 1. **Verificación en dispositivo real** de todo lo listado en
    "COMPLETADAS EN S014" -- caso guía explícito: Alaska y Dinarama ya

@@ -1049,6 +1049,13 @@ class PlayerManager @Inject constructor(
                 )
                 return item
             }
+        } else {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate(ancla='$anchorArtistName') -- cupo=diccionario sin candidatos " +
+                    "para década=${anchor.decadeBegin} (pool agotado esta sesión, ver fix S016) -- " +
+                    "pasando a resolveFinalFallback()",
+            )
         }
 
         return resolveFinalFallback(anchor, anchorArtistName, excludeNames)
@@ -1099,8 +1106,9 @@ class PlayerManager @Inject constructor(
             if (foreignHit != null) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
-                    "resolveFinalFallback(ancla='$anchorArtistName') -- español agotado esta vuelta, " +
-                        "cayendo a extranjero conocido: '${foreignHit.artist}'",
+                    "resolveFinalFallback(ancla='$anchorArtistName') -- español agotado esta vuelta " +
+                        "(década=${anchor.decadeBegin}), cayendo a extranjero conocido de la MISMA " +
+                        "década: '${foreignHit.artist}'",
                 )
                 val item = resolveYoutubeCandidate(anchorArtistName, foreignHit.artist, foreignHit.song)
                 if (item != null) {
@@ -1137,6 +1145,29 @@ class PlayerManager @Inject constructor(
      * `allowForeignFallback` (punto 7.2) ignora la restricción de
      * origen -- solo se usa desde resolveFinalFallback(), nunca desde
      * el cupo normal de la vuelta.
+     *
+     * **Fix real S016** (reportado por Miguel Ángel con
+     * `radio_relacionados_debug.txt`: "la década no se está
+     * respetando en absoluto"). Causa raíz confirmada leyendo el log:
+     * el diccionario solo tiene ~15 artistas españoles por década
+     * (deliberadamente no exhaustivo, ver `KnownHitsRepository`), así
+     * que en una sesión larga se agotan rápido -- y esta función
+     * tenía un segundo intento que, al agotarse la década del ancla,
+     * caía silenciosamente a `randomHit(decadeBegin = null, ...)`
+     * (CUALQUIER década), sin ninguna marca en el log que lo
+     * distinguiera del acierto normal. Eliminado: si la década del
+     * ancla está agotada para el diccionario, esta función devuelve
+     * `null` y dueForDiscoQuota()/dueForExploreQuota() (ambas
+     * respetan década de verdad, vía MusicBrainz) o, en última
+     * instancia, resolveFinalFallback() toman el relevo -- nunca la
+     * propia función relaja la década.
+     *
+     * `KnownHitsRepository.pool()` ya cubre el caso legítimo de
+     * "década desconocida" (ancla sin `life-span.begin` en
+     * MusicBrainz, `anchor.decadeBegin == null`): ese caso entra por
+     * la MISMA llamada de abajo, con `decadeBegin = null` pasado
+     * directamente desde el ancla, así que no hace falta ningún
+     * segundo intento aparte para cubrirlo.
      */
     private fun pickDictCandidate(
         anchor: RadioAnchor,
@@ -1144,11 +1175,7 @@ class PlayerManager @Inject constructor(
         allowForeignFallback: Boolean,
     ): com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.KnownHit? {
         val requireEs = anchor.isSpanishOrigin && !allowForeignFallback
-        knownHitsRepository.randomHit(anchor.decadeBegin, requireEs, excludeArtists)?.let { return it }
-        if (anchor.decadeBegin != null) {
-            knownHitsRepository.randomHit(decadeBegin = null, requireEs, excludeArtists)?.let { return it }
-        }
-        return null
+        return knownHitsRepository.randomHit(anchor.decadeBegin, requireEs, excludeArtists)
     }
 
     /**
