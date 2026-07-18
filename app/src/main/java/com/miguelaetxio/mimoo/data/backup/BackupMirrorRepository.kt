@@ -48,12 +48,18 @@ data class BundleComparison(
     val remoteFavoriteCount: Int,
     val localPlaylistCount: Int,
     val remotePlaylistCount: Int,
+    val localRadioCount: Int,
+    val remoteRadioCount: Int,
+    val localChannelCount: Int,
+    val remoteChannelCount: Int,
 ) {
-    /** Diferencia absoluta total, para el aviso ("X pistas/álbumes/listas de diferencia"). */
+    /** Diferencia absoluta total, para el aviso ("X pistas/álbumes/listas/emisoras/canales de diferencia"). */
     val totalDifference: Int
         get() = kotlin.math.abs(localTrackCount - remoteTrackCount) +
             kotlin.math.abs(localFavoriteCount - remoteFavoriteCount) +
-            kotlin.math.abs(localPlaylistCount - remotePlaylistCount)
+            kotlin.math.abs(localPlaylistCount - remotePlaylistCount) +
+            kotlin.math.abs(localRadioCount - remoteRadioCount) +
+            kotlin.math.abs(localChannelCount - remoteChannelCount)
 }
 
 @Singleton
@@ -65,10 +71,23 @@ class BackupMirrorRepository @Inject constructor() {
         val remoteFavoriteKeys = remote.favoriteAlbums.map { it.artist to it.album }.toSet()
         val localPlaylistNames = local.playlists.map { it.name }.toSet()
         val remotePlaylistNames = remote.playlists.map { it.name }.toSet()
+        // H07 Ampliación S014/S015 ("réplica total"): sin comparar también
+        // radio/canal/ajustes, dos dispositivos que solo divergieran en eso
+        // quedarían marcados `identical = true` y la sincronización nunca
+        // dispararía la restauración -- exactamente el síntoma que reportó
+        // Miguel Ángel en S013.
+        val localRadioKeys = local.radioStations.map { it.stationUuid }.toSet()
+        val remoteRadioKeys = remote.radioStations.map { it.stationUuid }.toSet()
+        val localChannelKeys = local.channelSubscriptions.map { it.channelId }.toSet()
+        val remoteChannelKeys = remote.channelSubscriptions.map { it.channelId }.toSet()
+        val settingsIdentical = local.uiSettings == remote.uiSettings
 
         val identical = localTrackIds == remoteTrackIds &&
             localFavoriteKeys == remoteFavoriteKeys &&
-            localPlaylistNames == remotePlaylistNames
+            localPlaylistNames == remotePlaylistNames &&
+            localRadioKeys == remoteRadioKeys &&
+            localChannelKeys == remoteChannelKeys &&
+            settingsIdentical
 
         return BundleComparison(
             identical = identical,
@@ -78,6 +97,10 @@ class BackupMirrorRepository @Inject constructor() {
             remoteFavoriteCount = remote.favoriteAlbums.size,
             localPlaylistCount = local.playlists.size,
             remotePlaylistCount = remote.playlists.size,
+            localRadioCount = local.radioStations.size,
+            remoteRadioCount = remote.radioStations.size,
+            localChannelCount = local.channelSubscriptions.size,
+            remoteChannelCount = remote.channelSubscriptions.size,
         )
     }
 }

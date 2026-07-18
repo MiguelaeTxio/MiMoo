@@ -5,9 +5,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.room.withTransaction
+import com.miguelaetxio.mimoo.data.access.UiPreferencesManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.local.AppDatabase
+import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
@@ -84,6 +87,9 @@ class BackupImportRepository @Inject constructor(
     private val trackDao: SearchResultTrackDao,
     private val favoriteAlbumDao: FavoriteAlbumDao,
     private val playlistDao: PlaylistDao,
+    private val favoriteRadioStationDao: FavoriteRadioStationDao,
+    private val channelSubscriptionDao: ChannelSubscriptionDao,
+    private val uiPreferencesManager: UiPreferencesManager,
     private val storageManager: StorageManager,
 ) {
     /**
@@ -125,7 +131,9 @@ class BackupImportRepository @Inject constructor(
                 playlistDao.deleteAllPlaylists()
                 favoriteAlbumDao.deleteAll()
                 trackDao.deleteAll()
-                val stepTables = "importDestructively() -- 4 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
+                favoriteRadioStationDao.deleteAll()
+                channelSubscriptionDao.deleteAll()
+                val stepTables = "importDestructively() -- 6 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
                 Log.d(TAG, stepTables)
                 BackupDebugLogger.log(context, storageManager, stepTables)
 
@@ -151,16 +159,23 @@ class BackupImportRepository @Inject constructor(
                     }
                 }
 
+                bundle.radioStations.forEach { dto -> favoriteRadioStationDao.insert(dto.toEntity()) }
+                bundle.channelSubscriptions.forEach { dto -> channelSubscriptionDao.insert(dto.toEntity()) }
+
                 result = BackupImportResult(
                     importedTracks = newTracks,
                     favoriteAlbumCount = bundle.favoriteAlbums.size,
                     playlistCount = bundle.playlists.size,
                 )
                 val stepDone = "importDestructively() -- transacción completa: ${newTracks.size} pistas, " +
-                    "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists"
+                    "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists, " +
+                    "${bundle.radioStations.size} emisoras, ${bundle.channelSubscriptions.size} canales"
                 Log.d(TAG, stepDone)
                 BackupDebugLogger.log(context, storageManager, stepDone)
             }
+            // Los ajustes de UI viven fuera de Room (SharedPreferences) -- se aplican
+            // fuera de la transacción, como el propio UiPreferencesManager los expone.
+            uiPreferencesManager.setGlassBorderEnabled(bundle.uiSettings.glassBorderEnabled)
             result
         }
 
@@ -255,7 +270,25 @@ class BackupImportRepository @Inject constructor(
                         )
                     }
                 }
+
+                // Favoritos de radio (H09) y suscripciones de canal (H11) -- H07
+                // Ampliación S014/S015, "réplica total". Sin archivos físicos de por
+                // medio (igual que favoritos/playlists), así que se reemplazan
+                // enteros: mismo patrón, no hace falta diff selectivo por clave.
+                favoriteRadioStationDao.deleteAll()
+                bundle.radioStations.forEach { dto -> favoriteRadioStationDao.insert(dto.toEntity()) }
+                channelSubscriptionDao.deleteAll()
+                bundle.channelSubscriptions.forEach { dto -> channelSubscriptionDao.insert(dto.toEntity()) }
             }
+
+            // Ajustes de UI (SharedPreferences, fuera de Room) -- la nube gana, igual
+            // que el resto del bundle en esta ruta.
+            uiPreferencesManager.setGlassBorderEnabled(bundle.uiSettings.glassBorderEnabled)
+
+            val stepDone2 = "applyCloudWinsTargeted() -- ${bundle.radioStations.size} emisora(s), " +
+                "${bundle.channelSubscriptions.size} canal(es), cristal=${bundle.uiSettings.glassBorderEnabled}"
+            Log.d(TAG, stepDone2)
+            BackupDebugLogger.log(context, storageManager, stepDone2)
 
             BackupImportResult(
                 importedTracks = newRows,

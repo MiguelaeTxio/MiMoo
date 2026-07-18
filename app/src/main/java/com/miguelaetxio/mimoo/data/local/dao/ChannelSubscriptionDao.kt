@@ -23,6 +23,10 @@ interface ChannelSubscriptionDao {
     @Delete
     suspend fun delete(subscription: ChannelSubscription)
 
+    /** Borrado total -- usado por la importación/sincronización de réplica completa (H07). */
+    @Query("DELETE FROM channel_subscriptions")
+    suspend fun deleteAll()
+
     /** Query directa por channelId -- evita reconstruir un ChannelSubscription completo solo para borrar. */
     @Query("DELETE FROM channel_subscriptions WHERE channelId = :channelId")
     suspend fun deleteByChannelId(channelId: String)

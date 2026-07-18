@@ -23,6 +23,10 @@ interface FavoriteRadioStationDao {
     @Delete
     suspend fun delete(favorite: FavoriteRadioStation)
 
+    /** Borrado total -- usado por la importación/sincronización de réplica completa (H07). */
+    @Query("DELETE FROM favorite_radio_stations")
+    suspend fun deleteAll()
+
     @Query("SELECT EXISTS(SELECT 1 FROM favorite_radio_stations WHERE stationUuid = :stationUuid)")
     suspend fun isFavorite(stationUuid: String): Boolean
 

@@ -496,40 +496,85 @@ suponer:**
 
 ### Hoja de ruta
 
-**PASO 1 -- Confirmar con Miguel Ángel** qué divergía exactamente
-(favoritos de radio, canales suscritos, algún ajuste de Ajustes,
-o los tres) antes de tocar código -- no asumir, el síntoma reportado
-en S013 no especificaba cuál.
+**PASO 1 ✅ (S015, confirmado por Miguel Ángel esta sesión):** "la
+aplicación debe replicarse de un dispositivo a otro" -- alcance total,
+no solo el favorito de radio o de canal aislado que motivó el reporte
+original de S013. Se construye la réplica completa: pistas/favoritos/
+playlists (ya existente), + favoritos de radio (H09) + suscripciones
+de canal (H11) + ajustes de UI, salvo el PIN de acceso (ver PASO 4).
 
-**PASO 2 -- Ampliar `BackupBundle`/`BackupDto.kt`:** añadir
-`favoriteRadioStations: List<FavoriteRadioStationBackupDto>` (leer
-`FavoriteRadioStation.kt`/`FavoriteRadioStationDao.kt` reales antes de
-definir el DTO -- directriz §4.1) y, si H11 confirma que las
-suscripciones deben sincronizarse, `channelSubscriptions: List<...>`
-en la misma línea. Subir `BackupBundle.CURRENT_VERSION` (cambio de
-forma, ver comentario de la propia clase) y actualizar
-`BackupSerializer`/lo que rechace versiones no reconocidas.
+**PASO 2 ✅ (S015):** `BackupBundle`/`BackupDto.kt` ampliado con
+`radioStations: List<FavoriteRadioStationBackupDto>`,
+`channelSubscriptions: List<ChannelSubscriptionBackupDto>` y
+`uiSettings: UiSettingsBackupDto` -- leídas las entidades/DAOs reales
+antes de definir los DTOs (directriz §4.1). `CURRENT_VERSION` sube de
+1 a 2; `BackupRepository.fromSyncJson()`/`fromJson()` ya rechazaban
+versiones no reconocidas (comportamiento heredado, sin tocar) -- una
+copia de Drive v1 se trata como remoto ilegible y se sobreescribe.
 
-**PASO 3 -- `BackupRepository`/`BackupImportRepository`:** incluir los
-nuevos campos tanto al construir el bundle (export/subida automática)
-como al aplicarlo (import/`applyCloudWinsTargeted()` y
-`importDestructively()`) -- mismo patrón de comparación
-targeted-por-clave-estable que ya usa `applyCloudWinsTargeted()` para
-pistas (aquí la clave estable es el `stationuuid` de Radio-Browser
-para favoritos de radio, y previsiblemente el id/url de canal de
-YouTube para H11 -- confirmar leyendo las entidades reales).
+**PASO 3 ✅ (S015), con una decisión de diseño distinta a la prevista
+en el PASO 3 original de este anexo:** en vez de diff selectivo por
+clave estable (`stationuuid`/`channelId`), `applyCloudWinsTargeted()`
+e `importDestructively()` reemplazan radio/canal enteros (borrar todo
++ reinsertar desde el bundle) -- mismo patrón que ya usa el propio
+`applyCloudWinsTargeted()` para favoritos de álbum/playlists, cuyo
+propio comentario ya justifica por qué: sin archivos físicos de por
+medio, el reemplazo total es barato y no tiene el problema de
+re-descarga que sí motivó el diff selectivo de pistas. Ajustes de UI:
+`uiPreferencesManager.setGlassBorderEnabled()` aplicado fuera de la
+transacción Room (SharedPreferences, no es una tabla).
 
-**PASO 4 -- Ajustes de UI (`UiPreferencesManager`), solo si Miguel
-Ángel confirma en el PASO 1 que también divergen:** decidir con él,
-antes de construir, qué ajustes concretos deben viajar (probablemente
-sí el cristal con/sin borde; probablemente NO el PIN de acceso, que es
-más bien una credencial de dispositivo que un ajuste de preferencia) y
-añadir esos campos al bundle con el mismo mecanismo.
+**Hallazgo real no anticipado en el PASO 3 original, corregido en la
+misma sesión:** `BackupMirrorRepository.compare()` --de la que depende
+`identical` en `AutoSyncViewModel.runSync()`-- no comparaba
+radio/canal/ajustes. Sin este fix, dos dispositivos que solo
+divergieran ahí habrían quedado marcados `identical = true` y la
+sincronización nunca habría disparado la restauración -- exactamente
+el síntoma reportado en S013, reproducido de nuevo por el propio
+cambio si no se corregía a la vez. `BundleComparison` gana
+`local/remoteRadioCount` y `local/remoteChannelCount`.
+
+**Segundo hallazgo real, corregido en la misma sesión:** `BackupBundle`
+también lo reutiliza `ShareCodeRepository` (H10, compartir con
+personas DISTINTAS). Sin corrección, cada código de compartición
+("miMoo+hash") habría filtrado las emisoras favoritas, los canales
+suscritos y los ajustes de interfaz de Miguel Ángel a cualquiera que
+recibiera el código -- fuera del propósito de H10. Se añadió
+`BackupBundle.strippedForSharing()` (privado, en
+`ShareCodeRepository`) y se aplica en los 8 niveles de compartición
+antes de escribir el archivo.
+
+**PASO 4 ✅ (S015):** confirmado con Miguel Ángel que el ajuste de UI
+(`glassBorderEnabled`, único que existe hoy en `UiPreferencesManager`)
+sí debe replicarse; el PIN de acceso (`AccessPinManager`) se mantiene
+explícitamente fuera -- credencial de dispositivo, no preferencia.
 
 **PASO 5 -- Verificación en dispositivo real con dos dispositivos**
 (teléfono + tablet de Miguel Ángel y Silvia, mismo patrón que S008):
-marcar favorito de radio/canal en uno, sincronizar, confirmar que
+**pendiente, sin hacer todavía.** Marcar favorito de radio/canal y
+cambiar el ajuste de cristal en uno, sincronizar, confirmar que
 aparece en el otro sin duplicar ni perder lo que ya tenía.
+
+**PASO 6 -- Hueco real detectado en esta sesión, sin cerrar
+(pendiente explícito, no bloquea el resto):** a diferencia de pistas/
+favoritos de álbum/playlists, alternar un favorito de radio
+(`RadioBrowserViewModel.toggleFavorite()`) o una suscripción de canal
+(`SearchViewModel`/`ChannelsViewModel`, `ChannelSubscriptionRepository
+.toggle()`/`.unsubscribe()`) **no pasa por `AutoSyncPusher
+.executeIfConnected()`** -- se ejecuta siempre en local, sin la
+garantía de "sin conexión, la mutación no se aplica" ni el push
+inmediato a Drive que sí tienen el resto de mutaciones (regla de
+negocio #1 de este mismo anexo). El dato SÍ acaba replicado (la
+sincronización periódica al abrir la app ya incluye radio/canal/
+ajustes, ver PASO 2-3), pero no de forma inmediata como pistas/
+favoritos. Corregirlo exige añadir infraestructura de Snackbar/Activity
+nueva en tres pantallas que hoy no la tienen
+(`RadioBrowserScreen.kt`, `ChannelsScreen.kt`, `SearchScreen.kt`) --
+mismo patrón ya usado en `LibraryScreen.kt`
+(`toggleFavoriteAlbum(activity, ...)` + `syncBlockedMessage` +
+`LaunchedEffect`+`snackbarHostState`), pospuesto en esta sesión por no
+poder verificarse visualmente sin dispositivo. Retomar en la próxima
+sesión de este hito si Miguel Ángel lo confirma como prioritario.
 
 
 

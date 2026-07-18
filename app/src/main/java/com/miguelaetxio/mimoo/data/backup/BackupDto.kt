@@ -1,33 +1,45 @@
 package com.miguelaetxio.mimoo.data.backup
 
+import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 
 /**
  * Formato de archivo de exportación/importación del repositorio
  * completo (H06). Deliberadamente independiente de las entidades
  * Room reales (SearchResultTrack, FavoriteAlbum, Playlist,
- * PlaylistTrackCrossRef) para que el formato de archivo no quede
- * acoplado al esquema interno de la base de datos -- un cambio futuro
- * de esquema no debería romper la lectura de backups antiguos sin
- * más ceremonia que un salto de `version`.
+ * PlaylistTrackCrossRef, FavoriteRadioStation, ChannelSubscription)
+ * para que el formato de archivo no quede acoplado al esquema interno
+ * de la base de datos -- un cambio futuro de esquema no debería
+ * romper la lectura de backups antiguos sin más ceremonia que un
+ * salto de `version`.
  *
- * `version` empieza en 1. Cualquier cambio de forma incompatible
- * (campo eliminado/renombrado, semántica distinta) debe subir este
- * número; `BackupSerializer` rechaza con un mensaje claro cualquier
- * versión que no reconozca, en vez de intentar leerla a ciegas.
+ * `version` sube a 2 (H07, Ampliación S014/S015 -- "réplica total"
+ * pedida explícitamente por Miguel Ángel): se añaden
+ * `radioStations`/`channelSubscriptions`/`uiSettings`, ausentes hasta
+ * ahora del bundle -- ver `DOCS/ANNEX_H07.md`. `BackupRepository`
+ * rechaza con un mensaje claro cualquier versión que no reconozca, en
+ * vez de intentar leerla a ciegas -- una copia de Drive de la versión
+ * 1 (anterior a este cambio) se trata como remoto ilegible y este
+ * dispositivo la sobreescribe, mismo criterio que un JSON corrupto.
  * ---
  * File format for exporting/importing the whole repository (H06).
  * Deliberately independent from the real Room entities
  * (SearchResultTrack, FavoriteAlbum, Playlist,
- * PlaylistTrackCrossRef) so the file format isn't coupled to the
- * internal DB schema -- a future schema change shouldn't break
- * reading old backups beyond bumping `version`.
+ * PlaylistTrackCrossRef, FavoriteRadioStation, ChannelSubscription)
+ * so the file format isn't coupled to the internal DB schema -- a
+ * future schema change shouldn't break reading old backups beyond
+ * bumping `version`.
  *
- * `version` starts at 1. Any incompatible shape change (removed/
- * renamed field, different semantics) must bump this number;
- * `BackupSerializer` rejects any version it doesn't recognize with a
- * clear message instead of silently trying to read it.
+ * `version` bumps to 2 (H07, S014/S015 extension -- "total replica"
+ * explicitly requested by Miguel Ángel): adds
+ * `radioStations`/`channelSubscriptions`/`uiSettings`, missing from
+ * the bundle until now -- see `DOCS/ANNEX_H07.md`. `BackupRepository`
+ * rejects any version it doesn't recognize with a clear message
+ * instead of trying to read it blindly -- a version-1 Drive copy
+ * (from before this change) is treated as an unreadable remote and
+ * this device overwrites it, same as a corrupt JSON.
  */
 data class BackupBundle(
     val version: Int = CURRENT_VERSION,
@@ -35,9 +47,12 @@ data class BackupBundle(
     val tracks: List<TrackBackupDto>,
     val favoriteAlbums: List<FavoriteAlbumBackupDto>,
     val playlists: List<PlaylistBackupDto>,
+    val radioStations: List<FavoriteRadioStationBackupDto>,
+    val channelSubscriptions: List<ChannelSubscriptionBackupDto>,
+    val uiSettings: UiSettingsBackupDto,
 ) {
     companion object {
-        const val CURRENT_VERSION = 1
+        const val CURRENT_VERSION = 2
     }
 }
 
@@ -138,6 +153,105 @@ fun SearchResultTrack.toBackupDto(): TrackBackupDto = TrackBackupDto(
 
 fun FavoriteAlbum.toBackupDto(): FavoriteAlbumBackupDto =
     FavoriteAlbumBackupDto(artist = artist, album = album)
+
+/**
+ * Favorito de emisora exportable (H07, réplica total). Transporta los
+ * mismos campos que la entidad Room -- no hay nada específico del
+ * dispositivo que excluir aquí (a diferencia de TrackBackupDto con
+ * filePath/downloadStatus): una emisora nunca se descarga, solo se
+ * guarda su referencia (ver comentario de FavoriteRadioStation).
+ * ---
+ * Exportable station favorite (H07, total replica). Carries the same
+ * fields as the Room entity -- nothing device-specific to exclude
+ * here (unlike TrackBackupDto with filePath/downloadStatus): a
+ * station is never downloaded, only its reference is kept (see
+ * FavoriteRadioStation's comment).
+ */
+data class FavoriteRadioStationBackupDto(
+    val stationUuid: String,
+    val name: String,
+    val urlResolved: String,
+    val favicon: String?,
+    val country: String?,
+    val tags: String?,
+)
+
+fun FavoriteRadioStation.toBackupDto(): FavoriteRadioStationBackupDto = FavoriteRadioStationBackupDto(
+    stationUuid = stationUuid,
+    name = name,
+    urlResolved = urlResolved,
+    favicon = favicon,
+    country = country,
+    tags = tags,
+)
+
+fun FavoriteRadioStationBackupDto.toEntity(): FavoriteRadioStation = FavoriteRadioStation(
+    stationUuid = stationUuid,
+    name = name,
+    urlResolved = urlResolved,
+    favicon = favicon,
+    country = country,
+    tags = tags,
+)
+
+/**
+ * Suscripción de canal exportable (H07, réplica total).
+ * Deliberadamente SIN `lastCheckedAt` -- es el reloj propio de
+ * `ChannelCheckWorker` en ESTE dispositivo (cuándo comprobó él por
+ * última vez contenido nuevo), no un dato de la suscripción en sí;
+ * igual criterio que TrackBackupDto excluye filePath/downloadStatus.
+ * Se reinicializa a `null` en la importación -- el dispositivo
+ * destino comprobará el canal por primera vez en su propio ciclo.
+ * ---
+ * Exportable channel subscription (H07, total replica). Deliberately
+ * WITHOUT `lastCheckedAt` -- it's `ChannelCheckWorker`'s own clock on
+ * THIS device (when it last checked for new content), not data about
+ * the subscription itself; same criterion as TrackBackupDto excluding
+ * filePath/downloadStatus. Reset to `null` on import -- the
+ * destination device will check the channel for the first time on its
+ * own cycle.
+ */
+data class ChannelSubscriptionBackupDto(
+    val channelId: String,
+    val title: String,
+    val thumbnailUrl: String?,
+    val subscribedAt: Long,
+)
+
+fun ChannelSubscription.toBackupDto(): ChannelSubscriptionBackupDto = ChannelSubscriptionBackupDto(
+    channelId = channelId,
+    title = title,
+    thumbnailUrl = thumbnailUrl,
+    subscribedAt = subscribedAt,
+)
+
+fun ChannelSubscriptionBackupDto.toEntity(): ChannelSubscription = ChannelSubscription(
+    channelId = channelId,
+    title = title,
+    thumbnailUrl = thumbnailUrl,
+    subscribedAt = subscribedAt,
+    lastCheckedAt = null,
+)
+
+/**
+ * Ajustes de interfaz exportables (H07, réplica total). Por ahora
+ * solo `glassBorderEnabled` (`UiPreferencesManager`, único ajuste que
+ * existe hoy). Deliberadamente NO incluye el PIN de acceso
+ * (`AccessPinManager`) -- es una credencial de dispositivo, no un
+ * ajuste de preferencia, mismo razonamiento que ya recoge
+ * `ANNEX_H07.md`; se mantiene fuera de la réplica salvo que Miguel
+ * Ángel pida lo contrario.
+ * ---
+ * Exportable UI settings (H07, total replica). For now only
+ * `glassBorderEnabled` (`UiPreferencesManager`, the only setting that
+ * exists today). Deliberately does NOT include the access PIN
+ * (`AccessPinManager`) -- it's a device credential, not a preference
+ * setting, same reasoning already captured in `ANNEX_H07.md`; kept
+ * out of the replica unless Miguel Ángel asks otherwise.
+ */
+data class UiSettingsBackupDto(
+    val glassBorderEnabled: Boolean,
+)
 
 /**
  * Sobre de la copia de respaldo AUTOMÁTICA (H07 PARTE 1, redefinición

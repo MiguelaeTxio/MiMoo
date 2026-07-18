@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.backup.BackupBundle
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
+import com.miguelaetxio.mimoo.data.backup.UiSettingsBackupDto
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -72,6 +73,36 @@ class ShareCodeRepository @Inject constructor(
     private val gson: Gson = GsonBuilder().create()
 
     /**
+     * H10 comparte contenido entre personas DISTINTAS, nunca entre los
+     * propios dispositivos de Miguel Ángel (eso es H07). Desde que
+     * `BackupBundle` incluye `radioStations`/`channelSubscriptions`/
+     * `uiSettings` (H07, réplica total, S014/S015), reutilizar
+     * `full.copy(...)` sin tocar esos tres campos los arrastraría tal
+     * cual a CUALQUIER código de compartición -- filtraría a un
+     * desconocido las emisoras favoritas, los canales suscritos y los
+     * ajustes de interfaz de Miguel Ángel, algo completamente ajeno al
+     * propósito de H10 (compartir música). Se vacían explícitamente
+     * aquí, en el paso final antes de escribir el archivo, para que
+     * ningún nivel de compartición existente ni futuro pueda olvidarlo.
+     * ---
+     * H10 shares content between DIFFERENT people, never between
+     * Miguel Ángel's own devices (that's H07). Since `BackupBundle`
+     * gained `radioStations`/`channelSubscriptions`/`uiSettings` (H07,
+     * total replica, S014/S015), reusing `full.copy(...)` without
+     * touching those three fields would carry them as-is into ANY
+     * share code -- leaking Miguel Ángel's favorite stations,
+     * subscribed channels, and UI settings to a stranger, something
+     * entirely outside H10's purpose (sharing music). Explicitly
+     * emptied here, as the final step before writing the file, so no
+     * existing or future share level can forget it.
+     */
+    private fun BackupBundle.strippedForSharing(): BackupBundle = copy(
+        radioStations = emptyList(),
+        channelSubscriptions = emptyList(),
+        uiSettings = UiSettingsBackupDto(glassBorderEnabled = false),
+    )
+
+    /**
      * Nivel 1 de la lista de Miguel Ángel (S011): Biblioteca completa.
      * Reutiliza `BackupRepository.buildCurrentBundle()` tal cual --
      * "compartir toda la biblioteca" es, por definición, el mismo
@@ -79,7 +110,7 @@ class ShareCodeRepository @Inject constructor(
      * archivo `.txt` en vez de un archivo en Drive.
      */
     suspend fun buildLibraryShareFile(): Uri {
-        val bundle = backupRepository.buildCurrentBundle()
+        val bundle = backupRepository.buildCurrentBundle().strippedForSharing()
         return writeShareFile(
             ShareBundle(
                 scopeLabel = "Biblioteca completa (${bundle.tracks.size} pistas)",
@@ -103,7 +134,7 @@ class ShareCodeRepository @Inject constructor(
         label: (BackupBundle) -> String,
     ): Uri {
         val full = backupRepository.buildCurrentBundle()
-        val scoped = filter(full)
+        val scoped = filter(full).strippedForSharing()
         return writeShareFile(
             ShareBundle(scopeLabel = label(scoped), sharedAt = System.currentTimeMillis(), bundle = scoped),
             fileNameHint = fileNameHint,
@@ -173,7 +204,8 @@ class ShareCodeRepository @Inject constructor(
                 ShareBundle(
                     scopeLabel = "Lista de reproducción (vacía o sin pistas descargadas)",
                     sharedAt = System.currentTimeMillis(),
-                    bundle = full.copy(tracks = emptyList(), favoriteAlbums = emptyList(), playlists = emptyList()),
+                    bundle = full.copy(tracks = emptyList(), favoriteAlbums = emptyList(), playlists = emptyList())
+                        .strippedForSharing(),
                 ),
                 fileNameHint = "lista",
             )
@@ -182,7 +214,7 @@ class ShareCodeRepository @Inject constructor(
             tracks = full.tracks.filter { it.youtubeId in trackIds },
             favoriteAlbums = emptyList(),
             playlists = listOf(playlistDto),
-        )
+        ).strippedForSharing()
         return writeShareFile(
             ShareBundle(
                 scopeLabel = "Lista de reproducción: ${playlistDto.name} (${scoped.tracks.size} pistas)",

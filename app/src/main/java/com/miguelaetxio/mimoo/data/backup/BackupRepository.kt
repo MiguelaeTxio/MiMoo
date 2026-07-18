@@ -3,7 +3,10 @@ package com.miguelaetxio.mimoo.data.backup
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
+import com.miguelaetxio.mimoo.data.access.UiPreferencesManager
+import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
@@ -38,6 +41,9 @@ class BackupRepository @Inject constructor(
     private val trackDao: SearchResultTrackDao,
     private val favoriteAlbumDao: FavoriteAlbumDao,
     private val playlistDao: PlaylistDao,
+    private val favoriteRadioStationDao: FavoriteRadioStationDao,
+    private val channelSubscriptionDao: ChannelSubscriptionDao,
+    private val uiPreferencesManager: UiPreferencesManager,
 ) {
     private val gson: Gson = GsonBuilder().create()
 
@@ -111,6 +117,9 @@ class BackupRepository @Inject constructor(
             tracks = exportableTracks.map { it.toBackupDto() },
             favoriteAlbums = favoriteAlbums.map { it.toBackupDto() },
             playlists = playlists,
+            radioStations = favoriteRadioStationDao.getAllOnce().map { it.toBackupDto() },
+            channelSubscriptions = channelSubscriptionDao.getAllOnce().map { it.toBackupDto() },
+            uiSettings = UiSettingsBackupDto(glassBorderEnabled = uiPreferencesManager.glassBorderEnabled.value),
         )
     }
 
