@@ -34,8 +34,8 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
-| H09 | `DOCS/ANNEX_H09.md` | ← **EN PROGRESO** |
+| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
+| H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 
@@ -52,3 +52,9 @@ abierto, sin mencionar jamás su propio estado.
   (suscripciones + descarga automática tipo podcast), a petición
   explícita de Miguel Ángel al aclarar qué significaba "Canal" en los
   niveles 9-10 de H10. H09 se mantiene EN PROGRESO.
+- **2026-07-18** — PCH explícito de Miguel Ángel al arranque de
+  sesión: H09 pasa a PAUSADO (sin incidencia nueva, simplemente se
+  cierra el foco de esta sesión), H08 pasa a EN PROGRESO (fallo real
+  reportado en dispositivo sobre la Ampliación S011: filtro
+  país+género+década no está evitando que temas en español deriven a
+  sugerencias en inglés — ver `DOCS/ANNEX_H08.md`).
