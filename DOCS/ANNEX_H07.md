@@ -458,7 +458,80 @@ están activos. **Pendiente en dispositivo real por Miguel Ángel.**
 
 ---
 
-## Fuera de Alcance de Este Hito (explícitamente pospuesto)
+## Ampliación S014 (2026-07-18): sincronización total (pistas, links, settings, favoritos)
+
+Reabierto por PCH explícito de Miguel Ángel al cierre de S014 --
+divergencia real reportada en S013: los favoritos (y en general
+ajustes/estado) divergen entre su teléfono y su tablet tras
+sincronizar vía Drive. Sin investigar todavía en S013 (se pospuso a
+petición explícita); esta sección es la hoja de ruta ejecutable de la
+sesión que lo retome.
+
+**Punto de partida ya confirmado leyendo el código real esta misma
+sesión (S014, antes del PCH) -- no partir de cero, no volver a
+suponer:**
+
+- `BackupBundle` (`data/backup/BackupDto.kt`) transporta exactamente
+  `tracks` (con `isFavorite` por pista), `favoriteAlbums` y
+  `playlists`. **No transporta absolutamente nada más** -- ni
+  favoritos de emisora de radio (`FavoriteRadioStation`, entidad H09
+  con su propio DAO/repositorio, `MIGRATION_9_10`), ni suscripciones a
+  canal (H11, entidad nueva de esa sesión), ni ningún ajuste de la
+  app.
+- Ajustes/preferencias de la app viven en al menos dos sitios
+  distintos, ninguno de los dos pasa por `BackupBundle`/Drive:
+  `UiPreferencesManager` (`data/access/UiPreferencesManager.kt`,
+  DataStore/SharedPreferences -- cristal esmerilado con/sin borde,
+  etc.) y `AccessPinManager` (`data/access/AccessPinManager.kt` --
+  PIN de acceso, este último probablemente NO debe sincronizarse
+  entre dispositivos, decidir con Miguel Ángel).
+- Conclusión de diagnóstico, sin necesidad de más lectura de código
+  para arrancar: la divergencia de favoritos que reportó Miguel Ángel
+  case con casi total probabilidad de **favoritos de radio**
+  (`FavoriteRadioStation`, H09) o de **suscripciones de canal** (H11),
+  no de favoritos de pista/álbum (esos sí viajan ya). Confirmarlo con
+  Miguel Ángel al arrancar la sesión (qué tipo de favorito exactamente
+  divergía) antes de asumir cuál de los dos es, aunque probablemente
+  haya que arreglar ambos de todas formas.
+
+### Hoja de ruta
+
+**PASO 1 -- Confirmar con Miguel Ángel** qué divergía exactamente
+(favoritos de radio, canales suscritos, algún ajuste de Ajustes,
+o los tres) antes de tocar código -- no asumir, el síntoma reportado
+en S013 no especificaba cuál.
+
+**PASO 2 -- Ampliar `BackupBundle`/`BackupDto.kt`:** añadir
+`favoriteRadioStations: List<FavoriteRadioStationBackupDto>` (leer
+`FavoriteRadioStation.kt`/`FavoriteRadioStationDao.kt` reales antes de
+definir el DTO -- directriz §4.1) y, si H11 confirma que las
+suscripciones deben sincronizarse, `channelSubscriptions: List<...>`
+en la misma línea. Subir `BackupBundle.CURRENT_VERSION` (cambio de
+forma, ver comentario de la propia clase) y actualizar
+`BackupSerializer`/lo que rechace versiones no reconocidas.
+
+**PASO 3 -- `BackupRepository`/`BackupImportRepository`:** incluir los
+nuevos campos tanto al construir el bundle (export/subida automática)
+como al aplicarlo (import/`applyCloudWinsTargeted()` y
+`importDestructively()`) -- mismo patrón de comparación
+targeted-por-clave-estable que ya usa `applyCloudWinsTargeted()` para
+pistas (aquí la clave estable es el `stationuuid` de Radio-Browser
+para favoritos de radio, y previsiblemente el id/url de canal de
+YouTube para H11 -- confirmar leyendo las entidades reales).
+
+**PASO 4 -- Ajustes de UI (`UiPreferencesManager`), solo si Miguel
+Ángel confirma en el PASO 1 que también divergen:** decidir con él,
+antes de construir, qué ajustes concretos deben viajar (probablemente
+sí el cristal con/sin borde; probablemente NO el PIN de acceso, que es
+más bien una credencial de dispositivo que un ajuste de preferencia) y
+añadir esos campos al bundle con el mismo mecanismo.
+
+**PASO 5 -- Verificación en dispositivo real con dos dispositivos**
+(teléfono + tablet de Miguel Ángel y Silvia, mismo patrón que S008):
+marcar favorito de radio/canal en uno, sincronizar, confirmar que
+aparece en el otro sin duplicar ni perder lo que ya tenía.
+
+
 
 - Resolución de conflictos más allá de "la copia de respaldo manda"
   en la sincronización automática — no hay fusión inteligente de

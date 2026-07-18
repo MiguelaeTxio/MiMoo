@@ -33,8 +33,8 @@ abierto, sin mencionar jamás su propio estado.
 | H04 | `DOCS/ANNEX_H04.md` | PAUSADO |
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
-| H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
+| H07 | `DOCS/ANNEX_H07.md` | ← **EN PROGRESO** |
+| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
@@ -58,3 +58,11 @@ abierto, sin mencionar jamás su propio estado.
   reportado en dispositivo sobre la Ampliación S011: filtro
   país+género+década no está evitando que temas en español deriven a
   sugerencias en inglés — ver `DOCS/ANNEX_H08.md`).
+- **2026-07-18 (cierre de S014, misma fecha)** — PCH explícito de
+  Miguel Ángel al cierre de sesión: H08 pasa a PAUSADO (el rediseño
+  cerrado en S013 quedó construido y compilando en S014, pendiente
+  solo de verificación en dispositivo real -- ver `DOCS/ANNEX_H08.md`
+  sección "COMPLETADAS EN S014"), H07 pasa a EN PROGRESO --
+  divergencia real de favoritos/ajustes entre dispositivos tras
+  sincronizar (reportada por Miguel Ángel en S013, ver
+  `DOCS/ANNEX_H07.md`).
