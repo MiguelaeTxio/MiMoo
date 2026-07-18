@@ -970,27 +970,49 @@ class PlayerManager @Inject constructor(
                 // radio_relacionados_debug.txt antes de devolver null.
                 null
             } else {
-                val relatedArtist = radioRepository.suggestRelatedArtist(
-                    anchor,
-                    excludeArtists = radioUsedArtists + anchorArtistName,
-                )
-                if (relatedArtist == null) {
-                    // Sin log aquí -- suggestRelatedArtist() ya
-                    // registra el motivo exacto.
-                    null
-                } else if (!isAcceptableByHitsQuota(relatedArtist, anchor.decadeBegin)) {
-                    // S011 -- rechazado por el cupo de exploración
-                    // (ver comentario de radioTracksAccepted/
-                    // radioExploreTracksUsed) -- ni siquiera se gasta
-                    // una búsqueda de YouTube en este candidato, el
-                    // llamante (topUpRadioQueueIfNeeded) simplemente
-                    // reintenta con otro.
+                // FIX REAL (S012, regresión reportada por Miguel Ángel:
+                // "ya no se ponen 10 temas, se pone uno solo"). Antes,
+                // un candidato rechazado por el cupo de éxitos
+                // conocidos devolvía null aquí, y topUpRadioQueueIfNeeded()
+                // trataba ese null exactamente igual que "no queda
+                // ningún candidato" -- parando la Radio entera con un
+                // solo rechazo de cuota, algo que por diseño debe pasar
+                // 1 de cada 10 veces. Ahora: un rechazo de cuota pide
+                // OTRO candidato en la misma llamada (excluyendo el
+                // rechazado), sin gastar ninguna búsqueda de YouTube en
+                // él. Solo se para de verdad cuando suggestRelatedArtist()
+                // ya no tiene ningún candidato más que ofrecer -- ver log
+                // real: 'Belle and Sebastian' descartado por cuota seguido
+                // inmediatamente de "parado del todo -- backlog final: 1".
+                val rejectedByQuota = mutableSetOf<String>()
+                var relatedArtist: String? = null
+                while (true) {
+                    val candidate = radioRepository.suggestRelatedArtist(
+                        anchor,
+                        excludeArtists = radioUsedArtists + anchorArtistName + rejectedByQuota,
+                    )
+                    if (candidate == null) {
+                        // Sin log aquí -- suggestRelatedArtist() ya
+                        // registra el motivo exacto (eslabón roto de
+                        // verdad, no candidatos en ningún cruce).
+                        break
+                    }
+                    if (isAcceptableByHitsQuota(candidate, anchor.decadeBegin)) {
+                        relatedArtist = candidate
+                        break
+                    }
+                    // S011 -- rechazado por el cupo de exploración (ver
+                    // comentario de radioTracksAccepted/radioExploreTracksUsed).
                     RadioDebugLogger.log(
                         appContext, storageManager,
-                        "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist' " +
+                        "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$candidate' " +
                             "descartado por el cupo de éxitos conocidos (década=${anchor.decadeBegin}, " +
-                            "aceptadas=$radioTracksAccepted, exploración=$radioExploreTracksUsed)",
+                            "aceptadas=$radioTracksAccepted, exploración=$radioExploreTracksUsed) -- " +
+                            "pidiendo otro candidato",
                     )
+                    rejectedByQuota.add(candidate)
+                }
+                if (relatedArtist == null) {
                     null
                 } else {
                     // H08 -- limit=6 en vez de 1, y se descartan
