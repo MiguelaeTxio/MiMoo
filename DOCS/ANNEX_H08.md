@@ -307,6 +307,61 @@ que surja un nuevo fallo en uso real.
 
 ---
 
+## Ampliación S011 (2026-07-18): filtro por década + diccionario de éxitos conocidos
+
+Reabierto puntualmente sobre el cierre de S010 -- fallo real reportado
+por Miguel Ángel en dispositivo: *"he puesto una canción de Alaska y
+Dinarama y ahora me pone reguetón... si pones una canción de los
+Beatles no es lógico que después te ponga reguetón"*. País+género no
+bastaban -- dos artistas del mismo país y género pueden ser de décadas
+completamente distintas.
+
+**Filtro por década**, mismo patrón que país+género (S010): se fija
+UNA VEZ al arrancar la sesión, del primer artista, y nunca se
+recalcula en saltos posteriores.
+- `RadioAnchor` gana `decadeBegin: Int?`, calculado en
+  `resolveAnchor()` a partir de `life-span.begin` del artista en
+  MusicBrainz (nuevo campo en `MusicBrainzArtistDetail`, de primer
+  nivel, sin `inc=` especial) -- redondeado hacia abajo a la década.
+- `findCandidates()` añade `begin:[década TO década+9]` a la query
+  Lucene (campo `begin` confirmado como campo de búsqueda real de
+  artista antes de usarlo). Cascada de fallback en 4 niveles:
+  género+país+década → género+década → género+país → género solo.
+
+**Diccionario de artistas conocidos por década** (petición explícita:
+*"solo vamos a tener que obtener las listas una única vez... sacamos
+un diccionario, ya está"*) -- `assets/known_hit_artists.json`,
+compilado UNA SOLA VEZ leyendo Wikipedia (números uno de LOS40/España
+por década, verificados en vivo para 2020-2024) y conocimiento
+histórico de Billboard, sin scraping en tiempo de ejecución ni llamada
+de red para esto. A nivel de ARTISTA, no de canción concreta -- encaja
+con que `RadioRepository` ya sugiere artistas, nunca canciones sueltas.
+`KnownHitsRepository` (nuevo) lo carga una vez (`lazy`) y consulta por
+artista+década.
+
+**Cupo de exploración del 10%** (petición explícita: *"si no está en
+la base de datos, no se mete, hasta que digamos que falte un 10%...
+una de cada diez"*) -- `PlayerManager.isAcceptableByHitsQuota()`:
+9 de cada 10 pistas que Radio añade deben ser un artista conocido; la
+décima puede ser cualquier cosa. `radioTracksAccepted`/
+`radioExploreTracksUsed`, reiniciados junto con `radioAnchor` en cada
+sesión nueva.
+
+**Fuentes descartadas tras investigación real** (Billboard, Promusicae,
+40 Principales, 40 Principales Classics): ninguna tiene API pública,
+solo páginas web pensadas para lectura humana. Sustituidas por
+Wikipedia como fuente única de "históricos" -- misma cobertura de
+intención (canciones que de verdad fueron populares) sin mantener
+cuatro scrapers frágiles ni dudas de permisos de uso.
+
+**Sin verificar en dispositivo real todavía** -- pendiente confirmar
+que Alaska y Dinarama ya no deriva a reguetón, y que el diccionario
+tiene cobertura suficiente para no romper la cadena de sugerencias
+con demasiada frecuencia (JSON deliberadamente no exhaustivo, ver
+comentario del propio archivo).
+
+---
+
 ## Fuera de Alcance de Este Hito
 
 - Cualquier forma de "me gusta"/entrenamiento de preferencias más allá

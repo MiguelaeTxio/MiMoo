@@ -11,7 +11,7 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-15 (cierre de sesión S011 NewFlow)
+## Última actualización: 2026-07-18 (cierre de sesión S011 NewFlow, continuación larga)
 
 **S010 se cerró sin ejecutar PCS** (probablemente un corte de
 conexión) -- 35 commits reales de H09 y de H08 quedaron sin
@@ -130,24 +130,117 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
     barras invertidas en vez de 1) también se corrigió por el camino,
     aunque no era la causa del fallo.
 
+## S011, continuación larga (misma sesión, tras compactación de contexto)
+
+12. **H10, cuarto y quinto rediseño (segundo y tercer fallo real en
+    dispositivo tras el rediseño a archivo del punto 11):**
+    - MiMoo no aparecía en absoluto en "Abrir con" de WhatsApp, ni
+      tampoco en el explorador de archivos de Android. Investigado a
+      fondo: desde Android 7, las URIs `content://` son opacas y
+      `MimeTypeMap` no reconoce extensiones inventadas (`.mimoo`) --
+      Android nunca sabe qué tipo asignarle al guardarlo. Intento con
+      tipo MIME propio (`application/x-mimoo-share`) tampoco resolvió
+      el problema de fondo.
+    - **Solución real, propuesta por Miguel Ángel:** sustituir la
+      extensión inventada por `.txt` (tipo ya reconocido de fábrica),
+      con una marca interna al principio del archivo
+      (`SHARE_FILE_MARKER`) para que MiMoo distinga sus propios
+      archivos de cualquier otro `.txt`. Registrado por tipo MIME
+      (`text/plain` y `application/txt`, esta última una variante no
+      estándar que algunas apps usan). **Confirmado funcionando en
+      dispositivo real** -- MiMoo aparece en "Abrir con" y decodifica
+      bien.
+    - Vía manual de emergencia añadida en paralelo (Ajustes →
+      Compartir → "Importar código recibido, elegir archivo"),
+      independiente de que la apertura automática funcione.
+    - Línea de solución alternativa explorada pero no construida:
+      Android App Links verificados contra el dominio propio de
+      Miguel Ángel (`campusstudioonline.com`, hosting en
+      PythonAnywhere) -- requeriría servidor propio, documentado en
+      `DOCS/ANNEX_H10.md`.
+13. **Fallo real de build encontrado sin poder leer el log inicialmente
+    dos veces más** (mismo patrón que el punto 11): un `pathPattern`
+    mal escapado (corregido, no era la causa final) y, la causa real,
+    un comentario KDoc con `"*/*"` literal cerrando el bloque de
+    comentario antes de tiempo -- mismo mecanismo que el fallo del
+    punto 11, en un archivo distinto.
+14. **PlayerBar colapsable** (fallo real: el reproductor expandido
+    fijo, pedido en S010, tapaba pantallas con poco contenido propio
+    como Ajustes, sin dejar forma de llegar a "Buscar
+    actualizaciones"). Botón para contraer a una mini-barra de una
+    sola fila; diseño expandido original intacto.
+15. **Fallback de carátula vía iTunes** cuando MusicBrainz/Cover Art
+    Archive no tiene coincidencia (petición explícita: "falta
+    descargar carátula cuando no existe"). Dos fallos reales
+    encontrados y corregidos sobre la marcha con el mismo caso real
+    (Crystal Method / Vegas): el artista real es "The Crystal Method"
+    (reintento con "The " añadido), y la app aceptaba el primer
+    release de MusicBrainz sin comprobar si Cover Art Archive tenía
+    imagen real (ahora prueba varios candidatos con petición HEAD
+    real). Botón manual "Actualizar carátula" añadido para forzar un
+    reintento cuando una URL rota ya quedó guardada de antes de estos
+    fixes.
+16. **Botón de descarga en la notificación y en el reproductor
+    expandido** (petición explícita). En la notificación, límite real
+    de Android documentado (5 huecos totales, uno ocupado por un
+    icono del propio sistema MIUI) -- no siempre visible, no es un
+    fallo de código. En el reproductor propio (Compose, sin ese
+    límite), funciona siempre.
+17. **Repo de GitHub hecho público** (petición de Miguel Ángel, se
+    quedó al 90% de su cuota gratuita de Actions en el plan privado) +
+    caché de Gradle/pip añadida al workflow para reducir minutos de
+    build cuando vuelva a privado el 1 de agosto.
+18. **Cristal esmerilado (glassmorphism) extendido a toda la
+    aplicación**, petición explícita con una captura de un teclado
+    como referencia. Iteración por feedback real: sin volumen/sombra,
+    variante sin borde, interruptor persistido en Ajustes
+    (`LocalGlassBorderEnabled`, reactivo en toda la app sin
+    reiniciar), y finalmente distinción visual entre chapitas
+    clicables y decorativas (`glassChip(interactive = ...)`) para que
+    se note a simple vista cuál se puede tocar. Aplicado
+    exhaustivamente: menú lateral, títulos de todas las pantallas,
+    filas de artista/álbum/pista/playlist/canal/emisora/resultado de
+    búsqueda, selector alfabético, pestañas de Biblioteca, Ajustes en
+    acordeón (con cristal en cada título de sección -- petición
+    explícita, para que quepa "Buscar actualizaciones" con el
+    reproductor expandido), cola de reproducción, botones de
+    reproducir todo/aleatorio.
+19. **Radio (H08) reabierto puntualmente:** filtro por década (mismo
+    patrón de ancla de sesión que país+género, S010) + diccionario de
+    artistas conocidos por década compilado una sola vez (Wikipedia +
+    Billboard, sin scraping en tiempo de ejecución) + cupo de
+    exploración del 10%. Ver `DOCS/ANNEX_H08.md`, sección "Ampliación
+    S011" para el detalle completo. **Sin verificar en dispositivo.**
+
 ## Siguiente sesión — orden sugerido
 
 1. Ver `DOCS/ANNEX_ROUTER.md` para el hito EN PROGRESO real al
-   arrancar (no asumir que sigue siendo H09 sin comprobar).
-2. Verificación en dispositivo de todo lo construido en S011: flujo
-   completo de H10 (generar/enviar/recibir/importar un archivo .mimoo),
-   fix de sync de H07, carátula en reproductor/notificación, botón de
-   favoritos en notificación, y H11 (suscribirse a un canal, esperar
-   a la comprobación periódica o forzarla, confirmar que la primera
-   pasada no descarga nada y la segunda sí encola contenido nuevo).
-3. Si sigue H09: hoja de ruta real en `DOCS/ANNEX_H09.md` (sección
+   arrancar (H09, sin tocar en toda esta sesión S011 -- confirmar que
+   sigue siendo el que corresponde antes de asumirlo).
+2. Verificación en dispositivo real de todo lo construido en la
+   continuación de S011 (lista completa en la sección de arriba):
+   H10 (.txt, confirmado ya en un caso real por Miguel Ángel, seguir
+   probando el resto de niveles), PlayerBar colapsable, carátula vía
+   iTunes + botón "Actualizar carátula", botones de descarga
+   (notificación y reproductor), cristal completo, Radio con
+   filtro de década + diccionario de éxitos (caso concreto a
+   confirmar: Alaska y Dinarama ya no debería derivar a reguetón).
+3. H11: sin probar en dispositivo desde su construcción, más las
+   asunciones pendientes de confirmar (`DOCS/ANNEX_H11.md`, sección
+   "Lo que queda por confirmar": audio vs vídeo, cuántos vídeos atrás
+   al suscribirse, notificación de contenido nuevo, Shorts sí/no).
+4. Si sigue H09: hoja de ruta real en `DOCS/ANNEX_H09.md` (sección
    final) -- confirmación de que funciona entero en dispositivo,
    decisión sobre el indicador "En directo", ampliar catálogo de
    géneros si hace falta.
-4. H11: confirmar con Miguel Ángel las asunciones tomadas al
-   construirlo (audio vs vídeo, cuántos vídeos atrás al suscribirse,
-   notificación de contenido nuevo o no, Shorts sí/no) -- ver
-   `DOCS/ANNEX_H11.md`, sección "Lo que queda por confirmar".
+5. Decisión de producto pendiente, sin construir: Android App Links
+   verificados con el dominio propio de Miguel Ángel
+   (`campusstudioonline.com` + PythonAnywhere) como alternativa a
+   compartir por archivo -- ver `DOCS/ANNEX_H10.md`.
+6. Recordatorio de calendario: 1 de agosto, Miguel Ángel vuelve a
+   poner el repo de MiMoo en privado (ahora público para no gastar la
+   cuota gratuita de Actions) -- la caché de Gradle/pip ya está lista
+   para entonces.
 
 ## Pendientes antiguos, sin tocar en S011, no bloquean nada
 
