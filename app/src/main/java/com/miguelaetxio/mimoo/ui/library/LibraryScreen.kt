@@ -281,27 +281,31 @@ fun LibraryScreen(
                             }
                         }
                         if (showSinglesToggle) {
-                            IconButton(onClick = viewModel::toggleSinglesViewMode) {
-                                if (uiState.singlesViewMode == SinglesViewMode.BY_LETTER) {
-                                    Icon(
-                                        Icons.Filled.FormatListBulleted,
-                                        contentDescription = "Ver todos los artistas en una lista",
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Filled.SortByAlpha,
-                                        contentDescription = "Ver artistas agrupados por letra",
-                                    )
+                            Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                                IconButton(onClick = viewModel::toggleSinglesViewMode) {
+                                    if (uiState.singlesViewMode == SinglesViewMode.BY_LETTER) {
+                                        Icon(
+                                            Icons.Filled.FormatListBulleted,
+                                            contentDescription = "Ver todos los artistas en una lista",
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Filled.SortByAlpha,
+                                            contentDescription = "Ver artistas agrupados por letra",
+                                        )
+                                    }
                                 }
                             }
                             // H10 (S011, nivel 5) -- réplica total de
                             // todos los sencillos favoritos (pistas
                             // favoritas sin álbum asignado).
-                            IconButton(onClick = viewModel::shareFavoriteSinglesReplica) {
-                                Icon(
-                                    Icons.Filled.Share,
-                                    contentDescription = "Compartir sencillos favoritos",
-                                )
+                            Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                                IconButton(onClick = viewModel::shareFavoriteSinglesReplica) {
+                                    Icon(
+                                        Icons.Filled.Share,
+                                        contentDescription = "Compartir sencillos favoritos",
+                                    )
+                                }
                             }
                         }
                         Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {

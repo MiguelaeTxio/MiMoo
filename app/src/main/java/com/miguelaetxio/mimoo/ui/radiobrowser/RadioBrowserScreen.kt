@@ -119,6 +119,13 @@ fun RadioBrowserScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        RadioFilterChip(
+                            label = "Todos",
+                            selected = uiState.selectedGenre == null,
+                            onClick = { viewModel.onGenreSelect(null) },
+                        )
+                    }
                     items(uiState.genres, key = { it.label }) { genre ->
                         RadioFilterChip(
                             label = genre.label,
@@ -138,6 +145,13 @@ fun RadioBrowserScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        RadioFilterChip(
+                            label = "Todas",
+                            selected = uiState.selectedDecade == null,
+                            onClick = { viewModel.onDecadeSelect(null) },
+                        )
+                    }
                     items(uiState.decades, key = { it.label }) { decade ->
                         RadioFilterChip(
                             label = decade.label,
