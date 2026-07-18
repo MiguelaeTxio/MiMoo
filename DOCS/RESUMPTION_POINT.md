@@ -11,53 +11,46 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-18 (cierre de sesión S013 NewFlow)
+## Última actualización: 2026-07-18 (cierre de sesión S014 NewFlow)
 
-**Hito activo: H08** (Música relacionada / Radio) -- H09 se pausó al
-arrancar esta sesión (PCH explícito de Miguel Ángel), ver
-`DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H07** (sincronización total -- pistas, links, settings,
+favoritos) -- H08 se pausó al cierre de esta sesión (PCH explícito de
+Miguel Ángel), ver `DOCS/ANNEX_ROUTER.md`.
 
-**S013 fue una sesión de diseño puro, sin código nuevo del rediseño de
-Radio** (decisión explícita de Miguel Ángel: "no vamos a hacer aquí un
-trabajo de este hito para no terminar"). Lo único real en `main` de
-esta sesión:
-1. PCH: H09 a PAUSADO, H08 a EN PROGRESO (`DOCS/ANNEX_ROUTER.md`).
-2. Reconciliación documental de un commit sin documentar (`f9c7cfd`,
-   ya en `main` antes de arrancar S013) -- fix real de que un rechazo
-   del cupo de éxitos ya no para la Radio entera. Ver
-   `DOCS/ANNEX_H08.md` sección "Reconciliación de una brecha
-   documental: S012".
+**S014 construyó por completo el rediseño de Radio cerrado en diseño
+en S013** (ver `DOCS/ANNEX_H08.md`, sección "COMPLETADAS EN S014"):
+origen español/mixto fijado por el primer tema, diccionario
+artista+canción por origen/década, cupo 80/10/10 (diccionario/
+exploración/disco) con degradación a 90/10 y cascada de fallback
+final. Workflow de GitHub Actions en verde (commit `a776d8d`).
+**Pendiente de verificación en dispositivo real por Miguel Ángel** --
+ver la hoja de ruta de `DOCS/ANNEX_H08.md` para el detalle exacto de
+qué probar cuando se retome ese hito.
 
-**El diseño completo del rediseño de Radio (origen español/mixto,
-diccionario artista+canción por década, cupo 80/10/10 con fuente de
-disco, cascada de fallback) quedó cerrado y escrito con Miguel Ángel,
-íntegro en `DOCS/ANNEX_H08.md` sección "S013" -- es la hoja de ruta
-ejecutable de la siguiente sesión, sin necesidad de más contexto.**
+**Cierre de sesión, PCH explícito de Miguel Ángel:** H08 pasa a
+PAUSADO, H07 pasa a EN PROGRESO -- retoma la divergencia real de
+favoritos/ajustes entre dispositivos que Miguel Ángel reportó en S013
+y quedó pospuesta sin investigar. `DOCS/ANNEX_H07.md`, sección
+"Ampliación S014", ya trae la hoja de ruta ejecutable con el
+diagnóstico de partida confirmado leyendo el código real esta misma
+sesión (antes del PCH): `BackupBundle` no transporta favoritos de
+radio (H09) ni suscripciones de canal (H11) ni ningún ajuste de la
+app -- punto de partida más probable de la divergencia reportada.
 
-**Siguiente sesión (S014 o la que Miguel Ángel abra sobre H08):**
-1. Confirmar en dispositivo real el fix de S012 (backlog ya no se
-   corta a 1 pista tras un rechazo de cupo).
-2. Construir el diseño de `DOCS/ANNEX_H08.md` sección "S013" completo:
-   diccionario ampliado (artista+canción+origen por década), regla de
-   origen fijada por el primer tema, cupo 80/10/10 con degradación a
-   90/10, fuente de disco vía `lookupArtist` bajo demanda, cascada de
-   fallback (español agotado -> conocido extranjero -> clásica).
-3. Explícitamente NO construir en esa sesión salvo petición: los
-   porcentajes configurables en Ajustes (idea de Miguel Ángel,
-   apuntada como mejora futura en el propio anexo).
+**Siguiente sesión (H07, sincronización total):**
+1. Confirmar con Miguel Ángel qué divergía exactamente (favoritos de
+   radio, canales suscritos, algún ajuste, o varios) antes de tocar
+   código -- ver `DOCS/ANNEX_H07.md` PASO 1 de la ampliación S014.
+2. Seguir la hoja de ruta completa de esa misma sección (PASOS 2-5):
+   ampliar `BackupBundle`/`BackupDto.kt`, `BackupRepository`/
+   `BackupImportRepository`, y opcionalmente `UiPreferencesManager` si
+   Miguel Ángel confirma que los ajustes también divergen.
+3. Verificación en dispositivo real con dos dispositivos (teléfono +
+   tablet).
 
-**Pendiente sin resolver, distinto de H08 -- para otra sesión con su
-propio PCH, no mezclar con la de arriba:** Miguel Ángel reportó en
-S013 que los favoritos (y en general ajustes/estado) divergen entre su
-teléfono y su tablet tras sincronizar -- sospecha que la sincronización
-vía Drive (H07) no está reflejando una "copia total" real entre
-dispositivos. No investigado todavía en S013 (se pospuso a petición
-explícita de Miguel Ángel). Cuando se retome, empezar releyendo
-`AutoSyncViewModel`/`BackupBundle` reales antes de asumir nada -- el
-memory previo decía "Favoritos↔Drive (H07), confirmado sin tocar
-código" en S011, pero eso solo confirmaba que `BackupBundle` incluye
-el campo `isFavorite`, no que la sincronización entre dos dispositivos
-concretos esté funcionando de verdad.
+**Pendiente sin resolver, distinto de H07 -- para cuando se retome H08
+con su propio PCH:** verificación en dispositivo del rediseño de Radio
+S013/S014 completo, ver punto arriba.
 
 ---
 

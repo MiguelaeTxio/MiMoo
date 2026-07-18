@@ -573,6 +573,72 @@ con esos campos):**
 
 ---
 
+## COMPLETADAS EN S014
+
+Construido el diseño completo cerrado en S013 (arriba, sección "S013:
+diseño cerrado del rediseño completo de Radio"). Trabajo real:
+
+- **`known_hit_artists.json` reescrito por completo**: de lista plana
+  `{década: [artistas]}` a `{década: {es: [...], intl: [...]}}`, cada
+  entrada ahora `{artist, song}` -- canción concreta real, no solo el
+  nombre del artista (caso guía de Miguel Ángel: Yes en los 80 ->
+  "Owner of a Lonely Heart"). Reutiliza los ~210 artistas ya
+  existentes, separación estricta "de España" (no "de habla hispana"
+  -- Alejandro Fernández, Chayanne, Ricky Martin, Shakira van en
+  `intl`).
+- **`KnownHitsRepository` reescrito**: `lookupHit()`, `randomHit()`
+  (cupo del 80%, exclusión de ya-usados), `isKnownSpanishArtist()`
+  (filtro barato de origen).
+- **`RadioAnchor` gana `isSpanishOrigin: Boolean`**, fijado UNA VEZ en
+  `RadioRepository.resolveAnchor()` (diccionario + respaldo
+  `country=ES` de MusicBrainz), absoluto para el resto de la sesión de
+  Radio -- nunca se relaja salvo en el fallback final de "classical".
+- **`RadioRepository.suggestRelatedArtist()` (cupo de exploración,
+  10%)**: mantiene el origen fijo en toda la cascada, que ahora sigue
+  el orden género+década exacta -> género cualquier década -> década
+  exacta cualquier género (antes: género+país+década -> género+década
+  -> género+país -> género).
+- **`RadioRepository.lookupArtistProfile()` nuevo**: perfil completo
+  (géneros/país/década) de un artista bajo demanda, para el cupo de
+  disco.
+- **`PlayerManager`, cupo 80/10/10 completo** (disco -> exploración ->
+  diccionario, con degradación a 90/10 si el 10% de disco se queda sin
+  candidatos españoles y cascada de fallback final: español agotado ->
+  un tema extranjero conocido -> género fijo "classical"). Inyecta
+  `SearchResultTrackRepository` como fuente de artistas ya descargados
+  para el 10% de disco.
+- **Verificado**: el workflow de GitHub Actions compiló en verde
+  (commit `a776d8d`) tras el fix de firma entre `KnownHitsRepository`
+  y `PlayerManager` (el primer commit intermedio, `2f55652`, falló en
+  compilación por ese desajuste -- reconciliado en el mismo bloque de
+  trabajo).
+
+**Sin construir en S014 (aplazado explícitamente, ver arriba):**
+porcentajes del cupo configurables en Ajustes.
+
+**Sin verificar en dispositivo real todavía** -- pendiente que Miguel
+Ángel pruebe: sesión de Radio arrancada con un grupo español (caso
+guía: Alaska y Dinarama, S011), sesión arrancada con un grupo
+extranjero (modo mixto), y que el 10% de disco funcione si tiene algo
+descargado en el dispositivo de prueba.
+
+## Hoja de Ruta para la Siguiente Sesión que retome H08
+
+1. **Verificación en dispositivo real** de todo lo listado en
+   "COMPLETADAS EN S014" -- caso guía explícito: Alaska y Dinarama ya
+   no debería derivar a reguetón (S011), y ahora además el resto de la
+   sesión española debería mantenerse consistentemente en artista+
+   canción conocidos de esa era, con la mezcla 80/10/10 visible en
+   `radio_relacionados_debug.txt` a lo largo de una sesión larga
+   (~15-20 pistas).
+2. Si aparece algún bug real de dispositivo, diagnosticar leyendo el
+   log real (`radio_relacionados_debug.txt`) antes de suponer causa --
+   mismo criterio que siempre.
+3. Solo si Miguel Ángel lo pide explícitamente: porcentajes del cupo
+   80/10/10 configurables en Ajustes.
+
+---
+
 ## Fuera de Alcance de Este Hito
 
 - Cualquier forma de "me gusta"/entrenamiento de preferencias más allá
@@ -580,3 +646,4 @@ con esos campos):**
   el objetivo descrito por Miguel Ángel.
 - Playlists colaborativas o compartidas entre Miguel Ángel y Silvia —
   no mencionado, fuera de alcance salvo que se pida explícitamente.
+
