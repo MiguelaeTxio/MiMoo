@@ -563,6 +563,13 @@ private fun ColumnScope.AlbumsTabContent(
     val activity = LocalContext.current as Activity
     when (val drill = uiState.albumsDrill) {
         is AlbumsDrillLevel.Letters -> {
+            if (uiState.albumsByArtist.isNotEmpty()) {
+                PlayAllRow(
+                    label = "Biblioteca completa",
+                    onPlayAll = viewModel::playAllAlbums,
+                    onShuffle = viewModel::playAllAlbumsShuffled,
+                )
+            }
             // Entrada "Favoritos" antes de las letras -- petición
             // explícita de Miguel Ángel (2026-07-05): "van a aparecer
             // arriba, antes que la A... es la primera entrada, es
@@ -628,6 +635,13 @@ private fun ColumnScope.AlbumsTabContent(
             val artists = uiState.albumsByArtist.keys
                 .filter { sortLetterFor(it) == drill.letter }
                 .sorted()
+            if (artists.isNotEmpty()) {
+                PlayAllRow(
+                    label = "Letra ${drill.letter}",
+                    onPlayAll = { viewModel.playLetterAlbums(drill.letter) },
+                    onShuffle = { viewModel.playLetterAlbumsShuffled(drill.letter) },
+                )
+            }
             ArtistList(
                 artists = artists,
                 onArtistClick = viewModel::selectAlbumsArtist,
@@ -647,6 +661,11 @@ private fun ColumnScope.AlbumsTabContent(
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
             } else {
+                PlayAllRow(
+                    label = "Biblioteca completa",
+                    onPlayAll = viewModel::playAllAlbums,
+                    onShuffle = viewModel::playAllAlbumsShuffled,
+                )
                 ArtistList(
                     artists = artists,
                     onArtistClick = viewModel::selectAlbumsArtist,
@@ -718,15 +737,31 @@ private fun ColumnScope.SinglesTabContent(
     onAddToPlaylist: (SearchResultTrack) -> Unit,
 ) {
     when (val drill = uiState.singlesDrill) {
-        is SinglesDrillLevel.Letters -> LetterGrid(
-            letters = uiState.singleLetters,
-            emptyMessage = "Todavía no hay sencillos descargados.",
-            onSelect = viewModel::selectSinglesLetter,
-        )
+        is SinglesDrillLevel.Letters -> {
+            if (uiState.singlesByArtist.isNotEmpty()) {
+                PlayAllRow(
+                    label = "Todos los sencillos",
+                    onPlayAll = viewModel::playAllSingles,
+                    onShuffle = viewModel::playAllSinglesShuffled,
+                )
+            }
+            LetterGrid(
+                letters = uiState.singleLetters,
+                emptyMessage = "Todavía no hay sencillos descargados.",
+                onSelect = viewModel::selectSinglesLetter,
+            )
+        }
         is SinglesDrillLevel.Artists -> {
             val artists = uiState.singlesByArtist.keys
                 .filter { sortLetterFor(it) == drill.letter }
                 .sorted()
+            if (artists.isNotEmpty()) {
+                PlayAllRow(
+                    label = "Letra ${drill.letter}",
+                    onPlayAll = { viewModel.playLetterSingles(drill.letter) },
+                    onShuffle = { viewModel.playLetterSinglesShuffled(drill.letter) },
+                )
+            }
             ArtistList(
                 artists = artists,
                 onArtistClick = viewModel::selectSinglesArtist,
@@ -746,6 +781,11 @@ private fun ColumnScope.SinglesTabContent(
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
             } else {
+                PlayAllRow(
+                    label = "Todos los sencillos",
+                    onPlayAll = viewModel::playAllSingles,
+                    onShuffle = viewModel::playAllSinglesShuffled,
+                )
                 ArtistList(
                     artists = artists,
                     onArtistClick = viewModel::selectSinglesArtist,
@@ -971,11 +1011,52 @@ private fun FavoritesHeaderRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = onPlayAll) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir favoritos")
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onPlayAll) {
+                Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir favoritos")
+            }
         }
-        IconButton(onClick = onShuffle) {
-            Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onShuffle) {
+                Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
+            }
+        }
+    }
+}
+
+/**
+ * S011 -- "reproducir todo/aleatorio" fijos (petición explícita de
+ * Miguel Ángel: "incluir botones de reproducción para reproducir todo
+ * secuencial y todo aleatorio... para poder reproducir la biblioteca
+ * entera, todos los sencillos, todo un artista, toda una letra").
+ * Reutilizable en cualquier nivel -- biblioteca completa, una letra,
+ * todos los sencillos.
+ */
+@Composable
+private fun PlayAllRow(label: String, onPlayAll: () -> Unit, onShuffle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip(interactive = false)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onPlayAll) {
+                Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir todo")
+            }
+        }
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onShuffle) {
+                Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
+            }
         }
     }
 }

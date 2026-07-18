@@ -1351,6 +1351,63 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
+     * S011 -- "reproducir todo/aleatorio" fijos en cada nivel de
+     * Biblioteca (petición explícita de Miguel Ángel): biblioteca
+     * completa, toda una letra, todo un artista, todos los sencillos,
+     * favoritos -- para poder encadenar la reproducción sin tener que
+     * entrar pista a pista. Artista y favoritos ya existían
+     * (playArtistAlbums.../playFavorites...); estas son las que
+     * faltaban: biblioteca completa y por letra.
+     */
+    fun playAllAlbums() {
+        val allTracks = _uiState.value.albumsByArtist.values.flatMap { it.values.flatten() }
+        playerManager.playQueue(allTracks.toQueueItems())
+    }
+
+    fun playAllAlbumsShuffled() {
+        val allTracks = _uiState.value.albumsByArtist.values.flatMap { it.values.flatten() }
+        playerManager.playQueue(allTracks.shuffled().toQueueItems())
+    }
+
+    fun playLetterAlbums(letter: Char) {
+        val tracks = _uiState.value.albumsByArtist
+            .filterKeys { sortLetterFor(it) == letter }
+            .values.flatMap { it.values.flatten() }
+        playerManager.playQueue(tracks.toQueueItems())
+    }
+
+    fun playLetterAlbumsShuffled(letter: Char) {
+        val tracks = _uiState.value.albumsByArtist
+            .filterKeys { sortLetterFor(it) == letter }
+            .values.flatMap { it.values.flatten() }
+        playerManager.playQueue(tracks.shuffled().toQueueItems())
+    }
+
+    fun playAllSingles() {
+        val allTracks = _uiState.value.singlesByArtist.values.flatten()
+        playerManager.playQueue(allTracks.toQueueItems())
+    }
+
+    fun playAllSinglesShuffled() {
+        val allTracks = _uiState.value.singlesByArtist.values.flatten()
+        playerManager.playQueue(allTracks.shuffled().toQueueItems())
+    }
+
+    fun playLetterSingles(letter: Char) {
+        val tracks = _uiState.value.singlesByArtist
+            .filterKeys { sortLetterFor(it) == letter }
+            .values.flatten()
+        playerManager.playQueue(tracks.toQueueItems())
+    }
+
+    fun playLetterSinglesShuffled(letter: Char) {
+        val tracks = _uiState.value.singlesByArtist
+            .filterKeys { sortLetterFor(it) == letter }
+            .values.flatten()
+        playerManager.playQueue(tracks.shuffled().toQueueItems())
+    }
+
+    /**
      * Plays every album track of one artist, album order then title
      * order within each album, as a queue (pestaña Álbumes).
      */
