@@ -225,7 +225,7 @@ fun LibraryScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.glassChip()) {
+                    Box(modifier = Modifier.glassChip(interactive = false)) {
                         Text(title, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
                     }
                 },

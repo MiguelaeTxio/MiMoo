@@ -609,7 +609,7 @@ class MainActivity : ComponentActivity() {
                             Box(
                                 modifier = Modifier
                                     .padding(16.dp)
-                                    .glassChip(),
+                                    .glassChip(interactive = false),
                             ) {
                                 Text(
                                     text = "miMoo",

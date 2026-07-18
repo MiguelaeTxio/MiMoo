@@ -36,6 +36,21 @@ import androidx.compose.ui.unit.dp
 object GlassTokens {
     val fillTop: Color = Color.White.copy(alpha = 0.18f)
     val fillBottom: Color = Color.White.copy(alpha = 0.06f)
+
+    /**
+     * S011 -- petición explícita de Miguel Ángel: "en las chapitas
+     * tenemos que distinguir entre chapitas clicables y decorativas,
+     * para que el usuario sepa siempre cuáles son clicables a simple
+     * vista". Las decorativas (títulos de sección informativos,
+     * etiquetas que no llevan ninguna acción) usan un cristal mucho
+     * más tenue -- casi imperceptible -- y NUNCA borde, sea cual sea
+     * el interruptor de Ajustes. Es una señal por contraste de
+     * relleno, no por el borde, para que funcione igual de bien con
+     * el interruptor activado o desactivado.
+     */
+    val decorativeFillTop: Color = Color.White.copy(alpha = 0.08f)
+    val decorativeFillBottom: Color = Color.White.copy(alpha = 0.02f)
+
     val border: Color = Color.White.copy(alpha = 0.32f)
     val borderWidth: Dp = 1.dp
     val cornerRadius: Dp = 16.dp
@@ -69,19 +84,31 @@ val LocalGlassBorderEnabled = compositionLocalOf { false }
  * interruptor de Ajustes decide para toda la app; una superficie
  * concreta puede seguir forzando `true`/`false` explícitamente si
  * hiciera falta alguna vez, aunque hoy ninguna lo hace.
+ *
+ * `interactive = false` para chapitas puramente decorativas (títulos
+ * de sección, etiquetas sin ninguna acción asociada) -- cristal mucho
+ * más tenue y sin borde nunca, para que el usuario distinga a simple
+ * vista qué chapitas se pueden tocar y cuáles no.
  */
 @Composable
 fun Modifier.glassChip(
     shape: Shape = RoundedCornerShape(GlassTokens.cornerRadius),
     showBorder: Boolean = LocalGlassBorderEnabled.current,
+    interactive: Boolean = true,
 ): Modifier =
     this
         .clip(shape)
         .background(
-            brush = Brush.verticalGradient(listOf(GlassTokens.fillTop, GlassTokens.fillBottom))
+            brush = Brush.verticalGradient(
+                if (interactive) {
+                    listOf(GlassTokens.fillTop, GlassTokens.fillBottom)
+                } else {
+                    listOf(GlassTokens.decorativeFillTop, GlassTokens.decorativeFillBottom)
+                }
+            )
         )
         .let {
-            if (showBorder) {
+            if (showBorder && interactive) {
                 it.border(width = GlassTokens.borderWidth, color = GlassTokens.border, shape = shape)
             } else {
                 it

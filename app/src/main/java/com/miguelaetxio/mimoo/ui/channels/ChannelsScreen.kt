@@ -42,7 +42,7 @@ fun ChannelsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.glassChip()) {
+                    Box(modifier = Modifier.glassChip(interactive = false)) {
                         Text("Canales", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
                     }
                 },

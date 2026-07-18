@@ -195,7 +195,7 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.glassChip()) {
+                    Box(modifier = Modifier.glassChip(interactive = false)) {
                         Text("Ajustes", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
                     }
                 },

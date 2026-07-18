@@ -54,7 +54,7 @@ fun RadioBrowserScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.glassChip()) {
+                    Box(modifier = Modifier.glassChip(interactive = false)) {
                         Text("Radio Online", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
                     }
                 },

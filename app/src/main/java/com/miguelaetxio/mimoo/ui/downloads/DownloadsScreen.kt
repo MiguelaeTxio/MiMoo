@@ -52,7 +52,7 @@ fun DownloadsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.glassChip()) {
+                    Box(modifier = Modifier.glassChip(interactive = false)) {
                         Text("Descargas", modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
                     }
                 },
@@ -124,7 +124,10 @@ fun DownloadsScreen(
                             "Con error (${uiState.failed.size})",
                             modifier = Modifier.weight(1f),
                         )
-                        TextButton(onClick = viewModel::retryAll) {
+                        TextButton(
+                            onClick = viewModel::retryAll,
+                            modifier = Modifier.glassChip(),
+                        ) {
                             Text("Reintentar todas")
                         }
                     }
@@ -153,14 +156,17 @@ fun DownloadsScreen(
     }
 }
 
+/** S011 -- cabeceras de sección son puramente informativas, sin ninguna acción -- cristal decorativo. */
 @Composable
 private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        title,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-    )
+    Box(modifier = modifier.padding(horizontal = 8.dp, vertical = 2.dp).glassChip(interactive = false)) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+    }
 }
 
 /**
@@ -170,13 +176,18 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
  * y la copia SAF que vienen despues no reportan progreso propio, así
  * que la barra puede quedarse en 99% unos segundos justo antes de
  * pasar a Completadas.
+ *
+ * S011 -- cristal decorativo (la fila en sí no lleva ninguna acción,
+ * solo informa del progreso).
  */
 @Composable
 private fun DownloadingRow(track: SearchResultTrack) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip(interactive = false)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
     ) {
         TrackTitleLine(track)
         Spacer(Modifier.height(6.dp))
@@ -199,13 +210,17 @@ private fun DownloadingRow(track: SearchResultTrack) {
  * Fila "en cola": sin % (todavía no hay progress_hooks que reportar),
  * barra vacía y un icono de reloj de arena para dejar claro que está
  * esperando turno, no parada por error.
+ *
+ * S011 -- cristal decorativo, mismo criterio que DownloadingRow.
  */
 @Composable
 private fun QueuedRow(track: SearchResultTrack) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip(interactive = false)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -232,6 +247,10 @@ private fun QueuedRow(track: SearchResultTrack) {
  * botón de borrar definitivo -- para las que fallan siempre, sin
  * importar cuánto se espere o se reintente (petición explícita de
  * Miguel Ángel, 2026-07-06).
+ *
+ * S011 -- la fila en sí es decorativa (no lleva acción propia), pero
+ * los dos botones que contiene sí son clicables -- cada uno con su
+ * propia chapita interactiva, distinta de la fila que los envuelve.
  */
 @Composable
 private fun FailedRow(
@@ -242,7 +261,9 @@ private fun FailedRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip(interactive = false)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -253,25 +274,32 @@ private fun FailedRow(
         )
         Spacer(Modifier.width(12.dp))
         TrackTitleLine(track, modifier = Modifier.weight(1f))
-        IconButton(onClick = onRetry) {
-            Icon(Icons.Filled.Refresh, contentDescription = "Reintentar")
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onRetry) {
+                Icon(Icons.Filled.Refresh, contentDescription = "Reintentar")
+            }
         }
-        IconButton(onClick = onDelete) {
-            Icon(
-                Icons.Filled.Delete,
-                contentDescription = "Borrar definitivamente",
-                tint = MaterialTheme.colorScheme.error,
-            )
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Borrar definitivamente",
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            }
         }
     }
 }
 
+/** S011 -- cristal decorativo, mismo criterio que las otras filas de estado. */
 @Composable
 private fun CompletedRow(track: SearchResultTrack) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip(interactive = false)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(

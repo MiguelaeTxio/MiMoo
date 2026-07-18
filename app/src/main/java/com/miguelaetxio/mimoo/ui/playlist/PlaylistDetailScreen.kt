@@ -60,7 +60,7 @@ fun PlaylistDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.glassChip()) {
+                    Box(modifier = Modifier.glassChip(interactive = false)) {
                         Text(
                             "Lista de reproducción",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
