@@ -33,8 +33,8 @@ abierto, sin mencionar jamás su propio estado.
 | H04 | `DOCS/ANNEX_H04.md` | PAUSADO |
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
-| H07 | `DOCS/ANNEX_H07.md` | ← **EN PROGRESO** |
-| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
+| H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
+| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
@@ -66,3 +66,12 @@ abierto, sin mencionar jamás su propio estado.
   divergencia real de favoritos/ajustes entre dispositivos tras
   sincronizar (reportada por Miguel Ángel en S013, ver
   `DOCS/ANNEX_H07.md`).
+- **2026-07-18 (cierre de S015, misma fecha)** — PCH explícito de
+  Miguel Ángel al cierre de sesión: H07 pasa a PAUSADO (réplica total
+  construida en S015 -- datos, tres puntos de conectividad/push
+  inmediato, verificación en dispositivo pendiente, ver
+  `DOCS/ANNEX_H07.md`), H08 pasa a EN PROGRESO -- Miguel Ángel pide
+  explícitamente los porcentajes del cupo 80/10/10 configurables en
+  Ajustes, punto ya anticipado y con hoja de ruta ejecutable en
+  `DOCS/ANNEX_H08.md` ("Hoja de Ruta para la Siguiente Sesión que
+  retome H08", punto 3).
