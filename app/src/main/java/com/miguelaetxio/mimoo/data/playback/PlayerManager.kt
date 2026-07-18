@@ -242,6 +242,7 @@ class PlayerManager @Inject constructor(
     private val radioRepository: RadioRepository,
     private val externalLinkResolver: ExternalLinkResolver,
     private val streamResolver: StreamResolver,
+    private val knownHitsRepository: com.miguelaetxio.mimoo.data.remote.KnownHitsRepository,
 ) {
     /**
      * Público (antes privado) para que MiMooPlaybackService pueda
@@ -463,6 +464,8 @@ class PlayerManager @Inject constructor(
                     // from this new artist on the next top-up.
                     radioAnchor = null
                     radioUsedArtists.clear()
+                    radioTracksAccepted = 0
+                    radioExploreTracksUsed = 0
                 }
                 if (currentItem?.isFromRadio == true || isLastItem) {
                     topUpRadioQueueIfNeeded()
@@ -695,6 +698,20 @@ class PlayerManager @Inject constructor(
     private var radioAnchorArtistFallback: String? = null
     private var radioAnchorTrackTitle: String? = null
     private var radioAnchor: RadioAnchor? = null
+
+    /**
+     * S011 -- cupo de "exploración" de la sesión de Radio (petición
+     * explícita de Miguel Ángel): "una de cada diez canciones es la
+     * que nos dé que no esté [en el diccionario de éxitos]... las
+     * otras nueve deben cumplir con estar". `radioTracksAccepted`
+     * cuenta TODAS las pistas que Radio ha añadido de verdad esta
+     * sesión (conocidas + exploración); `radioExploreTracksUsed`
+     * cuenta cuántas de ellas fueron "exploración" (no encontradas en
+     * el diccionario). Se reinician junto con `radioAnchor` al
+     * arrancar una sesión nueva.
+     */
+    private var radioTracksAccepted = 0
+    private var radioExploreTracksUsed = 0
     private val radioUsedArtists = mutableSetOf<String>()
 
     private fun topUpRadioQueueIfNeeded() {
@@ -907,6 +924,27 @@ class PlayerManager @Inject constructor(
     }
 
     /**
+     * S011 -- cupo de exploración: 9 de cada 10 pistas que Radio añade
+     * deben ser un artista conocido (`KnownHitsRepository`, diccionario
+     * compilado una sola vez, ver esa clase); la décima puede ser
+     * cualquier cosa. `radioExploreTracksUsed * 10 < radioTracksAccepted + 1`
+     * es la comprobación de "¿toca ya una de exploración?" -- se
+     * mantiene al ritmo de 1 de cada 10 sin depender de saber de
+     * antemano cuántas pistas va a tener la sesión.
+     */
+    private fun isAcceptableByHitsQuota(artist: String, decadeBegin: Int?): Boolean {
+        if (knownHitsRepository.isKnownHitArtist(artist, decadeBegin)) {
+            radioTracksAccepted++
+            return true
+        }
+        val dueForExploration = radioExploreTracksUsed * 10 < radioTracksAccepted + 1
+        if (!dueForExploration) return false
+        radioTracksAccepted++
+        radioExploreTracksUsed++
+        return true
+    }
+
+    /**
      * Un único ciclo búsqueda-de-relacionado + búsqueda-gratuita-en-
      * YouTube + resolución-de-stream (ver RadioRepository y
      * ExternalLinkResolver.searchYoutube()). Nunca lanza -- cualquier
@@ -939,6 +977,20 @@ class PlayerManager @Inject constructor(
                 if (relatedArtist == null) {
                     // Sin log aquí -- suggestRelatedArtist() ya
                     // registra el motivo exacto.
+                    null
+                } else if (!isAcceptableByHitsQuota(relatedArtist, anchor.decadeBegin)) {
+                    // S011 -- rechazado por el cupo de exploración
+                    // (ver comentario de radioTracksAccepted/
+                    // radioExploreTracksUsed) -- ni siquiera se gasta
+                    // una búsqueda de YouTube en este candidato, el
+                    // llamante (topUpRadioQueueIfNeeded) simplemente
+                    // reintenta con otro.
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchOneRadioTrack(ancla='$anchorArtistName') -> relacionado='$relatedArtist' " +
+                            "descartado por el cupo de éxitos conocidos (década=${anchor.decadeBegin}, " +
+                            "aceptadas=$radioTracksAccepted, exploración=$radioExploreTracksUsed)",
+                    )
                     null
                 } else {
                     // H08 -- limit=6 en vez de 1, y se descartan
@@ -1355,6 +1407,8 @@ class PlayerManager @Inject constructor(
         radioAnchorTrackTitle = null
         radioAnchor = null
         radioUsedArtists.clear()
+        radioTracksAccepted = 0
+        radioExploreTracksUsed = 0
         syncStateFromPlayer()
     }
 

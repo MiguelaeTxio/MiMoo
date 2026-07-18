@@ -1,0 +1,59 @@
+{
+  "1960": [
+    "The Beatles", "The Rolling Stones", "Elvis Presley", "The Beach Boys", "Bob Dylan",
+    "The Supremes", "The Mamas & The Papas", "The Kinks", "The Who", "Simon & Garfunkel",
+    "Otis Redding", "Aretha Franklin", "Marvin Gaye", "The Animals", "The Monkees",
+    "Sam Cooke", "Ray Charles", "Cliff Richard", "Tom Jones", "Petula Clark",
+    "Raphael", "Julio Iglesias", "Duo Dinámico", "Los Bravos", "Massiel",
+    "Marisol", "Rocío Dúrcal", "Karina", "Fórmula V", "Los Brincos", "Los Pekenikes"
+  ],
+  "1970": [
+    "Led Zeppelin", "Pink Floyd", "Elton John", "The Rolling Stones", "ABBA",
+    "Fleetwood Mac", "Queen", "David Bowie", "Bee Gees", "Stevie Wonder",
+    "Eagles", "Rod Stewart", "Bob Marley", "The Eagles", "Chicago",
+    "Carpenters", "Donna Summer", "Boney M.", "Julio Iglesias", "Camilo Sesto",
+    "Rocío Jurado", "Manolo Escobar", "Massiel", "José Luis Perales",
+    "Nino Bravo", "Mocedades", "Los Pecos", "Miguel Ríos", "Barry White"
+  ],
+  "1980": [
+    "Michael Jackson", "Madonna", "Prince", "U2", "Whitney Houston",
+    "Duran Duran", "Wham!", "Culture Club", "The Police", "Phil Collins",
+    "Cyndi Lauper", "Eurythmics", "Depeche Mode", "Tina Turner", "Bon Jovi",
+    "Alaska y Dinarama", "Mecano", "Hombres G", "Radio Futura", "Loquillo",
+    "Miguel Bosé", "Rocío Jurado", "La Pantoja", "Alejandro Sanz", "Ana Belén",
+    "Víctor Manuel", "Kiko Veneno", "Nacha Pop", "Golpes Bajos", "Gabinete Caligari",
+    "Modern Talking", "a-ha", "Wham"
+  ],
+  "1990": [
+    "Mariah Carey", "Whitney Houston", "Michael Jackson", "Madonna", "Nirvana",
+    "U2", "Spice Girls", "Backstreet Boys", "Celine Dion", "Britney Spears",
+    "Take That", "Oasis", "Ace of Base", "Alejandro Sanz", "Enrique Iglesias",
+    "Héroes del Silencio", "Mecano", "Bunbury", "Rosana", "Alejandro Fernández",
+    "Presuntos Implicados", "Amistades Peligrosas", "Estopa", "Chayanne",
+    "Ricky Martin", "Shakira", "Backstreet Boys", "R.E.M.", "Blur"
+  ],
+  "2000": [
+    "Beyoncé", "Rihanna", "Christina Aguilera", "Britney Spears", "Eminem",
+    "Coldplay", "Black Eyed Peas", "Shakira", "Alejandro Sanz", "David Bisbal",
+    "Enrique Iglesias", "Amaral", "La Oreja de Van Gogh", "Melendi",
+    "Estopa", "El Canto del Loco", "Manu Chao", "Sergio Dalma",
+    "Christina Rosenvinge", "Fangoria", "Nena Daconte", "Nelly Furtado",
+    "Justin Timberlake", "Usher", "Kanye West", "Amy Winehouse"
+  ],
+  "2010": [
+    "Adele", "Bruno Mars", "Ed Sheeran", "Katy Perry", "Rihanna",
+    "Taylor Swift", "Justin Bieber", "Coldplay", "One Direction", "Lady Gaga",
+    "Shakira", "Pablo Alborán", "Alejandro Sanz", "Enrique Iglesias",
+    "David Bisbal", "Malú", "Manuel Carrasco", "Vanesa Martín", "Melendi",
+    "Rosalía", "C. Tangana", "Aitana", "Ana Mena", "Dani Martín",
+    "Maluma", "J Balvin", "Ozuna", "Sebastián Yatra", "Luis Fonsi"
+  ],
+  "2020": [
+    "Bad Bunny", "Karol G", "Rosalía", "Aitana", "Ana Mena",
+    "Quevedo", "Bizarrap", "Feid", "Rauw Alejandro", "Myke Towers",
+    "Manuel Turizo", "Shakira", "Dua Lipa", "The Weeknd", "Taylor Swift",
+    "Olivia Rodrigo", "Sabrina Carpenter", "Doja Cat", "Tate McRae", "Benson Boone",
+    "Lola Índigo", "Dani Fernández", "Pablo Alborán", "María Becerra",
+    "BTS", "Måneskin", "Tiësto", "Ed Sheeran", "David Guetta", "Emilia"
+  ]
+}

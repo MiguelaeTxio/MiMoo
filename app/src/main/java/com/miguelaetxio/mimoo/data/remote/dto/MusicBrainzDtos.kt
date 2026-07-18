@@ -109,11 +109,26 @@ data class MusicBrainzArtistSummary(
     @SerializedName("country") val country: String? = null,
 )
 
+/**
+ * S011 -- `life-span.begin` (año de inicio de actividad del
+ * artista/grupo), añadido para poder anclar la Radio también por
+ * década, no solo por género+país. Petición explícita de Miguel
+ * Ángel, con un caso concreto: "he puesto una canción de Alaska y
+ * Dinarama y ahora me pone reguetón... si pones una canción de los
+ * Beatles no es lógico que después te ponga reguetón". Igual que
+ * `country`, es un campo de primer nivel que MusicBrainz siempre
+ * devuelve si lo tiene, sin necesitar ningún `inc=` especial.
+ */
 data class MusicBrainzArtistDetail(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
     @SerializedName("genres") val genres: List<MusicBrainzGenre> = emptyList(),
     @SerializedName("country") val country: String? = null,
+    @SerializedName("life-span") val lifeSpan: MusicBrainzLifeSpan? = null,
+)
+
+data class MusicBrainzLifeSpan(
+    @SerializedName("begin") val begin: String? = null,
 )
 
 data class MusicBrainzGenre(

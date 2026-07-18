@@ -18,7 +18,7 @@ import javax.inject.Singleton
  * recalculated for the rest of the session, no matter how many tracks
  * get chained afterward.
  */
-data class RadioAnchor(val genre: String, val country: String?)
+data class RadioAnchor(val genre: String, val country: String?, val decadeBegin: Int? = null)
 
 /**
  * H08 PARTE 2 (S009, fix de sesgo hacia música inglesa e
@@ -130,8 +130,12 @@ class RadioRepository @Inject constructor(
             }
             val chosenGenre = genres.random()
             val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
-            log("resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: género='$chosenGenre', país=$sourceCountry")
-            RadioAnchor(genre = chosenGenre, country = sourceCountry)
+            val decadeBegin = parseDecadeBegin(sourceDetail.lifeSpan?.begin)
+            log(
+                "resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: " +
+                    "género='$chosenGenre', país=$sourceCountry, década=$decadeBegin"
+            )
+            RadioAnchor(genre = chosenGenre, country = sourceCountry, decadeBegin = decadeBegin)
         } catch (e: Exception) {
             log("resolveAnchor('$sourceArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
@@ -154,26 +158,57 @@ class RadioRepository @Inject constructor(
     suspend fun suggestRelatedArtist(anchor: RadioAnchor, excludeArtists: Set<String>): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
 
-        val countryScoped = if (anchor.country != null) {
-            findCandidates(anchor.genre, anchor.country, excludeLower)
+        // S011 -- filtro de década (petición explícita de Miguel Ángel,
+        // caso concreto: Alaska y Dinarama -- 80s -- terminó en
+        // reguetón. "Si pones una canción de los Beatles no es lógico
+        // que después te ponga reguetón"). Cascada de intentos, más
+        // estricto primero, igual que ya se hacía solo con país:
+        // género+país+década -> género+década (sin país, por si el
+        // cruce de las tres es demasiado estrecho) -> género+país (el
+        // comportamiento de antes de esta sesión) -> género solo.
+        val genreCountryDecade = if (anchor.country != null && anchor.decadeBegin != null) {
+            findCandidates(anchor.genre, anchor.country, anchor.decadeBegin, excludeLower)
+        } else {
+            emptyList()
+        }
+        val genreDecade = if (genreCountryDecade.isEmpty() && anchor.decadeBegin != null) {
+            findCandidates(anchor.genre, countryCode = null, anchor.decadeBegin, excludeLower)
+        } else {
+            emptyList()
+        }
+        val genreCountry = if (genreCountryDecade.isEmpty() && genreDecade.isEmpty() && anchor.country != null) {
+            findCandidates(anchor.genre, anchor.country, decadeBegin = null, excludeLower)
         } else {
             emptyList()
         }
 
-        val candidates = if (countryScoped.isNotEmpty()) {
-            countryScoped
-        } else {
-            if (anchor.country != null) {
-                log("suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}) -- 0 candidatos CON país, reintentando solo por género")
+        val candidates = genreCountryDecade.ifEmpty {
+            genreDecade.ifEmpty {
+                genreCountry.ifEmpty {
+                    if (anchor.country != null || anchor.decadeBegin != null) {
+                        log(
+                            "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}, " +
+                                "década=${anchor.decadeBegin}) -- 0 candidatos en ningún cruce más " +
+                                "estricto, reintentando solo por género"
+                        )
+                    }
+                    findCandidates(anchor.genre, countryCode = null, decadeBegin = null, excludeLower)
+                }
             }
-            findCandidates(anchor.genre, countryCode = null, excludeLower)
         }
 
         val chosen = candidates.randomOrNull()
         if (chosen == null) {
-            log("suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}) -- 0 candidatos NI con país NI sin él (tras excluir ${excludeArtists.size} ya usados) -- eslabón roto")
+            log(
+                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}, " +
+                    "década=${anchor.decadeBegin}) -- 0 candidatos en ningún cruce " +
+                    "(tras excluir ${excludeArtists.size} ya usados) -- eslabón roto"
+            )
         } else {
-            log("suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}) -> '$chosen' (${candidates.size} candidatos, filtrado por país: ${countryScoped.isNotEmpty()})")
+            log(
+                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country}, " +
+                    "década=${anchor.decadeBegin}) -> '$chosen' (${candidates.size} candidatos)"
+            )
         }
         return chosen
     }
@@ -181,6 +216,7 @@ class RadioRepository @Inject constructor(
     private suspend fun findCandidates(
         genre: String,
         countryCode: String?,
+        decadeBegin: Int?,
         excludeLower: Set<String>,
     ): List<String> = try {
         // S010 -- offset aleatorio, no siempre 0 (petición explícita
@@ -211,19 +247,38 @@ class RadioRepository @Inject constructor(
         // handled the same as "no candidates").
         val randomOffset = (0..90 step 10).toList().random()
         musicBrainzApiService
-            .searchArtists(query = buildGenreQuery(genre, countryCode), limit = 10, offset = randomOffset)
+            .searchArtists(query = buildGenreQuery(genre, countryCode, decadeBegin), limit = 10, offset = randomOffset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
     } catch (e: Exception) {
-        log("findCandidates(género='$genre', país=$countryCode) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+        log("findCandidates(género='$genre', país=$countryCode, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
         emptyList()
     }
 
-    private fun buildGenreQuery(genre: String, countryCode: String?): String {
+    private fun buildGenreQuery(genre: String, countryCode: String?, decadeBegin: Int?): String {
         fun escape(value: String) = value.replace("\"", "")
-        val base = "tag:\"${escape(genre)}\""
-        return if (countryCode != null) "$base AND country:${escape(countryCode)}" else base
+        var query = "tag:\"${escape(genre)}\""
+        if (countryCode != null) query += " AND country:${escape(countryCode)}"
+        // S011 -- rango de década sobre el campo `begin` (verificado
+        // como campo de búsqueda real de artista en MusicBrainz,
+        // musicbrainzngs docs, 2026-07-18) -- "artista que empezó su
+        // actividad entre el inicio y el final de esta década", mejor
+        // esfuerzo razonable como proxy de "época musical" ya que
+        // MusicBrainz no tiene un campo de "década" per se.
+        if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
+        return query
+    }
+
+    /**
+     * "1983-05-12", "1983-05", "1983" -- MusicBrainz life-span.begin
+     * viene con distinta precisión según lo que conste en su base. Se
+     * usan solo los 4 primeros dígitos (el año) y se redondea hacia
+     * abajo a la década ("1983" -> 1980).
+     */
+    private fun parseDecadeBegin(begin: String?): Int? {
+        val year = begin?.take(4)?.toIntOrNull() ?: return null
+        return (year / 10) * 10
     }
 
     private fun log(line: String) = RadioDebugLogger.log(appContext, storageManager, line)
