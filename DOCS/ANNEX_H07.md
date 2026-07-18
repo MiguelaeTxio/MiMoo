@@ -496,6 +496,13 @@ suponer:**
 
 ### Hoja de ruta
 
+## COMPLETADAS EN S015
+
+(Detalle completo de lo construido -- réplica total de datos, tres
+puntos de conectividad/push inmediato, y los dos hallazgos reales
+corregidos sobre la marcha -- queda documentado paso a paso arriba, en
+esta misma sección "Hoja de ruta", PASOS 1-6, todos marcados ✅.)
+
 **PASO 1 ✅ (S015, confirmado por Miguel Ángel esta sesión):** "la
 aplicación debe replicarse de un dispositivo a otro" -- alcance total,
 no solo el favorito de radio o de canal aislado que motivó el reporte
@@ -551,9 +558,10 @@ explícitamente fuera -- credencial de dispositivo, no preferencia.
 
 **PASO 5 -- Verificación en dispositivo real con dos dispositivos**
 (teléfono + tablet de Miguel Ángel y Silvia, mismo patrón que S008):
-**pendiente, sin hacer todavía.** Marcar favorito de radio/canal y
-cambiar el ajuste de cristal en uno, sincronizar, confirmar que
-aparece en el otro sin duplicar ni perder lo que ya tenía.
+**pendiente, sin hacer todavía -- primer punto de la hoja de ruta
+cuando se retome este hito.** Marcar favorito de radio/canal y cambiar
+el ajuste de cristal en uno, sincronizar, confirmar que aparece en el
+otro sin duplicar ni perder lo que ya tenía.
 
 **PASO 6 ✅ (S015, misma sesión -- Miguel Ángel exigió cerrarlo de
 inmediato, "la sincronización debe ser total"):** alternar un favorito
@@ -570,6 +578,33 @@ Activity añadida en las tres pantallas que no la tenían
 idéntico a `LibraryScreen.kt`. Sin verificación visual posible en este
 entorno (sin dispositivo) -- cubierto por build verde de GitHub
 Actions; verificación real queda dentro del PASO 5.
+
+**Nota de sesión, sin relación con el código de este hito:** en el
+transcurso de S015 se detectó y corrigió también una inconsistencia
+visual real en H03/Biblioteca (`LibraryScreen.kt`): el toggle
+lista/alfabeto de Álbumes no tenía la chapita de cristal esmerilado
+que sí lleva su gemelo de Sencillos. Corregido (commit `661d7b5`,
+verificado en build verde) -- no forma parte del alcance de H07, se
+deja anotado aquí solo por trazabilidad de la sesión.
+
+## Hoja de Ruta para la Siguiente Sesión que retome H07
+
+1. **PASO 5 (verificación en dispositivo real)** -- único punto
+   técnico que queda abierto de la réplica total: con dos dispositivos
+   (teléfono + tablet), marcar favorito de radio, suscribirte a un
+   canal, y cambiar el ajuste de cristal en uno; sincronizar (abrir la
+   app) y confirmar que todo aparece en el otro sin duplicar ni perder
+   nada. Probar también el caso "sin conexión" (debe rechazar la
+   mutación con el aviso de Snackbar, no aplicarla en local).
+2. Confirmar de paso que el fix de `SocketTimeoutException` en el
+   diálogo de conflicto de sync (commit `4784c9d`, S011) sigue sin
+   reventar -- pendiente de confirmación explícita de Miguel Ángel
+   desde que se corrigió.
+3. Si aparece algún bug real de dispositivo, diagnosticar leyendo el
+   log real (`sync_debug.txt`/`BackupDebugLogger`) antes de suponer
+   causa -- mismo criterio que siempre.
+
+## Fuera de Alcance de Este Hito
 
 
 

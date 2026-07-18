@@ -11,48 +11,78 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-18 (cierre de sesión S014 NewFlow)
+## Última actualización: 2026-07-18 (cierre de sesión S015 NewFlow)
 
-**Hito activo: H07** (sincronización total -- pistas, links, settings,
-favoritos) -- H08 se pausó al cierre de esta sesión (PCH explícito de
-Miguel Ángel), ver `DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H08** (cupo 80/10/10 de Radio configurable en Ajustes)
+-- H07 se pausó al cierre de esta sesión (PCH explícito de Miguel
+Ángel), ver `DOCS/ANNEX_ROUTER.md`.
 
-**S014 construyó por completo el rediseño de Radio cerrado en diseño
-en S013** (ver `DOCS/ANNEX_H08.md`, sección "COMPLETADAS EN S014"):
-origen español/mixto fijado por el primer tema, diccionario
-artista+canción por origen/década, cupo 80/10/10 (diccionario/
-exploración/disco) con degradación a 90/10 y cascada de fallback
-final. Workflow de GitHub Actions en verde (commit `a776d8d`).
+**S015 construyó la réplica total de H07** (ver `DOCS/ANNEX_H07.md`,
+sección "COMPLETADAS EN S015" -- PASOS 1-6, todos ✅ salvo el PASO 5):
+`BackupBundle` ahora transporta favoritos de radio (H09), suscripciones
+de canal (H11) y ajustes de UI, además de lo que ya llevaba (pistas/
+favoritos de álbum/playlists). Dos hallazgos reales corregidos sobre la
+marcha en la misma sesión: `BackupMirrorRepository.compare()` no
+comparaba los campos nuevos (habría dejado la sincronización sin
+disparar si solo divergía ahí) y `ShareCodeRepository` (H10) habría
+filtrado esos mismos datos personales a cualquiera que recibiera un
+código de compartición -- ambos corregidos. Además, marcar/desmarcar
+favorito de radio y suscribirte/darte de baja de un canal pasan ahora
+por `AutoSyncPusher.executeIfConnected()` (conectividad obligatoria +
+push inmediato), mismo patrón que pistas/álbumes/playlists -- exigido
+explícitamente por Miguel Ángel ("la sincronización debe ser total")
+tras detectar el hueco él mismo. Workflow de GitHub Actions en verde en
+los tres commits de la sesión (`efd7817`, `10e9e95`, `661d7b5`).
 **Pendiente de verificación en dispositivo real por Miguel Ángel** --
-ver la hoja de ruta de `DOCS/ANNEX_H08.md` para el detalle exacto de
-qué probar cuando se retome ese hito.
+ver `DOCS/ANNEX_H07.md`, "Hoja de Ruta para la Siguiente Sesión que
+retome H07", para el detalle exacto de qué probar.
 
-**Cierre de sesión, PCH explícito de Miguel Ángel:** H08 pasa a
-PAUSADO, H07 pasa a EN PROGRESO -- retoma la divergencia real de
-favoritos/ajustes entre dispositivos que Miguel Ángel reportó en S013
-y quedó pospuesta sin investigar. `DOCS/ANNEX_H07.md`, sección
-"Ampliación S014", ya trae la hoja de ruta ejecutable con el
-diagnóstico de partida confirmado leyendo el código real esta misma
-sesión (antes del PCH): `BackupBundle` no transporta favoritos de
-radio (H09) ni suscripciones de canal (H11) ni ningún ajuste de la
-app -- punto de partida más probable de la divergencia reportada.
+**Nota de sesión sin relación con H07:** se detectó y corrigió también
+una inconsistencia visual real en Biblioteca (`LibraryScreen.kt`) --
+el toggle lista/alfabeto de Álbumes no tenía la chapita de cristal
+esmerilado que sí lleva su gemelo de Sencillos (commit `661d7b5`).
 
-**Siguiente sesión (H07, sincronización total):**
-1. Confirmar con Miguel Ángel qué divergía exactamente (favoritos de
-   radio, canales suscritos, algún ajuste, o varios) antes de tocar
-   código -- ver `DOCS/ANNEX_H07.md` PASO 1 de la ampliación S014.
-2. Seguir la hoja de ruta completa de esa misma sección (PASOS 2-5):
-   ampliar `BackupBundle`/`BackupDto.kt`, `BackupRepository`/
-   `BackupImportRepository`, y opcionalmente `UiPreferencesManager` si
-   Miguel Ángel confirma que los ajustes también divergen.
-3. Verificación en dispositivo real con dos dispositivos (teléfono +
-   tablet).
+**Incidencia de interfaz reportada por Miguel Ángel durante la
+sesión, ajena al código del proyecto:** cortes/desincronización real
+del chat de Claude.ai -- contenido de turnos anteriores de la propia
+sesión desaparecido del lado del usuario, con frecuencia reportada
+como alta. No es diagnosticable ni corregible desde este repositorio
+(vive en la infraestructura del cliente de chat, fuera del alcance de
+Claude en una sesión). Recomendado a Miguel Ángel: botón de "no me
+gusta" en el turno donde note el corte (envía contexto técnico
+directamente a Anthropic) y/o soporte de Anthropic. Mitigación de
+producto ya vigente en MiMoo: el estado real del proyecto nunca vive
+en la memoria del chat -- cada bloque de trabajo se commitea/pushea al
+momento y `RESUMPTION_POINT.md`/`ANNEX_ROUTER.md` reflejan siempre la
+verdad actual del repo, así que un corte de chat no pierde trabajo del
+proyecto, solo el texto de la conversación.
 
-**Pendiente sin resolver, distinto de H07 -- para cuando se retome H08
-con su propio PCH:** verificación en dispositivo del rediseño de Radio
-S013/S014 completo, ver punto arriba.
+**Cierre de sesión, PCH explícito de Miguel Ángel:** H07 pasa a
+PAUSADO (réplica total construida, verificación en dispositivo
+pendiente), H08 pasa a EN PROGRESO -- Miguel Ángel pide explícitamente
+los porcentajes del cupo 80/10/10 configurables en Ajustes, punto ya
+anticipado con hoja de ruta ejecutable en `DOCS/ANNEX_H08.md` ("Hoja
+de Ruta para la Siguiente Sesión que retome H08", punto 3) -- no hizo
+falta tocar ese anexo en esta sesión, su hoja de ruta ya lo contemplaba
+con suficiente detalle para arrancar sin contexto adicional.
+
+**Siguiente sesión (H08, cupo configurable):**
+1. Sacar las tres proporciones del cupo (diccionario/exploración/
+   disco, hoy 80/10/10 fijo como comparación de enteros en
+   `PlayerManager.dueForExploreQuota()`/`dueForDiscoQuota()`) a
+   `UiPreferencesManager`, con una pantalla/slider en Ajustes -- ver
+   `DOCS/ANNEX_H08.md` punto 6 y punto 3 de la hoja de ruta final para
+   el contexto técnico completo (dónde viven hoy, qué reemplazar).
+2. Verificación en dispositivo real de todo lo construido en S014
+   (rediseño de Radio, sin verificar todavía) -- sigue pendiente,
+   compatible con verificar a la vez el cupo configurable nuevo.
+
+**Pendiente sin resolver, distinto de H08 -- para cuando se retome H07
+con su propio PCH:** verificación en dispositivo de la réplica total
+(PASO 5 de `DOCS/ANNEX_H07.md`), ver punto arriba.
 
 ---
+
 
 ## Sesión anterior (S011, contexto histórico)
 
