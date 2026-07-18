@@ -105,7 +105,13 @@ private fun ChannelSection(
     onPlayTrack: (com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .glassChip(interactive = false)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             if (channel.subscription.thumbnailUrl != null) {
                 SubcomposeAsyncImage(
                     model = channel.subscription.thumbnailUrl,
@@ -123,23 +129,29 @@ private fun ChannelSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            IconButton(onClick = onPlayAll, enabled = channel.tracks.isNotEmpty()) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir todo el canal")
+            Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                IconButton(onClick = onPlayAll, enabled = channel.tracks.isNotEmpty()) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir todo el canal")
+                }
             }
-            IconButton(onClick = onUnsubscribe) {
-                Icon(
-                    Icons.Filled.RemoveCircleOutline,
-                    contentDescription = "Darse de baja del canal",
-                    tint = MaterialTheme.colorScheme.error,
-                )
+            Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                IconButton(onClick = onUnsubscribe) {
+                    Icon(
+                        Icons.Filled.RemoveCircleOutline,
+                        contentDescription = "Darse de baja del canal",
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
         channel.tracks.forEach { track ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(start = 44.dp, end = 8.dp, top = 3.dp, bottom = 3.dp)
+                    .glassChip()
                     .clickable { onPlayTrack(track) }
-                    .padding(start = 52.dp, top = 6.dp, bottom = 6.dp),
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
             ) {
                 Text(
                     track.title,

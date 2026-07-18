@@ -293,7 +293,10 @@ private fun SearchResultRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip()
+            .clickable(onClick = onPlay)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -456,8 +459,10 @@ private fun SearchTypeResultRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .glassChip()
             .clickable(onClick = onOpen)
-            .padding(vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (result.thumbnailUrl != null) {
