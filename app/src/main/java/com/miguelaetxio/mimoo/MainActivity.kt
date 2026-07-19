@@ -869,6 +869,16 @@ class MainActivity : ComponentActivity() {
                                         Screen.Queue.route,
                                     ) { launchSingleTop = true }
                                 },
+                                onOpenAlbum = { artistName, albumName ->
+                                    navController.navigate(
+                                        Screen.Album.routeFor(artistName, albumName),
+                                    )
+                                },
+                                onOpenArtist = { artistName ->
+                                    navController.navigate(
+                                        Screen.Artist.routeFor(artistName),
+                                    )
+                                },
                             )
                         }
 

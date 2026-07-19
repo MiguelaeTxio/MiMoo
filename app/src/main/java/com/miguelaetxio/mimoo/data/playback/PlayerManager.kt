@@ -1004,7 +1004,18 @@ class PlayerManager @Inject constructor(
      * the first " - " counts. Discarded if the result is suspiciously
      * short or if there's no separator at all.
      */
-    private fun parseArtistFromTitle(title: String?): String? {
+    /**
+     * H12 (S018) -- visibilidad ampliada de `private` a `internal`
+     * para que PlayerBarViewModel la reutilice en el menú de tres
+     * puntos ("Ver artista"), sin duplicar esta lógica de parseo.
+     * Comportamiento sin cambios respecto a su uso original en Radio.
+     * ---
+     * H12 (S018) -- visibility widened from `private` to `internal` so
+     * PlayerBarViewModel can reuse it for the three-dot menu ("View
+     * artist"), without duplicating this parsing logic. Behavior
+     * unchanged from its original use in Radio.
+     */
+    internal fun parseArtistFromTitle(title: String?): String? {
         if (title.isNullOrBlank()) return null
         val separatorIndex = title.indexOf(" - ")
         if (separatorIndex <= 0) return null

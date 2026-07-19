@@ -108,6 +108,48 @@ class PlayerBarViewModel @Inject constructor(
         _downloadStatus.asStateFlow()
 
     /**
+     * H12 (S018) -- artista/álbum resueltos para el menú de tres
+     * puntos del reproductor ("Ver álbum"/"Ver artista", roadmap punto
+     * 6). `_menuArtist`: el artista ESTRUCTURADO de la fila local si
+     * existe (`track.artist`, H05) tiene prioridad; si la pista no
+     * tiene fila local o esa fila no trae artista, cae al
+     * `currentArtist` del propio PlaybackState (fiable para pistas
+     * reproducidas desde AlbumScreen/SongScreen, que siempre lo
+     * pasan); si tampoco hay nada, se intenta
+     * `PlayerManager.parseArtistFromTitle()` (mismo patrón que Radio,
+     * H08) sobre el título. `null` en los tres casos = sin artista
+     * resoluble = la UI oculta el menú entero (no tiene sentido
+     * mostrar un menú con cero opciones). `_menuAlbum`: solo viene de
+     * la fila local (`track.album`) -- nunca se infiere, un álbum
+     * inventado navegaría a un sitio incorrecto.
+     * ---
+     * H12 (S018) -- resolved artist/album for the player's three-dot
+     * menu ("View album"/"View artist", roadmap point 6).
+     * `_menuArtist`: the local row's STRUCTURED artist (`track.artist`,
+     * H05) takes priority if it exists; if there's no local row or it
+     * has no artist, falls back to PlaybackState's own `currentArtist`
+     * (reliable for tracks played from AlbumScreen/SongScreen, which
+     * always pass it); if there's still nothing,
+     * `PlayerManager.parseArtistFromTitle()` is tried (same pattern as
+     * Radio, H08) against the title. `null` in all three cases = no
+     * resolvable artist = the UI hides the whole menu (no point
+     * showing a menu with zero options). `_menuAlbum`: only ever comes
+     * from the local row (`track.album`) -- never inferred, a made-up
+     * album would navigate somewhere wrong.
+     */
+    private val _menuArtist = MutableStateFlow<String?>(null)
+    val menuArtist: StateFlow<String?> = _menuArtist.asStateFlow()
+    private val _menuAlbum = MutableStateFlow<String?>(null)
+    val menuAlbum: StateFlow<String?> = _menuAlbum.asStateFlow()
+
+    private fun resolveMenuArtist(track: com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack?): String? {
+        val current = state.value
+        return track?.artist?.takeIf { it.isNotBlank() }
+            ?: current.currentArtist?.takeIf { it.isNotBlank() }
+            ?: playerManager.parseArtistFromTitle(current.currentTitle)
+    }
+
+    /**
      * Fallo real diagnosticado leyendo el código (Miguel Ángel,
      * 2026-07-15: "a veces tiene carátula un disco pero no se ve en
      * el exoplayer"): hasta ahora este ViewModel solo LEÍA
@@ -192,6 +234,8 @@ class PlayerBarViewModel @Inject constructor(
                     _isCurrentFavorite.value = track?.isFavorite == true
                     _coverArtUrl.value = track?.coverArtUrl
                     _downloadStatus.value = track?.downloadStatus
+                    _menuArtist.value = resolveMenuArtist(track)
+                    _menuAlbum.value = track?.album
                     if (track != null && track.coverArtUrl == null) {
                         requestCoverArtIfMissing(track.artist, track.album)
                     }
@@ -204,6 +248,8 @@ class PlayerBarViewModel @Inject constructor(
         _isCurrentFavorite.value = track?.isFavorite == true
         _coverArtUrl.value = track?.coverArtUrl
         _downloadStatus.value = track?.downloadStatus
+        _menuArtist.value = resolveMenuArtist(track)
+        _menuAlbum.value = track?.album
         if (track != null && track.coverArtUrl == null) {
             requestCoverArtIfMissing(track.artist, track.album)
         }

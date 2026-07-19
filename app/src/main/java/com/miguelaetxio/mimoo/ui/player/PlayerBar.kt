@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -82,12 +83,16 @@ import coil.compose.SubcomposeAsyncImage
 fun PlayerBar(
     viewModel: PlayerBarViewModel = hiltViewModel(),
     onOpenQueue: () -> Unit,
+    onOpenAlbum: (artistName: String, albumName: String) -> Unit,
+    onOpenArtist: (artistName: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val positionMs by viewModel.positionMs.collectAsState()
     val isCurrentFavorite by viewModel.isCurrentFavorite.collectAsState()
     val coverArtUrl by viewModel.coverArtUrl.collectAsState()
     val downloadStatus by viewModel.downloadStatus.collectAsState()
+    val menuArtist by viewModel.menuArtist.collectAsState()
+    val menuAlbum by viewModel.menuAlbum.collectAsState()
     val title = state.currentTitle ?: return
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
     var isExpanded by remember { mutableStateOf(true) }
@@ -206,6 +211,39 @@ fun PlayerBar(
                 ) {
                     IconButton(onClick = viewModel::downloadCurrentTrack) {
                         Icon(Icons.Filled.Download, contentDescription = "Descargar")
+                    }
+                }
+
+                // H12 (S018, roadmap punto 6) -- menú de tres puntos:
+                // "Ver álbum"/"Ver artista". Oculto por completo si no
+                // hay artista resoluble (ver PlayerBarViewModel.
+                // resolveMenuArtist()) -- un menú con cero opciones no
+                // aporta nada. "Ver álbum" solo aparece si además se
+                // conoce el álbum (fila local con `album` no nulo).
+                if (menuArtist != null) {
+                    var showMenu by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "Más opciones")
+                        }
+                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            if (menuAlbum != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Ver álbum") },
+                                    onClick = {
+                                        showMenu = false
+                                        onOpenAlbum(menuArtist!!, menuAlbum!!)
+                                    },
+                                )
+                            }
+                            DropdownMenuItem(
+                                text = { Text("Ver artista") },
+                                onClick = {
+                                    showMenu = false
+                                    onOpenArtist(menuArtist!!)
+                                },
+                            )
+                        }
                     }
                 }
 
