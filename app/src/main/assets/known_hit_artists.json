@@ -1,251 +1,1048 @@
 {
   "1960": {
     "es": [
-      {"artist": "Raphael", "song": "Yo Soy Aquel"},
-      {"artist": "Julio Iglesias", "song": "La Vida Sigue Igual"},
-      {"artist": "Duo Dinámico", "song": "Quince Años Tiene Mi Amor"},
-      {"artist": "Los Bravos", "song": "Black Is Black"},
-      {"artist": "Massiel", "song": "La, La, La"},
-      {"artist": "Marisol", "song": "Corazón Contento"},
-      {"artist": "Rocío Dúrcal", "song": "Amor a la Española"},
-      {"artist": "Karina", "song": "El Baúl de los Recuerdos"},
-      {"artist": "Fórmula V", "song": "Que Bueno, Que Bueno"},
-      {"artist": "Los Brincos", "song": "Flamenco"},
-      {"artist": "Los Pekenikes", "song": "Adagio"}
+      {
+        "artist": "Raphael",
+        "song": "Yo Soy Aquel"
+      },
+      {
+        "artist": "Julio Iglesias",
+        "song": "La Vida Sigue Igual"
+      },
+      {
+        "artist": "Duo Dinámico",
+        "song": "Quince Años Tiene Mi Amor"
+      },
+      {
+        "artist": "Los Bravos",
+        "song": "Black Is Black"
+      },
+      {
+        "artist": "Massiel",
+        "song": "La, La, La"
+      },
+      {
+        "artist": "Marisol",
+        "song": "Corazón Contento"
+      },
+      {
+        "artist": "Rocío Dúrcal",
+        "song": "Amor a la Española"
+      },
+      {
+        "artist": "Karina",
+        "song": "El Baúl de los Recuerdos"
+      },
+      {
+        "artist": "Fórmula V",
+        "song": "Que Bueno, Que Bueno"
+      },
+      {
+        "artist": "Los Brincos",
+        "song": "Flamenco"
+      },
+      {
+        "artist": "Los Pekenikes",
+        "song": "Adagio"
+      },
+      {
+        "artist": "Micky",
+        "song": "El Koala"
+      },
+      {
+        "artist": "Joan Manuel Serrat",
+        "song": "Penélope"
+      },
+      {
+        "artist": "Miguel Ríos",
+        "song": "El Río"
+      },
+      {
+        "artist": "Los Relámpagos",
+        "song": "Yo No Me Quiero Casar"
+      },
+      {
+        "artist": "Peret",
+        "song": "Una Lágrima"
+      },
+      {
+        "artist": "Los Diablos",
+        "song": "El Vagabundo"
+      }
     ],
     "intl": [
-      {"artist": "The Beatles", "song": "Hey Jude"},
-      {"artist": "The Rolling Stones", "song": "Satisfaction"},
-      {"artist": "Elvis Presley", "song": "Suspicious Minds"},
-      {"artist": "The Beach Boys", "song": "Good Vibrations"},
-      {"artist": "Bob Dylan", "song": "Like a Rolling Stone"},
-      {"artist": "The Supremes", "song": "Baby Love"},
-      {"artist": "The Mamas & The Papas", "song": "California Dreamin'"},
-      {"artist": "The Kinks", "song": "You Really Got Me"},
-      {"artist": "The Who", "song": "My Generation"},
-      {"artist": "Simon & Garfunkel", "song": "The Sound of Silence"},
-      {"artist": "Otis Redding", "song": "(Sittin' On) The Dock of the Bay"},
-      {"artist": "Aretha Franklin", "song": "Respect"},
-      {"artist": "Marvin Gaye", "song": "I Heard It Through the Grapevine"},
-      {"artist": "The Animals", "song": "House of the Rising Sun"},
-      {"artist": "The Monkees", "song": "I'm a Believer"},
-      {"artist": "Sam Cooke", "song": "A Change Is Gonna Come"},
-      {"artist": "Ray Charles", "song": "Hit the Road Jack"},
-      {"artist": "Cliff Richard", "song": "Congratulations"},
-      {"artist": "Tom Jones", "song": "It's Not Unusual"},
-      {"artist": "Petula Clark", "song": "Downtown"}
+      {
+        "artist": "The Beatles",
+        "song": "Hey Jude"
+      },
+      {
+        "artist": "The Rolling Stones",
+        "song": "Satisfaction"
+      },
+      {
+        "artist": "Elvis Presley",
+        "song": "Suspicious Minds"
+      },
+      {
+        "artist": "The Beach Boys",
+        "song": "Good Vibrations"
+      },
+      {
+        "artist": "Bob Dylan",
+        "song": "Like a Rolling Stone"
+      },
+      {
+        "artist": "The Supremes",
+        "song": "Baby Love"
+      },
+      {
+        "artist": "The Mamas & The Papas",
+        "song": "California Dreamin'"
+      },
+      {
+        "artist": "The Kinks",
+        "song": "You Really Got Me"
+      },
+      {
+        "artist": "The Who",
+        "song": "My Generation"
+      },
+      {
+        "artist": "Simon & Garfunkel",
+        "song": "The Sound of Silence"
+      },
+      {
+        "artist": "Otis Redding",
+        "song": "(Sittin' On) The Dock of the Bay"
+      },
+      {
+        "artist": "Aretha Franklin",
+        "song": "Respect"
+      },
+      {
+        "artist": "Marvin Gaye",
+        "song": "I Heard It Through the Grapevine"
+      },
+      {
+        "artist": "The Animals",
+        "song": "House of the Rising Sun"
+      },
+      {
+        "artist": "The Monkees",
+        "song": "I'm a Believer"
+      },
+      {
+        "artist": "Sam Cooke",
+        "song": "A Change Is Gonna Come"
+      },
+      {
+        "artist": "Ray Charles",
+        "song": "Hit the Road Jack"
+      },
+      {
+        "artist": "Cliff Richard",
+        "song": "Congratulations"
+      },
+      {
+        "artist": "Tom Jones",
+        "song": "It's Not Unusual"
+      },
+      {
+        "artist": "Petula Clark",
+        "song": "Downtown"
+      }
     ]
   },
   "1970": {
     "es": [
-      {"artist": "Julio Iglesias", "song": "Un Canto a Galicia"},
-      {"artist": "Camilo Sesto", "song": "Vivir Así Es Morir de Amor"},
-      {"artist": "Rocío Jurado", "song": "Señora"},
-      {"artist": "Manolo Escobar", "song": "Y Viva España"},
-      {"artist": "Massiel", "song": "Rosas En El Mar"},
-      {"artist": "José Luis Perales", "song": "Un Velero Llamado Libertad"},
-      {"artist": "Nino Bravo", "song": "Libre"},
-      {"artist": "Mocedades", "song": "Eres Tú"},
-      {"artist": "Los Pecos", "song": "Vestido Azul"},
-      {"artist": "Miguel Ríos", "song": "El Himno a la Alegría"}
+      {
+        "artist": "Julio Iglesias",
+        "song": "Un Canto a Galicia"
+      },
+      {
+        "artist": "Camilo Sesto",
+        "song": "Vivir Así Es Morir de Amor"
+      },
+      {
+        "artist": "Rocío Jurado",
+        "song": "Señora"
+      },
+      {
+        "artist": "Manolo Escobar",
+        "song": "Y Viva España"
+      },
+      {
+        "artist": "Massiel",
+        "song": "Rosas En El Mar"
+      },
+      {
+        "artist": "José Luis Perales",
+        "song": "Un Velero Llamado Libertad"
+      },
+      {
+        "artist": "Nino Bravo",
+        "song": "Libre"
+      },
+      {
+        "artist": "Mocedades",
+        "song": "Eres Tú"
+      },
+      {
+        "artist": "Los Pecos",
+        "song": "Vestido Azul"
+      },
+      {
+        "artist": "Miguel Ríos",
+        "song": "El Himno a la Alegría"
+      },
+      {
+        "artist": "Peret",
+        "song": "Borracho"
+      },
+      {
+        "artist": "Cecilia",
+        "song": "Un Ramito de Violetas"
+      },
+      {
+        "artist": "Jeanette",
+        "song": "Porque Te Vas"
+      },
+      {
+        "artist": "Triana",
+        "song": "Todo Es de Color"
+      },
+      {
+        "artist": "Tequila",
+        "song": "Salta"
+      },
+      {
+        "artist": "Sergio y Estíbaliz",
+        "song": "Tú Volverás"
+      },
+      {
+        "artist": "Miguel Bosé",
+        "song": "Linda"
+      },
+      {
+        "artist": "Enrique y Ana",
+        "song": "Chicas y Chicos"
+      }
     ],
     "intl": [
-      {"artist": "Led Zeppelin", "song": "Stairway to Heaven"},
-      {"artist": "Pink Floyd", "song": "Another Brick in the Wall"},
-      {"artist": "Elton John", "song": "Rocket Man"},
-      {"artist": "The Rolling Stones", "song": "Angie"},
-      {"artist": "ABBA", "song": "Dancing Queen"},
-      {"artist": "Fleetwood Mac", "song": "Dreams"},
-      {"artist": "Queen", "song": "Bohemian Rhapsody"},
-      {"artist": "David Bowie", "song": "Heroes"},
-      {"artist": "Bee Gees", "song": "Stayin' Alive"},
-      {"artist": "Stevie Wonder", "song": "Superstition"},
-      {"artist": "Eagles", "song": "Hotel California"},
-      {"artist": "Rod Stewart", "song": "Maggie May"},
-      {"artist": "Bob Marley", "song": "No Woman, No Cry"},
-      {"artist": "The Eagles", "song": "Hotel California"},
-      {"artist": "Chicago", "song": "If You Leave Me Now"},
-      {"artist": "Carpenters", "song": "Close to You"},
-      {"artist": "Donna Summer", "song": "I Feel Love"},
-      {"artist": "Boney M.", "song": "Rasputin"},
-      {"artist": "Barry White", "song": "You're the First, the Last, My Everything"}
+      {
+        "artist": "Led Zeppelin",
+        "song": "Stairway to Heaven"
+      },
+      {
+        "artist": "Pink Floyd",
+        "song": "Another Brick in the Wall"
+      },
+      {
+        "artist": "Elton John",
+        "song": "Rocket Man"
+      },
+      {
+        "artist": "The Rolling Stones",
+        "song": "Angie"
+      },
+      {
+        "artist": "ABBA",
+        "song": "Dancing Queen"
+      },
+      {
+        "artist": "Fleetwood Mac",
+        "song": "Dreams"
+      },
+      {
+        "artist": "Queen",
+        "song": "Bohemian Rhapsody"
+      },
+      {
+        "artist": "David Bowie",
+        "song": "Heroes"
+      },
+      {
+        "artist": "Bee Gees",
+        "song": "Stayin' Alive"
+      },
+      {
+        "artist": "Stevie Wonder",
+        "song": "Superstition"
+      },
+      {
+        "artist": "Eagles",
+        "song": "Hotel California"
+      },
+      {
+        "artist": "Rod Stewart",
+        "song": "Maggie May"
+      },
+      {
+        "artist": "Bob Marley",
+        "song": "No Woman, No Cry"
+      },
+      {
+        "artist": "The Eagles",
+        "song": "Hotel California"
+      },
+      {
+        "artist": "Chicago",
+        "song": "If You Leave Me Now"
+      },
+      {
+        "artist": "Carpenters",
+        "song": "Close to You"
+      },
+      {
+        "artist": "Donna Summer",
+        "song": "I Feel Love"
+      },
+      {
+        "artist": "Boney M.",
+        "song": "Rasputin"
+      },
+      {
+        "artist": "Barry White",
+        "song": "You're the First, the Last, My Everything"
+      }
     ]
   },
   "1980": {
     "es": [
-      {"artist": "Alaska y Dinarama", "song": "Ni Tú Ni Nadie"},
-      {"artist": "Mecano", "song": "Hijo de la Luna"},
-      {"artist": "Hombres G", "song": "Devuélveme a mi Chica"},
-      {"artist": "Radio Futura", "song": "Escuela de Calor"},
-      {"artist": "Loquillo", "song": "Cadillac Solitario"},
-      {"artist": "Miguel Bosé", "song": "Amante Bandido"},
-      {"artist": "Rocío Jurado", "song": "Como Yo Te Amo a Ti"},
-      {"artist": "La Pantoja", "song": "Marinero de Luces"},
-      {"artist": "Alejandro Sanz", "song": "Los Dos Cogidos de la Mano"},
-      {"artist": "Ana Belén", "song": "Contamíname"},
-      {"artist": "Víctor Manuel", "song": "Solo Pienso en Ti"},
-      {"artist": "Kiko Veneno", "song": "Volando Voy"},
-      {"artist": "Nacha Pop", "song": "La Chica de Ayer"},
-      {"artist": "Golpes Bajos", "song": "Malos Tiempos para la Lírica"},
-      {"artist": "Gabinete Caligari", "song": "Al Calor del Amor en un Bar"}
+      {
+        "artist": "Alaska y Dinarama",
+        "song": "Ni Tú Ni Nadie"
+      },
+      {
+        "artist": "Mecano",
+        "song": "Hijo de la Luna"
+      },
+      {
+        "artist": "Hombres G",
+        "song": "Devuélveme a mi Chica"
+      },
+      {
+        "artist": "Radio Futura",
+        "song": "Escuela de Calor"
+      },
+      {
+        "artist": "Loquillo",
+        "song": "Cadillac Solitario"
+      },
+      {
+        "artist": "Miguel Bosé",
+        "song": "Amante Bandido"
+      },
+      {
+        "artist": "Rocío Jurado",
+        "song": "Como Yo Te Amo a Ti"
+      },
+      {
+        "artist": "La Pantoja",
+        "song": "Marinero de Luces"
+      },
+      {
+        "artist": "Alejandro Sanz",
+        "song": "Los Dos Cogidos de la Mano"
+      },
+      {
+        "artist": "Ana Belén",
+        "song": "Contamíname"
+      },
+      {
+        "artist": "Víctor Manuel",
+        "song": "Solo Pienso en Ti"
+      },
+      {
+        "artist": "Kiko Veneno",
+        "song": "Volando Voy"
+      },
+      {
+        "artist": "Nacha Pop",
+        "song": "La Chica de Ayer"
+      },
+      {
+        "artist": "Golpes Bajos",
+        "song": "Malos Tiempos para la Lírica"
+      },
+      {
+        "artist": "Gabinete Caligari",
+        "song": "Al Calor del Amor en un Bar"
+      },
+      {
+        "artist": "Burning",
+        "song": "Nadie Como Tú"
+      },
+      {
+        "artist": "Alaska y Los Pegamoides",
+        "song": "Bailando"
+      },
+      {
+        "artist": "Danza Invisible",
+        "song": "Sevilla Sur"
+      },
+      {
+        "artist": "Duncan Dhu",
+        "song": "En Algún Lugar"
+      },
+      {
+        "artist": "La Unión",
+        "song": "Lobo-Hombre en París"
+      },
+      {
+        "artist": "Seguridad Social",
+        "song": "Chiquilla"
+      },
+      {
+        "artist": "Dúo Dinámico",
+        "song": "Resistiré"
+      },
+      {
+        "artist": "Parálisis Permanente",
+        "song": "Autosuficiencia"
+      }
     ],
     "intl": [
-      {"artist": "Michael Jackson", "song": "Billie Jean"},
-      {"artist": "Madonna", "song": "Like a Virgin"},
-      {"artist": "Prince", "song": "Purple Rain"},
-      {"artist": "U2", "song": "With or Without You"},
-      {"artist": "Whitney Houston", "song": "I Wanna Dance with Somebody"},
-      {"artist": "Duran Duran", "song": "Hungry Like the Wolf"},
-      {"artist": "Wham!", "song": "Wake Me Up Before You Go-Go"},
-      {"artist": "Culture Club", "song": "Karma Chameleon"},
-      {"artist": "The Police", "song": "Every Breath You Take"},
-      {"artist": "Phil Collins", "song": "In the Air Tonight"},
-      {"artist": "Cyndi Lauper", "song": "Girls Just Want to Have Fun"},
-      {"artist": "Eurythmics", "song": "Sweet Dreams (Are Made of This)"},
-      {"artist": "Depeche Mode", "song": "People Are People"},
-      {"artist": "Tina Turner", "song": "What's Love Got to Do with It"},
-      {"artist": "Bon Jovi", "song": "Livin' on a Prayer"},
-      {"artist": "Modern Talking", "song": "You're My Heart, You're My Soul"},
-      {"artist": "a-ha", "song": "Take On Me"},
-      {"artist": "Wham", "song": "Wake Me Up Before You Go-Go"},
-      {"artist": "Yes", "song": "Owner of a Lonely Heart"}
+      {
+        "artist": "Michael Jackson",
+        "song": "Billie Jean"
+      },
+      {
+        "artist": "Madonna",
+        "song": "Like a Virgin"
+      },
+      {
+        "artist": "Prince",
+        "song": "Purple Rain"
+      },
+      {
+        "artist": "U2",
+        "song": "With or Without You"
+      },
+      {
+        "artist": "Whitney Houston",
+        "song": "I Wanna Dance with Somebody"
+      },
+      {
+        "artist": "Duran Duran",
+        "song": "Hungry Like the Wolf"
+      },
+      {
+        "artist": "Wham!",
+        "song": "Wake Me Up Before You Go-Go"
+      },
+      {
+        "artist": "Culture Club",
+        "song": "Karma Chameleon"
+      },
+      {
+        "artist": "The Police",
+        "song": "Every Breath You Take"
+      },
+      {
+        "artist": "Phil Collins",
+        "song": "In the Air Tonight"
+      },
+      {
+        "artist": "Cyndi Lauper",
+        "song": "Girls Just Want to Have Fun"
+      },
+      {
+        "artist": "Eurythmics",
+        "song": "Sweet Dreams (Are Made of This)"
+      },
+      {
+        "artist": "Depeche Mode",
+        "song": "People Are People"
+      },
+      {
+        "artist": "Tina Turner",
+        "song": "What's Love Got to Do with It"
+      },
+      {
+        "artist": "Bon Jovi",
+        "song": "Livin' on a Prayer"
+      },
+      {
+        "artist": "Modern Talking",
+        "song": "You're My Heart, You're My Soul"
+      },
+      {
+        "artist": "a-ha",
+        "song": "Take On Me"
+      },
+      {
+        "artist": "Wham",
+        "song": "Wake Me Up Before You Go-Go"
+      },
+      {
+        "artist": "Yes",
+        "song": "Owner of a Lonely Heart"
+      }
     ]
   },
   "1990": {
     "es": [
-      {"artist": "Alejandro Sanz", "song": "Corazón Partío"},
-      {"artist": "Enrique Iglesias", "song": "Experiencia Religiosa"},
-      {"artist": "Héroes del Silencio", "song": "Entre Dos Tierras"},
-      {"artist": "Mecano", "song": "La Fuerza del Destino"},
-      {"artist": "Bunbury", "song": "Lady Blue"},
-      {"artist": "Rosana", "song": "El Talismán"},
-      {"artist": "Presuntos Implicados", "song": "Mientes Tan Bien"},
-      {"artist": "Amistades Peligrosas", "song": "Estoy Enamorado"},
-      {"artist": "Estopa", "song": "La Raja de Tu Falda"}
+      {
+        "artist": "Alejandro Sanz",
+        "song": "Corazón Partío"
+      },
+      {
+        "artist": "Enrique Iglesias",
+        "song": "Experiencia Religiosa"
+      },
+      {
+        "artist": "Héroes del Silencio",
+        "song": "Entre Dos Tierras"
+      },
+      {
+        "artist": "Mecano",
+        "song": "La Fuerza del Destino"
+      },
+      {
+        "artist": "Bunbury",
+        "song": "Lady Blue"
+      },
+      {
+        "artist": "Rosana",
+        "song": "El Talismán"
+      },
+      {
+        "artist": "Presuntos Implicados",
+        "song": "Mientes Tan Bien"
+      },
+      {
+        "artist": "Amistades Peligrosas",
+        "song": "Estoy Enamorado"
+      },
+      {
+        "artist": "Estopa",
+        "song": "La Raja de Tu Falda"
+      },
+      {
+        "artist": "Joaquín Sabina",
+        "song": "19 Días y 500 Noches"
+      },
+      {
+        "artist": "Los Rodríguez",
+        "song": "Sin Documentos"
+      },
+      {
+        "artist": "Extremoduro",
+        "song": "So Payaso"
+      },
+      {
+        "artist": "La Oreja de Van Gogh",
+        "song": "Cuéntame al Oído"
+      },
+      {
+        "artist": "Ella Baila Sola",
+        "song": "Nada de Nada"
+      },
+      {
+        "artist": "Celtas Cortos",
+        "song": "20 de Abril"
+      },
+      {
+        "artist": "Dover",
+        "song": "En El Río"
+      },
+      {
+        "artist": "Seguridad Social",
+        "song": "Y Soñé"
+      }
     ],
     "intl": [
-      {"artist": "Mariah Carey", "song": "Hero"},
-      {"artist": "Whitney Houston", "song": "I Will Always Love You"},
-      {"artist": "Michael Jackson", "song": "Black or White"},
-      {"artist": "Madonna", "song": "Vogue"},
-      {"artist": "Nirvana", "song": "Smells Like Teen Spirit"},
-      {"artist": "U2", "song": "One"},
-      {"artist": "Spice Girls", "song": "Wannabe"},
-      {"artist": "Backstreet Boys", "song": "I Want It That Way"},
-      {"artist": "Celine Dion", "song": "My Heart Will Go On"},
-      {"artist": "Britney Spears", "song": "...Baby One More Time"},
-      {"artist": "Take That", "song": "Back for Good"},
-      {"artist": "Oasis", "song": "Wonderwall"},
-      {"artist": "Ace of Base", "song": "The Sign"},
-      {"artist": "Alejandro Fernández", "song": "Si Tú Supieras"},
-      {"artist": "Chayanne", "song": "Tiempo de Vals"},
-      {"artist": "Ricky Martin", "song": "María"},
-      {"artist": "Shakira", "song": "Estoy Aquí"},
-      {"artist": "R.E.M.", "song": "Losing My Religion"},
-      {"artist": "Blur", "song": "Song 2"}
+      {
+        "artist": "Mariah Carey",
+        "song": "Hero"
+      },
+      {
+        "artist": "Whitney Houston",
+        "song": "I Will Always Love You"
+      },
+      {
+        "artist": "Michael Jackson",
+        "song": "Black or White"
+      },
+      {
+        "artist": "Madonna",
+        "song": "Vogue"
+      },
+      {
+        "artist": "Nirvana",
+        "song": "Smells Like Teen Spirit"
+      },
+      {
+        "artist": "U2",
+        "song": "One"
+      },
+      {
+        "artist": "Spice Girls",
+        "song": "Wannabe"
+      },
+      {
+        "artist": "Backstreet Boys",
+        "song": "I Want It That Way"
+      },
+      {
+        "artist": "Celine Dion",
+        "song": "My Heart Will Go On"
+      },
+      {
+        "artist": "Britney Spears",
+        "song": "...Baby One More Time"
+      },
+      {
+        "artist": "Take That",
+        "song": "Back for Good"
+      },
+      {
+        "artist": "Oasis",
+        "song": "Wonderwall"
+      },
+      {
+        "artist": "Ace of Base",
+        "song": "The Sign"
+      },
+      {
+        "artist": "Alejandro Fernández",
+        "song": "Si Tú Supieras"
+      },
+      {
+        "artist": "Chayanne",
+        "song": "Tiempo de Vals"
+      },
+      {
+        "artist": "Ricky Martin",
+        "song": "María"
+      },
+      {
+        "artist": "Shakira",
+        "song": "Estoy Aquí"
+      },
+      {
+        "artist": "R.E.M.",
+        "song": "Losing My Religion"
+      },
+      {
+        "artist": "Blur",
+        "song": "Song 2"
+      }
     ]
   },
   "2000": {
     "es": [
-      {"artist": "Alejandro Sanz", "song": "Corazón Partío"},
-      {"artist": "David Bisbal", "song": "Ave María"},
-      {"artist": "Enrique Iglesias", "song": "Bailamos"},
-      {"artist": "Amaral", "song": "Sin Ti No Soy Nada"},
-      {"artist": "La Oreja de Van Gogh", "song": "Rosas"},
-      {"artist": "Melendi", "song": "Caminando por la Vida"},
-      {"artist": "Estopa", "song": "Vino Tinto"},
-      {"artist": "El Canto del Loco", "song": "Zapatillas"},
-      {"artist": "Sergio Dalma", "song": "Bailar Pegados"},
-      {"artist": "Christina Rosenvinge", "song": "Que Diferente Es Todo"},
-      {"artist": "Fangoria", "song": "Miedo"},
-      {"artist": "Nena Daconte", "song": "Tenía Tanto Que Darte"}
+      {
+        "artist": "Alejandro Sanz",
+        "song": "Corazón Partío"
+      },
+      {
+        "artist": "David Bisbal",
+        "song": "Ave María"
+      },
+      {
+        "artist": "Enrique Iglesias",
+        "song": "Bailamos"
+      },
+      {
+        "artist": "Amaral",
+        "song": "Sin Ti No Soy Nada"
+      },
+      {
+        "artist": "La Oreja de Van Gogh",
+        "song": "Rosas"
+      },
+      {
+        "artist": "Melendi",
+        "song": "Caminando por la Vida"
+      },
+      {
+        "artist": "Estopa",
+        "song": "Vino Tinto"
+      },
+      {
+        "artist": "El Canto del Loco",
+        "song": "Zapatillas"
+      },
+      {
+        "artist": "Sergio Dalma",
+        "song": "Bailar Pegados"
+      },
+      {
+        "artist": "Christina Rosenvinge",
+        "song": "Que Diferente Es Todo"
+      },
+      {
+        "artist": "Fangoria",
+        "song": "Miedo"
+      },
+      {
+        "artist": "Nena Daconte",
+        "song": "Tenía Tanto Que Darte"
+      },
+      {
+        "artist": "Café Quijano",
+        "song": "La Lola"
+      },
+      {
+        "artist": "Bebe",
+        "song": "Malo"
+      },
+      {
+        "artist": "Chenoa",
+        "song": "Cuando Tú Vas"
+      },
+      {
+        "artist": "Bustamante",
+        "song": "Dime"
+      },
+      {
+        "artist": "Marea",
+        "song": "180 Grados"
+      },
+      {
+        "artist": "Andy y Lucas",
+        "song": "Tanto la Quería"
+      },
+      {
+        "artist": "El Sueño de Morfeo",
+        "song": "Nuestro Momento"
+      }
     ],
     "intl": [
-      {"artist": "Beyoncé", "song": "Crazy in Love"},
-      {"artist": "Rihanna", "song": "Umbrella"},
-      {"artist": "Christina Aguilera", "song": "Beautiful"},
-      {"artist": "Britney Spears", "song": "Toxic"},
-      {"artist": "Eminem", "song": "Lose Yourself"},
-      {"artist": "Coldplay", "song": "Viva la Vida"},
-      {"artist": "Black Eyed Peas", "song": "I Gotta Feeling"},
-      {"artist": "Shakira", "song": "Hips Don't Lie"},
-      {"artist": "Manu Chao", "song": "Me Gustas Tú"},
-      {"artist": "Nelly Furtado", "song": "I'm Like a Bird"},
-      {"artist": "Justin Timberlake", "song": "SexyBack"},
-      {"artist": "Usher", "song": "Yeah!"},
-      {"artist": "Kanye West", "song": "Gold Digger"},
-      {"artist": "Amy Winehouse", "song": "Rehab"}
+      {
+        "artist": "Beyoncé",
+        "song": "Crazy in Love"
+      },
+      {
+        "artist": "Rihanna",
+        "song": "Umbrella"
+      },
+      {
+        "artist": "Christina Aguilera",
+        "song": "Beautiful"
+      },
+      {
+        "artist": "Britney Spears",
+        "song": "Toxic"
+      },
+      {
+        "artist": "Eminem",
+        "song": "Lose Yourself"
+      },
+      {
+        "artist": "Coldplay",
+        "song": "Viva la Vida"
+      },
+      {
+        "artist": "Black Eyed Peas",
+        "song": "I Gotta Feeling"
+      },
+      {
+        "artist": "Shakira",
+        "song": "Hips Don't Lie"
+      },
+      {
+        "artist": "Manu Chao",
+        "song": "Me Gustas Tú"
+      },
+      {
+        "artist": "Nelly Furtado",
+        "song": "I'm Like a Bird"
+      },
+      {
+        "artist": "Justin Timberlake",
+        "song": "SexyBack"
+      },
+      {
+        "artist": "Usher",
+        "song": "Yeah!"
+      },
+      {
+        "artist": "Kanye West",
+        "song": "Gold Digger"
+      },
+      {
+        "artist": "Amy Winehouse",
+        "song": "Rehab"
+      }
     ]
   },
   "2010": {
     "es": [
-      {"artist": "Pablo Alborán", "song": "Solamente Tú"},
-      {"artist": "Alejandro Sanz", "song": "No Es Lo Mismo"},
-      {"artist": "Enrique Iglesias", "song": "Bailando"},
-      {"artist": "David Bisbal", "song": "Esclavo de Sus Besos"},
-      {"artist": "Malú", "song": "Como un Único Ser"},
-      {"artist": "Manuel Carrasco", "song": "Que Nadie"},
-      {"artist": "Vanesa Martín", "song": "Complicidad"},
-      {"artist": "Melendi", "song": "Con la Luna Llena"},
-      {"artist": "Rosalía", "song": "Malamente"},
-      {"artist": "C. Tangana", "song": "Mala Mujer"},
-      {"artist": "Aitana", "song": "Teléfono"},
-      {"artist": "Ana Mena", "song": "Como Antes"},
-      {"artist": "Dani Martín", "song": "Cero"}
+      {
+        "artist": "Pablo Alborán",
+        "song": "Solamente Tú"
+      },
+      {
+        "artist": "Alejandro Sanz",
+        "song": "No Es Lo Mismo"
+      },
+      {
+        "artist": "Enrique Iglesias",
+        "song": "Bailando"
+      },
+      {
+        "artist": "David Bisbal",
+        "song": "Esclavo de Sus Besos"
+      },
+      {
+        "artist": "Malú",
+        "song": "Como un Único Ser"
+      },
+      {
+        "artist": "Manuel Carrasco",
+        "song": "Que Nadie"
+      },
+      {
+        "artist": "Vanesa Martín",
+        "song": "Complicidad"
+      },
+      {
+        "artist": "Melendi",
+        "song": "Con la Luna Llena"
+      },
+      {
+        "artist": "Rosalía",
+        "song": "Malamente"
+      },
+      {
+        "artist": "C. Tangana",
+        "song": "Mala Mujer"
+      },
+      {
+        "artist": "Aitana",
+        "song": "Teléfono"
+      },
+      {
+        "artist": "Ana Mena",
+        "song": "Como Antes"
+      },
+      {
+        "artist": "Dani Martín",
+        "song": "Cero"
+      },
+      {
+        "artist": "Vetusta Morla",
+        "song": "Copenhague"
+      },
+      {
+        "artist": "Antonio Orozco",
+        "song": "Devuélveme la Vida"
+      },
+      {
+        "artist": "Beret",
+        "song": "Lo Siento"
+      },
+      {
+        "artist": "Leiva",
+        "song": "Complicado"
+      }
     ],
     "intl": [
-      {"artist": "Adele", "song": "Rolling in the Deep"},
-      {"artist": "Bruno Mars", "song": "Uptown Funk"},
-      {"artist": "Ed Sheeran", "song": "Shape of You"},
-      {"artist": "Katy Perry", "song": "Firework"},
-      {"artist": "Rihanna", "song": "We Found Love"},
-      {"artist": "Taylor Swift", "song": "Shake It Off"},
-      {"artist": "Justin Bieber", "song": "Baby"},
-      {"artist": "Coldplay", "song": "Paradise"},
-      {"artist": "One Direction", "song": "What Makes You Beautiful"},
-      {"artist": "Lady Gaga", "song": "Bad Romance"},
-      {"artist": "Shakira", "song": "Waka Waka"},
-      {"artist": "Maluma", "song": "Felices los 4"},
-      {"artist": "J Balvin", "song": "Mi Gente"},
-      {"artist": "Ozuna", "song": "Te Boté"},
-      {"artist": "Sebastián Yatra", "song": "Traicionera"},
-      {"artist": "Luis Fonsi", "song": "Despacito"}
+      {
+        "artist": "Adele",
+        "song": "Rolling in the Deep"
+      },
+      {
+        "artist": "Bruno Mars",
+        "song": "Uptown Funk"
+      },
+      {
+        "artist": "Ed Sheeran",
+        "song": "Shape of You"
+      },
+      {
+        "artist": "Katy Perry",
+        "song": "Firework"
+      },
+      {
+        "artist": "Rihanna",
+        "song": "We Found Love"
+      },
+      {
+        "artist": "Taylor Swift",
+        "song": "Shake It Off"
+      },
+      {
+        "artist": "Justin Bieber",
+        "song": "Baby"
+      },
+      {
+        "artist": "Coldplay",
+        "song": "Paradise"
+      },
+      {
+        "artist": "One Direction",
+        "song": "What Makes You Beautiful"
+      },
+      {
+        "artist": "Lady Gaga",
+        "song": "Bad Romance"
+      },
+      {
+        "artist": "Shakira",
+        "song": "Waka Waka"
+      },
+      {
+        "artist": "Maluma",
+        "song": "Felices los 4"
+      },
+      {
+        "artist": "J Balvin",
+        "song": "Mi Gente"
+      },
+      {
+        "artist": "Ozuna",
+        "song": "Te Boté"
+      },
+      {
+        "artist": "Sebastián Yatra",
+        "song": "Traicionera"
+      },
+      {
+        "artist": "Luis Fonsi",
+        "song": "Despacito"
+      }
     ]
   },
   "2020": {
     "es": [
-      {"artist": "Rosalía", "song": "Con Altura"},
-      {"artist": "Aitana", "song": "Formentera"},
-      {"artist": "Ana Mena", "song": "Un Millón de Cosas"},
-      {"artist": "Lola Índigo", "song": "Mala Suerte"},
-      {"artist": "Dani Fernández", "song": "Percebe"},
-      {"artist": "Pablo Alborán", "song": "Castillos de Arena"}
+      {
+        "artist": "Rosalía",
+        "song": "Con Altura"
+      },
+      {
+        "artist": "Aitana",
+        "song": "Formentera"
+      },
+      {
+        "artist": "Ana Mena",
+        "song": "Un Millón de Cosas"
+      },
+      {
+        "artist": "Lola Índigo",
+        "song": "Mala Suerte"
+      },
+      {
+        "artist": "Dani Fernández",
+        "song": "Percebe"
+      },
+      {
+        "artist": "Pablo Alborán",
+        "song": "Castillos de Arena"
+      },
+      {
+        "artist": "Quevedo",
+        "song": "Quédate"
+      },
+      {
+        "artist": "Nebulossa",
+        "song": "Zorra"
+      },
+      {
+        "artist": "Guitarricadelafuente",
+        "song": "Maripili"
+      },
+      {
+        "artist": "Rigoberta Bandini",
+        "song": "Ay Mamá"
+      }
     ],
     "intl": [
-      {"artist": "Bad Bunny", "song": "Tití Me Preguntó"},
-      {"artist": "Karol G", "song": "Provenza"},
-      {"artist": "Quevedo", "song": "Quédate"},
-      {"artist": "Bizarrap", "song": "BZRP Music Sessions, Vol. 53"},
-      {"artist": "Feid", "song": "Feliz Cumpleaños Ferxxo"},
-      {"artist": "Rauw Alejandro", "song": "Todo de Ti"},
-      {"artist": "Myke Towers", "song": "La Falda"},
-      {"artist": "Manuel Turizo", "song": "La Bachata"},
-      {"artist": "Shakira", "song": "Monotonía"},
-      {"artist": "Dua Lipa", "song": "Levitating"},
-      {"artist": "The Weeknd", "song": "Blinding Lights"},
-      {"artist": "Taylor Swift", "song": "Cruel Summer"},
-      {"artist": "Olivia Rodrigo", "song": "Drivers License"},
-      {"artist": "Sabrina Carpenter", "song": "Espresso"},
-      {"artist": "Doja Cat", "song": "Say So"},
-      {"artist": "Tate McRae", "song": "Greedy"},
-      {"artist": "Benson Boone", "song": "Beautiful Things"},
-      {"artist": "María Becerra", "song": "Automático"},
-      {"artist": "BTS", "song": "Dynamite"},
-      {"artist": "Måneskin", "song": "Beggin'"},
-      {"artist": "Tiësto", "song": "The Business"},
-      {"artist": "Ed Sheeran", "song": "Bad Habits"},
-      {"artist": "David Guetta", "song": "I'm Good (Blue)"},
-      {"artist": "Emilia", "song": "Rugíste"}
+      {
+        "artist": "Bad Bunny",
+        "song": "Tití Me Preguntó"
+      },
+      {
+        "artist": "Karol G",
+        "song": "Provenza"
+      },
+      {
+        "artist": "Bizarrap",
+        "song": "BZRP Music Sessions, Vol. 53"
+      },
+      {
+        "artist": "Feid",
+        "song": "Feliz Cumpleaños Ferxxo"
+      },
+      {
+        "artist": "Rauw Alejandro",
+        "song": "Todo de Ti"
+      },
+      {
+        "artist": "Myke Towers",
+        "song": "La Falda"
+      },
+      {
+        "artist": "Manuel Turizo",
+        "song": "La Bachata"
+      },
+      {
+        "artist": "Shakira",
+        "song": "Monotonía"
+      },
+      {
+        "artist": "Dua Lipa",
+        "song": "Levitating"
+      },
+      {
+        "artist": "The Weeknd",
+        "song": "Blinding Lights"
+      },
+      {
+        "artist": "Taylor Swift",
+        "song": "Cruel Summer"
+      },
+      {
+        "artist": "Olivia Rodrigo",
+        "song": "Drivers License"
+      },
+      {
+        "artist": "Sabrina Carpenter",
+        "song": "Espresso"
+      },
+      {
+        "artist": "Doja Cat",
+        "song": "Say So"
+      },
+      {
+        "artist": "Tate McRae",
+        "song": "Greedy"
+      },
+      {
+        "artist": "Benson Boone",
+        "song": "Beautiful Things"
+      },
+      {
+        "artist": "María Becerra",
+        "song": "Automático"
+      },
+      {
+        "artist": "BTS",
+        "song": "Dynamite"
+      },
+      {
+        "artist": "Måneskin",
+        "song": "Beggin'"
+      },
+      {
+        "artist": "Tiësto",
+        "song": "The Business"
+      },
+      {
+        "artist": "Ed Sheeran",
+        "song": "Bad Habits"
+      },
+      {
+        "artist": "David Guetta",
+        "song": "I'm Good (Blue)"
+      },
+      {
+        "artist": "Emilia",
+        "song": "Rugíste"
+      }
     ]
   }
 }

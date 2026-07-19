@@ -888,30 +888,33 @@ class PlayerManager @Inject constructor(
      *      "Artista - Canción" (extremadamente común en YouTube,
      *      incluso en resubidas de canales random como el caso de
      *      arriba).
-     *   4. NUEVO -- si ninguno de los tres anteriores encontró NADA
+     *   4. FIX REAL S016 (reemplaza el antiguo fallback fijo a género
+     *      "classical" de S010 -- orden explícita y repetida de Miguel
+     *      Ángel: NUNCA MÁS cae a género fijo, en ningún punto del
+     *      flujo) -- si ninguno de los tres anteriores encontró NADA
      *      (caso real: "Def Con Dos Armas pal pueblo", subida por un
      *      canal random sin relación, sin artista de H05, sin guion en
-     *      el título que parsear), ancla FIJA a género "classical" sin
-     *      país -- petición explícita de Miguel Ángel: mejor seguir
-     *      con algo, aunque no tenga relación real con el origen, que
-     *      dejar la Radio muerta del todo. Género elegido a propósito:
-     *      "classical" es una etiqueta enorme y estable en MusicBrainz
-     *      (miles de artistas con géneros bien poblados), así que este
-     *      último escalón prácticamente nunca falla también.
+     *      el título que parsear), el ancla se deriva de disco: un
+     *      artista al azar de la biblioteca local ya descargada, cuyo
+     *      perfil (género/país/década) se resuelve vía MusicBrainz
+     *      igual que en pickDiscoCandidate(). Si tampoco eso da nada,
+     *      la función devuelve `null` y la Radio no arranca esta vez.
      * ---
      * S010 -- FOUR chained attempts to fix a Radio session's anchor,
      * each only if the previous one found NOTHING in MusicBrainz:
      *   1. YouTube channel name.
      *   2. H05's structured artist.
      *   3. Parsed from the video title itself, "Artist - Song" pattern.
-     *   4. NEW -- if none of the three above found ANYTHING, a FIXED
-     *      anchor to genre "classical" with no country -- explicit
-     *      request from Miguel Ángel: better to keep Radio going with
-     *      something, even unrelated to the actual origin, than leave
-     *      it dead entirely. Genre chosen on purpose: "classical" is a
-     *      huge, stable MusicBrainz tag (thousands of well-populated
-     *      artists), so this last resort essentially never fails
-     *      either.
+     *   4. FIX REAL S016 (reemplaza el fallback "classical" de S010,
+     *      orden explícita y repetida de Miguel Ángel: NUNCA MÁS cae a
+     *      género fijo) -- si ninguno de los tres anteriores encontró
+     *      NADA en MusicBrainz, el ancla se deriva de disco: un
+     *      artista al azar de la biblioteca local ya descargada, cuyo
+     *      perfil (género/país/década) se resuelve vía MusicBrainz
+     *      igual que en pickDiscoCandidate(). Si tampoco eso da nada
+     *      (sin descargas, o ninguna resuelve perfil), la función
+     *      devuelve `null` y la Radio simplemente no arranca esta vez
+     *      -- nunca rellenar con un género arbitrario sin relación.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
         radioRepository.resolveAnchor(anchorArtistName)?.let { return it }
@@ -940,9 +943,49 @@ class PlayerManager @Inject constructor(
         RadioDebugLogger.log(
             appContext, storageManager,
             "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado en NINGUNO de los " +
-                "intentos (canal, H05, título) -- cayendo a género fijo 'classical' sin país",
+                "intentos (canal, H05, título) -- derivando ancla de disco (biblioteca local), NUNCA clásica",
         )
-        return RadioAnchor(genre = FALLBACK_GENRE, country = null)
+        return resolveAnchorFromDisco(excludeArtistName = anchorArtistName)
+    }
+
+    /**
+     * S016 -- último recurso de anclaje de sesión, reemplaza el
+     * antiguo fallback fijo a "classical". Recorre artistas ya
+     * descargados (misma fuente que el cupo de disco) en orden
+     * aleatorio y resuelve el primero cuyo perfil MusicBrainz tenga al
+     * menos un género -- ese perfil (género/país/década) se convierte
+     * en el ancla de la sesión completa. `null` si no hay biblioteca o
+     * ninguna resuelve perfil -- la Radio no arranca esta vez, en vez
+     * de arrancar con un género arbitrario sin relación con el usuario.
+     */
+    private suspend fun resolveAnchorFromDisco(excludeArtistName: String): RadioAnchor? {
+        val candidates = searchResultTrackRepository.getAllOnce()
+            .mapNotNull { it.artist }
+            .distinct()
+            .filter { !it.equals(excludeArtistName, ignoreCase = true) }
+            .shuffled()
+        for (artistName in candidates) {
+            val profile = radioRepository.lookupArtistProfile(artistName) ?: continue
+            val genre = profile.genres.firstOrNull() ?: continue
+            val isSpanish = profile.country == "ES" || knownHitsRepository.isKnownSpanishArtist(artistName)
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "resolveAnchorFromDisco() -- ancla derivada de disco: '$artistName' " +
+                    "(género='$genre', país=${profile.country}, década=${profile.decadeBegin}, es=$isSpanish)",
+            )
+            return RadioAnchor(
+                genre = genre,
+                country = profile.country,
+                decadeBegin = profile.decadeBegin,
+                isSpanishOrigin = isSpanish,
+            )
+        }
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "resolveAnchorFromDisco() -- ni la biblioteca local tiene nada resoluble -- " +
+                "la Radio no arranca esta vez, eslabón roto de verdad",
+        )
+        return null
     }
 
     /**
@@ -1090,11 +1133,22 @@ class PlayerManager @Inject constructor(
      * S013 punto 7 -- se llega aquí solo cuando disco (si activo),
      * exploración y diccionario han fallado los tres en la misma
      * vuelta. En modo español: se permite UNA vez un tema conocido
-     * pero extranjero (punto 7.2) antes de caer al fallback final de
-     * género fijo "classical" sin país (punto 7.3, mecanismo ya
-     * existente vía resolveAnchorWithFallbacks/FALLBACK_GENRE, aquí
-     * reutilizado directamente sin sobrescribir el ancla de la
-     * sesión).
+     * pero extranjero (punto 7.2) antes del último recurso.
+     *
+     * **Fix real S016, segundo bloque** -- orden explícito y repetido
+     * de Miguel Ángel: NUNCA MÁS cae a género fijo "classical". El
+     * último peldaño, cuando ni siquiera el extranjero conocido de la
+     * misma década tiene nada, pasa a ser `pickDiscoCandidate()` --
+     * la MISMA biblioteca local del cupo de disco (S013 punto 8, con
+     * su propia relajación interna género->década->origen puro, pero
+     * origen SIEMPRE respetado). Se llama directamente, sin mirar
+     * `radioDiscoExhausted` (esa marca solo apaga el cupo REGULAR del
+     * 10%, no este último recurso) -- si la biblioteca de verdad no
+     * tiene nada que ofrecer, la función devuelve `null` y
+     * `topUpRadioQueueIfNeeded()` para la Radio con su log habitual de
+     * "sin más candidatos", que es el único desenlace aceptable
+     * cuando NADA (diccionario, exploración, disco) tiene ya nada que
+     * ofrecer -- nunca rellenar con música sin relación alguna.
      */
     private suspend fun resolveFinalFallback(
         anchor: RadioAnchor,
@@ -1121,22 +1175,23 @@ class PlayerManager @Inject constructor(
 
         RadioDebugLogger.log(
             appContext, storageManager,
-            "resolveFinalFallback(ancla='$anchorArtistName') -- cayendo al fallback final: " +
-                "género fijo '$FALLBACK_GENRE' sin país ni restricción de origen",
+            "resolveFinalFallback(ancla='$anchorArtistName') -- diccionario y exploración agotados " +
+                "esta vuelta, último recurso: disco (biblioteca local), NUNCA clásica",
         )
-        val classicalAnchor = RadioAnchor(genre = FALLBACK_GENRE, country = null, decadeBegin = null, isSpanishOrigin = false)
-        val classicalArtist = radioRepository.suggestRelatedArtist(classicalAnchor, excludeNames) ?: run {
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera el fallback final tiene " +
-                    "candidatos -- eslabón roto de verdad",
-            )
-            return null
+        val discoItem = pickDiscoCandidate(anchor, excludeNames)
+        if (discoItem != null) {
+            radioTracksAccepted++
+            registerUsedArtist(discoItem.artist)
+            radioDiscoTracksUsed++
+            return discoItem
         }
-        val item = resolveYoutubeCandidate(anchorArtistName, classicalArtist, songTitle = null) ?: return null
-        radioTracksAccepted++
-        registerUsedArtist(classicalArtist)
-        return item
+
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera disco tiene candidatos -- " +
+                "eslabón roto de verdad, la Radio se para en vez de rellenar con música sin relación",
+        )
+        return null
     }
 
     /**
@@ -1732,22 +1787,6 @@ class PlayerManager @Inject constructor(
          * adding tracks up to 10 more... always keeping 10 more".
          */
         const val RADIO_QUEUE_SIZE = 10
-
-        /**
-         * S010 -- último escalón cuando canal, artista de H05 y título
-         * fallan los tres a la vez (ver resolveAnchorWithFallbacks()).
-         * Petición explícita de Miguel Ángel: mejor seguir con algo que
-         * dejar la Radio muerta. "classical" elegido por ser una
-         * etiqueta enorme y estable en MusicBrainz -- prácticamente
-         * nunca se queda sin candidatos.
-         * ---
-         * S010 -- last resort when channel, H05 artist and title all
-         * fail at once. Explicit request from Miguel Ángel: better to
-         * keep going with something than leave Radio dead. "classical"
-         * chosen for being a huge, stable MusicBrainz tag -- it
-         * essentially never runs out of candidates.
-         */
-        const val FALLBACK_GENRE = "classical"
 
         /**
          * H08 -- por encima de esto, un resultado de búsqueda se

@@ -26,7 +26,12 @@ import javax.inject.Singleton
  * puntual, sin scraping en tiempo real, mismo criterio que S011) --
  * reutiliza los ~210 artistas que ya existían en la versión anterior
  * del diccionario, asignándoles ahora una canción concreta por
- * década. Deliberadamente no exhaustivo.
+ * década. Ampliado en S016 (orden explícita de Miguel Ángel, "quince
+ * es una mierda de diccionario"): listas `es` de cada década
+ * engordadas con más artistas reales verificables, y corregida la
+ * clasificación de Quevedo (canario, España -- estaba mal metido en
+ * `intl` de los 2020). Deliberadamente no exhaustivo -- sigue
+ * pendiente ampliar más en próximas sesiones, ver ANNEX_H08.md S016.
  * ---
  * S013/S014 -- complete redesign of the known-hits dictionary. See
  * `DOCS/ANNEX_H08.md`, "S013" section, for the full design.

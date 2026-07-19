@@ -671,6 +671,61 @@ español de la década, la Radio pasa a extranjero-conocido-misma-década
 y finalmente a clásica, sin mostrar nunca año/década ajena en el cupo
 de diccionario.
 
+## S016, segundo bloque -- orden explícita: fuera "classical" del todo, y diccionario ampliado
+
+Miguel Ángel corrigió dos cosas de raíz, muy explícitamente, tras el
+primer fix de década de esta misma sesión:
+
+**1. "Classical" queda eliminado por completo, en TODO el flujo, no
+solo en el cupo de diccionario.** Había DOS sitios que caían a género
+fijo "classical" (`FALLBACK_GENRE`, ya eliminado del código):
+- `resolveFinalFallback()` (cupo agotado en una vuelta): ahora, tras
+  el extranjero-conocido-misma-década (punto 7.2, sin tocar), el
+  último recurso es `pickDiscoCandidate()` -- la MISMA biblioteca
+  local del 10% de disco, con su propia relajación interna
+  género->década->origen puro (origen siempre respetado). Si ni
+  siquiera eso tiene nada, la función devuelve `null` y la Radio
+  simplemente no añade nada esa vuelta -- nunca música sin relación.
+- `resolveAnchorWithFallbacks()` (no se pudo identificar NADA del
+  artista que arrancó la sesión -- ni canal, ni artista de H05, ni
+  título parseable): antes fijaba un ancla dura a "classical" sin
+  país. Ahora deriva el ancla de disco (`resolveAnchorFromDisco()`,
+  nueva función): recorre la biblioteca local al azar y usa el
+  primer artista cuyo perfil MusicBrainz tenga género -- ese perfil
+  (género/país/década) se convierte en el ancla de toda la sesión. Si
+  la biblioteca tampoco tiene nada resoluble, la Radio no arranca esa
+  vez, en vez de arrancar con un género arbitrario.
+
+**2. Diccionario ampliado.** La lista `es` de cada década tenía
+~15 artistas (motivo real del fix de década de este mismo bloque de
+trabajo: se agotaba en minutos de sesión). Ampliada con entradas
+reales verificables (conocimiento propio, mismo criterio de
+compilación que el resto del diccionario, sin inventar nada):
+
+| Década | `es` antes | `es` ahora |
+|---|---|---|
+| 1960 | 11 | 17 |
+| 1970 | 10 | 18 |
+| 1980 | 15 | 23 |
+| 1990 | 9 | 17 |
+| 2000 | 12 | 19 |
+| 2010 | 13 | 17 |
+| 2020 | 6 | 10 |
+
+De paso, corregido un error de clasificación de origen que ya existía:
+**Quevedo** (canario, España) estaba en la lista `intl` de los 2020 --
+movido a `es`.
+
+**Pendiente, dicho explícitamente por Miguel Ángel:** esto sigue sin
+llegar a ~100 por década. Ampliar más allá de esta pasada requiere
+más tiempo de curación real (verificar canción+década concreta uno a
+uno) para no repetir el mismo tipo de error que motivó el primer fix
+de este bloque -- se deja como trabajo pendiente explícito, no
+resuelto por decisión unilateral de recortar el alcance.
+
+**Sin verificar en dispositivo real todavía** -- ninguno de los dos
+puntos de este bloque se ha probado en dispositivo real.
+
 ---
 
 
