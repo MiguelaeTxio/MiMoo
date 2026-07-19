@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.data.remote
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistDetail
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSearchResponse
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseDetail
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroupSearchResponse
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzSearchResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -88,4 +89,35 @@ interface MusicBrainzApiService {
         @Query("inc") inc: String = "genres",
         @Query("fmt") format: String = "json",
     ): MusicBrainzArtistDetail
+
+    /**
+     * H12 (S018) -- browse de release-groups (álbumes/sencillos) de un
+     * artista ya resuelto por MBID. Endpoint de BROWSE, no de
+     * búsqueda: se filtra por `artist={mbid}` (relación directa),
+     * nunca por `query=` con sintaxis Lucene -- mismo patrón que
+     * `lookupArtist`/`lookupRelease`, distinto de `searchReleases`/
+     * `searchArtists`. `type` filtra por tipo de release-group
+     * (`album` o `single`), verificado contra los ejemplos oficiales
+     * de browse (musicbrainz.org/doc/MusicBrainz_API/Search#Browse,
+     * 2026-07-19) -- separa "álbumes" de "sencillos sueltos" tal como
+     * pide el diseño de S017, sin traer EPs/compilaciones mezclados.
+     * ---
+     * H12 (S018) -- browse of release-groups (albums/singles) for an
+     * artist already resolved by MBID. BROWSE endpoint, not search:
+     * filtered by `artist={mbid}` (direct relationship), never by
+     * Lucene `query=` -- same pattern as `lookupArtist`/
+     * `lookupRelease`, unlike `searchReleases`/`searchArtists`. `type`
+     * filters by release-group type (`album` or `single`), verified
+     * against the official browse examples
+     * (musicbrainz.org/doc/MusicBrainz_API/Search#Browse, 2026-07-19)
+     * -- separates "albums" from "loose singles" per the S017 design,
+     * without mixing in EPs/compilations.
+     */
+    @GET("release-group/")
+    suspend fun browseReleaseGroupsByArtist(
+        @Query("artist") artistMbid: String,
+        @Query("type") type: String,
+        @Query("limit") limit: Int = 100,
+        @Query("fmt") format: String = "json",
+    ): MusicBrainzReleaseGroupSearchResponse
 }

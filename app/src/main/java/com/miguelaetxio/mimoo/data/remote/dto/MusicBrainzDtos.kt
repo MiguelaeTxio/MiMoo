@@ -134,3 +134,27 @@ data class MusicBrainzLifeSpan(
 data class MusicBrainzGenre(
     @SerializedName("name") val name: String,
 )
+
+/**
+ * H12 (S018) -- DTOs para el browse de release-groups de un artista
+ * (`browseReleaseGroupsByArtist`). Un release-group agrupa las
+ * distintas ediciones/reediciones de un mismo álbum o sencillo bajo
+ * un único id estable -- es el nivel correcto para listar "álbumes de
+ * un artista" sin duplicados por cada reedición.
+ * ---
+ * H12 (S018) -- DTOs for browsing an artist's release-groups
+ * (`browseReleaseGroupsByArtist`). A release-group bundles the
+ * different editions/reissues of the same album or single under one
+ * stable id -- the right level for listing "an artist's albums"
+ * without duplicates per reissue.
+ */
+data class MusicBrainzReleaseGroupSearchResponse(
+    @SerializedName("release-groups") val releaseGroups: List<MusicBrainzReleaseGroup> = emptyList(),
+)
+
+data class MusicBrainzReleaseGroup(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("first-release-date") val firstReleaseDate: String? = null,
+    @SerializedName("primary-type") val primaryType: String? = null,
+)
