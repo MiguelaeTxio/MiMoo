@@ -5,28 +5,60 @@ import java.text.Normalizer
 /**
  * Normalizes a string for accent-insensitive, case-insensitive text
  * search/filtering, shared by every filter field in the app
- * (Biblioteca, Playlists). Strips diacritics (NFD decomposition +
- * removal of combining marks, same technique already used by
- * `sortLetterFor` in `LibraryViewModel` for the artist-letter
- * grouping) so that typing "angel" matches "Ángel" and vice versa --
- * a real usability gap in the original filter, which only did
- * `trim().lowercase()` and silently missed accented queries.
+ * (Biblioteca, Playlists) and by every name-based cross-reference in
+ * H12 (ArtistScreen/AlbumScreen matching against local downloads).
+ * Strips diacritics (NFD decomposition + removal of combining marks,
+ * same technique already used by `sortLetterFor` in
+ * `LibraryViewModel` for the artist-letter grouping) so that typing
+ * "angel" matches "Ángel" and vice versa -- a real usability gap in
+ * the original filter, which only did `trim().lowercase()` and
+ * silently missed accented queries.
+ *
+ * S018 -- fallo real reportado por Miguel Ángel (ArtistScreen, AC/DC):
+ * el álbum local "The Razor's Edge" no se reconocía como el mismo que
+ * el release-group de MusicBrainz "The Razors Edge" (sin apóstrofo),
+ * dando "0 álbumes completos" pese a tener el álbum entero descargado.
+ * Ampliado para quitar también puntuación (apóstrofos rectos/curvos,
+ * paréntesis, exclamaciones, dos puntos...), no solo acentos --
+ * mismo principio que el fix de acentos: dos formas de escribir el
+ * mismo título no deberían fallar el match por un carácter que ni
+ * siquiera se pronuncia.
  * ---
  * Normaliza una cadena para búsqueda/filtrado insensible a acentos y
  * mayúsculas, compartida por todos los campos de filtro de la app
- * (Biblioteca, Playlists). Elimina diacríticos (descomposición NFD +
- * borrado de marcas combinantes, la misma técnica que ya usa
- * `sortLetterFor` en `LibraryViewModel` para agrupar artistas por
- * letra) para que escribir "angel" encuentre "Ángel" y viceversa --
- * un hueco de usabilidad real en el filtro original, que solo hacía
- * `trim().lowercase()` y no encontraba búsquedas con acento.
+ * (Biblioteca, Playlists) y por todo cruce por nombre de H12
+ * (ArtistScreen/AlbumScreen contra lo descargado localmente). Elimina
+ * diacríticos (descomposición NFD + borrado de marcas combinantes, la
+ * misma técnica que ya usa `sortLetterFor` en `LibraryViewModel` para
+ * agrupar artistas por letra) para que escribir "angel" encuentre
+ * "Ángel" y viceversa -- un hueco de usabilidad real en el filtro
+ * original, que solo hacía `trim().lowercase()` y no encontraba
+ * búsquedas con acento.
+ *
+ * S018 -- fallo real reportado por Miguel Ángel (ArtistScreen, AC/DC):
+ * el álbum local "The Razor's Edge" no se reconocía como el mismo que
+ * el release-group de MusicBrainz "The Razors Edge" (sin apóstrofo),
+ * dando "0 álbumes completos" pese a tener el álbum entero descargado.
+ * Ampliado para quitar también puntuación (apóstrofos rectos/curvos,
+ * paréntesis, exclamaciones, dos puntos...), no solo acentos -- mismo
+ * principio que el fix de acentos: dos formas de escribir el mismo
+ * título no deberían fallar el match por un carácter que ni siquiera
+ * se pronuncia.
  */
 object SearchNormalizer {
 
     fun normalize(raw: String): String {
         val trimmedLower = raw.trim().lowercase()
-        return Normalizer.normalize(trimmedLower, Normalizer.Form.NFD)
+        val withoutAccents = Normalizer.normalize(trimmedLower, Normalizer.Form.NFD)
             .replace(Regex("\\p{M}"), "")
+        // \p{L} = letras (cualquier alfabeto), \p{Nd} = dígitos decimales
+        // -- todo lo que no sea eso ni espacio se quita (apóstrofos,
+        // paréntesis, exclamaciones, dos puntos, guiones...). Colapsa
+        // los espacios sobrantes que deja huecos como "(Live)" -> " Live".
+        return withoutAccents
+            .replace(Regex("[^\\p{L}\\p{Nd}\\s]"), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
     }
 
     /**
