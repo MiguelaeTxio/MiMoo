@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
@@ -120,6 +122,8 @@ fun ArtistScreen(
                                 ReleaseGroupRow(
                                     releaseGroup = album,
                                     icon = Icons.Filled.Album,
+                                    downloadStatus = uiState.albumDownloadStatusById[album.id]
+                                        ?: AlbumDownloadStatus.NONE,
                                     onClick = { onOpenAlbum(album.title) },
                                 )
                                 HorizontalDivider()
@@ -134,6 +138,11 @@ fun ArtistScreen(
                                 ReleaseGroupRow(
                                     releaseGroup = single,
                                     icon = Icons.Filled.MusicNote,
+                                    downloadStatus = if (single.id in uiState.downloadedSingleIds) {
+                                        AlbumDownloadStatus.COMPLETE
+                                    } else {
+                                        AlbumDownloadStatus.NONE
+                                    },
                                     onClick = { onOpenSong(single.title) },
                                 )
                                 HorizontalDivider()
@@ -166,6 +175,7 @@ fun ArtistScreen(
 private fun ReleaseGroupRow(
     releaseGroup: MusicBrainzReleaseGroup,
     icon: ImageVector,
+    downloadStatus: AlbumDownloadStatus,
     onClick: () -> Unit,
 ) {
     Row(
@@ -186,6 +196,27 @@ private fun ReleaseGroupRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        // S018 -- marca por fila pedida por Miguel Ángel (ver
+        // comentario de clase de AlbumDownloadStatus): completo (icono
+        // relleno) / parcial (icono a medias) / nada si no hay ninguna
+        // pista local de este álbum concreto.
+        when (downloadStatus) {
+            AlbumDownloadStatus.COMPLETE -> {
+                Icon(
+                    Icons.Filled.CloudDone,
+                    contentDescription = "Descargado completo",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            AlbumDownloadStatus.PARTIAL -> {
+                Icon(
+                    Icons.Filled.CloudQueue,
+                    contentDescription = "Descargado parcialmente",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            AlbumDownloadStatus.NONE -> {}
         }
     }
 }

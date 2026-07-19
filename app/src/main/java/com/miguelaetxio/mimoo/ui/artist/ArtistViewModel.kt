@@ -17,6 +17,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Estado de descarga de UN álbum concreto -- distinto del resumen
+ * agregado (completeAlbumsCount/partialAlbumsCount): esto es lo que
+ * pinta la marca en cada fila de la lista (petición explícita de
+ * Miguel Ángel, S018: "si entro en la página, le doy a Beastie
+ * Boys... me muestra de los discos que tengo, si tengo alguno
+ * descargado, me lo muestra").
+ * ---
+ * Download status of ONE specific album -- distinct from the
+ * aggregate summary (completeAlbumsCount/partialAlbumsCount): this is
+ * what paints the badge on each list row (explicit request from
+ * Miguel Ángel, S018: "if I open the page, tap Beastie Boys... it
+ * shows me which of the albums I have, if I have any downloaded, it
+ * shows me").
+ */
+enum class AlbumDownloadStatus { NONE, PARTIAL, COMPLETE }
+
 data class ArtistUiState(
     val artistName: String = "",
     val isLoading: Boolean = true,
@@ -35,6 +52,10 @@ data class ArtistUiState(
     val completeAlbumsCount: Int = 0,
     val partialAlbumsCount: Int = 0,
     val downloadedSinglesCount: Int = 0,
+    // S018 -- por-fila, ver AlbumDownloadStatus. Claves = release-group
+    // id de MusicBrainz. Un álbum ausente del mapa equivale a NONE.
+    val albumDownloadStatusById: Map<String, AlbumDownloadStatus> = emptyMap(),
+    val downloadedSingleIds: Set<String> = emptySet(),
 )
 
 /**
@@ -168,25 +189,42 @@ class ArtistViewModel @Inject constructor(
 
         var completeCount = 0
         var partialCount = 0
+        val albumStatusById = mutableMapOf<String, AlbumDownloadStatus>()
         val currentAlbums = _uiState.value.albums
         for (albumGroup in currentAlbums) {
             val normalizedTitle = SearchNormalizer.normalize(albumGroup.title)
-            val localCount = localTracksByAlbum[normalizedTitle] ?: continue
+            val localCount = localTracksByAlbum[normalizedTitle]
+            if (localCount == null) {
+                albumStatusById[albumGroup.id] = AlbumDownloadStatus.NONE
+                continue
+            }
             val totalCount = artistDirectoryRepository.getTrackCount(albumGroup.id)
             if (totalCount != null && localCount >= totalCount) {
                 completeCount++
+                albumStatusById[albumGroup.id] = AlbumDownloadStatus.COMPLETE
             } else {
                 partialCount++
+                albumStatusById[albumGroup.id] = AlbumDownloadStatus.PARTIAL
             }
         }
 
-        val downloadedSinglesCount = localTracks.count { it.album == null }
+        val downloadedSinglesLocal = localTracks.filter { it.album == null }
+        val downloadedSingleTitles = downloadedSinglesLocal
+            .map { SearchNormalizer.normalize(it.title) }
+            .toSet()
+        val downloadedSingleIds = _uiState.value.singles
+            .filter { SearchNormalizer.normalize(it.title) in downloadedSingleTitles }
+            .map { it.id }
+            .toSet()
+        val downloadedSinglesCount = downloadedSinglesLocal.count()
 
         _uiState.value = _uiState.value.copy(
             isLoadingDownloadedCounts = false,
             completeAlbumsCount = completeCount,
             partialAlbumsCount = partialCount,
             downloadedSinglesCount = downloadedSinglesCount,
+            albumDownloadStatusById = albumStatusById,
+            downloadedSingleIds = downloadedSingleIds,
         )
     }
 
