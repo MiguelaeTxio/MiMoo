@@ -11,11 +11,36 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-19 (cierre de sesión S016 NewFlow)
+## Última actualización: 2026-07-19 (cierre de sesión S017 NewFlow)
 
-**Hito activo: H12** (Directorio de Música + Favoritos sin descarga,
-hito nuevo) -- H08 se pausó al cierre de esta sesión (PCH explícito de
-Miguel Ángel), ver `DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H12** (Directorio de Música + Favoritos sin descarga)
+-- sin PCH en esta sesión, sigue EN PROGRESO tras el cierre, ver
+`DOCS/ANNEX_ROUTER.md`.
+
+**S017, resumen: sesión de diseño puro, sin código (un commit,
+`989d932`).** Cerrados con Miguel Ángel los siete puntos pendientes de
+`DOCS/ANNEX_H12.md`: tres páginas separadas (Artista/Álbum/Canción)
+con rutas nuevas en `NavGraph.kt` y cruces en ambos sentidos; búsqueda
+unificada en una sola pantalla que sustituye a `SearchScreen` (H01) y
+`AlbumSearchScreen` (H05), cubriendo también listas de reproducción y
+canales (sin pantallas de búsqueda separadas, corregido tras
+malentendido inicial en la conversación); `FavoriteArtist(artist)` como
+tabla nueva, mismo patrón que `FavoriteAlbum`; homónimos resueltos con
+dos mecanismos -- `normalizeArtistName()` (quita `"The "` inicial) para
+variantes del mismo artista, y tabla `ArtistDisambiguation` para
+artistas distintos con el mismo nombre; botones separados
+Reproducir/Descargar por pista y por álbum; menú de tres puntos del
+reproductor con fallback a `parseArtistFromTitle()`; y criterio de
+conteo de la sección "Descargado" por álbum y por artista. El anexo
+quedó reescrito con la hoja de ruta de construcción completa, ejecutable
+sin contexto adicional. **Sin código en esta sesión** -- construcción
+pendiente para la sesión siguiente.
+
+## Sesión anterior (S016, contexto histórico)
+
+**Hito activo al cierre de S016: H12** (Directorio de Música +
+Favoritos sin descarga, hito nuevo) -- H08 se pausó al cierre de esa
+sesión (PCH explícito de Miguel Ángel), ver `DOCS/ANNEX_ROUTER.md`.
 
 **S016, resumen narrativo completo (seis commits reales, `f08e8b4`..`a6003b6`):**
 
@@ -96,15 +121,16 @@ de memoria real, sin inventar nada -- seguir ampliando es candidato
 fuerte para dedicar una sesión aparte si H08 se retoma antes de llegar
 a un tamaño satisfactorio.
 
-**Siguiente sesión (H12, diseño puro -- ver `DOCS/ANNEX_H12.md`
-sección final para los siete puntos exactos a cerrar):** navegación y
-pantallas exactas, unificación de búsqueda (H01+H05), modelo de datos
-de favorito de artista, desambiguación de artistas homónimos (sin
-resolver, ver esa misma sección), streaming al vuelo desde una página,
-menú de tres puntos en el reproductor, y criterio de la sección
-"Descargado" de cada página. Sin código en esa sesión -- se cierra el
-diseño y se deja escrito en el propio anexo para construir en la
-sesión siguiente a esa.
+**Siguiente sesión (H12, construcción -- diseño ya cerrado en S017, ver
+`DOCS/ANNEX_H12.md` sección "Hoja de Ruta de Construcción para la
+Siguiente Sesión" para los ocho bloques exactos, ya ejecutable sin
+contexto adicional):** entidades `FavoriteArtist`/`ArtistDisambiguation`
++ migración Room, `normalizeArtistName()`, tres pantallas nuevas
+(`ArtistScreen`/`AlbumScreen`/`SongScreen`) + rutas en `NavGraph.kt`,
+flujo de desambiguación de homónimos, búsqueda unificada (sustituye a
+H01/H05, incluye listas y canales), botones Reproducir/Descargar por
+pista y por álbum, menú de tres puntos del reproductor, y verificación
++ commit por bloque cerrado.
 
 **Pendiente sin resolver, distinto de H12 -- para cuando se retome H08
 con su propio PCH:** verificación en dispositivo real de TODO lo
