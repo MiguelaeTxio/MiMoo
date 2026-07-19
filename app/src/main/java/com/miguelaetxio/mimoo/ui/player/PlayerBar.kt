@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.ui.player
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
  * S010 -- "reproductor expandido", rediseño completo pedido por
@@ -120,20 +122,34 @@ fun PlayerBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 if (state.queueSize > 1) {
-                    IconButton(onClick = viewModel::toggleShuffle) {
-                        Icon(
-                            Icons.Filled.Shuffle,
-                            contentDescription = if (state.shuffleModeEnabled) {
-                                "Desactivar orden aleatorio"
-                            } else {
-                                "Activar orden aleatorio"
-                            },
-                            tint = if (state.shuffleModeEnabled) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                LocalContentColor.current
-                            },
-                        )
+                    // H13 -- chapita de cristal esmerilado alrededor del
+                    // icono SOLO cuando está activo, mismo lenguaje
+                    // visual que el resto de la app (glassChip circular,
+                    // igual que el icono de menú de la barra superior).
+                    // Antes solo cambiaba el tint del trazo, poco
+                    // perceptible sobre el propio cristal de fondo.
+                    Box(
+                        modifier = if (state.shuffleModeEnabled) {
+                            Modifier.glassChip(shape = CircleShape)
+                        } else {
+                            Modifier
+                        },
+                    ) {
+                        IconButton(onClick = viewModel::toggleShuffle) {
+                            Icon(
+                                Icons.Filled.Shuffle,
+                                contentDescription = if (state.shuffleModeEnabled) {
+                                    "Desactivar orden aleatorio"
+                                } else {
+                                    "Activar orden aleatorio"
+                                },
+                                tint = if (state.shuffleModeEnabled) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    LocalContentColor.current
+                                },
+                            )
+                        }
                     }
                 }
 
@@ -179,20 +195,29 @@ fun PlayerBar(
                 }
 
                 if (state.queueSize > 1) {
-                    IconButton(onClick = viewModel::toggleRepeat) {
-                        Icon(
-                            Icons.Filled.Repeat,
-                            contentDescription = if (state.repeatModeEnabled) {
-                                "Desactivar reproducción cíclica"
-                            } else {
-                                "Activar reproducción cíclica"
-                            },
-                            tint = if (state.repeatModeEnabled) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                LocalContentColor.current
-                            },
-                        )
+                    // H13 -- misma chapita que aleatorio, ver comentario de arriba.
+                    Box(
+                        modifier = if (state.repeatModeEnabled) {
+                            Modifier.glassChip(shape = CircleShape)
+                        } else {
+                            Modifier
+                        },
+                    ) {
+                        IconButton(onClick = viewModel::toggleRepeat) {
+                            Icon(
+                                Icons.Filled.Repeat,
+                                contentDescription = if (state.repeatModeEnabled) {
+                                    "Desactivar reproducción cíclica"
+                                } else {
+                                    "Activar reproducción cíclica"
+                                },
+                                tint = if (state.repeatModeEnabled) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    LocalContentColor.current
+                                },
+                            )
+                        }
                     }
                 }
 
