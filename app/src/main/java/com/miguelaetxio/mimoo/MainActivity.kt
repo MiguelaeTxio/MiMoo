@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
@@ -681,32 +680,6 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Playlists.route,
-                                    ) { launchSingleTop = true }
-                                    scope.launch { drawerState.close() }
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
-                            )
-                            NavigationDrawerItem(
-                                label = { Text("Buscar álbum") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Album,
-                                        contentDescription = null,
-                                    )
-                                },
-                                selected = currentRoute == Screen.AlbumSearch.route,
-                                onClick = {
-                                    navController.navigate(
-                                        Screen.AlbumSearch.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

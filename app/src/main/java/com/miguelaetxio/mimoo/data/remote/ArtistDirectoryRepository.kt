@@ -121,6 +121,34 @@ class ArtistDirectoryRepository @Inject constructor(
         artistDisambiguationRepository.saveChoice(normalizedNameKey, chosenMbid)
     }
 
+    /**
+     * Búsqueda de artistas por texto libre para la búsqueda unificada
+     * (bloque 5, S018) -- a diferencia de `resolveArtist()`, que exige
+     * un nombre ya conocido y decide entre Resolved/NeedsDisambiguation/
+     * NotFound, aquí el resultado es una lista de candidatos que el
+     * usuario ve directamente en los resultados de búsqueda (mismo
+     * papel que `searchAlbumCandidates` de AlbumMatchRepository para
+     * álbumes). El nombre canónico de MusicBrainz que trae cada
+     * candidato es justo lo que se navega a ArtistScreen, así que esa
+     * pantalla normalmente resuelve directo sin diálogo de
+     * desambiguación (nombre exacto, no libre).
+     * ---
+     * Free-text artist search for unified search (block 5, S018) --
+     * unlike `resolveArtist()`, which requires an already-known name
+     * and decides between Resolved/NeedsDisambiguation/NotFound, here
+     * the result is a candidate list the user sees directly in search
+     * results (same role as AlbumMatchRepository's
+     * `searchAlbumCandidates` for albums). Each candidate's canonical
+     * MusicBrainz name is exactly what gets navigated to ArtistScreen,
+     * so that screen normally resolves directly without a
+     * disambiguation dialog (exact name, not free text).
+     */
+    suspend fun searchArtistsByQuery(query: String): List<MusicBrainzArtistSummary> =
+        musicBrainzApiService
+            .searchArtists(query = query, limit = ARTIST_SEARCH_LIMIT)
+            .artists
+            .distinctBy { it.id }
+
     /** Álbumes del artista (release-groups tipo "album"), H12. */
     suspend fun getAlbums(artistMbid: String): List<MusicBrainzReleaseGroup> =
         musicBrainzApiService

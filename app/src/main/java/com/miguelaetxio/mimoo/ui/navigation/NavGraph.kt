@@ -7,7 +7,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.miguelaetxio.mimoo.ui.albumsearch.AlbumSearchScreen
 import com.miguelaetxio.mimoo.ui.album.AlbumScreen
 import com.miguelaetxio.mimoo.ui.artist.ArtistScreen
 import com.miguelaetxio.mimoo.ui.downloads.DownloadsScreen
@@ -17,9 +16,9 @@ import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistsScreen
 import com.miguelaetxio.mimoo.ui.queue.QueueScreen
 import com.miguelaetxio.mimoo.ui.radiobrowser.RadioBrowserScreen
-import com.miguelaetxio.mimoo.ui.search.SearchScreen
 import com.miguelaetxio.mimoo.ui.settings.SettingsScreen
 import com.miguelaetxio.mimoo.ui.song.SongScreen
+import com.miguelaetxio.mimoo.ui.unifiedsearch.UnifiedSearchScreen
 
 sealed class Screen(val route: String) {
     object Search : Screen("search")
@@ -28,7 +27,6 @@ sealed class Screen(val route: String) {
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
     }
-    object AlbumSearch : Screen("album_search")
     object Artist : Screen("artist/{artistName}") {
         fun routeFor(artistName: String) = "artist/${Uri.encode(artistName)}"
     }
@@ -69,8 +67,17 @@ fun MiMooNavGraph(
         startDestination = Screen.Search.route,
     ) {
         composable(Screen.Search.route) {
-            SearchScreen(
+            UnifiedSearchScreen(
                 onOpenDrawer = onOpenDrawer,
+                onOpenSong = { artistName, songTitle ->
+                    navController.navigate(Screen.Song.routeFor(artistName, songTitle))
+                },
+                onOpenAlbum = { artistName, albumName ->
+                    navController.navigate(Screen.Album.routeFor(artistName, albumName))
+                },
+                onOpenArtist = { artistName ->
+                    navController.navigate(Screen.Artist.routeFor(artistName))
+                },
                 onOpenExternalLink = { url ->
                     navController.navigate(Screen.ImportLink.routeFor(url))
                 },
@@ -96,14 +103,6 @@ fun MiMooNavGraph(
             ),
         ) {
             PlaylistDetailScreen(onBack = { navController.popBackStack() })
-        }
-        composable(Screen.AlbumSearch.route) {
-            AlbumSearchScreen(
-                onOpenDrawer = onOpenDrawer,
-                onNavigateToLibrary = {
-                    navController.navigate(Screen.Library.route)
-                },
-            )
         }
         composable(
             Screen.Artist.route,
