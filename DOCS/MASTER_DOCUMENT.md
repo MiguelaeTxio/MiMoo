@@ -28,6 +28,7 @@ queda abierto en cada uno.
 | H09 | Radios Online del Mundo por Género/Tema/Década (Radio-Browser.info) | `DOCS/ANNEX_H09.md` |
 | H10 | Hash de Compartición de Contenido | `DOCS/ANNEX_H10.md` |
 | H11 | Canales — Suscripciones y Descarga Automática | `DOCS/ANNEX_H11.md` |
+| H12 | Directorio de Música (Artista/Álbum/Canción) + Favoritos sin Descarga | `DOCS/ANNEX_H12.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -63,6 +64,13 @@ real todavía; los niveles 9-10 (Canales) dependen de que exista H11.
 H11: hito nuevo, construido (suscripciones, pantalla
 de gestión, descarga automática en segundo plano) -- ver
 `DOCS/ANNEX_H11.md`, sin verificar en dispositivo real todavía.
+H12: hito nuevo (2026-07-19), sin código todavía -- directorio de
+música navegable vía MusicBrainz (páginas de artista/álbum/canción
+cruzadas entre sí), unificación de las búsquedas de H01/H05, streaming
+y descarga al vuelo desde esas páginas, y favoritos de artista/álbum
+desacoplados de la descarga. Ver `DOCS/ANNEX_H12.md` para el diseño
+inicial y los puntos pendientes de cerrar (homónimos, navegación
+exacta) antes de construir.
 
 ---
 
@@ -363,6 +371,25 @@ suscrito, y comprobación periódica en segundo plano (una vez al día)
 que encola automáticamente el contenido nuevo -- sin descargar de
 golpe el catálogo histórico al suscribirse. Sin verificación en
 dispositivo real todavía.
+
+### Hito 12: Directorio de Música (Artista/Álbum/Canción) + Favoritos sin Descarga
+(Ver `DOCS/ANNEX_H12.md`) — Abierto 2026-07-19, a petición explícita
+de Miguel Ángel: punto de partida fue un menú de tres puntos en el
+reproductor para ver la página de álbum/artista del tema que suena, y
+poder marcar como favorito un artista o álbum sin tener nada
+descargado de él. Al hablarlo se amplió a un directorio completo
+navegable vía MusicBrainz (páginas de Artista/Álbum/Canción, cruzadas
+entre sí en ambos sentidos), que unifica las dos búsquedas separadas
+que existen hoy (H01 sencillos, H05 álbumes) en una sola experiencia,
+con streaming y descarga al vuelo desde cualquier página tenga o no
+algo descargado ya. Favoritos de álbum ya existían (`FavoriteAlbum`,
+H03); favoritos de artista son concepto nuevo. Sin código todavía --
+Miguel Ángel decidió explícitamente que la sesión que lo retome sea de
+diseño puro (mismo patrón que S013 para H08), para cerrar antes de
+construir: navegación exacta, unificación de búsqueda, modelo de datos
+de favorito de artista, y desambiguación de artistas homónimos (H05
+tolera ambigüedad a nivel de una pista suelta; una página de artista
+necesita fijar un MusicBrainz ID concreto).
 
 ---
 

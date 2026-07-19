@@ -34,10 +34,11 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
+| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
+| H12 | `DOCS/ANNEX_H12.md` | ← **EN PROGRESO** |
 
 ---
 
@@ -75,3 +76,18 @@ abierto, sin mencionar jamás su propio estado.
   Ajustes, punto ya anticipado y con hoja de ruta ejecutable en
   `DOCS/ANNEX_H08.md` ("Hoja de Ruta para la Siguiente Sesión que
   retome H08", punto 3).
+- **2026-07-19 (cierre de S016, misma fecha)** — PCH explícito de
+  Miguel Ángel al cierre de sesión: H08 pasa a PAUSADO (bloque de
+  trabajo real de esta sesión -- fix de década, eliminación de
+  "classical" en todo el flujo, cascada género+década también en
+  disco, historial entre sesiones, ampliación del diccionario en tres
+  pasadas -- construido y compilando en verde, pendiente de
+  verificación en dispositivo real, ver `DOCS/ANNEX_H08.md` secciones
+  "S016"), **H12 abierto EN PROGRESO** -- hito nuevo (Directorio de
+  Música + Favoritos sin descarga), a petición explícita de Miguel
+  Ángel al pedir un menú de tres puntos en el reproductor para ver
+  álbum/artista del tema que suena, ampliado en la propia conversación
+  a un directorio completo navegable vía MusicBrainz -- ver
+  `DOCS/ANNEX_H12.md`. Miguel Ángel decidió explícitamente que la
+  sesión que retome H12 sea de **diseño puro, sin tocar código**
+  (mismo patrón que S013 para H08).
