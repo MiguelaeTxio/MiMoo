@@ -145,9 +145,8 @@ fun AlbumScreen(
                         ) { _, match ->
                             AlbumTrackRow(
                                 match = match,
-                                downloadStatus = match.matchedTrack?.let {
-                                    uiState.downloadStatusByYoutubeId[it.youtubeId]
-                                },
+                                downloadStatus = uiState.localTracksByPosition[match.position - 1]
+                                    ?.downloadStatus,
                                 onPlay = { viewModel.playTrack(match) },
                                 onDownload = { viewModel.downloadTrack(match) },
                                 onOpenSong = { onOpenSong(match.mbTitle) },
@@ -213,7 +212,7 @@ private fun AlbumTrackRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text("${match.position}. ${match.mbTitle}")
-            if (match.matchedTrack == null) {
+            if (match.matchedTrack == null && downloadStatus != DownloadStatus.DONE) {
                 Text(
                     "Sin emparejar en YouTube",
                     style = MaterialTheme.typography.bodySmall,
@@ -221,7 +220,12 @@ private fun AlbumTrackRow(
                 )
             }
         }
-        if (match.matchedTrack != null) {
+        // S018 FIX -- ya no depende solo de match.matchedTrack != null:
+        // una pista ya descargada (downloadStatus == DONE) debe poder
+        // reproducirse aunque el reemparejamiento de ESTA sesión no
+        // haya encontrado nada en YouTube (playTrack() ya prioriza el
+        // archivo local sobre el emparejamiento fresco).
+        if (match.matchedTrack != null || downloadStatus == DownloadStatus.DONE) {
             IconButton(onClick = onPlay) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
             }
@@ -242,8 +246,10 @@ private fun AlbumTrackRow(
                     )
                 }
                 else -> {
-                    IconButton(onClick = onDownload) {
-                        Icon(Icons.Filled.Download, contentDescription = "Descargar")
+                    if (match.matchedTrack != null) {
+                        IconButton(onClick = onDownload) {
+                            Icon(Icons.Filled.Download, contentDescription = "Descargar")
+                        }
                     }
                 }
             }
