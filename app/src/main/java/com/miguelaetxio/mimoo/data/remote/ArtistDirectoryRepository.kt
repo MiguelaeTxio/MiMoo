@@ -149,6 +149,45 @@ class ArtistDirectoryRepository @Inject constructor(
             .artists
             .distinctBy { it.id }
 
+    /**
+     * Muestra paginada de artistas cuyo nombre empieza por `letter`,
+     * para el Explorador (S018, rediseño tras feedback en dispositivo
+     * de Miguel Ángel: "muestra los 20 primeros artistas por la A...
+     * si paso el dedo, que vaya mostrando más"). Usa sintaxis Lucene
+     * de prefijo (`artist:A*`), verificada contra la documentación
+     * oficial de búsqueda indexada de MusicBrainz (wildcard `*` de
+     * varios caracteres soportado, `offset`/`limit` para paginar) --
+     * no es un endpoint de browse real (MusicBrainz no tiene "listar
+     * todos los artistas por letra"), es una búsqueda con prefijo.
+     * AVISO EXPLÍCITO para quien lea esto: los resultados vienen
+     * ordenados por RELEVANCIA de MusicBrainz, no alfabéticamente --
+     * "por la A" da artistas reales que empiezan por A, pero no en
+     * orden A, Aa, Ab... Miguel Ángel lo aceptó como limitación real
+     * de la API, no un bug.
+     * ---
+     * Paginated sample of artists whose name starts with `letter`, for
+     * Explorer (S018, redesign after Miguel Ángel's on-device
+     * feedback: "show the first 20 artists for A... scrolling should
+     * load more"). Uses Lucene prefix syntax (`artist:A*`), verified
+     * against MusicBrainz's official indexed-search docs (multi-char
+     * `*` wildcard supported, `offset`/`limit` for paging) -- not a
+     * real browse endpoint (MusicBrainz has no "list all artists by
+     * letter"), it's a prefix search. EXPLICIT WARNING for whoever
+     * reads this: results come back sorted by MusicBrainz RELEVANCE,
+     * not alphabetically -- "for A" gives real artists starting with
+     * A, but not in A, Aa, Ab... order. Miguel Ángel accepted this as
+     * a real API limitation, not a bug.
+     */
+    suspend fun browseArtistsByLetter(
+        letter: Char,
+        offset: Int,
+        limit: Int = 20,
+    ): List<MusicBrainzArtistSummary> =
+        musicBrainzApiService
+            .searchArtists(query = "artist:$letter*", limit = limit, offset = offset)
+            .artists
+            .distinctBy { it.id }
+
     /** Álbumes del artista (release-groups tipo "album"), H12. */
     suspend fun getAlbums(artistMbid: String): List<MusicBrainzReleaseGroup> =
         musicBrainzApiService
