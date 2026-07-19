@@ -130,7 +130,7 @@ fun ExplorerScreen(
  * local.
  */
 @Composable
-private fun ExplorerArtistList(
+private fun ColumnScope.ExplorerArtistList(
     artists: List<String>,
     onArtistClick: (String) -> Unit,
 ) {
