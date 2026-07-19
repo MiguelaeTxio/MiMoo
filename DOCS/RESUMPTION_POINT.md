@@ -11,75 +11,105 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-18 (cierre de sesión S015 NewFlow)
+## Última actualización: 2026-07-19 (cierre de sesión S016 NewFlow)
 
-**Hito activo: H08** (cupo 80/10/10 de Radio configurable en Ajustes)
--- H07 se pausó al cierre de esta sesión (PCH explícito de Miguel
-Ángel), ver `DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H12** (Directorio de Música + Favoritos sin descarga,
+hito nuevo) -- H08 se pausó al cierre de esta sesión (PCH explícito de
+Miguel Ángel), ver `DOCS/ANNEX_ROUTER.md`.
 
-**S015 construyó la réplica total de H07** (ver `DOCS/ANNEX_H07.md`,
-sección "COMPLETADAS EN S015" -- PASOS 1-6, todos ✅ salvo el PASO 5):
-`BackupBundle` ahora transporta favoritos de radio (H09), suscripciones
-de canal (H11) y ajustes de UI, además de lo que ya llevaba (pistas/
-favoritos de álbum/playlists). Dos hallazgos reales corregidos sobre la
-marcha en la misma sesión: `BackupMirrorRepository.compare()` no
-comparaba los campos nuevos (habría dejado la sincronización sin
-disparar si solo divergía ahí) y `ShareCodeRepository` (H10) habría
-filtrado esos mismos datos personales a cualquiera que recibiera un
-código de compartición -- ambos corregidos. Además, marcar/desmarcar
-favorito de radio y suscribirte/darte de baja de un canal pasan ahora
-por `AutoSyncPusher.executeIfConnected()` (conectividad obligatoria +
-push inmediato), mismo patrón que pistas/álbumes/playlists -- exigido
-explícitamente por Miguel Ángel ("la sincronización debe ser total")
-tras detectar el hueco él mismo. Workflow de GitHub Actions en verde en
-los tres commits de la sesión (`efd7817`, `10e9e95`, `661d7b5`).
-**Pendiente de verificación en dispositivo real por Miguel Ángel** --
-ver `DOCS/ANNEX_H07.md`, "Hoja de Ruta para la Siguiente Sesión que
-retome H07", para el detalle exacto de qué probar.
+**S016, resumen narrativo completo (seis commits reales, `f08e8b4`..`a6003b6`):**
 
-**Nota de sesión sin relación con H07:** se detectó y corrigió también
-una inconsistencia visual real en Biblioteca (`LibraryScreen.kt`) --
-el toggle lista/alfabeto de Álbumes no tenía la chapita de cristal
-esmerilado que sí lleva su gemelo de Sencillos (commit `661d7b5`).
+1. **`36c972e` -- cupo 80/10/10 de Radio configurable en Ajustes.**
+   `UiPreferencesManager` gana `radioExplorePercent`/`radioDiscoPercent`
+   (SharedPreferences + `StateFlow`, patrón del borde de cristal),
+   `radioDictPercent` siempre derivado (100 - los otros dos).
+   `PlayerManager.dueForExploreQuota()`/`dueForDiscoQuota()` dejan la
+   fórmula fija `used*10 < accepted+1` (solo válida para p=10) por
+   `dueForQuota(used, percent) = percent>0 && used*100 <
+   (accepted+1)*percent`, sin división, válida para cualquier reparto.
+   Nueva sección "Radio" en Ajustes con dos sliders + texto derivado
+   de diccionario.
 
-**Incidencia de interfaz reportada por Miguel Ángel durante la
-sesión, ajena al código del proyecto:** cortes/desincronización real
-del chat de Claude.ai -- contenido de turnos anteriores de la propia
-sesión desaparecido del lado del usuario, con frecuencia reportada
-como alta. No es diagnosticable ni corregible desde este repositorio
-(vive en la infraestructura del cliente de chat, fuera del alcance de
-Claude en una sesión). Recomendado a Miguel Ángel: botón de "no me
-gusta" en el turno donde note el corte (envía contexto técnico
-directamente a Anthropic) y/o soporte de Anthropic. Mitigación de
-producto ya vigente en MiMoo: el estado real del proyecto nunca vive
-en la memoria del chat -- cada bloque de trabajo se commitea/pushea al
-momento y `RESUMPTION_POINT.md`/`ANNEX_ROUTER.md` reflejan siempre la
-verdad actual del repo, así que un corte de chat no pierde trabajo del
-proyecto, solo el texto de la conversación.
+2. **`86fb3d5` -- fix real: la década dejaba de respetarse tras agotar
+   el pool de la sesión.** Diagnosticado leyendo el log real
+   (`radio_relacionados_debug.txt`, sesión de ~4h, ancla 1980):
+   `pickDictCandidate()` tenía un segundo intento que, al agotarse el
+   pool español de esa década (~15 artistas), caía silenciosamente a
+   CUALQUIER década. Eliminado -- la cascada ya existente (extranjero
+   conocido -> clásica, en ese momento) toma el relevo respetando
+   siempre la década.
 
-**Cierre de sesión, PCH explícito de Miguel Ángel:** H07 pasa a
-PAUSADO (réplica total construida, verificación en dispositivo
-pendiente), H08 pasa a EN PROGRESO -- Miguel Ángel pide explícitamente
-los porcentajes del cupo 80/10/10 configurables en Ajustes, punto ya
-anticipado con hoja de ruta ejecutable en `DOCS/ANNEX_H08.md` ("Hoja
-de Ruta para la Siguiente Sesión que retome H08", punto 3) -- no hizo
-falta tocar ese anexo en esta sesión, su hoja de ruta ya lo contemplaba
-con suficiente detalle para arrancar sin contexto adicional.
+3. **`384ed8a` -- orden explícita y repetida de Miguel Ángel: NUNCA
+   MÁS cae a "classical".** `resolveFinalFallback()` (cupo agotado en
+   una vuelta) y `resolveAnchorWithFallbacks()` (no se identifica nada
+   del artista semilla) sustituyen su último recurso por disco
+   (biblioteca local) -- si tampoco eso tiene nada, la Radio no añade
+   nada esa vuelta / no arranca, nunca rellena con música sin
+   relación. `FALLBACK_GENRE` eliminado del código. Primera pasada de
+   ampliación del diccionario español (+23 entradas) y corrección de
+   Quevedo (canario, estaba mal clasificado como extranjero).
 
-**Siguiente sesión (H08, cupo configurable):**
-1. Sacar las tres proporciones del cupo (diccionario/exploración/
-   disco, hoy 80/10/10 fijo como comparación de enteros en
-   `PlayerManager.dueForExploreQuota()`/`dueForDiscoQuota()`) a
-   `UiPreferencesManager`, con una pantalla/slider en Ajustes -- ver
-   `DOCS/ANNEX_H08.md` punto 6 y punto 3 de la hoja de ruta final para
-   el contexto técnico completo (dónde viven hoy, qué reemplazar).
-2. Verificación en dispositivo real de todo lo construido en S014
-   (rediseño de Radio, sin verificar todavía) -- sigue pendiente,
-   compatible con verificar a la vez el cupo configurable nuevo.
+4. **`b38304e` -- segunda pasada de ampliación del diccionario**
+   (+23 entradas más), comunicando explícitamente a Miguel Ángel que
+   no se llegaba a las 100/década pedidas.
 
-**Pendiente sin resolver, distinto de H08 -- para cuando se retome H07
-con su propio PCH:** verificación en dispositivo de la réplica total
-(PASO 5 de `DOCS/ANNEX_H07.md`), ver punto arriba.
+5. **`12b399e` -- corrección de Miguel Ángel sobre el bloque anterior
+   (malentendido real, aclarado en la conversación): la intención
+   siempre fue aguantar el máximo tiempo posible con género+década de
+   la semilla, degradando solo cuando se agota uno de los dos -- por
+   eso el diccionario debe ser lo más extenso posible.** Encontrado y
+   corregido un bug real no reportado hasta entonces: `pickDiscoCandidate()`
+   (10% disco) tenía un último peldaño que ignoraba género Y década,
+   solo miraba origen -- podía meter un tema sin relación alguna en
+   medio de una sesión coherente. Ahora sigue la misma cascada
+   simétrica que el diccionario. Nuevo `RadioSessionHistoryManager`
+   (SharedPreferences, hasta 400 artistas) -- historial de Radio
+   persistente ENTRE sesiones (no solo dentro de una), usado como
+   preferencia suave en las tres cascadas, a petición explícita de
+   Miguel Ángel ("que las listas no sean siempre igual"). Tercera
+   pasada de ampliación del diccionario (+16 entradas), con género
+   incluido en cada entrada por primera vez.
+
+6. **`a6003b6` -- PCH de cierre.** H08 pasa a PAUSADO (todo lo de
+   arriba construido y compilando en verde en los seis commits,
+   **nada verificado en dispositivo real todavía**). H12 abierto EN
+   PROGRESO: hito nuevo, conversación de apertura completa capturada
+   en `DOCS/ANNEX_H12.md` -- directorio de música navegable vía
+   MusicBrainz (páginas de artista/álbum/canción cruzadas entre sí),
+   unificación de las búsquedas de H01/H05, streaming y descarga al
+   vuelo desde cualquier página, favoritos de artista/álbum
+   desacoplados de la descarga. Miguel Ángel decidió explícitamente
+   que la sesión que lo retome sea de **diseño puro, sin tocar
+   código** -- mismo patrón que S013 para H08.
+
+**Incidencia real de esta sesión, ya resuelta:** el token de GitHub
+usado al empezar la sesión dejó de funcionar a mitad (HTTP 401 en el
+segundo bloque de trabajo) -- Miguel Ángel proporcionó un token nuevo
+y se retomó sin perder ningún commit local ya hecho.
+
+**Pendiente explícito, dicho textualmente por Miguel Ángel -- "es lo
+más importante":** el diccionario de éxitos conocidos sigue sin llegar
+a las ~100 entradas por década que pidió (estado real al cierre:
+1960:22, 1970:22, 1980:28, 1990:23, 2000:27, 2010:24, 2020:13). Tres
+pasadas de ampliación en esta sesión, todas con entradas verificables
+de memoria real, sin inventar nada -- seguir ampliando es candidato
+fuerte para dedicar una sesión aparte si H08 se retoma antes de llegar
+a un tamaño satisfactorio.
+
+**Siguiente sesión (H12, diseño puro -- ver `DOCS/ANNEX_H12.md`
+sección final para los siete puntos exactos a cerrar):** navegación y
+pantallas exactas, unificación de búsqueda (H01+H05), modelo de datos
+de favorito de artista, desambiguación de artistas homónimos (sin
+resolver, ver esa misma sección), streaming al vuelo desde una página,
+menú de tres puntos en el reproductor, y criterio de la sección
+"Descargado" de cada página. Sin código en esa sesión -- se cierra el
+diseño y se deja escrito en el propio anexo para construir en la
+sesión siguiente a esa.
+
+**Pendiente sin resolver, distinto de H12 -- para cuando se retome H08
+con su propio PCH:** verificación en dispositivo real de TODO lo
+construido en S016 (ver bitácora arriba), y continuar ampliando el
+diccionario hacia las ~100/década pedidas.
 
 ---
 
