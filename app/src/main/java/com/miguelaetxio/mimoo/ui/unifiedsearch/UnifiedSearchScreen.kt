@@ -3,9 +3,11 @@ package com.miguelaetxio.mimoo.ui.unifiedsearch
 import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -100,6 +102,46 @@ fun UnifiedSearchScreen(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
+            // S018 -- chips para restringir la VISTA tras buscar
+            // (roadmap: "lanza la búsqueda, presenta unos resultados,
+            // toco álbum, restringe la búsqueda a los álbumes"). Solo
+            // tienen sentido una vez hay algo buscado.
+            if (uiState.hasSearched) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ResultKindChip(
+                        label = "Artista",
+                        selected = uiState.activeFilter == SearchResultKind.ARTIST,
+                        onClick = { viewModel.setFilter(SearchResultKind.ARTIST) },
+                    )
+                    ResultKindChip(
+                        label = "Álbum",
+                        selected = uiState.activeFilter == SearchResultKind.ALBUM,
+                        onClick = { viewModel.setFilter(SearchResultKind.ALBUM) },
+                    )
+                    ResultKindChip(
+                        label = "Sencillo",
+                        selected = uiState.activeFilter == SearchResultKind.SONG,
+                        onClick = { viewModel.setFilter(SearchResultKind.SONG) },
+                    )
+                    ResultKindChip(
+                        label = "Lista",
+                        selected = uiState.activeFilter == SearchResultKind.PLAYLIST,
+                        onClick = { viewModel.setFilter(SearchResultKind.PLAYLIST) },
+                    )
+                    ResultKindChip(
+                        label = "Canal",
+                        selected = uiState.activeFilter == SearchResultKind.CHANNEL,
+                        onClick = { viewModel.setFilter(SearchResultKind.CHANNEL) },
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
             uiState.errorMessage?.let { message ->
                 Text(
                     text = message,
@@ -117,65 +159,86 @@ fun UnifiedSearchScreen(
                 )
             }
 
+            val filter = uiState.activeFilter
             LazyColumn(modifier = Modifier.weight(1f)) {
-                section(
-                    title = "Canciones",
-                    items = uiState.songs,
-                    key = { "song-${it.youtubeId}" },
-                ) { song ->
-                    SongResultRow(
-                        song = song,
-                        onClick = { onOpenSong(song.channelTitle, song.title) },
-                    )
+                if (filter == null || filter == SearchResultKind.SONG) {
+                    section(
+                        title = "Canciones",
+                        items = uiState.songs,
+                        key = { "song-${it.youtubeId}" },
+                    ) { song ->
+                        SongResultRow(
+                            song = song,
+                            onClick = { onOpenSong(song.channelTitle, song.title) },
+                        )
+                    }
                 }
-                section(
-                    title = "Álbumes",
-                    items = uiState.albums,
-                    key = { "album-${it.mbid}" },
-                ) { album ->
-                    AlbumResultRow(
-                        album = album,
-                        onClick = { onOpenAlbum(album.artist ?: "", album.title) },
-                    )
+                if (filter == null || filter == SearchResultKind.ALBUM) {
+                    section(
+                        title = "Álbumes",
+                        items = uiState.albums,
+                        key = { "album-${it.mbid}" },
+                    ) { album ->
+                        AlbumResultRow(
+                            album = album,
+                            onClick = { onOpenAlbum(album.artist ?: "", album.title) },
+                        )
+                    }
                 }
-                section(
-                    title = "Artistas",
-                    items = uiState.artists,
-                    key = { "artist-${it.id}" },
-                ) { artist ->
-                    ArtistResultRow(
-                        artist = artist,
-                        onClick = { onOpenArtist(artist.name) },
-                    )
+                if (filter == null || filter == SearchResultKind.ARTIST) {
+                    section(
+                        title = "Artistas",
+                        items = uiState.artists,
+                        key = { "artist-${it.id}" },
+                    ) { artist ->
+                        ArtistResultRow(
+                            artist = artist,
+                            onClick = { onOpenArtist(artist.name) },
+                        )
+                    }
                 }
-                section(
-                    title = "Listas de reproducción",
-                    items = uiState.playlists,
-                    key = { "playlist-${it.id}" },
-                ) { playlist ->
-                    TypeResultRow(
-                        result = playlist,
-                        onOpen = { onOpenExternalLink(playlist.url) },
-                    )
+                if (filter == null || filter == SearchResultKind.PLAYLIST) {
+                    section(
+                        title = "Listas de reproducción",
+                        items = uiState.playlists,
+                        key = { "playlist-${it.id}" },
+                    ) { playlist ->
+                        TypeResultRow(
+                            result = playlist,
+                            onOpen = { onOpenExternalLink(playlist.url) },
+                        )
+                    }
                 }
-                section(
-                    title = "Canales",
-                    items = uiState.channels,
-                    key = { "channel-${it.id}" },
-                ) { channel ->
-                    TypeResultRow(
-                        result = channel,
-                        onOpen = { onOpenExternalLink(channel.url) },
-                        isChannel = true,
-                        isSubscribed = channel.id in subscribedChannelIds,
-                        onToggleSubscription = {
-                            viewModel.toggleChannelSubscription(activity, channel)
-                        },
-                    )
+                if (filter == null || filter == SearchResultKind.CHANNEL) {
+                    section(
+                        title = "Canales",
+                        items = uiState.channels,
+                        key = { "channel-${it.id}" },
+                    ) { channel ->
+                        TypeResultRow(
+                            result = channel,
+                            onOpen = { onOpenExternalLink(channel.url) },
+                            isChannel = true,
+                            isSubscribed = channel.id in subscribedChannelIds,
+                            onToggleSubscription = {
+                                viewModel.toggleChannelSubscription(activity, channel)
+                            },
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ResultKindChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+    )
 }
 
 /**

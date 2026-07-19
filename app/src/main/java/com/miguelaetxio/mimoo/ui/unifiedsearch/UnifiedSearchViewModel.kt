@@ -26,6 +26,21 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Tipo de resultado para restringir la VISTA (S018, rediseño de la
+ * búsqueda unificada): "lanza la búsqueda, presenta unos resultados,
+ * toco álbum, restringe la búsqueda a los álbumes" -- las cinco
+ * fuentes siguen buscando TODAS en paralelo en search() (sin
+ * cambios), esto solo decide qué secciones se pintan en pantalla.
+ * ---
+ * Result type to restrict the VIEW (S018, unified search redesign):
+ * "run the search, show results, tap album, restrict the view to
+ * albums" -- all five sources still search in parallel in search()
+ * (unchanged), this only decides which sections get painted on
+ * screen.
+ */
+enum class SearchResultKind { SONG, ALBUM, ARTIST, PLAYLIST, CHANNEL }
+
 data class UnifiedSearchUiState(
     val query: String = "",
     val isSearching: Boolean = false,
@@ -37,6 +52,8 @@ data class UnifiedSearchUiState(
     val playlists: List<SearchTypeResult> = emptyList(),
     val channels: List<SearchTypeResult> = emptyList(),
     val syncBlockedMessage: String? = null,
+    // null = sin restringir, se ven las cinco secciones (S018).
+    val activeFilter: SearchResultKind? = null,
 ) {
     val isEmpty: Boolean
         get() = songs.isEmpty() && albums.isEmpty() && artists.isEmpty() &&
@@ -98,6 +115,12 @@ class UnifiedSearchViewModel @Inject constructor(
 
     fun onQueryChange(query: String) {
         _uiState.value = _uiState.value.copy(query = query)
+    }
+
+    /** Toggle: tocar el chip ya activo lo desactiva (vuelve a ver las cinco secciones). */
+    fun setFilter(kind: SearchResultKind) {
+        val current = _uiState.value.activeFilter
+        _uiState.value = _uiState.value.copy(activeFilter = if (current == kind) null else kind)
     }
 
     fun search() {
