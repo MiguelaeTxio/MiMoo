@@ -1536,6 +1536,47 @@ class PlayerManager @Inject constructor(
     }
 
     /**
+     * "Reproducir en aleatorio" desde Biblioteca -- SUSTITUYE al
+     * patrón anterior (`playQueue(items.shuffled())`, una mezcla
+     * manual de la lista de Kotlin, ajena por completo al modo
+     * aleatorio real de ExoPlayer). Aquí los `items` se insertan en
+     * su orden ORIGINAL y se activa `player.shuffleModeEnabled` --
+     * así es el propio ExoPlayer quien decide el orden real (y lo
+     * recalcula al saltar pistas, no una mezcla fija de un solo
+     * uso), y `PlaybackState.shuffleModeEnabled` -- y por tanto la
+     * chapita del reproductor -- queda sincronizado de verdad.
+     *
+     * Fallo real reportado por Miguel Ángel (S019): "escoger el modo
+     * aleatorio desde la biblioteca implica no saber qué modo de
+     * reproducción se está ejecutando" -- con el mezclado manual, el
+     * reproductor mostraba "aleatorio desactivado" mientras en
+     * realidad se escuchaba una lista mezclada, sin ninguna forma de
+     * saberlo desde la UI.
+     * ---
+     * "Play shuffled" from Library -- REPLACES the previous pattern
+     * (`playQueue(items.shuffled())`, a manual Kotlin-list shuffle
+     * completely unrelated to ExoPlayer's real shuffle mode). Here
+     * `items` are inserted in their ORIGINAL order and
+     * `player.shuffleModeEnabled` is turned on -- so ExoPlayer itself
+     * decides the real play order (and recalculates it when skipping
+     * tracks, not a fixed one-off shuffle), and
+     * `PlaybackState.shuffleModeEnabled` -- and therefore the
+     * player's chip -- stays genuinely in sync.
+     *
+     * Real bug reported by Miguel Ángel (S019): "choosing shuffle mode
+     * from the Library means not knowing which playback mode is
+     * running" -- with the manual shuffle, the player showed "shuffle
+     * off" while a shuffled list was actually playing, with no way to
+     * tell from the UI.
+     */
+    fun playQueueShuffled(items: List<QueueItem>) {
+        playQueue(items)
+        if (!player.shuffleModeEnabled) {
+            player.shuffleModeEnabled = true
+        }
+    }
+
+    /**
      * "Reproducir a continuación" -- inserta `items` justo después de
      * la pista actual, SIN interrumpir lo que suena ahora mismo:
      * sonarán en cuanto termine la pista actual, antes que lo que ya

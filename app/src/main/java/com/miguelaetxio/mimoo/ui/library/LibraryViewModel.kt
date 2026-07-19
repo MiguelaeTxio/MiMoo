@@ -1366,7 +1366,7 @@ class LibraryViewModel @Inject constructor(
 
     fun playAllAlbumsShuffled() {
         val allTracks = _uiState.value.albumsByArtist.values.flatMap { it.values.flatten() }
-        playerManager.playQueue(allTracks.shuffled().toQueueItems())
+        playerManager.playQueueShuffled(allTracks.toQueueItems())
     }
 
     fun playLetterAlbums(letter: Char) {
@@ -1380,7 +1380,7 @@ class LibraryViewModel @Inject constructor(
         val tracks = _uiState.value.albumsByArtist
             .filterKeys { sortLetterFor(it) == letter }
             .values.flatMap { it.values.flatten() }
-        playerManager.playQueue(tracks.shuffled().toQueueItems())
+        playerManager.playQueueShuffled(tracks.toQueueItems())
     }
 
     fun playAllSingles() {
@@ -1390,7 +1390,7 @@ class LibraryViewModel @Inject constructor(
 
     fun playAllSinglesShuffled() {
         val allTracks = _uiState.value.singlesByArtist.values.flatten()
-        playerManager.playQueue(allTracks.shuffled().toQueueItems())
+        playerManager.playQueueShuffled(allTracks.toQueueItems())
     }
 
     fun playLetterSingles(letter: Char) {
@@ -1404,7 +1404,7 @@ class LibraryViewModel @Inject constructor(
         val tracks = _uiState.value.singlesByArtist
             .filterKeys { sortLetterFor(it) == letter }
             .values.flatten()
-        playerManager.playQueue(tracks.shuffled().toQueueItems())
+        playerManager.playQueueShuffled(tracks.toQueueItems())
     }
 
     /**
@@ -1419,7 +1419,7 @@ class LibraryViewModel @Inject constructor(
     /** Plays every album track of one artist in random order (pestaña Álbumes). */
     fun playArtistAlbumsShuffled(artist: String) {
         val albums = _uiState.value.albumsByArtist[artist] ?: return
-        playerManager.playQueue(albums.values.flatten().shuffled().toQueueItems())
+        playerManager.playQueueShuffled(albums.values.flatten().toQueueItems())
     }
 
     /** Plays every single of one artist, title order, as a queue (pestaña Sencillos). */
@@ -1431,7 +1431,7 @@ class LibraryViewModel @Inject constructor(
     /** Plays every single of one artist in random order (pestaña Sencillos). */
     fun playArtistSinglesShuffled(artist: String) {
         val tracks = _uiState.value.singlesByArtist[artist] ?: return
-        playerManager.playQueue(tracks.shuffled().toQueueItems())
+        playerManager.playQueueShuffled(tracks.toQueueItems())
     }
 
     /** Plays every favorite, title order, as a queue (pestaña Favoritos). */
@@ -1450,15 +1450,15 @@ class LibraryViewModel @Inject constructor(
      * once, with a warning if any fail instead of just vanishing.
      */
     fun playFavorites() {
-        playResolvedFavorites(_uiState.value.favorites)
+        playResolvedFavorites(_uiState.value.favorites, shuffled = false)
     }
 
     /** Plays every favorite in random order (pestaña Favoritos). */
     fun playFavoritesShuffled() {
-        playResolvedFavorites(_uiState.value.favorites.shuffled())
+        playResolvedFavorites(_uiState.value.favorites, shuffled = true)
     }
 
-    private fun playResolvedFavorites(tracks: List<SearchResultTrack>) {
+    private fun playResolvedFavorites(tracks: List<SearchResultTrack>, shuffled: Boolean) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isResolvingFavorites = true,
@@ -1508,7 +1508,11 @@ class LibraryViewModel @Inject constructor(
                 },
             )
             if (items.isNotEmpty()) {
-                playerManager.playQueue(items)
+                if (shuffled) {
+                    playerManager.playQueueShuffled(items)
+                } else {
+                    playerManager.playQueue(items)
+                }
             }
         }
     }
