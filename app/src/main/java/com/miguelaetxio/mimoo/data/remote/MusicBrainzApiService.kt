@@ -120,4 +120,33 @@ interface MusicBrainzApiService {
         @Query("limit") limit: Int = 100,
         @Query("fmt") format: String = "json",
     ): MusicBrainzReleaseGroupSearchResponse
+
+    /**
+     * H12 (S018) -- browse de releases dentro de un release-group ya
+     * conocido, para obtener una release representativa y con ella su
+     * número de pistas vía `lookupRelease` -- exclusivamente
+     * MusicBrainz, SIN pasar por YouTube (a diferencia de
+     * AlbumMatchRepository.matchAlbumTracks(), que sí empareja cada
+     * pista con un vídeo). Necesario para el conteo "álbum completo /
+     * álbum parcial" de ArtistScreen: llamar a matchAlbumTracks() para
+     * cada álbum del artista solo para contar pistas dispararía una
+     * búsqueda de YouTube por pista y por álbum, un coste que este
+     * conteo no necesita.
+     * ---
+     * H12 (S018) -- browse of releases inside an already-known
+     * release-group, to get a representative release and, from it, its
+     * track count via `lookupRelease` -- MusicBrainz only, WITHOUT
+     * touching YouTube (unlike AlbumMatchRepository.matchAlbumTracks(),
+     * which does match each track to a video). Needed for
+     * ArtistScreen's "complete album / partial album" count: calling
+     * matchAlbumTracks() for every one of the artist's albums just to
+     * count tracks would fire a YouTube search per track per album, a
+     * cost this count doesn't need.
+     */
+    @GET("release/")
+    suspend fun browseReleasesByReleaseGroup(
+        @Query("release-group") releaseGroupMbid: String,
+        @Query("limit") limit: Int = 1,
+        @Query("fmt") format: String = "json",
+    ): MusicBrainzSearchResponse
 }

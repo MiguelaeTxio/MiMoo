@@ -132,4 +132,36 @@ class ArtistDirectoryRepository @Inject constructor(
         musicBrainzApiService
             .browseReleaseGroupsByArtist(artistMbid, type = "single")
             .releaseGroups
+
+    /**
+     * Número de pistas de un álbum, solo vía MusicBrainz (sin
+     * YouTube) -- usado por ArtistScreen para el conteo "álbum
+     * completo / álbum parcial" (S018). Resuelve una release
+     * representativa del release-group y cuenta su tracklist. Null si
+     * el release-group no tiene ninguna release resoluble o falla la
+     * consulta -- el llamante trata "desconocido" como "no marcar
+     * completo", nunca como 0 (0 pistas sería un dato falso, no una
+     * ausencia real de información).
+     * ---
+     * Track count for an album, MusicBrainz only (no YouTube) -- used
+     * by ArtistScreen for the "complete album / partial album" count
+     * (S018). Resolves a representative release from the release-group
+     * and counts its tracklist. Null if the release-group has no
+     * resolvable release or the lookup fails -- the caller treats
+     * "unknown" as "don't mark complete", never as 0 (0 tracks would be
+     * a false data point, not a real absence of information).
+     */
+    suspend fun getTrackCount(releaseGroupMbid: String): Int? =
+        try {
+            val releaseId = musicBrainzApiService
+                .browseReleasesByReleaseGroup(releaseGroupMbid)
+                .releases
+                .firstOrNull()
+                ?.id
+                ?: return null
+            musicBrainzApiService.lookupRelease(releaseId).media
+                .sumOf { it.tracks.size }
+        } catch (e: Exception) {
+            null
+        }
 }
