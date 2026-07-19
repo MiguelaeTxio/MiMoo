@@ -255,6 +255,11 @@ class PlayerManager @Inject constructor(
     // desde una corrutina ya en marcha (fetchRoundCandidate()), no
     // necesitan collect().
     private val uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager,
+    // S016, segundo bloque -- historial persistente de artistas de
+    // Radio ENTRE sesiones (petición explícita de Miguel Ángel: "que
+    // las listas no sean siempre igual"). Preferencia suave, ver
+    // RadioSessionHistoryManager.
+    private val radioSessionHistoryManager: com.miguelaetxio.mimoo.data.access.RadioSessionHistoryManager,
 ) {
 
     /**
@@ -1040,9 +1045,13 @@ class PlayerManager @Inject constructor(
      */
     private suspend fun fetchRoundCandidate(anchor: RadioAnchor, anchorArtistName: String): QueueItem? {
         val excludeNames = radioUsedArtists + anchorArtistName
+        // S016, segundo bloque -- preferencia suave entre sesiones
+        // (ver RadioSessionHistoryManager). Se calcula UNA vez por
+        // vuelta, no por cupo -- es la misma lista para los tres.
+        val avoidNames = radioSessionHistoryManager.recentlyUsedLower()
 
         if (dueForDiscoQuota()) {
-            val discoItem = pickDiscoCandidate(anchor, excludeNames)
+            val discoItem = pickDiscoCandidate(anchor, excludeNames, avoidNames)
             if (discoItem != null) {
                 radioDiscoTracksUsed++
                 radioTracksAccepted++
@@ -1063,7 +1072,7 @@ class PlayerManager @Inject constructor(
         }
 
         if (dueForExploreQuota()) {
-            val exploreArtist = radioRepository.suggestRelatedArtist(anchor, excludeNames)
+            val exploreArtist = radioRepository.suggestRelatedArtist(anchor, excludeNames, avoidNames)
             if (exploreArtist != null) {
                 val item = resolveYoutubeCandidate(anchorArtistName, exploreArtist, songTitle = null)
                 if (item != null) {
@@ -1079,7 +1088,7 @@ class PlayerManager @Inject constructor(
             }
         }
 
-        val dictHit = pickDictCandidate(anchor, excludeNames, allowForeignFallback = false)
+        val dictHit = pickDictCandidate(anchor, excludeNames, avoidNames, allowForeignFallback = false)
         if (dictHit != null) {
             val item = resolveYoutubeCandidate(anchorArtistName, dictHit.artist, dictHit.song)
             if (item != null) {
@@ -1088,7 +1097,8 @@ class PlayerManager @Inject constructor(
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "fetchRoundCandidate(ancla='$anchorArtistName') -> cupo=diccionario: " +
-                        "'${dictHit.artist}' - '${dictHit.song}'",
+                        "'${dictHit.artist}' - '${dictHit.song}' (género='${dictHit.genre}', " +
+                        "ancla=género:'${anchor.genre}'/década:${anchor.decadeBegin})",
                 )
                 return item
             }
@@ -1096,8 +1106,8 @@ class PlayerManager @Inject constructor(
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "fetchRoundCandidate(ancla='$anchorArtistName') -- cupo=diccionario sin candidatos " +
-                    "para década=${anchor.decadeBegin} (pool agotado esta sesión, ver fix S016) -- " +
-                    "pasando a resolveFinalFallback()",
+                    "para género='${anchor.genre}' década=${anchor.decadeBegin} (cascada género/década " +
+                    "agotada del todo esta sesión) -- pasando a resolveFinalFallback()",
             )
         }
 
@@ -1125,8 +1135,12 @@ class PlayerManager @Inject constructor(
     private fun dueForDiscoQuota(): Boolean =
         !radioDiscoExhausted && dueForQuota(radioDiscoTracksUsed, uiPreferencesManager.radioDiscoPercent.value)
 
+    /** S016, segundo bloque -- registra en memoria de sesión Y en el historial persistente entre sesiones. */
     private fun registerUsedArtist(artist: String?) {
-        artist?.let { radioUsedArtists.add(it) }
+        artist?.let {
+            radioUsedArtists.add(it)
+            radioSessionHistoryManager.registerUsed(it)
+        }
     }
 
     /**
@@ -1155,8 +1169,9 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         excludeNames: Set<String>,
     ): QueueItem? {
+        val avoidNames = radioSessionHistoryManager.recentlyUsedLower()
         if (anchor.isSpanishOrigin) {
-            val foreignHit = pickDictCandidate(anchor, excludeNames, allowForeignFallback = true)
+            val foreignHit = pickDictCandidate(anchor, excludeNames, avoidNames, allowForeignFallback = true)
             if (foreignHit != null) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
@@ -1178,7 +1193,7 @@ class PlayerManager @Inject constructor(
             "resolveFinalFallback(ancla='$anchorArtistName') -- diccionario y exploración agotados " +
                 "esta vuelta, último recurso: disco (biblioteca local), NUNCA clásica",
         )
-        val discoItem = pickDiscoCandidate(anchor, excludeNames)
+        val discoItem = pickDiscoCandidate(anchor, excludeNames, avoidNames)
         if (discoItem != null) {
             radioTracksAccepted++
             registerUsedArtist(discoItem.artist)
@@ -1196,41 +1211,39 @@ class PlayerManager @Inject constructor(
 
     /**
      * S013, cupo del 80% -- elige un candidato del diccionario de
-     * éxitos ampliado para la década+origen del ancla.
+     * éxitos ampliado para género+década+origen del ancla.
      * `allowForeignFallback` (punto 7.2) ignora la restricción de
      * origen -- solo se usa desde resolveFinalFallback(), nunca desde
-     * el cupo normal de la vuelta.
+     * el cupo normal de la vuelta. El origen (`requireEs`) es lo único
+     * que decide ESTA función por fuera de la cascada de
+     * `randomHit()` -- género y década los gestiona por completo
+     * `KnownHitsRepository.randomHit()`.
      *
-     * **Fix real S016** (reportado por Miguel Ángel con
-     * `radio_relacionados_debug.txt`: "la década no se está
-     * respetando en absoluto"). Causa raíz confirmada leyendo el log:
-     * el diccionario solo tiene ~15 artistas españoles por década
-     * (deliberadamente no exhaustivo, ver `KnownHitsRepository`), así
-     * que en una sesión larga se agotan rápido -- y esta función
-     * tenía un segundo intento que, al agotarse la década del ancla,
-     * caía silenciosamente a `randomHit(decadeBegin = null, ...)`
-     * (CUALQUIER década), sin ninguna marca en el log que lo
-     * distinguiera del acierto normal. Eliminado: si la década del
-     * ancla está agotada para el diccionario, esta función devuelve
-     * `null` y dueForDiscoQuota()/dueForExploreQuota() (ambas
-     * respetan década de verdad, vía MusicBrainz) o, en última
-     * instancia, resolveFinalFallback() toman el relevo -- nunca la
-     * propia función relaja la década.
-     *
-     * `KnownHitsRepository.pool()` ya cubre el caso legítimo de
-     * "década desconocida" (ancla sin `life-span.begin` en
-     * MusicBrainz, `anchor.decadeBegin == null`): ese caso entra por
-     * la MISMA llamada de abajo, con `decadeBegin = null` pasado
-     * directamente desde el ancla, así que no hace falta ningún
-     * segundo intento aparte para cubrirlo.
+     * **Historial S016 en dos pasos, mismo bloque de trabajo:**
+     * 1. Fix de década (reportado por Miguel Ángel con
+     *    `radio_relacionados_debug.txt`): esta función tenía un
+     *    fallback que, al agotarse la década del ancla, caía
+     *    silenciosamente a CUALQUIER década sin marca en el log.
+     *    Eliminado en un primer commit.
+     * 2. Corrección de Miguel Ángel sobre el punto anterior: nunca
+     *    pidió que el diccionario dejara de filtrar por género -- el
+     *    diccionario, hasta este bloque, JAMÁS había tenido dato de
+     *    género por entrada (`KnownHitsRepository.RawHit` no lo
+     *    tenía). Añadido `genre` a cada entrada del JSON y
+     *    reescrita `randomHit()` con la cascada género+década
+     *    simétrica que pidió explícitamente: género+década exacta ->
+     *    se agota género, se mantiene década -> se agota también eso,
+     *    se mantiene género sin década -> `null`. El origen nunca se
+     *    relaja en ninguno de esos tres pasos.
      */
     private fun pickDictCandidate(
         anchor: RadioAnchor,
         excludeArtists: Set<String>,
+        avoidArtists: Set<String>,
         allowForeignFallback: Boolean,
     ): com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.KnownHit? {
         val requireEs = anchor.isSpanishOrigin && !allowForeignFallback
-        return knownHitsRepository.randomHit(anchor.decadeBegin, requireEs, excludeArtists)
+        return knownHitsRepository.randomHit(anchor.genre, anchor.decadeBegin, requireEs, excludeArtists, avoidArtists)
     }
 
     /**
@@ -1238,16 +1251,32 @@ class PlayerManager @Inject constructor(
      * descargados (misma fuente que Biblioteca), en orden aleatorio,
      * excluyendo los ya usados esta sesión; para cada uno resuelve
      * género/país/década vía MusicBrainz bajo demanda (cacheado por
-     * artista dentro de la sesión, ver radioLibraryArtistProfileCache)
-     * y acepta el primero que cumpla género+origen+década, relajando a
-     * década+origen (sin género) y finalmente a "cualquier pista que
-     * cumpla origen" (último peldaño específico del 10% de disco) --
-     * nunca cae directa a clásica ni al extranjero-conocido desde
-     * aquí, eso lo decide fetchRoundCandidate()/resolveFinalFallback()
-     * cuando este cupo devuelve null.
+     * artista dentro de la sesión, ver radioLibraryArtistProfileCache).
+     *
+     * **Fix real S016, corrección de Miguel Ángel sobre el diseño
+     * original de esta función.** Antes tenía un último peldaño
+     * ("cualquier pista que cumpla origen") que ignoraba género Y
+     * década por completo -- eso permitía que, en una sesión de
+     * flamenco rock español, el 10% de disco metiera un tema de Pink
+     * Floyd solo por tener origen distinto correcto. Eliminado: ahora
+     * sigue la MISMA cascada simétrica género/década que
+     * `KnownHitsRepository.randomHit()` (origen SIEMPRE fijo, nunca se
+     * relaja aquí):
+     *   1. género + década exacta.
+     *   2. se agota el género -> se mantiene la década, cualquier género.
+     *   3. se agota también eso -> se mantiene el género, cualquier década.
+     *   4. nada -- `null`. Nunca cae directa a clásica ni al
+     *      extranjero-conocido desde aquí, eso lo decide
+     *      fetchRoundCandidate()/resolveFinalFallback() cuando este
+     *      cupo devuelve null.
      */
-    private suspend fun pickDiscoCandidate(anchor: RadioAnchor, excludeArtists: Set<String>): QueueItem? {
+    private suspend fun pickDiscoCandidate(
+        anchor: RadioAnchor,
+        excludeArtists: Set<String>,
+        avoidArtists: Set<String>,
+    ): QueueItem? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
+        val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         val downloadedTracks = searchResultTrackRepository.getAllOnce()
             .filter {
                 it.downloadStatus == com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
@@ -1262,28 +1291,35 @@ class PlayerManager @Inject constructor(
             .shuffled()
         if (candidateArtists.isEmpty()) return null
 
-        var genreMatch: String? = null
-        var originDecadeMatch: String? = null
-        var anyOriginMatch: String? = null
+        data class ProfiledArtist(
+            val artist: String,
+            val profile: com.miguelaetxio.mimoo.data.remote.RadioRepository.ArtistProfile,
+        )
 
-        for (artistName in candidateArtists) {
+        val originMatches = candidateArtists.mapNotNull { artistName ->
             val profile = radioLibraryArtistProfileCache.getOrPut(artistName) {
                 radioRepository.lookupArtistProfile(artistName)
-            } ?: continue
+            } ?: return@mapNotNull null
             val originOk = if (anchor.isSpanishOrigin) profile.country == "ES" else true
-            if (!originOk) continue
-            if (anyOriginMatch == null) anyOriginMatch = artistName
-            val decadeOk = anchor.decadeBegin == null || profile.decadeBegin == anchor.decadeBegin
-            if (decadeOk) {
-                if (originDecadeMatch == null) originDecadeMatch = artistName
-                if (genreMatch == null && profile.genres.any { it.equals(anchor.genre, ignoreCase = true) }) {
-                    genreMatch = artistName
-                    break
-                }
-            }
+            if (!originOk) null else ProfiledArtist(artistName, profile)
+        }
+        if (originMatches.isEmpty()) return null
+
+        fun genreOk(p: ProfiledArtist) = p.profile.genres.any { it.equals(anchor.genre, ignoreCase = true) }
+        fun decadeOk(p: ProfiledArtist) = anchor.decadeBegin == null || p.profile.decadeBegin == anchor.decadeBegin
+
+        /** S016, segundo bloque -- entre los que cumplen `condition`, prefiere los no evitados; si eso vacía la lista, ignora la preferencia. */
+        fun pickPreferred(condition: (ProfiledArtist) -> Boolean): String? {
+            val matching = originMatches.filter(condition)
+            val preferred = matching.filter { it.artist.lowercase() !in avoidLower }
+            return preferred.ifEmpty { matching }.firstOrNull()?.artist
         }
 
-        val chosenArtist = genreMatch ?: originDecadeMatch ?: anyOriginMatch ?: return null
+        val chosenArtist = pickPreferred { genreOk(it) && decadeOk(it) }
+            ?: pickPreferred { decadeOk(it) }
+            ?: pickPreferred { genreOk(it) }
+            ?: return null
+
         val track = downloadedTracks
             .filter { it.artist.equals(chosenArtist, ignoreCase = true) }
             .randomOrNull() ?: return null

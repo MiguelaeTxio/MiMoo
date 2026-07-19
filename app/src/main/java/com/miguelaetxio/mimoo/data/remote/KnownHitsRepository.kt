@@ -32,6 +32,15 @@ import javax.inject.Singleton
  * clasificación de Quevedo (canario, España -- estaba mal metido en
  * `intl` de los 2020). Deliberadamente no exhaustivo -- sigue
  * pendiente ampliar más en próximas sesiones, ver ANNEX_H08.md S016.
+ *
+ * **Género (S016, corrección de Miguel Ángel):** cada entrada tiene
+ * ahora también un `genre` (un único género principal por canción,
+ * mismo estilo de etiqueta que `RadioAnchor.genre`/MusicBrainz --
+ * "pop", "rock", "pop rock", "flamenco", "rumba", "copla",
+ * "reggaeton", "hip hop", etc.). El diccionario NUNCA había filtrado
+ * por género -- error real, no decisión de Miguel Ángel, corregido en
+ * el mismo bloque que amplió las listas `es`. Ver `randomHit()` para
+ * la cascada género+década.
  * ---
  * S013/S014 -- complete redesign of the known-hits dictionary. See
  * `DOCS/ANNEX_H08.md`, "S013" section, for the full design.
@@ -40,10 +49,10 @@ import javax.inject.Singleton
 class KnownHitsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    /** Un éxito conocido concreto -- artista + canción real de esa época. */
-    data class KnownHit(val artist: String, val song: String)
+    /** Un éxito conocido concreto -- artista + canción real de esa época, con su género principal. */
+    data class KnownHit(val artist: String, val song: String, val genre: String)
 
-    private data class RawHit(val artist: String = "", val song: String = "")
+    private data class RawHit(val artist: String = "", val song: String = "", val genre: String = "")
     private data class RawDecade(val es: List<RawHit> = emptyList(), val intl: List<RawHit> = emptyList())
 
     /** `lazy` -- se lee y parsea el asset una sola vez, la primera vez que se necesita. */
@@ -71,7 +80,7 @@ class KnownHitsRepository @Inject constructor(
         val decades = if (decadeBegin != null) listOfNotNull(byDecade[decadeBegin]) else byDecade.values.toList()
         return decades.flatMap { d ->
             val raw = if (requireEs) d.es else d.es + d.intl
-            raw.map { KnownHit(it.artist, it.song) }
+            raw.map { KnownHit(it.artist, it.song, it.genre) }
         }
     }
 
@@ -88,15 +97,57 @@ class KnownHitsRepository @Inject constructor(
 
     /**
      * S013, cupo del 80% -- elige un candidato al azar del diccionario
-     * para la década+origen dados, excluyendo los artistas ya usados
-     * en la sesión. `decadeBegin == null` amplía la búsqueda a
-     * cualquier década conocida, igual que `lookupHit()`.
+     * para género+década+origen dados, excluyendo los artistas ya
+     * usados en la sesión.
+     *
+     * **Cascada género/década (S016, corrección explícita de Miguel
+     * Ángel -- "si se acaba antes por género, se sigue con la misma
+     * década aunque ya no coincida el género; si se acaba la década,
+     * se sigue con el género aunque no sea de la misma década"):**
+     *   1. género + década exacta.
+     *   2. se agota el género -> se mantiene la década, cualquier género.
+     *   3. se agota también eso -> se mantiene el género, cualquier década.
+     *   4. nada -- `null`. El origen (`requireEs`) NUNCA se relaja
+     *      aquí dentro, en ninguno de los tres pasos -- eso lo decide
+     *      el llamante (`allowForeignFallback`, ver PlayerManager).
+     *
+     * `genre == null` o `decadeBegin == null` saltan directamente el
+     * paso que dependería de ese dato ausente (mismo criterio que
+     * antes de S016 para década desconocida).
+     *
+     * `avoidArtists` (S016 -- "que las listas no sean siempre igual"
+     * entre sesiones, ver `RadioSessionHistoryManager`): preferencia
+     * SUAVE en cada uno de los tres pasos -- si evitarlos deja el
+     * paso sin candidatos, se ignora `avoidArtists` para ESE paso y se
+     * elige igualmente de él, nunca se salta un paso entero por esto.
      */
-    fun randomHit(decadeBegin: Int?, requireEs: Boolean, excludeArtists: Set<String>): KnownHit? {
+    fun randomHit(
+        genre: String?,
+        decadeBegin: Int?,
+        requireEs: Boolean,
+        excludeArtists: Set<String>,
+        avoidArtists: Set<String> = emptySet(),
+    ): KnownHit? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
-        return pool(decadeBegin, requireEs)
-            .filter { it.artist.lowercase() !in excludeLower }
-            .randomOrNull()
+        val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
+        fun pick(candidates: List<KnownHit>): KnownHit? {
+            val allowed = candidates.filter { it.artist.lowercase() !in excludeLower }
+            val preferred = allowed.filter { it.artist.lowercase() !in avoidLower }
+            return preferred.ifEmpty { allowed }.randomOrNull()
+        }
+
+        if (genre != null && decadeBegin != null) {
+            pick(pool(decadeBegin, requireEs).filter { it.genre.equals(genre, ignoreCase = true) })
+                ?.let { return it }
+        }
+        if (decadeBegin != null) {
+            pick(pool(decadeBegin, requireEs))?.let { return it }
+        }
+        if (genre != null) {
+            pick(pool(null, requireEs).filter { it.genre.equals(genre, ignoreCase = true) })
+                ?.let { return it }
+        }
+        return null
     }
 
     /**

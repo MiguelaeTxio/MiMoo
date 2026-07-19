@@ -726,6 +726,61 @@ resuelto por decisión unilateral de recortar el alcance.
 **Sin verificar en dispositivo real todavía** -- ninguno de los dos
 puntos de este bloque se ha probado en dispositivo real.
 
+## S016, tercer bloque -- corrección de Miguel Ángel: género+década nunca fue "opcional", disco también debe cumplirlo, e historial entre sesiones
+
+Miguel Ángel corrigió una interpretación mía del bloque anterior: **no
+dijo nunca que la década se relajara sin más** -- la intención siempre
+fue aguantar el máximo tiempo posible poniendo música de la semilla
+(mismo género+década), y por eso el diccionario tiene que ser lo más
+extenso posible: con ~15-25 entradas por década se agota en poco más
+de una hora (10 diccionario + ~1-2 explora/disco ≈ 12-13 pistas a 3
+min ≈ 40 min hasta el primer cambio real de década/género, y la sesión
+completa se sale del todo sobre la hora y media). Cuanto más grande el
+diccionario, más tiempo se tarda en agotar género+década antes de
+degradar, y esa degradación gradual es la que hace que la Radio "vaya
+enganchada" al gusto real de quien la puso.
+
+**Tres correcciones de este bloque:**
+
+1. **El 10% de disco no respetaba género+década, solo origen.**
+   `pickDiscoCandidate()` tenía un último peldaño ("cualquier pista
+   que cumpla origen") que ignoraba género Y década -- en una sesión
+   de flamenco rock español podía meter un tema de Pink Floyd. Nunca
+   fue una decisión de Miguel Ángel, es evidente que no debía pasar.
+   Corregido: `pickDiscoCandidate()` sigue ahora la MISMA cascada
+   simétrica género/década que el diccionario (género+década exacta ->
+   se agota género, se mantiene década -> se agota también eso, se
+   mantiene género -> `null`), con origen siempre fijo.
+
+2. **Diccionario ampliado por tercera vez en esta sesión** (aún sin
+   llegar a 100/década, pendiente explícito):
+
+   | Década | Antes | Ahora |
+   |---|---|---|
+   | 1960 | 20 | 22 |
+   | 1970 | 22 | 22 |
+   | 1980 | 25 | 28 |
+   | 1990 | 20 | 23 |
+   | 2000 | 23 | 27 |
+   | 2010 | 21 | 24 |
+   | 2020 | 12 | 13 |
+
+3. **Historial entre sesiones (petición nueva, explícita de Miguel
+   Ángel: "que las listas no sean siempre igual"):** nuevo
+   `RadioSessionHistoryManager` (SharedPreferences, hasta 400
+   artistas, rotatorio) que persiste cada artista que Radio acepta de
+   verdad, ENTRE sesiones (no solo dentro de una, que ya cubría
+   `radioUsedArtists`). Se usa como preferencia SUAVE en las tres
+   cascadas (diccionario/exploración/disco): en cada paso, si evitar
+   los artistas recientes deja el paso sin candidatos, se ignora esa
+   preferencia para ese paso y se elige igual -- nunca bloquea que
+   Radio encuentre algo por evitar repetición.
+
+**Sin verificar en dispositivo real todavía** -- ninguno de los tres
+puntos de este bloque se ha probado en dispositivo real. Pendiente
+explícito: seguir ampliando el diccionario en próximas sesiones, es
+"lo más importante" según palabras textuales de Miguel Ángel.
+
 ---
 
 

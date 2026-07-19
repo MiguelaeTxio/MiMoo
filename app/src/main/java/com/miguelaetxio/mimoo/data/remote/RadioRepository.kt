@@ -147,9 +147,18 @@ class RadioRepository @Inject constructor(
      * -> país=ES fijo; si no, sin restricción de país) se mantiene
      * FIJO en las tres vueltas de la cascada, nunca se relaja aquí.
      * `excludeArtists` son los nombres ya usados en esta sesión.
+     * `avoidArtists` (S016, `RadioSessionHistoryManager`): preferencia
+     * SUAVE entre sesiones -- si evitarlos deja una vuelta de la
+     * cascada sin candidatos, se ignora para esa vuelta y se elige
+     * igual de ella, nunca se salta una vuelta entera por esto.
      */
-    suspend fun suggestRelatedArtist(anchor: RadioAnchor, excludeArtists: Set<String>): String? {
+    suspend fun suggestRelatedArtist(
+        anchor: RadioAnchor,
+        excludeArtists: Set<String>,
+        avoidArtists: Set<String> = emptySet(),
+    ): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
+        val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         val originCountry = if (anchor.isSpanishOrigin) "ES" else null
 
         val genreAndDecade = if (anchor.decadeBegin != null) {
@@ -169,8 +178,8 @@ class RadioRepository @Inject constructor(
         }
 
         val candidates = genreAndDecade.ifEmpty { genreAnyDecade.ifEmpty { decadeAnyGenre } }
-
-        val chosen = candidates.randomOrNull()
+        val preferred = candidates.filter { it.lowercase() !in avoidLower }
+        val chosen = preferred.ifEmpty { candidates }.randomOrNull()
         if (chosen == null) {
             log(
                 "suggestRelatedArtist(género='${anchor.genre}', origen_es=${anchor.isSpanishOrigin}, " +
