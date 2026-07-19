@@ -874,8 +874,17 @@ private fun ColumnScope.FavoritesTabContent(
  * only large, bold letters, in alphabetical order, only the ones with
  * at least one artist -- never the whole alphabet.
  */
+/**
+ * H12 (S018) -- visibilidad ampliada de `private` a `internal` para
+ * que ExplorerScreen la reutilice tal cual (letras favoritas), sin
+ * duplicar este composable ya genérico. Comportamiento sin cambios.
+ * ---
+ * H12 (S018) -- visibility widened from `private` to `internal` so
+ * ExplorerScreen can reuse it as-is (favorite letters), without
+ * duplicating this already-generic composable. Behavior unchanged.
+ */
 @Composable
-private fun ColumnScope.LetterGrid(
+internal fun ColumnScope.LetterGrid(
     letters: List<Char>,
     emptyMessage: String,
     onSelect: (Char) -> Unit,

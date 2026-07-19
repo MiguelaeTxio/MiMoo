@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Downloading
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlaylistPlay
@@ -654,6 +655,32 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Library.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Explorador") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.Explore,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Explorer.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Explorer.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
