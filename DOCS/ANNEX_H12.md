@@ -107,50 +107,148 @@ centrales de la sesión de diseño que abre este hito.
 
 ---
 
-## Hoja de Ruta para la Siguiente Sesión -- DISEÑO PURO, SIN TOCAR CÓDIGO
+## S017 -- Diseño cerrado
 
-Decisión explícita de Miguel Ángel: *"es mejor diseñar y luego
-construir"* -- mismo patrón que S013 para Radio (H08). La sesión que
-retome este hito NO escribe código; cierra el diseño punto por punto,
-lo deja documentado en este mismo anexo, y solo entonces (sesión
-siguiente a esa) se construye.
+Sesión de diseño puro (sin código), mismo patrón que S013 para Radio
+(H08). Los siete puntos de la hoja de ruta anterior quedan cerrados
+con Miguel Ángel:
 
-Puntos a cerrar, con Miguel Ángel, en esa sesión de diseño:
+1. **Pantallas y navegación: tres páginas separadas.** `NavGraph.kt`
+   gana tres rutas nuevas, clave por nombre de texto (consistente con
+   `FavoriteAlbum`):
+   - `artist/{artistName}` → `ArtistScreen`
+   - `album/{artistName}/{albumName}` → `AlbumScreen`
+   - `song/{artistName}/{songTitle}` → `SongScreen`
 
-1. **Pantallas y navegación exacta.** ¿Página de Artista y página de
-   Álbum como dos Composables/rutas nuevas en `NavGraph.kt`? ¿Existe
-   página de "Canción" propia o una canción siempre se representa
-   dentro de la página de su álbum? Dibujar el grafo de navegación
-   completo (qué botón/tap lleva a dónde) antes de tocar código.
-2. **Unificación de búsqueda.** ¿Una sola pantalla de búsqueda con
-   resultados tipados (canción/álbum/artista) reemplazando a
-   `SearchScreen` (H01) y `AlbumSearchScreen` (H05), o conviven las
-   dos pantallas actuales y se añade navegación cruzada entre sus
-   resultados? Decidir el punto de entrada único.
-3. **Modelo de datos de favorito de artista.** Tabla nueva
-   `FavoriteArtist`, clave por nombre (mismo patrón que
-   `FavoriteAlbum`) salvo que se decida lo contrario. Confirmar
-   nombre de tabla/campos y si necesita más que `(artist)`.
-4. **Desambiguación de homónimos.** Diseñar el flujo de selección +
-   la tabla de "artista elegido" (ver sección de arriba). Decidir
-   dónde vive esa persistencia y cómo se dispara (¿en cuanto se detecta
-   más de un candidato al buscar, o solo al entrar a una página?).
-5. **Streaming al vuelo desde una página.** Confirmar que reutiliza el
-   emparejamiento MusicBrainz↔YouTube de H05 pista a pista, y decidir
-   la UI exacta: ¿"Reproducir" vs "Descargar" como dos acciones
-   separadas por pista/álbum, o un único botón que reproduce y de paso
-   pregunta si se quiere conservar?
-6. **Menú de tres puntos en el reproductor.** Confirmar las dos
-   opciones exactas ("Ver álbum" / "Ver artista" del tema que suena) y
-   qué pasa si la pista actual no tiene artista/álbum estructurado
-   (pista suelta de YouTube sin metadatos de H05) -- ¿se oculta la
-   opción, o se intenta resolver por título parseado, mismo patrón que
-   ya usa Radio en `parseArtistFromTitle()`?
-7. **Sección "Descargado" en cada página.** Confirmar el criterio
-   exacto de conteo ("2 álbumes, 1 sencillo") y si distingue álbum
-   completo descargado vs. álbum parcialmente descargado.
+   Cruces en ambos sentidos: `SongScreen` enlaza a su álbum (si
+   pertenece a uno) y a su artista; `AlbumScreen` muestra tracklist
+   completa (cada pista tappable a `SongScreen`) y enlaza a su
+   artista; `ArtistScreen` lista álbumes (tappable a `AlbumScreen`) y
+   sencillos sueltos (tappable a `SongScreen`).
 
-Al cerrar esa sesión de diseño, esta misma sección de este anexo se
-sustituye por la hoja de ruta de construcción, ya ejecutable sin
-contexto adicional -- mismo patrón que siguió `ANNEX_H08.md` con la
-sección "S013 -- diseño cerrado" seguida de "COMPLETADAS EN S014".
+2. **Búsqueda unificada -- una sola pantalla, cinco tipos de
+   resultado.** Sustituye a `SearchScreen` (H01) y
+   `AlbumSearchScreen` (H05) como único punto de entrada de búsqueda
+   de todo el catálogo online. Resultados tipados por
+   icono/sección -- canción, álbum, artista, lista de reproducción,
+   canal -- ninguno queda fuera ni tiene pantalla de búsqueda aparte:
+   - Canción → `SongScreen` (directorio nuevo).
+   - Álbum → `AlbumScreen` (directorio nuevo).
+   - Artista → `ArtistScreen` (directorio nuevo).
+   - Lista de reproducción → destino ya existente (detalle de lista,
+     sin cambios de H04/H10).
+   - Canal → destino ya existente (pantalla de canal/suscripción de
+     H08 Parte 1/H11, sin cambios).
+
+   Los motores de búsqueda por debajo no cambian (YouTube para
+   sencillos/listas/canales, MusicBrainz para álbumes/artistas) --
+   se unifica el punto de entrada y la presentación de resultados
+   (una query, reparto a las fuentes que corresponda, lista
+   mezclada), no cinco búsquedas en paralelo.
+
+3. **`FavoriteArtist(artist)`**, clave por nombre TEXT -- mismo
+   patrón que `FavoriteAlbum`, sin campos extra.
+
+4. **Homónimos -- dos mecanismos distintos:**
+   - **Normalización** (para que variantes del mismo artista no
+     generen dos páginas, ej. "The Chemical Brothers" / "Chemical
+     Brothers"): `normalizeArtistName()` quita `"The "` inicial, pasa
+     a minúsculas y recorta espacios/acentos, solo para
+     matching/routing -- el nombre mostrado en pantalla sigue siendo
+     el canónico de MusicBrainz. Asunción declarada y confirmada: solo
+     `"The "` en inglés; no se tocan artículos en español (`"Los"`,
+     `"La"`, etc.) por falta de caso real detectado -- revisar si
+     aparece uno.
+   - **Homónimos reales** (dos artistas *distintos* con el mismo
+     nombre normalizado): tabla nueva
+     `ArtistDisambiguation(normalizedNameKey TEXT PRIMARY KEY,
+     chosenMbid TEXT)`. Se dispara la primera vez que se entra a una
+     página de artista y MusicBrainz devuelve más de un candidato con
+     MBID distinto para ese nombre normalizado -- se muestran 2-3
+     candidatos (país/década/género) para elegir, y la elección se
+     persiste ahí.
+
+5. **Streaming/descarga al vuelo -- dos botones separados**, por
+   consistencia con el resto de la app:
+   - Por pista: ▶ **Reproducir** (streaming inmediato, reutiliza el
+     emparejamiento MusicBrainz↔YouTube de H05, no descarga nada) y
+     ⬇ **Descargar** (flujo yt-dlp existente, añade a biblioteca
+     local).
+   - Por álbum: **Reproducir álbum** (cola en streaming, orden de
+     tracklist) y **Descargar álbum** (flujo de descarga completa ya
+     existente en H05).
+
+6. **Menú de tres puntos en el reproductor -- confirmado.** Dos
+   opciones: "Ver álbum" / "Ver artista". Si la pista actual no tiene
+   metadatos estructurados (sencillo suelto de YouTube), se intenta
+   resolver primero con `parseArtistFromTitle()` (mismo patrón que
+   Radio); si tampoco da nada, la opción se oculta.
+
+7. **Sección "Descargado" -- criterio de conteo:**
+   - Página de Álbum: `"X de Y pistas descargadas"` (deriva de
+     `SearchResultTrack` por nombre, igual que `LibraryViewModel`
+     hoy); se etiqueta "Álbum completo" solo si X==Y.
+   - Página de Artista: cuenta por separado álbumes completos,
+     álbumes parciales y sencillos sueltos descargados, ej.:
+     `"2 álbumes completos, 1 álbum parcial, 3 sencillos"`.
+
+---
+
+## Hoja de Ruta de Construcción para la Siguiente Sesión (ejecutable, sin contexto adicional)
+
+1. **Entidades y DAO:**
+   - `FavoriteArtist(artist: String)` (clave primaria `artist`),
+     `FavoriteArtistDao`, `FavoriteArtistRepository` -- mismo patrón
+     que `FavoriteAlbum`/`FavoriteAlbumRepository` (S005). Migración
+     Room nueva (siguiente número tras `MIGRATION_9_10`, ver H09).
+   - `ArtistDisambiguation(normalizedNameKey: String PRIMARY KEY,
+     chosenMbid: String)`, DAO y repositorio a juego.
+   - Leer primero `data/local/entity/FavoriteAlbum.kt` y el `Database`
+     real (directriz §4.1 vinculante) antes de escribir nada -- no
+     inferir nombres de campo.
+
+2. **`normalizeArtistName()`** -- función util nueva (proponer
+   ubicación: junto a otros helpers de texto ya existentes, ej. cerca
+   de `parseArtistFromTitle()` de Radio). Quita `"The "` inicial
+   (case-insensitive), minúsculas, trim de espacios/acentos. Solo para
+   matching interno -- nunca para mostrar en UI.
+
+3. **Tres pantallas nuevas** (`ArtistScreen`, `AlbumScreen`,
+   `SongScreen`) + rutas en `NavGraph.kt` (directriz §4.2: no añadir
+   rutas hasta que la pantalla exista). Cada una resuelve datos de
+   MusicBrainz al entrar (sin persistir catálogo en Room, igual que ya
+   hace H05), cruza con `FavoriteArtist`/`FavoriteAlbum` y con
+   `SearchResultTrack` (por nombre) para las secciones
+   Favorito/Descargado.
+
+4. **Flujo de desambiguación:** al entrar a `ArtistScreen`, si
+   MusicBrainz devuelve >1 MBID para el nombre normalizado y no hay
+   fila en `ArtistDisambiguation`, mostrar diálogo/pantalla de
+   selección (2-3 candidatos, país/década/género) antes de resolver el
+   resto de la página; guardar elección.
+
+5. **Búsqueda unificada:** nueva pantalla que sustituye a
+   `SearchScreen` (H01) y `AlbumSearchScreen` (H05) como entrada
+   principal; reparte la query a YouTube (sencillos/listas/canales) y
+   MusicBrainz (álbumes/artistas), presenta resultados tipados y
+   mezclados. Revisar `NavGraph.kt` para retirar las entradas de menú
+   que apuntaban a las dos pantallas viejas y apuntarlas a la nueva.
+
+6. **Botones de Reproducir/Descargar** por pista y por álbum en las
+   tres pantallas nuevas, reutilizando el emparejamiento existente de
+   H05 (`AlbumSearchViewModel`-adjacent) para resolver
+   MusicBrainz→YouTube pista a pista.
+
+7. **Menú de tres puntos en el reproductor:** dos opciones nuevas
+   ("Ver álbum" / "Ver artista") navegando a las pantallas nuevas,
+   con fallback a `parseArtistFromTitle()` y ocultación si no resuelve
+   nada.
+
+8. **Verificación:** inspección visual (`.kt`, directriz de
+   `newflow-android-edit` PASO 4) tras cada bloque; commit por bloque
+   cerrado (entidades, luego pantallas, luego búsqueda unificada,
+   luego menú del reproductor) -- no acumular varios bloques sin
+   commitear.
+
+No queda ningún punto de diseño abierto para arrancar la
+construcción.
