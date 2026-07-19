@@ -29,6 +29,7 @@ queda abierto en cada uno.
 | H10 | Hash de Compartición de Contenido | `DOCS/ANNEX_H10.md` |
 | H11 | Canales — Suscripciones y Descarga Automática | `DOCS/ANNEX_H11.md` |
 | H12 | Directorio de Música (Artista/Álbum/Canción) + Favoritos sin Descarga | `DOCS/ANNEX_H12.md` |
+| H13 | UX del Reproductor (ExoPlayer) — Estado Visual de Controles | `DOCS/ANNEX_H13.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -64,13 +65,21 @@ real todavía; los niveles 9-10 (Canales) dependen de que exista H11.
 H11: hito nuevo, construido (suscripciones, pantalla
 de gestión, descarga automática en segundo plano) -- ver
 `DOCS/ANNEX_H11.md`, sin verificar en dispositivo real todavía.
-H12: hito nuevo (2026-07-19), sin código todavía -- directorio de
-música navegable vía MusicBrainz (páginas de artista/álbum/canción
-cruzadas entre sí), unificación de las búsquedas de H01/H05, streaming
-y descarga al vuelo desde esas páginas, y favoritos de artista/álbum
-desacoplados de la descarga. Ver `DOCS/ANNEX_H12.md` para el diseño
-inicial y los puntos pendientes de cerrar (homónimos, navegación
-exacta) antes de construir.
+H12: hito nuevo (2026-07-19), construido entero en S018 -- directorio
+de música navegable vía MusicBrainz (páginas de artista/álbum/canción
+cruzadas entre sí), unificación de las búsquedas de H01/H05 con chips
+de filtro por tipo, streaming y descarga al vuelo desde esas páginas,
+favoritos de artista/álbum desacoplados de la descarga, y Explorador
+(letra -> local + muestra paginada de MusicBrainz, scroll infinito).
+Dos fixes reales confirmados en dispositivo durante la propia sesión
+(normalización de puntuación en nombres, cruce con lo descargado por
+posición de pista en vez de por youtubeId). Ver `DOCS/ANNEX_H12.md`
+para el detalle completo.
+H13: hito nuevo (2026-07-19), sin código todavía -- estado visual de
+los controles ON/OFF del reproductor expandido (aleatorio, cíclico y
+lo que se identifique como "etc." al retomarlo). Ver
+`DOCS/ANNEX_H13.md` para el diagnóstico técnico ya leído del código
+real y la hoja de ruta.
 
 ---
 
@@ -383,13 +392,26 @@ entre sí en ambos sentidos), que unifica las dos búsquedas separadas
 que existen hoy (H01 sencillos, H05 álbumes) en una sola experiencia,
 con streaming y descarga al vuelo desde cualquier página tenga o no
 algo descargado ya. Favoritos de álbum ya existían (`FavoriteAlbum`,
-H03); favoritos de artista son concepto nuevo. Sin código todavía --
-Miguel Ángel decidió explícitamente que la sesión que lo retome sea de
-diseño puro (mismo patrón que S013 para H08), para cerrar antes de
-construir: navegación exacta, unificación de búsqueda, modelo de datos
-de favorito de artista, y desambiguación de artistas homónimos (H05
-tolera ambigüedad a nivel de una pista suelta; una página de artista
-necesita fijar un MusicBrainz ID concreto).
+H03); favoritos de artista son concepto nuevo. Diseñado en la propia
+sesión de apertura (sin código) y construido entero en la sesión
+siguiente (S018): navegación exacta, unificación de búsqueda (con
+chips de filtro por tipo, ampliación pedida en la misma S018), modelo
+de datos de favorito de artista, desambiguación de artistas homónimos,
+y Explorador (letra -> local + muestra paginada de MusicBrainz).
+Confirmado en dispositivo real por Miguel Ángel tras dos fixes reales
+(normalización de puntuación, cruce con lo descargado por posición de
+pista). Ver `DOCS/ANNEX_H12.md` para el detalle completo.
+
+### Hito 13: UX del Reproductor (ExoPlayer) — Estado Visual de Controles
+(Ver `DOCS/ANNEX_H13.md`) — Abierto 2026-07-19 (cierre de S018) a
+petición explícita de Miguel Ángel: los controles ON/OFF del
+reproductor expandido (aleatorio, cíclico) deben verse claramente
+activos de un vistazo, no solo con un cambio sutil de color de icono
+como hoy. Petición deliberadamente abierta ("chapitas... y aleatorio
+deben verse cuando están activos, etc.") -- la sesión que lo retome
+debe cerrar el alcance exacto con Miguel Ángel antes de tocar código.
+Diagnóstico técnico del estado actual ya leído y documentado en el
+anexo. Sin código todavía.
 
 ---
 

@@ -38,7 +38,8 @@ abierto, sin mencionar jamás su propio estado.
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
-| H12 | `DOCS/ANNEX_H12.md` | ← **EN PROGRESO** |
+| H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
+| H13 | `DOCS/ANNEX_H13.md` | ← **EN PROGRESO** |
 
 ---
 
@@ -91,3 +92,17 @@ abierto, sin mencionar jamás su propio estado.
   `DOCS/ANNEX_H12.md`. Miguel Ángel decidió explícitamente que la
   sesión que retome H12 sea de **diseño puro, sin tocar código**
   (mismo patrón que S013 para H08).
+- **2026-07-19 (cierre de S018, misma fecha)** — PCH explícito de
+  Miguel Ángel al cierre de sesión: H12 pasa a PAUSADO (hoja de ruta
+  completa de S017 construida entera en S018 -- entidades+migración,
+  normalizeArtistName(), ArtistScreen/AlbumScreen/SongScreen+NavGraph,
+  desambiguación, búsqueda unificada, botones Reproducir/Descargar,
+  menú del reproductor -- más el rediseño de Explorador y dos fixes
+  reales confirmados en dispositivo por Miguel Ángel durante la
+  sesión: normalización de puntuación en SearchNormalizer y cruce con
+  lo descargado por posición de pista en vez de por youtubeId recién
+  emparejado, ver `DOCS/ANNEX_H12.md`), **H13 abierto EN PROGRESO** --
+  hito nuevo (UX del Reproductor / ExoPlayer, estado visual de
+  controles ON/OFF), a petición explícita de Miguel Ángel: "chapitas,
+  opciones de cíclicos y aleatorio deben verse cuando están activos,
+  etc." -- ver `DOCS/ANNEX_H13.md`.
