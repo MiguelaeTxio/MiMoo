@@ -8,6 +8,8 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.ArtistDisambiguationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,6 +40,7 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_8_9,
                 AppDatabase.MIGRATION_9_10,
                 AppDatabase.MIGRATION_10_11,
+                AppDatabase.MIGRATION_11_12,
             )
             .build()
 
@@ -71,4 +74,14 @@ object DatabaseModule {
     @Provides
     fun provideChannelSubscriptionDao(db: AppDatabase): ChannelSubscriptionDao =
         db.channelSubscriptionDao()
+
+    /** H12 (S018) -- mismo patrón que el resto de DAOs de este módulo, para no repetir el fallo [Dagger/MissingBinding] documentado arriba. */
+    @Provides
+    fun provideFavoriteArtistDao(db: AppDatabase): FavoriteArtistDao =
+        db.favoriteArtistDao()
+
+    /** H12 (S018) -- mismo patrón que el resto de DAOs de este módulo, para no repetir el fallo [Dagger/MissingBinding] documentado arriba. */
+    @Provides
+    fun provideArtistDisambiguationDao(db: AppDatabase): ArtistDisambiguationDao =
+        db.artistDisambiguationDao()
 }

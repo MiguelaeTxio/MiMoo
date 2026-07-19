@@ -10,12 +10,16 @@ import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.ArtistDisambiguationDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
+import com.miguelaetxio.mimoo.data.local.entity.ArtistDisambiguation
 
 @Database(
     entities = [
@@ -25,8 +29,10 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
         FavoriteAlbum::class,
         FavoriteRadioStation::class,
         ChannelSubscription::class,
+        FavoriteArtist::class,
+        ArtistDisambiguation::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -36,6 +42,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoriteAlbumDao(): FavoriteAlbumDao
     abstract fun favoriteRadioStationDao(): FavoriteRadioStationDao
     abstract fun channelSubscriptionDao(): ChannelSubscriptionDao
+    abstract fun favoriteArtistDao(): FavoriteArtistDao
+    abstract fun artistDisambiguationDao(): ArtistDisambiguationDao
 
     companion object {
         /**
@@ -320,6 +328,42 @@ abstract class AppDatabase : RoomDatabase() {
                         "`subscribedAt` INTEGER NOT NULL, " +
                         "`lastCheckedAt` INTEGER, " +
                         "PRIMARY KEY(`channelId`))"
+                )
+            }
+        }
+
+        /**
+         * Crea favorite_artists y artist_disambiguations (H12, S018).
+         * favorite_artists: favoritos a nivel de ARTISTA, concepto
+         * nuevo y separado de favorite_albums e isFavorite (pista) --
+         * misma forma que MIGRATION_8_9, clave primaria simple
+         * (artist) en vez de compuesta porque no hace falta un segundo
+         * campo. artist_disambiguations: elección persistida de MBID
+         * para homónimos reales -- ver comentario de la entidad
+         * ArtistDisambiguation. Dos tablas nuevas, no toca ninguna
+         * tabla existente.
+         * ---
+         * Creates favorite_artists and artist_disambiguations (H12,
+         * S018). favorite_artists: ARTIST-level favorites, a new
+         * concept separate from favorite_albums and the per-track
+         * isFavorite -- same shape as MIGRATION_8_9, simple primary
+         * key (artist) instead of composite since a second field
+         * isn't needed. artist_disambiguations: persisted MBID choice
+         * for real homonyms -- see the ArtistDisambiguation entity's
+         * comment. Two new tables, doesn't touch any existing table.
+         */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `favorite_artists` (" +
+                        "`artist` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`artist`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `artist_disambiguations` (" +
+                        "`normalizedNameKey` TEXT NOT NULL, " +
+                        "`chosenMbid` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`normalizedNameKey`))"
                 )
             }
         }
