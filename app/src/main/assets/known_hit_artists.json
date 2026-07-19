@@ -68,6 +68,18 @@
       {
         "artist": "Los Diablos",
         "song": "El Vagabundo"
+      },
+      {
+        "artist": "Manolo Escobar",
+        "song": "El Porompompero"
+      },
+      {
+        "artist": "Salomé",
+        "song": "Vivo Cantando"
+      },
+      {
+        "artist": "Los Sirex",
+        "song": "Buenas Noches, Princesa"
       }
     ],
     "intl": [
@@ -226,6 +238,22 @@
       {
         "artist": "Enrique y Ana",
         "song": "Chicas y Chicos"
+      },
+      {
+        "artist": "Barrabás",
+        "song": "Woman"
+      },
+      {
+        "artist": "Karina",
+        "song": "En Un Mundo Nuevo"
+      },
+      {
+        "artist": "Mari Trini",
+        "song": "Yo No Soy Esa"
+      },
+      {
+        "artist": "Georgie Dann",
+        "song": "El Chiringuito"
       }
     ],
     "intl": [
@@ -400,6 +428,14 @@
       {
         "artist": "Parálisis Permanente",
         "song": "Autosuficiencia"
+      },
+      {
+        "artist": "Objetivo Birmania",
+        "song": "Verano Africano"
+      },
+      {
+        "artist": "Tam Tam Go!",
+        "song": "Cerca del Ecuador"
       }
     ],
     "intl": [
@@ -550,6 +586,18 @@
       {
         "artist": "Seguridad Social",
         "song": "Y Soñé"
+      },
+      {
+        "artist": "Fangoria",
+        "song": "Retorciendo Palabras"
+      },
+      {
+        "artist": "La Frontera",
+        "song": "Ni Un Minuto Más"
+      },
+      {
+        "artist": "M-Clan",
+        "song": "Frío"
       }
     ],
     "intl": [
@@ -708,6 +756,22 @@
       {
         "artist": "El Sueño de Morfeo",
         "song": "Nuestro Momento"
+      },
+      {
+        "artist": "Pereza",
+        "song": "El Rey de la Fiesta"
+      },
+      {
+        "artist": "Macaco",
+        "song": "Moving"
+      },
+      {
+        "artist": "Fito & Fitipaldis",
+        "song": "Soldadito Marinero"
+      },
+      {
+        "artist": "Malú",
+        "song": "Aprendiz"
       }
     ],
     "intl": [
@@ -838,6 +902,22 @@
       {
         "artist": "Leiva",
         "song": "Complicado"
+      },
+      {
+        "artist": "Miss Caffeina",
+        "song": "Verano"
+      },
+      {
+        "artist": "Love of Lesbian",
+        "song": "Allí Donde Solíamos Gritar"
+      },
+      {
+        "artist": "Izal",
+        "song": "Copacabana"
+      },
+      {
+        "artist": "Rozalén",
+        "song": "La Puerta Violeta"
       }
     ],
     "intl": [
@@ -948,6 +1028,14 @@
       {
         "artist": "Rigoberta Bandini",
         "song": "Ay Mamá"
+      },
+      {
+        "artist": "Bad Gyal",
+        "song": "Chulo"
+      },
+      {
+        "artist": "Cruz Cafuné",
+        "song": "Coco Chanel"
       }
     ],
     "intl": [
