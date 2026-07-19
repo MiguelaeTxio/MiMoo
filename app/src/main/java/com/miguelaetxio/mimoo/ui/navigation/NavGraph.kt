@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.miguelaetxio.mimoo.ui.albumsearch.AlbumSearchScreen
+import com.miguelaetxio.mimoo.ui.album.AlbumScreen
+import com.miguelaetxio.mimoo.ui.artist.ArtistScreen
 import com.miguelaetxio.mimoo.ui.downloads.DownloadsScreen
 import com.miguelaetxio.mimoo.ui.importlink.ImportLinkScreen
 import com.miguelaetxio.mimoo.ui.library.LibraryScreen
@@ -17,6 +19,7 @@ import com.miguelaetxio.mimoo.ui.queue.QueueScreen
 import com.miguelaetxio.mimoo.ui.radiobrowser.RadioBrowserScreen
 import com.miguelaetxio.mimoo.ui.search.SearchScreen
 import com.miguelaetxio.mimoo.ui.settings.SettingsScreen
+import com.miguelaetxio.mimoo.ui.song.SongScreen
 
 sealed class Screen(val route: String) {
     object Search : Screen("search")
@@ -26,6 +29,17 @@ sealed class Screen(val route: String) {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
     }
     object AlbumSearch : Screen("album_search")
+    object Artist : Screen("artist/{artistName}") {
+        fun routeFor(artistName: String) = "artist/${Uri.encode(artistName)}"
+    }
+    object Album : Screen("album/{artistName}/{albumName}") {
+        fun routeFor(artistName: String, albumName: String) =
+            "album/${Uri.encode(artistName)}/${Uri.encode(albumName)}"
+    }
+    object Song : Screen("song/{artistName}/{songTitle}") {
+        fun routeFor(artistName: String, songTitle: String) =
+            "song/${Uri.encode(artistName)}/${Uri.encode(songTitle)}"
+    }
     object ImportLink : Screen("import_link?url={url}") {
         // H08 PARTE 1 (S009) -- url opcional: null para el flujo
         // original (pegar a mano), o la url de una playlist/canal ya
@@ -88,6 +102,52 @@ fun MiMooNavGraph(
                 onOpenDrawer = onOpenDrawer,
                 onNavigateToLibrary = {
                     navController.navigate(Screen.Library.route)
+                },
+            )
+        }
+        composable(
+            Screen.Artist.route,
+            arguments = listOf(navArgument("artistName") { type = NavType.StringType }),
+        ) {
+            ArtistScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAlbum = { albumName ->
+                    val artistName = it.arguments?.getString("artistName") ?: return@ArtistScreen
+                    navController.navigate(Screen.Album.routeFor(artistName, albumName))
+                },
+                onOpenSong = { songTitle ->
+                    val artistName = it.arguments?.getString("artistName") ?: return@ArtistScreen
+                    navController.navigate(Screen.Song.routeFor(artistName, songTitle))
+                },
+            )
+        }
+        composable(
+            Screen.Album.route,
+            arguments = listOf(
+                navArgument("artistName") { type = NavType.StringType },
+                navArgument("albumName") { type = NavType.StringType },
+            ),
+        ) {
+            AlbumScreen(
+                onBack = { navController.popBackStack() },
+                onOpenSong = { songTitle ->
+                    val artistName = it.arguments?.getString("artistName") ?: return@AlbumScreen
+                    navController.navigate(Screen.Song.routeFor(artistName, songTitle))
+                },
+            )
+        }
+        composable(
+            Screen.Song.route,
+            arguments = listOf(
+                navArgument("artistName") { type = NavType.StringType },
+                navArgument("songTitle") { type = NavType.StringType },
+            ),
+        ) {
+            SongScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAlbum = { albumName ->
+                    val artistName = it.arguments?.getString("artistName") ?: return@SongScreen
+                    navController.navigate(Screen.Album.routeFor(artistName, albumName))
                 },
             )
         }
