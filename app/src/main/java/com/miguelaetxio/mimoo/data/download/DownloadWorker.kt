@@ -58,6 +58,7 @@ class DownloadWorker @AssistedInject constructor(
     private val repository: SearchResultTrackRepository,
     private val storageManager: StorageManager,
     private val autoSyncPusher: AutoSyncPusher,
+    private val cookiesManager: CookiesManager,
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -274,7 +275,14 @@ class DownloadWorker @AssistedInject constructor(
         return try {
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
-            runYtDlp(youtubeUrl, tempBase.absolutePath, ffmpegDir, progressListener, youtubeId)
+            runYtDlp(
+                youtubeUrl,
+                tempBase.absolutePath,
+                ffmpegDir,
+                progressListener,
+                youtubeId,
+                cookiesManager.cookiesFilePathOrNull(),
+            )
 
             // yt-dlp appends .opus to the output template.
             // yt-dlp añade .opus a la plantilla de salida.
@@ -481,6 +489,7 @@ class DownloadWorker @AssistedInject constructor(
         ffmpegPath: String,
         progressListener: DownloadProgressListener,
         youtubeId: String,
+        cookiesPath: String?,
     ) {
         val py = com.chaquo.python.Python.getInstance()
         val downloader = py.getModule("downloader")
@@ -491,6 +500,7 @@ class DownloadWorker @AssistedInject constructor(
             ffmpegPath,
             progressListener,
             youtubeId,
+            cookiesPath,
         )
     }
 }

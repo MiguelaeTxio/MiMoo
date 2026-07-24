@@ -38,6 +38,7 @@ def download_audio(
     ffmpeg_location: str,
     progress_listener=None,
     youtube_id: str = None,
+    cookies_path: str = None,
 ) -> bool:
     """
     Download the best audio stream and convert it to Opus at output_path.
@@ -101,6 +102,15 @@ def download_audio(
         progress_listener: Optional Kotlin DownloadProgressListener proxy.
         youtube_id: Optional 11-char YouTube video id, embedded as a
                     custom metadata tag in the output file (see above).
+        cookies_path: Optional absolute path to a Netscape-format
+                    cookies.txt (see CookiesManager.kt), passed to
+                    yt-dlp as ydl_opts["cookiefile"]. Required for
+                    videos YouTube marks as age-restricted -- as of
+                    2026, no player_client workaround bypasses that
+                    without an authenticated, age-verified account.
+                    If omitted or the file doesn't exist, no cookies
+                    are used (behavior identical to before this fix;
+                    non-restricted videos are unaffected either way).
 
     Returns:
         True if download and conversion succeeded.
@@ -164,6 +174,19 @@ def download_audio(
         "no_warnings": True,
         "progress_hooks": [_progress_hook],
     }
+
+    # Fix real (2026-07-24, debug_error.txt de Miguel Angel): sin esto,
+    # yt-dlp rechaza cualquier video marcado por YouTube como
+    # restringido por edad con "Sign in to confirm your age". El
+    # archivo lo gestiona CookiesManager.kt -- nunca se genera aqui.
+    # ---
+    # Real fix (2026-07-24, Miguel Angel's debug_error.txt): without
+    # this, yt-dlp rejects any video YouTube marks as age-restricted
+    # with "Sign in to confirm your age". The file is managed by
+    # CookiesManager.kt -- never generated here.
+    if cookies_path and os.path.isfile(cookies_path):
+        ydl_opts["cookiefile"] = cookies_path
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([youtube_url])
 

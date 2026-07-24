@@ -22,11 +22,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -141,6 +143,28 @@ fun SettingsScreen(
         }
     }
 
+    // Fix real (2026-07-24) -- selector del cookies.txt (formato
+    // Netscape) exportado por Miguel Ángel desde su navegador logueado
+    // en YouTube. Mismo patrón que fileImportLauncher (lee el
+    // contenido con el ContentResolver, sin copiar el Uri en sí) --
+    // ver CookiesManager.importCookies() para la validación real.
+    val cookiesImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val content = try {
+            context.contentResolver.openInputStream(uri)
+                ?.bufferedReader()?.use { it.readText() }
+        } catch (e: Exception) {
+            null
+        }
+        if (content.isNullOrBlank()) {
+            viewModel.importCookies("")
+        } else {
+            viewModel.importCookies(content)
+        }
+    }
+
     // H10 (S011) -- selector manual del archivo .txt recibido, vía
     // de emergencia independiente de la apertura automática. Usa el
     // MISMO ShareImportViewModel de ámbito Activity que MainActivity
@@ -189,6 +213,14 @@ fun SettingsScreen(
             is BackupUiState.Error ->
                 snackbarHostState.showSnackbar("Error: ${state.message}")
             else -> Unit
+        }
+    }
+
+    val cookiesImportError by viewModel.cookiesImportError.collectAsState()
+    LaunchedEffect(cookiesImportError) {
+        cookiesImportError?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearCookiesImportError()
         }
     }
 
@@ -435,6 +467,58 @@ fun SettingsScreen(
                         valueRange = 0f..100f,
                         steps = 99,
                     )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // Fix real (2026-07-24, debug_error.txt de Miguel Ángel):
+            // cookies de YouTube para que yt-dlp pueda descargar
+            // vídeos restringidos por edad ("Sign in to confirm your
+            // age") -- ver CookiesManager.kt. hasCookies refleja en
+            // vivo si ya hay un cookies.txt importado EN ESTE
+            // dispositivo -- nunca se sincroniza vía Drive (§4.6).
+            val hasCookies by viewModel.hasCookies.collectAsState()
+            SettingsAccordionSection(
+                title = "YouTube",
+                expanded = expandedSection == "youtube",
+                onToggle = {
+                    expandedSection = if (expandedSection == "youtube") null else "youtube"
+                },
+            ) {
+                Text(
+                    "Algunos vídeos de YouTube están restringidos por edad y " +
+                        "piden una cuenta verificada para descargarse. Exporta " +
+                        "el cookies.txt (formato Netscape) de un navegador " +
+                        "logueado en tu cuenta de YouTube y impórtalo aquí -- " +
+                        "solo se guarda en este dispositivo, nunca se sincroniza.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (hasCookies) "Cookies importadas en este dispositivo." else "Sin cookies importadas.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(16.dp))
+                TextButton(
+                    onClick = { cookiesImportLauncher.launch(arrayOf("*/*")) },
+                    modifier = Modifier.glassChip(),
+                ) {
+                    Icon(Icons.Filled.VpnKey, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (hasCookies) "Reemplazar cookies.txt" else "Importar cookies.txt")
+                }
+                if (hasCookies) {
+                    Spacer(Modifier.height(4.dp))
+                    TextButton(
+                        onClick = viewModel::clearCookies,
+                        modifier = Modifier.glassChip(),
+                    ) {
+                        Icon(Icons.Filled.Delete, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Eliminar cookies")
+                    }
                 }
             }
 

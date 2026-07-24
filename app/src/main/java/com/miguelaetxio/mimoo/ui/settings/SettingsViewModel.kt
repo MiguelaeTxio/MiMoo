@@ -13,6 +13,7 @@ import com.miguelaetxio.mimoo.data.backup.BackupRepository
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.DriveBackupFile
+import com.miguelaetxio.mimoo.data.download.CookiesManager
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.share.ShareCodeRepository
@@ -78,6 +79,7 @@ class SettingsViewModel @Inject constructor(
     private val storageManager: StorageManager,
     private val shareCodeRepository: ShareCodeRepository,
     private val uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager,
+    private val cookiesManager: CookiesManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
@@ -108,6 +110,37 @@ class SettingsViewModel @Inject constructor(
 
     fun setRadioDiscoPercent(percent: Int) {
         uiPreferencesManager.setRadioDiscoPercent(percent)
+    }
+
+    /**
+     * Fix real (2026-07-24, `debug_error.txt` de Miguel Ángel):
+     * cookies de YouTube para que yt-dlp pueda descargar vídeos
+     * restringidos por edad ("Sign in to confirm your age") -- ver
+     * `CookiesManager.kt`. `hasCookies` refleja en vivo si ya hay un
+     * cookies.txt importado en este dispositivo; `cookiesImportError`
+     * es el mensaje puntual cuando el archivo elegido no parece un
+     * cookies.txt válido de YouTube.
+     */
+    val hasCookies: StateFlow<Boolean> = cookiesManager.hasCookies
+
+    private val _cookiesImportError = MutableStateFlow<String?>(null)
+    val cookiesImportError: StateFlow<String?> = _cookiesImportError.asStateFlow()
+
+    fun importCookies(content: String) {
+        val success = cookiesManager.importCookies(content)
+        _cookiesImportError.value = if (success) {
+            null
+        } else {
+            "El archivo elegido no parece un cookies.txt de YouTube válido."
+        }
+    }
+
+    fun clearCookiesImportError() {
+        _cookiesImportError.value = null
+    }
+
+    fun clearCookies() {
+        cookiesManager.clearCookies()
     }
 
     /**
