@@ -107,3 +107,92 @@ todavía que Miguel Ángel los incluye en "etc.":**
    cristal real de la app, no solo a que el código compile.
 4. Cierre de sesión: actualizar este anexo con lo construido y
    `RESUMPTION_POINT.md`.
+
+---
+
+## COMPLETADAS EN S019
+
+**Nota de alcance:** esta sesión NO cerró el "etc." de H13 -- se abrió
+con la continuación normal (chapitas ya construidas en S018,
+verificadas visualmente) y derivó por completo hacia un bug real de
+descargas (yt-dlp, restricción por edad) reportado por Miguel Ángel a
+mitad de sesión, más una función nueva de producto que salió de ahí.
+La hoja de ruta original (arriba) sigue intacta y sin tocar para la
+próxima sesión que retome H13 de verdad.
+
+**Único punto real de H13 en esta sesión:** fix de un bug de layout
+real en `PlayerBar.kt` -- con el menú de tres puntos (H12) presente
+junto a favorito/descarga/aleatorio/cíclico, la fila de controles
+superaba el ancho de pantalla y el botón de contraer el reproductor
+(el último de la fila) se salía por el borde derecho, invisible e
+inalcanzable, dejando el reproductor expandido fijo sin forma de
+colapsarlo. El botón de contraer ahora es fijo, fuera de la fila
+scrollable de controles variables.
+
+**Todo lo demás de la sesión (fuera de H13, sin PCH formal --
+tratado como trabajo de bug real intercalado, mismo patrón que
+sesiones anteriores):**
+
+1. **Soporte de cookies de YouTube para vídeos restringidos por
+   edad.** Reportado con `debug_error.txt` real: yt-dlp rechazaba la
+   descarga de "River Euphrates" (Pixies) con "Sign in to confirm
+   your age". `CookiesManager.kt` (nuevo) gestiona un `cookies.txt`
+   (Netscape) importable desde Ajustes → YouTube, pasado a
+   `downloader.py` como `cookiefile`.
+2. **Sincronización de cookies vía Drive (H07), NUNCA vía APK ni
+   códigos de compartición.** Petición explícita: que Silvia no
+   tenga que importar nada a mano. Rechazada la vía de embeberlo en
+   la instalación (riesgo real: el APK es público, cualquiera con él
+   podría extraer una sesión completa de la cuenta de Google).
+   `SyncEnvelope.cookiesTxtContent` viaja por el canal privado de
+   `AutoSyncPusher`/`AutoSyncViewModel`, deliberadamente fuera de
+   `BackupBundle`.
+3. **Fix real de validación:** `CookiesManager.importCookies()`
+   rechazaba en silencio las líneas `#HttpOnly_` (donde viven las
+   cookies de autenticación más importantes de Google) -- corregido.
+4. **Fix real de fondo, encontrado leyendo la documentación actual de
+   yt-dlp:** con cookies, por defecto solo se prueban los clientes
+   `tv_downgraded,web` en cuenta gratuita -- `web_creator` (el único
+   que gestiona la verificación de edad de cuenta) nunca se probaba
+   sin ser Premium. Forzarlo para TODA descarga con cookies fue una
+   REGRESIÓN real (rompía vídeos normales con "Please sign in",
+   reportado con dos alternativas distintas fallando). Fix final:
+   primer intento siempre con el comportamiento por defecto; solo se
+   reintenta forzando `web_creator` si el error es el mensaje EXACTO
+   de restricción de edad.
+5. **Diagnóstico real en `debug_error.txt`:** `cookiesPath`,
+   `cookiesExist`, `cookiesDiag` (tamaño, líneas, dominios
+   google.com/youtube.com presentes, cookie SID/`__Secure-3PSID`) y
+   `ytDlpVersion` -- construido en vivo, iterando con los propios
+   `debug_error.txt` reales que Miguel Ángel fue subiendo.
+6. **Función nueva de producto: "Buscar alternativa" en Descargas.**
+   Petición explícita de Miguel Ángel: cuando una pista falla siempre
+   (límite real de yt-dlp, no arreglable desde MiMoo), poder buscar
+   otro vídeo de YouTube para la misma canción sin romper el álbum.
+   `TrackAlternativeRepository.kt` (nuevo, mismo patrón que
+   `BackupImportRepository` -- transacción Room que cruza dos DAOs)
+   sustituye youtubeId/canal/duración/miniatura del vídeo,
+   PRESERVANDO SIEMPRE título, artista, álbum, posición de disco y
+   favorito de la fila original, y recreando las referencias de
+   playlist. UI en `DownloadsScreen.kt`: tercer botón junto a
+   Reintentar/Borrar, campo de búsqueda editable (precargado con el
+   título exacto), lista de resultados.
+7. **Fix real de fallo silencioso, encontrado por queja directa de
+   Miguel Ángel (probó 4 alternativas, ninguna se aplicó nunca):**
+   la función cerraba el diálogo SIEMPRE, sin comprobar
+   `MutationOutcome` ni capturar ninguna excepción -- si no había
+   conexión o cualquier paso fallaba, el diálogo se cerraba igual sin
+   avisar. Corregido: ahora nunca se cierra en silencio.
+8. **Paso de confirmación explícita añadido a petición textual**
+   ("todo pasa por que siempre hacemos las cosas callando"): tocar un
+   resultado ya no descarga directamente -- muestra tema fallido,
+   texto de búsqueda, tema alternativo elegido, y Cancelar/Aceptar.
+9. **Verificado en dispositivo real por Miguel Ángel, de principio a
+   fin:** cookies importadas y sincronizadas, fix de `web_creator`
+   sin la regresión, y una descarga completada con éxito vía "Buscar
+   alternativa".
+
+**Incidencia de proceso, ya resuelta:** el repositorio estuvo en modo
+privado durante parte de la sesión y se quedó sin cuota gratuita de
+GitHub Actions -- Miguel Ángel lo puso en público a mitad de sesión y
+el build pendiente terminó en verde sin más intervención.

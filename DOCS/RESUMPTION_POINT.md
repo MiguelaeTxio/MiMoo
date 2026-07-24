@@ -11,32 +11,65 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-19 (cierre de sesión S017 NewFlow)
+## Última actualización: 2026-07-24 (cierre de sesión S019 NewFlow)
 
-**Hito activo: H12** (Directorio de Música + Favoritos sin descarga)
--- sin PCH en esta sesión, sigue EN PROGRESO tras el cierre, ver
-`DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H13** (UX del Reproductor) -- sin PCH en esta sesión,
+sigue EN PROGRESO tras el cierre, ver `DOCS/ANNEX_ROUTER.md`.
 
-**S017, resumen: sesión de diseño puro, sin código (un commit,
-`989d932`).** Cerrados con Miguel Ángel los siete puntos pendientes de
-`DOCS/ANNEX_H12.md`: tres páginas separadas (Artista/Álbum/Canción)
-con rutas nuevas en `NavGraph.kt` y cruces en ambos sentidos; búsqueda
-unificada en una sola pantalla que sustituye a `SearchScreen` (H01) y
-`AlbumSearchScreen` (H05), cubriendo también listas de reproducción y
-canales (sin pantallas de búsqueda separadas, corregido tras
-malentendido inicial en la conversación); `FavoriteArtist(artist)` como
-tabla nueva, mismo patrón que `FavoriteAlbum`; homónimos resueltos con
-dos mecanismos -- `normalizeArtistName()` (quita `"The "` inicial) para
-variantes del mismo artista, y tabla `ArtistDisambiguation` para
-artistas distintos con el mismo nombre; botones separados
-Reproducir/Descargar por pista y por álbum; menú de tres puntos del
-reproductor con fallback a `parseArtistFromTitle()`; y criterio de
-conteo de la sección "Descargado" por álbum y por artista. El anexo
-quedó reescrito con la hoja de ruta de construcción completa, ejecutable
-sin contexto adicional. **Sin código en esta sesión** -- construcción
-pendiente para la sesión siguiente.
+**S019, resumen: sesión abierta como continuación de H13, derivada casi
+por completo hacia un bug real de descargas y una función de producto
+nueva a partir de ahí (nueve commits reales, `b16a7c8`..`fa48800`).**
+Ver `DOCS/ANNEX_H13.md`, sección "COMPLETADAS EN S019" para el detalle
+completo commit a commit. Resumen:
 
-## Sesión anterior (S016, contexto histórico)
+Miguel Ángel reportó con `debug_error.txt` real que "River Euphrates"
+(Pixies) fallaba siempre con "Sign in to confirm your age" en yt-dlp.
+Investigación completa en varias vueltas, cada una con su propio
+`debug_error.txt` real como evidencia: soporte de cookies importables
+desde Ajustes (`CookiesManager.kt`), sincronizadas vía Drive (H07,
+nunca vía APK ni códigos de compartición -- riesgo de seguridad real
+descartado explícitamente), fix de una validación propia que rechazaba
+en silencio las cookies de autenticación reales (`#HttpOnly_`), y el
+fix de fondo (forzar el cliente `web_creator` de yt-dlp solo ante el
+mensaje exacto de restricción de edad, tras una regresión real
+encontrada y corregida en la misma sesión: forzarlo siempre rompía
+vídeos normales). Confirmado finalmente que este vídeo concreto es un
+límite real y actual de yt-dlp sin solución fiable documentada (issue
+abierto en el propio repo de yt-dlp).
+
+De ahí salió una función de producto nueva, petición explícita de
+Miguel Ángel: **"Buscar alternativa"** en Descargas -- cuando una
+pista falla siempre, buscar otro vídeo de YouTube para la misma
+canción sin romper la secuencia del álbum
+(`TrackAlternativeRepository.kt`, preserva título/artista/álbum/
+posición/favorito/playlists). Con paso de confirmación explícita
+(tema fallido / texto de búsqueda / tema alternativo / Cancelar-
+Aceptar) tras un fallo real de diseño encontrado por queja directa de
+Miguel Ángel: el diálogo se cerraba en silencio sin aplicar nada.
+
+**Verificado en dispositivo real de principio a fin por Miguel Ángel**
+al cierre: cookies importadas y sincronizadas, fix de `web_creator`
+sin la regresión, descarga completada con éxito vía "Buscar
+alternativa".
+
+**Único punto de H13 propiamente dicho tocado en esta sesión:** fix de
+un bug de layout real en `PlayerBar.kt` -- el botón de contraer el
+reproductor se salía de pantalla con varios controles opcionales
+visibles a la vez (favorito+descarga+menú de tres puntos+aleatorio+
+cíclico), dejando el reproductor expandido fijo sin forma de
+colapsarlo. Ahora es fijo, fuera de la fila scrollable de controles.
+
+**La hoja de ruta original de H13 (arriba en el anexo, "Preguntar
+primero, no asumir" sobre el alcance de "etc.") sigue exactamente
+igual, sin tocar** -- la sesión que retome H13 de verdad debe empezar
+por ahí.
+
+## Sesión anterior (S018, contexto histórico)
+
+Cierre de H12 (Directorio de Música), PCH hacia H13 (UX del
+Reproductor) a petición explícita de Miguel Ángel. Ver
+`DOCS/ANNEX_H13.md`, "NOTA DE APERTURA" para la petición textual
+completa.
 
 **Hito activo al cierre de S016: H12** (Directorio de Música +
 Favoritos sin descarga, hito nuevo) -- H08 se pausó al cierre de esa
