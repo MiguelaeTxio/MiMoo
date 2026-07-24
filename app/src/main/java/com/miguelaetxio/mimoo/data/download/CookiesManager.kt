@@ -74,16 +74,44 @@ class CookiesManager @Inject constructor(
      * selector de archivos. Devuelve `false` sin escribir nada si el
      * contenido no parece un cookies.txt de YouTube real -- para que
      * la UI pueda avisar antes de dar una falsa sensación de éxito.
+     *
+     * Fix real (2026-07-24): la comprobación original rechazaba
+     * cualquier línea que empezara por "#", incluyendo el prefijo
+     * "#HttpOnly_" -- una extensión real y muy común del formato
+     * Netscape para marcar cookies HttpOnly, que es exactamente donde
+     * viven las cookies de autenticación más importantes de Google
+     * (SID, __Secure-3PSID, etc.). Si el cookies.txt real de Miguel
+     * Ángel tenía esas líneas como mayoría o totalidad de las de
+     * youtube.com, `looksValid` daba `false` y la importación se
+     * rechazaba en silencio -- sin que el archivo se llegara a
+     * guardar nunca, por más que el usuario repitiera el proceso.
      * ---
      * Validates (a light check, not a full Netscape-format parser)
      * and saves the content chosen by the user with the file picker.
      * Returns `false` without writing anything if the content doesn't
      * look like a real YouTube cookies.txt -- so the UI can warn
      * instead of giving a false sense of success.
+     *
+     * Real fix (2026-07-24): the original check rejected any line
+     * starting with "#", including the "#HttpOnly_" prefix -- a real,
+     * very common Netscape format extension marking HttpOnly cookies,
+     * which is exactly where Google's most important auth cookies
+     * live (SID, __Secure-3PSID, etc.). If Miguel Ángel's real
+     * cookies.txt had those lines as most or all of its youtube.com
+     * entries, `looksValid` returned `false` and the import was
+     * silently rejected -- the file never actually got saved, no
+     * matter how many times the process was repeated.
      */
     fun importCookies(content: String): Boolean {
         val looksValid = content.lineSequence().any { line ->
-            !line.startsWith("#") && line.contains("youtube.com") && line.count { it == '\t' } >= 5
+            val cookieLine = if (line.startsWith("#HttpOnly_")) {
+                line.removePrefix("#HttpOnly_")
+            } else {
+                line
+            }
+            !cookieLine.startsWith("#") &&
+                cookieLine.contains("youtube.com") &&
+                cookieLine.count { it == '\t' } >= 5
         }
         if (!looksValid) return false
 

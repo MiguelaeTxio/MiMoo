@@ -362,6 +362,7 @@ class DownloadWorker @AssistedInject constructor(
             // Recurre a filesDir si el Uri SAF no esta disponible.
             try {
                 val rootUri = storageManager.getRootUri()
+                val cookiesPathForDebug = cookiesManager.cookiesFilePathOrNull()
                 if (rootUri != null) {
                     val rootDoc = androidx.documentfile.provider.DocumentFile
                         .fromTreeUri(applicationContext, rootUri)
@@ -380,6 +381,17 @@ class DownloadWorker @AssistedInject constructor(
                                         appendLine("ffmpegPath  : $ffmpegPath")
                                         appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
                                         appendLine("ffmpegDir   : $ffmpegDir")
+                                        // Fix real (2026-07-24) -- diagnóstico
+                                        // del bug de cookies: sin esto no hay
+                                        // forma de saber si downloader.py
+                                        // llegó a recibir un cookiefile real o
+                                        // si CookiesManager no tenía nada que
+                                        // dar en el momento exacto del fallo.
+                                        appendLine("cookiesPath : $cookiesPathForDebug")
+                                        appendLine(
+                                            "cookiesExist: " +
+                                                "${cookiesPathForDebug?.let { File(it).exists() }}"
+                                        )
                                         appendLine("exception   : ${e::class.java.name}")
                                         appendLine("message     : ${e.message}")
                                         appendLine("--- stacktrace ---")
@@ -396,6 +408,11 @@ class DownloadWorker @AssistedInject constructor(
                             appendLine("youtubeId   : $youtubeId")
                             appendLine("ffmpegPath  : $ffmpegPath")
                             appendLine("ffmpegExists: ${File(ffmpegPath).exists()}")
+                            appendLine("cookiesPath : $cookiesPathForDebug")
+                            appendLine(
+                                "cookiesExist: " +
+                                    "${cookiesPathForDebug?.let { File(it).exists() }}"
+                            )
                             appendLine("exception   : ${e::class.java.name}")
                             appendLine("message     : ${e.message}")
                             appendLine("--- stacktrace ---")
