@@ -2,7 +2,9 @@ package com.miguelaetxio.mimoo.ui.player
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -114,13 +116,53 @@ fun PlayerBar(
         Column(modifier = Modifier.fillMaxWidth()) {
 
             // 1 -- Controles, arriba del todo.
+            //
+            // Fix real (2026-07-24, reportado por Miguel Ángel): con
+            // varios controles opcionales visibles a la vez (favorito +
+            // descarga + menú de tres puntos + aleatorio + cíclico), la
+            // fila de controles superaba el ancho de pantalla -- un Row
+            // normal no encoge ni envuelve sus hijos, así que el botón
+            // de contraer (el último) se salía por el borde derecho,
+            // invisible e inalcanzable, dejando el reproductor expandido
+            // fijo tapando el resto de la pantalla sin ninguna forma de
+            // colapsarlo. Fix: el botón de contraer sale de la fila
+            // scrollable y queda FIJO al final, siempre visible pase lo
+            // que pase con el resto de controles; los controles variables
+            // (aleatorio..menú de tres puntos) quedan en una sub-fila con
+            // weight(1f) + scroll horizontal propio -- con pocos
+            // controles se ve igual que antes (SpaceBetween reparte el
+            // espacio sobrante), con muchos se puede desplazar en vez de
+            // desbordar fuera de pantalla.
+            // ---
+            // Real fix (2026-07-24, reported by Miguel Ángel): with
+            // several optional controls visible at once (favorite +
+            // download + three-dot menu + shuffle + repeat), the
+            // controls row exceeded screen width -- a plain Row doesn't
+            // shrink or wrap its children, so the collapse button (the
+            // last one) fell off the right edge, invisible and
+            // unreachable, leaving the expanded player fixed and
+            // covering the rest of the screen with no way to collapse
+            // it. Fix: the collapse button moves out of the scrollable
+            // row and stays FIXED at the end, always visible no matter
+            // what happens with the rest of the controls; the variable
+            // controls (shuffle..three-dot menu) live in a sub-row with
+            // weight(1f) + its own horizontal scroll -- with few controls
+            // it looks the same as before (SpaceBetween distributes the
+            // leftover space), with many it can be scrolled instead of
+            // overflowing off-screen.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                 if (state.queueSize > 1) {
                     // H13 -- chapita de cristal esmerilado alrededor del
                     // icono SOLO cuando está activo, mismo lenguaje
@@ -271,9 +313,13 @@ fun PlayerBar(
                         }
                     }
                 }
+                } // fin de la sub-fila scrollable de controles variables
 
                 // S011 -- botón para colapsar el reproductor a la
-                // mini-barra, ver comentario de cabecera.
+                // mini-barra, ver comentario de cabecera. Fix real
+                // (2026-07-24): FUERA de la sub-fila scrollable de
+                // arriba, así queda fijo y siempre visible aunque los
+                // demás controles necesiten desplazarse.
                 IconButton(onClick = { isExpanded = false }) {
                     Icon(Icons.Filled.ExpandMore, contentDescription = "Contraer reproductor")
                 }
