@@ -119,14 +119,17 @@ class SettingsViewModel @Inject constructor(
      * cookies de YouTube para que yt-dlp pueda descargar vídeos
      * restringidos por edad ("Sign in to confirm your age") -- ver
      * `CookiesManager.kt`. `hasCookies` refleja en vivo si ya hay un
-     * cookies.txt importado en este dispositivo; `cookiesImportError`
-     * es el mensaje puntual cuando el archivo elegido no parece un
-     * cookies.txt válido de YouTube.
+     * cookies.txt importado en este dispositivo; `cookiesImportMessage`
+     * es el mensaje puntual (éxito O error) tras cada intento de
+     * importar/eliminar -- fix real (2026-07-24, queja explícita de
+     * Miguel Ángel: "no dice absolutamente nada" tras importar): antes
+     * solo había mensaje en el caso de error, así que un éxito real no
+     * daba ninguna confirmación visible.
      */
     val hasCookies: StateFlow<Boolean> = cookiesManager.hasCookies
 
-    private val _cookiesImportError = MutableStateFlow<String?>(null)
-    val cookiesImportError: StateFlow<String?> = _cookiesImportError.asStateFlow()
+    private val _cookiesImportMessage = MutableStateFlow<String?>(null)
+    val cookiesImportMessage: StateFlow<String?> = _cookiesImportMessage.asStateFlow()
 
     /**
      * Fix real (2026-07-24, petición explícita de Miguel Ángel: "que
@@ -149,22 +152,24 @@ class SettingsViewModel @Inject constructor(
      */
     fun importCookies(activity: Activity, content: String) {
         val success = cookiesManager.importCookies(content)
-        _cookiesImportError.value = if (success) {
-            null
+        _cookiesImportMessage.value = if (success) {
+            "Cookies importadas: ${content.length} caracteres guardados. " +
+                cookiesManager.diagnosticsSummary()
         } else {
-            "El archivo elegido no parece un cookies.txt de YouTube válido."
+            "El archivo elegido no parece un cookies.txt de YouTube válido -- nada guardado."
         }
         if (success) {
             viewModelScope.launch { autoSyncPusher.executeIfConnected(activity) { } }
         }
     }
 
-    fun clearCookiesImportError() {
-        _cookiesImportError.value = null
+    fun clearCookiesImportMessage() {
+        _cookiesImportMessage.value = null
     }
 
     fun clearCookies(activity: Activity) {
         cookiesManager.clearCookies()
+        _cookiesImportMessage.value = "Cookies eliminadas de este dispositivo."
         viewModelScope.launch { autoSyncPusher.executeIfConnected(activity) { } }
     }
 

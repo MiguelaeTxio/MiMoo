@@ -139,6 +139,44 @@ class CookiesManager @Inject constructor(
         cookiesFile.takeIf { it.exists() }?.absolutePath
 
     /**
+     * Diagnóstico real (2026-07-24, segundo debug_error.txt de Miguel
+     * Ángel: cookiesExist=true y sigue fallando igual) -- que el
+     * archivo exista y "parezca" un cookies.txt (looksValid) no
+     * significa que tenga las cookies de sesión de Google que YouTube
+     * necesita para la verificación de edad. Esas cookies clave (SID,
+     * __Secure-3PSID, etc.) viven en el dominio `.google.com`, NO en
+     * `.youtube.com` -- si la extensión exportó solo "Current Tab"
+     * estando en youtube.com, es muy probable que el archivo tenga
+     * cookies de youtube.com pero NINGUNA de google.com, y por eso
+     * yt-dlp recibe un cookiefile real que aun así no autentica nada.
+     * Se vuelca en debug_error.txt para confirmarlo o descartarlo sin
+     * depender de que Miguel Ángel abra el archivo a mano.
+     * ---
+     * Real diagnostic (2026-07-24, Miguel Ángel's second debug_error.txt:
+     * cookiesExist=true and still failing the same way) -- the file
+     * existing and "looking like" a cookies.txt (looksValid) doesn't
+     * mean it has the Google session cookies YouTube needs for age
+     * verification. Those key cookies (SID, __Secure-3PSID, etc.) live
+     * under the `.google.com` domain, NOT `.youtube.com` -- if the
+     * extension exported only "Current Tab" while on youtube.com, the
+     * file very likely has youtube.com cookies but NONE from
+     * google.com, so yt-dlp gets a real cookiefile that still doesn't
+     * authenticate anything. Dumped into debug_error.txt to confirm or
+     * rule this out without relying on Miguel Ángel opening the file
+     * by hand.
+     */
+    fun diagnosticsSummary(): String {
+        if (!cookiesFile.exists()) return "sin archivo"
+        val lines = cookiesFile.readLines()
+        val hasGoogleDomain = lines.any { it.contains("google.com") }
+        val hasYoutubeDomain = lines.any { it.contains("youtube.com") }
+        val hasSidCookie = lines.any { it.contains("\tSID\t") || it.contains("__Secure-3PSID") }
+        return "tamaño=${cookiesFile.length()}B líneas=${lines.size} " +
+            "dominio_google.com=$hasGoogleDomain dominio_youtube.com=$hasYoutubeDomain " +
+            "cookie_SID_o_3PSID=$hasSidCookie"
+    }
+
+    /**
      * Contenido actual del cookies.txt, o `null` si no hay ninguno --
      * usado por `AutoSyncPusher`/`AutoSyncViewModel` (H07) para
      * incluirlo en el `SyncEnvelope` subido a Drive. Nunca se incluye

@@ -216,11 +216,11 @@ fun SettingsScreen(
         }
     }
 
-    val cookiesImportError by viewModel.cookiesImportError.collectAsState()
-    LaunchedEffect(cookiesImportError) {
-        cookiesImportError?.let {
+    val cookiesImportMessage by viewModel.cookiesImportMessage.collectAsState()
+    LaunchedEffect(cookiesImportMessage) {
+        cookiesImportMessage?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.clearCookiesImportError()
+            viewModel.clearCookiesImportMessage()
         }
     }
 

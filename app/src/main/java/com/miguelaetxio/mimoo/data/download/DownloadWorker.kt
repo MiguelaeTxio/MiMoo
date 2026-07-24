@@ -392,6 +392,7 @@ class DownloadWorker @AssistedInject constructor(
                                             "cookiesExist: " +
                                                 "${cookiesPathForDebug?.let { File(it).exists() }}"
                                         )
+                                        appendLine("cookiesDiag : ${cookiesManager.diagnosticsSummary()}")
                                         appendLine("exception   : ${e::class.java.name}")
                                         appendLine("message     : ${e.message}")
                                         appendLine("--- stacktrace ---")
@@ -413,6 +414,7 @@ class DownloadWorker @AssistedInject constructor(
                                 "cookiesExist: " +
                                     "${cookiesPathForDebug?.let { File(it).exists() }}"
                             )
+                            appendLine("cookiesDiag : ${cookiesManager.diagnosticsSummary()}")
                             appendLine("exception   : ${e::class.java.name}")
                             appendLine("message     : ${e.message}")
                             appendLine("--- stacktrace ---")
