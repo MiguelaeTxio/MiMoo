@@ -159,9 +159,9 @@ fun SettingsScreen(
             null
         }
         if (content.isNullOrBlank()) {
-            viewModel.importCookies("")
+            viewModel.importCookies(activity, "")
         } else {
-            viewModel.importCookies(content)
+            viewModel.importCookies(activity, content)
         }
     }
 
@@ -490,8 +490,11 @@ fun SettingsScreen(
                     "Algunos vídeos de YouTube están restringidos por edad y " +
                         "piden una cuenta verificada para descargarse. Exporta " +
                         "el cookies.txt (formato Netscape) de un navegador " +
-                        "logueado en tu cuenta de YouTube y impórtalo aquí -- " +
-                        "solo se guarda en este dispositivo, nunca se sincroniza.",
+                        "logueado en tu cuenta de YouTube e impórtalo aquí en " +
+                        "un dispositivo -- se sincroniza automáticamente al " +
+                        "resto por el mismo canal privado de Drive que ya usa " +
+                        "la biblioteca (nunca por un enlace o código de " +
+                        "compartición).",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -512,7 +515,7 @@ fun SettingsScreen(
                 if (hasCookies) {
                     Spacer(Modifier.height(4.dp))
                     TextButton(
-                        onClick = viewModel::clearCookies,
+                        onClick = { viewModel.clearCookies(activity) },
                         modifier = Modifier.glassChip(),
                     ) {
                         Icon(Icons.Filled.Delete, contentDescription = null)

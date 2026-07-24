@@ -273,4 +273,27 @@ data class SyncEnvelope(
     val deviceLabel: String,
     val timestamp: Long,
     val bundle: BackupBundle,
+    /**
+     * Fix real (2026-07-24, petición explícita de Miguel Ángel: "que
+     * mi mujer no tenga que importar nada") -- contenido del
+     * cookies.txt de YouTube (ver `CookiesManager.kt`), `null` si este
+     * dispositivo no tiene ninguno importado. Deliberadamente a este
+     * nivel del sobre, NUNCA dentro de `bundle` -- `BackupBundle`
+     * también viaja por la exportación/importación manual (H06) y los
+     * códigos de compartición (H10), ambos pensados para poder acabar
+     * en manos de terceros; este campo solo se lee/escribe desde
+     * `AutoSyncPusher`/`AutoSyncViewModel`, el canal privado
+     * dispositivo-a-dispositivo de Miguel Ángel vía su propio Drive.
+     * ---
+     * Real fix (2026-07-24, explicit request from Miguel Ángel: "so my
+     * wife doesn't have to import anything") -- YouTube cookies.txt
+     * content (see `CookiesManager.kt`), `null` if this device has
+     * none imported. Deliberately at this envelope level, NEVER inside
+     * `bundle` -- `BackupBundle` also travels through manual export/
+     * import (H06) and share codes (H10), both meant to potentially
+     * end up in third parties' hands; this field is only read/written
+     * by `AutoSyncPusher`/`AutoSyncViewModel`, Miguel Ángel's private
+     * device-to-device channel over his own Drive.
+     */
+    val cookiesTxtContent: String? = null,
 )

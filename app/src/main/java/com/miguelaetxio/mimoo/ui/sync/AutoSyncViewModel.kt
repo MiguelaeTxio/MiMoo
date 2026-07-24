@@ -18,6 +18,7 @@ import com.miguelaetxio.mimoo.data.backup.DeviceIdentityManager
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
 import com.miguelaetxio.mimoo.data.backup.SyncEnvelope
+import com.miguelaetxio.mimoo.data.download.CookiesManager
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
@@ -107,6 +108,7 @@ class AutoSyncViewModel @Inject constructor(
     private val libraryReconciler: LibraryReconciler,
     private val deviceIdentityManager: DeviceIdentityManager,
     private val storageManager: StorageManager,
+    private val cookiesManager: CookiesManager,
     @ApplicationContext private val applicationContext: Context,
 ) : ViewModel() {
 
@@ -200,6 +202,15 @@ class AutoSyncViewModel @Inject constructor(
         Log.d(TAG, compareMsg)
         BackupDebugLogger.log(applicationContext, storageManager, compareMsg)
 
+        // Fix real (2026-07-24, petición explícita de Miguel Ángel:
+        // "que mi mujer no tenga que importar nada") -- las cookies de
+        // YouTube se sincronizan SIEMPRE que el sobre remoto traiga
+        // algo distinto de lo local, sin importar si las pistas
+        // coinciden o de qué dispositivo venga el sobre. Deliberadamente
+        // fuera del resto del flujo comparison.identical/caso2/caso3,
+        // que es exclusivamente sobre pistas.
+        applyRemoteCookiesIfNewer(envelope)
+
         if (comparison.identical) {
             // H07 PARTE 1 -- fallo real señalado por Miguel Ángel:
             // que la base de datos coincida con Drive NO significa
@@ -264,6 +275,30 @@ class AutoSyncViewModel @Inject constructor(
      *    tapping "Refresh" in Library, now also on every automatic
      *    sync, not just those two moments).
      */
+    /**
+     * Fix real (2026-07-24) -- ver comentario de
+     * `SyncEnvelope.cookiesTxtContent` en `BackupDto.kt`. Sobrescribe
+     * el cookies.txt local solo si el remoto trae contenido distinto
+     * -- si el remoto no tiene cookies (`null`) o es idéntico al
+     * local, no se toca nada.
+     * ---
+     * Real fix (2026-07-24) -- see `SyncEnvelope.cookiesTxtContent`'s
+     * comment in `BackupDto.kt`. Overwrites the local cookies.txt only
+     * if the remote one carries different content -- if the remote has
+     * no cookies (`null`) or it's identical to local, nothing is
+     * touched.
+     */
+    private fun applyRemoteCookiesIfNewer(envelope: SyncEnvelope) {
+        val remoteCookies = envelope.cookiesTxtContent ?: return
+        if (remoteCookies != cookiesManager.currentContentOrNull()) {
+            cookiesManager.applySyncedCookies(remoteCookies)
+            val msg = "applyRemoteCookiesIfNewer() -- cookies.txt actualizado desde " +
+                "la copia de ${envelope.deviceLabel}"
+            Log.d(TAG, msg)
+            BackupDebugLogger.log(applicationContext, storageManager, msg)
+        }
+    }
+
     private suspend fun verifyDiskAndReconcile() {
         val missing = libraryReconciler.verifyDiskState()
         missing.forEach { track ->
@@ -416,6 +451,7 @@ class AutoSyncViewModel @Inject constructor(
             deviceLabel = deviceIdentityManager.deviceLabel,
             timestamp = System.currentTimeMillis(),
             bundle = bundle,
+            cookiesTxtContent = cookiesManager.currentContentOrNull(),
         )
         driveRepository.pushSyncState(accessToken, backupRepository.toSyncJson(envelope))
     }

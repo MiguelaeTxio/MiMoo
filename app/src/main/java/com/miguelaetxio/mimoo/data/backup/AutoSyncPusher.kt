@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.backup
 
 import android.content.Context
 import android.util.Log
+import com.miguelaetxio.mimoo.data.download.CookiesManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -78,6 +79,7 @@ class AutoSyncPusher @Inject constructor(
     private val backupRepository: BackupRepository,
     private val deviceIdentityManager: DeviceIdentityManager,
     private val storageManager: StorageManager,
+    private val cookiesManager: CookiesManager,
 ) {
     /**
      * `context` puede ser una `Activity` (pantallas normales) o el
@@ -114,6 +116,9 @@ class AutoSyncPusher @Inject constructor(
                 deviceLabel = deviceIdentityManager.deviceLabel,
                 timestamp = System.currentTimeMillis(),
                 bundle = bundle,
+                // Fix real (2026-07-24) -- ver comentario de
+                // SyncEnvelope.cookiesTxtContent en BackupDto.kt.
+                cookiesTxtContent = cookiesManager.currentContentOrNull(),
             )
             driveRepository.pushSyncState(outcome.accessToken, backupRepository.toSyncJson(envelope))
             val msg = "pushCurrentState() -- copia de respaldo automática actualizada tras cambio local"

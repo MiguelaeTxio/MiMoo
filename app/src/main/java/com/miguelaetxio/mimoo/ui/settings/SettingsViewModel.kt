@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.backup.BackupDebugLogger
 import com.miguelaetxio.mimoo.data.backup.BackupDriveRepository
 import com.miguelaetxio.mimoo.data.backup.BackupImportRepository
@@ -80,6 +81,7 @@ class SettingsViewModel @Inject constructor(
     private val shareCodeRepository: ShareCodeRepository,
     private val uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager,
     private val cookiesManager: CookiesManager,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
@@ -126,12 +128,34 @@ class SettingsViewModel @Inject constructor(
     private val _cookiesImportError = MutableStateFlow<String?>(null)
     val cookiesImportError: StateFlow<String?> = _cookiesImportError.asStateFlow()
 
-    fun importCookies(content: String) {
+    /**
+     * Fix real (2026-07-24, petición explícita de Miguel Ángel: "que
+     * mi mujer no tenga que importar nada") -- tras guardar el
+     * cookies.txt localmente, empuja el estado a Drive de inmediato
+     * (mismo mecanismo que cualquier otra mutación, `AutoSyncPusher`)
+     * en vez de esperar a la siguiente descarga/favorito para que el
+     * envelope se actualice. Mutación vacía a propósito: lo único que
+     * cambió ya lo recoge `CookiesManager.currentContentOrNull()`
+     * dentro del propio push -- ver `AutoSyncPusher.pushCurrentState()`.
+     * ---
+     * Real fix (2026-07-24, explicit request from Miguel Ángel: "so my
+     * wife doesn't have to import anything") -- after saving
+     * cookies.txt locally, pushes the state to Drive immediately (same
+     * mechanism as any other mutation, `AutoSyncPusher`) instead of
+     * waiting for the next download/favorite for the envelope to
+     * update. Empty mutation on purpose: the only thing that changed
+     * is already picked up by `CookiesManager.currentContentOrNull()`
+     * inside the push itself -- see `AutoSyncPusher.pushCurrentState()`.
+     */
+    fun importCookies(activity: Activity, content: String) {
         val success = cookiesManager.importCookies(content)
         _cookiesImportError.value = if (success) {
             null
         } else {
             "El archivo elegido no parece un cookies.txt de YouTube válido."
+        }
+        if (success) {
+            viewModelScope.launch { autoSyncPusher.executeIfConnected(activity) { } }
         }
     }
 
@@ -139,8 +163,9 @@ class SettingsViewModel @Inject constructor(
         _cookiesImportError.value = null
     }
 
-    fun clearCookies() {
+    fun clearCookies(activity: Activity) {
         cookiesManager.clearCookies()
+        viewModelScope.launch { autoSyncPusher.executeIfConnected(activity) { } }
     }
 
     /**
