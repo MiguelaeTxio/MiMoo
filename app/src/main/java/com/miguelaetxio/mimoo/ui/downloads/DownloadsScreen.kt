@@ -172,7 +172,9 @@ fun DownloadsScreen(
             state = alternativeSearchState,
             onQueryChange = viewModel::updateAlternativeQuery,
             onSearch = viewModel::searchAlternatives,
-            onChoose = { alternative -> viewModel.chooseAlternative(activity, alternative) },
+            onRequestConfirm = viewModel::requestConfirmation,
+            onCancelConfirm = viewModel::cancelConfirmation,
+            onConfirm = { viewModel.confirmAlternative(activity) },
             onDismiss = viewModel::dismissAlternativeSearch,
         )
     }
@@ -375,10 +377,17 @@ private fun TrackTitleLine(
  * (state.query) y es editable -- petición textual de Miguel Ángel:
  * "si el nombre del archivo es Canción de cuna Remaster 2007, que el
  * usuario pueda borrar Remaster 2007" antes de lanzar la búsqueda.
- * Elegir un resultado sustituye la fuente y encola la descarga de
- * inmediato (ver DownloadsViewModel.chooseAlternative()) -- el álbum,
- * artista y posición de disco de la fila original NUNCA cambian, así
- * que la pista sustituida mantiene su lugar exacto en el LP.
+ *
+ * Tocar un resultado NO descarga nada todavía -- pasa a un paso de
+ * confirmación explícita (petición textual de Miguel Ángel,
+ * 2026-07-24: "todo pasa por que siempre hacemos las cosas
+ * callando"), con las cuatro líneas exactas que pidió (tema fallido,
+ * texto de búsqueda usado, tema alternativo elegido, pregunta) y
+ * Cancelar/Aceptar -- solo al pulsar Aceptar se sustituye la fuente y
+ * se encola la descarga (ver DownloadsViewModel.confirmAlternative()).
+ * El álbum, artista y posición de disco de la fila original NUNCA
+ * cambian, así que la pista sustituida mantiene su lugar exacto en
+ * el LP.
  * ---
  * Real fix (2026-07-24, explicit request from Miguel Ángel, prompted
  * by Pixies' "River Euphrates"): dialog to search for an alternative
@@ -389,11 +398,17 @@ private fun TrackTitleLine(
  * The text field starts with the failed track's EXACT title
  * (state.query) and is editable -- Miguel Ángel's literal request:
  * "if the filename is Canción de cuna Remaster 2007, let the user
- * delete Remaster 2007" before running the search. Choosing a result
- * replaces the source and enqueues the download immediately (see
- * DownloadsViewModel.chooseAlternative()) -- the original row's album,
- * artist and disc position NEVER change, so the replaced track keeps
- * its exact place on the LP.
+ * delete Remaster 2007" before running the search.
+ *
+ * Tapping a result does NOT download anything yet -- it moves to an
+ * explicit confirmation step (Miguel Ángel's literal request,
+ * 2026-07-24: "everything happens because we always do things
+ * silently"), with the exact four lines he asked for (failed track,
+ * search text used, chosen alternative, question) and Cancel/Accept --
+ * only pressing Accept replaces the source and enqueues the download
+ * (see DownloadsViewModel.confirmAlternative()). The original row's
+ * album, artist and disc position NEVER change, so the replaced track
+ * keeps its exact place on the LP.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -401,10 +416,46 @@ private fun AlternativeSearchDialog(
     state: AlternativeSearchUiState,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
-    onChoose: (ExternalLinkTrack) -> Unit,
+    onRequestConfirm: (ExternalLinkTrack) -> Unit,
+    onCancelConfirm: () -> Unit,
+    onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val target = state.targetTrack ?: return
+    val pending = state.pendingConfirmation
+
+    if (pending != null) {
+        AlertDialog(
+            onDismissRequest = onCancelConfirm,
+            title = { Text("Confirmar sustitución") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("Tema fallido: ${target.title}")
+                    Spacer(Modifier.height(4.dp))
+                    Text("Nombre de búsqueda: ${state.query}")
+                    Spacer(Modifier.height(4.dp))
+                    Text("Tema alternativo: ${pending.title}")
+                    Spacer(Modifier.height(12.dp))
+                    Text("¿Procedo a la descarga?")
+                    if (state.errorMessage != null) {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            state.errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirm) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancelConfirm) { Text("Cancelar") }
+            },
+        )
+        return
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -460,7 +511,7 @@ private fun AlternativeSearchDialog(
                         items(state.results, key = { it.youtubeId }) { result ->
                             AlternativeResultRow(
                                 result = result,
-                                onClick = { onChoose(result) },
+                                onClick = { onRequestConfirm(result) },
                             )
                         }
                     }

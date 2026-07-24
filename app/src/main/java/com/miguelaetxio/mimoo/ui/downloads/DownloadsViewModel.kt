@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -58,6 +59,12 @@ data class AlternativeSearchUiState(
     val isSearching: Boolean = false,
     val results: List<ExternalLinkTrack> = emptyList(),
     val errorMessage: String? = null,
+    // Fix real (2026-07-24, petición explícita de Miguel Ángel:
+    // "todo pasa por que siempre hacemos las cosas callando") --
+    // resultado elegido, pendiente de confirmación explícita antes de
+    // tocar nada. `null` = todavía en la lista de resultados, sin
+    // elegir ninguno.
+    val pendingConfirmation: ExternalLinkTrack? = null,
 )
 
 /**
@@ -244,29 +251,88 @@ class DownloadsViewModel @Inject constructor(
     }
 
     /**
-     * El usuario elige uno de los resultados: sustituye la fuente de
-     * la pista fallida (TrackAlternativeRepository, preserva álbum/
-     * artista/posición/favorito/playlists) y encola la descarga de
-     * inmediato con el youtubeId nuevo -- mismo mecanismo de sync que
-     * cualquier otra mutación (H07 PARTE 1, AutoSyncPusher).
+     * El usuario toca un resultado de la lista -- NO descarga todavía.
+     * Pasa al paso de confirmación explícita (petición textual de
+     * Miguel Ángel, 2026-07-24: "todo pasa por que siempre hacemos las
+     * cosas callando"): tema fallido, texto de búsqueda usado, tema
+     * alternativo elegido, y los botones Cancelar/Aceptar.
      */
-    fun chooseAlternative(activity: Activity, alternative: ExternalLinkTrack) {
+    fun requestConfirmation(alternative: ExternalLinkTrack) {
+        _alternativeSearchState.value = _alternativeSearchState.value.copy(
+            pendingConfirmation = alternative,
+            errorMessage = null,
+        )
+    }
+
+    /** Vuelve a la lista de resultados sin tocar nada. */
+    fun cancelConfirmation() {
+        _alternativeSearchState.value = _alternativeSearchState.value.copy(
+            pendingConfirmation = null,
+        )
+    }
+
+    /**
+     * Confirmado por el usuario: sustituye la fuente de la pista
+     * fallida (TrackAlternativeRepository, preserva álbum/artista/
+     * posición/favorito/playlists) y encola la descarga de inmediato
+     * con el youtubeId nuevo -- mismo mecanismo de sync que cualquier
+     * otra mutación (H07 PARTE 1, AutoSyncPusher).
+     *
+     * Fix real (2026-07-24): la versión anterior cerraba el diálogo
+     * SIEMPRE, sin comprobar el resultado de executeIfConnected() ni
+     * capturar ningún fallo -- si no había conexión, o si
+     * replaceFailedTrackSource()/enqueue() lanzaba cualquier
+     * excepción, el diálogo se cerraba igual, dando la falsa
+     * impresión de que la sustitución había funcionado cuando en
+     * realidad no se guardó ningún cambio (causa real de que Miguel
+     * Ángel siguiera viendo siempre el título original tras varios
+     * intentos). Ahora: sin conexión o con excepción, el diálogo se
+     * queda abierto en el paso de confirmación con el mensaje de error
+     * visible -- solo se cierra en éxito confirmado.
+     * ---
+     * Real fix (2026-07-24): the previous version ALWAYS closed the
+     * dialog, without checking executeIfConnected()'s result or
+     * catching any failure -- with no connection, or if
+     * replaceFailedTrackSource()/enqueue() threw any exception, the
+     * dialog closed anyway, giving the false impression the
+     * replacement had worked when nothing was actually saved (real
+     * cause of Miguel Ángel seeing the original title over and over
+     * across several attempts). Now: on no connection or an
+     * exception, the dialog stays open at the confirmation step with
+     * the error message visible -- it only closes on confirmed
+     * success.
+     */
+    fun confirmAlternative(activity: Activity) {
         val target = _alternativeSearchState.value.targetTrack ?: return
+        val alternative = _alternativeSearchState.value.pendingConfirmation ?: return
         viewModelScope.launch {
-            autoSyncPusher.executeIfConnected(activity) {
-                val replacement = trackAlternativeRepository.replaceFailedTrackSource(
-                    original = target,
-                    alternative = alternative,
-                )
-                downloadQueueManager.enqueue(
-                    youtubeId = replacement.youtubeId,
-                    title = replacement.title,
-                    artist = replacement.artist ?: replacement.channelTitle,
-                    album = replacement.album,
-                    trackPosition = replacement.trackPosition,
+            try {
+                val outcome = autoSyncPusher.executeIfConnected(activity) {
+                    val replacement = trackAlternativeRepository.replaceFailedTrackSource(
+                        original = target,
+                        alternative = alternative,
+                    )
+                    downloadQueueManager.enqueue(
+                        youtubeId = replacement.youtubeId,
+                        title = replacement.title,
+                        artist = replacement.artist ?: replacement.channelTitle,
+                        album = replacement.album,
+                        trackPosition = replacement.trackPosition,
+                    )
+                }
+                when (outcome) {
+                    is MutationOutcome.Success -> dismissAlternativeSearch()
+                    is MutationOutcome.NoConnection -> _alternativeSearchState.value =
+                        _alternativeSearchState.value.copy(
+                            errorMessage = "Sin conexión: no se puede sustituir la pista ahora mismo.",
+                        )
+                }
+            } catch (e: Exception) {
+                _alternativeSearchState.value = _alternativeSearchState.value.copy(
+                    errorMessage = "Fallo al sustituir la pista: " +
+                        (e.message ?: e::class.java.simpleName),
                 )
             }
-            dismissAlternativeSearch()
         }
     }
 }
