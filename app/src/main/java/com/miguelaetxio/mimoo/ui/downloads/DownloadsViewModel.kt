@@ -1,11 +1,16 @@
 package com.miguelaetxio.mimoo.ui.downloads
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
+import com.miguelaetxio.mimoo.data.local.repository.TrackAlternativeRepository
+import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
+import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +43,24 @@ data class DownloadsUiState(
 )
 
 /**
+ * Fix real (2026-07-24, petición explícita de Miguel Ángel, motivada
+ * por "River Euphrates" de Pixies -- ver TrackAlternativeRepository
+ * para el diseño completo): estado del diálogo "Buscar alternativa"
+ * para una pista con ERROR permanente. `query` empieza como el título
+ * exacto de la pista y es editable por el usuario (p.ej. quitar
+ * "Remaster 2007" del texto) antes de lanzar la búsqueda.
+ * `targetTrack` es la fila fallida que se sustituirá si el usuario
+ * elige un resultado -- `null` significa que el diálogo está cerrado.
+ */
+data class AlternativeSearchUiState(
+    val targetTrack: SearchResultTrack? = null,
+    val query: String = "",
+    val isSearching: Boolean = false,
+    val results: List<ExternalLinkTrack> = emptyList(),
+    val errorMessage: String? = null,
+)
+
+/**
  * ViewModel for the "Descargas" screen — the single place to see
  * everything with a download in flight (QUEUED/DOWNLOADING, with real
  * progress) plus a short list of what just finished. Exists because
@@ -62,10 +85,16 @@ data class DownloadsUiState(
 class DownloadsViewModel @Inject constructor(
     private val repository: SearchResultTrackRepository,
     private val downloadQueueManager: DownloadQueueManager,
+    private val externalLinkResolver: ExternalLinkResolver,
+    private val trackAlternativeRepository: TrackAlternativeRepository,
+    private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
     val uiState: StateFlow<DownloadsUiState> = _uiState.asStateFlow()
+
+    private val _alternativeSearchState = MutableStateFlow(AlternativeSearchUiState())
+    val alternativeSearchState: StateFlow<AlternativeSearchUiState> = _alternativeSearchState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -160,6 +189,84 @@ class DownloadsViewModel @Inject constructor(
     fun deleteFailed(track: SearchResultTrack) {
         viewModelScope.launch {
             repository.delete(track)
+        }
+    }
+
+    /**
+     * Abre el diálogo "Buscar alternativa" para una pista fallida --
+     * query inicial = título exacto de la pista, editable por el
+     * usuario antes de buscar (petición textual de Miguel Ángel:
+     * poder quitar "Remaster 2007" del texto, por ejemplo).
+     */
+    fun openAlternativeSearch(track: SearchResultTrack) {
+        _alternativeSearchState.value = AlternativeSearchUiState(
+            targetTrack = track,
+            query = track.title,
+        )
+    }
+
+    fun updateAlternativeQuery(query: String) {
+        _alternativeSearchState.value = _alternativeSearchState.value.copy(query = query)
+    }
+
+    fun dismissAlternativeSearch() {
+        _alternativeSearchState.value = AlternativeSearchUiState()
+    }
+
+    /**
+     * Lanza la búsqueda en YouTube con el texto editado -- mismo
+     * mecanismo que UnifiedSearchViewModel.searchSongs()
+     * (ExternalLinkResolver.searchYoutube()), reutilizado tal cual.
+     */
+    fun searchAlternatives() {
+        val query = _alternativeSearchState.value.query.trim()
+        if (query.isEmpty()) return
+
+        viewModelScope.launch {
+            _alternativeSearchState.value = _alternativeSearchState.value.copy(
+                isSearching = true,
+                errorMessage = null,
+            )
+            try {
+                val results = externalLinkResolver.searchYoutube(query, limit = 15).tracks
+                _alternativeSearchState.value = _alternativeSearchState.value.copy(
+                    isSearching = false,
+                    results = results,
+                )
+            } catch (e: Exception) {
+                _alternativeSearchState.value = _alternativeSearchState.value.copy(
+                    isSearching = false,
+                    results = emptyList(),
+                    errorMessage = e.message ?: "No se pudo buscar en YouTube.",
+                )
+            }
+        }
+    }
+
+    /**
+     * El usuario elige uno de los resultados: sustituye la fuente de
+     * la pista fallida (TrackAlternativeRepository, preserva álbum/
+     * artista/posición/favorito/playlists) y encola la descarga de
+     * inmediato con el youtubeId nuevo -- mismo mecanismo de sync que
+     * cualquier otra mutación (H07 PARTE 1, AutoSyncPusher).
+     */
+    fun chooseAlternative(activity: Activity, alternative: ExternalLinkTrack) {
+        val target = _alternativeSearchState.value.targetTrack ?: return
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(activity) {
+                val replacement = trackAlternativeRepository.replaceFailedTrackSource(
+                    original = target,
+                    alternative = alternative,
+                )
+                downloadQueueManager.enqueue(
+                    youtubeId = replacement.youtubeId,
+                    title = replacement.title,
+                    artist = replacement.artist ?: replacement.channelTitle,
+                    album = replacement.album,
+                    trackPosition = replacement.trackPosition,
+                )
+            }
+            dismissAlternativeSearch()
         }
     }
 }

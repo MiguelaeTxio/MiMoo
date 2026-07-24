@@ -129,4 +129,26 @@ interface PlaylistDao {
         "WHERE playlistId = :playlistId"
     )
     fun getTrackCountForPlaylist(playlistId: Long): Flow<Int>
+
+    /**
+     * Todas las referencias de playlist que apuntan a una pista dada,
+     * en cualquier lista de reproducción. Usado por
+     * TrackAlternativeRepository.replaceFailedTrackSource() (fix real,
+     * 2026-07-24): antes de borrar la fila vieja (que arrastraría
+     * estas referencias por ON DELETE CASCADE), hay que capturarlas
+     * para poder recrearlas con el youtubeId nuevo -- si no, sustituir
+     * la fuente de una pista fallida la sacaría en silencio de
+     * cualquier playlist en la que estuviera.
+     * ---
+     * All playlist cross-refs pointing at a given track, across any
+     * playlist. Used by
+     * TrackAlternativeRepository.replaceFailedTrackSource() (real fix,
+     * 2026-07-24): before deleting the old row (which would drag these
+     * refs away via ON DELETE CASCADE), they need to be captured so
+     * they can be recreated with the new youtubeId -- otherwise
+     * replacing a failed track's source would silently drop it from
+     * any playlist it was in.
+     */
+    @Query("SELECT * FROM playlist_track_cross_refs WHERE youtubeId = :youtubeId")
+    suspend fun getCrossRefsForTrack(youtubeId: String): List<PlaylistTrackCrossRef>
 }

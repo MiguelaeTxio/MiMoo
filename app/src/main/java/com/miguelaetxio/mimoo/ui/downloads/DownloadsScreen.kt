@@ -1,5 +1,8 @@
 package com.miguelaetxio.mimoo.ui.downloads
 
+import android.app.Activity
+
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.FindReplace
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
@@ -16,10 +20,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack
 import com.miguelaetxio.mimoo.ui.library.displayArtistName
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 
@@ -43,6 +49,8 @@ fun DownloadsScreen(
     onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val alternativeSearchState by viewModel.alternativeSearchState.collectAsState()
+    val activity = LocalContext.current as Activity
     val isEmpty = uiState.downloading.isEmpty() &&
         uiState.queued.isEmpty() &&
         uiState.recentlyCompleted.isEmpty() &&
@@ -137,6 +145,7 @@ fun DownloadsScreen(
                         track,
                         onRetry = { viewModel.retry(track) },
                         onDelete = { viewModel.deleteFailed(track) },
+                        onFindAlternative = { viewModel.openAlternativeSearch(track) },
                     )
                 }
             }
@@ -153,6 +162,19 @@ fun DownloadsScreen(
                 }
             }
         }
+    }
+
+    // Fix real (2026-07-24, petición explícita de Miguel Ángel) --
+    // diálogo "Buscar alternativa" para una pista con ERROR
+    // permanente. Ver AlternativeSearchUiState/TrackAlternativeRepository.
+    if (alternativeSearchState.targetTrack != null) {
+        AlternativeSearchDialog(
+            state = alternativeSearchState,
+            onQueryChange = viewModel::updateAlternativeQuery,
+            onSearch = viewModel::searchAlternatives,
+            onChoose = { alternative -> viewModel.chooseAlternative(activity, alternative) },
+            onDismiss = viewModel::dismissAlternativeSearch,
+        )
     }
 }
 
@@ -257,6 +279,7 @@ private fun FailedRow(
     track: SearchResultTrack,
     onRetry: () -> Unit,
     onDelete: () -> Unit,
+    onFindAlternative: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -277,6 +300,16 @@ private fun FailedRow(
         Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
             IconButton(onClick = onRetry) {
                 Icon(Icons.Filled.Refresh, contentDescription = "Reintentar")
+            }
+        }
+        // Fix real (2026-07-24, petición explícita de Miguel Ángel):
+        // cuando reintentar el MISMO vídeo nunca va a funcionar (límite
+        // real de yt-dlp, no del código de MiMoo -- ver
+        // TrackAlternativeRepository), buscar otro vídeo distinto para
+        // la misma canción es la única salida real que no rompe el LP.
+        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+            IconButton(onClick = onFindAlternative) {
+                Icon(Icons.Filled.FindReplace, contentDescription = "Buscar alternativa")
             }
         }
         Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
@@ -330,3 +363,144 @@ private fun TrackTitleLine(
         )
     }
 }
+
+/**
+ * Fix real (2026-07-24, petición explícita de Miguel Ángel, motivada
+ * por "River Euphrates" de Pixies): diálogo para buscar un vídeo de
+ * YouTube alternativo cuando el original lleva fallando siempre --
+ * ver TrackAlternativeRepository para el porqué (límite real de
+ * yt-dlp, no de MiMoo) y para el diseño de la sustitución.
+ *
+ * El campo de texto empieza con el título EXACTO de la pista fallida
+ * (state.query) y es editable -- petición textual de Miguel Ángel:
+ * "si el nombre del archivo es Canción de cuna Remaster 2007, que el
+ * usuario pueda borrar Remaster 2007" antes de lanzar la búsqueda.
+ * Elegir un resultado sustituye la fuente y encola la descarga de
+ * inmediato (ver DownloadsViewModel.chooseAlternative()) -- el álbum,
+ * artista y posición de disco de la fila original NUNCA cambian, así
+ * que la pista sustituida mantiene su lugar exacto en el LP.
+ * ---
+ * Real fix (2026-07-24, explicit request from Miguel Ángel, prompted
+ * by Pixies' "River Euphrates"): dialog to search for an alternative
+ * YouTube video when the original keeps failing -- see
+ * TrackAlternativeRepository for why (a real yt-dlp limitation, not
+ * MiMoo's) and for the replacement's design.
+ *
+ * The text field starts with the failed track's EXACT title
+ * (state.query) and is editable -- Miguel Ángel's literal request:
+ * "if the filename is Canción de cuna Remaster 2007, let the user
+ * delete Remaster 2007" before running the search. Choosing a result
+ * replaces the source and enqueues the download immediately (see
+ * DownloadsViewModel.chooseAlternative()) -- the original row's album,
+ * artist and disc position NEVER change, so the replaced track keeps
+ * its exact place on the LP.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AlternativeSearchDialog(
+    state: AlternativeSearchUiState,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onChoose: (ExternalLinkTrack) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val target = state.targetTrack ?: return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Buscar alternativa") },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "La descarga de \"${target.title}\" lleva fallando siempre. " +
+                        "Edita el texto y busca otro vídeo para la misma canción -- " +
+                        "se guardará en el mismo álbum y en su mismo lugar del disco.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = state.query,
+                        onValueChange = onQueryChange,
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        label = { Text("Buscar") },
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = onSearch, modifier = Modifier.glassChip()) {
+                        Text("Buscar")
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+
+                if (state.isSearching) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (state.errorMessage != null) {
+                    Text(
+                        state.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                } else if (state.results.isEmpty()) {
+                    Text(
+                        "Sin resultados todavía -- edita el texto y pulsa \"Buscar\".",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 320.dp),
+                    ) {
+                        items(state.results, key = { it.youtubeId }) { result ->
+                            AlternativeResultRow(
+                                result = result,
+                                onClick = { onChoose(result) },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cerrar") }
+        },
+    )
+}
+
+/** Fila de un resultado de búsqueda dentro de AlternativeSearchDialog -- tocar elige ese vídeo como sustituto. */
+@Composable
+private fun AlternativeResultRow(
+    result: ExternalLinkTrack,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .glassChip()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(result.title, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "${result.channelTitle} · ${formatAlternativeDuration(result.durationSeconds)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** Mismo patrón que formatDuration() de ImportLinkScreen.kt (privado allí, no reutilizable desde aquí). */
+private fun formatAlternativeDuration(totalSeconds: Int): String {
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
+}
+
