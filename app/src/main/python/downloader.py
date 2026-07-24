@@ -32,6 +32,25 @@ import yt_dlp
 MIMOO_YOUTUBE_ID_TAG = "MIMOO_YOUTUBE_ID"
 
 
+def get_ytdlp_version() -> str:
+    """
+    Version real de yt-dlp empaquetada en este build (resuelta por pip
+    en tiempo de compilacion, sin version fijada -- ver
+    app/build.gradle.kts). Usado por DownloadWorker.kt para incluirla
+    en debug_error.txt -- yt-dlp cambia con mucha frecuencia como
+    responde YouTube a cada cliente, asi que saber la version exacta
+    del fallo es diagnostico real, no solo curiosidad.
+    ---
+    Real yt-dlp version bundled in this build (resolved by pip at
+    compile time, no pinned version -- see app/build.gradle.kts). Used
+    by DownloadWorker.kt to include it in debug_error.txt -- yt-dlp
+    changes very frequently how YouTube responds to each client, so
+    knowing the exact version at the time of a failure is real
+    diagnostic, not just curiosity.
+    """
+    return yt_dlp.version.__version__
+
+
 def download_audio(
     youtube_url: str,
     output_path: str,
@@ -186,6 +205,40 @@ def download_audio(
     # CookiesManager.kt -- never generated here.
     if cookies_path and os.path.isfile(cookies_path):
         ydl_opts["cookiefile"] = cookies_path
+
+        # Fix real (2026-07-24, segunda vuelta): cookies completas y
+        # validas (verificado con Miguel Angel: el video se reproduce
+        # perfecto en el navegador, sin pedir nada) y aun asi el mismo
+        # error -- la causa real, confirmada leyendo la documentacion
+        # actual de yt-dlp (directriz 4.5): con cookies, por defecto
+        # solo prueba los clientes "tv_downgraded,web" (cuenta
+        # gratuita) o "tv_downgraded,web_creator,web" (cuenta
+        # Premium). El cliente "web_creator" es el unico que gestiona
+        # bien la verificacion de edad de cuenta, y yt-dlp NUNCA lo
+        # prueba por defecto en una cuenta gratuita, aunque las
+        # cookies sean perfectas. Se fuerza aqui explicitamente para
+        # cualquier cuenta -- sin cookies, extractor_args no se toca,
+        # los clientes por defecto (visionos,android_vr,web) siguen
+        # igual que antes de este fix.
+        # ---
+        # Real fix (2026-07-24, second round): full, valid cookies
+        # (confirmed with Miguel Angel: the video plays fine in the
+        # browser, no prompt at all) and still the same error -- the
+        # real cause, confirmed by reading yt-dlp's current
+        # documentation (directive 4.5): with cookies, by default it
+        # only tries "tv_downgraded,web" (free account) or
+        # "tv_downgraded,web_creator,web" (Premium account). The
+        # "web_creator" client is the only one that properly handles
+        # account age-verification, and yt-dlp NEVER tries it by
+        # default on a free account, even with perfect cookies.
+        # Explicitly forced here for any account -- without cookies,
+        # extractor_args is left untouched, default clients
+        # (visionos,android_vr,web) stay exactly as before this fix.
+        ydl_opts["extractor_args"] = {
+            "youtube": {
+                "player_client": ["web_creator", "tv_downgraded", "web"],
+            },
+        }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([youtube_url])

@@ -363,6 +363,14 @@ class DownloadWorker @AssistedInject constructor(
             try {
                 val rootUri = storageManager.getRootUri()
                 val cookiesPathForDebug = cookiesManager.cookiesFilePathOrNull()
+                val ytDlpVersionForDebug = try {
+                    com.chaquo.python.Python.getInstance()
+                        .getModule("downloader")
+                        .callAttr("get_ytdlp_version")
+                        .toString()
+                } catch (_: Exception) {
+                    "desconocida"
+                }
                 if (rootUri != null) {
                     val rootDoc = androidx.documentfile.provider.DocumentFile
                         .fromTreeUri(applicationContext, rootUri)
@@ -393,6 +401,7 @@ class DownloadWorker @AssistedInject constructor(
                                                 "${cookiesPathForDebug?.let { File(it).exists() }}"
                                         )
                                         appendLine("cookiesDiag : ${cookiesManager.diagnosticsSummary()}")
+                                        appendLine("ytDlpVersion: $ytDlpVersionForDebug")
                                         appendLine("exception   : ${e::class.java.name}")
                                         appendLine("message     : ${e.message}")
                                         appendLine("--- stacktrace ---")
@@ -415,6 +424,7 @@ class DownloadWorker @AssistedInject constructor(
                                     "${cookiesPathForDebug?.let { File(it).exists() }}"
                             )
                             appendLine("cookiesDiag : ${cookiesManager.diagnosticsSummary()}")
+                            appendLine("ytDlpVersion: $ytDlpVersionForDebug")
                             appendLine("exception   : ${e::class.java.name}")
                             appendLine("message     : ${e.message}")
                             appendLine("--- stacktrace ---")
