@@ -206,42 +206,49 @@ def download_audio(
     if cookies_path and os.path.isfile(cookies_path):
         ydl_opts["cookiefile"] = cookies_path
 
-        # Fix real (2026-07-24, segunda vuelta): cookies completas y
-        # validas (verificado con Miguel Angel: el video se reproduce
-        # perfecto en el navegador, sin pedir nada) y aun asi el mismo
-        # error -- la causa real, confirmada leyendo la documentacion
-        # actual de yt-dlp (directriz 4.5): con cookies, por defecto
-        # solo prueba los clientes "tv_downgraded,web" (cuenta
-        # gratuita) o "tv_downgraded,web_creator,web" (cuenta
-        # Premium). El cliente "web_creator" es el unico que gestiona
-        # bien la verificacion de edad de cuenta, y yt-dlp NUNCA lo
-        # prueba por defecto en una cuenta gratuita, aunque las
-        # cookies sean perfectas. Se fuerza aqui explicitamente para
-        # cualquier cuenta -- sin cookies, extractor_args no se toca,
-        # los clientes por defecto (visionos,android_vr,web) siguen
-        # igual que antes de este fix.
-        # ---
-        # Real fix (2026-07-24, second round): full, valid cookies
-        # (confirmed with Miguel Angel: the video plays fine in the
-        # browser, no prompt at all) and still the same error -- the
-        # real cause, confirmed by reading yt-dlp's current
-        # documentation (directive 4.5): with cookies, by default it
-        # only tries "tv_downgraded,web" (free account) or
-        # "tv_downgraded,web_creator,web" (Premium account). The
-        # "web_creator" client is the only one that properly handles
-        # account age-verification, and yt-dlp NEVER tries it by
-        # default on a free account, even with perfect cookies.
-        # Explicitly forced here for any account -- without cookies,
-        # extractor_args is left untouched, default clients
-        # (visionos,android_vr,web) stay exactly as before this fix.
-        ydl_opts["extractor_args"] = {
+    # Fix real de REGRESION (2026-07-24, tercera vuelta): la version
+    # anterior forzaba el cliente "web_creator" para CUALQUIER descarga
+    # con cookies, no solo la restringida por edad -- reportado por
+    # Miguel Angel con dos "alternativas" DISTINTAS (youtubeId
+    # ynZZwmSAnHg y kz7S66l-Dbc) fallando con un error nuevo, "Please
+    # sign in" generico, que nunca habia aparecido antes de ese fix.
+    # web_creator exige un contexto de cuenta distinto (pensado para
+    # YouTube Studio) que rompe la autenticacion normal para videos
+    # SIN ninguna restriccion real. Ahora: primer intento SIEMPRE con
+    # el comportamiento por defecto de yt-dlp (tv_downgraded,web con
+    # cookies) -- identico al de antes de tocar nada por este tema.
+    # Solo si ese intento falla con el mensaje EXACTO de restriccion
+    # de edad, se reintenta UNA vez forzando web_creator -- nunca para
+    # ningun otro tipo de error, para no repetir esta regresion.
+    # ---
+    # Real REGRESSION fix (2026-07-24, third round): the previous
+    # version forced the "web_creator" client for ANY download with
+    # cookies, not just the age-restricted one -- reported by Miguel
+    # Angel with two DIFFERENT "alternatives" (youtubeId ynZZwmSAnHg
+    # and kz7S66l-Dbc) failing with a new, generic "Please sign in"
+    # error that had never appeared before that fix. web_creator
+    # requires a different account context (meant for YouTube Studio)
+    # that breaks normal authentication for videos with NO real
+    # restriction. Now: first attempt ALWAYS uses yt-dlp's default
+    # behavior (tv_downgraded,web with cookies) -- identical to before
+    # this whole topic was touched. Only if that attempt fails with the
+    # EXACT age-restriction message is it retried ONCE forcing
+    # web_creator -- never for any other kind of error, to avoid
+    # repeating this regression.
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([youtube_url])
+    except yt_dlp.DownloadError as e:
+        if "Sign in to confirm your age" not in str(e):
+            raise
+        ydl_opts_age_gate = dict(ydl_opts)
+        ydl_opts_age_gate["extractor_args"] = {
             "youtube": {
                 "player_client": ["web_creator", "tv_downgraded", "web"],
             },
         }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([youtube_url])
+        with yt_dlp.YoutubeDL(ydl_opts_age_gate) as ydl:
+            ydl.download([youtube_url])
 
     if youtube_id:
         _embed_youtube_id_tag(f"{output_path}.opus", ffmpeg_bin, youtube_id)
