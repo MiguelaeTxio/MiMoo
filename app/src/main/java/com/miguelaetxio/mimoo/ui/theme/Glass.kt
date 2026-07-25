@@ -51,6 +51,32 @@ object GlassTokens {
     val decorativeFillTop: Color = Color.White.copy(alpha = 0.08f)
     val decorativeFillBottom: Color = Color.White.copy(alpha = 0.02f)
 
+    /**
+     * H13 -- chapita ENCENDIDA, para controles con estado ON/OFF
+     * (aleatorio y cíclico del reproductor). Nace de un fallo real:
+     * hasta ahora el estado activo se señalaba con
+     * `colorScheme.primary` como tint del icono, pero en la paleta de
+     * la app `primary` ES BLANCO (`MiMooTheme.kt`, petición de Miguel
+     * Ángel: fondo azul MSX, letra blanca) -- exactamente el mismo
+     * blanco que `LocalContentColor` del estado inactivo. El "cambio
+     * de color" no cambiaba absolutamente nada en pantalla.
+     *
+     * La placa encendida es casi blanca y opaca, con el icono en azul
+     * MSX (`colorScheme.onPrimary`) -- una tecla iluminada, legible de
+     * un vistazo sin depender del color del trazo. Mismo principio que
+     * un `FilterChip` seleccionado de Material 3.
+     * ---
+     * H13 -- LIT chip, for ON/OFF controls (player shuffle and
+     * repeat). Born from a real bug: the active state used to be shown
+     * with `colorScheme.primary` as the icon tint, but in this app's
+     * palette `primary` IS WHITE -- the very same white as the
+     * inactive `LocalContentColor`. The "color change" changed nothing
+     * on screen. The lit plate is nearly opaque white with an MSX-blue
+     * icon instead: a lit key, readable at a glance.
+     */
+    val activeFillTop: Color = Color.White.copy(alpha = 0.88f)
+    val activeFillBottom: Color = Color.White.copy(alpha = 0.72f)
+
     val border: Color = Color.White.copy(alpha = 0.32f)
     val borderWidth: Dp = 1.dp
     val cornerRadius: Dp = 16.dp
@@ -89,21 +115,27 @@ val LocalGlassBorderEnabled = compositionLocalOf { false }
  * de sección, etiquetas sin ninguna acción asociada) -- cristal mucho
  * más tenue y sin borde nunca, para que el usuario distinga a simple
  * vista qué chapitas se pueden tocar y cuáles no.
+ *
+ * `active = true` (H13) para controles con estado ON/OFF que están
+ * encendidos -- placa casi opaca, ver `GlassTokens.activeFillTop`.
+ * Manda sobre `interactive`: una chapita encendida es siempre
+ * clicable por definición.
  */
 @Composable
 fun Modifier.glassChip(
     shape: Shape = RoundedCornerShape(GlassTokens.cornerRadius),
     showBorder: Boolean = LocalGlassBorderEnabled.current,
     interactive: Boolean = true,
+    active: Boolean = false,
 ): Modifier =
     this
         .clip(shape)
         .background(
             brush = Brush.verticalGradient(
-                if (interactive) {
-                    listOf(GlassTokens.fillTop, GlassTokens.fillBottom)
-                } else {
-                    listOf(GlassTokens.decorativeFillTop, GlassTokens.decorativeFillBottom)
+                when {
+                    active -> listOf(GlassTokens.activeFillTop, GlassTokens.activeFillBottom)
+                    interactive -> listOf(GlassTokens.fillTop, GlassTokens.fillBottom)
+                    else -> listOf(GlassTokens.decorativeFillTop, GlassTokens.decorativeFillBottom)
                 }
             )
         )

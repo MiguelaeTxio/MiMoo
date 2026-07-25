@@ -164,39 +164,38 @@ fun PlayerBar(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                 if (state.queueSize > 1) {
-                    // H13 -- chapita de cristal esmerilado alrededor del
-                    // icono SOLO cuando está activo, mismo lenguaje
-                    // visual que el resto de la app (glassChip circular,
-                    // igual que el icono de menú de la barra superior).
-                    // Antes solo cambiaba el tint del trazo, poco
-                    // perceptible sobre el propio cristal de fondo.
-                    Box(
-                        modifier = if (state.shuffleModeEnabled) {
-                            Modifier.glassChip(shape = CircleShape)
-                        } else {
-                            Modifier
-                        },
+                    // H13 -- chapita de cristal SIEMPRE presente (todos
+                    // los botones del reproductor la llevan, petición
+                    // explícita de Miguel Ángel), ENCENDIDA cuando el
+                    // modo está activo. El tint deja de ser el
+                    // diferenciador: `colorScheme.primary` es blanco en
+                    // esta paleta, igual que el inactivo -- ver
+                    // GlassTokens.activeFillTop.
+                    GlassIconButton(
+                        onClick = viewModel::toggleShuffle,
+                        active = state.shuffleModeEnabled,
                     ) {
-                        IconButton(onClick = viewModel::toggleShuffle) {
-                            Icon(
-                                Icons.Filled.Shuffle,
-                                contentDescription = if (state.shuffleModeEnabled) {
-                                    "Desactivar orden aleatorio"
-                                } else {
-                                    "Activar orden aleatorio"
-                                },
-                                tint = if (state.shuffleModeEnabled) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    LocalContentColor.current
-                                },
-                            )
-                        }
+                        Icon(
+                            Icons.Filled.Shuffle,
+                            contentDescription = if (state.shuffleModeEnabled) {
+                                "Desactivar orden aleatorio"
+                            } else {
+                                "Activar orden aleatorio"
+                            },
+                            tint = if (state.shuffleModeEnabled) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                LocalContentColor.current
+                            },
+                        )
                     }
                 }
 
                 if (state.currentYoutubeId != null) {
-                    IconButton(onClick = viewModel::toggleCurrentFavorite) {
+                    // Favorito conserva su patrón propio (glifo relleno
+                    // vs contorno + amarillo), que ya se lee de un
+                    // vistazo sin necesidad de placa encendida.
+                    GlassIconButton(onClick = viewModel::toggleCurrentFavorite) {
                         Icon(
                             if (isCurrentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                             contentDescription = if (isCurrentFavorite) {
@@ -215,11 +214,11 @@ fun PlayerBar(
 
                 // H08 -- "anterior" no depende de que haya más de una
                 // pista en cola, ver PlayerManager.playPrevious().
-                IconButton(onClick = viewModel::playPrevious) {
+                GlassIconButton(onClick = viewModel::playPrevious) {
                     Icon(Icons.Filled.SkipPrevious, contentDescription = "Anterior")
                 }
 
-                IconButton(onClick = viewModel::togglePlayPause) {
+                GlassIconButton(onClick = viewModel::togglePlayPause) {
                     Icon(
                         imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = if (state.isPlaying) "Pausar" else "Reproducir",
@@ -227,7 +226,7 @@ fun PlayerBar(
                 }
 
                 if (state.queueSize > 1) {
-                    IconButton(
+                    GlassIconButton(
                         onClick = viewModel::playNext,
                         enabled = state.repeatModeEnabled ||
                             state.queueIndex < state.queueSize - 1,
@@ -237,29 +236,24 @@ fun PlayerBar(
                 }
 
                 if (state.queueSize > 1) {
-                    // H13 -- misma chapita que aleatorio, ver comentario de arriba.
-                    Box(
-                        modifier = if (state.repeatModeEnabled) {
-                            Modifier.glassChip(shape = CircleShape)
-                        } else {
-                            Modifier
-                        },
+                    // H13 -- misma chapita encendida que aleatorio.
+                    GlassIconButton(
+                        onClick = viewModel::toggleRepeat,
+                        active = state.repeatModeEnabled,
                     ) {
-                        IconButton(onClick = viewModel::toggleRepeat) {
-                            Icon(
-                                Icons.Filled.Repeat,
-                                contentDescription = if (state.repeatModeEnabled) {
-                                    "Desactivar reproducción cíclica"
-                                } else {
-                                    "Activar reproducción cíclica"
-                                },
-                                tint = if (state.repeatModeEnabled) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    LocalContentColor.current
-                                },
-                            )
-                        }
+                        Icon(
+                            Icons.Filled.Repeat,
+                            contentDescription = if (state.repeatModeEnabled) {
+                                "Desactivar reproducción cíclica"
+                            } else {
+                                "Activar reproducción cíclica"
+                            },
+                            tint = if (state.repeatModeEnabled) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                LocalContentColor.current
+                            },
+                        )
                     }
                 }
 
@@ -276,7 +270,7 @@ fun PlayerBar(
                     downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.QUEUED &&
                     downloadStatus != com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DOWNLOADING
                 ) {
-                    IconButton(onClick = viewModel::downloadCurrentTrack) {
+                    GlassIconButton(onClick = viewModel::downloadCurrentTrack) {
                         Icon(Icons.Filled.Download, contentDescription = "Descargar")
                     }
                 }
@@ -290,7 +284,7 @@ fun PlayerBar(
                 if (menuArtist != null) {
                     var showMenu by remember { mutableStateOf(false) }
                     Box {
-                        IconButton(onClick = { showMenu = true }) {
+                        GlassIconButton(onClick = { showMenu = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "Más opciones")
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
@@ -320,7 +314,7 @@ fun PlayerBar(
                 // (2026-07-24): FUERA de la sub-fila scrollable de
                 // arriba, así queda fijo y siempre visible aunque los
                 // demás controles necesiten desplazarse.
-                IconButton(onClick = { isExpanded = false }) {
+                GlassIconButton(onClick = { isExpanded = false }) {
                     Icon(Icons.Filled.ExpandMore, contentDescription = "Contraer reproductor")
                 }
             }
@@ -383,7 +377,22 @@ fun PlayerBar(
 
                 Spacer(Modifier.width(16.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                // H13 -- petición explícita de Miguel Ángel: el bloque
+                // de metadatos junto a la carátula también sobre
+                // cristal esmerilado, como el resto de la app. Es
+                // clicable (abre la cola de sesión), así que cristal
+                // interactivo, no decorativo.
+                // ---
+                // H13 -- explicit request: the metadata block next to
+                // the cover art also sits on frosted glass. It is
+                // clickable (opens the session queue), so interactive
+                // glass, not decorative.
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .glassChip()
+                        .padding(12.dp),
+                ) {
                     Text(
                         text = title,
                         maxLines = 2,
@@ -477,7 +486,15 @@ private fun PlayerBarCollapsed(
             }
         }
         Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        // H13 -- mismo tratamiento que el reproductor expandido
+        // (metadatos y botones sobre cristal), para que contraer el
+        // reproductor no cambie el lenguaje visual.
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .glassChip()
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        ) {
             Text(
                 text = title,
                 maxLines = 1,
@@ -494,15 +511,52 @@ private fun PlayerBarCollapsed(
                 )
             }
         }
-        IconButton(onClick = onTogglePlayPause) {
+        Spacer(Modifier.width(8.dp))
+        GlassIconButton(onClick = onTogglePlayPause) {
             Icon(
                 imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                 contentDescription = if (isPlaying) "Pausar" else "Reproducir",
             )
         }
-        IconButton(onClick = onExpand) {
+        GlassIconButton(onClick = onExpand) {
             Icon(Icons.Filled.ExpandLess, contentDescription = "Expandir reproductor")
         }
+    }
+}
+
+/**
+ * H13 -- botón del reproductor sobre chapita de cristal circular.
+ * Petición explícita de Miguel Ángel: *"el exoplayer carece del efecto
+ * cristal esmerilado en los botones"*. Todos los botones del
+ * reproductor (expandido y mini-barra) pasan por aquí, así que el
+ * aspecto se ajusta en un único sitio.
+ *
+ * `active` enciende la placa (`GlassTokens.activeFillTop`) para los
+ * controles con estado ON/OFF -- aleatorio y cíclico. El `padding`
+ * va ANTES del cristal a propósito: deja aire real entre chapitas
+ * contiguas sin que ese aire se pinte de cristal.
+ * ---
+ * H13 -- player button on a circular glass chip. Every player button
+ * (expanded and mini bar) goes through here, so the look is tuned in a
+ * single place. `active` lights the plate up for ON/OFF controls
+ * (shuffle, repeat). The padding comes BEFORE the glass on purpose:
+ * real breathing room between adjacent chips, without that room being
+ * painted as glass.
+ */
+@Composable
+private fun GlassIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    active: Boolean = false,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .padding(horizontal = 2.dp)
+            .glassChip(shape = CircleShape, active = active),
+    ) {
+        IconButton(onClick = onClick, enabled = enabled, content = content)
     }
 }
 
