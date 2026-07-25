@@ -482,6 +482,8 @@ class PlayerManager @Inject constructor(
                     // from this new artist on the next top-up.
                     radioAnchor = null
                     radioUsedArtists.clear()
+                    radioRecentArtists.clear()
+                    radioBlockedArtists.clear()
                     radioTracksAccepted = 0
                     radioPortionUsed.clear()
                     radioPortionExhausted.clear()
@@ -769,6 +771,34 @@ class PlayerManager @Inject constructor(
      */
     private var radioKnownSongsExhausted = false
     private var radioDiscoArtistsExhausted = false
+
+    /**
+     * Últimos artistas servidos, en orden y con tope
+     * `RADIO_ARTIST_WINDOW`. S022: es la ventana que impide que un
+     * artista suene dos veces demasiado cerca. `radioUsedArtists` no
+     * sirve para esto -- es un `Set` sin orden, así que sabe *si* un
+     * artista sonó, pero no *hace cuánto*, y desde S020 además es solo
+     * preferencia suave.
+     */
+    private val radioRecentArtists = ArrayDeque<String>()
+
+    /**
+     * Artistas agotados para el resto de la sesión por haber intentado
+     * repetir dentro de la ventana. Exclusión DURA, a diferencia de
+     * `radioUsedArtists`.
+     */
+    private val radioBlockedArtists = mutableSetOf<String>()
+
+    /**
+     * ¿Ha sonado este artista dentro de las últimas
+     * `RADIO_ARTIST_WINDOW` canciones? Criterio de Miguel Ángel
+     * (S022): a veinte canciones de distancia repetir no molesta; dos
+     * veces en diez, sí.
+     */
+    private fun isArtistTooRecent(artist: String?): Boolean {
+        val name = artist?.lowercase() ?: return false
+        return radioRecentArtists.any { it == name }
+    }
 
     /**
      * S013/S014, punto 8.2 -- caché en memoria de género/país/década
@@ -1100,7 +1130,9 @@ class PlayerManager @Inject constructor(
         // usados en sesiones recientes.
         val avoidNames = radioUsedArtists.map { it.lowercase() }.toSet() +
             radioSessionHistoryManager.recentlyUsedLower()
-        val anchorExclusion = setOf(anchorArtistName.lowercase())
+        // `radioBlockedArtists` es exclusión DURA, no preferencia: son
+        // los que ya se agotaron por reincidir dentro de la ventana.
+        val anchorExclusion = setOf(anchorArtistName.lowercase()) + radioBlockedArtists
 
         for (portion in portionsDueThisRound()) {
             val item = when (portion) {
@@ -1109,6 +1141,39 @@ class PlayerManager @Inject constructor(
                 RadioPortion.KNOWN -> fetchFromKnown(anchor, anchorArtistName, avoidNames)
             }
             if (item != null) {
+                // ─── REGLA DURA 1, S022 ───────────────────────────────
+                // *"El mismo tema no se debe repetir nunca. Repetir el
+                // mismo tema es un rollazo (...) y sobre todo cuando
+                // por desgracia acaba de ponerla, pum, y lo repite otra
+                // vez."* Sin excepción y venga de la porción que venga.
+                if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs) {
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA " +
+                            "ya sonado esta sesión: '${item.artist}' ('${item.title}')",
+                    )
+                    continue
+                }
+
+                // ─── REGLA DURA 2, S022 ───────────────────────────────
+                // *"No se deben repetir el mismo artista en cuatro o
+                // cinco canciones (...) si ponemos un artista, 20
+                // canciones, ponemos otra vez, no pasa nada, pero dos
+                // veces cada diez, ya estamos incurriendo en
+                // repetición."* Reincidir dentro de la ventana no solo
+                // descarta el candidato: agota al artista para el resto
+                // de la sesión, para no volver a tropezar con él.
+                if (isArtistTooRecent(item.artist)) {
+                    item.artist?.let { radioBlockedArtists.add(it.lowercase()) }
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchRoundCandidate(ancla='$anchorArtistName') -- '${item.artist}' repetiría " +
+                            "dentro de las últimas $RADIO_ARTIST_WINDOW canciones: descartado y " +
+                            "marcado como agotado para esta sesión",
+                    )
+                    continue
+                }
+
                 acceptRadioItem(portion, item)
                 return item
             }
@@ -1195,6 +1260,13 @@ class PlayerManager @Inject constructor(
         radioPortionUsed[portion] = (radioPortionUsed[portion] ?: 0) + 1
         registerUsedArtist(item.artist)
         radioUsedSongs.add(knownHitsRepository.songKey(item.artist, item.title))
+        // S022 -- alimenta la ventana deslizante de artistas recientes.
+        item.artist?.lowercase()?.let { name ->
+            radioRecentArtists.addLast(name)
+            while (radioRecentArtists.size > RADIO_ARTIST_WINDOW) {
+                radioRecentArtists.removeFirst()
+            }
+        }
     }
 
     private fun anchorOrigin(anchor: RadioAnchor) =
@@ -1274,13 +1346,26 @@ class PlayerManager @Inject constructor(
     ): QueueItem? {
         val item = pickDiscoCandidate(anchor, anchorExclusion, avoidNames)
         if (item != null) {
-            if (!radioDiscoArtistsExhausted && item.artist?.lowercase() in radioUsedArtists.map { it.lowercase() }) {
-                radioDiscoArtistsExhausted = true
-                RadioDebugLogger.log(
-                    appContext, storageManager,
-                    "fetchFromDisco(ancla='$anchorArtistName') -- agotados los ARTISTAS nuevos de disco; " +
-                        "la porción sigue viva sacando más temas de los ya usados",
+            // S022, orden explícita de Miguel Ángel tras las doce
+            // Fangorias seguidas: *"agotamos el disco y pasamos la
+            // cuota de disco a las otras dos (...) cuando ocurre eso,
+            // no podemos llegar y seguir poniendo el mismo artista
+            // solamente"*.
+            //
+            // Hasta aquí, quedarse sin artistas NUEVOS solo encendía
+            // `radioDiscoArtistsExhausted` y la porción "seguía viva
+            // sacando más temas de los ya usados" -- que es
+            // literalmente cómo una sesión anclada en Fangoria acabó
+            // sirviendo doce temas de Fangoria del tirón. Sin artistas
+            // nuevos la porción está agotada, punto: cede su cuota a
+            // diccionario y exploración, que es donde queda música que
+            // el usuario no tiene.
+            if (item.artist?.lowercase() in radioUsedArtists.map { it.lowercase() }) {
+                exhaustPortion(
+                    RadioPortion.DISCO, anchorArtistName,
+                    "agotados los ARTISTAS nuevos de la biblioteca local para el ancla",
                 )
+                return null
             }
             RadioDebugLogger.log(
                 appContext, storageManager,
@@ -1990,6 +2075,8 @@ class PlayerManager @Inject constructor(
         radioAnchorTrackTitle = null
         radioAnchor = null
         radioUsedArtists.clear()
+        radioRecentArtists.clear()
+        radioBlockedArtists.clear()
         radioTracksAccepted = 0
         radioPortionUsed.clear()
         radioPortionExhausted.clear()
@@ -2064,6 +2151,17 @@ class PlayerManager @Inject constructor(
     }
 
     private companion object {
+        /**
+         * S022 -- ventana, en canciones, dentro de la cual un mismo
+         * artista no puede volver a sonar. Criterio literal de Miguel
+         * Ángel: *"si ponemos un artista, 20 canciones, ponemos otra
+         * vez, no pasa nada, pero cada diez o dos veces cada diez, si
+         * ya estamos incurriendo en repetición, se hace repetitivo"*.
+         * Reincidir dentro de la ventana no solo descarta el
+         * candidato: agota a ese artista para el resto de la sesión.
+         */
+        private const val RADIO_ARTIST_WINDOW = 10
+
         /**
          * H08 PARTE 2 (S009) -- cuántas pistas de Radio se mantienen
          * siempre por delante en la cola. Petición explícita de
