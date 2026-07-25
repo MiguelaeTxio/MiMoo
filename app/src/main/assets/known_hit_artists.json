@@ -190,6 +190,86 @@
         "artist": "Bruno Lomas",
         "song": "La Novia",
         "genre": "pop"
+      },
+      {
+        "artist": "Los Brincos",
+        "song": "Un Sorbito de Champagne",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Los Brincos",
+        "song": "Borracho",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Raphael",
+        "song": "Digan Lo Que Digan",
+        "genre": "pop"
+      },
+      {
+        "artist": "Dúo Dinámico",
+        "song": "Perdóname",
+        "genre": "pop"
+      },
+      {
+        "artist": "Massiel",
+        "song": "Rosas en el Mar",
+        "genre": "pop"
+      },
+      {
+        "artist": "Miguel Ríos",
+        "song": "Vuelvo a Granada",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Los Ángeles",
+        "song": "Créeme",
+        "genre": "pop"
+      },
+      {
+        "artist": "Fórmula V",
+        "song": "Cuéntame",
+        "genre": "pop"
+      },
+      {
+        "artist": "Juan y Junior",
+        "song": "La Caza",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Raimon",
+        "song": "Diguem No",
+        "genre": "folk"
+      },
+      {
+        "artist": "Víctor Manuel",
+        "song": "El Abuelo Vítor",
+        "genre": "folk"
+      },
+      {
+        "artist": "Manolo Escobar",
+        "song": "Mi Carro",
+        "genre": "copla"
+      },
+      {
+        "artist": "Los Sirex",
+        "song": "Que Se Mueran los Feos",
+        "genre": "rock"
+      },
+      {
+        "artist": "Lone Star",
+        "song": "Mi Calle",
+        "genre": "rock"
+      },
+      {
+        "artist": "Luis Aguilé",
+        "song": "Cuando Salí de Cuba",
+        "genre": "pop"
+      },
+      {
+        "artist": "Maria del Mar Bonet",
+        "song": "Què Volen Aquesta Gent?",
+        "genre": "folk"
       }
     ],
     "intl": [
@@ -3486,6 +3566,56 @@
         "artist": "C. Tangana",
         "song": "Ateo",
         "genre": "hip hop"
+      },
+      {
+        "artist": "C. Tangana",
+        "song": "Tú Me Dejaste de Querer",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "C. Tangana",
+        "song": "Nominao",
+        "genre": "pop"
+      },
+      {
+        "artist": "Rosalía",
+        "song": "Saoko",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Quevedo",
+        "song": "Bzrp Music Sessions #52",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Rigoberta Bandini",
+        "song": "In Spain We Call It Soledad",
+        "genre": "pop"
+      },
+      {
+        "artist": "Dani Fernández",
+        "song": "Bailemos",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Lola Índigo",
+        "song": "El Tonto",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Guitarricadelafuente",
+        "song": "Mil y Una Noches",
+        "genre": "folk"
+      },
+      {
+        "artist": "Sen Senra",
+        "song": "Milagro",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Siloé",
+        "song": "La Rueda",
+        "genre": "indie rock"
       }
     ],
     "intl": [

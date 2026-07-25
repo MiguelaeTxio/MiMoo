@@ -156,6 +156,91 @@ class KnownHitsRepository @Inject constructor(
      * ningún peldaño extra: si el ancla tiene década se respeta, y si
      * no la tiene no hay nada que respetar.
      */
+    /**
+     * Familias de géneros compatibles.
+     *
+     * S022 -- el filtro del diccionario comparaba el género del ancla
+     * con el de la entrada mediante `equals(ignoreCase = true)`, es
+     * decir igualdad literal de cadena. El problema es que el ancla
+     * viene de MusicBrainz, cuyo vocabulario es enorme y granular,
+     * mientras el diccionario usa 27 etiquetas amplias. El resultado
+     * fue el caso Fangoria: ancla `electropop`, y en es/1980 había
+     * cuatro temas perfectamente adecuados -- Aviador Dro
+     * (`electronic`), Décima Víctima y Derribos Arias (`new wave`),
+     * Objetivo Birmania (`synth-pop`) -- que el filtro no vio porque
+     * ninguno decía literalmente `electropop`. Cero candidatos, porción
+     * agotada en 0,7 segundos, y de ahí la cascada que acabó sirviendo
+     * doce temas del mismo artista.
+     *
+     * Un género puede estar en varias familias a propósito
+     * (`pop rock`, `hard rock`, `new wave`, `bolero`): hacen de puente
+     * entre estilos que de verdad se tocan. Lo que NO se hace es
+     * conectarlo todo con todo, porque entonces el género dejaría de
+     * significar nada y la Radio perdería el hilo que la hace
+     * reconocible.
+     */
+    private val GENRE_FAMILIES: List<Set<String>> = listOf(
+        setOf(
+            "electronic", "electronica", "electropop", "synth-pop", "synthpop",
+            "synth pop", "new wave", "dark wave", "techno", "house", "dance",
+            "electro", "edm", "italo disco", "electronic rock",
+        ),
+        setOf(
+            "rock", "pop rock", "rock and roll", "rock & roll", "rock'n'roll",
+            "classic rock", "garage rock", "rock urbano", "hard rock", "glam rock",
+            "psychedelic rock", "progressive rock", "art rock", "southern rock",
+        ),
+        setOf(
+            "heavy metal", "hard rock", "metal", "thrash metal", "power metal",
+            "speed metal", "nu metal", "heavy rock",
+        ),
+        setOf(
+            "punk", "punk rock", "post-punk", "hardcore punk", "ska punk",
+            "new wave", "hardcore",
+        ),
+        setOf(
+            "pop", "pop rock", "dance-pop", "teen pop", "synth-pop", "bolero",
+            "balada", "ballad", "latin pop", "chanson",
+        ),
+        setOf(
+            "folk", "folk rock", "singer-songwriter", "cantautor", "trova",
+            "nueva canción", "country", "americana", "bluegrass",
+        ),
+        setOf(
+            "flamenco", "copla", "rumba", "rumba catalana", "flamenco pop",
+            "sevillanas", "bolero", "cante",
+        ),
+        setOf("hip hop", "rap", "trap", "urban", "drill", "hip-hop"),
+        setOf(
+            "reggaeton", "latin", "latin pop", "salsa", "merengue", "bachata",
+            "cumbia", "urbano latino", "regional mexicano", "ranchera",
+        ),
+        setOf(
+            "soul", "funk", "disco", "r&b", "rhythm and blues", "motown",
+            "gospel", "neo soul",
+        ),
+        setOf(
+            "indie rock", "indie", "indie pop", "alternative rock", "alternative",
+            "britpop", "shoegaze", "post-rock", "grunge", "noise pop",
+        ),
+        setOf("ska", "reggae", "dub", "ska punk", "rocksteady", "dancehall"),
+        setOf("jazz", "blues", "swing", "rhythm and blues", "bossa nova"),
+    )
+
+    /**
+     * Géneros del diccionario que se aceptan como equivalentes al del
+     * ancla. Si el género no pertenece a ninguna familia conocida, se
+     * devuelve él solo -- comportamiento idéntico al anterior.
+     */
+    private fun relatedGenres(genre: String): Set<String> {
+        val normalized = genre.lowercase().trim()
+        val related = GENRE_FAMILIES.filter { normalized in it }.flatten().toSet()
+        return if (related.isEmpty()) setOf(normalized) else related
+    }
+
+    private fun matchesGenre(hitGenre: String, anchorGenre: String): Boolean =
+        hitGenre.lowercase().trim() in relatedGenres(anchorGenre)
+
     fun randomHit(
         genre: String?,
         decadeBegin: Int?,
@@ -182,7 +267,7 @@ class KnownHitsRepository @Inject constructor(
         // que no sonar nada o repetir.
         if (relaxGenre) return pick(pool(decadeBegin, origin))
         if (genre == null) return null
-        return pick(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
+        return pick(pool(decadeBegin, origin).filter { matchesGenre(it.genre, genre) })
     }
 
     /**
@@ -217,7 +302,7 @@ class KnownHitsRepository @Inject constructor(
             artistsOf(pool(decadeBegin, origin))
         } else {
             if (genre == null) return emptyList()
-            artistsOf(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
+            artistsOf(pool(decadeBegin, origin).filter { matchesGenre(it.genre, genre) })
         }
         val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
         return fresh.shuffled() + repeated.shuffled()
