@@ -34,12 +34,13 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
+| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
+| H14 | `DOCS/ANNEX_H14.md` | ← **EN PROGRESO** |
 
 ---
 
@@ -118,3 +119,25 @@ abierto, sin mencionar jamás su propio estado.
   alguno"*, con dos logs reales entregados como evidencia. Diagnóstico
   completo sobre código real y hoja de ruta cerrada y ejecutable en
   `DOCS/ANNEX_H08.md`, sección "S020".
+- **2026-07-25 (cierre de S021, misma fecha)** — PCH explícito de
+  Miguel Ángel al cierre de sesión: H08 pasa a PAUSADO (hoja de ruta
+  de S020 cumplida entera -- auditoría del diccionario, cierre de las
+  cuatro fugas de década que soltaba el código, ampliación de 286 a
+  751 entradas y verificación en línea de cinco entradas falsas; no
+  queda trabajo de implementación pendiente, solo verificación en
+  dispositivo, ver `DOCS/ANNEX_H08.md` sección "COMPLETADAS EN S021"),
+  **H14 abierto EN PROGRESO** -- hito nuevo (Almacenamiento de la
+  Biblioteca), construido en esta misma sesión a petición explícita de
+  Miguel Ángel: poder cambiar desde Ajustes la carpeta donde vive el
+  audio, incluida una tarjeta externa, llevándose todas las canciones
+  sin perder favoritos, listas ni canales. Recogía una petición que
+  venía registrada sin hito desde S020. Instrucción textual de Miguel
+  Ángel para este PCH: *"anota las implementaciones en los hitos
+  correspondientes, si el movimiento no encaja en ninguno, creas a tal
+  efecto"* -- no encajaba (H06 es respaldo en Drive, H07 es
+  sincronización entre dispositivos; ninguno gobierna dónde vive el
+  audio local), así que se creó `DOCS/ANNEX_H14.md`. Dejó a elección
+  del modelo cuál de los dos quedaba EN PROGRESO: se elige H14 por ser
+  lo más reciente y lo menos verificado, y porque H08 ya no tiene
+  trabajo de implementación pendiente. Si la escucha de la Radio en
+  dispositivo revela algo, H08 vuelve con un PCH trivial.

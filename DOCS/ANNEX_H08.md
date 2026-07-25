@@ -1097,80 +1097,171 @@ Todo lo anterior queda implementado en esta sesión, en cuatro commits:
      de desconocidos hereda porcentaje.
 
 **Pendiente de verificación en dispositivo real con una sesión larga.**
-Y sigue pendiente, sin tocar en S020:
 
-### HOJA DE RUTA PARA LA SIGUIENTE SESIÓN (fijada por Miguel Ángel al cierre de S020)
+### COMPLETADAS EN S021
 
-Palabras textuales: *"comenzamos la siguiente sesión dejando el
-diccionario correcto. Y aumentando la muestra si es posible."*
+Sesión dedicada a la hoja de ruta que Miguel Ángel fijó al cierre de
+S020 (*"comenzamos la siguiente sesión dejando el diccionario
+correcto. Y aumentando la muestra si es posible."*). Se cumplió
+entera, pero el primer hallazgo obligó a corregir antes el diagnóstico
+del que partía.
 
-Es trabajo de DATOS, no de lógica. La lógica de la Radio quedó
-completa en S020; lo que manda ahora en la calidad real es el
-contenido de `app/src/main/assets/known_hit_artists.json`.
+#### 1. El diagnóstico de S020 sobre las décadas era incorrecto
 
-1. **Dejar el diccionario correcto -- auditoría de décadas.** Repasar
-   entrada por entrada y mover las que estén en la década equivocada.
-   Detectadas leyendo el log real de S020, todas servidas como 1980:
-   - **Måneskin** -- *Beggin'* es de 2021.
-   - **Blur** -- *Song 2* es de 1997.
-   - **Ska-P** -- años 90.
-   - **Love of Lesbian** -- años 2000.
-   - **The Animals** -- *House of the Rising Sun* es de 1964.
+S020 atribuyó los saltos de década ("Måneskin servido como los 80") a
+entradas mal fechadas del diccionario. La auditoría entrada por entrada
+de S021 comprobó que **no era eso**: Måneskin estaba en 2020, Blur en
+1990, Ska-P en 1990 y The Animals en 1960 -- todas bien colocadas. Solo
+Love of Lesbian estaba realmente floja (tema de 2009 en el bloque de
+2010). Además `known_hit_artists.json` **no se tocó en S020** (su
+último commit era `12b399e`, del 19 de julio), así que el log que
+delató el fallo se produjo contra ese mismo archivo correcto.
 
-   No son las únicas: la lista de arriba es solo lo que asomó en una
-   sesión. Hay que revisar el archivo entero, no solo esas cinco.
-   Conviene revisar también el campo `genre` de cada entrada por el
-   mismo motivo -- con el género ya inabandonable (S020), una entrada
-   mal etiquetada de género es tan dañina como una mal fechada.
+La década no venía mal del dato: **la soltaba el código**.
 
-2. **Aumentar la muestra "si es posible".** Objetivo histórico: ~100
-   entradas por década. Estado medido en S020: **289 en total**, unas
-   41 por década.
+#### 2. Las cuatro fugas de década (`f592b40`)
 
-   | Década | `es` | `intl` | Total |
-   |---|---|---|---|
-   | 1960 | 22 | 20 | 42 |
-   | 1970 | 22 | 19 | 41 |
-   | 1980 | 28 | 19 | 47 |
-   | 1990 | 23 | 19 | 42 |
-   | 2000 | 27 | 14 | 41 |
-   | 2010 | 24 | 16 | 40 |
-   | 2020 | 13 | 23 | 36 |
+En S020 se eliminaron los peldaños que soltaban el GÉNERO, pero los
+simétricos, los que soltaban la DÉCADA, se quedaron dentro. Eso
+incumplía la mitad de la regla suprema cerrada en S020: *"siempre se
+respeta género y década, siempre"*.
 
-   Dos criterios que S020 hace más importantes que antes:
-   - **Equilibrio `es`/`intl` por década.** Con la separación dura de
-     origen, una sesión extranjera solo puede usar el bloque `intl`:
-     hoy son 19 entradas en los 80 y 14 en los 2000. Ese bloque es el
-     que más se queda corto.
-   - **Variedad de GÉNERO dentro de cada bloque.** El diccionario
-     tiene solo 12 géneros distintos y 158 de sus 289 entradas son
-     `pop`. Con el género inabandonable, anclar en algo que no sea pop
-     o rock agota el peldaño 1 enseguida y la sesión pasa a vivir del
-     peldaño 2 (artistas conocidos, temas no catalogados). Funciona,
-     pero la variedad baja.
+1. `KnownHitsRepository.randomHit()` -- peldaño 2 `pool(null, origin)`,
+   comentado como "género, cualquier década".
+2. `KnownHitsRepository.knownArtists()` -- el mismo patrón en la rama
+   `anyDecade`.
+3. `RadioRepository.suggestRelatedArtist()` -- segunda vuelta con
+   `findCandidates(..., decadeBegin = null, ...)`.
+4. `PlayerManager.pickDiscoCandidate()` -- `?: pickPreferred { genreOk(it) }`,
+   sin `decadeOk`. **Esta cuarta no estaba en el análisis inicial**;
+   apareció al revisar la porción de disco.
 
-3. **Verificación en dispositivo de todo lo construido en S020**, si
-   no se ha hecho antes de esa sesión -- ver "Construido en S020" más
-   arriba para qué mirar en `radio_relacionados_debug.txt`.
+Las cuatro pasan a vuelta ÚNICA: género Y década del ancla, o la
+porción se declara agotada y su porcentaje se reparte entre las vivas
+(mecanismo de S020, `effectiveQuotaPercent()`, sin cambios). El caso
+"ancla sin década" sigue cubierto sin peldaño extra, porque
+`pool()`, `findCandidates()` y `decadeOk()` ya lo resuelven cada uno
+por su cuenta cuando `decadeBegin` es null.
 
-#### 7. Lo que sigue pendiente, sin tocar en S020
+Con un diccionario de ~40 entradas por década estas fugas se
+disparaban casi de inmediato: en cuanto el pool exacto se quedaba sin
+candidatos, la sesión pasaba a servir cualquier década.
 
-Estos puntos no los tocó Miguel Ángel y siguen siendo válidos, en este
-orden, DESPUÉS de lo anterior:
+#### 3. Auditoría del diccionario (`2a2e62d`)
 
-- **Ancla determinista.** `resolveAnchor()` usa `genres.random()`:
-  sustituir por el género con más votos en MusicBrainz. Y no anclar
-  desde el nombre del canal de YouTube (`'Natacha Atlas Official'`,
-  `'知心音樂網'`) si existe artista estructurado.
-- **Validar el candidato antes de encolar** -- el caso del vídeo de la
-  Tate y el de noticias de guerra. Cobra más importancia todavía con
-  el peldaño 3, que se apoya entero en artistas desconocidos.
-- **Auditoría de décadas del diccionario** (Måneskin, Blur, Ska-P,
-  Love of Lesbian, The Animals mal colocados).
-- **Ampliación del diccionario hacia ~100/década.** Con la escalera
-  nueva deja de ser un cuello de botella que rompe la sesión, pero
-  sigue mandando en la variedad.
-- Failover de Radio-Browser (H09) ante 503/timeout, solo si lo pide.
+Errores reales encontrados y corregidos:
+
+- **3 duplicados exactos de tema.** Importan más de lo que parece
+  desde S020: la no-repetición es por `songKey()` = `artista|canción`,
+  así que dos entradas del mismo tema con el nombre del artista escrito
+  distinto contaban como temas distintos y el mismo tema podía sonar
+  dos veces en una sesión. Eran `Eagles`/`The Eagles` (Hotel
+  California), `Wham!`/`Wham` (Wake Me Up Before You Go-Go) y
+  Alejandro Sanz -- Corazón Partío, presente a la vez en 1990 y 2000.
+- **6 reubicaciones de década** (Ana Belén *Contamíname* 1993,
+  Seguridad Social *Chiquilla* 1991, Víctor Manuel *Solo Pienso en Ti*
+  1978, Sergio Dalma *Bailar Pegados* 1991, Enrique Iglesias
+  *Bailamos* 1999, Alejandro Sanz *No Es Lo Mismo* 2003).
+- **3 temas sustituidos** por otro del mismo artista realmente de esa
+  década, para no vaciar bloques ya escasos (Rosalía, Love of Lesbian,
+  Estopa).
+- **4 géneros mal etiquetados** y **3 nombres de artista** ("La
+  Pantoja" -> "Isabel Pantoja", unificación de "Dúo Dinámico", y
+  sustitución de un tema de 1989 editado bajo el alias "Alejandro
+  Magno", irresoluble en YouTube).
+
+#### 4. Ampliación del diccionario (`afd5934`)
+
+De 286 a 750 entradas. Con las fugas cerradas, el motor ya no tiene
+ninguna válvula de escape, así que el tamaño y el reparto del
+diccionario pasan a ser lo único que sostiene una sesión larga.
+
+| Década | `es` | `intl` | Total | (antes) |
+|---|---|---|---|---|
+| 1960 | 38 | 59 | 97 | 42 |
+| 1970 | 48 | 56 | 104 | 41 |
+| 1980 | 52 | 61 | 113 | 43 |
+| 1990 | 52 | 63 | 115 | 46 |
+| 2000 | 51 | 65 | 116 | 39 |
+| 2010 | 50 | 60 | 110 | 39 |
+| 2020 | 35 | 61 | 96 | 36 |
+
+Los dos bloques `intl` más flacos eran 2000 (14) y 2010 (16), justo
+los que con la separación dura de origen tienen que sostener por sí
+solos cualquier sesión anclada en un artista no español. Pasan a 65 y
+60. De 12 géneros a 27, con `pop` cayendo del 55% al 33%. Géneros que
+sencillamente no existían y que ahora tienen pool propio: punk (19),
+indie rock (32), heavy metal (10), new wave (9), synth-pop (6),
+electronic (36, antes 3), disco (6), funk (4), jazz (4), r&b (7), ska,
+blues, country, bachata, bolero, regional mexicano.
+
+Esto importa directamente desde S020: con el género inabandonable,
+anclar en algo que no fuese pop o rock agotaba el peldaño 1 casi de
+inmediato.
+
+#### 5. Cinco entradas falsas verificadas en línea (`f5b0f38`)
+
+Las cinco que la auditoría había dejado marcadas como "no
+verificables" eran **todas inventadas**. Ninguna habría resuelto jamás
+en YouTube, así que cada una quemaba su peldaño sin devolver nada.
+
+- Dover, *En El Río* -> *Serenade* (1997). Dover cantaba en inglés en
+  los 90.
+- Danza Invisible, *Sevilla Sur* -> *Sabor de Amor* (1988).
+- Objetivo Birmania, *Verano Africano* -> *Desidia* (1984), y género
+  `pop` -> `synth-pop`: eran dance-pop/synth-funk, no pop genérico.
+- Tam Tam Go!, *Cerca del Ecuador* -> *Manuel Raquel*, que es de
+  *Spanish Shuffle* (1988) y por tanto de los 80. Eso obligó a corregir
+  además la entrada de los 90 creada en `afd5934` con ese mismo tema,
+  que pasa a *Espaldas Mojadas* (1990).
+- Micky, *El Koala* -> Micky y Los Tonys, *La Luna y el Toro* (1964).
+  En los 60 grababa con ese nombre; su carrera en solitario es de los
+  70, así que se añadió además *El Chico de la Armónica* (1971) en la
+  década que le corresponde.
+
+También apareció por el camino que Triana figuraba con *Todo Es de
+Color*, que es de Lole y Manuel (1975). Triana pasa a *Abre la Puerta*
+y Lole y Manuel entra con el tema que sí es suyo.
+
+**751 entradas, sin duplicados, sin ninguna entrada dudosa pendiente.**
+
+#### 6. Estado real de H08 al cerrar S021
+
+La lógica quedó completa en S020 y sin fugas en S021; los datos
+quedaron correctos y ampliados en S021. **Nada de esto está verificado
+en dispositivo.** Todo compila en verde; nada se ha escuchado.
+
+Riesgo a vigilar en la primera escucha, heredado de S020:
+`matchesArtist()` puede rechazar vídeos legítimos si el artista no
+aparece ni en el título ni en el canal.
+
+Géneros con pool mínimo tras la ampliación: blues, country y bolero
+tienen una sola entrada; ska, bachata y regional mexicano dos. Anclar
+ahí agota la porción de conocidos casi de inmediato y reparte su cupo.
+Es comportamiento correcto por diseño, pero conviene saberlo antes de
+interpretar un log.
+
+### HOJA DE RUTA PARA LA SIGUIENTE SESIÓN QUE RETOME H08
+
+**No queda trabajo de implementación pendiente en H08.** Lógica y
+datos están completos. Lo único que queda es verificación en
+dispositivo, y de su resultado depende todo lo demás.
+
+1. **Escucha larga en dispositivo real**, revisando
+   `radio_relacionados_debug.txt`:
+   - Que **ninguna** línea sirva una década distinta a la del ancla. Si
+     aparece alguna, queda una quinta fuga sin localizar y ese es el
+     trabajo de la sesión.
+   - Cuántos `0 de N resultados pasaron el filtro` de
+     `matchesArtist()`. Si abundan, el criterio está demasiado apretado
+     y hay que relajarlo (p. ej. comparar por token normalizado en vez
+     de por subcadena completa).
+   - Cuándo se declara agotada cada porción y si `effectiveQuotaPercent()`
+     reparte de verdad el porcentaje liberado.
+2. **Según el resultado**, corregir lo que el log delate. Sin log, no
+   hay nada que corregir a ciegas.
+3. **Solo si Miguel Ángel lo pide**: failover de Radio-Browser ante
+   503/timeout, que es H09 y no H08.
 
 ---
 

@@ -30,6 +30,7 @@ queda abierto en cada uno.
 | H11 | Canales — Suscripciones y Descarga Automática | `DOCS/ANNEX_H11.md` |
 | H12 | Directorio de Música (Artista/Álbum/Canción) + Favoritos sin Descarga | `DOCS/ANNEX_H12.md` |
 | H13 | UX del Reproductor (ExoPlayer) — Estado Visual de Controles | `DOCS/ANNEX_H13.md` |
+| H14 | Almacenamiento de la Biblioteca — Carpeta Configurable y Traslado | `DOCS/ANNEX_H14.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -84,6 +85,26 @@ paleta es blanco, el mismo blanco del estado inactivo -- el cambio de
 color no cambiaba nada en pantalla. En S019 se arregló además un bug
 de layout real (el botón de contraer se salía de pantalla). Pendiente:
 verificación visual en dispositivo real. Ver `DOCS/ANNEX_H13.md`.
+H08, estado tras S021: la lógica de la Radio quedó completa en S020 y
+sin fugas en S021 (se cerraron cuatro peldaños que mantenían el género
+pero soltaban la década, incumpliendo la mitad de la regla que Miguel
+Ángel había cerrado en S020), y el diccionario de éxitos quedó
+auditado, corregido y ampliado de 286 a 751 entradas, con las siete
+décadas en el entorno de las ~100 fijadas como objetivo y con la
+proporción de `pop` bajando del 55% al 33%. Hallazgo de fondo: los
+saltos de década que S020 achacó a entradas mal fechadas venían en
+realidad del código, no del dato. No queda trabajo de implementación
+pendiente en H08 -- solo verificación en dispositivo. Ver
+`DOCS/ANNEX_H08.md`, "COMPLETADAS EN S021".
+H14: hito nuevo (2026-07-25), construido en S021 -- la carpeta donde
+vive el audio descargado pasa a ser configurable desde Ajustes, con
+selector del sistema y dos ramas al cambiarla: llevarse toda la
+biblioteca a la carpeta nueva, o cambiar solo el ajuste dejando lo ya
+descargado donde está. Nuevo `LibraryMigrator` (copia + borrado, nunca
+destructivo antes de tiempo, reentrante). Motivado por el caso de uso
+de mover la biblioteca a una tarjeta externa sin perder favoritos,
+listas ni canales. Sin verificar en dispositivo todavía. Ver
+`DOCS/ANNEX_H14.md`.
 
 ---
 

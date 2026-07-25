@@ -11,10 +11,63 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-25 (cierre de sesión S020 NewFlow)
+## Última actualización: 2026-07-25 (cierre de sesión S021 NewFlow)
 
-**Hito activo: H08** (Radio) -- PCH en esta sesión, H13 pasó a PAUSADO.
-Ver `DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H14** (Almacenamiento de la Biblioteca) -- hito nuevo,
+abierto por PCH al cierre de esta sesión; H08 pasó a PAUSADO. Ver
+`DOCS/ANNEX_ROUTER.md`.
+
+**S021, resumen: sesión de dos mitades. Primero se cumplió entera la
+hoja de ruta de H08 fijada al cierre de S020 (diccionario correcto y
+muestra ampliada), corrigiendo por el camino un diagnóstico
+equivocado; después, a petición de Miguel Ángel, se construyó la
+carpeta de biblioteca configurable, que venía registrada aquí sin hito
+desde S020. Cinco commits, `2a2e62d`..`3ff10ab`, todos compilando en
+verde.**
+
+**H08, cerrado y pausado.** El punto de partida era *"comenzamos la
+siguiente sesión dejando el diccionario correcto. Y aumentando la
+muestra si es posible."* Hallazgo de fondo nada más empezar: **el
+diagnóstico de S020 sobre las décadas era incorrecto.** Las cinco
+entradas que S020 señaló como mal fechadas (Måneskin, Blur, Ska-P,
+Love of Lesbian, The Animals) estaban bien colocadas, y
+`known_hit_artists.json` ni siquiera se tocó en S020 -- el log que
+delató el fallo se produjo contra ese mismo archivo correcto. La
+década no venía mal del dato: **la soltaba el código**, en cuatro
+sitios que en S020 se habían quedado dentro al eliminar solo los
+peldaños que soltaban el género. Las cuatro cerradas. Después,
+auditoría real del diccionario (duplicados de tema, seis
+reubicaciones, géneros y nombres), ampliación de 286 a 751 entradas
+con las siete décadas en el entorno de las ~100, y verificación en
+línea de cinco entradas que resultaron ser **todas inventadas**. Ver
+`DOCS/ANNEX_H08.md`, "COMPLETADAS EN S021".
+
+**H14, hito nuevo.** Recoge la petición que estaba anotada más abajo en
+este mismo archivo desde S020 y que Miguel Ángel concretó en S021:
+poder cambiar desde Ajustes la carpeta donde vive el audio, llevándola
+por ejemplo a una tarjeta externa, con todas las canciones, álbumes,
+listas y canales, y sin perder favoritos. Construido: sección
+"Almacenamiento" en Ajustes, `LibraryMigrator` nuevo, y las dos ramas
+que pidió (mover todo / solo cambiar el ajuste). Ver
+`DOCS/ANNEX_H14.md`.
+
+**Nada de las dos mitades está verificado en dispositivo.** Todo
+compila; ni la Radio se ha escuchado ni la migración de carpeta se ha
+probado sobre una tarjeta real.
+
+**Riesgos conocidos a vigilar en la primera prueba:**
+- **Radio:** que ninguna línea del `radio_relacionados_debug.txt` sirva
+  una década distinta a la del ancla (si aparece, queda una quinta
+  fuga sin localizar). Y `matchesArtist()`, que puede rechazar vídeos
+  legítimos: si abundan los `0 de N resultados pasaron el filtro`, el
+  criterio está demasiado apretado.
+- **Carpeta:** que `takePersistableUriPermission()` no lance
+  `SecurityException` sobre la tarjeta externa -- algunos fabricantes
+  restringen ciertas rutas.
+
+**Siguiente sesión:** hoja de ruta de `DOCS/ANNEX_H14.md`, encabezada
+por la verificación en dispositivo con tarjeta externa. Si la escucha
+de la Radio revela algo, H08 vuelve con un PCH trivial.
 
 **S020, resumen: sesión de dos mitades. Primero se cerró y construyó
 el "etc." de H13 (cristal esmerilado del reproductor); después, a
@@ -430,12 +483,18 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
    cuota gratuita de Actions) -- la caché de Gradle/pip ya está lista
    para entonces.
 
-## Petición nueva de producto, sin hito asignado todavía (S020, 2026-07-25)
+## Petición de producto ya recogida en un hito (S020 -> H14 en S021)
 
 **Carpeta de descarga configurable.** Petición textual de Miguel
 Ángel: *"dar la posibilidad de cambiar la carpeta de descarga con la
 opción de copiar todo a esa carpeta o solamente los settings, sin
 perder favoritos etc."*
+
+**Resuelta en S021.** Dejó de estar sin hito: el PCH del cierre de
+S021 abrió **H14 (Almacenamiento de la Biblioteca)** y el trabajo
+quedó construido allí -- ver `DOCS/ANNEX_H14.md`. Se conserva aquí el
+enunciado original porque es la fuente de verdad de lo que pidió, y
+porque la verificación en dispositivo sigue pendiente.
 
 Alcance tal como lo describió:
 - Poder elegir una carpeta de descarga distinta a la actual.
@@ -447,10 +506,10 @@ Alcance tal como lo describió:
   metadatos: la base de datos Room no se toca, solo cambian las rutas
   de archivo.
 
-No es H08 y **no se ha abierto hito para esto** -- eso requiere un PCH
-explícito de Miguel Ángel. Encaja de forma natural como hito propio
-(H14) o dentro de H06/H07, que son los que gobiernan almacenamiento y
-sincronización. Anotado aquí para que no se pierda entre sesiones.
+Las tres cosas quedaron construidas en S021 tal como las describió. La
+intuición de "encaja como hito propio (H14)" resultó ser la acertada:
+ni H06 (respaldo de metadatos en Drive) ni H07 (sincronización entre
+dispositivos) gobiernan dónde vive el audio en el dispositivo local.
 
 ## Pendientes antiguos, sin tocar en S011, no bloquean nada
 
