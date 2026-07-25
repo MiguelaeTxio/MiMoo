@@ -7,6 +7,86 @@
         "genre": "pop"
       },
       {
+        "artist": "Los Ángeles",
+        "song": "Mañana Mañana",
+        "genre": "pop"
+      },
+      {
+        "artist": "Juan y Junior",
+        "song": "Anduriña",
+        "genre": "pop"
+      },
+      {
+        "artist": "Los Canarios",
+        "song": "Get On Your Knees",
+        "genre": "rock"
+      },
+      {
+        "artist": "Lola Flores",
+        "song": "A Tu Vera",
+        "genre": "copla"
+      },
+      {
+        "artist": "Los Payos",
+        "song": "María Isabel",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Los Módulos",
+        "song": "Todo Tiene Su Fin",
+        "genre": "rock"
+      },
+      {
+        "artist": "Encarnita Polo",
+        "song": "Paco Paco Paco",
+        "genre": "pop"
+      },
+      {
+        "artist": "Los Stop",
+        "song": "El Turista 1.999.999",
+        "genre": "pop"
+      },
+      {
+        "artist": "Marifé de Triana",
+        "song": "Torre de Arena",
+        "genre": "copla"
+      },
+      {
+        "artist": "Raimon",
+        "song": "Al Vent",
+        "genre": "folk"
+      },
+      {
+        "artist": "Lluís Llach",
+        "song": "L'Estaca",
+        "genre": "folk"
+      },
+      {
+        "artist": "Los Salvajes",
+        "song": "Es la Edad",
+        "genre": "rock"
+      },
+      {
+        "artist": "Concha Velasco",
+        "song": "La Chica Ye-Yé",
+        "genre": "pop"
+      },
+      {
+        "artist": "Víctor Manuel",
+        "song": "El Abuelo Víctor",
+        "genre": "folk"
+      },
+      {
+        "artist": "Antonio Molina",
+        "song": "Soy Minero",
+        "genre": "copla"
+      },
+      {
+        "artist": "Los Bravos",
+        "song": "Bring a Little Lovin'",
+        "genre": "rock"
+      },
+      {
         "artist": "Julio Iglesias",
         "song": "La Vida Sigue Igual",
         "genre": "pop"
@@ -119,6 +199,201 @@
         "genre": "rock"
       },
       {
+        "artist": "The Doors",
+        "song": "Light My Fire",
+        "genre": "rock"
+      },
+      {
+        "artist": "Jimi Hendrix",
+        "song": "Purple Haze",
+        "genre": "rock"
+      },
+      {
+        "artist": "Creedence Clearwater Revival",
+        "song": "Proud Mary",
+        "genre": "rock"
+      },
+      {
+        "artist": "Janis Joplin",
+        "song": "Piece of My Heart",
+        "genre": "blues"
+      },
+      {
+        "artist": "The Byrds",
+        "song": "Mr. Tambourine Man",
+        "genre": "folk"
+      },
+      {
+        "artist": "Johnny Cash",
+        "song": "Ring of Fire",
+        "genre": "country"
+      },
+      {
+        "artist": "Roy Orbison",
+        "song": "Oh, Pretty Woman",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Everly Brothers",
+        "song": "Cathy's Clown",
+        "genre": "pop"
+      },
+      {
+        "artist": "Ben E. King",
+        "song": "Stand by Me",
+        "genre": "soul"
+      },
+      {
+        "artist": "The Righteous Brothers",
+        "song": "You've Lost That Lovin' Feelin'",
+        "genre": "soul"
+      },
+      {
+        "artist": "The Temptations",
+        "song": "My Girl",
+        "genre": "soul"
+      },
+      {
+        "artist": "Four Tops",
+        "song": "Reach Out I'll Be There",
+        "genre": "soul"
+      },
+      {
+        "artist": "Wilson Pickett",
+        "song": "In the Midnight Hour",
+        "genre": "soul"
+      },
+      {
+        "artist": "James Brown",
+        "song": "I Got You (I Feel Good)",
+        "genre": "funk"
+      },
+      {
+        "artist": "Nina Simone",
+        "song": "Feeling Good",
+        "genre": "jazz"
+      },
+      {
+        "artist": "Dusty Springfield",
+        "song": "Son of a Preacher Man",
+        "genre": "soul"
+      },
+      {
+        "artist": "The Zombies",
+        "song": "She's Not There",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Yardbirds",
+        "song": "For Your Love",
+        "genre": "rock"
+      },
+      {
+        "artist": "Cream",
+        "song": "Sunshine of Your Love",
+        "genre": "rock"
+      },
+      {
+        "artist": "Jefferson Airplane",
+        "song": "White Rabbit",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Velvet Underground",
+        "song": "Sunday Morning",
+        "genre": "rock"
+      },
+      {
+        "artist": "Joan Baez",
+        "song": "Donna Donna",
+        "genre": "folk"
+      },
+      {
+        "artist": "Peter, Paul and Mary",
+        "song": "Blowin' in the Wind",
+        "genre": "folk"
+      },
+      {
+        "artist": "Nancy Sinatra",
+        "song": "These Boots Are Made for Walkin'",
+        "genre": "pop"
+      },
+      {
+        "artist": "Frank Sinatra",
+        "song": "Strangers in the Night",
+        "genre": "jazz"
+      },
+      {
+        "artist": "Engelbert Humperdinck",
+        "song": "Release Me",
+        "genre": "pop"
+      },
+      {
+        "artist": "The Hollies",
+        "song": "Bus Stop",
+        "genre": "rock"
+      },
+      {
+        "artist": "Small Faces",
+        "song": "Itchycoo Park",
+        "genre": "rock"
+      },
+      {
+        "artist": "Procol Harum",
+        "song": "A Whiter Shade of Pale",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Troggs",
+        "song": "Wild Thing",
+        "genre": "rock"
+      },
+      {
+        "artist": "France Gall",
+        "song": "Poupée de Cire, Poupée de Son",
+        "genre": "pop"
+      },
+      {
+        "artist": "Adamo",
+        "song": "Tombe la Neige",
+        "genre": "pop"
+      },
+      {
+        "artist": "Gigliola Cinquetti",
+        "song": "Non Ho L'Età",
+        "genre": "pop"
+      },
+      {
+        "artist": "Sandie Shaw",
+        "song": "Puppet on a String",
+        "genre": "pop"
+      },
+      {
+        "artist": "Lulu",
+        "song": "To Sir with Love",
+        "genre": "pop"
+      },
+      {
+        "artist": "The Shadows",
+        "song": "Apache",
+        "genre": "rock"
+      },
+      {
+        "artist": "Booker T. & the M.G.'s",
+        "song": "Green Onions",
+        "genre": "funk"
+      },
+      {
+        "artist": "Ike & Tina Turner",
+        "song": "River Deep – Mountain High",
+        "genre": "soul"
+      },
+      {
+        "artist": "Chuck Berry",
+        "song": "No Particular Place to Go",
+        "genre": "rock"
+      },
+      {
         "artist": "The Rolling Stones",
         "song": "Satisfaction",
         "genre": "rock"
@@ -223,6 +498,126 @@
         "genre": "pop"
       },
       {
+        "artist": "Los Chichos",
+        "song": "Quiero Ser Libre",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Las Grecas",
+        "song": "Te Estoy Amando Locamente",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Lole y Manuel",
+        "song": "Todo Es de Color",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Camarón de la Isla",
+        "song": "La Leyenda del Tiempo",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Paco de Lucía",
+        "song": "Entre Dos Aguas",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Bambino",
+        "song": "Procuro Olvidarte",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Manzanita",
+        "song": "Por Tu Ausencia",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Burning",
+        "song": "Qué Hace una Chica Como Tú en un Sitio Como Éste",
+        "genre": "rock"
+      },
+      {
+        "artist": "Asfalto",
+        "song": "Rocinante",
+        "genre": "rock"
+      },
+      {
+        "artist": "Ñu",
+        "song": "El Flautista",
+        "genre": "rock"
+      },
+      {
+        "artist": "Leño",
+        "song": "Este Madrid",
+        "genre": "rock"
+      },
+      {
+        "artist": "Ramoncín",
+        "song": "Marica de Terciopelo",
+        "genre": "punk"
+      },
+      {
+        "artist": "La Banda Trapera del Río",
+        "song": "Ciutat Podrida",
+        "genre": "punk"
+      },
+      {
+        "artist": "Kaka de Luxe",
+        "song": "Rosario",
+        "genre": "punk"
+      },
+      {
+        "artist": "Los Canarios",
+        "song": "Ciclos",
+        "genre": "rock"
+      },
+      {
+        "artist": "Aguaviva",
+        "song": "Poetas Andaluces",
+        "genre": "folk"
+      },
+      {
+        "artist": "Jarcha",
+        "song": "Libertad Sin Ira",
+        "genre": "folk"
+      },
+      {
+        "artist": "Luis Eduardo Aute",
+        "song": "Al Alba",
+        "genre": "folk"
+      },
+      {
+        "artist": "Pablo Guerrero",
+        "song": "A Cántaros",
+        "genre": "folk"
+      },
+      {
+        "artist": "Joan Manuel Serrat",
+        "song": "Mediterráneo",
+        "genre": "folk"
+      },
+      {
+        "artist": "Lluís Llach",
+        "song": "Viatge a Ítaca",
+        "genre": "folk"
+      },
+      {
+        "artist": "Los Puntos",
+        "song": "Cuando Salga la Luna",
+        "genre": "pop"
+      },
+      {
+        "artist": "Los Diablos",
+        "song": "Un Rayo de Sol",
+        "genre": "pop"
+      },
+      {
+        "artist": "Juan Pardo",
+        "song": "La Charanga",
+        "genre": "pop"
+      },
+      {
         "artist": "Víctor Manuel",
         "song": "Solo Pienso en Ti",
         "genre": "pop"
@@ -289,7 +684,7 @@
       },
       {
         "artist": "Triana",
-        "song": "Todo Es de Color",
+        "song": "Abre la Puerta",
         "genre": "rock"
       },
       {
@@ -338,6 +733,196 @@
         "artist": "Led Zeppelin",
         "song": "Stairway to Heaven",
         "genre": "rock"
+      },
+      {
+        "artist": "Black Sabbath",
+        "song": "Paranoid",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Deep Purple",
+        "song": "Smoke on the Water",
+        "genre": "rock"
+      },
+      {
+        "artist": "AC/DC",
+        "song": "Highway to Hell",
+        "genre": "rock"
+      },
+      {
+        "artist": "Kiss",
+        "song": "I Was Made for Lovin' You",
+        "genre": "rock"
+      },
+      {
+        "artist": "Ramones",
+        "song": "Blitzkrieg Bop",
+        "genre": "punk"
+      },
+      {
+        "artist": "Sex Pistols",
+        "song": "Anarchy in the U.K.",
+        "genre": "punk"
+      },
+      {
+        "artist": "The Clash",
+        "song": "London Calling",
+        "genre": "punk"
+      },
+      {
+        "artist": "Blondie",
+        "song": "Heart of Glass",
+        "genre": "new wave"
+      },
+      {
+        "artist": "Talking Heads",
+        "song": "Psycho Killer",
+        "genre": "new wave"
+      },
+      {
+        "artist": "Lou Reed",
+        "song": "Walk on the Wild Side",
+        "genre": "rock"
+      },
+      {
+        "artist": "Iggy Pop",
+        "song": "The Passenger",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Who",
+        "song": "Baba O'Riley",
+        "genre": "rock"
+      },
+      {
+        "artist": "Genesis",
+        "song": "Follow You Follow Me",
+        "genre": "rock"
+      },
+      {
+        "artist": "Yes",
+        "song": "Roundabout",
+        "genre": "rock"
+      },
+      {
+        "artist": "Supertramp",
+        "song": "The Logical Song",
+        "genre": "rock"
+      },
+      {
+        "artist": "Dire Straits",
+        "song": "Sultans of Swing",
+        "genre": "rock"
+      },
+      {
+        "artist": "Lynyrd Skynyrd",
+        "song": "Sweet Home Alabama",
+        "genre": "rock"
+      },
+      {
+        "artist": "T. Rex",
+        "song": "Get It On",
+        "genre": "rock"
+      },
+      {
+        "artist": "Alice Cooper",
+        "song": "School's Out",
+        "genre": "rock"
+      },
+      {
+        "artist": "Electric Light Orchestra",
+        "song": "Mr. Blue Sky",
+        "genre": "rock"
+      },
+      {
+        "artist": "Bruce Springsteen",
+        "song": "Born to Run",
+        "genre": "rock"
+      },
+      {
+        "artist": "Marvin Gaye",
+        "song": "What's Going On",
+        "genre": "soul"
+      },
+      {
+        "artist": "Al Green",
+        "song": "Let's Stay Together",
+        "genre": "soul"
+      },
+      {
+        "artist": "Earth, Wind & Fire",
+        "song": "September",
+        "genre": "funk"
+      },
+      {
+        "artist": "Kool & The Gang",
+        "song": "Jungle Boogie",
+        "genre": "funk"
+      },
+      {
+        "artist": "Chic",
+        "song": "Le Freak",
+        "genre": "disco"
+      },
+      {
+        "artist": "Gloria Gaynor",
+        "song": "I Will Survive",
+        "genre": "disco"
+      },
+      {
+        "artist": "Village People",
+        "song": "Y.M.C.A.",
+        "genre": "disco"
+      },
+      {
+        "artist": "KC and the Sunshine Band",
+        "song": "That's the Way (I Like It)",
+        "genre": "disco"
+      },
+      {
+        "artist": "Sister Sledge",
+        "song": "We Are Family",
+        "genre": "disco"
+      },
+      {
+        "artist": "Baccara",
+        "song": "Yes Sir, I Can Boogie",
+        "genre": "disco"
+      },
+      {
+        "artist": "Peter Tosh",
+        "song": "Legalize It",
+        "genre": "reggae"
+      },
+      {
+        "artist": "Jimmy Cliff",
+        "song": "The Harder They Come",
+        "genre": "reggae"
+      },
+      {
+        "artist": "Neil Young",
+        "song": "Heart of Gold",
+        "genre": "folk"
+      },
+      {
+        "artist": "Cat Stevens",
+        "song": "Father and Son",
+        "genre": "folk"
+      },
+      {
+        "artist": "Simon & Garfunkel",
+        "song": "Bridge over Troubled Water",
+        "genre": "folk"
+      },
+      {
+        "artist": "Billy Joel",
+        "song": "Piano Man",
+        "genre": "pop"
+      },
+      {
+        "artist": "Kraftwerk",
+        "song": "The Model",
+        "genre": "electronic"
       },
       {
         "artist": "Pink Floyd",
@@ -431,6 +1016,141 @@
       {
         "artist": "Alaska y Dinarama",
         "song": "Ni Tú Ni Nadie",
+        "genre": "pop"
+      },
+      {
+        "artist": "Los Ronaldos",
+        "song": "Adiós Papá",
+        "genre": "rock"
+      },
+      {
+        "artist": "El Último de la Fila",
+        "song": "Insurrección",
+        "genre": "rock"
+      },
+      {
+        "artist": "La Guardia",
+        "song": "Cuando Brille el Sol",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Los Rebeldes",
+        "song": "Mediterráneo",
+        "genre": "rock"
+      },
+      {
+        "artist": "Rosendo",
+        "song": "Agradecido",
+        "genre": "rock"
+      },
+      {
+        "artist": "Los Suaves",
+        "song": "Dolores Se Llamaba Lola",
+        "genre": "rock"
+      },
+      {
+        "artist": "Los Enemigos",
+        "song": "John Wayne",
+        "genre": "rock"
+      },
+      {
+        "artist": "Luz Casal",
+        "song": "Rufino",
+        "genre": "rock"
+      },
+      {
+        "artist": "La Frontera",
+        "song": "El Límite",
+        "genre": "rock"
+      },
+      {
+        "artist": "Los Nikis",
+        "song": "La Amenaza Amarilla",
+        "genre": "punk"
+      },
+      {
+        "artist": "Siniestro Total",
+        "song": "Bailaré Sobre Tu Tumba",
+        "genre": "punk"
+      },
+      {
+        "artist": "Ilegales",
+        "song": "Soy un Macarra",
+        "genre": "punk"
+      },
+      {
+        "artist": "Eskorbuto",
+        "song": "Mucha Policía, Poca Diversión",
+        "genre": "punk"
+      },
+      {
+        "artist": "La Polla Records",
+        "song": "No Somos Nada",
+        "genre": "punk"
+      },
+      {
+        "artist": "Glutamato Ye-Yé",
+        "song": "Todos los Negritos Tienen Hambre y Frío",
+        "genre": "punk"
+      },
+      {
+        "artist": "Kortatu",
+        "song": "Sarri, Sarri",
+        "genre": "ska"
+      },
+      {
+        "artist": "Obús",
+        "song": "Va a Estallar el Obús",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Ángeles del Infierno",
+        "song": "Maldito Sea Tu Nombre",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Sangre Azul",
+        "song": "Cuerpo a Cuerpo",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Aviador Dro",
+        "song": "Nuclear Sí",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Décima Víctima",
+        "song": "Un Buen Momento",
+        "genre": "new wave"
+      },
+      {
+        "artist": "Derribos Arias",
+        "song": "A Flúor",
+        "genre": "new wave"
+      },
+      {
+        "artist": "Los Zombies",
+        "song": "Groenlandia",
+        "genre": "pop"
+      },
+      {
+        "artist": "Los Toreros Muertos",
+        "song": "Mi Agüita Amarilla",
+        "genre": "pop"
+      },
+      {
+        "artist": "Semen Up",
+        "song": "Lo Estás Haciendo Muy Bien",
+        "genre": "pop"
+      },
+      {
+        "artist": "Olé Olé",
+        "song": "No Controles",
+        "genre": "pop"
+      },
+      {
+        "artist": "Joaquín Sabina",
+        "song": "Pongamos Que Hablo de Madrid",
         "genre": "pop"
       },
       {
@@ -561,6 +1281,221 @@
         "genre": "pop"
       },
       {
+        "artist": "Guns N' Roses",
+        "song": "Sweet Child o' Mine",
+        "genre": "rock"
+      },
+      {
+        "artist": "Metallica",
+        "song": "Master of Puppets",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Iron Maiden",
+        "song": "The Number of the Beast",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Def Leppard",
+        "song": "Pour Some Sugar on Me",
+        "genre": "rock"
+      },
+      {
+        "artist": "Van Halen",
+        "song": "Jump",
+        "genre": "rock"
+      },
+      {
+        "artist": "Europe",
+        "song": "The Final Countdown",
+        "genre": "rock"
+      },
+      {
+        "artist": "Dire Straits",
+        "song": "Money for Nothing",
+        "genre": "rock"
+      },
+      {
+        "artist": "Queen",
+        "song": "Under Pressure",
+        "genre": "rock"
+      },
+      {
+        "artist": "Toto",
+        "song": "Africa",
+        "genre": "rock"
+      },
+      {
+        "artist": "Journey",
+        "song": "Don't Stop Believin'",
+        "genre": "rock"
+      },
+      {
+        "artist": "Survivor",
+        "song": "Eye of the Tiger",
+        "genre": "rock"
+      },
+      {
+        "artist": "Bryan Adams",
+        "song": "Summer of '69",
+        "genre": "rock"
+      },
+      {
+        "artist": "Billy Idol",
+        "song": "Rebel Yell",
+        "genre": "rock"
+      },
+      {
+        "artist": "INXS",
+        "song": "Need You Tonight",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Cure",
+        "song": "Just Like Heaven",
+        "genre": "new wave"
+      },
+      {
+        "artist": "The Smiths",
+        "song": "This Charming Man",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Joy Division",
+        "song": "Love Will Tear Us Apart",
+        "genre": "new wave"
+      },
+      {
+        "artist": "New Order",
+        "song": "Blue Monday",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Talking Heads",
+        "song": "Once in a Lifetime",
+        "genre": "new wave"
+      },
+      {
+        "artist": "Simple Minds",
+        "song": "Don't You (Forget About Me)",
+        "genre": "new wave"
+      },
+      {
+        "artist": "Tears for Fears",
+        "song": "Shout",
+        "genre": "new wave"
+      },
+      {
+        "artist": "The Human League",
+        "song": "Don't You Want Me",
+        "genre": "synth-pop"
+      },
+      {
+        "artist": "Soft Cell",
+        "song": "Tainted Love",
+        "genre": "synth-pop"
+      },
+      {
+        "artist": "Pet Shop Boys",
+        "song": "West End Girls",
+        "genre": "synth-pop"
+      },
+      {
+        "artist": "Erasure",
+        "song": "A Little Respect",
+        "genre": "synth-pop"
+      },
+      {
+        "artist": "Alphaville",
+        "song": "Forever Young",
+        "genre": "synth-pop"
+      },
+      {
+        "artist": "Kim Wilde",
+        "song": "Kids in America",
+        "genre": "pop"
+      },
+      {
+        "artist": "Bananarama",
+        "song": "Venus",
+        "genre": "pop"
+      },
+      {
+        "artist": "Rick Astley",
+        "song": "Never Gonna Give You Up",
+        "genre": "pop"
+      },
+      {
+        "artist": "The Bangles",
+        "song": "Walk Like an Egyptian",
+        "genre": "pop"
+      },
+      {
+        "artist": "George Michael",
+        "song": "Faith",
+        "genre": "pop"
+      },
+      {
+        "artist": "Falco",
+        "song": "Rock Me Amadeus",
+        "genre": "pop"
+      },
+      {
+        "artist": "Nena",
+        "song": "99 Luftballons",
+        "genre": "pop"
+      },
+      {
+        "artist": "Sandra",
+        "song": "Maria Magdalena",
+        "genre": "pop"
+      },
+      {
+        "artist": "Laura Branigan",
+        "song": "Self Control",
+        "genre": "pop"
+      },
+      {
+        "artist": "Roxette",
+        "song": "The Look",
+        "genre": "pop"
+      },
+      {
+        "artist": "Lionel Richie",
+        "song": "Hello",
+        "genre": "soul"
+      },
+      {
+        "artist": "Sade",
+        "song": "Smooth Operator",
+        "genre": "soul"
+      },
+      {
+        "artist": "Simply Red",
+        "song": "Holding Back the Years",
+        "genre": "soul"
+      },
+      {
+        "artist": "Run-D.M.C.",
+        "song": "Walk This Way",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Beastie Boys",
+        "song": "(You Gotta) Fight for Your Right",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Public Enemy",
+        "song": "Fight the Power",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "UB40",
+        "song": "Red Red Wine",
+        "genre": "reggae"
+      },
+      {
         "artist": "Madonna",
         "song": "Like a Virgin",
         "genre": "pop"
@@ -653,6 +1588,131 @@
         "artist": "Alejandro Sanz",
         "song": "Corazón Partío",
         "genre": "pop"
+      },
+      {
+        "artist": "Jarabe de Palo",
+        "song": "La Flaca",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Revólver",
+        "song": "El Roce de Tu Piel",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Los Secretos",
+        "song": "Agárrate a Mí María",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Tam Tam Go!",
+        "song": "Manuel Raquel",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Antonio Vega",
+        "song": "El Sitio de Mi Recreo",
+        "genre": "pop"
+      },
+      {
+        "artist": "Mago de Oz",
+        "song": "Molinos de Viento",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Reincidentes",
+        "song": "Ansiedad",
+        "genre": "punk"
+      },
+      {
+        "artist": "Boikot",
+        "song": "La Ruta del Che",
+        "genre": "punk"
+      },
+      {
+        "artist": "Los Suaves",
+        "song": "Maldita Sea Mi Suerte",
+        "genre": "rock"
+      },
+      {
+        "artist": "Rosendo",
+        "song": "Masculino Singular",
+        "genre": "rock"
+      },
+      {
+        "artist": "Los Planetas",
+        "song": "Segundo Premio",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Australian Blonde",
+        "song": "Chup Chup",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Ketama",
+        "song": "No Estamos Locos",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Niña Pastori",
+        "song": "Cai",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Rosario Flores",
+        "song": "Mucho por Vivir",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Navajita Plateá",
+        "song": "Noches de Bohemia",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Camela",
+        "song": "Sueños Inalcanzables",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Los Manolos",
+        "song": "Amigos para Siempre",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Los del Río",
+        "song": "Macarena",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Azúcar Moreno",
+        "song": "Bandido",
+        "genre": "pop"
+      },
+      {
+        "artist": "Marta Sánchez",
+        "song": "Desesperada",
+        "genre": "pop"
+      },
+      {
+        "artist": "Luz Casal",
+        "song": "Piensa en Mí",
+        "genre": "pop"
+      },
+      {
+        "artist": "OBK",
+        "song": "De Qué Me Sirve Llorar",
+        "genre": "synth-pop"
+      },
+      {
+        "artist": "Chimo Bayo",
+        "song": "Así Me Gusta a Mí",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Paco Pil",
+        "song": "Viva la Fiesta",
+        "genre": "electronic"
       },
       {
         "artist": "Ana Belén",
@@ -792,6 +1852,226 @@
         "genre": "pop"
       },
       {
+        "artist": "Pearl Jam",
+        "song": "Alive",
+        "genre": "rock"
+      },
+      {
+        "artist": "Soundgarden",
+        "song": "Black Hole Sun",
+        "genre": "rock"
+      },
+      {
+        "artist": "Alice in Chains",
+        "song": "Man in the Box",
+        "genre": "rock"
+      },
+      {
+        "artist": "Stone Temple Pilots",
+        "song": "Plush",
+        "genre": "rock"
+      },
+      {
+        "artist": "Radiohead",
+        "song": "Creep",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Verve",
+        "song": "Bitter Sweet Symphony",
+        "genre": "rock"
+      },
+      {
+        "artist": "Pulp",
+        "song": "Common People",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Suede",
+        "song": "Animal Nitrate",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "The Cranberries",
+        "song": "Zombie",
+        "genre": "rock"
+      },
+      {
+        "artist": "No Doubt",
+        "song": "Don't Speak",
+        "genre": "rock"
+      },
+      {
+        "artist": "Alanis Morissette",
+        "song": "You Oughta Know",
+        "genre": "rock"
+      },
+      {
+        "artist": "Red Hot Chili Peppers",
+        "song": "Under the Bridge",
+        "genre": "rock"
+      },
+      {
+        "artist": "Rage Against the Machine",
+        "song": "Killing in the Name",
+        "genre": "rock"
+      },
+      {
+        "artist": "Metallica",
+        "song": "Nothing Else Matters",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Green Day",
+        "song": "Basket Case",
+        "genre": "punk"
+      },
+      {
+        "artist": "The Offspring",
+        "song": "Self Esteem",
+        "genre": "punk"
+      },
+      {
+        "artist": "Blink-182",
+        "song": "What's My Age Again?",
+        "genre": "punk"
+      },
+      {
+        "artist": "Nine Inch Nails",
+        "song": "Closer",
+        "genre": "electronic"
+      },
+      {
+        "artist": "The Prodigy",
+        "song": "Firestarter",
+        "genre": "electronic"
+      },
+      {
+        "artist": "The Chemical Brothers",
+        "song": "Block Rockin' Beats",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Daft Punk",
+        "song": "Around the World",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Fatboy Slim",
+        "song": "Praise You",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Underworld",
+        "song": "Born Slippy",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Robert Miles",
+        "song": "Children",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Faithless",
+        "song": "Insomnia",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Snap!",
+        "song": "Rhythm Is a Dancer",
+        "genre": "electronic"
+      },
+      {
+        "artist": "2 Unlimited",
+        "song": "No Limit",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Haddaway",
+        "song": "What Is Love",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Eiffel 65",
+        "song": "Blue (Da Ba Dee)",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Aqua",
+        "song": "Barbie Girl",
+        "genre": "pop"
+      },
+      {
+        "artist": "Dr. Dre",
+        "song": "Nuthin' but a \"G\" Thang",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "2Pac",
+        "song": "California Love",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "The Notorious B.I.G.",
+        "song": "Juicy",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Wu-Tang Clan",
+        "song": "C.R.E.A.M.",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Coolio",
+        "song": "Gangsta's Paradise",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "TLC",
+        "song": "Waterfalls",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Destiny's Child",
+        "song": "Say My Name",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Lauryn Hill",
+        "song": "Doo Wop (That Thing)",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Seal",
+        "song": "Kiss from a Rose",
+        "genre": "soul"
+      },
+      {
+        "artist": "Sinéad O'Connor",
+        "song": "Nothing Compares 2 U",
+        "genre": "pop"
+      },
+      {
+        "artist": "Cher",
+        "song": "Believe",
+        "genre": "pop"
+      },
+      {
+        "artist": "Robbie Williams",
+        "song": "Angels",
+        "genre": "pop"
+      },
+      {
+        "artist": "Savage Garden",
+        "song": "Truly Madly Deeply",
+        "genre": "pop"
+      },
+      {
+        "artist": "Eric Clapton",
+        "song": "Tears in Heaven",
+        "genre": "rock"
+      },
+      {
         "artist": "Whitney Houston",
         "song": "I Will Always Love You",
         "genre": "pop"
@@ -889,6 +2169,136 @@
         "artist": "David Bisbal",
         "song": "Ave María",
         "genre": "pop"
+      },
+      {
+        "artist": "La Quinta Estación",
+        "song": "El Sol No Regresa",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Manolo García",
+        "song": "Pájaros de Barro",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Iván Ferreiro",
+        "song": "Turnedo",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Deluxe",
+        "song": "Que No",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Pignoise",
+        "song": "Nada Que Perder",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Jarabe de Palo",
+        "song": "Bonito",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Sidonie",
+        "song": "Fascinado",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Vetusta Morla",
+        "song": "Un Día en el Mundo",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Love of Lesbian",
+        "song": "Club de Fans de John Boy",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Dover",
+        "song": "King George",
+        "genre": "rock"
+      },
+      {
+        "artist": "Sôber",
+        "song": "Diez Años",
+        "genre": "rock"
+      },
+      {
+        "artist": "Ska-P",
+        "song": "Cannabis",
+        "genre": "ska"
+      },
+      {
+        "artist": "Álex Ubago",
+        "song": "A Gritos de Esperanza",
+        "genre": "pop"
+      },
+      {
+        "artist": "Merche",
+        "song": "Abre Tu Mente",
+        "genre": "pop"
+      },
+      {
+        "artist": "David DeMaría",
+        "song": "Precisamente Ahora",
+        "genre": "pop"
+      },
+      {
+        "artist": "Rosa López",
+        "song": "Europe's Living a Celebration",
+        "genre": "pop"
+      },
+      {
+        "artist": "Efecto Mariposa",
+        "song": "No Me Crees",
+        "genre": "pop"
+      },
+      {
+        "artist": "La Cabra Mecánica",
+        "song": "La Lista de la Compra",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Muchachito Bombo Infierno",
+        "song": "Siempre Que Quieras",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Ojos de Brujo",
+        "song": "Ventilaor R-80",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Rosario Flores",
+        "song": "Algo Contigo",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Bebo & Cigala",
+        "song": "Lágrimas Negras",
+        "genre": "bolero"
+      },
+      {
+        "artist": "Violadores del Verso",
+        "song": "Vicios y Virtudes",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Nach",
+        "song": "Efectos Vocales",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Mala Rodríguez",
+        "song": "Tengo un Trato",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Tote King",
+        "song": "Un Tipo Cualquiera",
+        "genre": "hip hop"
       },
       {
         "artist": "Alejandro Sanz",
@@ -1018,6 +2428,261 @@
         "genre": "pop"
       },
       {
+        "artist": "Linkin Park",
+        "song": "In the End",
+        "genre": "rock"
+      },
+      {
+        "artist": "Evanescence",
+        "song": "Bring Me to Life",
+        "genre": "rock"
+      },
+      {
+        "artist": "Nickelback",
+        "song": "How You Remind Me",
+        "genre": "rock"
+      },
+      {
+        "artist": "Creed",
+        "song": "With Arms Wide Open",
+        "genre": "rock"
+      },
+      {
+        "artist": "System of a Down",
+        "song": "Chop Suey!",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Slipknot",
+        "song": "Duality",
+        "genre": "heavy metal"
+      },
+      {
+        "artist": "Papa Roach",
+        "song": "Last Resort",
+        "genre": "rock"
+      },
+      {
+        "artist": "Limp Bizkit",
+        "song": "Rollin'",
+        "genre": "rock"
+      },
+      {
+        "artist": "Muse",
+        "song": "Supermassive Black Hole",
+        "genre": "rock"
+      },
+      {
+        "artist": "The White Stripes",
+        "song": "Seven Nation Army",
+        "genre": "rock"
+      },
+      {
+        "artist": "The Killers",
+        "song": "Mr. Brightside",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Franz Ferdinand",
+        "song": "Take Me Out",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Arctic Monkeys",
+        "song": "I Bet You Look Good on the Dancefloor",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "The Strokes",
+        "song": "Last Nite",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Kings of Leon",
+        "song": "Sex on Fire",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Kaiser Chiefs",
+        "song": "Ruby",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Snow Patrol",
+        "song": "Chasing Cars",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Keane",
+        "song": "Somewhere Only We Know",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Travis",
+        "song": "Sing",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Maroon 5",
+        "song": "This Love",
+        "genre": "pop"
+      },
+      {
+        "artist": "OneRepublic",
+        "song": "Apologize",
+        "genre": "pop"
+      },
+      {
+        "artist": "The Fray",
+        "song": "How to Save a Life",
+        "genre": "pop"
+      },
+      {
+        "artist": "James Blunt",
+        "song": "You're Beautiful",
+        "genre": "pop"
+      },
+      {
+        "artist": "Jason Mraz",
+        "song": "I'm Yours",
+        "genre": "pop"
+      },
+      {
+        "artist": "Pink",
+        "song": "Get the Party Started",
+        "genre": "pop"
+      },
+      {
+        "artist": "Avril Lavigne",
+        "song": "Complicated",
+        "genre": "pop"
+      },
+      {
+        "artist": "Gorillaz",
+        "song": "Feel Good Inc.",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Moby",
+        "song": "We Are All Made of Stars",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Daft Punk",
+        "song": "One More Time",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Bob Sinclar",
+        "song": "World, Hold On",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Sean Paul",
+        "song": "Get Busy",
+        "genre": "reggae"
+      },
+      {
+        "artist": "Shaggy",
+        "song": "It Wasn't Me",
+        "genre": "reggae"
+      },
+      {
+        "artist": "Daddy Yankee",
+        "song": "Gasolina",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Don Omar",
+        "song": "Dale Don Dale",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Wisin & Yandel",
+        "song": "Rakata",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Tego Calderón",
+        "song": "Pa' Que Retozen",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Calle 13",
+        "song": "Atrévete-te-te",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "50 Cent",
+        "song": "In da Club",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Snoop Dogg",
+        "song": "Drop It Like It's Hot",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "OutKast",
+        "song": "Hey Ya!",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Jay-Z",
+        "song": "99 Problems",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Nelly",
+        "song": "Hot in Herre",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Alicia Keys",
+        "song": "Fallin'",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Norah Jones",
+        "song": "Don't Know Why",
+        "genre": "jazz"
+      },
+      {
+        "artist": "Michael Bublé",
+        "song": "Home",
+        "genre": "jazz"
+      },
+      {
+        "artist": "Damien Rice",
+        "song": "The Blower's Daughter",
+        "genre": "folk"
+      },
+      {
+        "artist": "Jack Johnson",
+        "song": "Better Together",
+        "genre": "folk"
+      },
+      {
+        "artist": "Juanes",
+        "song": "La Camisa Negra",
+        "genre": "rock"
+      },
+      {
+        "artist": "Maná",
+        "song": "Labios Compartidos",
+        "genre": "rock"
+      },
+      {
+        "artist": "Café Tacvba",
+        "song": "Eres",
+        "genre": "rock"
+      },
+      {
+        "artist": "Julieta Venegas",
+        "song": "Me Voy",
+        "genre": "pop"
+      },
+      {
         "artist": "Rihanna",
         "song": "Umbrella",
         "genre": "pop"
@@ -1089,6 +2754,141 @@
       {
         "artist": "Pablo Alborán",
         "song": "Solamente Tú",
+        "genre": "pop"
+      },
+      {
+        "artist": "Estopa",
+        "song": "Rumba a Lo Desconocido",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Fito & Fitipaldis",
+        "song": "Antes de Que Cuente Diez",
+        "genre": "rock"
+      },
+      {
+        "artist": "Sidecars",
+        "song": "Cuestión de Suerte",
+        "genre": "rock"
+      },
+      {
+        "artist": "Taburete",
+        "song": "Sirenas",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Viva Suecia",
+        "song": "El Bien",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Second",
+        "song": "Rincón Exquisito",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Lori Meyers",
+        "song": "Mi Realidad",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Supersubmarina",
+        "song": "Cientos de Miles",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Dorian",
+        "song": "La Tormenta de Arena",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Shinova",
+        "song": "La Buena Suerte",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Carolina Durante",
+        "song": "Cayetano",
+        "genre": "punk"
+      },
+      {
+        "artist": "Xoel López",
+        "song": "Tierra",
+        "genre": "folk"
+      },
+      {
+        "artist": "El Kanka",
+        "song": "Lo Mal Que Estoy y lo Poco Que Me Quejo",
+        "genre": "folk"
+      },
+      {
+        "artist": "La Pegatina",
+        "song": "Lloverá y Yo Veré",
+        "genre": "rumba"
+      },
+      {
+        "artist": "Rayden",
+        "song": "Mírame",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Kase.O",
+        "song": "Basureta",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Natos y Waor",
+        "song": "Hasta el Amanecer",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Rels B",
+        "song": "Cómo Dormiste?",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Juan Magán",
+        "song": "Bailando por Ahí",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Fangoria",
+        "song": "Dramas y Comedias",
+        "genre": "pop"
+      },
+      {
+        "artist": "Álvaro Soler",
+        "song": "Sofía",
+        "genre": "pop"
+      },
+      {
+        "artist": "Blas Cantó",
+        "song": "Él No Soy Yo",
+        "genre": "pop"
+      },
+      {
+        "artist": "Nil Moliner",
+        "song": "Soldadito de Hierro",
+        "genre": "pop"
+      },
+      {
+        "artist": "Dvicio",
+        "song": "Paraíso",
+        "genre": "pop"
+      },
+      {
+        "artist": "Maldita Nerea",
+        "song": "El Secreto de las Tortugas",
+        "genre": "pop"
+      },
+      {
+        "artist": "Lola Índigo",
+        "song": "Ya No Quiero Ná",
+        "genre": "pop"
+      },
+      {
+        "artist": "Amaia",
+        "song": "El Relámpago",
         "genre": "pop"
       },
       {
@@ -1209,6 +3009,226 @@
         "genre": "pop"
       },
       {
+        "artist": "Imagine Dragons",
+        "song": "Radioactive",
+        "genre": "rock"
+      },
+      {
+        "artist": "Twenty One Pilots",
+        "song": "Stressed Out",
+        "genre": "rock"
+      },
+      {
+        "artist": "Arctic Monkeys",
+        "song": "Do I Wanna Know?",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Hozier",
+        "song": "Take Me to Church",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Of Monsters and Men",
+        "song": "Little Talks",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "The Lumineers",
+        "song": "Ho Hey",
+        "genre": "folk"
+      },
+      {
+        "artist": "Mumford & Sons",
+        "song": "I Will Wait",
+        "genre": "folk"
+      },
+      {
+        "artist": "Lorde",
+        "song": "Royals",
+        "genre": "pop"
+      },
+      {
+        "artist": "Lana Del Rey",
+        "song": "Summertime Sadness",
+        "genre": "pop"
+      },
+      {
+        "artist": "Sam Smith",
+        "song": "Stay with Me",
+        "genre": "pop"
+      },
+      {
+        "artist": "Miley Cyrus",
+        "song": "Wrecking Ball",
+        "genre": "pop"
+      },
+      {
+        "artist": "Ariana Grande",
+        "song": "Problem",
+        "genre": "pop"
+      },
+      {
+        "artist": "Selena Gomez",
+        "song": "Good for You",
+        "genre": "pop"
+      },
+      {
+        "artist": "Dua Lipa",
+        "song": "New Rules",
+        "genre": "pop"
+      },
+      {
+        "artist": "Camila Cabello",
+        "song": "Havana",
+        "genre": "pop"
+      },
+      {
+        "artist": "Sia",
+        "song": "Chandelier",
+        "genre": "pop"
+      },
+      {
+        "artist": "Pharrell Williams",
+        "song": "Happy",
+        "genre": "pop"
+      },
+      {
+        "artist": "Meghan Trainor",
+        "song": "All About That Bass",
+        "genre": "pop"
+      },
+      {
+        "artist": "Charlie Puth",
+        "song": "Attention",
+        "genre": "pop"
+      },
+      {
+        "artist": "Shawn Mendes",
+        "song": "Stitches",
+        "genre": "pop"
+      },
+      {
+        "artist": "The Chainsmokers",
+        "song": "Closer",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Avicii",
+        "song": "Wake Me Up",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Calvin Harris",
+        "song": "Summer",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Martin Garrix",
+        "song": "Animals",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Swedish House Mafia",
+        "song": "Don't You Worry Child",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Alan Walker",
+        "song": "Faded",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Kygo",
+        "song": "Firestone",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Major Lazer",
+        "song": "Lean On",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Robin Schulz",
+        "song": "Prayer in C",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Drake",
+        "song": "Hotline Bling",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Kendrick Lamar",
+        "song": "HUMBLE.",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Post Malone",
+        "song": "Rockstar",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Macklemore & Ryan Lewis",
+        "song": "Thrift Shop",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Nicki Minaj",
+        "song": "Super Bass",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Cardi B",
+        "song": "Bodak Yellow",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "The Weeknd",
+        "song": "Can't Feel My Face",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Frank Ocean",
+        "song": "Thinkin Bout You",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Nicky Jam",
+        "song": "El Perdón",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Farruko",
+        "song": "Krippy Kush",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Becky G",
+        "song": "Mayores",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "CNCO",
+        "song": "Reggaetón Lento",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Romeo Santos",
+        "song": "Propuesta Indecente",
+        "genre": "bachata"
+      },
+      {
+        "artist": "Prince Royce",
+        "song": "Darte un Beso",
+        "genre": "bachata"
+      },
+      {
+        "artist": "Carlos Vives",
+        "song": "La Bicicleta",
+        "genre": "pop"
+      },
+      {
         "artist": "Bruno Mars",
         "song": "Uptown Funk",
         "genre": "pop"
@@ -1293,6 +3313,116 @@
         "genre": "pop"
       },
       {
+        "artist": "Arde Bogotá",
+        "song": "Los Perros",
+        "genre": "rock"
+      },
+      {
+        "artist": "Viva Suecia",
+        "song": "La Voz del Presidente",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Siloé",
+        "song": "El Incendio",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Carolina Durante",
+        "song": "Elige Tu Propia Aventura",
+        "genre": "punk"
+      },
+      {
+        "artist": "Leiva",
+        "song": "Superpoderes",
+        "genre": "rock"
+      },
+      {
+        "artist": "Amaral",
+        "song": "Mareas",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Dani Martín",
+        "song": "Portales",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Sen Senra",
+        "song": "Corazón Cromado",
+        "genre": "pop"
+      },
+      {
+        "artist": "Alizzz",
+        "song": "El Encuentro",
+        "genre": "pop"
+      },
+      {
+        "artist": "Amaia",
+        "song": "Yamaguchi",
+        "genre": "pop"
+      },
+      {
+        "artist": "Zahara",
+        "song": "Merichane",
+        "genre": "pop"
+      },
+      {
+        "artist": "Belén Aguilera",
+        "song": "Multiverso",
+        "genre": "pop"
+      },
+      {
+        "artist": "La La Love You",
+        "song": "El Fin del Mundo",
+        "genre": "pop"
+      },
+      {
+        "artist": "Nil Moliner",
+        "song": "Mi Religión",
+        "genre": "pop"
+      },
+      {
+        "artist": "Chanel",
+        "song": "SloMo",
+        "genre": "pop"
+      },
+      {
+        "artist": "Judeline",
+        "song": "Canijo",
+        "genre": "pop"
+      },
+      {
+        "artist": "Ralphie Choo",
+        "song": "Máquina Culona",
+        "genre": "pop"
+      },
+      {
+        "artist": "Blanca Paloma",
+        "song": "Eaea",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "María José Llergo",
+        "song": "Superpoder",
+        "genre": "flamenco"
+      },
+      {
+        "artist": "Saiko",
+        "song": "Polaris",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Morad",
+        "song": "Motivos",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Ptazeta",
+        "song": "Mami",
+        "genre": "hip hop"
+      },
+      {
         "artist": "Aitana",
         "song": "Formentera",
         "genre": "pop"
@@ -1358,6 +3488,196 @@
         "artist": "Bad Bunny",
         "song": "Tití Me Preguntó",
         "genre": "reggaeton"
+      },
+      {
+        "artist": "Harry Styles",
+        "song": "As It Was",
+        "genre": "pop"
+      },
+      {
+        "artist": "Billie Eilish",
+        "song": "Happier Than Ever",
+        "genre": "pop"
+      },
+      {
+        "artist": "Miley Cyrus",
+        "song": "Flowers",
+        "genre": "pop"
+      },
+      {
+        "artist": "Lady Gaga",
+        "song": "Rain on Me",
+        "genre": "pop"
+      },
+      {
+        "artist": "Justin Bieber",
+        "song": "Peaches",
+        "genre": "pop"
+      },
+      {
+        "artist": "Chappell Roan",
+        "song": "Good Luck, Babe!",
+        "genre": "pop"
+      },
+      {
+        "artist": "Gracie Abrams",
+        "song": "That's So True",
+        "genre": "pop"
+      },
+      {
+        "artist": "Lewis Capaldi",
+        "song": "Forget Me",
+        "genre": "pop"
+      },
+      {
+        "artist": "Coldplay",
+        "song": "My Universe",
+        "genre": "pop"
+      },
+      {
+        "artist": "Dua Lipa",
+        "song": "Houdini",
+        "genre": "pop"
+      },
+      {
+        "artist": "SZA",
+        "song": "Kill Bill",
+        "genre": "r&b"
+      },
+      {
+        "artist": "Teddy Swims",
+        "song": "Lose Control",
+        "genre": "soul"
+      },
+      {
+        "artist": "Noah Kahan",
+        "song": "Stick Season",
+        "genre": "folk"
+      },
+      {
+        "artist": "Hozier",
+        "song": "Too Sweet",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Glass Animals",
+        "song": "Heat Waves",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Wet Leg",
+        "song": "Chaise Longue",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Fontaines D.C.",
+        "song": "Starburster",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Sam Fender",
+        "song": "Seventeen Going Under",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Arctic Monkeys",
+        "song": "Body Paint",
+        "genre": "indie rock"
+      },
+      {
+        "artist": "Imagine Dragons",
+        "song": "Enemy",
+        "genre": "rock"
+      },
+      {
+        "artist": "Fred again..",
+        "song": "Rumble",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Peggy Gou",
+        "song": "(It Goes Like) Nanana",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Calvin Harris",
+        "song": "Miracle",
+        "genre": "electronic"
+      },
+      {
+        "artist": "Kendrick Lamar",
+        "song": "Not Like Us",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Central Cee",
+        "song": "Doja",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Lil Nas X",
+        "song": "Montero",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Trueno",
+        "song": "Dance Crip",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Nicki Nicole",
+        "song": "Mamichula",
+        "genre": "hip hop"
+      },
+      {
+        "artist": "Tini",
+        "song": "La Triple T",
+        "genre": "pop"
+      },
+      {
+        "artist": "Karol G",
+        "song": "Bichota",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "J Balvin",
+        "song": "Rojo",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Ozuna",
+        "song": "Caramelo",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Anuel AA",
+        "song": "Hasta Que Dios Diga",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Sech",
+        "song": "Sal y Perrea",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Jhay Cortez",
+        "song": "Dákiti",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Young Miko",
+        "song": "Classy 101",
+        "genre": "reggaeton"
+      },
+      {
+        "artist": "Peso Pluma",
+        "song": "Ella Baila Sola",
+        "genre": "regional mexicano"
+      },
+      {
+        "artist": "Grupo Frontera",
+        "song": "Un x100to",
+        "genre": "regional mexicano"
       },
       {
         "artist": "Karol G",
