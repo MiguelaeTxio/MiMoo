@@ -936,49 +936,117 @@ otro mirror ni degrada con un mensaje claro al usuario. No es H08;
 queda anotado aquí para que la sesión de Radio decida si lo toca de
 paso o lo deja para H09.
 
-### HOJA DE RUTA PARA LA SESIÓN DE RADIO (cerrada, ejecutable)
+### ESPECIFICACIÓN CERRADA DE LA RADIO (S020, dictada por Miguel Ángel)
 
-Orden deliberado: de la causa con más impacto por línea tocada a la
-que menos.
+**Esta especificación es la ley. Sustituye a la hoja de ruta que yo
+había propuesto en esta misma sección, y corrige dos puntos de ella
+que estaban mal planteados.** Transcrita punto por punto de su
+mensaje, con la traducción técnica al lado.
 
-1. **Simetría de origen.** `pool()` pasa de un `requireEs: Boolean` a
-   un origen de tres valores (solo `es` / solo `intl` / ambos). Con
-   ancla extranjera se sirve `intl`; con ancla española, `es`; "ambos"
-   queda reservado al `allowForeignFallback` explícito que ya existe.
-   Es el cambio de menos líneas y el que más ruido quita.
-2. **La cascada nunca abandona el género. — HECHO EN S020.** Orden
-   textual de Miguel Ángel al plantearle el punto: *"El género no debe
-   abandonarse."* Eliminado el peldaño intermedio (mantener década,
-   soltar género) en los DOS cupos que lo tenían, para que degraden
-   igual:
-   - `KnownHitsRepository.randomHit()`: la cascada queda género+década
-     -> género sin década -> `null`.
-   - `PlayerManager.pickDiscoCandidate()`: misma forma, desaparece
-     `pickPreferred { decadeOk(it) }`.
+#### 1. Anclaje
 
-   Cuando el género del ancla se agota, el cupo devuelve `null` y
-   resuelve el cupo de disco o la vuelta siguiente -- nunca se sirve un
-   género distinto al del ancla. Mismo criterio con el que se sacó
-   "classical" en S016.
-3. **Ancla determinista, no aleatoria.** En `resolveAnchor()`,
-   sustituir `genres.random()` por el género de MusicBrainz con más
-   votos (`count`), con desempate estable. Y no fijar ancla desde un
-   nombre de canal: si el artista estructurado existe, usarlo siempre
-   antes que el nombre del canal.
-4. **Validar el candidato de exploración.** Antes de encolar un
-   resultado de `suggestRelatedArtist()`, comprobar que el vídeo
-   resuelto corresponde de verdad al artista (nombre del artista
-   presente en título o canal, o duración de canción). Si no,
-   descartar y pasar de vuelta -- nunca encolar a ciegas.
-5. **Auditoría de décadas del diccionario.** Repasar entrada por
-   entrada `known_hit_artists.json` y mover las que estén en la década
-   equivocada (empezar por las detectadas: Måneskin, Blur, Ska-P, Love
-   of Lesbian, The Animals).
-6. **Ampliación del diccionario hacia ~100/década**, con género
-   correcto por entrada y equilibrio `es`/`intl` -- pendiente
-   histórico, sigue siendo el techo real de calidad de la Radio.
-7. **Opcional, solo si Miguel Ángel lo pide:** failover de
-   Radio-Browser (H09) contra un mirror alternativo ante 503/timeout.
+- **"La primera canción fija la radio."** Género, década y origen se
+  derivan del PRIMER tema y no se vuelven a tocar.
+- **"El género queda fijado para toda la sesión."**
+- **"La década se fija para toda la sesión."**
+- **"Si es española de origen se fija en España. Si no, no hay origen
+  fijado."** Origen asimétrico **a propósito**: ancla española ->
+  solo España; ancla no española -> **sin restricción de origen
+  ninguna**, pueden sonar artistas españoles y extranjeros
+  indistintamente.
+
+> **Corrección a mi diagnóstico (causa 1).** Yo había señalado como
+> fallo que con ancla extranjera el pool siguiera incluyendo el bloque
+> español, y propuse restringirlo a `intl`. **Es comportamiento
+> deseado, no un fallo.** Los artistas españoles que aparecían en la
+> sesión anclada en Pixies son correctos. El código actual
+> (`requireEs = anchor.isSpanishOrigin`) ya implementa esta regla y
+> **no se toca**. Queda anulado el punto 1 de mi hoja de ruta.
+
+#### 2. Regla suprema
+
+**"Lo principal es el género, el género no se abandona nunca."**
+**"Siempre se respeta género y década, siempre."** Ninguna degradación,
+en ningún cupo, en ningún fallback, puede servir un tema fuera del
+género y la década del ancla. HECHO en el commit `15119db` de esta
+sesión para los dos cupos que lo incumplían.
+
+#### 3. Repetición: la unidad es la CANCIÓN, no el artista
+
+**"Si hay que repetir artista se repite. Mientras, no se repite
+canción hasta que no quede más remedio."**
+
+Cambio estructural respecto a lo construido: hoy `radioUsedArtists` +
+`excludeNames` excluyen **artistas** ya usados de forma dura, y eso es
+justo lo que fuerza las degradaciones que Miguel Ángel quiere eliminar.
+La exclusión dura debe pasar a ser por **tema** (artista+canción, o
+`youtubeId`); el artista pasa a preferencia **suave** -- se prefiere no
+repetirlo, pero repetirlo es siempre mejor que degradar el género.
+
+#### 4. La escalera de degradación -- "lo de `hasta agotar` es un error"
+
+Palabras textuales: *"no se agota, lo único que se agota es la lista
+de temas conocidos, pero podemos seguir poniendo temas de artistas
+conocidos aunque no se conozcan los temas."*
+
+Orden exacto, respetando SIEMPRE género + década + (origen si
+español):
+
+1. **Artista conocido + tema conocido** -- entrada del diccionario que
+   cumple género y década, con su canción concreta. Es el estado
+   normal.
+2. **Artista conocido + tema NO catalogado** -- cuando se acaban los
+   temas del diccionario, se siguen sirviendo los MISMOS artistas
+   conocidos buscando en YouTube otras canciones suyas, no la del
+   diccionario. Técnicamente: `resolveYoutubeCandidate(artista,
+   songTitle = null)` sobre artistas del diccionario ya usados.
+3. **Artistas desconocidos** -- *"si se agotan los artistas pq no
+   debemos repetir temas, se siguen poniendo de artistas
+   desconocidos"*. Es el actual cupo de exploración (MusicBrainz por
+   `tag:género` + rango de década), pero deja de ser un cupo del 10%
+   para ser también el peldaño final de la escalera.
+4. **Nunca** se sale de género + década. Si de verdad no hay nada, la
+   Radio se para -- nunca rellena con música sin relación.
+
+Consecuencia: **`resolveFinalFallback()` desaparece tal como está
+hoy.** Su peldaño 7.2 (con ancla española, permitir una vez un
+conocido extranjero) contradice frontalmente "si es española se fija
+en España" y se elimina.
+
+#### 5. Los dos cupos por proporción
+
+- **"Se compara con la lista de conocidos y se pone la proporción
+  fijada en settings."** -- cupo de conocidos, porcentaje de Ajustes.
+- **"Se pone la proporción fijada de artistas en el disco."** -- cupo
+  de biblioteca local, porcentaje de Ajustes.
+- **Disco, regla propia:** *"si se agota se deja de poner la
+  proporción... si se pone reggae y no hay reggae en el disco, no se
+  ponen temas del disco; si se pone rock de los setenta y no hay rock
+  de los setenta en el disco, no se pone disco."* El cupo de disco no
+  degrada NUNCA: o hay material del género+década exactos en la
+  biblioteca local, o ese cupo simplemente no se sirve y su porcentaje
+  se reparte entre los demás. La marca `radioDiscoExhausted` ya existe
+  pero hoy solo se activa con ancla española -- debe activarse en
+  cualquier ancla.
+
+#### 6. Lo que sobrevive de mi hoja de ruta anterior
+
+Estos puntos no los tocó Miguel Ángel y siguen siendo válidos, en este
+orden, DESPUÉS de lo anterior:
+
+- **Ancla determinista.** `resolveAnchor()` usa `genres.random()`:
+  sustituir por el género con más votos en MusicBrainz. Y no anclar
+  desde el nombre del canal de YouTube (`'Natacha Atlas Official'`,
+  `'知心音樂網'`) si existe artista estructurado.
+- **Validar el candidato antes de encolar** -- el caso del vídeo de la
+  Tate y el de noticias de guerra. Cobra más importancia todavía con
+  el peldaño 3, que se apoya entero en artistas desconocidos.
+- **Auditoría de décadas del diccionario** (Måneskin, Blur, Ska-P,
+  Love of Lesbian, The Animals mal colocados).
+- **Ampliación del diccionario hacia ~100/década.** Con la escalera
+  nueva deja de ser un cuello de botella que rompe la sesión, pero
+  sigue mandando en la variedad.
+- Failover de Radio-Browser (H09) ante 503/timeout, solo si lo pide.
 
 ---
 

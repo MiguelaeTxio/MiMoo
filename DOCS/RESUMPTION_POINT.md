@@ -404,6 +404,28 @@ reflejarse en la documentación. Reconciliado al arrancar S011 -- ver
    cuota gratuita de Actions) -- la caché de Gradle/pip ya está lista
    para entonces.
 
+## Petición nueva de producto, sin hito asignado todavía (S020, 2026-07-25)
+
+**Carpeta de descarga configurable.** Petición textual de Miguel
+Ángel: *"dar la posibilidad de cambiar la carpeta de descarga con la
+opción de copiar todo a esa carpeta o solamente los settings, sin
+perder favoritos etc."*
+
+Alcance tal como lo describió:
+- Poder elegir una carpeta de descarga distinta a la actual.
+- Al cambiarla, elegir entre **copiar todo** el audio ya descargado a
+  la carpeta nueva, o **copiar solo los ajustes** (es decir, que a
+  partir de ahora se descargue ahí, dejando el audio anterior donde
+  está).
+- En ninguno de los dos casos se pierden favoritos ni el resto de
+  metadatos: la base de datos Room no se toca, solo cambian las rutas
+  de archivo.
+
+No es H08 y **no se ha abierto hito para esto** -- eso requiere un PCH
+explícito de Miguel Ángel. Encaja de forma natural como hito propio
+(H14) o dentro de H06/H07, que son los que gobiernan almacenamiento y
+sincronización. Anotado aquí para que no se pierda entre sesiones.
+
 ## Pendientes antiguos, sin tocar en S011, no bloquean nada
 
 - H03 PASO 8 y H04 PASO 6 (verificación funcional en dispositivo).
