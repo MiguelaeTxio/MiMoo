@@ -137,9 +137,9 @@
         "genre": "rock"
       },
       {
-        "artist": "Micky",
-        "song": "El Koala",
-        "genre": "pop"
+        "artist": "Micky y Los Tonys",
+        "song": "La Luna y el Toro",
+        "genre": "rock"
       },
       {
         "artist": "Joan Manuel Serrat",
@@ -495,6 +495,11 @@
       {
         "artist": "Julio Iglesias",
         "song": "Un Canto a Galicia",
+        "genre": "pop"
+      },
+      {
+        "artist": "Micky",
+        "song": "El Chico de la Armónica",
         "genre": "pop"
       },
       {
@@ -1225,7 +1230,7 @@
       },
       {
         "artist": "Danza Invisible",
-        "song": "Sevilla Sur",
+        "song": "Sabor de Amor",
         "genre": "pop rock"
       },
       {
@@ -1250,12 +1255,12 @@
       },
       {
         "artist": "Objetivo Birmania",
-        "song": "Verano Africano",
-        "genre": "pop"
+        "song": "Desidia",
+        "genre": "synth-pop"
       },
       {
         "artist": "Tam Tam Go!",
-        "song": "Cerca del Ecuador",
+        "song": "Manuel Raquel",
         "genre": "pop rock"
       },
       {
@@ -1606,7 +1611,7 @@
       },
       {
         "artist": "Tam Tam Go!",
-        "song": "Manuel Raquel",
+        "song": "Espaldas Mojadas",
         "genre": "pop rock"
       },
       {
@@ -1806,7 +1811,7 @@
       },
       {
         "artist": "Dover",
-        "song": "En El Río",
+        "song": "Serenade",
         "genre": "rock"
       },
       {
