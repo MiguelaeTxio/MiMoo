@@ -216,6 +216,66 @@ class LibraryReconciler @Inject constructor(
         val root = DocumentFile.fromTreeUri(context, rootUri)
             ?: return@withContext RescanResult(0, 0, 0)
 
+        // ─────────────────────────────────────────────────────────────
+        // PUERTA DE SEGURIDAD S022 -- las dos limpiezas de abajo son
+        // DESTRUCTIVAS y corren en cada sincronización automática, no
+        // solo al arrancar.
+        //
+        // Fallo real de Miguel Ángel: tras trasladar la biblioteca a
+        // una tarjeta externa, *"parece que al entrar en descargas se
+        // borró el directorio"*. Mecanismo: DocumentFile.listFiles()
+        // devuelve un ARRAY VACÍO cuando el proveedor SAF falla -- no
+        // lanza. Así que pruneEmptyFolders() no podía distinguir "esta
+        // carpeta está vacía" de "no he podido leer esta carpeta", y
+        // ante ambas hacía lo mismo: borrarla. Con la tarjeta a medio
+        // montar, las carpetas de artista/álbum listan vacío y se
+        // borran CON su música dentro.
+        //
+        // Nada destructivo se ejecuta si la raíz no responde con
+        // garantías, o si Room dice que hay biblioteca y la raíz no la
+        // ve. Saltarse una limpieza cosmética no cuesta nada; borrar
+        // álbumes enteros sí.
+        // ─────────────────────────────────────────────────────────────
+        val rootReadable = try {
+            root.exists() && root.canRead()
+        } catch (e: Exception) {
+            false
+        }
+        val rootChildren = if (rootReadable) {
+            try {
+                root.listFiles()
+            } catch (e: Exception) {
+                emptyArray()
+            }
+        } else {
+            emptyArray()
+        }
+        val roomExpectsFiles = repository.getAll().first().count {
+            it.downloadStatus == DownloadStatus.DONE && it.filePath != null
+        } > 0
+
+        val safeToPrune = when {
+            !rootReadable -> {
+                Log.w(TAG, "rescan(): limpieza omitida, la raíz no responde")
+                false
+            }
+            // Room dice que hay biblioteca descargada y la raíz no ve
+            // ni un solo hijo: es un volumen ausente, no una carpeta
+            // que se haya quedado vacía de verdad.
+            roomExpectsFiles && rootChildren.isEmpty() -> {
+                Log.w(
+                    TAG,
+                    "rescan(): limpieza omitida, Room espera archivos pero la raíz " +
+                        "no lista ninguno (¿tarjeta no montada?)",
+                )
+                false
+            }
+            else -> true
+        }
+
+        val junkFilesRemoved = if (safeToPrune) pruneJunkFiles(root, isRoot = true) else 0
+        val emptyFoldersRemoved = if (safeToPrune) pruneEmptyFolders(root) else 0
+
         // Carpetas vacías primero (petición explícita de Miguel Ángel,
         // 2026-07-04, tras encontrar carpetas de artista completamente
         // vacías en disco -- restos de descargas movidas/fusionadas en
@@ -247,8 +307,9 @@ class LibraryReconciler @Inject constructor(
         // diagnostic logs, not download leftovers). Done before
         // pruneEmptyFolders() so a folder left empty by this also gets
         // deleted in the same pass.
-        val junkFilesRemoved = pruneJunkFiles(root, isRoot = true)
-        val emptyFoldersRemoved = pruneEmptyFolders(root)
+        // pruneEmptyFolders() se hace después de pruneJunkFiles() para
+        // que una carpeta que se quede vacía tras esa limpieza también
+        // se borre en el mismo pase -- las dos, solo si `safeToPrune`.
 
         // Only real, search-originated rows are protected from being
         // touched again. Synthetic rows (our own, from a previous
@@ -497,7 +558,15 @@ class LibraryReconciler @Inject constructor(
             .forEach { sub ->
                 removed += pruneEmptyFolders(sub)
                 try {
-                    if (sub.listFiles().isEmpty()) {
+                    // S022 -- segunda capa de la misma salvaguarda que
+                    // la puerta de `rescan()`. listFiles() devuelve un
+                    // array vacío ante un fallo del proveedor SAF, así
+                    // que "vacía" y "no legible" eran el mismo caso y
+                    // los dos acababan en delete(). Se exige ahora que
+                    // la carpeta responda de verdad antes de creerse
+                    // que está vacía.
+                    val readable = sub.exists() && sub.canRead()
+                    if (readable && sub.listFiles().isEmpty()) {
                         sub.delete()
                         removed++
                     }
