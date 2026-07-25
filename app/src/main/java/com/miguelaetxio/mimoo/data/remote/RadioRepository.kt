@@ -12,17 +12,21 @@ import javax.inject.Singleton
  * origen). Se calculan del PRIMER artista y no se vuelven a tocar
  * mientras dure la sesión.
  *
- * `isSpanishOrigin` (S013/S014, ver DOCS/ANNEX_H08.md sección "S013"
- * punto 1) -- ABSOLUTO para el resto de la sesión de Radio, nunca se
- * relaja ni siquiera en el último peldaño del fallback normal (solo
- * el fallback de "clásica" lo ignora del todo, como red de seguridad
- * final). true si el primer tema es de un grupo ESPAÑOL (idioma
- * irrelevante -- hay grupos españoles que cantan en inglés, p.ej. Los
- * Bravos). false ("modo mixto") en cualquier otro caso -- el resto de
- * la sesión puede ser español o extranjero sin restricción de origen,
- * pero lo extranjero debe ser CONOCIDO EN ESPAÑA (ver
- * KnownHitsRepository, "intl"), nunca cualquier tema del Billboard
- * sin más.
+ * `isSpanishOrigin` -- ABSOLUTO para el resto de la sesión, nunca se
+ * relaja en ningún peldaño de ningún cupo. `true` si el primer tema es
+ * de un grupo ESPAÑOL (el idioma es irrelevante: hay grupos españoles
+ * que cantan en inglés, p.ej. Los Bravos).
+ *
+ * **S020 -- separación dura en los DOS sentidos, regla cerrada por
+ * Miguel Ángel.** `true` -> solo artistas españoles. `false` -> solo
+ * artistas NO españoles. Ya no existe el "modo mixto": hasta S020,
+ * `false` significaba "sin restricción de origen", y eso metía el
+ * bloque español entero del diccionario en cualquier sesión anclada en
+ * un artista extranjero -- medido sobre log real, con ancla Pixies
+ * (rock/US/1980) el 60% del pool disponible era música española.
+ * Lo extranjero sigue teniendo que ser CONOCIDO EN ESPAÑA cuando sale
+ * del diccionario (ver KnownHitsRepository, bloque "intl"), nunca
+ * cualquier tema del Billboard sin más.
  * ---
  * Genre + country + decade + origin fixed ONCE when a Radio session
  * starts. Computed from the FIRST artist and never recalculated for
@@ -159,25 +163,25 @@ class RadioRepository @Inject constructor(
     ): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
-        val originCountry = if (anchor.isSpanishOrigin) "ES" else null
 
+        // S020 -- cascada de DOS peldaños, nunca tres. El tercero
+        // (`findCandidatesAnyGenre`: mantener década, soltar el género)
+        // se elimina por la regla suprema de Miguel Ángel: "el género no
+        // se abandona nunca". Era el equivalente aquí del peldaño que ya
+        // se quitó en KnownHitsRepository.randomHit() y en
+        // PlayerManager.pickDiscoCandidate().
         val genreAndDecade = if (anchor.decadeBegin != null) {
-            findCandidates(anchor.genre, originCountry, anchor.decadeBegin, excludeLower)
+            findCandidates(anchor.genre, anchor.isSpanishOrigin, anchor.decadeBegin, excludeLower)
         } else {
             emptyList()
         }
         val genreAnyDecade = if (genreAndDecade.isEmpty()) {
-            findCandidates(anchor.genre, originCountry, decadeBegin = null, excludeLower)
-        } else {
-            emptyList()
-        }
-        val decadeAnyGenre = if (genreAndDecade.isEmpty() && genreAnyDecade.isEmpty() && anchor.decadeBegin != null) {
-            findCandidatesAnyGenre(originCountry, anchor.decadeBegin, excludeLower)
+            findCandidates(anchor.genre, anchor.isSpanishOrigin, decadeBegin = null, excludeLower)
         } else {
             emptyList()
         }
 
-        val candidates = genreAndDecade.ifEmpty { genreAnyDecade.ifEmpty { decadeAnyGenre } }
+        val candidates = genreAndDecade.ifEmpty { genreAnyDecade }
         val preferred = candidates.filter { it.lowercase() !in avoidLower }
         val chosen = preferred.ifEmpty { candidates }.randomOrNull()
         if (chosen == null) {
@@ -226,7 +230,7 @@ class RadioRepository @Inject constructor(
 
     private suspend fun findCandidates(
         genre: String,
-        countryCode: String?,
+        isSpanishOrigin: Boolean,
         decadeBegin: Int?,
         excludeLower: Set<String>,
     ): List<String> = try {
@@ -235,47 +239,28 @@ class RadioRepository @Inject constructor(
         // función en versiones anteriores del archivo).
         val randomOffset = (0..90 step 10).toList().random()
         musicBrainzApiService
-            .searchArtists(query = buildGenreQuery(genre, countryCode, decadeBegin), limit = 10, offset = randomOffset)
+            .searchArtists(query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin), limit = 10, offset = randomOffset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
     } catch (e: Exception) {
-        log("findCandidates(género='$genre', país=$countryCode, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+        log("findCandidates(género='$genre', origen_es=$isSpanishOrigin, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
         emptyList()
     }
 
     /**
-     * S013/S014 -- paso 3 de la cascada de suggestRelatedArtist():
-     * abandona el género, mantiene la década (y el origen) exacta.
+     * S020 -- el origen separa España y extranjero en los DOS
+     * sentidos, igual que el diccionario
+     * (`KnownHitsRepository.Origin`). Ancla española -> `country:ES`;
+     * ancla no española -> `NOT country:ES`, para que el cupo de
+     * artistas desconocidos no devuelva españoles en una sesión
+     * extranjera.
      */
-    private suspend fun findCandidatesAnyGenre(
-        countryCode: String?,
-        decadeBegin: Int,
-        excludeLower: Set<String>,
-    ): List<String> = try {
-        val randomOffset = (0..90 step 10).toList().random()
-        musicBrainzApiService
-            .searchArtists(query = buildDecadeOnlyQuery(countryCode, decadeBegin), limit = 10, offset = randomOffset)
-            .artists
-            .map { it.name }
-            .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
-    } catch (e: Exception) {
-        log("findCandidatesAnyGenre(país=$countryCode, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
-        emptyList()
-    }
-
-    private fun buildGenreQuery(genre: String, countryCode: String?, decadeBegin: Int?): String {
+    private fun buildGenreQuery(genre: String, isSpanishOrigin: Boolean, decadeBegin: Int?): String {
         fun escape(value: String) = value.replace("\"", "")
         var query = "tag:\"${escape(genre)}\""
-        if (countryCode != null) query += " AND country:${escape(countryCode)}"
+        query += if (isSpanishOrigin) " AND country:ES" else " AND NOT country:ES"
         if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
-        return query
-    }
-
-    private fun buildDecadeOnlyQuery(countryCode: String?, decadeBegin: Int): String {
-        fun escape(value: String) = value.replace("\"", "")
-        var query = "begin:[$decadeBegin TO ${decadeBegin + 9}]"
-        if (countryCode != null) query += " AND country:${escape(countryCode)}"
         return query
     }
 

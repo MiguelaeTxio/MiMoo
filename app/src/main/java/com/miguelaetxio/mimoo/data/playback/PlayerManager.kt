@@ -1099,7 +1099,7 @@ class PlayerManager @Inject constructor(
             }
         }
 
-        val dictHit = pickDictCandidate(anchor, excludeNames, avoidNames, allowForeignFallback = false)
+        val dictHit = pickDictCandidate(anchor, excludeNames, avoidNames)
         if (dictHit != null) {
             val item = resolveYoutubeCandidate(anchorArtistName, dictHit.artist, dictHit.song)
             if (item != null) {
@@ -1180,25 +1180,6 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         excludeNames: Set<String>,
     ): QueueItem? {
-        val avoidNames = radioSessionHistoryManager.recentlyUsedLower()
-        if (anchor.isSpanishOrigin) {
-            val foreignHit = pickDictCandidate(anchor, excludeNames, avoidNames, allowForeignFallback = true)
-            if (foreignHit != null) {
-                RadioDebugLogger.log(
-                    appContext, storageManager,
-                    "resolveFinalFallback(ancla='$anchorArtistName') -- español agotado esta vuelta " +
-                        "(década=${anchor.decadeBegin}), cayendo a extranjero conocido de la MISMA " +
-                        "década: '${foreignHit.artist}'",
-                )
-                val item = resolveYoutubeCandidate(anchorArtistName, foreignHit.artist, foreignHit.song)
-                if (item != null) {
-                    radioTracksAccepted++
-                    registerUsedArtist(foreignHit.artist)
-                    return item
-                }
-            }
-        }
-
         RadioDebugLogger.log(
             appContext, storageManager,
             "resolveFinalFallback(ancla='$anchorArtistName') -- diccionario y exploración agotados " +
@@ -1223,11 +1204,12 @@ class PlayerManager @Inject constructor(
     /**
      * S013, cupo del 80% -- elige un candidato del diccionario de
      * éxitos ampliado para género+década+origen del ancla.
-     * `allowForeignFallback` (punto 7.2) ignora la restricción de
-     * origen -- solo se usa desde resolveFinalFallback(), nunca desde
-     * el cupo normal de la vuelta. El origen (`requireEs`) es lo único
-     * que decide ESTA función por fuera de la cascada de
-     * `randomHit()` -- género y década los gestiona por completo
+     * **S020 -- el origen lo fija el ancla y no se relaja jamás.**
+     * Desaparece `allowForeignFallback` (antiguo punto 7.2, que
+     * permitía una vez un conocido extranjero en sesión española):
+     * contradice la regla de Miguel Ángel "si es española de origen se
+     * fija en España". Esta función solo traduce el ancla a `Origin`;
+     * género y década los gestiona por completo
      * `KnownHitsRepository.randomHit()`.
      *
      * **Historial S016 en dos pasos, mismo bloque de trabajo:**
@@ -1251,10 +1233,13 @@ class PlayerManager @Inject constructor(
         anchor: RadioAnchor,
         excludeArtists: Set<String>,
         avoidArtists: Set<String>,
-        allowForeignFallback: Boolean,
     ): com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.KnownHit? {
-        val requireEs = anchor.isSpanishOrigin && !allowForeignFallback
-        return knownHitsRepository.randomHit(anchor.genre, anchor.decadeBegin, requireEs, excludeArtists, avoidArtists)
+        val origin = if (anchor.isSpanishOrigin) {
+            com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.ES
+        } else {
+            com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.INTL
+        }
+        return knownHitsRepository.randomHit(anchor.genre, anchor.decadeBegin, origin, excludeArtists, avoidArtists)
     }
 
     /**
@@ -1315,7 +1300,14 @@ class PlayerManager @Inject constructor(
             val profile = radioLibraryArtistProfileCache.getOrPut(artistName) {
                 radioRepository.lookupArtistProfile(artistName)
             } ?: return@mapNotNull null
-            val originOk = if (anchor.isSpanishOrigin) profile.country == "ES" else true
+            // S020 -- separación dura en los dos sentidos. País
+            // desconocido en MusicBrainz cuenta como NO español: con
+            // ancla española queda fuera, con ancla extranjera entra.
+            val originOk = if (anchor.isSpanishOrigin) {
+                profile.country == "ES"
+            } else {
+                profile.country != "ES"
+            }
             if (!originOk) null else ProfiledArtist(artistName, profile)
         }
         if (originMatches.isEmpty()) return null

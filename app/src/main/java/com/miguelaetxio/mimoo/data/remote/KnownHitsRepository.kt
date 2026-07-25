@@ -70,29 +70,52 @@ class KnownHitsRepository @Inject constructor(
     }
 
     /**
+     * S020, orden explícita de Miguel Ángel: **el origen separa
+     * España y extranjero en los DOS sentidos.** Ancla española ->
+     * solo artistas españoles; ancla no española -> solo artistas no
+     * españoles. No hay mezcla.
+     *
+     * `ANY` no lo usa hoy ningún camino de la Radio -- se conserva
+     * porque `lookupHit()`/`isKnownHitArtist()` son consultas de
+     * "¿está este artista en el diccionario?" donde a veces interesa
+     * mirar el diccionario entero sin condicionar por origen.
+     */
+    enum class Origin { ES, INTL, ANY }
+
+    /**
      * Pool de un origen para una década concreta o, si `decadeBegin`
      * es null, de TODAS las décadas conocidas (mismo criterio que la
      * versión S011 de esta clase para "sin ancla de década fijada" --
      * puede no haber `life-span.begin` en MusicBrainz para el artista
      * que arrancó la sesión).
+     *
+     * **Historial S020.** Antes recibía un `requireEs: Boolean` y
+     * servía `d.es + d.intl` cuando era `false`, lo que metía el
+     * bloque español entero en cualquier sesión anclada en un artista
+     * extranjero. Miguel Ángel cerró la regla definitiva en S020:
+     * separación dura en los dos sentidos.
      */
-    private fun pool(decadeBegin: Int?, requireEs: Boolean): List<KnownHit> {
+    private fun pool(decadeBegin: Int?, origin: Origin): List<KnownHit> {
         val decades = if (decadeBegin != null) listOfNotNull(byDecade[decadeBegin]) else byDecade.values.toList()
         return decades.flatMap { d ->
-            val raw = if (requireEs) d.es else d.es + d.intl
+            val raw = when (origin) {
+                Origin.ES -> d.es
+                Origin.INTL -> d.intl
+                Origin.ANY -> d.es + d.intl
+            }
             raw.map { KnownHit(it.artist, it.song, it.genre) }
         }
     }
 
     /** Comprueba si `artist` es un "éxito conocido" para la década+origen dados (ignora may/min). */
-    fun isKnownHitArtist(artist: String, decadeBegin: Int?, requireEs: Boolean): Boolean =
-        lookupHit(artist, decadeBegin, requireEs) != null
+    fun isKnownHitArtist(artist: String, decadeBegin: Int?, origin: Origin): Boolean =
+        lookupHit(artist, decadeBegin, origin) != null
 
     /** Devuelve el par artista+canción exacto si `artist` está en el diccionario para esa década/origen. */
-    fun lookupHit(artist: String, decadeBegin: Int?, requireEs: Boolean): KnownHit? {
+    fun lookupHit(artist: String, decadeBegin: Int?, origin: Origin): KnownHit? {
         val artistLower = artist.trim().lowercase()
         if (artistLower.isBlank()) return null
-        return pool(decadeBegin, requireEs).firstOrNull { it.artist.lowercase() == artistLower }
+        return pool(decadeBegin, origin).firstOrNull { it.artist.lowercase() == artistLower }
     }
 
     /**
@@ -109,8 +132,8 @@ class KnownHitsRepository @Inject constructor(
      *      siguiente; este cupo nunca sirve un género que no sea el
      *      del ancla.
      *
-     * El origen (`requireEs`) NUNCA se relaja aquí dentro -- eso lo
-     * decide el llamante (`allowForeignFallback`, ver PlayerManager).
+     * El origen NUNCA se relaja aquí dentro: lo fija el ancla de la
+     * sesión y no se toca (S020, ver `Origin`).
      *
      * **Historial -- por qué desapareció un peldaño.** Hasta S020 la
      * cascada era simétrica (S016): entre el paso 1 y el actual paso 2
@@ -142,7 +165,7 @@ class KnownHitsRepository @Inject constructor(
     fun randomHit(
         genre: String?,
         decadeBegin: Int?,
-        requireEs: Boolean,
+        origin: Origin,
         excludeArtists: Set<String>,
         avoidArtists: Set<String> = emptySet(),
     ): KnownHit? {
@@ -155,11 +178,11 @@ class KnownHitsRepository @Inject constructor(
         }
 
         if (genre != null && decadeBegin != null) {
-            pick(pool(decadeBegin, requireEs).filter { it.genre.equals(genre, ignoreCase = true) })
+            pick(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
                 ?.let { return it }
         }
         if (genre != null) {
-            pick(pool(null, requireEs).filter { it.genre.equals(genre, ignoreCase = true) })
+            pick(pool(null, origin).filter { it.genre.equals(genre, ignoreCase = true) })
                 ?.let { return it }
         }
         return null

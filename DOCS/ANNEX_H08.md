@@ -949,19 +949,20 @@ mensaje, con la traducción técnica al lado.
   derivan del PRIMER tema y no se vuelven a tocar.
 - **"El género queda fijado para toda la sesión."**
 - **"La década se fija para toda la sesión."**
-- **"Si es española de origen se fija en España. Si no, no hay origen
-  fijado."** Origen asimétrico **a propósito**: ancla española ->
-  solo España; ancla no española -> **sin restricción de origen
-  ninguna**, pueden sonar artistas españoles y extranjeros
-  indistintamente.
+- **Origen: separación dura en los DOS sentidos.** Regla final:
+  *"mejor origen separando España/extranjera"*. Ancla española -> solo
+  artistas españoles. Ancla no española -> solo artistas NO españoles.
+  No existe el "modo mixto".
 
-> **Corrección a mi diagnóstico (causa 1).** Yo había señalado como
-> fallo que con ancla extranjera el pool siguiera incluyendo el bloque
-> español, y propuse restringirlo a `intl`. **Es comportamiento
-> deseado, no un fallo.** Los artistas españoles que aparecían en la
-> sesión anclada en Pixies son correctos. El código actual
-> (`requireEs = anchor.isSpanishOrigin`) ya implementa esta regla y
-> **no se toca**. Queda anulado el punto 1 de mi hoja de ruta.
+> **Historial de esta regla dentro de la propia S020, para que ninguna
+> sesión futura la revierta por error.** Miguel Ángel dictó primero
+> *"si es española de origen se fija en España. Si no, no hay origen
+> fijado"* -- es decir, sin restricción con ancla extranjera, que era
+> justo lo que el código ya hacía. Minutos después lo reconsideró y
+> cerró la regla en la separación dura de arriba. **Manda la segunda.**
+> Esto valida la causa 1 del diagnóstico: con ancla Pixies
+> (rock/US/1980) el 60% del pool disponible era música española, y eso
+> sí era un fallo. HECHO en esta misma sesión.
 
 #### 2. Regla suprema
 
