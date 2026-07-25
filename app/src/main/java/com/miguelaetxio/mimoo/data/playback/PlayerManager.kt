@@ -1180,6 +1180,12 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         excludeNames: Set<String>,
     ): QueueItem? {
+        // Preferencia suave entre sesiones (RadioSessionHistoryManager).
+        // Se declara aquí porque el bloque que la introducía -- el
+        // peldaño español -> extranjero conocido, eliminado en S020 --
+        // ya no existe, pero el cupo de disco de más abajo la sigue
+        // necesitando.
+        val avoidNames = radioSessionHistoryManager.recentlyUsedLower()
         RadioDebugLogger.log(
             appContext, storageManager,
             "resolveFinalFallback(ancla='$anchorArtistName') -- diccionario y exploración agotados " +
