@@ -124,6 +124,22 @@ interface SearchResultTrackDao {
     @Update
     suspend fun update(track: SearchResultTrack)
 
+    /**
+     * Actualiza varias filas en una sola transacción. Room envuelve
+     * automáticamente un `@Update` con lista, así que o se aplican
+     * todas o no se aplica ninguna.
+     *
+     * S022 -- lo necesita `LibraryMigrator` para conmutar de golpe los
+     * `filePath` de toda la biblioteca al final de un traslado, en vez
+     * de fila a fila: una interrupción a mitad de esa conmutación
+     * dejaría media biblioteca apuntando al destino y media al origen.
+     * ---
+     * Updates several rows in a single transaction -- Room wraps a
+     * list `@Update` automatically, so it's all or nothing.
+     */
+    @Update
+    suspend fun updateAll(tracks: List<SearchResultTrack>)
+
     @Delete
     suspend fun delete(track: SearchResultTrack)
 

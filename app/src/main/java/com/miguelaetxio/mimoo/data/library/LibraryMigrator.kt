@@ -2,9 +2,12 @@ package com.miguelaetxio.mimoo.data.library
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
+import android.system.Os
 import androidx.documentfile.provider.DocumentFile
 import com.miguelaetxio.mimoo.data.download.DownloadDirManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
+import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -199,14 +202,10 @@ class LibraryMigrator @Inject constructor(
             it.downloadStatus == DownloadStatus.DONE && it.filePath != null
         }
         val total = tracks.size
-        var migrated = 0
         val failures = mutableListOf<Failure>()
 
-        // Registra el fallo con su causa y refresca el progreso. Cada
-        // rama de abajo dice exactamente por qué se rindió, en vez del
-        // `failed++` mudo que había hasta S022.
         fun fail(
-            track: com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack,
+            track: SearchResultTrack,
             reason: FailureReason,
             detail: String? = null,
         ) {
@@ -219,23 +218,50 @@ class LibraryMigrator @Inject constructor(
                 detail = detail,
                 sourcePath = track.filePath,
             )
-            onProgress(Progress(migrated, total, failures.size))
         }
 
-        onProgress(Progress(done = 0, total = total, failed = 0))
-
+        // ─────────────────────────────────────────────────────────────
+        // FASE 0 -- precondiciones. Nada se toca hasta que todas pasan.
+        //
+        // Las pistas cuyo archivo de origen ya no existe NO bloquean el
+        // traslado: no hay nada que mover, así que se apartan y se
+        // reportan. Bloquear la biblioteca entera por unas filas
+        // huérfanas sería convertir un problema viejo en un problema
+        // nuevo.
+        // ─────────────────────────────────────────────────────────────
+        val pending = mutableListOf<Pair<SearchResultTrack, DocumentFile>>()
         for (track in tracks) {
-            val sourceUri = Uri.parse(track.filePath)
-            val sourceDoc = DocumentFile.fromSingleUri(context, sourceUri)
-
-            // Si el archivo origen ya no está, no hay nada que mover.
-            // La fila se deja intacta: de eso se encarga la
-            // reconciliación SAF<->Room, no este migrador.
+            val sourceDoc = DocumentFile.fromSingleUri(context, Uri.parse(track.filePath))
             if (sourceDoc == null || !sourceDoc.exists()) {
                 fail(track, FailureReason.SOURCE_MISSING)
                 continue
             }
+            pending += track to sourceDoc
+        }
 
+        val requiredBytes = pending.sumOf { (_, doc) -> doc.length() }
+        val freeBytes = freeSpaceAt(newRootUri)
+        if (freeBytes != null && freeBytes < requiredBytes + SAFETY_MARGIN_BYTES) {
+            return@withContext Result.Aborted(
+                "No hay espacio suficiente en la carpeta elegida.\n\n" +
+                    "Hacen falta ${formatBytes(requiredBytes)} " +
+                    "(más ${formatBytes(SAFETY_MARGIN_BYTES)} de margen) " +
+                    "y quedan ${formatBytes(freeBytes)} libres.\n\n" +
+                    "No se ha movido nada: la biblioteca sigue intacta " +
+                    "donde estaba.",
+            )
+        }
+
+        onProgress(Progress(done = 0, total = total, failed = failures.size))
+
+        // ─────────────────────────────────────────────────────────────
+        // FASE 1 -- copiar TODO al destino, sin tocar Room y sin borrar
+        // un solo archivo del origen. Mientras dura esta fase, la
+        // biblioteca sigue siendo enteramente la de origen: si algo
+        // falla, se retira lo copiado y no ha pasado nada.
+        // ─────────────────────────────────────────────────────────────
+        val staged = mutableListOf<Staged>()
+        for ((track, sourceDoc) in pending) {
             val targetDir = DownloadDirManager.getOrCreateTrackDir(
                 context = context,
                 rootUri = newRootUri,
@@ -243,43 +269,106 @@ class LibraryMigrator @Inject constructor(
                 album = track.album,
             )
             if (targetDir == null) {
-                fail(track, FailureReason.TARGET_DIR_NOT_CREATED)
-                continue
+                rollback(staged)
+                return@withContext abortedMidCopy(track, "no se pudo crear su carpeta en el destino")
             }
 
-            // Se conserva el nombre de archivo tal cual, incluido el
-            // prefijo "NN - " de posición de pista: mover la
-            // biblioteca no debe reordenar los álbumes.
             val fileName = sourceDoc.name ?: "${track.youtubeId}.opus"
             val targetDoc = resolveTarget(targetDir, fileName, sourceDoc.length())
             if (targetDoc == null) {
-                fail(track, FailureReason.TARGET_FILE_NOT_CREATED, "nombre: $fileName")
-                continue
+                rollback(staged)
+                return@withContext abortedMidCopy(track, "el destino rechazó el nombre «$fileName»")
             }
 
             val copyError = copyIfNeeded(sourceDoc, targetDoc)
             if (copyError != null) {
-                // Copia incompleta: se retira el destino a medias para
-                // no dejar basura, y el origen queda intacto.
                 targetDoc.delete()
-                fail(track, copyError.reason, copyError.detail)
-                continue
+                rollback(staged)
+                return@withContext abortedMidCopy(
+                    track,
+                    copyError.detail ?: "error al copiar",
+                )
             }
 
-            // Room primero, borrado después. En este orden, una
-            // interrupción entre ambos deja un archivo huérfano en el
-            // origen -- molesto pero inofensivo. En el orden inverso
-            // dejaría una fila apuntando a un archivo ya borrado, que
-            // sí rompe la reproducción.
-            trackRepository.update(track.copy(filePath = targetDoc.uri.toString()))
-            sourceDoc.delete()
-
-            migrated++
-            onProgress(Progress(migrated, total, failures.size))
+            staged += Staged(track, sourceDoc, targetDoc)
+            onProgress(Progress(staged.size, total, failures.size))
         }
 
-        writeFailureReport(newRootUri, migrated, total, failures)
-        Result.Completed(migrated = migrated, failures = failures)
+        // ─────────────────────────────────────────────────────────────
+        // FASE 2 -- conmutación. Una sola transacción de Room para toda
+        // la biblioteca: o apunta entera al destino, o entera al
+        // origen. Es el único instante en que el traslado "ocurre".
+        // ─────────────────────────────────────────────────────────────
+        trackRepository.updateAll(
+            staged.map { it.track.copy(filePath = it.target.uri.toString()) },
+        )
+
+        // ─────────────────────────────────────────────────────────────
+        // FASE 3 -- borrar los originales, ya con Room apuntando al
+        // destino. Un fallo aquí solo deja un archivo huérfano en el
+        // origen: molesto, nunca destructivo.
+        // ─────────────────────────────────────────────────────────────
+        staged.forEach { runCatching { it.source.delete() } }
+
+        writeFailureReport(newRootUri, staged.size, total, failures)
+        Result.Completed(migrated = staged.size, failures = failures)
+    }
+
+    /** Una pista ya copiada al destino, pendiente de conmutar en Room. */
+    private data class Staged(
+        val track: SearchResultTrack,
+        val source: DocumentFile,
+        val target: DocumentFile,
+    )
+
+    /**
+     * Retira del destino todo lo copiado en esta pasada. Room no se ha
+     * tocado todavía y los originales siguen intactos, así que tras
+     * esto la biblioteca queda exactamente como antes de empezar.
+     */
+    private fun rollback(staged: List<Staged>) {
+        staged.forEach { runCatching { it.target.delete() } }
+    }
+
+    private fun abortedMidCopy(track: SearchResultTrack, reason: String): Result.Aborted =
+        Result.Aborted(
+            "El traslado se ha cancelado al copiar «${track.artist ?: track.channelTitle} " +
+                "— ${track.title}»: $reason.\n\n" +
+                "No se ha movido nada: la biblioteca sigue intacta donde estaba.",
+        )
+
+    /**
+     * Bytes libres en el volumen de la raíz SAF indicada, o `null` si
+     * el proveedor no lo dice.
+     *
+     * S022, petición explícita de Miguel Ángel antes de trasladar de la
+     * tarjeta de vuelta al teléfono: *"antes hay que prever que la
+     * operación debe ser atómica y mirar los espacios de origen y el
+     * libre a destino"*. El sentido del traslado importa -- de tarjeta
+     * a memoria interna se va hacia el volumen más pequeño, y quedarse
+     * sin sitio a mitad era hasta ahora perfectamente posible.
+     *
+     * `null` (proveedor que no responde) NO bloquea el traslado: no
+     * saber cuánto hay libre no es lo mismo que saber que no cabe.
+     */
+    private fun freeSpaceAt(rootUri: Uri): Long? = try {
+        val documentUri = DocumentsContract.buildDocumentUriUsingTree(
+            rootUri,
+            DocumentsContract.getTreeDocumentId(rootUri),
+        )
+        context.contentResolver.openFileDescriptor(documentUri, "r")?.use { descriptor ->
+            val stats = Os.fstatvfs(descriptor.fileDescriptor)
+            stats.f_bavail * stats.f_frsize
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        val gb = bytes.toDouble() / (1024 * 1024 * 1024)
+        if (gb >= 1.0) return String.format(Locale.getDefault(), "%.1f GB", gb)
+        val mb = bytes.toDouble() / (1024 * 1024)
+        return String.format(Locale.getDefault(), "%.0f MB", mb)
     }
 
     /**
@@ -424,6 +513,14 @@ class LibraryMigrator @Inject constructor(
     companion object {
         private const val MIME_AUDIO = "audio/ogg"
         private const val REPORT_FILE_NAME = "traslado_biblioteca_informe.txt"
+
+        /**
+         * Margen que se exige libre en el destino POR ENCIMA de lo que
+         * ocupa la biblioteca. Dejar un volumen al borde de su
+         * capacidad -- y más aún la memoria interna -- trae sus propios
+         * problemas, así que no basta con que quepa justo.
+         */
+        private const val SAFETY_MARGIN_BYTES = 300L * 1024 * 1024
 
         /**
          * True mientras hay un traslado de biblioteca en curso.

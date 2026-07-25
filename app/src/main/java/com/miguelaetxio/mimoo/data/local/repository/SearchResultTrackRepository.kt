@@ -65,6 +65,12 @@ class SearchResultTrackRepository @Inject constructor(
     suspend fun update(track: SearchResultTrack) = dao.update(track)
 
     /**
+     * Actualiza varias filas en una sola transacción -- ver
+     * `SearchResultTrackDao.updateAll()`.
+     */
+    suspend fun updateAll(tracks: List<SearchResultTrack>) = dao.updateAll(tracks)
+
+    /**
      * Deletes a track row entirely (PASO 5, H03). Used only for
      * synthetic rows (from LibraryReconciler) that have no real
      * youtubeId to fall back to — there is nothing to re-download.

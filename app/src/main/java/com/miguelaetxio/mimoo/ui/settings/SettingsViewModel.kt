@@ -160,6 +160,15 @@ class SettingsViewModel @Inject constructor(
      */
     fun changeLibraryFolder(newRootUri: android.net.Uri, moveFiles: Boolean) {
         viewModelScope.launch {
+            // S022 -- se recuerda la raíz anterior para poder deshacer
+            // el ajuste si un traslado atómico aborta. Sin esto, un
+            // aborto por falta de espacio dejaba el ajuste cambiado
+            // mientras el mensaje afirmaba que no se había tocado nada:
+            // las descargas nuevas habrían ido al destino y todo lo
+            // anterior se habría quedado en el origen, que es justo el
+            // estado a medias que la atomicidad debe evitar.
+            val previousRootUri = storageManager.getRootUri()
+
             try {
                 storageManager.saveRootUri(newRootUri)
             } catch (e: SecurityException) {
@@ -199,8 +208,15 @@ class SettingsViewModel @Inject constructor(
                         failures = result.failures,
                     )
 
-                is com.miguelaetxio.mimoo.data.library.LibraryMigrator.Result.Aborted ->
+                is com.miguelaetxio.mimoo.data.library.LibraryMigrator.Result.Aborted -> {
+                    // El traslado no ha ocurrido, así que el ajuste
+                    // tampoco debe haber ocurrido.
+                    previousRootUri?.let {
+                        runCatching { storageManager.saveRootUri(it) }
+                    }
+                    _libraryFolderLabel.value = storageManager.getRootLabel()
                     LibraryFolderState.Error(result.reason)
+                }
             }
         }
     }
