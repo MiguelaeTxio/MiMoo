@@ -119,60 +119,39 @@ class KnownHitsRepository @Inject constructor(
     }
 
     /**
-     * S013, cupo del 80% -- elige un candidato al azar del diccionario
-     * para género+década+origen dados, excluyendo los artistas ya
-     * usados en la sesión.
+     * Cupo de CONOCIDOS, peldaño 1 -- un tema catalogado del género +
+     * década + origen del ancla que no haya sonado todavía.
      *
-     * **Cascada género/década (S020, orden explícita de Miguel Ángel:
-     * "el género no debe abandonarse"):**
+     * **S020, cambio estructural.** La unidad de no-repetición pasa a
+     * ser la CANCIÓN, no el artista. Orden textual de Miguel Ángel:
+     * *"si hay que repetir artista se repite. Mientras, no se repite
+     * canción hasta que no quede más remedio."* Antes se excluían
+     * artistas enteros de forma dura, y eso era justo lo que forzaba
+     * las degradaciones de género que había que eliminar.
+     *
+     * - `excludeSongKeys`: exclusión DURA, claves `artista|canción`
+     *   ya servidas esta sesión (ver `songKey()`).
+     * - `avoidArtists`: preferencia SUAVE -- se prefiere no repetir
+     *   artista, pero repetirlo es siempre mejor que salirse del
+     *   género. Si evitarlos deja el peldaño sin candidatos, se
+     *   ignora la preferencia para ESE peldaño.
+     *
+     * Cascada, sin abandonar jamás el género (S020):
      *   1. género + década exacta.
-     *   2. se agota la década -> se mantiene el GÉNERO, cualquier
-     *      década.
-     *   3. nada -- `null`. Que resuelva el cupo de disco o la vuelta
-     *      siguiente; este cupo nunca sirve un género que no sea el
-     *      del ancla.
-     *
-     * El origen NUNCA se relaja aquí dentro: lo fija el ancla de la
-     * sesión y no se toca (S020, ver `Origin`).
-     *
-     * **Historial -- por qué desapareció un peldaño.** Hasta S020 la
-     * cascada era simétrica (S016): entre el paso 1 y el actual paso 2
-     * había un peldaño que mantenía la década y soltaba el género
-     * entero. Ese peldaño es la causa directa, medida sobre
-     * `radio_relacionados_debug.txt` real (~30h de uso), de que una
-     * sesión anclada en `rock`/1980 sirviera copla (Rocío Jurado,
-     * Isabel Pantoja) y pop a mansalva: saltaba enseguida, porque el
-     * diccionario tiene solo 12 géneros y 158 de sus 289 entradas son
-     * `pop`, así que cualquier caída acababa en pop. Ver
-     * `DOCS/ANNEX_H08.md`, sección "S020", causa 2.
-     * ---
-     * S020 -- the genre is never abandoned (explicit instruction).
-     * Cascade: genre+decade -> genre, any decade -> null. The old
-     * S016 rung that kept the decade and dropped the genre is gone:
-     * measured on a real ~30h log, it was the direct cause of copla
-     * and pop flooding a `rock`/1980 session.
-     *
-     * `genre == null` o `decadeBegin == null` saltan directamente el
-     * paso que dependería de ese dato ausente (mismo criterio que
-     * antes de S016 para década desconocida).
-     *
-     * `avoidArtists` (S016 -- "que las listas no sean siempre igual"
-     * entre sesiones, ver `RadioSessionHistoryManager`): preferencia
-     * SUAVE en cada paso -- si evitarlos deja el paso sin candidatos,
-     * se ignora `avoidArtists` para ESE paso y se elige igualmente de
-     * él, nunca se salta un paso entero por esto.
+     *   2. género, cualquier década.
+     *   3. `null` -- el peldaño 1 de Conocidos está agotado; que lo
+     *      resuelva `knownArtists()` (peldaño 2).
      */
     fun randomHit(
         genre: String?,
         decadeBegin: Int?,
         origin: Origin,
-        excludeArtists: Set<String>,
+        excludeSongKeys: Set<String>,
         avoidArtists: Set<String> = emptySet(),
     ): KnownHit? {
-        val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun pick(candidates: List<KnownHit>): KnownHit? {
-            val allowed = candidates.filter { it.artist.lowercase() !in excludeLower }
+            val allowed = candidates.filter { songKey(it.artist, it.song) !in excludeSongKeys }
             val preferred = allowed.filter { it.artist.lowercase() !in avoidLower }
             return preferred.ifEmpty { allowed }.randomOrNull()
         }
@@ -187,6 +166,55 @@ class KnownHitsRepository @Inject constructor(
         }
         return null
     }
+
+    /**
+     * Cupo de CONOCIDOS, peldaño 2 (S020) -- *"podemos seguir poniendo
+     * temas de artistas conocidos aunque no se conozcan los temas"*.
+     *
+     * Devuelve los ARTISTAS del diccionario que cumplen género +
+     * década + origen del ancla, sin mirar qué canciones suyas están
+     * catalogadas: el llamante buscará en YouTube cualquier tema de
+     * ellos. Ordenados con los menos repetidos primero (`avoidArtists`
+     * al final), nunca vacío por preferencia: si todos están en
+     * `avoidArtists` se devuelven igualmente.
+     *
+     * Misma cascada de dos peldaños que `randomHit()`: género+década
+     * exacta y, si no hay nadie, género con cualquier década. El
+     * género no se abandona.
+     */
+    fun knownArtists(
+        genre: String?,
+        decadeBegin: Int?,
+        origin: Origin,
+        avoidArtists: Set<String> = emptySet(),
+    ): List<String> {
+        val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
+        fun artistsOf(candidates: List<KnownHit>): List<String> =
+            candidates.map { it.artist }.distinct()
+
+        val exact = if (genre != null && decadeBegin != null) {
+            artistsOf(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
+        } else {
+            emptyList()
+        }
+        val anyDecade = if (exact.isEmpty() && genre != null) {
+            artistsOf(pool(null, origin).filter { it.genre.equals(genre, ignoreCase = true) })
+        } else {
+            emptyList()
+        }
+        val all = exact.ifEmpty { anyDecade }
+        val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
+        return fresh.shuffled() + repeated.shuffled()
+    }
+
+    /**
+     * Clave de no-repetición de un tema. Normaliza a minúsculas y
+     * recorta, para que "Bon Jovi - Livin' on a Prayer" y
+     * "bon jovi - livin' on a prayer" cuenten como el mismo tema.
+     */
+    fun songKey(artist: String?, song: String?): String =
+        (artist.orEmpty().trim().lowercase() + "|" + song.orEmpty().trim().lowercase())
+
 
     /**
      * S013, punto 4 -- primer filtro (barato, sin red) para saber si
