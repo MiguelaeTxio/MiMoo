@@ -4,10 +4,32 @@ import android.content.Context
 import android.util.Log
 import com.miguelaetxio.mimoo.data.download.CookiesManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "MiMoo-AutoSync-Push"
+
+/**
+ * Ventana de amortiguación: las mutaciones que llegan dentro de este
+ * plazo colapsan en un único push a Drive.
+ */
+private const val PUSH_DEBOUNCE_MS = 5_000L
+
+/**
+ * Tope de espera. Si las mutaciones no dejan de llegar (una descarga
+ * masiva puede producirlas durante horas), el push sale igualmente
+ * pasado este tiempo desde el último efectivo, en vez de aplazarse
+ * indefinidamente.
+ */
+private const val MAX_PUSH_INTERVAL_MS = 60_000L
 
 /**
  * Resultado de intentar ejecutar una mutación (añadir/borrar pista,
@@ -92,6 +114,26 @@ class AutoSyncPusher @Inject constructor(
      * background) -- `DriveAuthorizationHelper.requestAuthorization()`
      * accepts either, see its comment.
      */
+    /**
+     * Ámbito propio del amortiguador. No puede ser el `viewModelScope`
+     * de nadie: el push va diferido y debe sobrevivir a la pantalla
+     * que originó la mutación.
+     */
+    private val pushScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Un solo push construyéndose/serializándose a la vez. Es el tope
+     * de memoria: sin esto, varios `DownloadWorker` en paralelo pueden
+     * tener cada uno su copia completa del bundle serializado en el
+     * heap al mismo tiempo.
+     */
+    private val pushMutex = Mutex()
+
+    private var pendingPush: Job? = null
+
+    @Volatile
+    private var lastPushAt: Long = 0L
+
     suspend fun executeIfConnected(context: Context, mutation: suspend () -> Unit): MutationOutcome {
         if (!networkChecker.isConnected()) {
             Log.d(TAG, "executeIfConnected() -- sin conexión, mutación rechazada")
@@ -99,8 +141,58 @@ class AutoSyncPusher @Inject constructor(
         }
 
         mutation()
-        pushCurrentState(context)
+        schedulePush(context)
         return MutationOutcome.Success
+    }
+
+    /**
+     * S022 -- `OutOfMemoryError` real en la tablet de Miguel Ángel
+     * durante la restauración de 763 pistas desde Drive:
+     *
+     *     Failed to allocate a 32 byte allocation with 1608096 free
+     *     bytes (...) growth limit 268435456
+     *
+     * Hasta aquí, CADA mutación llamaba directamente a
+     * `pushCurrentState()`, que construye el bundle entero
+     * (`buildCurrentBundle()`) y lo serializa completo a un String
+     * JSON (`toSyncJson()`). Con una biblioteca de 763 pistas eso son
+     * varios MB por pasada, y durante una descarga masiva hay una
+     * mutación por cada cambio de estado de cada pista, con varios
+     * `DownloadWorker` corriendo en paralelo. El resultado es un
+     * puñado de copias completas del bundle vivas a la vez contra un
+     * heap de 256 MB. Es también lo que llenaba `backup_debug.txt` con
+     * un push por segundo.
+     *
+     * Dos medidas, y ninguna cambia lo que acaba en Drive -- solo
+     * cuántas veces y cuántas a la vez:
+     *
+     * - **Serialización exclusiva** (`pushMutex`): como mucho un
+     *   bundle construyéndose en memoria en cada momento.
+     * - **Amortiguación**: las mutaciones que llegan seguidas colapsan
+     *   en un único push. Cada nueva cancela el push pendiente y
+     *   reprograma. `MAX_PUSH_INTERVAL_MS` evita la inanición: si
+     *   llevan más de un minuto llegando mutaciones sin parar, el
+     *   siguiente push sale ya, sin esperar.
+     *
+     * El contexto se degrada a `applicationContext` a propósito: el
+     * push es diferido y guardar una `Activity` en un campo la
+     * filtraría. `requestAuthorization()` acepta los dos (ver su
+     * comentario) y, si hiciera falta consentimiento interactivo, esta
+     * subida puntual se salta en silencio -- que es exactamente lo que
+     * ya hacía antes.
+     */
+    private fun schedulePush(context: Context) {
+        val appContext = context.applicationContext
+        pendingPush?.cancel()
+        pendingPush = pushScope.launch {
+            if (System.currentTimeMillis() - lastPushAt < MAX_PUSH_INTERVAL_MS) {
+                delay(PUSH_DEBOUNCE_MS)
+            }
+            pushMutex.withLock {
+                pushCurrentState(appContext)
+                lastPushAt = System.currentTimeMillis()
+            }
+        }
     }
 
     private suspend fun pushCurrentState(context: Context) {
