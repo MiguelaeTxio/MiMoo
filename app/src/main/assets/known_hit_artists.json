@@ -12,7 +12,7 @@
         "genre": "pop"
       },
       {
-        "artist": "Duo Dinámico",
+        "artist": "Dúo Dinámico",
         "song": "Quince Años Tiene Mi Amor",
         "genre": "pop"
       },
@@ -74,7 +74,7 @@
       {
         "artist": "Los Relámpagos",
         "song": "Yo No Me Quiero Casar",
-        "genre": "flamenco"
+        "genre": "rock"
       },
       {
         "artist": "Peret",
@@ -220,6 +220,11 @@
       {
         "artist": "Julio Iglesias",
         "song": "Un Canto a Galicia",
+        "genre": "pop"
+      },
+      {
+        "artist": "Víctor Manuel",
+        "song": "Solo Pienso en Ti",
         "genre": "pop"
       },
       {
@@ -395,11 +400,6 @@
         "genre": "reggae"
       },
       {
-        "artist": "The Eagles",
-        "song": "Hotel California",
-        "genre": "rock"
-      },
-      {
         "artist": "Chicago",
         "song": "If You Leave Me Now",
         "genre": "rock"
@@ -464,29 +464,19 @@
         "genre": "copla"
       },
       {
-        "artist": "La Pantoja",
+        "artist": "Isabel Pantoja",
         "song": "Marinero de Luces",
         "genre": "copla"
       },
       {
-        "artist": "Alejandro Sanz",
-        "song": "Los Dos Cogidos de la Mano",
-        "genre": "pop"
-      },
-      {
-        "artist": "Ana Belén",
-        "song": "Contamíname",
-        "genre": "pop"
-      },
-      {
-        "artist": "Víctor Manuel",
-        "song": "Solo Pienso en Ti",
-        "genre": "pop"
+        "artist": "Los Secretos",
+        "song": "Déjame",
+        "genre": "pop rock"
       },
       {
         "artist": "Kiko Veneno",
         "song": "Volando Voy",
-        "genre": "rock"
+        "genre": "flamenco"
       },
       {
         "artist": "Nacha Pop",
@@ -526,11 +516,6 @@
       {
         "artist": "La Unión",
         "song": "Lobo-Hombre en París",
-        "genre": "pop rock"
-      },
-      {
-        "artist": "Seguridad Social",
-        "song": "Chiquilla",
         "genre": "pop rock"
       },
       {
@@ -656,11 +641,6 @@
         "genre": "pop"
       },
       {
-        "artist": "Wham",
-        "song": "Wake Me Up Before You Go-Go",
-        "genre": "pop"
-      },
-      {
         "artist": "Yes",
         "song": "Owner of a Lonely Heart",
         "genre": "rock"
@@ -672,6 +652,26 @@
       {
         "artist": "Alejandro Sanz",
         "song": "Corazón Partío",
+        "genre": "pop"
+      },
+      {
+        "artist": "Ana Belén",
+        "song": "Contamíname",
+        "genre": "pop"
+      },
+      {
+        "artist": "Seguridad Social",
+        "song": "Chiquilla",
+        "genre": "pop rock"
+      },
+      {
+        "artist": "Sergio Dalma",
+        "song": "Bailar Pegados",
+        "genre": "pop"
+      },
+      {
+        "artist": "Enrique Iglesias",
+        "song": "Bailamos",
         "genre": "pop"
       },
       {
@@ -886,18 +886,13 @@
   "2000": {
     "es": [
       {
-        "artist": "Alejandro Sanz",
-        "song": "Corazón Partío",
-        "genre": "pop"
-      },
-      {
         "artist": "David Bisbal",
         "song": "Ave María",
         "genre": "pop"
       },
       {
-        "artist": "Enrique Iglesias",
-        "song": "Bailamos",
+        "artist": "Alejandro Sanz",
+        "song": "No Es Lo Mismo",
         "genre": "pop"
       },
       {
@@ -917,18 +912,13 @@
       },
       {
         "artist": "Estopa",
-        "song": "Vino Tinto",
+        "song": "El Run Run",
         "genre": "pop rock"
       },
       {
         "artist": "El Canto del Loco",
         "song": "Zapatillas",
         "genre": "pop rock"
-      },
-      {
-        "artist": "Sergio Dalma",
-        "song": "Bailar Pegados",
-        "genre": "pop"
       },
       {
         "artist": "Christina Rosenvinge",
@@ -1102,11 +1092,6 @@
         "genre": "pop"
       },
       {
-        "artist": "Alejandro Sanz",
-        "song": "No Es Lo Mismo",
-        "genre": "pop"
-      },
-      {
         "artist": "Enrique Iglesias",
         "song": "Bailando",
         "genre": "pop"
@@ -1188,7 +1173,7 @@
       },
       {
         "artist": "Love of Lesbian",
-        "song": "Allí Donde Solíamos Gritar",
+        "song": "Bajo el Volcán",
         "genre": "rock"
       },
       {
@@ -1296,7 +1281,7 @@
       {
         "artist": "Luis Fonsi",
         "song": "Despacito",
-        "genre": "pop"
+        "genre": "reggaeton"
       }
     ]
   },
@@ -1304,7 +1289,7 @@
     "es": [
       {
         "artist": "Rosalía",
-        "song": "Con Altura",
+        "song": "Despechá",
         "genre": "pop"
       },
       {
@@ -1382,7 +1367,7 @@
       {
         "artist": "Bizarrap",
         "song": "BZRP Music Sessions, Vol. 53",
-        "genre": "electronic"
+        "genre": "hip hop"
       },
       {
         "artist": "Feid",
