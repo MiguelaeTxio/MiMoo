@@ -800,6 +800,181 @@ explícito: seguir ampliando el diccionario en próximas sesiones, es
 
 ---
 
+## S020 (2026-07-25) -- DIAGNÓSTICO SOBRE LOG REAL, PREPARACIÓN DE LA SESIÓN DE RADIO
+
+**Sin código.** Miguel Ángel entregó dos logs reales
+(`radio_relacionados_debug.txt`, 299 líneas, ~30 horas de uso; y
+`radio_debug.txt`, de H09) con un veredicto textual: *"la radio está
+funcionando realmente mal, mezclando décadas y géneros y orígenes
+resultando en un poutpourri de temas sin sentido alguno"*. Esta
+sección es el diagnóstico leído del código real y contrastado con el
+log, para que la sesión siguiente arranque implementando en vez de
+investigando.
+
+**Lo primero, para no repetir el malentendido de S016:** esto NO es
+"el fix de S016 no funcionó". El fix de S016 hace exactamente lo que
+se diseñó. El problema es que lo diseñado tiene tres agujeros
+estructurales que solo se ven con un log largo de verdad.
+
+### Causa 1 (la gorda) -- el filtro de origen es ASIMÉTRICO
+
+`PlayerManager.pickDictCandidate()`:
+
+    val requireEs = anchor.isSpanishOrigin && !allowForeignFallback
+
+y `KnownHitsRepository.pool()`:
+
+    val raw = if (requireEs) d.es else d.es + d.intl
+
+Con ancla **española** el pool se restringe al bloque `es`. Con ancla
+**extranjera** (`isSpanishOrigin = false`) `requireEs` es `false` y el
+pool es `es + intl`: **el bloque español entero sigue dentro**. No hay
+ningún camino de código que diga "ancla extranjera -> solo `intl`".
+
+Recuento real del diccionario (`known_hit_artists.json`, medido en
+esta sesión): década 1980 tiene **28 entradas `es` frente a 19
+`intl`**. Es decir, con ancla Pixies (rock, US, 1980) **el 60% del
+pool es música española**. El log lo confirma sin margen de duda --
+sesión anclada en Pixies, `origen_es=false`, y salen Loquillo, Leño,
+Kiko Veneno, Barricada, Gabinete Caligari, Barón Rojo, Parálisis
+Permanente, Radio Futura, Burning, Golpes Bajos, Danza Invisible,
+Nacha Pop, Alaska, Dúo Dinámico, Isabel Pantoja, Rocío Jurado,
+Alejandro Sanz, Víctor Manuel, Ana Belén...
+
+Totales del diccionario: 159 `es` / 130 `intl` = 289 entradas. Con
+ancla extranjera, más de la mitad de lo que puede sonar es español.
+
+### Causa 2 -- el segundo peldaño de la cascada tira el género entero
+
+`KnownHitsRepository.randomHit()`, peldaño 2:
+
+    if (decadeBegin != null) { pick(pool(decadeBegin, requireEs))?.let { return it } }
+
+Sin filtro de género. En cuanto el peldaño 1 (género + década) se
+queda sin candidatos no usados, se cae aquí y entra CUALQUIER género
+de esa década. Y se queda sin candidatos enseguida: el diccionario
+tiene solo **12 géneros distintos** y está aplastantemente sesgado --
+158 entradas `pop` de 289 (55%), 70 `rock`, y luego colas de 17 o
+menos. Una sesión anclada en `rock`/1980 agota su puñado de entradas
+rock en pocas vueltas y a partir de ahí es, de facto, una sesión de
+pop de los 80.
+
+Evidencia directa en el log, todas con `ancla=género:'rock'/década:1980`:
+Rocío Jurado (copla), Isabel Pantoja (copla), Mecano, Michael Jackson,
+Whitney Houston, Wham!, Duran Duran, Culture Club, a-ha, Depeche Mode,
+Cyndi Lauper, Phil Collins (todas `género='pop'`). Y con
+`ancla=género:'electronica'/década:1970`: Rocío Jurado (copla), José
+Luis Perales (pop), Massiel (pop).
+
+### Causa 3 -- el ancla se fija mal de origen
+
+Tres fallos distintos, los tres visibles en el log:
+
+1. **Género de ancla elegido al azar.** `RadioRepository.resolveAnchor()`:
+   `val chosenGenre = genres.random()`. De todos los géneros que
+   MusicBrainz da para el artista se coge uno a cara o cruz, y ese
+   decide las siguientes horas de escucha.
+2. **El ancla se busca por el nombre del CANAL de YouTube.** En el log
+   aparecen anclas `'知心音樂網'`, `'Havalina Chiel'`,
+   `'Natacha Atlas Official'`. MusicBrainz no encuentra nada (son
+   nombres de canal, no de artista) y se cae a
+   `resolveAnchorFromDisco()`.
+3. **La caída a disco produce anclas sin ninguna relación.** Caso
+   real: escuchando **Natacha Atlas** el ancla acabó siendo **Jethro
+   Tull** (`art rock`, GB, 1960), derivada de la biblioteca local. A
+   partir de ahí, toda la sesión gira sobre un artista que Miguel
+   Ángel no estaba escuchando.
+
+### Causa 4 -- el cupo de exploración (10%) devuelve cosas que no son música
+
+`suggestRelatedArtist()` busca en MusicBrainz por `tag:"<género>"` y
+se queda con lo que salga, sin comprobar después que el vídeo de
+YouTube resuelto sea realmente música de ese artista. Dos casos reales
+del log:
+
+- `género='art rock'` -> **'Art & Language'** (colectivo de arte
+  conceptual) -> vídeo añadido a la cola: *"Art & Language --
+  Conceptual Art, Mirrors and Selfies | TateShots"*.
+- `género='rock'` -> **'Гражданская оборона'** -> vídeo añadido:
+  un vídeo de **noticias sobre la guerra en Rusia**, ni siquiera
+  música.
+
+### Causa 5 -- décadas mal puestas dentro del propio diccionario
+
+Independiente de la lógica: hay entradas colocadas en la década
+equivocada, así que aunque el filtro de década funcione, el dato es
+falso. Ejemplos reales servidos como década 1980: **Måneskin**
+(*Beggin'*, 2021), **Blur** (*Song 2*, 1997), **Ska-P** (1990s),
+**Love of Lesbian** (2000s), **The Animals** (*House of the Rising
+Sun*, 1964).
+
+### Causa 6 -- el diccionario sigue muy por debajo del objetivo
+
+289 entradas totales / 7 décadas ≈ 41 por década, frente a las ~100
+por década que Miguel Ángel fijó como objetivo. Sigue siendo, en sus
+palabras, "lo más importante": mientras el pool sea pequeño, cualquier
+cascada se agota y degrada. Recuento actual por década y origen:
+
+| Década | `es` | `intl` |
+|---|---|---|
+| 1960 | 22 | 20 |
+| 1970 | 22 | 19 |
+| 1980 | 28 | 19 |
+| 1990 | 23 | 19 |
+| 2000 | 27 | 14 |
+| 2010 | 24 | 16 |
+| 2020 | 13 | 23 |
+
+### Anexo -- H09 (Radios Online) también trae fallo real
+
+`radio_debug.txt` (mismo lote de logs) muestra que Radio-Browser.info
+está devolviendo **HTTP 503** en `searchStations()` y `getCountries()`
+y **SocketTimeoutException** en `searchByAnyTag()` para los términos
+`'80s'` y `'1980s'`. No es un fallo de la lógica de MiMoo: es el
+servidor. Pero MiMoo ataca hoy un único host y no reintenta contra
+otro mirror ni degrada con un mensaje claro al usuario. No es H08;
+queda anotado aquí para que la sesión de Radio decida si lo toca de
+paso o lo deja para H09.
+
+### HOJA DE RUTA PARA LA SESIÓN DE RADIO (cerrada, ejecutable)
+
+Orden deliberado: de la causa con más impacto por línea tocada a la
+que menos.
+
+1. **Simetría de origen.** `pool()` pasa de un `requireEs: Boolean` a
+   un origen de tres valores (solo `es` / solo `intl` / ambos). Con
+   ancla extranjera se sirve `intl`; con ancla española, `es`; "ambos"
+   queda reservado al `allowForeignFallback` explícito que ya existe.
+   Es el cambio de menos líneas y el que más ruido quita.
+2. **La cascada nunca abandona el género.** Eliminar el peldaño 2 de
+   `randomHit()` (década sin género). La cascada queda: género+década
+   -> género sin década -> `null`, y que sea el cupo de disco o la
+   vuelta siguiente quien resuelva, igual que ya se hizo con
+   "classical" en S016. Confirmar este punto con Miguel Ángel antes de
+   ejecutarlo: cambia el reparto real del 80/10/10 cuando el pool de
+   un género se agota.
+3. **Ancla determinista, no aleatoria.** En `resolveAnchor()`,
+   sustituir `genres.random()` por el género de MusicBrainz con más
+   votos (`count`), con desempate estable. Y no fijar ancla desde un
+   nombre de canal: si el artista estructurado existe, usarlo siempre
+   antes que el nombre del canal.
+4. **Validar el candidato de exploración.** Antes de encolar un
+   resultado de `suggestRelatedArtist()`, comprobar que el vídeo
+   resuelto corresponde de verdad al artista (nombre del artista
+   presente en título o canal, o duración de canción). Si no,
+   descartar y pasar de vuelta -- nunca encolar a ciegas.
+5. **Auditoría de décadas del diccionario.** Repasar entrada por
+   entrada `known_hit_artists.json` y mover las que estén en la década
+   equivocada (empezar por las detectadas: Måneskin, Blur, Ska-P, Love
+   of Lesbian, The Animals).
+6. **Ampliación del diccionario hacia ~100/década**, con género
+   correcto por entrada y equilibrio `es`/`intl` -- pendiente
+   histórico, sigue siendo el techo real de calidad de la Radio.
+7. **Opcional, solo si Miguel Ángel lo pide:** failover de
+   Radio-Browser (H09) contra un mirror alternativo ante 503/timeout.
+
+---
+
 ## Fuera de Alcance de Este Hito
 
 - Cualquier forma de "me gusta"/entrenamiento de preferencias más allá

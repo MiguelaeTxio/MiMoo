@@ -34,12 +34,12 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
+| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
-| H13 | `DOCS/ANNEX_H13.md` | ← **EN PROGRESO** |
+| H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 
 ---
 
@@ -106,3 +106,15 @@ abierto, sin mencionar jamás su propio estado.
   controles ON/OFF), a petición explícita de Miguel Ángel: "chapitas,
   opciones de cíclicos y aleatorio deben verse cuando están activos,
   etc." -- ver `DOCS/ANNEX_H13.md`.
+- **2026-07-25 (S020)** — PCH explícito de Miguel Ángel: H13 pasa a
+  PAUSADO (el "etc." quedó cerrado y construido en esta misma sesión
+  -- cristal esmerilado en todos los botones del reproductor y en el
+  bloque de metadatos, chapita encendida para aleatorio/cíclico,
+  compilando en verde, pendiente solo de verificación visual en
+  dispositivo, ver `DOCS/ANNEX_H13.md` sección "COMPLETADAS EN
+  S020"), **H08 pasa a EN PROGRESO** -- petición textual:
+  *"la radio está funcionando realmente mal, mezclando décadas y
+  géneros y orígenes resultando en un poutpourri de temas sin sentido
+  alguno"*, con dos logs reales entregados como evidencia. Diagnóstico
+  completo sobre código real y hoja de ruta cerrada y ejecutable en
+  `DOCS/ANNEX_H08.md`, sección "S020".

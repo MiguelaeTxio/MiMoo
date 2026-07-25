@@ -196,3 +196,69 @@ sesiones anteriores):**
 privado durante parte de la sesión y se quedó sin cuota gratuita de
 GitHub Actions -- Miguel Ángel lo puso en público a mitad de sesión y
 el build pendiente terminó en verde sin más intervención.
+
+---
+
+## COMPLETADAS EN S020
+
+Sesión que sí cerró el "etc." de la hoja de ruta. Alcance dado por
+Miguel Ángel en una sola frase: *"el exoplayer carece del efecto
+cristal esmerilado en los botones y en la parte de texto junto a la
+carátula donde se muestran los metadatos"*.
+
+**Hallazgo real durante la implementación, causa de fondo de la queja
+original del hito.** El estado activo de aleatorio/cíclico se
+señalaba con `MaterialTheme.colorScheme.primary` como `tint` del
+icono. En la paleta de la app (`MiMooTheme.kt`, petición de Miguel
+Ángel de 2026-07-05: fondo azul MSX, letra blanca) **`primary` ES
+`Color.White`** -- exactamente el mismo blanco que
+`LocalContentColor` del estado inactivo. El "cambio de color" nunca
+cambió un solo píxel en pantalla; el único diferenciador real era la
+chapita añadida en S018. El diagnóstico preliminar de la nota de
+apertura ("un cambio de tint sobre fondo de cristal es poco
+perceptible") se queda corto: no es poco perceptible, es idéntico.
+
+**Construido:**
+
+1. **`Glass.kt` -- chapita ENCENDIDA.** `GlassTokens.activeFillTop`/
+   `activeFillBottom` (blanco casi opaco, 0.88/0.72) y cuarto
+   parámetro `active` en `glassChip()`, con valor por defecto `false`
+   -- firma retrocompatible, ninguna llamada existente de la app
+   cambia. `active` manda sobre `interactive`: una chapita encendida
+   es clicable por definición.
+2. **`PlayerBar.kt` -- `GlassIconButton` privado.** TODOS los botones
+   del reproductor (expandido y mini-barra colapsada) pasan por este
+   composable, así que el aspecto se ajusta en un único sitio. El
+   `padding` se aplica ANTES del cristal, para dejar aire real entre
+   chapitas contiguas sin que ese aire se pinte de cristal.
+3. **Aleatorio y cíclico:** chapita encendida cuando el modo está
+   activo, con el icono en azul MSX (`colorScheme.onPrimary`) sobre la
+   placa clara -- una tecla iluminada, legible sin depender del color
+   del trazo.
+4. **Favorito:** conserva su patrón propio (glifo relleno vs contorno
+   + amarillo), que ya se leía bien; ahora también sobre cristal base.
+5. **Anterior, play/pausa, siguiente, descargar, menú de tres puntos y
+   contraer:** cristal base.
+6. **Bloque de metadatos junto a la carátula** (título / artista /
+   Local-Streaming) sobre chapita de cristal interactivo -- es
+   clicable, abre la cola de sesión.
+7. **Mini-barra colapsada:** mismo tratamiento (metadatos y sus dos
+   botones), para que contraer el reproductor no cambie el lenguaje
+   visual. Esto responde además a la pregunta 3 de la hoja de ruta
+   ("¿solo expandido o también colapsado?"), que Miguel Ángel no
+   respondió por separado: se aplicó a ambos por coherencia, declarado
+   explícitamente en el momento de hacerlo.
+
+Compilado en verde (`d2fef5c`). **Verificación visual en dispositivo
+real pendiente** -- en concreto, si la placa encendida al 0.88/0.72 es
+el punto justo de intensidad o hay que subirla/bajarla en
+`GlassTokens`, que es un cambio de un solo número.
+
+**Incidencia de proceso, ya corregida:** el primer commit del bloque
+salió sin su línea de asunto (`style: H13 -- ...`) porque el heredoc
+del mensaje iba encadenado con `&& \`, y el shell interpretó la
+primera línea del mensaje como un comando. Corregido con
+`git commit --amend -F <fichero>` y `push --force-with-lease`
+(`d177cbc` -> `d2fef5c`), mismo árbol de archivos. Para futuras
+sesiones: mensaje de commit multilínea siempre desde fichero, nunca
+heredoc encadenado.

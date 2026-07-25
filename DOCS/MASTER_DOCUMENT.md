@@ -75,11 +75,15 @@ Dos fixes reales confirmados en dispositivo durante la propia sesión
 (normalización de puntuación en nombres, cruce con lo descargado por
 posición de pista en vez de por youtubeId). Ver `DOCS/ANNEX_H12.md`
 para el detalle completo.
-H13: hito nuevo (2026-07-19), sin código todavía -- estado visual de
-los controles ON/OFF del reproductor expandido (aleatorio, cíclico y
-lo que se identifique como "etc." al retomarlo). Ver
-`DOCS/ANNEX_H13.md` para el diagnóstico técnico ya leído del código
-real y la hoja de ruta.
+H13: hito nuevo (2026-07-19), construido en S020 -- todos los botones
+del reproductor (expandido y mini-barra) y el bloque de metadatos
+junto a la carátula sobre cristal esmerilado, con chapita ENCENDIDA
+para aleatorio y cíclico. Causa de fondo encontrada por el camino: el
+estado activo se señalaba con `colorScheme.primary`, que en esta
+paleta es blanco, el mismo blanco del estado inactivo -- el cambio de
+color no cambiaba nada en pantalla. En S019 se arregló además un bug
+de layout real (el botón de contraer se salía de pantalla). Pendiente:
+verificación visual en dispositivo real. Ver `DOCS/ANNEX_H13.md`.
 
 ---
 
