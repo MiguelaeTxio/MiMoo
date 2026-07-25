@@ -1014,21 +1014,60 @@ hoy.** Su peldaño 7.2 (con ancla española, permitir una vez un
 conocido extranjero) contradice frontalmente "si es española se fija
 en España" y se elimina.
 
-#### 5. Los dos cupos por proporción
+#### 5. Las TRES porciones y el reparto dinámico
 
-- **"Se compara con la lista de conocidos y se pone la proporción
-  fijada en settings."** -- cupo de conocidos, porcentaje de Ajustes.
-- **"Se pone la proporción fijada de artistas en el disco."** -- cupo
-  de biblioteca local, porcentaje de Ajustes.
-- **Disco, regla propia:** *"si se agota se deja de poner la
-  proporción... si se pone reggae y no hay reggae en el disco, no se
-  ponen temas del disco; si se pone rock de los setenta y no hay rock
-  de los setenta en el disco, no se pone disco."* El cupo de disco no
-  degrada NUNCA: o hay material del género+década exactos en la
-  biblioteca local, o ese cupo simplemente no se sirve y su porcentaje
-  se reparte entre los demás. La marca `radioDiscoExhausted` ya existe
-  pero hoy solo se activa con ancla española -- debe activarse en
-  cualquier ancla.
+Resumen final dictado por Miguel Ángel, que sustituye a cualquier
+descripción anterior de los cupos en este anexo.
+
+**El primer tema fija origen, género y década.** Las tres porciones
+trabajan siempre dentro de ese ancla, sin excepción.
+
+| Porción | Qué sirve, en orden |
+|---|---|
+| **Conocidos** | 1º temas conocidos; 2º artistas conocidos con temas NO catalogados |
+| **Disco** | 1º artistas (de la biblioteca local); 2º más temas de esos artistas |
+| **Desconocidos** | artistas sin éxito catalogado, vía MusicBrainz |
+
+**Agotamiento y reparto.** Una porción puede agotarse. *"Cuando se
+agotan, su porción se reparte entre las que queden."* El reparto es a
+partes iguales entre las supervivientes:
+
+    efectivo(i) = base(i) + (suma de las bases agotadas) / (nº de porciones vivas)
+
+Ejemplo textual de Miguel Ángel, partiendo del 80/10/10 de Ajustes:
+si Conocidos (80) se agota, *"dejamos un 40 por cien para cada una de
+las otras dos porciones"* -> Disco 10+40 = 50, Desconocidos 10+40 = 50.
+Suma 100.
+
+Encadenado: *"como tenemos 3, cuando falla una se reparte entre las
+otras dos, y cuando falle otra ya solo nos queda una"* -> la
+superviviente pasa al 100%.
+
+**Cuándo se considera agotada cada porción:**
+
+- **Conocidos:** cuando no quedan temas del diccionario para el género
+  + década + origen del ancla **Y ADEMÁS** ya no quedan artistas
+  conocidos con temas no catalogados que servir. Los dos peldaños
+  deben fallar, no solo el primero.
+- **Disco:** cuando la biblioteca local no tiene NADA que cumpla el
+  ancla. *"Si se pone reggae y no hay reggae en el disco, no se ponen
+  temas del disco; si se pone rock de los setenta y no hay rock de los
+  setenta en el disco, no se pone disco."* No degrada jamás: o cumple
+  el ancla, o esa porción se reparte.
+- **Desconocidos:** en la práctica no se agota. *"Es prácticamente
+  imposible agotar el último baremo aunque no repitamos temas."*
+
+**Cuando se agotan las tres:** *"ya es lo que venga respetando género y
+década y origen"*. Es el único desenlace en el que se deja de
+distinguir procedencia -- pero el ancla se sigue respetando entera,
+como siempre.
+
+**Consecuencia sobre lo construido.** `radioDiscoExhausted` ya existe
+pero (a) solo se activa con ancla española y (b) no reparte nada: el
+porcentaje liberado se pierde. Hay que generalizarlo a las tres
+porciones y hacer que `dueForQuota()` trabaje con porcentajes
+EFECTIVOS recalculados según qué porciones siguen vivas, no con los
+porcentajes base de Ajustes.
 
 #### 6. Lo que sobrevive de mi hoja de ruta anterior
 
