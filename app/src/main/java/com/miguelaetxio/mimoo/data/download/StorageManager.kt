@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.download
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.core.content.edit
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +26,14 @@ class StorageManager @Inject constructor(
     companion object {
         private const val PREFS_NAME = "mimoo_storage_prefs"
         private const val KEY_ROOT_URI = "saf_root_uri"
+
+        /**
+         * Serial del sistema de archivos de un volumen extraíble, del
+         * estilo `1A2B-3C4D`. Es lo que Android usa como identificador
+         * de volumen en el `treeDocumentId` de una tarjeta externa,
+         * frente al literal `primary` de la memoria interna.
+         */
+        private val SD_VOLUME_REGEX = Regex("[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}")
     }
 
     private val prefs by lazy {
@@ -73,19 +82,55 @@ class StorageManager @Inject constructor(
 
     /**
      * Nombre legible de la carpeta raíz actual, para mostrarlo en
-     * Ajustes ("Carpeta actual: ..."). Devuelve el nombre que da el
-     * proveedor SAF y, si no lo da, el último segmento del Uri
-     * decodificado, que en la práctica es del estilo
-     * `primary:Music/MiMoo` o `1A2B-3C4D:MiMoo` en una tarjeta
-     * externa -- suficiente para que Miguel Ángel distinga memoria
-     * interna de tarjeta de un vistazo. `null` si no hay carpeta
+     * Ajustes ("Carpeta actual: ...").
+     *
+     * **Fallo real reportado por Miguel Ángel (S022):** *"a pesar de
+     * mover todo, la carpeta actual parece seguir siendo la antigua,
+     * por lo cual el cambio no se hace efectivo realmente"*. El cambio
+     * sí se hacía efectivo -- `saf_root_uri` es el único almacén de la
+     * raíz y todos sus consumidores (`DownloadWorker` incluido) leen de
+     * ahí. Lo que engañaba era esta etiqueta: devolvía
+     * `DocumentFile.fromTreeUri(uri).name`, o sea **solo el nombre de
+     * la carpeta hoja**. Con una carpeta destino llamada igual que la
+     * de origen (`MiMoo`, `Music`...), la etiqueta salía idéntica antes
+     * y después del traslado, y no había forma de distinguir memoria
+     * interna de tarjeta externa.
+     *
+     * La versión anterior documentaba que caería a un formato del
+     * estilo `primary:Music/MiMoo` o `1A2B-3C4D:MiMoo`, pero esa rama
+     * solo se alcanzaba si el proveedor SAF no daba nombre, cosa que en
+     * la práctica no pasa nunca.
+     *
+     * Ahora la etiqueta se construye desde el `treeDocumentId`, que sí
+     * lleva el identificador de volumen delante de los dos puntos, y
+     * queda del estilo `Memoria interna · Music/MiMoo` o
+     * `Tarjeta SD (1A2B-3C4D) · MiMoo`. `null` si no hay carpeta
      * elegida todavía.
      * ---
      * Human-readable name of the current root folder, for the Settings
-     * screen. Null when no folder has been chosen yet.
+     * screen. Built from the tree document id so the storage volume is
+     * always visible. Null when no folder has been chosen yet.
      */
     fun getRootLabel(): String? {
         val uri = getRootUri() ?: return null
+
+        val treeId = runCatching {
+            DocumentsContract.getTreeDocumentId(uri)
+        }.getOrNull()
+
+        if (!treeId.isNullOrBlank() && treeId.contains(':')) {
+            val volumeId = treeId.substringBefore(':')
+            val path = treeId.substringAfter(':').trim('/')
+            val volumeLabel = when {
+                volumeId.equals("primary", ignoreCase = true) -> "Memoria interna"
+                // Los volúmenes extraíbles se identifican con el serial
+                // del sistema de archivos, del estilo 1A2B-3C4D.
+                volumeId.matches(SD_VOLUME_REGEX) -> "Tarjeta SD ($volumeId)"
+                else -> volumeId
+            }
+            return if (path.isBlank()) volumeLabel else "$volumeLabel · $path"
+        }
+
         val fromProvider = runCatching {
             DocumentFile.fromTreeUri(context, uri)?.name
         }.getOrNull()
