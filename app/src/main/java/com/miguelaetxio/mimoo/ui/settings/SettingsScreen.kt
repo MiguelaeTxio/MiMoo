@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -575,30 +576,63 @@ fun SettingsScreen(
                     onDismissRequest = viewModel::dismissLibraryFolderState,
                     title = { Text("Carpeta cambiada") },
                     text = {
-                        Text(
-                            buildString {
-                                append("La biblioteca apunta ahora a ")
-                                append(folderState.folderLabel ?: "la carpeta elegida")
-                                append(".")
-                                if (folderState.movedFiles) {
-                                    append("\n\nCanciones movidas: ${folderState.migrated}.")
-                                    if (folderState.failed > 0) {
+                        // Lista explícita de lo que no se pudo mover.
+                        // Hasta S022 aquí solo salía el número, y con
+                        // 8 fallos sobre 700 y pico eso no permitía ni
+                        // saber qué canciones eran ni por qué fallaban.
+                        Column(
+                            modifier = Modifier
+                                .heightIn(max = 360.dp)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            Text(
+                                buildString {
+                                    append("La biblioteca apunta ahora a ")
+                                    append(folderState.folderLabel ?: "la carpeta elegida")
+                                    append(".")
+                                    if (folderState.movedFiles) {
+                                        append("\n\nCanciones movidas: ${folderState.migrated}.")
+                                    } else {
                                         append(
-                                            "\n${folderState.failed} no se han podido mover y " +
-                                                "siguen sonando desde la carpeta anterior. " +
-                                                "Puedes repetir el cambio de carpeta para " +
-                                                "reintentarlo: lo ya movido no se duplica.",
+                                            "\n\nLo que ya estaba descargado sigue en la " +
+                                                "carpeta anterior y se reproduce con " +
+                                                "normalidad. Las descargas nuevas irán a la " +
+                                                "carpeta nueva.",
                                         )
                                     }
-                                } else {
-                                    append(
-                                        "\n\nLo que ya estaba descargado sigue en la carpeta " +
-                                            "anterior y se reproduce con normalidad. Las " +
-                                            "descargas nuevas irán a la carpeta nueva.",
+                                },
+                            )
+
+                            if (folderState.movedFiles && folderState.failures.isNotEmpty()) {
+                                Spacer(Modifier.height(12.dp))
+                                Text(
+                                    "No se pudieron mover ${folderState.failures.size}, " +
+                                        "que siguen sonando desde la carpeta anterior:",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                folderState.failures.forEach { failure ->
+                                    Text(
+                                        "• ${failure.label}",
+                                        style = MaterialTheme.typography.bodySmall,
                                     )
+                                    Text(
+                                        "   ${failure.reasonText}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Spacer(Modifier.height(6.dp))
                                 }
-                            },
-                        )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "El detalle completo, con la ruta de cada una, queda " +
+                                        "en «traslado_biblioteca_informe.txt», en la raíz " +
+                                        "de la carpeta nueva.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     },
                     confirmButton = {
                         TextButton(onClick = viewModel::dismissLibraryFolderState) {

@@ -122,6 +122,14 @@ class SettingsViewModel @Inject constructor(
             val failed: Int,
             val movedFiles: Boolean,
             val folderLabel: String?,
+            /**
+             * Qué pistas fallaron y por qué. Añadido en S022: la
+             * primera prueba real dejó 8 de 700 y pico sin mover, y el
+             * resumen solo daba el número -- *"no sé qué canciones
+             * son"*. Ahora el diálogo las lista con nombre y causa.
+             */
+            val failures: List<com.miguelaetxio.mimoo.data.library.LibraryMigrator.Failure> =
+                emptyList(),
         ) : LibraryFolderState
 
         data class Error(val message: String) : LibraryFolderState
@@ -188,6 +196,7 @@ class SettingsViewModel @Inject constructor(
                         failed = result.failed,
                         movedFiles = true,
                         folderLabel = _libraryFolderLabel.value,
+                        failures = result.failures,
                     )
 
                 is com.miguelaetxio.mimoo.data.library.LibraryMigrator.Result.Aborted ->

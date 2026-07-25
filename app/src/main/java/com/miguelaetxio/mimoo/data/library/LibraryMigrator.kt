@@ -9,6 +9,10 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,14 +70,89 @@ class LibraryMigrator @Inject constructor(
     /** Progreso vivo de la migración, para la barra de la pantalla de Ajustes. */
     data class Progress(val done: Int, val total: Int, val failed: Int)
 
+    /**
+     * Motivo por el que una pista concreta no se pudo mover.
+     *
+     * Añadido en S022 tras la primera prueba real de Miguel Ángel: de
+     * 700 y pico canciones, 8 fallaron, y al reintentar fallaron las
+     * mismas 8 -- fallo determinista. El migrador contabilizaba los
+     * fallos pero no registraba **cuál** ni **por qué**, así que el
+     * resumen decía "8 no se han podido mover" y ahí se acababa la
+     * información ("no sé qué canciones son"). Cada rama de fallo
+     * escribe ahora su causa concreta.
+     */
+    enum class FailureReason {
+        /**
+         * El archivo origen no existe. La fila sigue en Room como DONE
+         * apuntando a un Uri muerto: esa pista **ya no sonaba antes de
+         * migrar**. No es un fallo del traslado, es una fila huérfana
+         * que la reconciliación SAF<->Room debe devolver a descarga.
+         */
+        SOURCE_MISSING,
+
+        /** No se pudo crear `{Artista}/{Álbum}` bajo la raíz destino. */
+        TARGET_DIR_NOT_CREATED,
+
+        /** `createFile()` devolvió null para el nombre de archivo. */
+        TARGET_FILE_NOT_CREATED,
+
+        /** La copia no lanzó, pero el destino no acabó con los bytes del origen. */
+        COPY_INCOMPLETE,
+
+        /** La copia lanzó una excepción -- el detalle lleva su mensaje. */
+        COPY_THREW,
+    }
+
+    /**
+     * Una pista que no se pudo mover, con lo necesario para
+     * identificarla a simple vista en Ajustes y para diagnosticar la
+     * causa en el informe de texto.
+     */
+    data class Failure(
+        val youtubeId: String,
+        val title: String,
+        val artist: String?,
+        val album: String?,
+        val reason: FailureReason,
+        val detail: String? = null,
+        val sourcePath: String? = null,
+    ) {
+        /** Etiqueta corta para el diálogo de Ajustes. */
+        val label: String
+            get() = buildString {
+                append(artist ?: "Artista desconocido")
+                append(" — ")
+                append(title)
+            }
+
+        val reasonText: String
+            get() = when (reason) {
+                FailureReason.SOURCE_MISSING ->
+                    "el archivo ya no estaba en la carpeta anterior"
+                FailureReason.TARGET_DIR_NOT_CREATED ->
+                    "no se pudo crear su carpeta en el destino"
+                FailureReason.TARGET_FILE_NOT_CREATED ->
+                    "el destino rechazó el nombre del archivo"
+                FailureReason.COPY_INCOMPLETE ->
+                    "la copia quedó incompleta"
+                FailureReason.COPY_THREW ->
+                    "error al copiar${detail?.let { ": $it" } ?: ""}"
+            }
+    }
+
     sealed interface Result {
         /**
-         * `migrated` pistas movidas con éxito; `failed` que siguen
-         * donde estaban (archivo origen desaparecido, destino no
-         * creable, o error de copia). `failed > 0` no invalida la
-         * migración: la biblioteca sigue entera y reproducible.
+         * `migrated` pistas movidas con éxito; `failures` las que
+         * siguen donde estaban, cada una con su motivo concreto.
+         * `failures` no vacío no invalida la migración: la biblioteca
+         * sigue entera y reproducible.
          */
-        data class Completed(val migrated: Int, val failed: Int) : Result
+        data class Completed(
+            val migrated: Int,
+            val failures: List<Failure>,
+        ) : Result {
+            val failed: Int get() = failures.size
+        }
 
         /** No se pudo ni empezar -- la raíz destino no es utilizable. */
         data class Aborted(val reason: String) : Result
@@ -105,7 +184,28 @@ class LibraryMigrator @Inject constructor(
         }
         val total = tracks.size
         var migrated = 0
-        var failed = 0
+        val failures = mutableListOf<Failure>()
+
+        // Registra el fallo con su causa y refresca el progreso. Cada
+        // rama de abajo dice exactamente por qué se rindió, en vez del
+        // `failed++` mudo que había hasta S022.
+        fun fail(
+            track: com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack,
+            reason: FailureReason,
+            detail: String? = null,
+        ) {
+            failures += Failure(
+                youtubeId = track.youtubeId,
+                title = track.title,
+                artist = track.artist ?: track.channelTitle,
+                album = track.album,
+                reason = reason,
+                detail = detail,
+                sourcePath = track.filePath,
+            )
+            onProgress(Progress(migrated, total, failures.size))
+        }
+
         onProgress(Progress(done = 0, total = total, failed = 0))
 
         for (track in tracks) {
@@ -116,8 +216,7 @@ class LibraryMigrator @Inject constructor(
             // La fila se deja intacta: de eso se encarga la
             // reconciliación SAF<->Room, no este migrador.
             if (sourceDoc == null || !sourceDoc.exists()) {
-                failed++
-                onProgress(Progress(migrated, total, failed))
+                fail(track, FailureReason.SOURCE_MISSING)
                 continue
             }
 
@@ -128,8 +227,7 @@ class LibraryMigrator @Inject constructor(
                 album = track.album,
             )
             if (targetDir == null) {
-                failed++
-                onProgress(Progress(migrated, total, failed))
+                fail(track, FailureReason.TARGET_DIR_NOT_CREATED)
                 continue
             }
 
@@ -139,18 +237,16 @@ class LibraryMigrator @Inject constructor(
             val fileName = sourceDoc.name ?: "${track.youtubeId}.opus"
             val targetDoc = resolveTarget(targetDir, fileName, sourceDoc.length())
             if (targetDoc == null) {
-                failed++
-                onProgress(Progress(migrated, total, failed))
+                fail(track, FailureReason.TARGET_FILE_NOT_CREATED, "nombre: $fileName")
                 continue
             }
 
-            val copied = copyIfNeeded(sourceDoc, targetDoc)
-            if (!copied) {
+            val copyError = copyIfNeeded(sourceDoc, targetDoc)
+            if (copyError != null) {
                 // Copia incompleta: se retira el destino a medias para
                 // no dejar basura, y el origen queda intacto.
                 targetDoc.delete()
-                failed++
-                onProgress(Progress(migrated, total, failed))
+                fail(track, copyError.reason, copyError.detail)
                 continue
             }
 
@@ -163,10 +259,77 @@ class LibraryMigrator @Inject constructor(
             sourceDoc.delete()
 
             migrated++
-            onProgress(Progress(migrated, total, failed))
+            onProgress(Progress(migrated, total, failures.size))
         }
 
-        Result.Completed(migrated = migrated, failed = failed)
+        writeFailureReport(newRootUri, migrated, total, failures)
+        Result.Completed(migrated = migrated, failures = failures)
+    }
+
+    /**
+     * Vuelca el detalle completo de los fallos a un archivo de texto en
+     * la raíz nueva -- mismo patrón que `RadioDebugLogger` (H08),
+     * `RadioBrowserDebugLogger` (H09) y `BackupDebugLogger` (H06).
+     *
+     * El diálogo de Ajustes muestra la lista legible; este archivo
+     * lleva además el `filePath` completo de origen, que es lo que
+     * permite distinguir de un vistazo si las filas huérfanas apuntan a
+     * la raíz anterior, a una raíz todavía más antigua, o a un Uri
+     * malformado. Se sobrescribe en cada migración: interesa el último
+     * intento, no el histórico.
+     */
+    private fun writeFailureReport(
+        rootUri: Uri,
+        migrated: Int,
+        total: Int,
+        failures: List<Failure>,
+    ) {
+        val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            .format(Date())
+        val report = buildString {
+            appendLine("MiMoo -- informe de traslado de biblioteca")
+            appendLine("Fecha: $stamp")
+            appendLine("Pistas DONE con archivo: $total")
+            appendLine("Movidas: $migrated")
+            appendLine("Fallidas: ${failures.size}")
+            appendLine()
+            if (failures.isEmpty()) {
+                appendLine("Sin fallos.")
+            } else {
+                failures.groupBy { it.reason }.forEach { (reason, group) ->
+                    appendLine("== $reason (${group.size}) ==")
+                    group.forEach { f ->
+                        appendLine("  ${f.label}")
+                        appendLine("    álbum:   ${f.album ?: "(sin álbum)"}")
+                        appendLine("    youtube: ${f.youtubeId}")
+                        appendLine("    origen:  ${f.sourcePath ?: "(sin ruta)"}")
+                        f.detail?.let { appendLine("    detalle: $it") }
+                    }
+                    appendLine()
+                }
+            }
+        }
+        try {
+            val rootDoc = DocumentFile.fromTreeUri(context, rootUri)
+            val doc = rootDoc?.findFile(REPORT_FILE_NAME)
+                ?: rootDoc?.createFile("text/plain", REPORT_FILE_NAME)
+            if (doc != null) {
+                context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
+                    out.write(report.toByteArray())
+                }
+            } else {
+                File(context.filesDir, REPORT_FILE_NAME).writeText(report)
+            }
+        } catch (e: Exception) {
+            // Un fallo escribiendo el informe nunca debe afectar al
+            // resultado real del traslado, que ya está consolidado.
+            try {
+                File(context.filesDir, REPORT_FILE_NAME).writeText(report)
+            } catch (ignored: Exception) {
+                // Sin sitio donde escribir: el diálogo de Ajustes sigue
+                // mostrando la lista, que es la vía principal.
+            }
+        }
     }
 
     /**
@@ -192,28 +355,58 @@ class LibraryMigrator @Inject constructor(
         return targetDir.createFile(MIME_AUDIO, fileName)
     }
 
+    /** Causa concreta de una copia fallida. */
+    private data class CopyError(val reason: FailureReason, val detail: String?)
+
     /**
      * Copia origen -> destino salvo que el destino ya tenga el mismo
-     * tamaño exacto (ya copiado en un intento anterior). Devuelve true
-     * si al terminar el destino contiene la misma cantidad de bytes
-     * que el origen.
+     * tamaño exacto (ya copiado en un intento anterior). Devuelve null
+     * si al terminar el destino contiene la misma cantidad de bytes que
+     * el origen, o la causa concreta del fallo.
+     *
+     * Hasta S022 esto devolvía un simple `false` desde un
+     * `catch (e: Exception)`, de modo que la causa raíz de un fallo de
+     * copia se perdía en el mismo sitio donde se producía. Ahora el
+     * mensaje de la excepción viaja hasta el informe: es la diferencia
+     * entre "8 no se han podido mover" y saber si fue permiso, espacio
+     * o Uri roto.
      */
-    private fun copyIfNeeded(source: DocumentFile, target: DocumentFile): Boolean {
+    private fun copyIfNeeded(source: DocumentFile, target: DocumentFile): CopyError? {
         val expected = source.length()
-        if (target.length() == expected && expected > 0L) return true
+        if (target.length() == expected && expected > 0L) return null
         return try {
-            context.contentResolver.openInputStream(source.uri)?.use { input ->
-                context.contentResolver.openOutputStream(target.uri, "wt")?.use { output ->
-                    input.copyTo(output)
-                }
+            val input = context.contentResolver.openInputStream(source.uri)
+                ?: return CopyError(
+                    FailureReason.COPY_THREW,
+                    "no se pudo abrir el archivo de origen",
+                )
+            input.use { source0 ->
+                val output = context.contentResolver.openOutputStream(target.uri, "wt")
+                    ?: return CopyError(
+                        FailureReason.COPY_THREW,
+                        "no se pudo abrir el archivo de destino para escritura",
+                    )
+                output.use { target0 -> source0.copyTo(target0) }
             }
-            target.length() == expected
+            val actual = target.length()
+            if (actual == expected) {
+                null
+            } else {
+                CopyError(
+                    FailureReason.COPY_INCOMPLETE,
+                    "esperados $expected bytes, escritos $actual",
+                )
+            }
         } catch (e: Exception) {
-            false
+            CopyError(
+                FailureReason.COPY_THREW,
+                "${e.javaClass.simpleName}: ${e.message ?: "sin mensaje"}",
+            )
         }
     }
 
     private companion object {
         const val MIME_AUDIO = "audio/ogg"
+        const val REPORT_FILE_NAME = "traslado_biblioteca_informe.txt"
     }
 }
