@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.VpnKey
@@ -415,6 +416,207 @@ fun SettingsScreen(
                         onCheckedChange = viewModel::setGlassBorderEnabled,
                     )
                 }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // ─────────────────────────────────────────────────────
+            // S021 -- Carpeta de la biblioteca configurable.
+            // Petición de Miguel Ángel registrada en S020
+            // (DOCS/RESUMPTION_POINT.md) y concretada en S021: poder
+            // llevarse la biblioteca a una tarjeta externa, con todo
+            // el audio, sin perder favoritos, listas ni canales.
+            //
+            // Dos ramas deliberadamente distintas, tal como las pidió:
+            // mover todo el audio, o cambiar solo el ajuste dejando lo
+            // ya descargado donde está. La segunda NO rompe nada
+            // porque filePath es un Uri absoluto y el permiso de la
+            // raíz anterior no se libera (ver StorageManager).
+            // ─────────────────────────────────────────────────────
+            val libraryFolderLabel by viewModel.libraryFolderLabel.collectAsState()
+            val libraryFolderState by viewModel.libraryFolderState.collectAsState()
+            var pendingNewLibraryRoot by remember {
+                mutableStateOf<android.net.Uri?>(null)
+            }
+            val libraryFolderPicker = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocumentTree(),
+            ) { uri ->
+                if (uri != null) pendingNewLibraryRoot = uri
+            }
+
+            SettingsAccordionSection(
+                title = "Almacenamiento",
+                expanded = expandedSection == "almacenamiento",
+                onToggle = {
+                    expandedSection =
+                        if (expandedSection == "almacenamiento") null else "almacenamiento"
+                },
+            ) {
+                Text(
+                    "Carpeta actual: ${libraryFolderLabel ?: "sin elegir todavía"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Aquí se guardan las canciones descargadas, organizadas en " +
+                        "{Artista}/{Álbum}. Puedes moverla a una tarjeta externa " +
+                        "sin perder favoritos, listas ni canales.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = { libraryFolderPicker.launch(null) },
+                    modifier = Modifier.glassChip(),
+                ) {
+                    Icon(Icons.Filled.Folder, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Cambiar carpeta de la biblioteca")
+                }
+            }
+
+            // Elegida ya la carpeta nueva: falta decidir qué hacer con
+            // lo que ya está descargado. Las dos opciones van en el
+            // cuerpo del diálogo, no como botones de acción, porque un
+            // AlertDialog de Material 3 pone los botones en fila y con
+            // tres no caben legibles en pantalla de móvil.
+            pendingNewLibraryRoot?.let { newRoot ->
+                AlertDialog(
+                    onDismissRequest = { pendingNewLibraryRoot = null },
+                    title = { Text("Cambiar carpeta de la biblioteca") },
+                    text = {
+                        Column {
+                            Text(
+                                "¿Qué hacemos con la música que ya tienes descargada?",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            TextButton(
+                                onClick = {
+                                    viewModel.changeLibraryFolder(newRoot, moveFiles = true)
+                                    pendingNewLibraryRoot = null
+                                },
+                                modifier = Modifier.fillMaxWidth().glassChip(),
+                            ) {
+                                Text("Mover toda la biblioteca a la carpeta nueva")
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            TextButton(
+                                onClick = {
+                                    viewModel.changeLibraryFolder(newRoot, moveFiles = false)
+                                    pendingNewLibraryRoot = null
+                                },
+                                modifier = Modifier.fillMaxWidth().glassChip(),
+                            ) {
+                                Text("Solo cambiar la carpeta (dejar lo descargado donde está)")
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "En los dos casos se conservan favoritos, listas de " +
+                                    "reproducción, canales, carátulas y el resto de datos.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { pendingNewLibraryRoot = null }) {
+                            Text("Cancelar")
+                        }
+                    },
+                )
+            }
+
+            when (val folderState = libraryFolderState) {
+                is SettingsViewModel.LibraryFolderState.Idle -> Unit
+
+                is SettingsViewModel.LibraryFolderState.Migrating -> AlertDialog(
+                    // Sin onDismissRequest efectivo: mover archivos a
+                    // medias y volver a tocar la app sería la vía más
+                    // fácil de dejar la biblioteca en un estado raro.
+                    onDismissRequest = {},
+                    title = { Text("Moviendo la biblioteca") },
+                    text = {
+                        Column {
+                            if (folderState.total > 0) {
+                                LinearProgressIndicator(
+                                    progress = {
+                                        folderState.done.toFloat() / folderState.total
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text("${folderState.done} de ${folderState.total} canciones")
+                            } else {
+                                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                Spacer(Modifier.height(8.dp))
+                                Text("Preparando…")
+                            }
+                            if (folderState.failed > 0) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "${folderState.failed} no se han podido mover",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "No cierres la app hasta que termine.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    confirmButton = {},
+                )
+
+                is SettingsViewModel.LibraryFolderState.Done -> AlertDialog(
+                    onDismissRequest = viewModel::dismissLibraryFolderState,
+                    title = { Text("Carpeta cambiada") },
+                    text = {
+                        Text(
+                            buildString {
+                                append("La biblioteca apunta ahora a ")
+                                append(folderState.folderLabel ?: "la carpeta elegida")
+                                append(".")
+                                if (folderState.movedFiles) {
+                                    append("\n\nCanciones movidas: ${folderState.migrated}.")
+                                    if (folderState.failed > 0) {
+                                        append(
+                                            "\n${folderState.failed} no se han podido mover y " +
+                                                "siguen sonando desde la carpeta anterior. " +
+                                                "Puedes repetir el cambio de carpeta para " +
+                                                "reintentarlo: lo ya movido no se duplica.",
+                                        )
+                                    }
+                                } else {
+                                    append(
+                                        "\n\nLo que ya estaba descargado sigue en la carpeta " +
+                                            "anterior y se reproduce con normalidad. Las " +
+                                            "descargas nuevas irán a la carpeta nueva.",
+                                    )
+                                }
+                            },
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = viewModel::dismissLibraryFolderState) {
+                            Text("Entendido")
+                        }
+                    },
+                )
+
+                is SettingsViewModel.LibraryFolderState.Error -> AlertDialog(
+                    onDismissRequest = viewModel::dismissLibraryFolderState,
+                    title = { Text("No se pudo cambiar la carpeta") },
+                    text = { Text(folderState.message) },
+                    confirmButton = {
+                        TextButton(onClick = viewModel::dismissLibraryFolderState) {
+                            Text("Cerrar")
+                        }
+                    },
+                )
             }
 
             Spacer(Modifier.height(12.dp))

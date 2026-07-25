@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.data.download
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.edit
+import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -69,5 +70,45 @@ class StorageManager @Inject constructor(
 
     /** Returns true if the user has already chosen a storage location. */
     fun hasRootUri(): Boolean = getRootUri() != null
+
+    /**
+     * Nombre legible de la carpeta raíz actual, para mostrarlo en
+     * Ajustes ("Carpeta actual: ..."). Devuelve el nombre que da el
+     * proveedor SAF y, si no lo da, el último segmento del Uri
+     * decodificado, que en la práctica es del estilo
+     * `primary:Music/MiMoo` o `1A2B-3C4D:MiMoo` en una tarjeta
+     * externa -- suficiente para que Miguel Ángel distinga memoria
+     * interna de tarjeta de un vistazo. `null` si no hay carpeta
+     * elegida todavía.
+     * ---
+     * Human-readable name of the current root folder, for the Settings
+     * screen. Null when no folder has been chosen yet.
+     */
+    fun getRootLabel(): String? {
+        val uri = getRootUri() ?: return null
+        val fromProvider = runCatching {
+            DocumentFile.fromTreeUri(context, uri)?.name
+        }.getOrNull()
+        if (!fromProvider.isNullOrBlank()) return fromProvider
+        return runCatching { Uri.decode(uri.lastPathSegment) }.getOrNull()
+    }
+
+    /**
+     * S021 -- **el permiso persistible de la raíz ANTERIOR no se
+     * libera nunca al cambiar de carpeta.** Es deliberado: cuando
+     * Miguel Ángel elige "solo cambiar la carpeta" (sin mover el
+     * audio), o cuando una migración deja pistas a medio camino, las
+     * filas de Room siguen apuntando con Uri absolutos a archivos de
+     * la raíz vieja. Soltar aquel permiso las volvería ilegibles de
+     * golpe. Android permite mantener varios permisos de árbol a la
+     * vez, así que conservarlos no cuesta nada y evita ese modo de
+     * fallo.
+     * ---
+     * S021 -- the previous root's persistable permission is
+     * deliberately never released: rows may still point at files under
+     * the old tree with absolute Uris.
+     */
+    fun persistedRootCount(): Int =
+        context.contentResolver.persistedUriPermissions.size
 }
 

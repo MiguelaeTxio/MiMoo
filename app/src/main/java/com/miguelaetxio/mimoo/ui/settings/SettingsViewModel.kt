@@ -82,6 +82,7 @@ class SettingsViewModel @Inject constructor(
     private val uiPreferencesManager: com.miguelaetxio.mimoo.data.access.UiPreferencesManager,
     private val cookiesManager: CookiesManager,
     private val autoSyncPusher: AutoSyncPusher,
+    private val libraryMigrator: com.miguelaetxio.mimoo.data.library.LibraryMigrator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
@@ -89,6 +90,115 @@ class SettingsViewModel @Inject constructor(
 
     /** S011 -- interruptor de borde del cristal ("añade un toggle en ajustes para cambiar de borde a sin borde"). */
     val glassBorderEnabled: StateFlow<Boolean> = uiPreferencesManager.glassBorderEnabled
+
+    // ─────────────────────────────────────────────────────────────
+    // S021 -- Carpeta de la biblioteca configurable
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Estado de un cambio de carpeta de biblioteca. Petición de Miguel
+     * Ángel (S020, registrada en `DOCS/RESUMPTION_POINT.md`; caso de
+     * uso concreto dictado en S021: mover la biblioteca a una tarjeta
+     * externa): elegir una carpeta nueva y decidir si se lleva allí
+     * todo el audio ya descargado o si solo cambia el ajuste para las
+     * descargas futuras. En los dos casos, sin perder favoritos,
+     * listas, canales ni metadatos -- ver `LibraryMigrator` para por
+     * qué migrar `filePath` es condición suficiente.
+     */
+    sealed interface LibraryFolderState {
+        data object Idle : LibraryFolderState
+
+        /** Migración en curso. `total` 0 mientras se cuenta. */
+        data class Migrating(val done: Int, val total: Int, val failed: Int) : LibraryFolderState
+
+        /**
+         * Terminado. `movedFiles = false` cuando se eligió cambiar
+         * solo el ajuste, en cuyo caso `migrated`/`failed` son 0 y el
+         * audio anterior sigue donde estaba, perfectamente
+         * reproducible.
+         */
+        data class Done(
+            val migrated: Int,
+            val failed: Int,
+            val movedFiles: Boolean,
+            val folderLabel: String?,
+        ) : LibraryFolderState
+
+        data class Error(val message: String) : LibraryFolderState
+    }
+
+    private val _libraryFolderLabel = MutableStateFlow(storageManager.getRootLabel())
+
+    /** Nombre legible de la carpeta actual, o null si no hay ninguna elegida. */
+    val libraryFolderLabel: StateFlow<String?> = _libraryFolderLabel.asStateFlow()
+
+    private val _libraryFolderState =
+        MutableStateFlow<LibraryFolderState>(LibraryFolderState.Idle)
+    val libraryFolderState: StateFlow<LibraryFolderState> = _libraryFolderState.asStateFlow()
+
+    /**
+     * Aplica la carpeta nueva elegida en el selector del sistema.
+     *
+     * **La raíz se guarda SIEMPRE primero**, antes de mover un solo
+     * byte, y en las dos ramas. Así el ajuste queda aplicado aunque la
+     * migración se interrumpa a mitad: las descargas nuevas van ya a
+     * la carpeta nueva y las pistas que no llegaron a moverse siguen
+     * sonando desde la vieja, porque su `filePath` es un Uri absoluto
+     * y el permiso de la raíz anterior no se libera nunca (ver
+     * `StorageManager.persistedRootCount()`).
+     *
+     * @param moveFiles true -> llevar allí todo el audio ya descargado;
+     *                  false -> solo cambiar el ajuste.
+     */
+    fun changeLibraryFolder(newRootUri: android.net.Uri, moveFiles: Boolean) {
+        viewModelScope.launch {
+            try {
+                storageManager.saveRootUri(newRootUri)
+            } catch (e: SecurityException) {
+                _libraryFolderState.value = LibraryFolderState.Error(
+                    "Android no ha concedido permiso permanente sobre esa " +
+                        "carpeta. Elige otra o vuelve a intentarlo.",
+                )
+                return@launch
+            }
+            _libraryFolderLabel.value = storageManager.getRootLabel()
+
+            if (!moveFiles) {
+                _libraryFolderState.value = LibraryFolderState.Done(
+                    migrated = 0,
+                    failed = 0,
+                    movedFiles = false,
+                    folderLabel = _libraryFolderLabel.value,
+                )
+                return@launch
+            }
+
+            _libraryFolderState.value = LibraryFolderState.Migrating(0, 0, 0)
+            val result = libraryMigrator.migrateTo(newRootUri) { progress ->
+                _libraryFolderState.value = LibraryFolderState.Migrating(
+                    done = progress.done,
+                    total = progress.total,
+                    failed = progress.failed,
+                )
+            }
+            _libraryFolderState.value = when (result) {
+                is com.miguelaetxio.mimoo.data.library.LibraryMigrator.Result.Completed ->
+                    LibraryFolderState.Done(
+                        migrated = result.migrated,
+                        failed = result.failed,
+                        movedFiles = true,
+                        folderLabel = _libraryFolderLabel.value,
+                    )
+
+                is com.miguelaetxio.mimoo.data.library.LibraryMigrator.Result.Aborted ->
+                    LibraryFolderState.Error(result.reason)
+            }
+        }
+    }
+
+    fun dismissLibraryFolderState() {
+        _libraryFolderState.value = LibraryFolderState.Idle
+    }
 
     fun setGlassBorderEnabled(enabled: Boolean) {
         uiPreferencesManager.setGlassBorderEnabled(enabled)
