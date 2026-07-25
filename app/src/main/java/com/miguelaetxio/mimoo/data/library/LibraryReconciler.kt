@@ -2,7 +2,9 @@ package com.miguelaetxio.mimoo.data.library
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.documentfile.provider.DocumentFile
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
@@ -154,8 +156,28 @@ data class RescanResult(
 class LibraryReconciler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: SearchResultTrackRepository,
+    private val storageManager: StorageManager,
 ) {
     companion object {
+        private const val TAG = "MiMoo-Reconciler"
+
+        /**
+         * Mínimo de pistas ausentes para que la salvaguarda de cordura
+         * de `verifyDiskState()` se plantee siquiera actuar. Por debajo
+         * de esto, un borrado real es perfectamente plausible y se
+         * trata como tal.
+         */
+        private const val BULK_MISSING_FLOOR = 10
+
+        /**
+         * Fracción de la biblioteca por encima de la cual una
+         * desaparición simultánea se considera problema de acceso al
+         * volumen y no borrado del usuario. Un cuarto de la biblioteca
+         * evaporándose entre dos sincronizaciones no es algo que haga
+         * nadie a mano.
+         */
+        private const val BULK_MISSING_FRACTION = 0.25
+
         /**
          * Public so callers (e.g. LibraryViewModel.deleteDownload)
          * can tell synthetic rows apart from real, search-originated
@@ -307,6 +329,59 @@ class LibraryReconciler @Inject constructor(
      * responsibility.
      */
     suspend fun verifyDiskState(): List<SearchResultTrack> = withContext(Dispatchers.IO) {
+        // ─────────────────────────────────────────────────────────────
+        // SALVAGUARDAS S022 -- fallo real reportado por Miguel Ángel:
+        // *"al cambiar de carpeta, el guardián detecta el cambio de
+        // contenidos y lo que hace es volver a descargar todo de
+        // nuevo"*.
+        //
+        // Esta función marcaba PENDING toda fila DONE cuyo archivo no
+        // respondiera exists(), y AutoSyncViewModel.verifyDiskAndReconcile()
+        // encola inmediatamente cada una. El problema es que exists()
+        // devuelve false por DOS motivos que aquí eran indistinguibles:
+        //
+        //   a) el archivo se borró de verdad  -> reencolar es correcto
+        //   b) el volumen no está accesible   -> reencolar es un desastre
+        //
+        // Con la biblioteca en memoria interna (b) no pasaba nunca. Con
+        // la biblioteca en una tarjeta externa (H14), basta con que la
+        // tarjeta no esté montada todavía cuando corre la sincronización
+        // para que las 700 y pico pistas respondan false a la vez y se
+        // redescarguen enteras. Lo mismo durante un traslado en curso.
+        //
+        // Ninguna de las tres salvaguardas de abajo toca Room: ante la
+        // duda, no se hace nada. Una verificación que se salta un ciclo
+        // no cuesta nada; una redescarga masiva sí.
+        // ─────────────────────────────────────────────────────────────
+
+        // 1. Nunca mientras se está trasladando la biblioteca: durante
+        //    el traslado hay archivos legítimamente en tránsito.
+        if (LibraryMigrator.isMigrating) {
+            Log.w(TAG, "verifyDiskState() omitido: traslado de biblioteca en curso")
+            return@withContext emptyList()
+        }
+
+        // 2. La raíz tiene que responder antes de creer nada de lo que
+        //    diga exists() sobre los archivos que cuelgan de ella. Si
+        //    la tarjeta no está montada, la raíz tampoco responde.
+        val rootUri = storageManager.getRootUri()
+        if (rootUri != null) {
+            val rootAvailable = try {
+                val root = DocumentFile.fromTreeUri(context, rootUri)
+                root != null && root.exists() && root.canRead()
+            } catch (e: Exception) {
+                false
+            }
+            if (!rootAvailable) {
+                Log.w(
+                    TAG,
+                    "verifyDiskState() omitido: la carpeta de la biblioteca no " +
+                        "responde (¿tarjeta no montada?)",
+                )
+                return@withContext emptyList()
+            }
+        }
+
         val doneTracks = repository.getAll().first().filter {
             it.downloadStatus == DownloadStatus.DONE && it.filePath != null
         }
@@ -318,6 +393,24 @@ class LibraryReconciler @Inject constructor(
                 false
             }
             !exists
+        }
+
+        // 3. Salvaguarda de cordura. Que desaparezca de golpe una
+        //    fracción grande de la biblioteca no es un borrado del
+        //    usuario: el usuario borra canciones de una en una o un
+        //    álbum entero, no media biblioteca a la vez sin tocar la
+        //    app. Es un volumen a medio montar, un permiso SAF caído o
+        //    un traslado a medias. Se deja Room intacto y se avisa.
+        val suspicious = missing.size >= BULK_MISSING_FLOOR &&
+            missing.size > doneTracks.size * BULK_MISSING_FRACTION
+        if (suspicious) {
+            Log.w(
+                TAG,
+                "verifyDiskState() abortado: ${missing.size} de ${doneTracks.size} " +
+                    "pistas sin archivo. Se asume carpeta no disponible, NO se " +
+                    "reencola nada.",
+            )
+            return@withContext emptyList()
         }
 
         missing.forEach { track -> repository.clearDownload(track.youtubeId) }

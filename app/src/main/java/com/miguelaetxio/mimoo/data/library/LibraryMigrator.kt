@@ -179,6 +179,22 @@ class LibraryMigrator @Inject constructor(
             )
         }
 
+        // El guardián de disco (LibraryReconciler.verifyDiskState()) se
+        // aparta mientras dure esto. En `finally` sin excepción: si el
+        // flag se quedara encendido, la verificación de disco quedaría
+        // desactivada para siempre.
+        isMigrating = true
+        try {
+            migrateInternal(newRootUri, onProgress)
+        } finally {
+            isMigrating = false
+        }
+    }
+
+    private suspend fun migrateInternal(
+        newRootUri: Uri,
+        onProgress: (Progress) -> Unit,
+    ): Result = withContext(Dispatchers.IO) {
         val tracks = trackRepository.getAllOnce().filter {
             it.downloadStatus == DownloadStatus.DONE && it.filePath != null
         }
@@ -405,8 +421,26 @@ class LibraryMigrator @Inject constructor(
         }
     }
 
-    private companion object {
-        const val MIME_AUDIO = "audio/ogg"
-        const val REPORT_FILE_NAME = "traslado_biblioteca_informe.txt"
+    companion object {
+        private const val MIME_AUDIO = "audio/ogg"
+        private const val REPORT_FILE_NAME = "traslado_biblioteca_informe.txt"
+
+        /**
+         * True mientras hay un traslado de biblioteca en curso.
+         *
+         * S022, fallo real de Miguel Ángel: durante el traslado hay
+         * archivos legítimamente en tránsito, y
+         * `LibraryReconciler.verifyDiskState()` interpretaba eso como
+         * "estas pistas ya no existen", las devolvía a PENDING y
+         * `AutoSyncViewModel` las reencolaba para descarga. Este flag
+         * es lo que le permite al reconciliador quitarse de en medio
+         * mientras dure el traslado.
+         *
+         * `@Volatile` porque se escribe desde el hilo de IO del
+         * migrador y se lee desde el de la sincronización.
+         */
+        @Volatile
+        var isMigrating: Boolean = false
+            private set
     }
 }
