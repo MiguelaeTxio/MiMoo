@@ -1099,7 +1099,61 @@ Todo lo anterior queda implementado en esta sesión, en cuatro commits:
 **Pendiente de verificación en dispositivo real con una sesión larga.**
 Y sigue pendiente, sin tocar en S020:
 
-#### 7. Lo que sobrevive de mi hoja de ruta anterior
+### HOJA DE RUTA PARA LA SIGUIENTE SESIÓN (fijada por Miguel Ángel al cierre de S020)
+
+Palabras textuales: *"comenzamos la siguiente sesión dejando el
+diccionario correcto. Y aumentando la muestra si es posible."*
+
+Es trabajo de DATOS, no de lógica. La lógica de la Radio quedó
+completa en S020; lo que manda ahora en la calidad real es el
+contenido de `app/src/main/assets/known_hit_artists.json`.
+
+1. **Dejar el diccionario correcto -- auditoría de décadas.** Repasar
+   entrada por entrada y mover las que estén en la década equivocada.
+   Detectadas leyendo el log real de S020, todas servidas como 1980:
+   - **Måneskin** -- *Beggin'* es de 2021.
+   - **Blur** -- *Song 2* es de 1997.
+   - **Ska-P** -- años 90.
+   - **Love of Lesbian** -- años 2000.
+   - **The Animals** -- *House of the Rising Sun* es de 1964.
+
+   No son las únicas: la lista de arriba es solo lo que asomó en una
+   sesión. Hay que revisar el archivo entero, no solo esas cinco.
+   Conviene revisar también el campo `genre` de cada entrada por el
+   mismo motivo -- con el género ya inabandonable (S020), una entrada
+   mal etiquetada de género es tan dañina como una mal fechada.
+
+2. **Aumentar la muestra "si es posible".** Objetivo histórico: ~100
+   entradas por década. Estado medido en S020: **289 en total**, unas
+   41 por década.
+
+   | Década | `es` | `intl` | Total |
+   |---|---|---|---|
+   | 1960 | 22 | 20 | 42 |
+   | 1970 | 22 | 19 | 41 |
+   | 1980 | 28 | 19 | 47 |
+   | 1990 | 23 | 19 | 42 |
+   | 2000 | 27 | 14 | 41 |
+   | 2010 | 24 | 16 | 40 |
+   | 2020 | 13 | 23 | 36 |
+
+   Dos criterios que S020 hace más importantes que antes:
+   - **Equilibrio `es`/`intl` por década.** Con la separación dura de
+     origen, una sesión extranjera solo puede usar el bloque `intl`:
+     hoy son 19 entradas en los 80 y 14 en los 2000. Ese bloque es el
+     que más se queda corto.
+   - **Variedad de GÉNERO dentro de cada bloque.** El diccionario
+     tiene solo 12 géneros distintos y 158 de sus 289 entradas son
+     `pop`. Con el género inabandonable, anclar en algo que no sea pop
+     o rock agota el peldaño 1 enseguida y la sesión pasa a vivir del
+     peldaño 2 (artistas conocidos, temas no catalogados). Funciona,
+     pero la variedad baja.
+
+3. **Verificación en dispositivo de todo lo construido en S020**, si
+   no se ha hecho antes de esa sesión -- ver "Construido en S020" más
+   arriba para qué mirar en `radio_relacionados_debug.txt`.
+
+#### 7. Lo que sigue pendiente, sin tocar en S020
 
 Estos puntos no los tocó Miguel Ángel y siguen siendo válidos, en este
 orden, DESPUÉS de lo anterior:

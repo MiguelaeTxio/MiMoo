@@ -11,58 +11,84 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
-## Última actualización: 2026-07-24 (cierre de sesión S019 NewFlow)
+## Última actualización: 2026-07-25 (cierre de sesión S020 NewFlow)
 
-**Hito activo: H13** (UX del Reproductor) -- sin PCH en esta sesión,
-sigue EN PROGRESO tras el cierre, ver `DOCS/ANNEX_ROUTER.md`.
+**Hito activo: H08** (Radio) -- PCH en esta sesión, H13 pasó a PAUSADO.
+Ver `DOCS/ANNEX_ROUTER.md`.
 
-**S019, resumen: sesión abierta como continuación de H13, derivada casi
-por completo hacia un bug real de descargas y una función de producto
-nueva a partir de ahí (nueve commits reales, `b16a7c8`..`fa48800`).**
-Ver `DOCS/ANNEX_H13.md`, sección "COMPLETADAS EN S019" para el detalle
-completo commit a commit. Resumen:
+**S020, resumen: sesión de dos mitades. Primero se cerró y construyó
+el "etc." de H13 (cristal esmerilado del reproductor); después, a
+petición de Miguel Ángel, PCH hacia H08 y reescritura completa del
+motor de la Radio sobre especificación dictada por él. Diez commits,
+`d2fef5c`..`19c5c87`, todos compilando en verde.**
 
-Miguel Ángel reportó con `debug_error.txt` real que "River Euphrates"
-(Pixies) fallaba siempre con "Sign in to confirm your age" en yt-dlp.
-Investigación completa en varias vueltas, cada una con su propio
-`debug_error.txt` real como evidencia: soporte de cookies importables
-desde Ajustes (`CookiesManager.kt`), sincronizadas vía Drive (H07,
-nunca vía APK ni códigos de compartición -- riesgo de seguridad real
-descartado explícitamente), fix de una validación propia que rechazaba
-en silencio las cookies de autenticación reales (`#HttpOnly_`), y el
-fix de fondo (forzar el cliente `web_creator` de yt-dlp solo ante el
-mensaje exacto de restricción de edad, tras una regresión real
-encontrada y corregida en la misma sesión: forzarlo siempre rompía
-vídeos normales). Confirmado finalmente que este vídeo concreto es un
-límite real y actual de yt-dlp sin solución fiable documentada (issue
-abierto en el propio repo de yt-dlp).
+**H13, cerrado y pausado.** Alcance dado en una frase: *"el exoplayer
+carece del efecto cristal esmerilado en los botones y en la parte de
+texto junto a la carátula"*. Hallazgo de fondo durante la
+implementación: el estado activo de aleatorio/cíclico se señalaba con
+`colorScheme.primary` como tint, y en esta paleta `primary` ES BLANCO
+-- el mismo blanco del estado inactivo. El "cambio de color" nunca
+cambió un píxel. Ver `DOCS/ANNEX_H13.md`, "COMPLETADAS EN S020".
+Pendiente: verificación visual en dispositivo, en concreto si la placa
+encendida (0.88/0.72 en `GlassTokens`) tiene la intensidad correcta.
 
-De ahí salió una función de producto nueva, petición explícita de
-Miguel Ángel: **"Buscar alternativa"** en Descargas -- cuando una
-pista falla siempre, buscar otro vídeo de YouTube para la misma
-canción sin romper la secuencia del álbum
-(`TrackAlternativeRepository.kt`, preserva título/artista/álbum/
-posición/favorito/playlists). Con paso de confirmación explícita
-(tema fallido / texto de búsqueda / tema alternativo / Cancelar-
-Aceptar) tras un fallo real de diseño encontrado por queja directa de
-Miguel Ángel: el diálogo se cerraba en silencio sin aplicar nada.
+**H08, reescritura completa.** Punto de partida: dos logs reales y un
+veredicto textual -- *"la radio está funcionando realmente mal,
+mezclando décadas y géneros y orígenes"*. Diagnóstico completo sobre
+código real en `DOCS/ANNEX_H08.md` sección "S020", y a partir de ahí
+una especificación dictada por Miguel Ángel que se implementó entera:
+género nunca abandonado en ningún cupo, origen separado España/
+extranjero en los dos sentidos, tres porciones con dos peldaños cada
+una, reparto dinámico del porcentaje de las porciones agotadas,
+no-repetición por CANCIÓN en vez de por artista, ancla determinista
+(género más votado, y buscada por el artista real en vez de por el
+nombre del canal de YouTube) y validación de que el vídeo encolado es
+del artista pedido.
 
-**Verificado en dispositivo real de principio a fin por Miguel Ángel**
-al cierre: cookies importadas y sincronizadas, fix de `web_creator`
-sin la regresión, descarga completada con éxito vía "Buscar
-alternativa".
+**Nada de la Radio está verificado en dispositivo.** Todo compila; nada
+se ha escuchado. Ver `DOCS/ANNEX_H08.md`, "Construido en S020", para
+las líneas concretas del `radio_relacionados_debug.txt` que delatan si
+cada pieza funciona.
 
-**Único punto de H13 propiamente dicho tocado en esta sesión:** fix de
-un bug de layout real en `PlayerBar.kt` -- el botón de contraer el
-reproductor se salía de pantalla con varios controles opcionales
-visibles a la vez (favorito+descarga+menú de tres puntos+aleatorio+
-cíclico), dejando el reproductor expandido fijo sin forma de
-colapsarlo. Ahora es fijo, fuera de la fila scrollable de controles.
+**Riesgo conocido a vigilar en la primera escucha:** `matchesArtist()`
+puede rechazar vídeos legítimos si el artista no aparece ni en el
+título ni en el canal. Si en el log abundan los `0 de 6 resultados
+pasaron el filtro`, el criterio está demasiado apretado y hay que
+relajarlo.
 
-**La hoja de ruta original de H13 (arriba en el anexo, "Preguntar
-primero, no asumir" sobre el alcance de "etc.") sigue exactamente
-igual, sin tocar** -- la sesión que retome H13 de verdad debe empezar
-por ahí.
+**Siguiente sesión, fijada por Miguel Ángel al cierre:** *"comenzamos
+la siguiente sesión dejando el diccionario correcto. Y aumentando la
+muestra si es posible."* Trabajo de datos sobre
+`known_hit_artists.json`, no de lógica. Hoja de ruta completa con
+recuentos y criterios en `DOCS/ANNEX_H08.md`, "HOJA DE RUTA PARA LA
+SIGUIENTE SESIÓN".
+
+## Incidencias de proceso de S020, útiles para futuras sesiones
+
+1. **Cuota de GitHub Actions con el repo en privado.** A mitad de
+   sesión los builds empezaron a fallar; el síntoma limpio fue un
+   commit de SOLO Markdown muriendo en 4 segundos con cero pasos
+   ejecutados. No era código. Miguel Ángel puso el repo en público y
+   el mismo commit, relanzado sin tocar nada, pasó a verde.
+2. **Lectura de logs de Actions -- estado real.**
+   `GET /actions/runs/{id}/jobs` SÍ funciona y devuelve cada paso con
+   su `conclusion`: es la vía buena para localizar el paso rojo, y
+   solo necesita *Actions: Read*. El texto del log sigue sin poder
+   leerse desde el entorno del modelo: `/actions/runs/{id}/logs` y
+   `/actions/jobs/{job_id}/logs` redirigen a subdominios rotatorios
+   (`productionresultssa12`, `results-receiver...`) y la lista de
+   dominios accesibles solo contempla `productionresultssa17`. Fijar
+   un subdominio no sirve porque GitHub los rota.
+3. **El permiso "Checks" NO existe para PAT de grano fino.** Se pidió
+   por error en esta sesión. La documentación de GitHub lo cita como
+   requisito del endpoint de check-runs, pero su propio personal
+   confirma en el foro que solo las GitHub Apps pueden tenerlo. El
+   token de sesión se queda con Contents RW + Actions RW + Metadata.
+4. **Mensajes de commit multilínea: siempre desde fichero**
+   (`git commit -F fichero`), nunca heredoc encadenado con `&& \` --
+   el shell se come la primera línea del mensaje y el commit sale sin
+   asunto. Pasó una vez y hubo que corregirlo con `--amend` +
+   `--force-with-lease`.
 
 ## Sesión anterior (S018, contexto histórico)
 
