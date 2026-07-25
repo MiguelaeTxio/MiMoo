@@ -1013,6 +1013,22 @@ class PlayerManager @Inject constructor(
             radioRepository.resolveAnchor(titleGuess)?.let { return it }
         }
 
+        // S022 -- un 503 o un timeout NO significan "este artista no
+        // existe". Miguel Ángel puso un tema de Alaska y Dinarama, el
+        // `resolveAnchor` se comió un HTTP 503, se probó el nombre del
+        // canal ('Chapuzasmix') que lógicamente tampoco existe, y la
+        // sesión acabó anclada en 'Quentin Gas & Los Zíngaros'
+        // (flamenco/2010) porque era lo que salió de la biblioteca
+        // local. Antes no arrancar Radio que anclarla en un artista
+        // arbitrario: sin ancla, la siguiente ronda lo reintenta.
+        if (radioRepository.lastFailureWasTransient) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchOneRadioTrack() -- NO se deriva ancla de disco: el fallo fue de red " +
+                    "(MusicBrainz no responde), no que el artista no exista. Se reintentará.",
+            )
+            return null
+        }
         RadioDebugLogger.log(
             appContext, storageManager,
             "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado en NINGUNO de los " +
@@ -1288,9 +1304,22 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         avoidNames: Set<String>,
     ): QueueItem? {
+        // S022 -- con MusicBrainz caído, el diccionario es lo único que
+        // sostiene la Radio, así que se suelta el género y se conservan
+        // origen y década (decisión de Miguel Ángel). Con el servicio
+        // sano, el género se respeta como siempre.
+        val degraded = radioRepository.isServiceDegraded
+        if (degraded) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchFromKnown(ancla='$anchorArtistName') -- MODO DEGRADADO (MusicBrainz no " +
+                    "responde): se suelta el género, se mantienen origen y década",
+            )
+        }
         if (!radioKnownSongsExhausted) {
             val hit = knownHitsRepository.randomHit(
                 anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), radioUsedSongs, avoidNames,
+                relaxGenre = degraded,
             )
             if (hit != null) {
                 val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
@@ -1315,6 +1344,7 @@ class PlayerManager @Inject constructor(
 
         val artists = knownHitsRepository.knownArtists(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), avoidNames,
+            relaxGenre = degraded,
         )
         for (artist in artists) {
             val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null) ?: continue
@@ -1327,6 +1357,19 @@ class PlayerManager @Inject constructor(
             return item
         }
 
+        // S022 -- si MusicBrainz está caído, NO se agota la porción:
+        // agotar es irreversible, y lo que ha pasado es que no se ha
+        // podido preguntar, no que no quede música. Queda viva para la
+        // ronda siguiente, que es la mitad de la propuesta de Miguel
+        // Ángel: "esperar a que esos timeouts dejen de serlo".
+        if (radioRepository.isServiceDegraded) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchFromKnown(ancla='$anchorArtistName') -- sin candidatos, pero MusicBrainz " +
+                    "está caído: la porción NO se agota, se reintentará en la siguiente ronda",
+            )
+            return null
+        }
         exhaustPortion(RadioPortion.KNOWN, anchorArtistName, "ni temas catalogados ni artistas conocidos libres")
         return null
     }

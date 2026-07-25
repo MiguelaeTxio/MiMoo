@@ -162,6 +162,7 @@ class KnownHitsRepository @Inject constructor(
         origin: Origin,
         excludeSongKeys: Set<String>,
         avoidArtists: Set<String> = emptySet(),
+        relaxGenre: Boolean = false,
     ): KnownHit? {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun pick(candidates: List<KnownHit>): KnownHit? {
@@ -170,6 +171,16 @@ class KnownHitsRepository @Inject constructor(
             return preferred.ifEmpty { allowed }.randomOrNull()
         }
 
+        // S022 -- MODO DEGRADADO. Con MusicBrainz caído, el
+        // diccionario es lo único que sostiene la Radio, y filtrar
+        // además por género lo deja seco: una sesión anclada en
+        // 'electropop'/ES/1980 se quedó sin candidatos en 0,7 segundos
+        // y acabó sirviendo doce temas del mismo artista. Decisión de
+        // Miguel Ángel ("habrá que soltarlo"): en degradado se
+        // conservan origen y década -- que es lo que se percibe -- y
+        // se suelta el género. Que suene Mecano es infinitamente mejor
+        // que no sonar nada o repetir.
+        if (relaxGenre) return pick(pool(decadeBegin, origin))
         if (genre == null) return null
         return pick(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
     }
@@ -194,13 +205,20 @@ class KnownHitsRepository @Inject constructor(
         decadeBegin: Int?,
         origin: Origin,
         avoidArtists: Set<String> = emptySet(),
+        relaxGenre: Boolean = false,
     ): List<String> {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun artistsOf(candidates: List<KnownHit>): List<String> =
             candidates.map { it.artist }.distinct()
 
-        if (genre == null) return emptyList()
-        val all = artistsOf(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
+        // S022 -- ver el comentario de `randomHit()`: en modo degradado
+        // se sueltan los géneros y se conservan origen y década.
+        val all = if (relaxGenre) {
+            artistsOf(pool(decadeBegin, origin))
+        } else {
+            if (genre == null) return emptyList()
+            artistsOf(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
+        }
         val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
         return fresh.shuffled() + repeated.shuffled()
     }

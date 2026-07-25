@@ -96,6 +96,53 @@ class RadioRepository @Inject constructor(
      * ---
      * ONLY called once, when a Radio session starts.
      */
+    /**
+     * Fallos transitorios de MusicBrainz seguidos (503, 429, timeout,
+     * corte de red). Se pone a cero en cuanto una llamada responde.
+     *
+     * S022 -- MusicBrainz es gratuito y notoriamente inestable, y sus
+     * caídas envenenaban la Radio entera: `lookupArtistProfile()` y
+     * `findCandidates()` devuelven `null`/vacío tanto cuando NO HAY
+     * candidatos como cuando NO SE HA PODIDO PREGUNTAR, y el motor
+     * trataba ambos como "porción agotada", que es irreversible. Ocho
+     * timeouts seguidos bastaron para dejar una sesión sirviendo doce
+     * temas del mismo artista.
+     */
+    @Volatile
+    var consecutiveTransientFailures: Int = 0
+        private set
+
+    /** ¿Está MusicBrainz dando problemas ahora mismo? */
+    val isServiceDegraded: Boolean
+        get() = consecutiveTransientFailures >= DEGRADED_THRESHOLD
+
+    /**
+     * True si el último fallo fue de red y no una respuesta legítima.
+     * Lo consulta el motor para no derivar un ancla de la biblioteca
+     * local cuando lo único que ha pasado es que MusicBrainz no
+     * contesta.
+     */
+    @Volatile
+    var lastFailureWasTransient: Boolean = false
+        private set
+
+    private fun isTransient(e: Exception): Boolean = when (e) {
+        is retrofit2.HttpException -> e.code() == 429 || e.code() >= 500
+        is java.io.IOException -> true
+        else -> false
+    }
+
+    private fun noteFailure(e: Exception) {
+        val transient = isTransient(e)
+        lastFailureWasTransient = transient
+        if (transient) consecutiveTransientFailures++
+    }
+
+    private fun noteSuccess() {
+        consecutiveTransientFailures = 0
+        lastFailureWasTransient = false
+    }
+
     suspend fun resolveAnchor(sourceArtist: String): RadioAnchor? {
         if (sourceArtist.isBlank() || isPlaceholderArtist(sourceArtist)) {
             log("resolveAnchor('$sourceArtist') -- origen vacío o placeholder, se descarta sin buscar")
@@ -113,6 +160,7 @@ class RadioRepository @Inject constructor(
             }
 
             val sourceDetail = musicBrainzApiService.lookupArtist(sourceMbid)
+            noteSuccess()
             val genres = sourceDetail.genres
                 .filter { it.name.isNotBlank() }
             if (genres.isEmpty()) {
@@ -154,6 +202,7 @@ class RadioRepository @Inject constructor(
                 isSpanishOrigin = isSpanishOrigin,
             )
         } catch (e: Exception) {
+            noteFailure(e)
             log("resolveAnchor('$sourceArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
         }
@@ -236,6 +285,7 @@ class RadioRepository @Inject constructor(
                 decadeBegin = parseDecadeBegin(detail.lifeSpan?.begin),
             )
         } catch (e: Exception) {
+            noteFailure(e)
             log("lookupArtistProfile('$artistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
         }
@@ -257,6 +307,7 @@ class RadioRepository @Inject constructor(
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
     } catch (e: Exception) {
+        noteFailure(e)
         log("findCandidates(género='$genre', origen_es=$isSpanishOrigin, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
         emptyList()
     }
@@ -299,5 +350,16 @@ class RadioRepository @Inject constructor(
     private fun buildArtistQuery(artist: String): String {
         fun escape(value: String) = value.replace("\"", "")
         return "artist:\"${escape(artist)}\""
+    }
+
+    private companion object {
+        /**
+         * Fallos transitorios seguidos a partir de los cuales se
+         * considera que MusicBrainz no está disponible y la Radio pasa
+         * a modo degradado. Dos son suficientes: uno puede ser mala
+         * suerte, dos seguidos ya son un servicio que no responde, y
+         * esperar más significa servir basura mientras tanto.
+         */
+        const val DEGRADED_THRESHOLD = 2
     }
 }
