@@ -1069,7 +1069,37 @@ porciones y hacer que `dueForQuota()` trabaje con porcentajes
 EFECTIVOS recalculados según qué porciones siguen vivas, no con los
 porcentajes base de Ajustes.
 
-#### 6. Lo que sobrevive de mi hoja de ruta anterior
+#### 6. Construido en S020 sobre la especificación
+
+Todo lo anterior queda implementado en esta sesión, en cuatro commits:
+
+1. `15119db` -- el género no se abandona en ningún cupo.
+2. `a9cb2b1` + `8b39266` -- origen separado en los dos sentidos
+   (`KnownHitsRepository.Origin`), fuera el peldaño español ->
+   extranjero, fuera `findCandidatesAnyGenre`.
+3. `0ac5b58` -- las tres porciones con sus dos peldaños, reparto
+   dinámico (`effectiveQuotaPercent()`), no-repetición por CANCIÓN
+   (`radioUsedSongs`) y desenlace terminal.
+4. Ancla determinista y validación de candidatos (este bloque):
+   - `MusicBrainzGenre` gana `count` (votos de la comunidad). El
+     género del ancla deja de ser `genres.random()` y pasa a ser el
+     más votado, con desempate alfabético -- el mismo artista da
+     SIEMPRE el mismo ancla.
+   - `resolveAnchorWithFallbacks()` invierte el orden: primero el
+     artista estructurado de la pista, después el nombre del canal de
+     YouTube. Era el origen de anclas como `'知心音樂網'` o
+     `'Natacha Atlas Official'`, y del caso peor: una sesión de
+     Natacha Atlas anclada en Jethro Tull.
+   - `matchesArtist()` valida que el vídeo resuelto sea del artista
+     pedido (nombre normalizado presente en título o canal) antes de
+     encolarlo. Cierra la puerta al vídeo de la Tate y al de noticias
+     de guerra. Importa más con el reparto dinámico, porque la porción
+     de desconocidos hereda porcentaje.
+
+**Pendiente de verificación en dispositivo real con una sesión larga.**
+Y sigue pendiente, sin tocar en S020:
+
+#### 7. Lo que sobrevive de mi hoja de ruta anterior
 
 Estos puntos no los tocó Miguel Ángel y siguen siendo válidos, en este
 orden, DESPUÉS de lo anterior:

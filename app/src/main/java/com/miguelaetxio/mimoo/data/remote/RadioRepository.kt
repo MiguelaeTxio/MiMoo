@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.remote
 
 import android.content.Context
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -113,13 +114,26 @@ class RadioRepository @Inject constructor(
 
             val sourceDetail = musicBrainzApiService.lookupArtist(sourceMbid)
             val genres = sourceDetail.genres
-                .map { it.name }
-                .filter { it.isNotBlank() }
+                .filter { it.name.isNotBlank() }
             if (genres.isEmpty()) {
                 log("resolveAnchor('$sourceArtist', mbid=$sourceMbid) -- encontrado en MusicBrainz pero SIN géneros propios (inc=genres vacío) -- no se puede fijar ancla")
                 return null
             }
-            val chosenGenre = genres.random()
+            // S020 -- ancla DETERMINISTA. Antes era `genres.random()`:
+            // de todos los géneros del artista se echaba a suertes uno
+            // y ese decidía la sesión entera. Ahora manda el más
+            // votado por la comunidad de MusicBrainz, con desempate
+            // alfabético para que el mismo artista dé SIEMPRE el mismo
+            // ancla (dos sesiones de Pixies deben anclarse igual).
+            val chosenGenre = genres
+                .sortedWith(compareByDescending<MusicBrainzGenre> { it.count }.thenBy { it.name.lowercase() })
+                .first()
+                .name
+            log(
+                "resolveAnchor('$sourceArtist') -- géneros de MusicBrainz por votos: " +
+                    genres.sortedByDescending { it.count }.joinToString { "${it.name}(${it.count})" } +
+                    " -> elegido '$chosenGenre'"
+            )
             val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
             val decadeBegin = parseDecadeBegin(sourceDetail.lifeSpan?.begin)
             // S013/S014, punto 4 -- "grupo español" se decide primero

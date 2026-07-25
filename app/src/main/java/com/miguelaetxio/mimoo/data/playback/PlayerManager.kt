@@ -948,16 +948,28 @@ class PlayerManager @Inject constructor(
      *      -- nunca rellenar con un género arbitrario sin relación.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
-        radioRepository.resolveAnchor(anchorArtistName)?.let { return it }
-
-        radioAnchorArtistFallback?.let { fallback ->
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado, " +
-                    "reintentando con el artista estructurado '$fallback'",
-            )
-            radioRepository.resolveAnchor(fallback)?.let { return it }
+        // S020 -- ORDEN INVERTIDO. Antes se intentaba primero
+        // `anchorArtistName`, que es el título del CANAL de YouTube, y
+        // solo si fallaba se probaba el artista estructurado. Eso
+        // producía anclas absurdas en cuanto el canal no se llamaba
+        // como el artista: en el log real de Miguel Ángel aparecen
+        // '知心音樂網', 'Havalina Chiel' y 'Natacha Atlas Official'
+        // como ancla, ninguno resoluble en MusicBrainz, y el caso peor
+        // acabó anclando una sesión de Natacha Atlas en JETHRO TULL,
+        // derivado de la biblioteca local. El artista estructurado
+        // (H05, dato real de la pista) va primero.
+        radioAnchorArtistFallback?.let { structured ->
+            radioRepository.resolveAnchor(structured)?.let {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveAnchorWithFallbacks() -- ancla fijada desde el artista estructurado " +
+                        "'$structured' (el canal era '$anchorArtistName')",
+                )
+                return it
+            }
         }
+
+        radioRepository.resolveAnchor(anchorArtistName)?.let { return it }
 
         val titleGuess = parseArtistFromTitle(radioAnchorTrackTitle)
             ?.takeIf { !it.equals(anchorArtistName, ignoreCase = true) &&
@@ -1502,6 +1514,34 @@ class PlayerManager @Inject constructor(
     }
 
     /**
+     * S020 -- comprueba que el vídeo resuelto es DE VERDAD del artista
+     * pedido, mirando su título y su canal. Sin esto, el peldaño de
+     * artistas desconocidos encolaba a ciegas lo primero que devolviera
+     * YouTube: en el log real de Miguel Ángel entraron
+     * *"Art & Language -- Conceptual Art, Mirrors and Selfies |
+     * TateShots"* (un vídeo de la Tate, buscando un colectivo de arte
+     * conceptual que MusicBrainz etiqueta como 'art rock') y, buscando
+     * 'Гражданская оборона', un vídeo de NOTICIAS sobre la guerra.
+     *
+     * Importa más ahora que antes: con el reparto dinámico de S020,
+     * esa porción hereda porcentaje cuando otra se agota, así que un
+     * candidato basura se repite más.
+     *
+     * Se compara normalizado (`SearchNormalizer.normalizeArtistName`,
+     * que ya quita puntuación y el "The " inicial), y basta con que el
+     * nombre aparezca en el título O en el canal -- ser más estricto
+     * descartaría vídeos legítimos subidos por sellos o recopilatorios
+     * de canal.
+     */
+    private fun matchesArtist(artist: String, title: String, channelTitle: String?): Boolean {
+        val needle = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(artist)
+        if (needle.isBlank()) return true
+        val haystack = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(title) + " " +
+            com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(channelTitle.orEmpty())
+        return haystack.contains(needle)
+    }
+
+    /**
      * Búsqueda gratuita en YouTube + filtro de duración/compilación +
      * resolución de stream -- mismo mecanismo que ya existía antes de
      * S013, ahora reutilizado por los cupos de diccionario,
@@ -1521,7 +1561,8 @@ class PlayerManager @Inject constructor(
             candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
                 COMPILATION_TITLE_HINTS.none { hint ->
                     candidate.title.contains(hint, ignoreCase = true)
-                }
+                } &&
+                matchesArtist(artist, candidate.title, candidate.channelTitle)
         }
         if (track == null) {
             RadioDebugLogger.log(

@@ -131,8 +131,18 @@ data class MusicBrainzLifeSpan(
     @SerializedName("begin") val begin: String? = null,
 )
 
+/**
+ * S020 -- `count` es el número de votos de la comunidad para ese
+ * género en ese artista. Sin él, el ancla de la Radio elegía género
+ * AL AZAR entre todos los que MusicBrainz devolviera, y ese sorteo
+ * decidía las siguientes horas de escucha. Documentado por MetaBrainz
+ * ("puedes quedarte con los n géneros con más votos"); algunos vienen
+ * a 0, así que el valor por defecto es 0 y el desempate no depende de
+ * que exista.
+ */
 data class MusicBrainzGenre(
     @SerializedName("name") val name: String,
+    @SerializedName("count") val count: Int = 0,
 )
 
 /**
