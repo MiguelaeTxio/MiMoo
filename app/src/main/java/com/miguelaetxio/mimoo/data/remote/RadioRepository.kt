@@ -181,27 +181,26 @@ class RadioRepository @Inject constructor(
         // S020 -- cascada de DOS peldaños, nunca tres. El tercero
         // (`findCandidatesAnyGenre`: mantener década, soltar el género)
         // se elimina por la regla suprema de Miguel Ángel: "el género no
-        // se abandona nunca". Era el equivalente aquí del peldaño que ya
-        // se quitó en KnownHitsRepository.randomHit() y en
+        // se abandona nunca".
+        //
+        // S021 -- y ahora tampoco quedan DOS: vuelta ÚNICA. El segundo
+        // peldaño mantenía el género pero soltaba la década
+        // (`decadeBegin = null`), lo que contradecía la otra mitad de la
+        // misma regla: *"siempre se respeta género y década, siempre"*.
+        // `findCandidates()` ya omite el rango de fechas en la consulta
+        // a MusicBrainz cuando `decadeBegin` es null, así que pasarle
+        // directamente `anchor.decadeBegin` cubre los dos casos: ancla
+        // con década (se respeta) y ancla sin ella (no hay nada que
+        // respetar). Mismo cambio y misma razón que en
+        // KnownHitsRepository.randomHit() y en
         // PlayerManager.pickDiscoCandidate().
-        val genreAndDecade = if (anchor.decadeBegin != null) {
-            findCandidates(anchor.genre, anchor.isSpanishOrigin, anchor.decadeBegin, excludeLower)
-        } else {
-            emptyList()
-        }
-        val genreAnyDecade = if (genreAndDecade.isEmpty()) {
-            findCandidates(anchor.genre, anchor.isSpanishOrigin, decadeBegin = null, excludeLower)
-        } else {
-            emptyList()
-        }
-
-        val candidates = genreAndDecade.ifEmpty { genreAnyDecade }
+        val candidates = findCandidates(anchor.genre, anchor.isSpanishOrigin, anchor.decadeBegin, excludeLower)
         val preferred = candidates.filter { it.lowercase() !in avoidLower }
         val chosen = preferred.ifEmpty { candidates }.randomOrNull()
         if (chosen == null) {
             log(
                 "suggestRelatedArtist(género='${anchor.genre}', origen_es=${anchor.isSpanishOrigin}, " +
-                    "década=${anchor.decadeBegin}) -- 0 candidatos en ninguna vuelta de la cascada " +
+                    "década=${anchor.decadeBegin}) -- 0 candidatos en la vuelta única género+década " +
                     "(tras excluir ${excludeArtists.size} ya usados) -- eslabón roto para este cupo"
             )
         } else {

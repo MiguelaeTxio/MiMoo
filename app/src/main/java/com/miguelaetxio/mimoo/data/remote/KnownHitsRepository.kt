@@ -136,11 +136,25 @@ class KnownHitsRepository @Inject constructor(
      *   género. Si evitarlos deja el peldaño sin candidatos, se
      *   ignora la preferencia para ESE peldaño.
      *
-     * Cascada, sin abandonar jamás el género (S020):
-     *   1. género + década exacta.
-     *   2. género, cualquier década.
-     *   3. `null` -- el peldaño 1 de Conocidos está agotado; que lo
+     * Vuelta ÚNICA (S021), sin abandonar jamás el género NI la década:
+     *   1. género + década del ancla.
+     *   2. `null` -- el peldaño 1 de Conocidos está agotado; que lo
      *      resuelva `knownArtists()` (peldaño 2).
+     *
+     * **Historial S021.** Aquí vivía un peldaño intermedio "género,
+     * cualquier década" (`pool(null, origin)`) que contradecía de
+     * frente la especificación que Miguel Ángel cerró en S020:
+     * *"siempre se respeta género y década, siempre"*. Era el
+     * mecanismo REAL que servía Måneskin o Blur en una sesión anclada
+     * en los 80. En S020 ese síntoma se atribuyó a entradas mal
+     * fechadas del diccionario, pero la auditoría de S021 comprobó que
+     * esas entradas estaban bien fechadas: la década la soltaba el
+     * código, no el dato. Eliminado.
+     *
+     * `pool()` ya resuelve por sí solo el caso "el ancla no trae
+     * década" sirviendo todas las décadas, así que no hace falta
+     * ningún peldaño extra: si el ancla tiene década se respeta, y si
+     * no la tiene no hay nada que respetar.
      */
     fun randomHit(
         genre: String?,
@@ -156,15 +170,8 @@ class KnownHitsRepository @Inject constructor(
             return preferred.ifEmpty { allowed }.randomOrNull()
         }
 
-        if (genre != null && decadeBegin != null) {
-            pick(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
-                ?.let { return it }
-        }
-        if (genre != null) {
-            pick(pool(null, origin).filter { it.genre.equals(genre, ignoreCase = true) })
-                ?.let { return it }
-        }
-        return null
+        if (genre == null) return null
+        return pick(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
     }
 
     /**
@@ -178,9 +185,9 @@ class KnownHitsRepository @Inject constructor(
      * al final), nunca vacío por preferencia: si todos están en
      * `avoidArtists` se devuelven igualmente.
      *
-     * Misma cascada de dos peldaños que `randomHit()`: género+década
-     * exacta y, si no hay nadie, género con cualquier década. El
-     * género no se abandona.
+     * Misma vuelta ÚNICA que `randomHit()` (S021): género + década del
+     * ancla, sin peldaño de rescate que suelte la década. Ni el género
+     * ni la década se abandonan nunca.
      */
     fun knownArtists(
         genre: String?,
@@ -192,17 +199,8 @@ class KnownHitsRepository @Inject constructor(
         fun artistsOf(candidates: List<KnownHit>): List<String> =
             candidates.map { it.artist }.distinct()
 
-        val exact = if (genre != null && decadeBegin != null) {
-            artistsOf(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
-        } else {
-            emptyList()
-        }
-        val anyDecade = if (exact.isEmpty() && genre != null) {
-            artistsOf(pool(null, origin).filter { it.genre.equals(genre, ignoreCase = true) })
-        } else {
-            emptyList()
-        }
-        val all = exact.ifEmpty { anyDecade }
+        if (genre == null) return emptyList()
+        val all = artistsOf(pool(decadeBegin, origin).filter { it.genre.equals(genre, ignoreCase = true) })
         val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
         return fresh.shuffled() + repeated.shuffled()
     }

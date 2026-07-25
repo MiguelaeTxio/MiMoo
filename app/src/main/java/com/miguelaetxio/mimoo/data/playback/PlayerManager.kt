@@ -1474,21 +1474,25 @@ class PlayerManager @Inject constructor(
         }
 
         // S020, orden explícita de Miguel Ángel: "el género no debe
-        // abandonarse". Desaparece el peldaño intermedio que mantenía
-        // la década y soltaba el género (`pickPreferred { decadeOk(it) }`)
-        // -- mismo cambio y misma razón que en
-        // `KnownHitsRepository.randomHit()`, para que los dos cupos
-        // degraden igual. Si no hay nada del género del ancla en la
-        // biblioteca local, este cupo devuelve null y resuelve la
-        // vuelta siguiente: nunca sirve un género que no sea el del
-        // ancla.
+        // abandonarse". Desapareció el peldaño intermedio que mantenía
+        // la década y soltaba el género (`pickPreferred { decadeOk(it) }`).
+        //
+        // S021 -- desaparece también el simétrico, que mantenía el
+        // género y soltaba la década (`pickPreferred { genreOk(it) }`).
+        // Era la cuarta y última fuga de década del motor, y la que
+        // hacía que una sesión anclada en los 70 sirviese cualquier
+        // cosa del disco con tal de que el género cuadrase. Queda una
+        // vuelta ÚNICA: género Y década del ancla, o esta porción
+        // devuelve null y se declara agotada -- que es exactamente lo
+        // que Miguel Ángel especificó: *"si se pone rock de los setenta
+        // y no hay rock de los setenta en el disco, no se pone disco"*.
+        // Nótese que `decadeOk()` ya es `true` cuando el ancla no trae
+        // década, así que el caso sin ancla de década sigue cubierto.
         // ---
-        // S020 -- the genre is never abandoned. The intermediate rung
-        // that kept the decade and dropped the genre is gone, matching
-        // KnownHitsRepository.randomHit() so both quotas degrade the
-        // same way.
+        // S021 -- neither the genre nor the decade is ever abandoned.
+        // Single pass: the anchor's genre AND decade, or this quota
+        // reports itself exhausted.
         val chosenArtist = pickPreferred { genreOk(it) && decadeOk(it) }
-            ?: pickPreferred { genreOk(it) }
             ?: return null
 
         // S020 -- dentro del artista elegido, primero los temas que no
