@@ -1264,22 +1264,26 @@ class PlayerManager @Inject constructor(
      * género/país/década vía MusicBrainz bajo demanda (cacheado por
      * artista dentro de la sesión, ver radioLibraryArtistProfileCache).
      *
-     * **Fix real S016, corrección de Miguel Ángel sobre el diseño
-     * original de esta función.** Antes tenía un último peldaño
-     * ("cualquier pista que cumpla origen") que ignoraba género Y
-     * década por completo -- eso permitía que, en una sesión de
-     * flamenco rock español, el 10% de disco metiera un tema de Pink
-     * Floyd solo por tener origen distinto correcto. Eliminado: ahora
-     * sigue la MISMA cascada simétrica género/década que
-     * `KnownHitsRepository.randomHit()` (origen SIEMPRE fijo, nunca se
-     * relaja aquí):
+     * **Cascada (S020, orden explícita de Miguel Ángel: "el género no
+     * debe abandonarse"), idéntica a la del diccionario:**
      *   1. género + década exacta.
-     *   2. se agota el género -> se mantiene la década, cualquier género.
-     *   3. se agota también eso -> se mantiene el género, cualquier década.
-     *   4. nada -- `null`. Nunca cae directa a clásica ni al
+     *   2. se agota la década -> se mantiene el GÉNERO, cualquier
+     *      década.
+     *   3. nada -- `null`. Nunca cae a clásica ni al
      *      extranjero-conocido desde aquí, eso lo decide
      *      fetchRoundCandidate()/resolveFinalFallback() cuando este
      *      cupo devuelve null.
+     *
+     * El origen SIEMPRE fijo, nunca se relaja aquí.
+     *
+     * **Historial de los dos peldaños que se han caído.** El diseño
+     * original tenía un último escalón ("cualquier pista que cumpla
+     * origen") que ignoraba género Y década -- eliminado en S016 por
+     * corrección de Miguel Ángel, porque metía Pink Floyd en una
+     * sesión de flamenco rock español. La cascada simétrica que lo
+     * sustituyó conservaba un escalón que mantenía la década y soltaba
+     * el género; eliminado en S020 por la misma razón medida sobre log
+     * real, ver `DOCS/ANNEX_H08.md` sección "S020".
      */
     private suspend fun pickDiscoCandidate(
         anchor: RadioAnchor,
@@ -1326,8 +1330,21 @@ class PlayerManager @Inject constructor(
             return preferred.ifEmpty { matching }.firstOrNull()?.artist
         }
 
+        // S020, orden explícita de Miguel Ángel: "el género no debe
+        // abandonarse". Desaparece el peldaño intermedio que mantenía
+        // la década y soltaba el género (`pickPreferred { decadeOk(it) }`)
+        // -- mismo cambio y misma razón que en
+        // `KnownHitsRepository.randomHit()`, para que los dos cupos
+        // degraden igual. Si no hay nada del género del ancla en la
+        // biblioteca local, este cupo devuelve null y resuelve la
+        // vuelta siguiente: nunca sirve un género que no sea el del
+        // ancla.
+        // ---
+        // S020 -- the genre is never abandoned. The intermediate rung
+        // that kept the decade and dropped the genre is gone, matching
+        // KnownHitsRepository.randomHit() so both quotas degrade the
+        // same way.
         val chosenArtist = pickPreferred { genreOk(it) && decadeOk(it) }
-            ?: pickPreferred { decadeOk(it) }
             ?: pickPreferred { genreOk(it) }
             ?: return null
 

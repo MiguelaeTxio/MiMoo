@@ -100,16 +100,34 @@ class KnownHitsRepository @Inject constructor(
      * para género+década+origen dados, excluyendo los artistas ya
      * usados en la sesión.
      *
-     * **Cascada género/década (S016, corrección explícita de Miguel
-     * Ángel -- "si se acaba antes por género, se sigue con la misma
-     * década aunque ya no coincida el género; si se acaba la década,
-     * se sigue con el género aunque no sea de la misma década"):**
+     * **Cascada género/década (S020, orden explícita de Miguel Ángel:
+     * "el género no debe abandonarse"):**
      *   1. género + década exacta.
-     *   2. se agota el género -> se mantiene la década, cualquier género.
-     *   3. se agota también eso -> se mantiene el género, cualquier década.
-     *   4. nada -- `null`. El origen (`requireEs`) NUNCA se relaja
-     *      aquí dentro, en ninguno de los tres pasos -- eso lo decide
-     *      el llamante (`allowForeignFallback`, ver PlayerManager).
+     *   2. se agota la década -> se mantiene el GÉNERO, cualquier
+     *      década.
+     *   3. nada -- `null`. Que resuelva el cupo de disco o la vuelta
+     *      siguiente; este cupo nunca sirve un género que no sea el
+     *      del ancla.
+     *
+     * El origen (`requireEs`) NUNCA se relaja aquí dentro -- eso lo
+     * decide el llamante (`allowForeignFallback`, ver PlayerManager).
+     *
+     * **Historial -- por qué desapareció un peldaño.** Hasta S020 la
+     * cascada era simétrica (S016): entre el paso 1 y el actual paso 2
+     * había un peldaño que mantenía la década y soltaba el género
+     * entero. Ese peldaño es la causa directa, medida sobre
+     * `radio_relacionados_debug.txt` real (~30h de uso), de que una
+     * sesión anclada en `rock`/1980 sirviera copla (Rocío Jurado,
+     * Isabel Pantoja) y pop a mansalva: saltaba enseguida, porque el
+     * diccionario tiene solo 12 géneros y 158 de sus 289 entradas son
+     * `pop`, así que cualquier caída acababa en pop. Ver
+     * `DOCS/ANNEX_H08.md`, sección "S020", causa 2.
+     * ---
+     * S020 -- the genre is never abandoned (explicit instruction).
+     * Cascade: genre+decade -> genre, any decade -> null. The old
+     * S016 rung that kept the decade and dropped the genre is gone:
+     * measured on a real ~30h log, it was the direct cause of copla
+     * and pop flooding a `rock`/1980 session.
      *
      * `genre == null` o `decadeBegin == null` saltan directamente el
      * paso que dependería de ese dato ausente (mismo criterio que
@@ -117,9 +135,9 @@ class KnownHitsRepository @Inject constructor(
      *
      * `avoidArtists` (S016 -- "que las listas no sean siempre igual"
      * entre sesiones, ver `RadioSessionHistoryManager`): preferencia
-     * SUAVE en cada uno de los tres pasos -- si evitarlos deja el
-     * paso sin candidatos, se ignora `avoidArtists` para ESE paso y se
-     * elige igualmente de él, nunca se salta un paso entero por esto.
+     * SUAVE en cada paso -- si evitarlos deja el paso sin candidatos,
+     * se ignora `avoidArtists` para ESE paso y se elige igualmente de
+     * él, nunca se salta un paso entero por esto.
      */
     fun randomHit(
         genre: String?,
@@ -139,9 +157,6 @@ class KnownHitsRepository @Inject constructor(
         if (genre != null && decadeBegin != null) {
             pick(pool(decadeBegin, requireEs).filter { it.genre.equals(genre, ignoreCase = true) })
                 ?.let { return it }
-        }
-        if (decadeBegin != null) {
-            pick(pool(decadeBegin, requireEs))?.let { return it }
         }
         if (genre != null) {
             pick(pool(null, requireEs).filter { it.genre.equals(genre, ignoreCase = true) })

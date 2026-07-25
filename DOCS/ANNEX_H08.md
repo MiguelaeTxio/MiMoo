@@ -946,13 +946,20 @@ que menos.
    ancla extranjera se sirve `intl`; con ancla española, `es`; "ambos"
    queda reservado al `allowForeignFallback` explícito que ya existe.
    Es el cambio de menos líneas y el que más ruido quita.
-2. **La cascada nunca abandona el género.** Eliminar el peldaño 2 de
-   `randomHit()` (década sin género). La cascada queda: género+década
-   -> género sin década -> `null`, y que sea el cupo de disco o la
-   vuelta siguiente quien resuelva, igual que ya se hizo con
-   "classical" en S016. Confirmar este punto con Miguel Ángel antes de
-   ejecutarlo: cambia el reparto real del 80/10/10 cuando el pool de
-   un género se agota.
+2. **La cascada nunca abandona el género. — HECHO EN S020.** Orden
+   textual de Miguel Ángel al plantearle el punto: *"El género no debe
+   abandonarse."* Eliminado el peldaño intermedio (mantener década,
+   soltar género) en los DOS cupos que lo tenían, para que degraden
+   igual:
+   - `KnownHitsRepository.randomHit()`: la cascada queda género+década
+     -> género sin década -> `null`.
+   - `PlayerManager.pickDiscoCandidate()`: misma forma, desaparece
+     `pickPreferred { decadeOk(it) }`.
+
+   Cuando el género del ancla se agota, el cupo devuelve `null` y
+   resuelve el cupo de disco o la vuelta siguiente -- nunca se sirve un
+   género distinto al del ancla. Mismo criterio con el que se sacó
+   "classical" en S016.
 3. **Ancla determinista, no aleatoria.** En `resolveAnchor()`,
    sustituir `genres.random()` por el género de MusicBrainz con más
    votos (`count`), con desempate estable. Y no fijar ancla desde un
