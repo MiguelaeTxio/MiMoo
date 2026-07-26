@@ -11,6 +11,68 @@ qué hito está EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md` para eso.*
 
 ---
 
+## Última actualización: 2026-07-26 (cierre de sesión S022 NewFlow)
+
+**S022, resumen: sesión de dos mitades y once commits,
+`318c8d1`..`8e4bd30`, todos compilando en verde. Arrancó en H14
+verificando en dispositivo el traslado de biblioteca a tarjeta
+externa; esa verificación destapó seis fallos reales, uno de ellos
+destructivo. Derivó después a H08 al reportar Miguel Ángel que la
+Radio funcionaba bien con música extranjera y muy mal con española.
+PCH al cierre: H08 queda EN PROGRESO -- ver `DOCS/ANNEX_ROUTER.md`.**
+
+**H14 -- el traslado se probó y salió mal de seis maneras.** La app
+llegó a borrar carpetas de música con su contenido: `listFiles()`
+devuelve array vacío cuando el proveedor SAF falla, y
+`pruneEmptyFolders()` no distinguía eso de una carpeta realmente
+vacía. La tablet perdió la biblioteca y hubo que restaurarla desde
+Drive. Corregido eso, más el guardián de disco que redescargaba los
+763 temas al no distinguir "archivo borrado" de "volumen no
+accesible", un `OutOfMemoryError` por serializar el bundle entero en
+cada mutación, la etiqueta de Ajustes que no dejaba ver a qué carpeta
+apuntaba, la instrumentación de fallos del traslado, y el rediseño del
+migrador en tres fases con comprobación previa de espacio. Detalle
+completo en `DOCS/ANNEX_H14.md`, sección "COMPLETADAS EN S022".
+
+**H08 -- la Radio española.** Los tres síntomas (La Frontera derivando
+a música extranjera, doce Fangorias seguidas, el LP entero de Quentin
+Gas) resultaron ser la misma causa: los errores transitorios de
+MusicBrainz se trataban como respuestas negativas definitivas, y cada
+negativa agotaba una porción de forma irreversible. Corregido, más las
+reglas de no repetición que pidió Miguel Ángel (ningún artista dos
+veces en 10 canciones, ningún tema repetido jamás).
+
+**Dos correcciones de rumbo dentro de la propia sesión, que conviene
+no repetir:**
+
+1. Se dio por bueno, sin medirlo, que el diccionario tenía 22-28
+   entradas por década. Tenía 96-116. La cifra venía de sesiones
+   antiguas. Miguel Ángel autorizó ampliarlo sobre esa premisa falsa;
+   al medir, el problema no era el volumen sino que el filtro comparaba
+   géneros por igualdad literal de cadena.
+2. El primer intento de agrupar géneros los juntó por INSTRUMENTO
+   (todo lo que usa sintetizadores en un saco), y así apareció Pet Shop
+   Boys en una radio de Dead Can Dance. Miguel Ángel lo describió como
+   juntar a Bob Marley con Bad Bunny porque reggae y reguetón suenan
+   parecido -- y ese error exacto estaba en el archivo, con `reggaeton`
+   junto a `salsa` y `bachata`. La solución no fue agrupar mejor sino
+   dejar de tirar el dato: MusicBrainz da los siete géneros del ancla y
+   el código se quedaba con uno.
+
+**Qué sigue (H08):** enriquecer `known_hit_artists.json` para que cada
+entrada lleve su CONJUNTO de géneros, igual que ya lo lleva el ancla, y
+así decidir por intersección real en ambos lados. Es lo que sostiene la
+Radio cuando MusicBrainz cae. Quedan además dos decisiones de criterio
+musical sin resolver (Tears for Fears y New Order en una radio de Dead
+Can Dance). Todo en `DOCS/ANNEX_H08.md`.
+
+**Sin verificar en dispositivo:** el modo degradado y las reglas de no
+repetición (el log terminó antes de que pudieran manifestarse), y el
+traslado atómico de vuelta de la tarjeta al teléfono, que Miguel Ángel
+tenía previsto hacer.
+
+---
+
 ## Última actualización: 2026-07-25 (cierre de sesión S021 NewFlow)
 
 **Hito activo: H14** (Almacenamiento de la Biblioteca) -- hito nuevo,

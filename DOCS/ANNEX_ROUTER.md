@@ -34,13 +34,13 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
+| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
-| H14 | `DOCS/ANNEX_H14.md` | ← **EN PROGRESO** |
+| H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
 
 ---
 
@@ -141,3 +141,23 @@ abierto, sin mencionar jamás su propio estado.
   lo más reciente y lo menos verificado, y porque H08 ya no tiene
   trabajo de implementación pendiente. Si la escucha de la Radio en
   dispositivo revela algo, H08 vuelve con un PCH trivial.
+
+- **2026-07-26** — PCH al cierre de S022, petición explícita de Miguel
+  Ángel ("Ok `PCH` y comenzamos con ese bloque en la siguiente
+  sesión"): **H08 pasa a EN PROGRESO**, H14 pasa a PAUSADO.
+
+  La sesión arrancó en H14 (verificación en dispositivo del traslado a
+  tarjeta externa) y derivó a H08 al aparecer fallos graves de Radio
+  con música española. Ambos hitos recibieron trabajo y ambos quedan
+  anotados en su anexo.
+
+  El bloque que abre la siguiente sesión está en `DOCS/ANNEX_H08.md`,
+  sección "Hoja de Ruta para la Siguiente Sesión que retome H08":
+  enriquecer el diccionario local para que cada entrada lleve su
+  CONJUNTO de géneros en vez de uno solo, más las dos decisiones de
+  criterio musical que quedaron sin resolver.
+
+  H14 se pausa con su verificación en dispositivo hecha y con seis
+  fallos reales corregidos, pero con la reconciliación posterior al
+  traslado y el traslado en segundo plano todavía abiertos — ver
+  `DOCS/ANNEX_H14.md`.

@@ -189,3 +189,89 @@ repetir el cambio reintenta sin duplicar.
   explícitamente metadatos, no audio.
 - Respaldo del audio en Drive — H06 respalda metadatos, no audio, por
   decisión de diseño ya tomada.
+
+---
+
+## COMPLETADAS EN S022 — verificación en dispositivo y seis fallos reales
+
+El punto 1 de la hoja de ruta (verificación en dispositivo con tarjeta
+externa) se ejecutó. `takePersistableUriPermission()` no lanzó
+`SecurityException`, que era el riesgo anotado. Todo lo demás falló, y
+de formas que el diseño no había previsto:
+
+1. **8 de 763 pistas no se pudieron mover, sin saber cuáles.**
+   `LibraryMigrator` tenía cinco caminos distintos hacia el mismo
+   `failed++` mudo, y `copyIfNeeded` remataba con
+   `catch (e: Exception) { false }`, perdiendo la causa raíz en el
+   mismo sitio donde se producía. Ahora cada fallo registra su motivo
+   concreto (`FailureReason`), el diálogo los lista con nombre y
+   causa, y el detalle con rutas queda en
+   `traslado_biblioteca_informe.txt` en la raíz de destino.
+
+2. **El guardián de disco redescargó la biblioteca entera.**
+   `LibraryReconciler.verifyDiskState()` marcaba PENDING toda fila
+   DONE cuyo archivo no respondiera `exists()`, y
+   `AutoSyncViewModel.verifyDiskAndReconcile()` las reencolaba acto
+   seguido. No distinguía "el archivo se borró" de "el volumen no está
+   accesible". Con la biblioteca en memoria interna eso no pasaba
+   nunca; en tarjeta externa es el caso habitual. Tres salvaguardas:
+   flag `LibraryMigrator.isMigrating`, comprobación de que la raíz
+   responde antes de creerse nada, y tope de cordura (10+ pistas y más
+   del 25% desaparecidas a la vez = problema de acceso, no borrado).
+
+3. **La app borró carpetas de música con su contenido dentro.**
+   `DocumentFile.listFiles()` devuelve array VACÍO cuando el proveedor
+   SAF falla -- no lanza. Y `pruneEmptyFolders()` hacía
+   `if (sub.listFiles().isEmpty()) sub.delete()`, de modo que "está
+   vacía" y "no he podido leerla" eran el mismo caso. Es el único
+   punto de la app que borra directorios, y `rescan()` lo ejecuta en
+   CADA sincronización automática. Puerta de seguridad en `rescan()` +
+   exigencia de `exists() && canRead()` antes de creerse un listado
+   vacío.
+
+4. **La etiqueta de Ajustes no distinguía dónde estaba apuntando.**
+   `getRootLabel()` devolvía solo el nombre de la carpeta hoja, y la
+   carpeta destino se llamaba `miMoo` igual que la de origen. Se
+   construye ahora desde `treeDocumentId`: `Memoria interna · ...` /
+   `Tarjeta SD (1A2B-3C4D) · ...`. El cambio de raíz SÍ funcionaba --
+   verificado que `saf_root_uri` es el único almacén y todos los
+   consumidores leen de él.
+
+5. **`OutOfMemoryError` con heap de 256 MB durante la restauración.**
+   `AutoSyncPusher` llamaba a `pushCurrentState()` en CADA mutación, y
+   eso construye y serializa el bundle ENTERO. Con varios
+   `DownloadWorker` en paralelo, varias copias completas vivas a la
+   vez. Amortiguación por ventana (5 s, tope 60 s) y `Mutex` que
+   garantiza un solo bundle en memoria.
+
+6. **Traslado atómico y comprobación previa de espacio** (punto 4 de
+   la hoja de ruta), a petición explícita de Miguel Ángel antes de
+   mover de la tarjeta de vuelta al teléfono. Tres fases: precondiciones
+   (bytes necesarios vs. libres con margen de 300 MB, abortando sin
+   mover nada), copia completa sin tocar Room ni borrar, conmutación en
+   una única transacción (`updateAll()`, nuevo en el DAO), y borrado de
+   originales. El punto de no retorno es único e instantáneo. El
+   ajuste de raíz se revierte si el traslado aborta.
+
+**Consecuencia sufrida:** la tablet perdió la biblioteca y hubo que
+restaurarla desde Drive resolviendo el conflicto a favor de la nube.
+El teléfono conservó la suya resolviendo a favor del dispositivo. El
+flujo de sincronización -- `runSync()`, diálogo de conflicto,
+`confirmCloudWins()`, `confirmLocalWins()` -- **no se tocó en toda la
+sesión**, verificado a petición expresa de Miguel Ángel.
+
+### Sigue abierto en H14
+
+- **Punto 2 — reconciliación posterior al traslado.** Sin resolver, y
+  ahora con motivo concreto: las filas que el guardián tumbó a PENDING
+  antes del arreglo no se recuperan solas. Conviene estudiar si
+  `rescan()` puede reasociarlas leyendo el `MIMOO_YOUTUBE_ID` embebido
+  en los propios archivos, en vez de redescargar.
+- **Punto 3 — traslado como trabajo de WorkManager en segundo plano.**
+  Intacto. Hoy sigue colgando del `viewModelScope` de Ajustes.
+- **Aviso en UI cuando salta la salvaguarda de cordura.** Hoy solo
+  queda en logcat; falta decidir con Miguel Ángel si debe avisarse y
+  con qué texto.
+- **Contador "N pistas siguen apuntando fuera de esta carpeta"** en
+  Ajustes, para responder con un número y no por inferencia a si el
+  traslado se completó. Propuesto, no decidido.

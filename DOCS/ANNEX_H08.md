@@ -1243,9 +1243,124 @@ interpretar un log.
 
 ### HOJA DE RUTA PARA LA SIGUIENTE SESIÓN QUE RETOME H08
 
-**No queda trabajo de implementación pendiente en H08.** Lógica y
-datos están completos. Lo único que queda es verificación en
-dispositivo, y de su resultado depende todo lo demás.
+## COMPLETADAS EN S022
+
+La sesión arrancó en H14 y derivó aquí al reportar Miguel Ángel tres
+fallos con música española: una radio de La Frontera que se fue entera
+a música extranjera, una de Fangoria que sirvió doce temas seguidos de
+Fangoria, y una de Alaska y Dinarama que acabó poniendo el LP completo
+de Quentin Gas y Los Zíngaros.
+
+**Causa raíz de los tres, sobre `radio_relacionados_debug.txt`:** los
+errores transitorios de MusicBrainz (503, timeout, 429) se trataban
+como respuestas negativas definitivas. `lookupArtistProfile()`,
+`findCandidates()` y `resolveAnchor()` devuelven `null`/vacío tanto
+cuando NO HAY candidatos como cuando NO SE HA PODIDO PREGUNTAR, y como
+cada negativa agotaba una porción de forma irreversible, una racha de
+mala red condenaba la sesión entera. El caso de Alaska es el más
+claro: un HTTP 503 descartó al artista real, el fallback probó con el
+nombre del canal ('Chapuzasmix') y la sesión acabó anclada en un
+artista arbitrario de la biblioteca local.
+
+Falla más con lo español porque los géneros de nicho (`electropop`/ES,
+`flamenco`/ES) dependen casi por completo de MusicBrainz, mientras que
+`hard rock`/GB tiene colchón de sobra en el diccionario.
+
+Implementado:
+
+- **La porción de disco se agota** al quedarse sin artistas NUEVOS y
+  cede su cuota a diccionario y exploración. Antes "seguía viva
+  sacando más temas de los ya usados", que es exactamente cómo se
+  producían los doce Fangorias.
+- **Ningún artista dos veces en 10 canciones** (`RADIO_ARTIST_WINDOW`).
+  Reincidir dentro de la ventana agota a ese artista para el resto de
+  la sesión. Criterio literal de Miguel Ángel: a veinte canciones de
+  distancia no molesta, dos veces en diez sí.
+  `radioUsedArtists` no servía -- es un `Set` sin orden, sabe SI sonó
+  pero no HACE CUÁNTO -- de ahí `radioRecentArtists`.
+- **Ningún tema repetido jamás.** `radioUsedSongs` ya se alimentaba
+  pero no se consultaba como filtro.
+- **Modo degradado** ante caída de MusicBrainz: `RadioRepository`
+  distingue fallo transitorio de respuesta legítima
+  (`isServiceDegraded`, umbral 4 fallos SEGUIDOS). La porción no se
+  agota por un fallo de red, y no se deriva ancla de la biblioteca
+  local por un 503.
+- **Excepción deliberada de emergencia:** SOLO en modo degradado, el
+  diccionario suelta el género y conserva origen y década. Va contra
+  la regla de S020 a sabiendas. Decisión explícita de Miguel Ángel
+  ("habrá que soltarlo", y al revisarlo: "es una situación de
+  emergencia que hemos solventado bien"). **No es una grieta en la
+  regla del ancla: es una excepción acotada a que MusicBrainz esté
+  caído.** No eliminar sin hablarlo con él.
+- **Pertenencia por INTERSECCIÓN de géneros reales.** MusicBrainz da
+  siete géneros de Dead Can Dance y el código se quedaba con uno,
+  tirando seis, y luego había que reconstruir a mano con familias
+  escritas a ojo lo que se acababa de descartar. Así apareció Pet Shop
+  Boys en una radio de Dead Can Dance -- agrupados por usar
+  sintetizadores. `RadioAnchor.genres` conserva el conjunto y
+  `sharesGenreWith()` decide por intersección.
+- **`GENRE_FAMILIES` reescritas estrechas y por ESCENA**, no por
+  instrumento. `dark wave` con gothic/ethereal/cold wave y NO con
+  synth-pop/house/techno. `reggaeton` separado de salsa/bachata/cumbia
+  y `regional mexicano` en la suya -- la primera versión cometía
+  literalmente el error que Miguel Ángel puso como ejemplo ("Bob
+  Marley y Bad Bunny porque reggae y reguetón suenan parecido").
+- **Diccionario a 777 entradas** (`es/1960` 38→54, `es/2020` 35→45).
+  Nota importante: la premisa con la que se abrió este trabajo era
+  falsa. El diccionario NO estaba en 22-28 por década, sino en 96-116;
+  esa cifra venía de sesiones antiguas y se dio por buena sin medirla.
+  Medido, el problema nunca fue el volumen sino la etiqueta.
+
+---
+
+## Hoja de Ruta para la Siguiente Sesión que retome H08
+
+**Bloque principal, acordado con Miguel Ángel al cierre de S022:
+enriquecer el diccionario local.**
+
+Hoy cada entrada de `known_hit_artists.json` tiene UN género escrito a
+mano. Por eso el cruce con el ancla necesita pasar por
+`GENRE_FAMILIES`, que es una aproximación mía por muy afinada que
+esté. El ancla ya lleva su conjunto completo de géneros; el
+diccionario debería llevarlo también, y entonces la pertenencia se
+decidiría por intersección real en los dos lados y las familias
+dejarían de hacer falta salvo como respaldo.
+
+Esto importa especialmente porque **el diccionario es lo único que
+sostiene la Radio cuando MusicBrainz se cae**, que es justo el momento
+en que el criterio no puede permitirse ser aproximado.
+
+1. Decidir el formato: añadir `genres: [...]` a cada entrada
+   conservando `genre` por compatibilidad, o sustituirlo.
+2. Poblarlo para las 777 entradas. Conviene decidir con Miguel Ángel
+   si se hace a mano, derivándolo de MusicBrainz en una pasada única,
+   o por lotes revisados por él.
+3. Cambiar `matchesGenre()` para cruzar conjunto contra conjunto y
+   dejar `relatedGenres()` como respaldo de entradas sin conjunto.
+
+**Dos decisiones de criterio musical pendientes de Miguel Ángel**,
+planteadas al cierre de S022 y sin resolver:
+
+- **Tears for Fears** entra en una radio de Dead Can Dance porque está
+  etiquetado `new wave` y esa familia puentea con `post-punk`, que sí
+  está en el ancla. Sacarlo obligaría a sacar también a Joy Division,
+  que lleva la misma etiqueta en el diccionario y sí encaja.
+- **New Order** entra vía `electronic`, que cruza con `ambient` y
+  `new age` del ancla. Defendible viniendo de Joy Division, pero la
+  vía es casual.
+
+**Verificación en dispositivo todavía no cubierta de S022:** el modo
+degradado no llegó a validarse (el log terminó en el primer 503, y con
+umbral 4 hacen falta cuatro seguidos), y las reglas de no repetición
+tampoco (solo hubo cuatro canciones antes del corte).
+
+---
+
+## Hoja de Ruta anterior (S021), ya cubierta
+
+Lógica y datos estaban completos; lo que quedaba era verificación en
+dispositivo, y de su resultado dependía todo lo demás. Esa
+verificación se hizo en S022 y es lo que destapó todo lo de arriba.
 
 1. **Escucha larga en dispositivo real**, revisando
    `radio_relacionados_debug.txt`:
