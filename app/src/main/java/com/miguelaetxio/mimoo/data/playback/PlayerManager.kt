@@ -1030,6 +1030,15 @@ class PlayerManager @Inject constructor(
                     "resolveAnchorWithFallbacks() -- ancla fijada desde $source: '$name' " +
                         "(canal='$anchorArtistName', título='$radioAnchorTrackTitle')",
                 )
+                // S023 -- adoptar el nombre que de verdad resolvió. Sin
+                // esto, el resto de la sesión seguía arrastrando el del
+                // canal: el log entero decía ancla='Kurt Cobain' cuando
+                // el ancla era Radio Futura, lo que costó tiempo de
+                // diagnóstico. Y no era solo cosmético -- la exclusión
+                // del artista del ancla estaba excluyendo al canal, así
+                // que el artista real podía volver a salir sorteado en
+                // su propia radio.
+                radioAnchorArtist = name
                 return it
             }
         }

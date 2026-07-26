@@ -274,7 +274,33 @@ class KnownHitsRepository @Inject constructor(
         }
 
         // 3 -- hermanos, último peldaño.
-        return anchors.any { anchor -> hits.any { genreTree.shareImmediateParent(it, anchor) } }
+        if (anchors.any { anchor -> hits.any { genreTree.shareImmediateParent(it, anchor) } }) {
+            return true
+        }
+
+        // 4 -- S023, tras verlo fallar en dispositivo: si el ancla NO
+        // tiene NINGÚN género concreto, lo ancho es lo único que hay y
+        // tiene que contar.
+        //
+        // Miguel Ángel puso "Radio Futura - Divina". MusicBrainz le
+        // atribuye un solo género: `rock`, con 129 descendientes. Como
+        // el peldaño 1 exige que lo compartido sea concreto, NINGUNA de
+        // las 777 entradas podía encajar y la porción del diccionario
+        // -- el 80% del cupo -- se agotó en dos décimas de segundo.
+        //
+        // El umbral se midió contra anclas de siete géneros (P!nk, Dead
+        // Can Dance, Led Zeppelin), todas con alguna carpeta concreta
+        // entre ellos. Nunca contra una que solo tuviera una raíz.
+        //
+        // Esto NO afloja lo anterior: solo se aplica cuando el ancla
+        // entera es genérica. Medido -- Radio Futura pasa de 0 a 260
+        // candidatos, mientras P!nk (349) y Dead Can Dance (30) no se
+        // mueven, así que Creed y Café Tacvba siguen fuera.
+        if (anchors.none { genreTree.isSpecific(it) }) {
+            return hits.any { it in anchors }
+        }
+
+        return false
     }
 
     fun randomHit(
