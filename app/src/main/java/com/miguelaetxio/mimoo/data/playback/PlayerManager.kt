@@ -810,6 +810,18 @@ class PlayerManager @Inject constructor(
     private val radioLibraryArtistProfileCache =
         mutableMapOf<String, com.miguelaetxio.mimoo.data.remote.RadioRepository.ArtistProfile?>()
 
+    /**
+     * S023 -- ¿falló alguna consulta de perfil por red durante la
+     * última pasada de `pickDiscoCandidate()`?
+     *
+     * No basta con mirar `radioRepository.lastFailureWasTransient` al
+     * final: ese indicador se reinicia con cada éxito, así que si la
+     * última consulta salió bien tapa los diez 503 anteriores. Aquí se
+     * recuerda si hubo ALGUNO, que es lo que decide si la porción
+     * puede darse por agotada.
+     */
+    private var radioDiscoLookupFailedTransiently = false
+
     private fun topUpRadioQueueIfNeeded() {
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
@@ -1418,6 +1430,32 @@ class PlayerManager @Inject constructor(
             )
             return item
         }
+        // S023 -- la porción DISCO no puede agotarse por no haber
+        // podido preguntar. La guarda equivalente existía en
+        // fetchFromKnown() desde S022 y aquí faltaba.
+        //
+        // Visto en log real: diez consultas seguidas de
+        // lookupArtistProfile() devolvieron HTTP 503 -- ZAZ, Future
+        // Sound of London, Héroes del Silencio, Air, Iron Maiden,
+        // Fatboy Slim, Chumbawamba, Pistones, Pixies, Transglobal
+        // Underground -- y de ahí se concluyó "la biblioteca local no
+        // tiene nada de género='pop' década=2000". Falso: la
+        // biblioteca puede estar llena, lo que pasó es que MusicBrainz
+        // no contestó. `lookupArtistProfile()` devuelve null tanto
+        // cuando el artista no existe como cuando falla la red, y
+        // pickDiscoCandidate() los descartaba igual.
+        //
+        // Agotar es IRREVERSIBLE para el resto de la vuelta y reparte
+        // la cuota a las otras porciones, así que el precio de
+        // equivocarse aquí es alto y el de esperar una ronda es nulo.
+        if (radioDiscoLookupFailedTransiently || radioRepository.isServiceDegraded) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchFromDisco(ancla='$anchorArtistName') -- sin candidatos, pero MusicBrainz " +
+                    "no está respondiendo: la porción NO se agota, se reintentará en la siguiente ronda",
+            )
+            return null
+        }
         exhaustPortion(
             RadioPortion.DISCO, anchorArtistName,
             "la biblioteca local no tiene nada de género='${anchor.genre}' década=${anchor.decadeBegin}",
@@ -1577,10 +1615,21 @@ class PlayerManager @Inject constructor(
             val profile: com.miguelaetxio.mimoo.data.remote.RadioRepository.ArtistProfile,
         )
 
+        radioDiscoLookupFailedTransiently = false
         val originMatches = candidateArtists.mapNotNull { artistName ->
             val profile = radioLibraryArtistProfileCache.getOrPut(artistName) {
                 radioRepository.lookupArtistProfile(artistName)
-            } ?: return@mapNotNull null
+            } ?: run {
+                // S023 -- distinguir "este artista no encaja" de "no se
+                // ha podido preguntar". lookupArtistProfile() devuelve
+                // null en los dos casos, y tratarlos igual fue lo que
+                // hizo concluir que la biblioteca no tenía nada de pop
+                // de los 2000 tras diez 503 seguidos.
+                if (radioRepository.lastFailureWasTransient) {
+                    radioDiscoLookupFailedTransiently = true
+                }
+                return@mapNotNull null
+            }
             // S020 -- separación dura en los dos sentidos. País
             // desconocido en MusicBrainz cuenta como NO español: con
             // ancla española queda fuera, con ancla extranjera entra.
