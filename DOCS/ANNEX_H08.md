@@ -1479,70 +1479,182 @@ pantalla llegó a componerse.
 
 ---
 
+---
+
+## S023 (continuación) -- REAPERTURA TRAS EL PRIMER CIERRE
+
+La sesión se cerró y se reabrió al probar en dispositivo. Cinco
+commits más, todos sobre el mismo hilo: **de dónde sale el artista que
+ancla una sesión de Radio.**
+
+### El fallo del canal de YouTube
+
+Miguel Ángel puso "Radio Futura - Divina" y la Radio devolvió The
+Strokes, R.E.M., The Smiths y Travis. El ancla se había fijado en
+**Kurt Cobain**, que es el nombre del CANAL que subió el vídeo.
+
+El respaldo de S010 no lo cazaba porque se diseñó para canales que NO
+son un artista ("OldGuitar8", sin resultados en MusicBrainz): solo
+salta cuando el canal FALLA. 'Kurt Cobain' es un artista real, resuelve
+perfectamente, y el título -- donde estaba el dato bueno -- no llegaba
+a probarse nunca.
+
+**La lección es de fuente, no de validación.** `pickAnchorArtist()` no
+podía ayudar: se buscó Kurt Cobain y se encontró Kurt Cobain. El
+problema no era un mal emparejamiento, era preguntar por la fuente
+equivocada. En palabras de Miguel Ángel: *"no podemos buscar por el
+nombre de quien lo sube"*.
+
+La cascada pasa a ordenarse por fiabilidad de la FUENTE: artista
+estructurado → título → canal.
+
+### La hambruna del diccionario
+
+Con el ancla ya correcta (Radio Futura, ES, 1980), la porción del
+diccionario se agotó en dos décimas. MusicBrainz le atribuye UN género:
+`rock`, con 129 descendientes, y el filtro de especificidad lo
+rechazaba. Ninguna de las 777 entradas podía encajar.
+
+El umbral se había medido contra anclas de cuatro a siete géneros
+(P!nk, Dead Can Dance, Led Zeppelin), todas con alguna carpeta concreta.
+Nunca contra un ancla cuyo conjunto ENTERO fuese una raíz. Cuarto
+peldaño añadido: si el ancla no tiene ningún género concreto, lo ancho
+cuenta.
+
+### La búsqueda por palabras, idea de Miguel Ángel
+
+Un vídeo titulado `Led Zeppelin Immigrant song`, subido por
+`oldschoolrockerkid`, no se pudo identificar: `parseArtistFromTitle()`
+solo parte por `" - "`. La sesión se ancló en un artista SORTEADO AL
+AZAR de la biblioteca local (Chumbawamba, `alternative dance`), de las
+61 entradas internacionales de los 80 solo encajaban 6, y la Radio las
+repitió en bucle.
+
+**Incidencia de método, anotada a propósito.** El modelo afirmó que ese
+tema "no tenía artista identificable por ninguna vía". Era falso: el
+artista y la canción estaban los dos en el título. Lo cierto era que el
+parser no supo leerlos. Miguel Ángel lo señaló: afirmar que el dato no
+está, en vez de decir que no se ha encontrado, cierra la puerta a la
+solución. La regla: **"no he encontrado coincidencia" nunca es "no
+existe"**.
+
+Su propuesta, implementada: si el título no viene partido, se parte por
+palabras y se pregunta, probando prefijos **del más largo al más
+corto** -- porque 'Led' también existe como artista y buscando al revés
+se perdería 'Led Zeppelin'. Verificado en dispositivo:
+
+    identifyFromTitleWords('Led Zeppelin Immigrant song')
+      -> artista='Led Zeppelin', canción='Immigrant song' (2 prefijos)
+    ancla fijada: hard rock, GB, 1970
+
+### Medición del diccionario, que corrige lo que creíamos
+
+Las cifras que arrastraba este anexo (1960:22, 1970:22, 1980:28...)
+estaban OBSOLETAS. El diccionario ya supera el objetivo de ~100 por
+década:
+
+    década   es  intl  total        década   es  intl  total
+    1960     54    59    113        2000     51    65    116
+    1970     48    56    104        2010     50    60    110
+    1980     52    61    113        2020     45    61    106
+    1990     52    63    115        TOTAL   352   425    777
+
+**El volumen no es el problema.** Lo es el pool que queda tras cruzar
+década + origen + género. Simulando cada una de las 777 entradas como
+ancla, contra su propio pool:
+
+    pool            mediana de candidatos   entradas con <5
+    español                    6 - 11            14-19 por década
+    internacional             21 - 40             0-5 por década
+
+Y la causa está aislada:
+
+    entradas SIN conjunto de géneros    media de géneros
+    español    151 de 352  (43%)              2,7
+    intl         5 de 425  ( 1%)              7,8
+
+**MusicBrainz apenas cataloga a los artistas españoles.** De las 151
+españolas sin conjunto, 81 llevan `pop` o `rock` a secas -- las dos
+carpetas raíz. Por eso una radio anclada en un español se queda sin
+candidatos: no faltan entradas, falta el DATO DE GÉNERO justo donde más
+se necesita. Añadir cien entradas españolas más sin resolver esto solo
+añadiría más "pop".
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
-**El bloque de géneros está cerrado.** El árbol se usa, `GENRE_FAMILIES`
-ya no existe, y el fechado por tema está verificado en dispositivo. Lo
-que queda es más pequeño y no depende entre sí.
+**Objetivo único acordado con Miguel Ángel al cierre de S023: que la
+Radio no se agote.** Todo lo demás queda detrás.
 
-### 1. Ampliar el diccionario (lo más antiguo pendiente del hito)
+El diagnóstico está hecho y medido (ver "Medición del diccionario" en
+S023 continuación). No falta volumen: falta DATO DE GÉNERO en el lado
+español, donde MusicBrainz apenas cataloga. Esto es una sesión de datos,
+no de motor.
 
-Sigue por debajo del objetivo de ~100 entradas por década. Último
-estado conocido: 1960:22, 1970:22, 1980:28, 1990:23, 2000:27,
-2010:24, 2020:13.
+### 1. Rellenar el género de las 151 españolas sin conjunto
 
-Novedad de S023 que cambia cómo hacerlo: las entradas nuevas ya no
-necesitan un género escrito a mano. Basta con artista + tema +
-década + origen, y `tools/enrich_dictionary_genres.py` les pone su
-conjunto real. **El campo `genre` sigue haciendo falta** como término
-único de búsqueda en MusicBrainz, pero deja de ser el que decide la
-pertenencia.
+Es la palanca principal. 43% del bloque español, y 81 de ellas llevan
+`pop` o `rock` a secas, que no sirven para cruzar con ningún ancla
+específica.
 
-### 2. Cerrar las fuentes de fecha por artista que quedan
+MusicBrainz no las tiene, así que hay que decidir CON MIGUEL ÁNGEL de
+dónde sale el dato. Opciones a plantearle, sin elegir por él:
 
-`lookupArtistProfile()` sigue derivando la década del `life-span` del
-artista para los candidatos del cupo DISCO. Ahí hace menos daño que en
-el ancla —descarta un candidato suelto en vez de condicionar la sesión
-entera— pero arrastra el mismo defecto que se corrigió en
-`resolveAnchor()`.
+- Otra fuente pública con mejor cobertura española (Discogs tiene
+  `style` por lanzamiento; Wikipedia/Wikidata tienen género por
+  artista).
+- Por lotes revisados por él, que es como se hizo la desambiguación de
+  S023 y funcionó.
 
-### 3. `sharesGenreWith()` no usa el árbol
+**Restricción heredada de S023, no negociable:** el género no lo
+inventa el modelo. Si el dato no está en una fuente, se pregunta; no se
+rellena a ojo. Fue el origen de `GENRE_FAMILIES` y de todo el trabajo
+de esta sesión.
 
-En `RadioAnchor` es intersección exacta pura, sin descenso ni filtro de
-especificidad. Estricta pero nunca falsa. Meter el árbol ahí exige
-resolver que `RadioAnchor` es una `data class` sin inyección.
+### 2. Medir DESPUÉS, con el mismo método
 
-### 4. Cinco artistas sin MBID
+La simulación que produjo las cifras de S023 -- tratar cada entrada
+como ancla y contar candidatos en su pool de década+origen -- es
+reproducible y debe repetirse al terminar. Criterio de éxito
+propuesto: que ninguna década española baje de ~15 candidatos de
+mediana, y que las entradas con menos de 5 candidatos caigan por
+debajo del 5% (hoy: 17% global, casi todo español).
 
-Deluxe, Kanye West, Los Canarios, Micky y Pink. Deluxe, Los Canarios y
-Micky no aparecen en MusicBrainz con ese nombre. Kanye West y Pink sí
-existen, y el límite de búsqueda subido a 25 debería resolverlos ya
-sin lista manual — **conviene comprobarlo** antes de buscarles MBID.
+### 3. Si tras 1 y 2 sigue agotándose, entonces sí tocar el motor
 
-### 5. Afinado del umbral, si al escuchar se ve un patrón
+Y no antes. Dos vías posibles, a decidir con las cifras delante:
 
-`MAX_DESCENDANTS_TO_DESCEND = 25` sale de medir el árbol (percentil 99
-en 19 descendientes), no de la intuición. La radio de P!nk tira hacia
-el indie/rock de los 2000 más que hacia el pop, porque su género
-principal es `pop`, la carpeta raíz. Si al escuchar más radios aparece
-un patrón, los dos sitios donde se ajusta son ese umbral y la elección
-del género principal del ancla.
+- Relajar la separación dura de origen cuando el pool español se
+  agota. **Ojo: contradice la orden explícita de S020** ("el origen
+  separa España y extranjero en los DOS sentidos"), así que requiere
+  que Miguel Ángel la revise, no se toca por iniciativa propia.
+- Ampliar la ventana de década a la contigua antes de repetir tema.
+  Menos invasivo, pero también toca una regla suya.
 
-### 6. Verificación en dispositivo que S022 dejó sin cubrir
+### 4. Pendientes menores, si sobra sesión
 
-Sigue pendiente y no se cubrió tampoco en S023:
+- `lookupArtistProfile()` sigue derivando la década del `life-span`
+  del artista para los candidatos del cupo DISCO -- mismo defecto
+  corregido en `resolveAnchor()`, con menos daño porque descarta un
+  candidato suelto en vez de condicionar la sesión.
+- `sharesGenreWith()` en `RadioAnchor` es intersección exacta sin
+  árbol. Estricta pero nunca falsa. Meterlo exige resolver que
+  `RadioAnchor` es una `data class` sin inyección.
+- Cinco artistas sin MBID (Deluxe, Kanye West, Los Canarios, Micky,
+  Pink). Kanye West y Pink deberían resolverse ya solos con el límite
+  de búsqueda en 25: **comprobarlo antes** de buscarles MBID a mano.
+- Verificación en dispositivo del modo degradado (hacen falta cuatro
+  fallos SEGUIDOS) y de las reglas de no repetición en una sesión
+  larga.
+- Verificación en dos dispositivos (PASO 5 de H07), ajena a este hito.
 
-- **Modo degradado**: nunca llegó a dispararse. Hace falta que
-  MusicBrainz falle cuatro veces SEGUIDAS (`DEGRADED_THRESHOLD = 4`).
-  En S023 hubo diez 503 seguidos en el cupo DISCO, así que es
-  reproducible — pero no se comprobó qué hace la Radio una vez
-  degradada.
-- **Reglas de no repetición**: tampoco validadas, nunca ha habido una
-  sesión lo bastante larga.
+### Lo que NO hay que volver a tocar
 
-### 7. Verificación en dos dispositivos (PASO 5 de H07)
-
-Sigue abierta, ajena a este hito pero pendiente.
+El bloque de géneros de S023 está cerrado y verificado en dispositivo:
+árbol, fechado por tema, cascada del ancla por fiabilidad de fuente, y
+búsqueda por palabras. Si algo de eso falla, es una incidencia nueva
+con log, no material de hoja de ruta.
 
 ---
 

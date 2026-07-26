@@ -54,14 +54,50 @@ Keane, Kings Of Leon y Kaiser Chiefs.
 
 ---
 
-## Próximos pasos
+## La sesión se reabrió tras el primer cierre
 
-Ver **"Hoja de Ruta para la Siguiente Sesión que retome H08"** en
-`DOCS/ANNEX_H08.md`. En orden: ampliar el diccionario (lo más antiguo
-pendiente del hito), cerrar las fuentes de fecha por artista que
-quedan, meter el árbol en `sharesGenreWith()`, comprobar si los cinco
-artistas sin MBID ya se resuelven con el límite de búsqueda subido a
-25, y la verificación en dispositivo del modo degradado.
+Al probar en dispositivo aparecieron tres fallos más, todos sobre **de
+dónde sale el artista que ancla la Radio**:
+
+- El ancla salía del **nombre del canal de YouTube**. "Radio Futura -
+  Divina" se ancló en *Kurt Cobain*, el canal que subió el vídeo. La
+  cascada pasa a ordenarse por fiabilidad de la FUENTE: artista
+  estructurado → título → canal.
+- Un ancla cuyo conjunto entero fuese una carpeta raíz (`rock`)
+  **agotaba el diccionario entero**. Cuarto peldaño añadido.
+- Un título sin guion (`Led Zeppelin Immigrant song`) no se sabía
+  leer, y la sesión acababa anclada en un artista sorteado al azar.
+  Idea de Miguel Ángel, implementada: partir el título por palabras y
+  probar prefijos del más largo al más corto.
+
+Verificado en dispositivo: una radio desde `Led Zeppelin Immigrant
+song` ancla en Led Zeppelin, hard rock, GB, 1970, y sirve Black
+Sabbath, Genesis y Lou Reed.
+
+---
+
+## Próximos pasos — OBJETIVO ÚNICO: que la Radio no se agote
+
+Acordado con Miguel Ángel al cierre. Ver la hoja de ruta completa en
+`DOCS/ANNEX_H08.md`.
+
+**El diagnóstico ya está hecho y medido, la próxima sesión no tiene que
+volver a investigarlo.** El diccionario NO está corto de volumen (777
+entradas, 104-116 por década, por encima del objetivo). Lo que falta es
+dato de género en el lado español:
+
+    entradas SIN conjunto de géneros    media de géneros
+    español    151 de 352  (43%)              2,7
+    intl         5 de 425  ( 1%)              7,8
+
+MusicBrainz apenas cataloga a los artistas españoles, y 81 de esas 151
+llevan `pop` o `rock` a secas. Por eso una radio anclada en un español
+agota: no faltan entradas, falta el dato justo donde más se necesita.
+
+Es una sesión de DATOS, no de motor. Y la primera decisión es de Miguel
+Ángel: de qué fuente sale ese género, ya que MusicBrainz no lo tiene.
+El modelo no lo inventa -- fue el origen de `GENRE_FAMILIES` y de todo
+el trabajo de S023.
 
 ---
 
@@ -72,6 +108,12 @@ artistas sin MBID ya se resuelven con el límite de búsqueda subido a
   el indie/rock de los 2000 más que hacia el pop, porque su género
   principal es `pop`, la carpeta raíz. Queda a su juicio, tras
   escuchar más radios, si eso se ajusta y dónde.
+
+- **Fuente del género español.** Primera decisión de la próxima
+  sesión, y no la puede tomar el modelo: MusicBrainz no cataloga a
+  esos 151 artistas. Opciones a plantearle -- otra fuente pública con
+  mejor cobertura española, o por lotes revisados por él, como se hizo
+  con la desambiguación de S023.
 
 - **Pantalla en blanco al navegar.** Reportada al final de S023 y
   ajena a H08 — no se tocó interfaz. Al entrar en Ajustes el hueco del
