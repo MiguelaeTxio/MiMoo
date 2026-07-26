@@ -49,11 +49,41 @@ import javax.inject.Singleton
 @Singleton
 class KnownHitsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val genreTree: GenreTree,
 ) {
-    /** Un éxito conocido concreto -- artista + canción real de esa época, con su género principal. */
-    data class KnownHit(val artist: String, val song: String, val genre: String)
+    /**
+     * Un éxito conocido concreto -- artista + canción real de esa época.
+     *
+     * `genre` es la etiqueta única escrita a mano de siempre. `genres`
+     * (S023) es el CONJUNTO real que MusicBrainz atribuye al artista,
+     * y lo tienen 616 de las 777 entradas. Se conservan los dos:
+     * `genre` sigue haciendo falta como término único de búsqueda en
+     * MusicBrainz, y romperlo no aportaba nada.
+     */
+    data class KnownHit(
+        val artist: String,
+        val song: String,
+        val genre: String,
+        val genres: List<String> = emptyList(),
+    ) {
+        /**
+         * Conjunto con el que cruzar contra el ancla. Las 161 entradas
+         * sin enriquecer caen a su género único, que aquí es
+         * simplemente un conjunto de uno.
+         */
+        val genreSet: Set<String>
+            get() = genres.ifEmpty { listOf(genre) }
+                .map { it.lowercase().trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
+    }
 
-    private data class RawHit(val artist: String = "", val song: String = "", val genre: String = "")
+    private data class RawHit(
+        val artist: String = "",
+        val song: String = "",
+        val genre: String = "",
+        val genres: List<String> = emptyList(),
+    )
     private data class RawDecade(val es: List<RawHit> = emptyList(), val intl: List<RawHit> = emptyList())
 
     /** `lazy` -- se lee y parsea el asset una sola vez, la primera vez que se necesita. */
@@ -137,7 +167,7 @@ class KnownHitsRepository @Inject constructor(
                 Origin.INTL -> d.intl
                 Origin.ANY -> d.es + d.intl
             }
-            raw.map { KnownHit(it.artist, it.song, it.genre) }
+            raw.map { KnownHit(it.artist, it.song, it.genre, it.genres) }
         }
     }
 
@@ -191,114 +221,60 @@ class KnownHitsRepository @Inject constructor(
      * no la tiene no hay nada que respetar.
      */
     /**
-     * Familias de géneros compatibles.
+     * ¿Encaja esta entrada del diccionario con el género del ancla?
      *
-     * S022 -- el filtro del diccionario comparaba el género del ancla
-     * con el de la entrada mediante `equals(ignoreCase = true)`, es
-     * decir igualdad literal de cadena. El problema es que el ancla
-     * viene de MusicBrainz, cuyo vocabulario es enorme y granular,
-     * mientras el diccionario usa 27 etiquetas amplias. El resultado
-     * fue el caso Fangoria: ancla `electropop`, y en es/1980 había
-     * cuatro temas perfectamente adecuados -- Aviador Dro
-     * (`electronic`), Décima Víctima y Derribos Arias (`new wave`),
-     * Objetivo Birmania (`synth-pop`) -- que el filtro no vio porque
-     * ninguno decía literalmente `electropop`. Cero candidatos, porción
-     * agotada en 0,7 segundos, y de ahí la cascada que acabó sirviendo
-     * doce temas del mismo artista.
+     * **S023 -- sustituye por completo a `GENRE_FAMILIES`.** Aquello
+     * eran sacos de géneros escritos a mano por el modelo: opinión, no
+     * dato. En uno convivían `new wave` y `post-punk`, y por esa arista
+     * Tears for Fears entraba en una radio de Dead Can Dance. Ahora la
+     * pertenencia se decide contra la taxonomía real de MusicBrainz
+     * (ver [GenreTree]).
      *
-     * Un género puede estar en varias familias a propósito
-     * (`pop rock`, `hard rock`, `new wave`, `bolero`): hacen de puente
-     * entre estilos que de verdad se tocan. Lo que NO se hace es
-     * conectarlo todo con todo, porque entonces el género dejaría de
-     * significar nada y la Radio perdería el hilo que la hace
-     * reconocible.
+     * **La regla, cerrada por Miguel Ángel**, con su analogía: oso
+     * hormiguero y oso polar comparten ancestro -- mamífero -- y no son
+     * parientes. Compartir un antepasado lejano no significa nada.
+     *
+     *   1. **Intersección directa** sobre un género CONCRETO. Que los
+     *      dos digan `rock` no vale: es la carpeta raíz, y por ahí
+     *      entraban Creed y Café Tacvba en una radio de P!nk. Que los
+     *      dos digan `electropop` o `dance-pop`, sí.
+     *   2. **Descenso desde el ancla.** Un género de la entrada cuelga
+     *      de un género del ancla. Solo hacia ABAJO, y solo desde
+     *      carpetas contenidas: bajar desde `rock` (129 descendientes)
+     *      admitiría medio catálogo.
+     *   3. **Hermanos**, último peldaño, y con el mismo tope: si el
+     *      padre común es una raíz, ser hermanos no significa nada.
+     *
+     * Nunca se sube al padre y nunca se recorren aristas de influencia.
+     * Con eso, las dos decisiones que quedaron abiertas en S022 se
+     * resuelven sin criterio del modelo: Tears for Fears (`new wave`) y
+     * New Order (`electronic`) entraban por influencia o por la raíz, y
+     * quedan fuera. Joy Division sigue entrando porque `post-punk` está
+     * literalmente en el conjunto del ancla.
+     *
+     * `hitGenres` es el conjunto de la entrada -- las 616 entradas
+     * enriquecidas en S023 lo tienen. Las 161 que no, caen al `genre`
+     * único de siempre, que aquí es un conjunto de uno.
      */
-    private val GENRE_FAMILIES: List<Set<String>> = listOf(
-        // Oscuro / gótico. NO lleva synth-pop ni nada de club: Dead Can
-        // Dance y Pet Shop Boys comparten el teclado y nada más.
-        setOf(
-            "dark wave", "darkwave", "gothic", "gothic rock", "goth",
-            "ethereal wave", "ethereal", "neoclassical dark wave", "cold wave",
-            "coldwave", "deathrock", "neoclassical",
-        ),
-        // Post-punk. Puente deliberado con la oscura vía post-punk y
-        // cold wave -- Joy Division sí pega con Dead Can Dance.
-        setOf("post-punk", "postpunk", "new wave", "cold wave", "no wave"),
-        // Synth-pop de pista de baile. Separado del anterior a
-        // propósito, aunque compartan la etiqueta 'new wave' en algunos
-        // discos.
-        setOf(
-            "synth-pop", "synthpop", "synth pop", "electropop", "new romantic",
-            "italo disco", "dance-pop", "hi-nrg",
-        ),
-        // Club / electrónica de baile.
-        setOf("techno", "house", "trance", "edm", "big beat", "acid house", "electro", "dance"),
-        // Electrónica de escucha.
-        setOf("ambient", "downtempo", "trip hop", "idm", "new age", "electronica", "electronic"),
-        setOf(
-            "rock", "pop rock", "rock and roll", "rock & roll", "rock'n'roll",
-            "classic rock", "garage rock", "rock urbano",
-        ),
-        setOf("hard rock", "heavy metal", "metal", "thrash metal", "power metal", "glam metal", "heavy rock"),
-        setOf("punk", "punk rock", "hardcore punk", "hardcore", "ska punk", "post-punk"),
-        setOf("pop", "dance-pop", "teen pop", "balada", "ballad", "bolero"),
-        setOf("folk", "folk rock", "singer-songwriter", "cantautor", "trova", "nueva canción"),
-        setOf("country", "americana", "bluegrass"),
-        // Flamenco y aledaños. 'rumba' aquí, NO con lo latino.
-        setOf("flamenco", "copla", "rumba", "rumba catalana", "flamenco pop", "sevillanas", "cante"),
-        // Urbano. Separado de lo latino tradicional: reggaetón no es
-        // salsa, igual que reggae no es reggaetón.
-        setOf("hip hop", "hip-hop", "rap", "trap", "drill", "urban"),
-        setOf("reggaeton", "urbano latino", "dembow"),
-        setOf("salsa", "merengue", "bachata", "cumbia", "latin", "latin pop", "bolero"),
-        setOf("regional mexicano", "ranchera", "mariachi", "corrido"),
-        setOf("ska", "reggae", "dub", "rocksteady", "dancehall"),
-        setOf("soul", "funk", "r&b", "rhythm and blues", "motown", "gospel", "neo soul"),
-        setOf("disco", "funk", "hi-nrg"),
-        setOf("indie rock", "indie", "indie pop", "alternative rock", "alternative", "britpop", "shoegaze", "grunge", "noise pop", "post-rock"),
-        setOf("jazz", "swing", "bossa nova", "blues"),
-        setOf("blues", "rhythm and blues"),
-        setOf("world music", "world", "ethnic", "traditional"),
-    )
+    private fun matchesGenre(hitGenres: Set<String>, anchorGenres: Set<String>): Boolean {
+        val hits = hitGenres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
+        val anchors = anchorGenres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
+        if (hits.isEmpty() || anchors.isEmpty()) return false
 
-    /**
-     * Géneros del diccionario que se aceptan como equivalentes.
-     *
-     * S022 -- estas familias YA NO son el mecanismo principal. Desde
-     * que `RadioAnchor` conserva todos los géneros que MusicBrainz
-     * atribuye al artista, la pertenencia se decide por intersección
-     * con datos reales. Las familias solo hacen de puente hacia el
-     * DICCIONARIO LOCAL, donde cada entrada tiene un único género
-     * escrito a mano y por tanto no hay conjunto con el que cruzar.
-     *
-     * Por eso son ahora estrechas y están agrupadas por ESCENA, no por
-     * instrumento -- que fue el error de la primera versión: metí
-     * `dark wave` junto a `synth-pop`, `house` y `techno` porque todos
-     * usan sintetizadores, y así Pet Shop Boys acabó en una radio de
-     * Dead Can Dance.
-     */
-    private fun relatedGenres(genre: String): Set<String> {
-        val normalized = genre.lowercase().trim()
-        val related = GENRE_FAMILIES.filter { normalized in it }.flatten().toSet()
-        return if (related.isEmpty()) setOf(normalized) else related
-    }
+        // 1 -- intersección directa, pero solo cuenta si lo que
+        // comparten es una carpeta CONCRETA. Compartir `rock` (129
+        // descendientes) no es parentesco: por ahí entraban Creed y
+        // Café Tacvba en una radio de P!nk.
+        if (hits.any { it in anchors && genreTree.isSpecific(it) }) return true
 
-    /**
-     * ¿Encaja esta entrada del diccionario con el ancla?
-     *
-     * Se cruza la familia del género de la entrada contra TODOS los
-     * géneros del ancla, no solo contra el más votado. Con Dead Can
-     * Dance = {dark wave, ethereal wave, gothic, neoclassical dark
-     * wave, new age, ambient, post-punk}:
-     *
-     *   Joy Division   ('new wave')  -> familia post-punk -> corta en
-     *                                   'post-punk' -> entra
-     *   Pet Shop Boys  ('synth-pop') -> familia synth-pop -> no corta
-     *                                   -> fuera
-     */
-    private fun matchesGenre(hitGenre: String, anchorGenres: Set<String>): Boolean {
-        val family = relatedGenres(hitGenre)
-        return anchorGenres.any { it.lowercase().trim() in family }
+        // 2 -- descenso desde el ancla, nunca ascenso.
+        val descendable = anchors.filter { genreTree.isSpecificEnoughToDescend(it) }
+        if (descendable.any { anchor -> hits.any { genreTree.isDescendantOf(it, anchor) } }) {
+            return true
+        }
+
+        // 3 -- hermanos, último peldaño.
+        return anchors.any { anchor -> hits.any { genreTree.shareImmediateParent(it, anchor) } }
     }
 
     fun randomHit(
@@ -329,7 +305,7 @@ class KnownHitsRepository @Inject constructor(
         if (relaxGenre) return pick(pool(decadeBegin, origin))
         if (genre == null) return null
         val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
-        return pick(pool(decadeBegin, origin).filter { matchesGenre(it.genre, anchorSet) })
+        return pick(pool(decadeBegin, origin).filter { matchesGenre(it.genreSet, anchorSet) })
     }
 
     /**
@@ -367,7 +343,7 @@ class KnownHitsRepository @Inject constructor(
             if (genre == null) return emptyList()
             artistsOf(
                 pool(decadeBegin, origin).filter {
-                    matchesGenre(it.genre, anchorGenres.ifEmpty { setOf(genre) })
+                    matchesGenre(it.genreSet, anchorGenres.ifEmpty { setOf(genre) })
                 },
             )
         }
