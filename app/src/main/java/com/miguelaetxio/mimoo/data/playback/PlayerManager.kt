@@ -973,11 +973,13 @@ class PlayerManager @Inject constructor(
      *      igual que en pickDiscoCandidate(). Si tampoco eso da nada,
      *      la función devuelve `null` y la Radio no arranca esta vez.
      * ---
-     * S010 -- FOUR chained attempts to fix a Radio session's anchor,
-     * each only if the previous one found NOTHING in MusicBrainz:
-     *   1. YouTube channel name.
-     *   2. H05's structured artist.
-     *   3. Parsed from the video title itself, "Artist - Song" pattern.
+     * S023 -- intentos encadenados, por FIABILIDAD DE LA FUENTE y no
+     * por si resuelven o no, cada uno solo si el anterior no encontró
+     * NADA en MusicBrainz:
+     *   1. Artista estructurado de H05 (dato real de la pista).
+     *   2. Parseado del propio título, patrón "Artista - Tema".
+     *   3. Nombre del canal de YouTube -- ÚLTIMO, porque describe a
+     *      quien subió el vídeo y no lo que el vídeo es.
      *   4. FIX REAL S016 (reemplaza el fallback "classical" de S010,
      *      orden explícita y repetida de Miguel Ángel: NUNCA MÁS cae a
      *      género fijo) -- si ninguno de los tres anteriores encontró
@@ -990,39 +992,46 @@ class PlayerManager @Inject constructor(
      *      -- nunca rellenar con un género arbitrario sin relación.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
-        // S020 -- ORDEN INVERTIDO. Antes se intentaba primero
-        // `anchorArtistName`, que es el título del CANAL de YouTube, y
-        // solo si fallaba se probaba el artista estructurado. Eso
-        // producía anclas absurdas en cuanto el canal no se llamaba
-        // como el artista: en el log real de Miguel Ángel aparecen
-        // '知心音樂網', 'Havalina Chiel' y 'Natacha Atlas Official'
-        // como ancla, ninguno resoluble en MusicBrainz, y el caso peor
-        // acabó anclando una sesión de Natacha Atlas en JETHRO TULL,
-        // derivado de la biblioteca local. El artista estructurado
-        // (H05, dato real de la pista) va primero.
-        radioAnchorArtistFallback?.let { structured ->
-            radioRepository.resolveAnchor(structured, radioAnchorTrackTitle)?.let {
+        // S023 -- EL NOMBRE DEL CANAL PASA A ÚLTIMO. Miguel Ángel puso
+        // "Radio Futura - Divina" y la Radio se ancló en KURT COBAIN,
+        // que es el nombre del canal que subió el vídeo. Ancla
+        // 'grunge', país US, origen español=false, y la sesión devolvió
+        // The Strokes, R.E.M., The Smiths y Travis. Radio Futura no
+        // tenía ninguna posibilidad.
+        //
+        // Por qué no bastaba el respaldo de S010. Aquel se diseñó para
+        // canales que NO son un artista ("OldGuitar8", sin resultados
+        // en MusicBrainz): solo salta cuando el canal FALLA. 'Kurt
+        // Cobain' es un artista real, resuelve perfectamente, y por eso
+        // nunca se llegaba al título -- donde estaba el dato bueno.
+        //
+        // La lección es de fuente, no de validación: el canal describe
+        // a QUIEN SUBIÓ el vídeo, el título describe QUÉ ES. Por eso el
+        // orden ahora va por fiabilidad de la fuente y no por si
+        // resuelve o no. En palabras de Miguel Ángel: "no podemos
+        // buscar por el nombre de quien lo sube".
+        //
+        // S020 sigue vigente en lo suyo: el artista estructurado (H05,
+        // dato real de la pista) va por delante del canal. Lo que
+        // cambia es que el título también.
+        val attempts = buildList {
+            add("artista estructurado" to radioAnchorArtistFallback)
+            add("título del tema" to parseArtistFromTitle(radioAnchorTrackTitle))
+            add("nombre del canal" to anchorArtistName)
+        }
+
+        val tried = mutableSetOf<String>()
+        for ((source, candidate) in attempts) {
+            val name = candidate?.takeIf { it.isNotBlank() } ?: continue
+            if (!tried.add(name.lowercase())) continue
+            radioRepository.resolveAnchor(name, radioAnchorTrackTitle)?.let {
                 RadioDebugLogger.log(
                     appContext, storageManager,
-                    "resolveAnchorWithFallbacks() -- ancla fijada desde el artista estructurado " +
-                        "'$structured' (el canal era '$anchorArtistName')",
+                    "resolveAnchorWithFallbacks() -- ancla fijada desde $source: '$name' " +
+                        "(canal='$anchorArtistName', título='$radioAnchorTrackTitle')",
                 )
                 return it
             }
-        }
-
-        radioRepository.resolveAnchor(anchorArtistName, radioAnchorTrackTitle)?.let { return it }
-
-        val titleGuess = parseArtistFromTitle(radioAnchorTrackTitle)
-            ?.takeIf { !it.equals(anchorArtistName, ignoreCase = true) &&
-                !it.equals(radioAnchorArtistFallback, ignoreCase = true) }
-        if (titleGuess != null) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchOneRadioTrack() -- ancla '$anchorArtistName' y artista estructurado sin " +
-                    "resultado, último intento con el título parseado ('${radioAnchorTrackTitle}' -> '$titleGuess')",
-            )
-            radioRepository.resolveAnchor(titleGuess, radioAnchorTrackTitle)?.let { return it }
         }
 
         // S022 -- un 503 o un timeout NO significan "este artista no
