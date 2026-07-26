@@ -278,6 +278,7 @@ class RadioRepository @Inject constructor(
                 .firstOrNull()
                 ?.id ?: return null
             val detail = musicBrainzApiService.lookupArtist(mbid)
+            noteSuccess()
             val genres = detail.genres.map { it.name }.filter { it.isNotBlank() }.toSet()
             ArtistProfile(
                 genres = genres,
@@ -301,11 +302,16 @@ class RadioRepository @Inject constructor(
         // sesiones de Radio con el mismo ancla (ver historial de esta
         // función en versiones anteriores del archivo).
         val randomOffset = (0..90 step 10).toList().random()
-        musicBrainzApiService
+        val found = musicBrainzApiService
             .searchArtists(query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin), limit = 10, offset = randomOffset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
+        // El servicio ha respondido. Que la lista venga vacía es una
+        // respuesta legítima, no un fallo: el contador se reinicia
+        // igual.
+        noteSuccess()
+        found
     } catch (e: Exception) {
         noteFailure(e)
         log("findCandidates(género='$genre', origen_es=$isSpanishOrigin, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
@@ -356,10 +362,15 @@ class RadioRepository @Inject constructor(
         /**
          * Fallos transitorios seguidos a partir de los cuales se
          * considera que MusicBrainz no está disponible y la Radio pasa
-         * a modo degradado. Dos son suficientes: uno puede ser mala
-         * suerte, dos seguidos ya son un servicio que no responde, y
-         * esperar más significa servir basura mientras tanto.
+         * a modo degradado.
+         *
+         * S022 -- subido de 2 a 4 tras verlo en dispositivo: dos 503
+         * sueltos de `lookupArtistProfile()` bastaron para declarar
+         * caído un servicio que en esa misma sesión estaba devolviendo
+         * diez candidatos sin problema. Con `noteSuccess()` ya
+         * presente en todos los caminos de éxito, llegar a cuatro
+         * significa cuatro fallos SEGUIDOS de verdad.
          */
-        const val DEGRADED_THRESHOLD = 2
+        const val DEGRADED_THRESHOLD = 4
     }
 }
