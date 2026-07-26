@@ -1,0 +1,58 @@
+name: Recuperar artefacto de una ejecucion anterior
+
+# Un rastreo cuesta mas de una hora. Si termina bien pero falla al
+# commitear, el dato sobrevive como artefacto (ver genre-tree.yml) y
+# NO hay que volver a rastrear: basta con recogerlo desde aqui.
+#
+# El artefacto se sirve desde blobs de Azure con subdominio variable,
+# inalcanzable fuera de Actions. Un runner si llega, y por eso la
+# recuperacion vive en un workflow y no en un comando local.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'ID de la ejecucion de la que recuperar el artefacto'
+        required: true
+      artifact_name:
+        description: 'Nombre del artefacto'
+        required: true
+        default: 'genre-tree'
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Descargar el artefacto de la ejecucion indicada
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: app/src/main/assets/
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commitear lo recuperado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/assets/
+          if git diff --cached --quiet; then
+            echo "Nada que recuperar: el contenido ya estaba en el repositorio."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: recuperar artefacto de una ejecucion anterior
+
+          Rescate del resultado de un rastreo que termino correctamente
+          pero no llego a commitear. No se ha vuelto a consultar
+          MusicBrainz: el contenido es exactamente el que produjo la
+          ejecucion original.
+          EOF
+          git pull --rebase origin main
+          git push

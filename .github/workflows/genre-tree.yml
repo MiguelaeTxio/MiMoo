@@ -62,4 +62,8 @@ jobs:
           arista por la que Tears for Fears se colaba en una radio de
           Dead Can Dance.
           EOF
+          # Reconciliar antes de empujar: un rastreo dura mas de una
+          # hora y main puede haber avanzado mientras tanto. Sin
+          # esto, el push se rechaza y se pierde el commit final.
+          git pull --rebase origin main
           git push
