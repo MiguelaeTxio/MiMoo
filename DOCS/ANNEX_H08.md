@@ -1355,46 +1355,209 @@ porque toca el motor y no el dato.
 
 ---
 
+## COMPLETADAS EN S023
+
+Sesión dedicada a una sola idea, planteada por Miguel Ángel en el
+primer mensaje: **el género no puede decidirse comparando nombres ni
+consultando sacos escritos por el modelo.** De ahí salió todo lo
+demás.
+
+### El punto de partida, corregido
+
+La sospecha inicial era que el cruce usaba expresiones regulares. No
+era así: `GENRE_FAMILIES` comparaba pertenencia exacta a un saco. Pero
+el efecto era peor, porque los sacos los había escrito el modelo. En
+la línea 192 convivían `new wave` y `post-punk`, y por esa arista
+Tears for Fears entraba en una radio de Dead Can Dance. El problema no
+era el algoritmo: era que el dato era opinión.
+
+### La regla, cerrada por Miguel Ángel
+
+Su analogía la fija entera: **un oso hormiguero y un oso polar
+comparten ancestro —mamífero— y no son parientes.** Compartir un
+antepasado lejano no significa nada; lo que importa es la posición en
+el árbol. De ahí:
+
+- Desde el ancla se **desciende**; nunca se sube al padre, porque la
+  carpeta padre contiene todo lo demás.
+- Los **hermanos** valen solo como último peldaño ("a última hora
+  dices, es comible").
+- Las aristas de **influencia no se recorren jamás**.
+
+Y su segunda aportación, igual de decisiva: **la década la marca el
+tema, no el artista.** Yes se formó en 1968, pero entre "Roundabout"
+(1971) y "Owner of a Lonely Heart" (1983) hay doce años y dos grupos
+distintos.
+
+### Datos construidos
+
+- **`genre_tree.json`** — 2176 géneros de MusicBrainz con su
+  parentesco real, 0 fichas fallidas. Las relaciones género-género NO
+  salen por `/ws/2` (la documentación oficial excluye explícitamente
+  los géneros), así que hubo que rastrear las fichas HTML una a una,
+  a una petición por segundo, en un workflow de disparo manual.
+  Guarda los dos tipos de arista —parentesco e influencia— a
+  propósito, para poder revisar el criterio sin volver a rastrear.
+- **`known_hit_artists.json`** — 621 de 777 entradas (79,9%) con su
+  conjunto real de géneros, media de 6,2 por entrada. De 258 entradas
+  etiquetadas `pop` solo 6 siguen siéndolo a secas; de 165 `rock`,
+  solo 13.
+- **`artist_disambiguation.json`** — diez artistas que la búsqueda
+  automática resuelve mal; cinco con MBID confirmado por Miguel Ángel
+  sobre candidatos con evidencia.
+
+### Cinco fallos del motor, todos vivos desde antes de esta sesión
+
+| Fallo | Cómo se descubrió |
+|---|---|
+| `resolveAnchor()` aceptaba el primer resultado sin comprobar el nombre | Pink → Pink Floyd, Los Ángeles → Los Angeles Philharmonic, Burning → Burning Spear |
+| La década salía del `life-span` del artista | P!nk, nacida en 1979, anclaba una radio en los 70 |
+| El límite de búsqueda de 5 dejaba fuera al artista real | De 'Kanye West' salían una banda tributo y una colaboración |
+| El cupo DISCO se agotaba por fallos de red | Diez 503 seguidos leídos como "la biblioteca no tiene nada" |
+| El cruce de géneros usaba sacos del modelo | Creed y Café Tacvba entraban compartiendo solo `rock` |
+
+Los dos primeros llevaban ahí desde que existe la Radio. Se escondían
+porque con grupos el año de formación daba un número plausible y con
+nombres largos la búsqueda acertaba.
+
+### Verificado en dispositivo
+
+Radio de P!nk, tres estados sucesivos:
+
+1. Antes: Cat Stevens, Lynyrd Skynyrd, ELO, Supertramp — los 70.
+2. Tras fechar por tema: Coldplay, Café Tacvba, Christina Aguilera,
+   Creed — los 2000, pero con Café Tacvba y Creed colados por `rock`.
+3. Tras el árbol: The Killers, Keane, Kings Of Leon, Kaiser Chiefs.
+
+### Incidencias propias de la sesión, resueltas
+
+- Un workflow salió **en verde sin producir nada**: `git diff` no ve
+  archivos nuevos sin seguimiento. Costó una hora de rastreo. Desde
+  entonces el resultado se sube como artefacto ANTES de commitear.
+- Un segundo rastreo perdió el commit final porque `main` había
+  avanzado durante la hora que duró. Resuelto con `pull --rebase`
+  antes del push, y recuperado sin volver a rastrear gracias al
+  artefacto.
+- El descarte por nombre se pasó de estricto y rechazó a **M-Clan**:
+  `normalize()` borra la puntuación en vez de sustituirla por espacio.
+- El filtro de especificidad faltaba en la **intersección**, no solo
+  en el descenso. Apareció al simular el cruce sobre los datos reales
+  antes de compilar.
+
+### Decisiones abiertas de S022, resueltas sin criterio del modelo
+
+- **Tears for Fears** entraba por una arista de influencia. Fuera.
+- **New Order** entra, pero por intersección directa en `post-punk`,
+  que MusicBrainz le atribuye de verdad — no por la vía casual de
+  `electronic` que motivó la duda.
+
+---
+
+## S023 -- INCIDENCIA ABIERTA: pantalla en blanco al navegar
+
+Reportada por Miguel Ángel al final de la sesión, con captura. **No
+guarda relación con el trabajo de S023** — no se tocó interfaz.
+
+Al entrar en Ajustes, el hueco del NavGraph queda vacío: sin cabecera
+y sin contenido. La barra del reproductor sigue intacta debajo, con el
+mismo tamaño que cuando funciona.
+
+Lo que la evidencia descarta: no es la pantalla de Ajustes
+(`SettingsScreen` pinta siempre su `Scaffold` con la barra "Ajustes",
+no tiene rama que dibuje vacío), no es el reparto de alturas (el hueco
+conserva su tamaño), y no es la navegación (el destino sigue ahí).
+
+**Se recupera solo** abriendo el menú lateral, lo que apunta a que una
+recomposición forzada lo resuelve. Hipótesis no confirmada: el ciclo
+de vida de la entrada del `NavHost` se queda por debajo del nivel al
+que Navigation-Compose dibuja el destino.
+
+Miguel Ángel decidió no perseguirlo ("déjalo, se recupera, no hay
+problema"). Encaja en H13, que es el hito de UX. Primer paso propuesto
+si se retoma: instrumentar qué ruta cree activa la raíz y si la
+pantalla llegó a componerse.
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
-**Bloque principal, acordado con Miguel Ángel al cierre de S022:
-enriquecer el diccionario local.**
+**El bloque de géneros está cerrado.** El árbol se usa, `GENRE_FAMILIES`
+ya no existe, y el fechado por tema está verificado en dispositivo. Lo
+que queda es más pequeño y no depende entre sí.
 
-Hoy cada entrada de `known_hit_artists.json` tiene UN género escrito a
-mano. Por eso el cruce con el ancla necesita pasar por
-`GENRE_FAMILIES`, que es una aproximación mía por muy afinada que
-esté. El ancla ya lleva su conjunto completo de géneros; el
-diccionario debería llevarlo también, y entonces la pertenencia se
-decidiría por intersección real en los dos lados y las familias
-dejarían de hacer falta salvo como respaldo.
+### 1. Ampliar el diccionario (lo más antiguo pendiente del hito)
 
-Esto importa especialmente porque **el diccionario es lo único que
-sostiene la Radio cuando MusicBrainz se cae**, que es justo el momento
-en que el criterio no puede permitirse ser aproximado.
+Sigue por debajo del objetivo de ~100 entradas por década. Último
+estado conocido: 1960:22, 1970:22, 1980:28, 1990:23, 2000:27,
+2010:24, 2020:13.
 
-1. Decidir el formato: añadir `genres: [...]` a cada entrada
-   conservando `genre` por compatibilidad, o sustituirlo.
-2. Poblarlo para las 777 entradas. Conviene decidir con Miguel Ángel
-   si se hace a mano, derivándolo de MusicBrainz en una pasada única,
-   o por lotes revisados por él.
-3. Cambiar `matchesGenre()` para cruzar conjunto contra conjunto y
-   dejar `relatedGenres()` como respaldo de entradas sin conjunto.
+Novedad de S023 que cambia cómo hacerlo: las entradas nuevas ya no
+necesitan un género escrito a mano. Basta con artista + tema +
+década + origen, y `tools/enrich_dictionary_genres.py` les pone su
+conjunto real. **El campo `genre` sigue haciendo falta** como término
+único de búsqueda en MusicBrainz, pero deja de ser el que decide la
+pertenencia.
 
-**Dos decisiones de criterio musical pendientes de Miguel Ángel**,
-planteadas al cierre de S022 y sin resolver:
+### 2. Cerrar las fuentes de fecha por artista que quedan
 
-- **Tears for Fears** entra en una radio de Dead Can Dance porque está
-  etiquetado `new wave` y esa familia puentea con `post-punk`, que sí
-  está en el ancla. Sacarlo obligaría a sacar también a Joy Division,
-  que lleva la misma etiqueta en el diccionario y sí encaja.
-- **New Order** entra vía `electronic`, que cruza con `ambient` y
-  `new age` del ancla. Defendible viniendo de Joy Division, pero la
-  vía es casual.
+`lookupArtistProfile()` sigue derivando la década del `life-span` del
+artista para los candidatos del cupo DISCO. Ahí hace menos daño que en
+el ancla —descarta un candidato suelto en vez de condicionar la sesión
+entera— pero arrastra el mismo defecto que se corrigió en
+`resolveAnchor()`.
 
-**Verificación en dispositivo todavía no cubierta de S022:** el modo
-degradado no llegó a validarse (el log terminó en el primer 503, y con
-umbral 4 hacen falta cuatro seguidos), y las reglas de no repetición
-tampoco (solo hubo cuatro canciones antes del corte).
+### 3. `sharesGenreWith()` no usa el árbol
+
+En `RadioAnchor` es intersección exacta pura, sin descenso ni filtro de
+especificidad. Estricta pero nunca falsa. Meter el árbol ahí exige
+resolver que `RadioAnchor` es una `data class` sin inyección.
+
+### 4. Cinco artistas sin MBID
+
+Deluxe, Kanye West, Los Canarios, Micky y Pink. Deluxe, Los Canarios y
+Micky no aparecen en MusicBrainz con ese nombre. Kanye West y Pink sí
+existen, y el límite de búsqueda subido a 25 debería resolverlos ya
+sin lista manual — **conviene comprobarlo** antes de buscarles MBID.
+
+### 5. Afinado del umbral, si al escuchar se ve un patrón
+
+`MAX_DESCENDANTS_TO_DESCEND = 25` sale de medir el árbol (percentil 99
+en 19 descendientes), no de la intuición. La radio de P!nk tira hacia
+el indie/rock de los 2000 más que hacia el pop, porque su género
+principal es `pop`, la carpeta raíz. Si al escuchar más radios aparece
+un patrón, los dos sitios donde se ajusta son ese umbral y la elección
+del género principal del ancla.
+
+### 6. Verificación en dispositivo que S022 dejó sin cubrir
+
+Sigue pendiente y no se cubrió tampoco en S023:
+
+- **Modo degradado**: nunca llegó a dispararse. Hace falta que
+  MusicBrainz falle cuatro veces SEGUIDAS (`DEGRADED_THRESHOLD = 4`).
+  En S023 hubo diez 503 seguidos en el cupo DISCO, así que es
+  reproducible — pero no se comprobó qué hace la Radio una vez
+  degradada.
+- **Reglas de no repetición**: tampoco validadas, nunca ha habido una
+  sesión lo bastante larga.
+
+### 7. Verificación en dos dispositivos (PASO 5 de H07)
+
+Sigue abierta, ajena a este hito pero pendiente.
+
+---
+
+## Hoja de Ruta anterior (S022), ya cubierta
+
+Pedía enriquecer el diccionario con el conjunto de géneros de cada
+entrada y dejar de depender de `GENRE_FAMILIES`. Cubierto en S023, y
+más allá de lo que pedía: las familias no quedaron como respaldo, se
+eliminaron. Sus dos decisiones de criterio musical pendientes —Tears
+for Fears y New Order— quedaron resueltas por los datos y no por
+criterio del modelo (ver COMPLETADAS EN S023).
+
+Lo único suyo que NO se cubrió es la verificación en dispositivo del
+modo degradado y de las reglas de no repetición, arrastrada al punto 6
+de la hoja de ruta vigente.
 
 ---
 
