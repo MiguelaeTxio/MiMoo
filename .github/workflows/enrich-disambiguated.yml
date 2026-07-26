@@ -1,0 +1,59 @@
+name: Enriquecer artistas desambiguados a mano
+
+# Disparo MANUAL. Segundos: solo consulta los MBID ya fijados, sin
+# buscar. Existe para no relanzar el rastreo completo de 658 artistas
+# (1h 20m) por un punado de entradas.
+on:
+  workflow_dispatch:
+
+jobs:
+  enrich-disambiguated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Consultar los MBID fijados y parchear el diccionario
+        run: python3 tools/enrich_disambiguated.py
+
+      - name: Salvar los resultados como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disambiguated-genres
+          path: |
+            app/src/main/assets/known_hit_artists.json
+            app/src/main/assets/artist_genre_resolution.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commitear si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/assets/known_hit_artists.json \
+                  app/src/main/assets/artist_genre_resolution.json
+          if git diff --cached --quiet; then
+            echo "Nada que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: generos reales de los artistas desambiguados a mano
+
+          Salida de tools/enrich_disambiguated.py. Los artistas cuyo
+          MBID fijo Miguel Angel sobre candidatos con evidencia pasan a
+          tener su conjunto de generos real, como los otros 648. Va
+          directo al MBID sin buscar -- la busqueda es justo lo que
+          fallaba con estos nombres.
+          EOF
+          git pull --rebase origin main
+          git push
