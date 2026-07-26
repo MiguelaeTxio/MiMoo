@@ -1,0 +1,50 @@
+name: Construir arbol de generos (MusicBrainz)
+
+# Disparo MANUAL, nunca automatico. El rastreo son miles de peticiones
+# a una por segundo: mas de una hora de ejecucion. Se lanza cuando se
+# quiere refrescar el arbol, no en cada push.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-genre-tree:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Rastrear MusicBrainz y construir el arbol
+        run: python3 tools/build_genre_tree.py
+
+      - name: Commitear el arbol si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- app/src/main/assets/genre_tree.json; then
+            echo "El arbol no ha cambiado respecto al commit anterior."
+            exit 0
+          fi
+          git add app/src/main/assets/genre_tree.json
+          git commit -F - <<'EOF'
+          data: regenerar el arbol de generos desde MusicBrainz
+
+          Salida de tools/build_genre_tree.py, ejecutado a mano desde
+          Actions. Recoge las relaciones genero-genero que MusicBrainz
+          publica en las fichas HTML y que /ws/2 no expone.
+
+          parents/children son parentesco real (subgenre of / subgenres).
+          influencedBy/influenced quedan guardados aparte y NO deben
+          recorrerse para decidir pertenencia al genero del ancla: es la
+          arista por la que Tears for Fears se colaba en una radio de
+          Dead Can Dance.
+          EOF
+          git push
