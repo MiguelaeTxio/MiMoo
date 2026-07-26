@@ -610,9 +610,18 @@ class RadioRepository @Inject constructor(
         }
 
         val canonical = disambiguation.confirmed[wanted]
+        // `normalize()` BORRA la puntuación en vez de sustituirla por
+        // espacio, así que 'M-Clan' queda como "mclan" y 'M Clan' como
+        // "m clan": el mismo grupo, y no casaban. Verificado en log
+        // real de S023 -- se rechazó a M-Clan, que era el correcto.
+        // Comparar además sin espacios cierra ese hueco sin tocar
+        // `normalize()`, que lo usan también H12 y favoritos.
+        fun tight(value: String) = value.replace(" ", "")
         val match = candidates.firstOrNull { candidate ->
             val got = SearchNormalizer.normalizeArtistName(candidate.name)
-            got == wanted || (canonical != null && got == canonical)
+            got == wanted ||
+                tight(got) == tight(wanted) ||
+                (canonical != null && (got == canonical || tight(got) == tight(canonical)))
         }
 
         if (match == null) {
