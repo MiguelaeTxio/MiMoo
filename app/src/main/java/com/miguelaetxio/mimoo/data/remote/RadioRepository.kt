@@ -505,6 +505,82 @@ class RadioRepository @Inject constructor(
      * prefijo "Artista - " si viene pegado delante, que es la forma
      * habitual en que YouTube titula los vídeos musicales.
      */
+    /**
+     * Qué artista y qué canción hay dentro de un título, cuando el
+     * título NO trae el patrón "Artista - Tema" (S023).
+     *
+     * **Por qué existe.** Miguel Ángel puso un vídeo titulado
+     * `Led Zeppelin Immigrant song`, subido por un canal llamado
+     * `oldschoolrockerkid`. El artista y la canción estaban los dos ahí
+     * delante, y la Radio no los vio: `parseArtistFromTitle()` solo
+     * parte por `" - "`, y ese título no lleva guion. Al no encontrar
+     * nada, la sesión acabó anclándose en un artista sorteado al azar
+     * de la biblioteca local.
+     *
+     * **La idea es suya**, y es la correcta: si el título no viene
+     * partido, hay que partirlo nosotros por palabras y preguntar. De
+     * `Led Zeppelin Immigrant song` salen cuatro; `Led Zeppelin` casa
+     * con un artista real y lo que sobra, `Immigrant song`, es la
+     * canción.
+     *
+     * **Se prueban prefijos, del más largo al más corto.** El orden
+     * importa: buscar primero lo corto encontraría `Led`, que también
+     * existe, y perderíamos `Led Zeppelin`. El primero que case gana, y
+     * casar significa que MusicBrainz devuelve un artista con ESE
+     * nombre -- misma comprobación que [pickAnchorArtist], no el primer
+     * resultado que llegue.
+     *
+     * Coste acotado: como mucho [MAX_TITLE_WORDS_FOR_ARTIST]
+     * peticiones, y solo al arrancar una sesión de Radio.
+     */
+    data class TitleIdentification(val artist: String, val song: String?)
+
+    suspend fun identifyFromTitleWords(rawTitle: String?): TitleIdentification? {
+        if (rawTitle.isNullOrBlank()) return null
+        // Se quitan paréntesis y corchetes ("(Official Video)",
+        // "[HD]"), pero NO se corta por " - ": aquí el título entero es
+        // el material de trabajo.
+        val cleaned = rawTitle
+            .replace(Regex("\\([^)]*\\)"), " ")
+            .replace(Regex("\\[[^]]*]"), " ")
+            .replace(Regex("[-–—_|]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+
+        val words = cleaned.split(" ").filter { it.isNotBlank() }
+        if (words.size < 2) return null
+
+        val longest = minOf(MAX_TITLE_WORDS_FOR_ARTIST, words.size - 1)
+        for (take in longest downTo 1) {
+            val candidate = words.take(take).joinToString(" ")
+            if (candidate.length <= 2) continue
+            val matched = try {
+                val hits = musicBrainzApiService
+                    .searchArtists(
+                        query = buildArtistQuery(candidate),
+                        limit = ANCHOR_SEARCH_LIMIT,
+                    )
+                    .artists
+                pickAnchorArtist(candidate, hits)?.let { candidate }
+            } catch (e: Exception) {
+                // Un 503 aquí no significa "estas palabras no son un
+                // artista". Se corta la búsqueda entera en vez de
+                // seguir probando prefijos más cortos y quedarse con
+                // uno peor por casualidad.
+                noteFailure(e)
+                log("identifyFromTitleWords('$rawTitle') -- ${e::class.java.simpleName} probando '$candidate', se abandona")
+                return null
+            }
+            if (matched != null) {
+                val song = words.drop(take).joinToString(" ").ifBlank { null }
+                log("identifyFromTitleWords('$rawTitle') -> artista='$candidate', canción='$song' (probados ${longest - take + 1} prefijos)")
+                return TitleIdentification(candidate, song)
+            }
+        }
+        log("identifyFromTitleWords('$rawTitle') -- ningún prefijo de hasta $longest palabras casa con un artista de MusicBrainz")
+        return null
+    }
+
     private fun stripTitleNoise(rawTitle: String): String {
         val withoutBrackets = rawTitle
             .replace(Regex("\\([^)]*\\)"), " ")
@@ -663,5 +739,16 @@ class RadioRepository @Inject constructor(
          * pedir de más no cuesta precisión -- cuesta no encontrarlo.
          */
         const val ANCHOR_SEARCH_LIMIT = 25
+
+        /**
+         * Palabras iniciales del título que se prueban como nombre de
+         * artista, de más a menos (ver `identifyFromTitleWords()`).
+         *
+         * Cinco cubre de sobra los nombres reales -- 'Creedence
+         * Clearwater Revival' son tres, 'Emerson, Lake and Palmer'
+         * cuatro -- y acota el coste a cinco peticiones como mucho,
+         * solo al arrancar la sesión.
+         */
+        const val MAX_TITLE_WORDS_FOR_ARTIST = 5
     }
 }

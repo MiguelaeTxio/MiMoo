@@ -1043,6 +1043,32 @@ class PlayerManager @Inject constructor(
             }
         }
 
+        // S023 -- BÚSQUEDA POR PALABRAS, idea de Miguel Ángel tras ver
+        // fallar el caso "Led Zeppelin Immigrant song".
+        //
+        // Ese título no lleva " - ", así que `parseArtistFromTitle()`
+        // devolvió null y los tres intentos de arriba se quedaron sin
+        // nada. El artista y la canción estaban los dos delante, en el
+        // propio título, y la sesión acabó anclándose en un artista
+        // sorteado al azar de la biblioteca local.
+        //
+        // La lección: no es que el dato no estuviera, es que no
+        // sabíamos leerlo. Si el título no viene partido, se parte por
+        // palabras y se pregunta -- del prefijo más largo al más corto,
+        // porque buscar primero lo corto encontraría 'Led' y perdería
+        // 'Led Zeppelin'.
+        radioRepository.identifyFromTitleWords(radioAnchorTrackTitle)?.let { identified ->
+            radioRepository.resolveAnchor(identified.artist, identified.song)?.let {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveAnchorWithFallbacks() -- ancla fijada partiendo el título por palabras: " +
+                        "'${identified.artist}' (canción='${identified.song}', título='$radioAnchorTrackTitle')",
+                )
+                radioAnchorArtist = identified.artist
+                return it
+            }
+        }
+
         // S022 -- un 503 o un timeout NO significan "este artista no
         // existe". Miguel Ángel puso un tema de Alaska y Dinarama, el
         // `resolveAnchor` se comió un HTTP 503, se probó el nombre del
