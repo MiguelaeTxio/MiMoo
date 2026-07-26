@@ -1320,6 +1320,7 @@ class PlayerManager @Inject constructor(
             val hit = knownHitsRepository.randomHit(
                 anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), radioUsedSongs, avoidNames,
                 relaxGenre = degraded,
+                anchorGenres = anchor.genres,
             )
             if (hit != null) {
                 val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
@@ -1345,6 +1346,7 @@ class PlayerManager @Inject constructor(
         val artists = knownHitsRepository.knownArtists(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), avoidNames,
             relaxGenre = degraded,
+            anchorGenres = anchor.genres,
         )
         for (artist in artists) {
             val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null) ?: continue
@@ -1591,7 +1593,14 @@ class PlayerManager @Inject constructor(
         }
         if (originMatches.isEmpty()) return null
 
-        fun genreOk(p: ProfiledArtist) = p.profile.genres.any { it.equals(anchor.genre, ignoreCase = true) }
+        // S022 -- INTERSECCIÓN, no igualdad contra el género principal.
+        // Antes se comparaba cada género del candidato solo contra
+        // `anchor.genre`, es decir contra la única etiqueta que había
+        // sobrevivido de las siete que MusicBrainz da del ancla. Ahora
+        // se cruzan los dos conjuntos completos: si Dead Can Dance
+        // tiene `post-punk` entre los suyos y Joy Division también,
+        // encajan -- y Pet Shop Boys, que no comparte ninguno, no.
+        fun genreOk(p: ProfiledArtist) = anchor.sharesGenreWith(p.profile.genres)
         fun decadeOk(p: ProfiledArtist) = anchor.decadeBegin == null || p.profile.decadeBegin == anchor.decadeBegin
 
         /** S016, segundo bloque -- entre los que cumplen `condition`, prefiere los no evitados; si eso vacía la lista, ignora la preferencia. */

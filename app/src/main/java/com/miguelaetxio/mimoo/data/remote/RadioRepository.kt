@@ -35,10 +35,46 @@ import javax.inject.Singleton
  */
 data class RadioAnchor(
     val genre: String,
+    /**
+     * TODOS los géneros que MusicBrainz atribuye al artista ancla, no
+     * solo el más votado.
+     *
+     * S022 -- el fallo que Miguel Ángel calificó de aberración:
+     * MusicBrainz describe a Dead Can Dance como
+     * `dark wave(13), ethereal wave(9), gothic(5),
+     * neoclassical dark wave(5), new age(4), ambient(1), post-punk(1)`,
+     * y el código se quedaba con `dark wave` y tiraba los otros seis.
+     * A partir de ahí había que reconstruir a mano, con familias de
+     * géneros escritas a ojo, la información que se acababa de
+     * descartar -- y así es como Pet Shop Boys acabó en una radio de
+     * Dead Can Dance: agrupados por usar sintetizadores, que es como
+     * juntar a Bob Marley con Bad Bunny porque reggae y reggaetón
+     * suenan parecido.
+     *
+     * Conservando el conjunto, la pertenencia se decide por
+     * INTERSECCIÓN con los géneros del candidato, que es un dato real
+     * de la misma fuente y no una taxonomía inventada:
+     *
+     *   Joy Division   {post-punk, new wave, gothic rock} -> corta en
+     *                  `post-punk` -> entra
+     *   Pet Shop Boys  {synth-pop, dance-pop, house}      -> vacía -> fuera
+     *   Guns N' Roses  {hard rock, glam metal}            -> vacía -> fuera
+     *
+     * `genre` se conserva porque las consultas a MusicBrainz necesitan
+     * un único término de búsqueda.
+     */
+    val genres: Set<String> = setOf(genre),
     val country: String?,
     val decadeBegin: Int? = null,
     val isSpanishOrigin: Boolean = false,
-)
+) {
+    /** ¿Comparte este candidato algún género con el ancla? */
+    fun sharesGenreWith(candidateGenres: Set<String>): Boolean {
+        if (candidateGenres.isEmpty()) return false
+        val mine = genres.map { it.lowercase().trim() }.toSet()
+        return candidateGenres.any { it.lowercase().trim() in mine }
+    }
+}
 
 /**
  * H08 PARTE 2 -- "Radio": dado el artista que estaba sonando, sugiere
@@ -190,13 +226,17 @@ class RadioRepository @Inject constructor(
             // campo country=ES de MusicBrainz como respaldo.
             val isSpanishOrigin = knownHitsRepository.isKnownSpanishArtist(sourceArtist) ||
                 sourceCountry == "ES"
+            val allGenres = genres.map { it.name.lowercase().trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
             log(
                 "resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: " +
                     "género='$chosenGenre', país=$sourceCountry, década=$decadeBegin, " +
-                    "origen español=$isSpanishOrigin"
+                    "origen español=$isSpanishOrigin, géneros=[${allGenres.joinToString()}]"
             )
             RadioAnchor(
                 genre = chosenGenre,
+                genres = allGenres.ifEmpty { setOf(chosenGenre.lowercase()) },
                 country = sourceCountry,
                 decadeBegin = decadeBegin,
                 isSpanishOrigin = isSpanishOrigin,

@@ -180,57 +180,68 @@ class KnownHitsRepository @Inject constructor(
      * reconocible.
      */
     private val GENRE_FAMILIES: List<Set<String>> = listOf(
+        // Oscuro / gótico. NO lleva synth-pop ni nada de club: Dead Can
+        // Dance y Pet Shop Boys comparten el teclado y nada más.
         setOf(
-            "electronic", "electronica", "electropop", "synth-pop", "synthpop",
-            "synth pop", "new wave", "dark wave", "techno", "house", "dance",
-            "electro", "edm", "italo disco", "electronic rock",
+            "dark wave", "darkwave", "gothic", "gothic rock", "goth",
+            "ethereal wave", "ethereal", "neoclassical dark wave", "cold wave",
+            "coldwave", "deathrock", "neoclassical",
         ),
+        // Post-punk. Puente deliberado con la oscura vía post-punk y
+        // cold wave -- Joy Division sí pega con Dead Can Dance.
+        setOf("post-punk", "postpunk", "new wave", "cold wave", "no wave"),
+        // Synth-pop de pista de baile. Separado del anterior a
+        // propósito, aunque compartan la etiqueta 'new wave' en algunos
+        // discos.
+        setOf(
+            "synth-pop", "synthpop", "synth pop", "electropop", "new romantic",
+            "italo disco", "dance-pop", "hi-nrg",
+        ),
+        // Club / electrónica de baile.
+        setOf("techno", "house", "trance", "edm", "big beat", "acid house", "electro", "dance"),
+        // Electrónica de escucha.
+        setOf("ambient", "downtempo", "trip hop", "idm", "new age", "electronica", "electronic"),
         setOf(
             "rock", "pop rock", "rock and roll", "rock & roll", "rock'n'roll",
-            "classic rock", "garage rock", "rock urbano", "hard rock", "glam rock",
-            "psychedelic rock", "progressive rock", "art rock", "southern rock",
+            "classic rock", "garage rock", "rock urbano",
         ),
-        setOf(
-            "heavy metal", "hard rock", "metal", "thrash metal", "power metal",
-            "speed metal", "nu metal", "heavy rock",
-        ),
-        setOf(
-            "punk", "punk rock", "post-punk", "hardcore punk", "ska punk",
-            "new wave", "hardcore",
-        ),
-        setOf(
-            "pop", "pop rock", "dance-pop", "teen pop", "synth-pop", "bolero",
-            "balada", "ballad", "latin pop", "chanson",
-        ),
-        setOf(
-            "folk", "folk rock", "singer-songwriter", "cantautor", "trova",
-            "nueva canción", "country", "americana", "bluegrass",
-        ),
-        setOf(
-            "flamenco", "copla", "rumba", "rumba catalana", "flamenco pop",
-            "sevillanas", "bolero", "cante",
-        ),
-        setOf("hip hop", "rap", "trap", "urban", "drill", "hip-hop"),
-        setOf(
-            "reggaeton", "latin", "latin pop", "salsa", "merengue", "bachata",
-            "cumbia", "urbano latino", "regional mexicano", "ranchera",
-        ),
-        setOf(
-            "soul", "funk", "disco", "r&b", "rhythm and blues", "motown",
-            "gospel", "neo soul",
-        ),
-        setOf(
-            "indie rock", "indie", "indie pop", "alternative rock", "alternative",
-            "britpop", "shoegaze", "post-rock", "grunge", "noise pop",
-        ),
-        setOf("ska", "reggae", "dub", "ska punk", "rocksteady", "dancehall"),
-        setOf("jazz", "blues", "swing", "rhythm and blues", "bossa nova"),
+        setOf("hard rock", "heavy metal", "metal", "thrash metal", "power metal", "glam metal", "heavy rock"),
+        setOf("punk", "punk rock", "hardcore punk", "hardcore", "ska punk", "post-punk"),
+        setOf("pop", "dance-pop", "teen pop", "balada", "ballad", "bolero"),
+        setOf("folk", "folk rock", "singer-songwriter", "cantautor", "trova", "nueva canción"),
+        setOf("country", "americana", "bluegrass"),
+        // Flamenco y aledaños. 'rumba' aquí, NO con lo latino.
+        setOf("flamenco", "copla", "rumba", "rumba catalana", "flamenco pop", "sevillanas", "cante"),
+        // Urbano. Separado de lo latino tradicional: reggaetón no es
+        // salsa, igual que reggae no es reggaetón.
+        setOf("hip hop", "hip-hop", "rap", "trap", "drill", "urban"),
+        setOf("reggaeton", "urbano latino", "dembow"),
+        setOf("salsa", "merengue", "bachata", "cumbia", "latin", "latin pop", "bolero"),
+        setOf("regional mexicano", "ranchera", "mariachi", "corrido"),
+        setOf("ska", "reggae", "dub", "rocksteady", "dancehall"),
+        setOf("soul", "funk", "r&b", "rhythm and blues", "motown", "gospel", "neo soul"),
+        setOf("disco", "funk", "hi-nrg"),
+        setOf("indie rock", "indie", "indie pop", "alternative rock", "alternative", "britpop", "shoegaze", "grunge", "noise pop", "post-rock"),
+        setOf("jazz", "swing", "bossa nova", "blues"),
+        setOf("blues", "rhythm and blues"),
+        setOf("world music", "world", "ethnic", "traditional"),
     )
 
     /**
-     * Géneros del diccionario que se aceptan como equivalentes al del
-     * ancla. Si el género no pertenece a ninguna familia conocida, se
-     * devuelve él solo -- comportamiento idéntico al anterior.
+     * Géneros del diccionario que se aceptan como equivalentes.
+     *
+     * S022 -- estas familias YA NO son el mecanismo principal. Desde
+     * que `RadioAnchor` conserva todos los géneros que MusicBrainz
+     * atribuye al artista, la pertenencia se decide por intersección
+     * con datos reales. Las familias solo hacen de puente hacia el
+     * DICCIONARIO LOCAL, donde cada entrada tiene un único género
+     * escrito a mano y por tanto no hay conjunto con el que cruzar.
+     *
+     * Por eso son ahora estrechas y están agrupadas por ESCENA, no por
+     * instrumento -- que fue el error de la primera versión: metí
+     * `dark wave` junto a `synth-pop`, `house` y `techno` porque todos
+     * usan sintetizadores, y así Pet Shop Boys acabó en una radio de
+     * Dead Can Dance.
      */
     private fun relatedGenres(genre: String): Set<String> {
         val normalized = genre.lowercase().trim()
@@ -238,8 +249,23 @@ class KnownHitsRepository @Inject constructor(
         return if (related.isEmpty()) setOf(normalized) else related
     }
 
-    private fun matchesGenre(hitGenre: String, anchorGenre: String): Boolean =
-        hitGenre.lowercase().trim() in relatedGenres(anchorGenre)
+    /**
+     * ¿Encaja esta entrada del diccionario con el ancla?
+     *
+     * Se cruza la familia del género de la entrada contra TODOS los
+     * géneros del ancla, no solo contra el más votado. Con Dead Can
+     * Dance = {dark wave, ethereal wave, gothic, neoclassical dark
+     * wave, new age, ambient, post-punk}:
+     *
+     *   Joy Division   ('new wave')  -> familia post-punk -> corta en
+     *                                   'post-punk' -> entra
+     *   Pet Shop Boys  ('synth-pop') -> familia synth-pop -> no corta
+     *                                   -> fuera
+     */
+    private fun matchesGenre(hitGenre: String, anchorGenres: Set<String>): Boolean {
+        val family = relatedGenres(hitGenre)
+        return anchorGenres.any { it.lowercase().trim() in family }
+    }
 
     fun randomHit(
         genre: String?,
@@ -248,6 +274,7 @@ class KnownHitsRepository @Inject constructor(
         excludeSongKeys: Set<String>,
         avoidArtists: Set<String> = emptySet(),
         relaxGenre: Boolean = false,
+        anchorGenres: Set<String> = emptySet(),
     ): KnownHit? {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun pick(candidates: List<KnownHit>): KnownHit? {
@@ -267,7 +294,8 @@ class KnownHitsRepository @Inject constructor(
         // que no sonar nada o repetir.
         if (relaxGenre) return pick(pool(decadeBegin, origin))
         if (genre == null) return null
-        return pick(pool(decadeBegin, origin).filter { matchesGenre(it.genre, genre) })
+        val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
+        return pick(pool(decadeBegin, origin).filter { matchesGenre(it.genre, anchorSet) })
     }
 
     /**
@@ -291,6 +319,7 @@ class KnownHitsRepository @Inject constructor(
         origin: Origin,
         avoidArtists: Set<String> = emptySet(),
         relaxGenre: Boolean = false,
+        anchorGenres: Set<String> = emptySet(),
     ): List<String> {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun artistsOf(candidates: List<KnownHit>): List<String> =
@@ -302,7 +331,11 @@ class KnownHitsRepository @Inject constructor(
             artistsOf(pool(decadeBegin, origin))
         } else {
             if (genre == null) return emptyList()
-            artistsOf(pool(decadeBegin, origin).filter { matchesGenre(it.genre, genre) })
+            artistsOf(
+                pool(decadeBegin, origin).filter {
+                    matchesGenre(it.genre, anchorGenres.ifEmpty { setOf(genre) })
+                },
+            )
         }
         val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
         return fresh.shuffled() + repeated.shuffled()
