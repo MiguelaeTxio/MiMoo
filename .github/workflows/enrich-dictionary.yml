@@ -1,0 +1,68 @@
+name: Enriquecer generos del diccionario (MusicBrainz)
+
+# Disparo MANUAL. Son 658 artistas a dos peticiones cada uno, a una por
+# segundo: alrededor de media hora. No debe lanzarse a la vez que
+# genre-tree.yml, para no doblar la carga sobre MusicBrainz.
+on:
+  workflow_dispatch:
+
+jobs:
+  enrich-dictionary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Resolver artistas y escribir sus generos
+        run: python3 tools/enrich_dictionary_genres.py
+
+      # Antes de commitear, como en genre-tree.yml: el rastreo vive en
+      # una maquina efimera y no se puede perder por un fallo posterior.
+      - name: Salvar los resultados como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dictionary-genres
+          path: |
+            app/src/main/assets/known_hit_artists.json
+            app/src/main/assets/artist_genre_resolution.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commitear si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/assets/known_hit_artists.json \
+                  app/src/main/assets/artist_genre_resolution.json
+          if git diff --cached --quiet; then
+            echo "Nada que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: conjunto de generos real por entrada del diccionario
+
+          Salida de tools/enrich_dictionary_genres.py. Cada entrada de
+          known_hit_artists.json pasa a llevar 'genres' con lo que
+          MusicBrainz dice del artista; 'genre' se conserva porque
+          RadioRepository lo necesita como termino unico de busqueda.
+
+          Sustituye los 27 generos escritos a mano, donde 'pop' y 'rock'
+          se llevaban el 54% de las 777 entradas y por tanto no servian
+          para decidir pertenencia a ningun ancla concreta.
+
+          artist_genre_resolution.json guarda como se resolvio cada
+          artista. Las entradas con 'review': true son aquellas en las
+          que MusicBrainz devolvio un nombre distinto al buscado o con
+          poca puntuacion: homonimos que hay que mirar a mano.
+          EOF
+          git push
