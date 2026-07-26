@@ -14,6 +14,10 @@
    {
     "artist": "Los Ángeles",
     "genre": "pop",
+    "genres": [
+     "beat music",
+     "merseybeat"
+    ],
     "song": "Mañana Mañana"
    },
    {
@@ -333,6 +337,10 @@
    {
     "artist": "Los Ángeles",
     "genre": "pop",
+    "genres": [
+     "beat music",
+     "merseybeat"
+    ],
     "song": "Créeme"
    },
    {
@@ -1313,6 +1321,9 @@
    {
     "artist": "Burning",
     "genre": "rock",
+    "genres": [
+     "rock"
+    ],
     "song": "Qué Hace una Chica Como Tú en un Sitio Como Éste"
    },
    {
@@ -2744,6 +2755,9 @@
    {
     "artist": "Burning",
     "genre": "rock",
+    "genres": [
+     "rock"
+    ],
     "song": "Nadie Como Tú"
    },
    {
@@ -5495,6 +5509,9 @@
    {
     "artist": "Bebe",
     "genre": "pop",
+    "genres": [
+     "latin pop"
+    ],
     "song": "Malo"
    },
    {

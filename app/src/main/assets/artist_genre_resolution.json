@@ -716,11 +716,13 @@
    "score": 100
   },
   "Bebe": {
-   "genres": [],
-   "matchedName": "Bebe Rexha",
-   "mbid": "db8fad3a-e131-47a1-8782-c2ee93708cdd",
-   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
-   "review": true,
+   "desambiguado": "MBID fijado a mano y confirmado por Miguel Angel",
+   "genres": [
+    "latin pop"
+   ],
+   "matchedName": "Bebe",
+   "mbid": "1f4c0c5a-be94-43e2-ab01-1aa623daa530",
+   "review": false,
    "score": 100
   },
   "Becky G": {
@@ -1166,11 +1168,13 @@
    "score": 100
   },
   "Burning": {
-   "genres": [],
-   "matchedName": "Burning Spear",
-   "mbid": "16dad944-c492-43dd-88ed-e0b7ac520c40",
-   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
-   "review": true,
+   "desambiguado": "MBID fijado a mano y confirmado por Miguel Angel",
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Burning",
+   "mbid": "7015f9da-a820-4787-935e-f2e426e36829",
+   "review": false,
    "score": 100
   },
   "Bustamante": {
@@ -4311,11 +4315,14 @@
    "score": 100
   },
   "Los Ángeles": {
-   "genres": [],
-   "matchedName": "Los Angeles Philharmonic",
-   "mbid": "98e4313e-dfb0-4084-805c-3e42ef9301d0",
-   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
-   "review": true,
+   "desambiguado": "MBID fijado a mano y confirmado por Miguel Angel",
+   "genres": [
+    "beat music",
+    "merseybeat"
+   ],
+   "matchedName": "Los Ángeles",
+   "mbid": "8fcb0a0f-cb32-4652-8c1d-a0a9770eeacf",
+   "review": false,
    "score": 100
   },
   "Lou Reed": {
@@ -6450,11 +6457,11 @@
    "score": 100
   },
   "Salomé": {
+   "desambiguado": "MBID fijado a mano y confirmado por Miguel Angel",
    "genres": [],
-   "matchedName": "Salomé de Bahia",
-   "mbid": "449c7223-7ab1-4b33-aba5-6da9dac3497c",
-   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
-   "review": true,
+   "matchedName": "Salomé",
+   "mbid": "7fa32778-1021-4f46-93bd-596545f2b50c",
+   "review": false,
    "score": 100
   },
   "Sam Cooke": {
@@ -6600,11 +6607,11 @@
    "score": 100
   },
   "Second": {
+   "desambiguado": "MBID fijado a mano y confirmado por Miguel Angel",
    "genres": [],
-   "matchedName": "A Split‐Second",
-   "mbid": "bf270b87-6da7-485b-8c5b-0d02c9c47f41",
-   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
-   "review": true,
+   "matchedName": "Second",
+   "mbid": "7286e960-1365-4747-8f57-56b00c4d54e9",
+   "review": false,
    "score": 100
   },
   "Seguridad Social": {
