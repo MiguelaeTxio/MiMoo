@@ -181,7 +181,10 @@ class RadioRepository @Inject constructor(
         lastFailureWasTransient = false
     }
 
-    suspend fun resolveAnchor(sourceArtist: String): RadioAnchor? {
+    suspend fun resolveAnchor(
+        sourceArtist: String,
+        sourceTrackTitle: String? = null,
+    ): RadioAnchor? {
         if (sourceArtist.isBlank() || isPlaceholderArtist(sourceArtist)) {
             log("resolveAnchor('$sourceArtist') -- origen vacío o placeholder, se descarta sin buscar")
             return null
@@ -236,7 +239,7 @@ class RadioRepository @Inject constructor(
                     " -> elegido '$chosenGenre'"
             )
             val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
-            val decadeBegin = parseDecadeBegin(sourceDetail.lifeSpan?.begin)
+            val decadeBegin = resolveTrackDecade(sourceArtist, sourceTrackTitle)
             // S013/S014, punto 4 -- "grupo español" se decide primero
             // por el diccionario de éxitos (barato, sin ambigüedad de
             // MusicBrainz) y, si el artista no está en él, por el
@@ -329,11 +332,18 @@ class RadioRepository @Inject constructor(
     suspend fun lookupArtistProfile(artistName: String): ArtistProfile? {
         if (artistName.isBlank() || isPlaceholderArtist(artistName)) return null
         return try {
-            val mbid = musicBrainzApiService
-                .searchArtists(query = buildArtistQuery(artistName))
-                .artists
-                .firstOrNull()
-                ?.id ?: return null
+            // S023 -- mismo arreglo que en resolveAnchor(): se
+            // comprueba que el candidato devuelto SEA el artista
+            // buscado, en vez de aceptar el primero que llegue.
+            val mbid = pickAnchorArtist(
+                artistName,
+                musicBrainzApiService
+                    .searchArtists(
+                        query = buildArtistQuery(artistName),
+                        limit = ANCHOR_SEARCH_LIMIT,
+                    )
+                    .artists,
+            ) ?: return null
             val detail = musicBrainzApiService.lookupArtist(mbid)
             noteSuccess()
             val genres = detail.genres.map { it.name }.filter { it.isNotBlank() }.toSet()
@@ -392,14 +402,115 @@ class RadioRepository @Inject constructor(
     }
 
     /**
-     * "1983-05-12", "1983-05", "1983" -- MusicBrainz life-span.begin
-     * viene con distinta precisión según lo que conste en su base. Se
-     * usan solo los 4 primeros dígitos (el año) y se redondea hacia
-     * abajo a la década ("1983" -> 1980).
+     * Década del TEMA que arranca la sesión (S023).
+     *
+     * **Qué sustituye y por qué.** Hasta S023 esto era
+     * `parseDecadeBegin(sourceDetail.lifeSpan?.begin)`: la década salía
+     * del `life-span` del ARTISTA. Para un grupo eso es el año de
+     * formación y colaba; para un solista es su fecha de NACIMIENTO, y
+     * mentía siempre. Verificado en log real: P!nk, nacida en 1979,
+     * anclaba una sesión en la década de 1970 y la Radio devolvía Cat
+     * Stevens, Lynyrd Skynyrd, ELO y Supertramp -- todos correctos
+     * para ese ancla, que era el problema. El motor obedecía; el dato
+     * era falso.
+     *
+     * Miguel Ángel cerró la regla al ver el diagnóstico, y va más allá
+     * de los solistas: **la década la marca el tema, nunca el
+     * artista.** Yes se formó en 1968; "Roundabout" es de 1971 y
+     * "Owner of a Lonely Heart" de 1983. No es lo mismo escuchar una
+     * que otra, y fechar por el grupo no acierta con ninguna. Ese caso
+     * exacto estaba en el log desde antes: una radio anclada en Led
+     * Zeppelin (formados en 1968) trayendo "Owner of a Lonely Heart".
+     *
+     * **Cascada, en orden de fiabilidad:**
+     *
+     * 1. El diccionario local, si conoce ese artista Y ese tema. Es
+     *    gratis, no gasta petición y no depende de que MusicBrainz
+     *    esté en pie.
+     * 2. `first-release-date` de la grabación en MusicBrainz. Una
+     *    petición más por sesión, solo al arrancar.
+     * 3. Nada. Se deja la década SIN FIJAR antes que inventarla. Sin
+     *    década la Radio filtra por género y origen: menos preciso,
+     *    pero no falso. `pool()` ya contempla `decadeBegin == null`.
+     *
+     * El año del tema local no entra en la cascada porque no existe:
+     * `SearchResultTrack` no guarda fecha. Si algún día la guarda,
+     * este es el sitio donde entraría, por delante de todo lo demás.
+     */
+    /**
+     * Década a partir del `life-span.begin` de un ARTISTA.
+     *
+     * S023 -- ya NO se usa para el ancla; ahí se fecha el tema (ver
+     * `resolveTrackDecade()`). Sobrevive solo para
+     * `lookupArtistProfile()`, que perfila artistas CANDIDATOS de la
+     * biblioteca local.
+     *
+     * ATENCIÓN: arrastra el mismo defecto de fondo. Para un solista
+     * esto es su fecha de nacimiento, y para un grupo el año de
+     * formación, que tampoco es la década de sus temas. Aquí hace
+     * menos daño que en el ancla -- filtra un candidato suelto, no
+     * condiciona la sesión entera -- pero sigue estando mal.
+     * Pendiente, anotado en ANNEX_H08.md.
      */
     private fun parseDecadeBegin(begin: String?): Int? {
         val year = begin?.take(4)?.toIntOrNull() ?: return null
         return (year / 10) * 10
+    }
+
+    private suspend fun resolveTrackDecade(artist: String, trackTitle: String?): Int? {
+        val cleanTitle = trackTitle?.let { stripTitleNoise(it) }
+
+        knownHitsRepository.decadeOfTrack(artist, cleanTitle)?.let { decade ->
+            log("resolveTrackDecade('$artist' -- '$cleanTitle') -> década $decade, del diccionario local")
+            return decade
+        }
+
+        if (cleanTitle.isNullOrBlank()) {
+            log("resolveTrackDecade('$artist') -- sin título de tema utilizable, década SIN FIJAR")
+            return null
+        }
+
+        return try {
+            val query = "recording:\"${cleanTitle.replace("\"", "")}\" " +
+                "AND artist:\"${artist.replace("\"", "")}\""
+            val wantedTitle = SearchNormalizer.normalize(cleanTitle)
+            val dated = musicBrainzApiService.searchRecordings(query = query)
+                .recordings
+                .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+                .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+            // La MÁS ANTIGUA: la primera publicación del tema, no la
+            // recopilación o reedición que se esté escuchando.
+            val year = dated.minOrNull()
+            if (year == null) {
+                log("resolveTrackDecade('$artist' -- '$cleanTitle') -- MusicBrainz no da fecha para el tema, década SIN FIJAR")
+                null
+            } else {
+                val decade = (year / 10) * 10
+                log("resolveTrackDecade('$artist' -- '$cleanTitle') -> década $decade (primera publicación $year), de MusicBrainz")
+                decade
+            }
+        } catch (e: Exception) {
+            // Un fallo aquí NO invalida el ancla: se pierde la década,
+            // no la sesión. Tampoco cuenta como fallo de servicio: el
+            // ancla en sí ya se resolvió bien justo antes.
+            log("resolveTrackDecade('$artist' -- '$cleanTitle') -- ${e::class.java.simpleName}, década SIN FIJAR")
+            null
+        }
+    }
+
+    /**
+     * Quita del título el ruido que trae YouTube y que impediría casar
+     * el tema con MusicBrainz o con el diccionario: "(Official Video)",
+     * "[Lyric Video]", "(Remastered 2011)" y compañía. También corta un
+     * prefijo "Artista - " si viene pegado delante, que es la forma
+     * habitual en que YouTube titula los vídeos musicales.
+     */
+    private fun stripTitleNoise(rawTitle: String): String {
+        val withoutBrackets = rawTitle
+            .replace(Regex("\\([^)]*\\)"), " ")
+            .replace(Regex("\\[[^]]*]"), " ")
+        val withoutArtistPrefix = withoutBrackets.substringAfter(" - ", withoutBrackets)
+        return withoutArtistPrefix.replace(Regex("\\s+"), " ").trim()
     }
 
     private fun log(line: String) = RadioDebugLogger.log(appContext, storageManager, line)

@@ -3,6 +3,7 @@ package com.miguelaetxio.mimoo.data.remote
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -81,6 +82,39 @@ class KnownHitsRepository @Inject constructor(
      * mirar el diccionario entero sin condicionar por origen.
      */
     enum class Origin { ES, INTL, ANY }
+
+    /**
+     * Década en la que el diccionario sitúa un tema concreto (S023).
+     *
+     * **Por qué existe.** Hasta S023 la década del ancla salía de
+     * `life-span.begin` del ARTISTA en MusicBrainz. Para un grupo eso
+     * es el año de formación; para un solista es su fecha de
+     * NACIMIENTO, y entonces el ancla siempre miente: P!nk nació en
+     * 1979, así que su radio se anclaba en los 70 y devolvía Cat
+     * Stevens y Lynyrd Skynyrd. Verificado sobre log real.
+     *
+     * Pero el problema es más profundo que los solistas, y lo cerró
+     * Miguel Ángel: **la década la marca el TEMA, no el artista.** Yes
+     * se formó en 1968, y entre "Roundabout" (1971) y "Owner of a
+     * Lonely Heart" (1983) hay doce años y dos grupos distintos.
+     * Anclar por el artista no acierta con ninguno de los dos.
+     *
+     * Se busca por artista Y tema. Si el artista está pero con otro
+     * tema, no vale: sería volver a fechar por artista.
+     */
+    fun decadeOfTrack(artist: String, song: String?): Int? {
+        if (song.isNullOrBlank()) return null
+        val wantedArtist = SearchNormalizer.normalizeArtistName(artist)
+        val wantedSong = SearchNormalizer.normalize(song)
+        if (wantedArtist.isBlank() || wantedSong.isBlank()) return null
+
+        return byDecade.entries.firstOrNull { (_, decade) ->
+            (decade.es + decade.intl).any { hit ->
+                SearchNormalizer.normalizeArtistName(hit.artist) == wantedArtist &&
+                    SearchNormalizer.normalize(hit.song) == wantedSong
+            }
+        }?.key
+    }
 
     /**
      * Pool de un origen para una década concreta o, si `decadeBegin`

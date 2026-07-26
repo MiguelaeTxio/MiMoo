@@ -989,7 +989,7 @@ class PlayerManager @Inject constructor(
         // derivado de la biblioteca local. El artista estructurado
         // (H05, dato real de la pista) va primero.
         radioAnchorArtistFallback?.let { structured ->
-            radioRepository.resolveAnchor(structured)?.let {
+            radioRepository.resolveAnchor(structured, radioAnchorTrackTitle)?.let {
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "resolveAnchorWithFallbacks() -- ancla fijada desde el artista estructurado " +
@@ -999,7 +999,7 @@ class PlayerManager @Inject constructor(
             }
         }
 
-        radioRepository.resolveAnchor(anchorArtistName)?.let { return it }
+        radioRepository.resolveAnchor(anchorArtistName, radioAnchorTrackTitle)?.let { return it }
 
         val titleGuess = parseArtistFromTitle(radioAnchorTrackTitle)
             ?.takeIf { !it.equals(anchorArtistName, ignoreCase = true) &&
@@ -1010,7 +1010,7 @@ class PlayerManager @Inject constructor(
                 "fetchOneRadioTrack() -- ancla '$anchorArtistName' y artista estructurado sin " +
                     "resultado, último intento con el título parseado ('${radioAnchorTrackTitle}' -> '$titleGuess')",
             )
-            radioRepository.resolveAnchor(titleGuess)?.let { return it }
+            radioRepository.resolveAnchor(titleGuess, radioAnchorTrackTitle)?.let { return it }
         }
 
         // S022 -- un 503 o un timeout NO significan "este artista no

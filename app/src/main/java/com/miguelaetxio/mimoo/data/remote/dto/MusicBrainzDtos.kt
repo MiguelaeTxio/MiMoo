@@ -168,3 +168,22 @@ data class MusicBrainzReleaseGroup(
     @SerializedName("first-release-date") val firstReleaseDate: String? = null,
     @SerializedName("primary-type") val primaryType: String? = null,
 )
+
+/**
+ * Respuesta de búsqueda de grabaciones (S023) -- se usa para fechar el
+ * TEMA que arranca una sesión de Radio, no al artista.
+ *
+ * `first-release-date` es la primera publicación conocida de esa
+ * grabación. Es la fecha que interesa: la del tema, no la de la
+ * recopilación o reedición concreta que se esté escuchando.
+ */
+data class MusicBrainzRecordingSearchResponse(
+    @SerializedName("recordings") val recordings: List<MusicBrainzRecording> = emptyList(),
+)
+
+data class MusicBrainzRecording(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String = "",
+    @SerializedName("first-release-date") val firstReleaseDate: String? = null,
+    @SerializedName("artist-credit") val artistCredit: List<MusicBrainzArtistCredit> = emptyList(),
+)

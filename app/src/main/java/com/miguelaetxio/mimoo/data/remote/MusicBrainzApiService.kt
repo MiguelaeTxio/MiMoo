@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.remote
 
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistDetail
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSearchResponse
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzRecordingSearchResponse
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseDetail
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroupSearchResponse
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzSearchResponse
@@ -26,6 +27,29 @@ import retrofit2.http.Query
  * MusicBrainz (verificado 2026-07-02).
  */
 interface MusicBrainzApiService {
+    /**
+     * Búsqueda de grabaciones (S023). Se usa para fechar el TEMA que
+     * arranca una sesión de Radio.
+     *
+     * Hasta S023 la década del ancla salía de `life-span.begin` del
+     * artista, que para un solista es su fecha de nacimiento -- P!nk
+     * (1979) anclaba en los 70. Pero incluso para grupos el artista es
+     * la fuente equivocada: Yes se formó en 1968, y entre "Roundabout"
+     * (1971) y "Owner of a Lonely Heart" (1983) no hay nada en común.
+     * Regla cerrada por Miguel Ángel en S023: **fecha el tema, nunca
+     * el artista.**
+     *
+     * `first-release-date` de la grabación es la primera publicación
+     * conocida, que es exactamente la fecha que queremos: la del tema,
+     * no la de la reedición que se esté escuchando.
+     */
+    @GET("recording/")
+    suspend fun searchRecordings(
+        @Query("query") query: String,
+        @Query("fmt") format: String = "json",
+        @Query("limit") limit: Int = 10,
+    ): MusicBrainzRecordingSearchResponse
+
     @GET("release/")
     suspend fun searchReleases(
         @Query("query") query: String,
