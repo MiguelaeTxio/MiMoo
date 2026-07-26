@@ -20,24 +20,57 @@
   "Hoy, arrancar una radio desde Pink fija Pink Floyd como ancla. Este archivo todavia no",
   "lo corrige: la app no lo lee. Anotado en ANNEX_H08.md como incidencia abierta."
  ],
-
- "incorrectos": {
-  "Bebe": { "devolvia": "Bebe Rexha", "mbid": null },
-  "Burning": { "devolvia": "Burning Spear", "mbid": null },
-  "Deluxe": { "devolvia": "Samy Deluxe", "mbid": null },
-  "Kanye West": { "devolvia": "Kanye West Tribute Band", "mbid": null },
-  "Los Canarios": { "devolvia": "Trío Los Canarios", "mbid": null },
-  "Los Ángeles": { "devolvia": "Los Angeles Philharmonic", "mbid": null },
-  "Micky": { "devolvia": "Micky Wolf", "mbid": null },
-  "Pink": { "devolvia": "Pink Floyd", "mbid": null },
-  "Salomé": { "devolvia": "Salomé de Bahia", "mbid": null },
-  "Second": { "devolvia": "A Split‐Second", "mbid": null }
- },
-
  "confirmados": {
   "Aviador Dro": "El Aviador Dro",
   "Bob Marley": "Bob Marley & The Wailers",
   "Bustamante": "David Bustamante",
   "Lauryn Hill": "Ms. Lauryn Hill"
+ },
+ "incorrectos": {
+  "Bebe": {
+   "devolvia": "Bebe Rexha",
+   "elegido": "confirmado por Miguel Angel sobre candidatos de S023",
+   "mbid": "1f4c0c5a-be94-43e2-ab01-1aa623daa530"
+  },
+  "Burning": {
+   "devolvia": "Burning Spear",
+   "elegido": "confirmado por Miguel Angel sobre candidatos de S023",
+   "mbid": "7015f9da-a820-4787-935e-f2e426e36829"
+  },
+  "Deluxe": {
+   "devolvia": "Samy Deluxe",
+   "mbid": null
+  },
+  "Kanye West": {
+   "devolvia": "Kanye West Tribute Band",
+   "mbid": null
+  },
+  "Los Canarios": {
+   "devolvia": "Trío Los Canarios",
+   "mbid": null
+  },
+  "Los Ángeles": {
+   "devolvia": "Los Angeles Philharmonic",
+   "elegido": "confirmado por Miguel Angel sobre candidatos de S023",
+   "mbid": "8fcb0a0f-cb32-4652-8c1d-a0a9770eeacf"
+  },
+  "Micky": {
+   "devolvia": "Micky Wolf",
+   "mbid": null
+  },
+  "Pink": {
+   "devolvia": "Pink Floyd",
+   "mbid": null
+  },
+  "Salomé": {
+   "devolvia": "Salomé de Bahia",
+   "elegido": "confirmado por Miguel Angel sobre candidatos de S023",
+   "mbid": "7fa32778-1021-4f46-93bd-596545f2b50c"
+  },
+  "Second": {
+   "devolvia": "A Split‐Second",
+   "elegido": "confirmado por Miguel Angel sobre candidatos de S023",
+   "mbid": "7286e960-1365-4747-8f57-56b00c4d54e9"
+  }
  }
 }

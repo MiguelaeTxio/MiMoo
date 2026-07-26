@@ -2,7 +2,9 @@ package com.miguelaetxio.mimoo.data.remote
 
 import android.content.Context
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -185,13 +187,28 @@ class RadioRepository @Inject constructor(
             return null
         }
         return try {
-            val sourceMbid = musicBrainzApiService
-                .searchArtists(query = buildArtistQuery(sourceArtist))
+            // S023 -- antes esto era `.artists.firstOrNull()?.id`: se
+            // aceptaba el PRIMER resultado sin comprobar que el nombre
+            // devuelto se pareciera al buscado. Con nombres cortos o
+            // ambiguos eso fijaba el ancla equivocada, y como el ancla
+            // congela género y país desde el primer tema, el error
+            // contaminaba la cadena entera y no un tema suelto:
+            //
+            //   Pink        -> Pink Floyd                (progressive rock)
+            //   Los Ángeles -> Los Angeles Philharmonic  (classical)
+            //   Burning     -> Burning Spear             (reggae)
+            //
+            // Nótese que 'classical' reentraba por aquí pese a haberse
+            // ordenado sacarlo del todo en S016: no llegaba como género
+            // de un tema, sino de un ancla mal resuelta.
+            val candidates = musicBrainzApiService
+                .searchArtists(
+                    query = buildArtistQuery(sourceArtist),
+                    limit = ANCHOR_SEARCH_LIMIT,
+                )
                 .artists
-                .firstOrNull()
-                ?.id
+            val sourceMbid = pickAnchorArtist(sourceArtist, candidates)
             if (sourceMbid == null) {
-                log("resolveAnchor('$sourceArtist') -- MusicBrainz no encontró NINGÚN artista con ese nombre (searchArtists vacío)")
                 return null
             }
 
@@ -398,6 +415,108 @@ class RadioRepository @Inject constructor(
         return "artist:\"${escape(artist)}\""
     }
 
+    /**
+     * Lista de desambiguación cargada de `artist_disambiguation.json`
+     * (S023). Se lee una sola vez y se conserva; es un asset del APK,
+     * no cambia en ejecución.
+     */
+    private data class Disambiguation(
+        /** Nombre normalizado -> MBID fijado a mano. */
+        val forced: Map<String, String>,
+        /** Normalizados sin MBID: MusicBrainz no tiene al artista. */
+        val blocked: Set<String>,
+        /** Normalizado -> nombre canónico que MusicBrainz devuelve. */
+        val confirmed: Map<String, String>,
+    )
+
+    private val disambiguation: Disambiguation by lazy { loadDisambiguation() }
+
+    private fun loadDisambiguation(): Disambiguation {
+        return try {
+            val json = appContext.assets.open("artist_disambiguation.json")
+                .bufferedReader()
+                .use { it.readText() }
+            val root = org.json.JSONObject(json)
+
+            val forced = mutableMapOf<String, String>()
+            val blocked = mutableSetOf<String>()
+            val wrong = root.optJSONObject("incorrectos")
+            wrong?.keys()?.forEach { name ->
+                val key = SearchNormalizer.normalizeArtistName(name)
+                val mbid = wrong.optJSONObject(name)?.optString("mbid").orEmpty()
+                if (mbid.isNotBlank() && mbid != "null") forced[key] = mbid else blocked += key
+            }
+
+            val confirmed = mutableMapOf<String, String>()
+            val ok = root.optJSONObject("confirmados")
+            ok?.keys()?.forEach { name ->
+                confirmed[SearchNormalizer.normalizeArtistName(name)] =
+                    SearchNormalizer.normalizeArtistName(ok.optString(name))
+            }
+
+            log("desambiguación cargada -- ${forced.size} con MBID fijado, ${blocked.size} sin resolver, ${confirmed.size} confirmados")
+            Disambiguation(forced, blocked, confirmed)
+        } catch (e: Exception) {
+            // Sin la lista se sigue funcionando: lo que se pierde son
+            // las correcciones manuales, no la comprobación de nombre.
+            log("desambiguación NO disponible (${e.javaClass.simpleName}) -- se sigue con verificación de nombre")
+            Disambiguation(emptyMap(), emptySet(), emptyMap())
+        }
+    }
+
+    /**
+     * Elige el artista del que se va a fijar el ancla, en vez de
+     * aceptar el primer resultado (S023).
+     *
+     * Orden: primero la corrección manual, si la hay; después el
+     * primer candidato cuyo nombre coincida de verdad con el buscado,
+     * ya plegados acentos y tipografía por `normalizeArtistName()`
+     * -- que es lo que hace que 'Guns N'Roses' case con
+     * 'Guns N' Roses' y 'a‐ha' con 'a-ha'.
+     *
+     * Si ningún candidato coincide se devuelve null y NO se ancla.
+     * Preferimos quedarnos sin radio a construir una cadena entera
+     * sobre un artista que no es.
+     */
+    private fun pickAnchorArtist(
+        sourceArtist: String,
+        candidates: List<MusicBrainzArtistSummary>,
+    ): String? {
+        val wanted = SearchNormalizer.normalizeArtistName(sourceArtist)
+
+        disambiguation.forced[wanted]?.let { mbid ->
+            log("resolveAnchor('$sourceArtist') -- MBID fijado a mano ($mbid), no se usa la búsqueda")
+            return mbid
+        }
+        if (wanted in disambiguation.blocked) {
+            log("resolveAnchor('$sourceArtist') -- artista marcado como no resoluble en MusicBrainz, no se fija ancla")
+            return null
+        }
+
+        if (candidates.isEmpty()) {
+            log("resolveAnchor('$sourceArtist') -- MusicBrainz no encontró NINGÚN artista con ese nombre (searchArtists vacío)")
+            return null
+        }
+
+        val canonical = disambiguation.confirmed[wanted]
+        val match = candidates.firstOrNull { candidate ->
+            val got = SearchNormalizer.normalizeArtistName(candidate.name)
+            got == wanted || (canonical != null && got == canonical)
+        }
+
+        if (match == null) {
+            log(
+                "resolveAnchor('$sourceArtist') -- ningún candidato coincide con el nombre buscado; " +
+                    "descartados: ${candidates.joinToString(", ") { it.name }}. No se fija ancla."
+            )
+            return null
+        }
+        if (match !== candidates.first()) {
+            log("resolveAnchor('$sourceArtist') -- se descarta '${candidates.first().name}' y se toma '${match.name}' por coincidencia de nombre")
+        }
+        return match.id
+    }
+
     private companion object {
         /**
          * Fallos transitorios seguidos a partir de los cuales se
@@ -412,5 +531,17 @@ class RadioRepository @Inject constructor(
          * significa cuatro fallos SEGUIDOS de verdad.
          */
         const val DEGRADED_THRESHOLD = 4
+
+        /**
+         * Candidatos que se piden al buscar el artista del ancla.
+         *
+         * S023 -- subido del 5 por defecto. La búsqueda por
+         * `artist:"NOMBRE"` devuelve coincidencias PARCIALES antes que
+         * la exacta: pidiendo cinco, de 'Kanye West' salían una banda
+         * tributo y una colaboración, y el artista real no aparecía en
+         * la ventana. Con `pickAnchorArtist()` descartando por nombre,
+         * pedir de más no cuesta precisión -- cuesta no encontrarlo.
+         */
+        const val ANCHOR_SEARCH_LIMIT = 25
     }
 }
