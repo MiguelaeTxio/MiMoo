@@ -1,0 +1,8363 @@
+{
+ "resolved": {
+  "2 Unlimited": {
+   "genres": [
+    "eurodance",
+    "euro house",
+    "pop",
+    "edm",
+    "electronic",
+    "europop",
+    "hip house",
+    "house",
+    "rave",
+    "synth-pop"
+   ],
+   "matchedName": "2 Unlimited",
+   "mbid": "515b236c-cce1-4dc2-aedd-50de7b1736e2",
+   "review": false,
+   "score": 100
+  },
+  "2Pac": {
+   "genres": [
+    "gangsta rap",
+    "west coast hip hop",
+    "hip hop",
+    "political hip hop",
+    "conscious hip hop",
+    "g-funk",
+    "pop rap"
+   ],
+   "matchedName": "2Pac",
+   "mbid": "382f1005-e9ab-4684-afd4-0bdae4ee37f2",
+   "review": false,
+   "score": 100
+  },
+  "50 Cent": {
+   "genres": [
+    "hip hop",
+    "east coast hip hop",
+    "gangsta rap",
+    "pop rap",
+    "hardcore hip hop",
+    "southern hip hop",
+    "trap"
+   ],
+   "matchedName": "50 Cent",
+   "mbid": "8e68819d-71be-4e7d-b41d-f1df81b01d3f",
+   "review": false,
+   "score": 100
+  },
+  "ABBA": {
+   "genres": [
+    "pop",
+    "disco",
+    "europop",
+    "glam rock",
+    "pop rock",
+    "euro-disco",
+    "mainstream rock",
+    "rock"
+   ],
+   "matchedName": "ABBA",
+   "mbid": "d87e52c5-bb8d-4da8-b941-9f4928627dc8",
+   "review": false,
+   "score": 100
+  },
+  "AC/DC": {
+   "genres": [
+    "hard rock",
+    "rock",
+    "blues rock",
+    "rock and roll"
+   ],
+   "matchedName": "AC/DC",
+   "mbid": "66c662b6-6e2f-4930-8610-912e24c63ed1",
+   "review": false,
+   "score": 100
+  },
+  "Ace of Base": {
+   "genres": [
+    "pop",
+    "europop",
+    "eurodance",
+    "bubblegum dance",
+    "club",
+    "dance-pop",
+    "electronic",
+    "euro house",
+    "hi-nrg",
+    "reggae",
+    "reggae-pop",
+    "ska",
+    "synth-pop",
+    "techno"
+   ],
+   "matchedName": "Ace of Base",
+   "mbid": "d4a1404d-e00c-4bac-b3ba-e3557f6468d6",
+   "review": false,
+   "score": 100
+  },
+  "Adamo": {
+   "genres": [
+    "pop",
+    "chanson française",
+    "europop",
+    "schlager"
+   ],
+   "matchedName": "Adamo",
+   "mbid": "d3132eab-36d1-476e-a736-cb6dbb08a4a2",
+   "review": false,
+   "score": 100
+  },
+  "Adele": {
+   "genres": [
+    "pop",
+    "soul",
+    "blue-eyed soul",
+    "pop soul",
+    "neo soul",
+    "r&b"
+   ],
+   "matchedName": "Adele",
+   "mbid": "cc2c9c3c-b7bc-4b8b-84d8-4fbd8779e493",
+   "review": false,
+   "score": 100
+  },
+  "Aguaviva": {
+   "genres": [],
+   "matchedName": "Aguaviva",
+   "mbid": "f7c73cda-e001-479f-accf-d9e7344e54b9",
+   "review": false,
+   "score": 100
+  },
+  "Aitana": {
+   "genres": [
+    "electropop",
+    "latin",
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "Aitana",
+   "mbid": "a24f2bd3-0d1b-4c03-8d91-6297ab5a2811",
+   "review": false,
+   "score": 100
+  },
+  "Al Green": {
+   "genres": [
+    "soul",
+    "smooth soul",
+    "gospel",
+    "southern soul",
+    "christmas music",
+    "contemporary gospel",
+    "soul blues"
+   ],
+   "matchedName": "Al Green",
+   "mbid": "fb7272ba-f130-4f0a-934d-6eeea4c18c9a",
+   "review": false,
+   "score": 100
+  },
+  "Alan Walker": {
+   "genres": [
+    "electronic",
+    "edm",
+    "electro house",
+    "future bass",
+    "dance",
+    "progressive house",
+    "electropop",
+    "pop",
+    "tropical house",
+    "club",
+    "dance-pop"
+   ],
+   "matchedName": "Alan Walker",
+   "mbid": "b0e4bc50-3062-4d31-afad-def6a6b7a8e9",
+   "review": false,
+   "score": 100
+  },
+  "Alanis Morissette": {
+   "genres": [
+    "alternative rock",
+    "post-grunge",
+    "pop rock",
+    "singer-songwriter",
+    "rock",
+    "dance-pop",
+    "new jack swing",
+    "pop"
+   ],
+   "matchedName": "Alanis Morissette",
+   "mbid": "4bdcee62-4902-4773-8cd1-e252e2e31225",
+   "review": false,
+   "score": 100
+  },
+  "Alaska y Dinarama": {
+   "genres": [
+    "pop rock"
+   ],
+   "matchedName": "Alaska y Dinarama",
+   "mbid": "32e5def8-6668-4459-bf21-643c0bde0de8",
+   "review": false,
+   "score": 100
+  },
+  "Alaska y Los Pegamoides": {
+   "genres": [],
+   "matchedName": "Alaska y los Pegamoides",
+   "mbid": "d7a16aab-6822-4d14-985e-8f87a2602051",
+   "review": false,
+   "score": 100
+  },
+  "Alejandro Fernández": {
+   "genres": [
+    "mariachi",
+    "ranchera",
+    "latin",
+    "latin pop",
+    "pop",
+    "ballad",
+    "bolero",
+    "pop rock"
+   ],
+   "matchedName": "Alejandro Fernández",
+   "mbid": "772a8360-e81e-4647-92e2-195c19efddad",
+   "review": false,
+   "score": 100
+  },
+  "Alejandro Sanz": {
+   "genres": [
+    "latin pop",
+    "latin",
+    "pop",
+    "flamenco pop",
+    "rock",
+    "singer-songwriter",
+    "soft rock"
+   ],
+   "matchedName": "Alejandro Sanz",
+   "mbid": "9bacf78f-9132-43da-8873-8a9eb49da0e9",
+   "review": false,
+   "score": 100
+  },
+  "Alice Cooper": {
+   "genres": [
+    "hard rock",
+    "glam rock",
+    "rock",
+    "heavy metal",
+    "classic rock",
+    "garage rock",
+    "glam metal",
+    "new wave",
+    "psychedelic rock"
+   ],
+   "matchedName": "Alice Cooper",
+   "mbid": "ee58c59f-8e7f-4430-b8ca-236c4d3745ae",
+   "review": false,
+   "score": 100
+  },
+  "Alice in Chains": {
+   "genres": [
+    "grunge",
+    "alternative rock",
+    "alternative metal",
+    "acoustic rock",
+    "heavy metal",
+    "sludge metal",
+    "hard rock",
+    "rock",
+    "doom metal",
+    "stoner metal",
+    "glam metal"
+   ],
+   "matchedName": "Alice in Chains",
+   "mbid": "4bd95eea-b9f6-4d70-a36c-cfea77431553",
+   "review": false,
+   "score": 100
+  },
+  "Alicia Keys": {
+   "genres": [
+    "contemporary r&b",
+    "r&b",
+    "neo soul",
+    "soul",
+    "jazz",
+    "jazz pop",
+    "pop",
+    "pop soul",
+    "hip hop",
+    "hip hop soul",
+    "smooth soul",
+    "southern soul"
+   ],
+   "matchedName": "Alicia Keys",
+   "mbid": "8ef1df30-ae4f-4dbd-9351-1a32b208a01e",
+   "review": false,
+   "score": 100
+  },
+  "Alizzz": {
+   "genres": [],
+   "matchedName": "Alizzz",
+   "mbid": "a4238edc-daf9-42ed-917b-dd586f91c269",
+   "review": false,
+   "score": 100
+  },
+  "Alphaville": {
+   "genres": [
+    "new wave",
+    "synth-pop",
+    "pop",
+    "alternative dance",
+    "dance-pop",
+    "dance-rock",
+    "dark disco",
+    "dark wave",
+    "darksynth",
+    "progressive pop",
+    "sophisti-pop"
+   ],
+   "matchedName": "Alphaville",
+   "mbid": "31aa6f87-8d00-4ae9-a5cc-6d7eeea109d2",
+   "review": false,
+   "score": 100
+  },
+  "Amaia": {
+   "genres": [
+    "alternative pop"
+   ],
+   "matchedName": "Amaia",
+   "mbid": "fd352180-b8c4-4ca3-a8e8-af21d2648372",
+   "review": false,
+   "score": 100
+  },
+  "Amaral": {
+   "genres": [
+    "latin ballad"
+   ],
+   "matchedName": "Amaral",
+   "mbid": "7a519099-d4c8-46c8-805b-214dab0e58a2",
+   "review": false,
+   "score": 100
+  },
+  "Amistades Peligrosas": {
+   "genres": [],
+   "matchedName": "Amistades Peligrosas",
+   "mbid": "7120aff8-de33-4be0-bf25-ea3b77b00924",
+   "review": false,
+   "score": 100
+  },
+  "Amy Winehouse": {
+   "genres": [
+    "soul",
+    "contemporary r&b",
+    "jazz",
+    "neo soul",
+    "jazz pop",
+    "pop soul",
+    "vocal jazz",
+    "crossover jazz",
+    "r&b"
+   ],
+   "matchedName": "Amy Winehouse",
+   "mbid": "dfe9a7c4-8cf2-47f4-9dcb-d233c2b86ec3",
+   "review": false,
+   "score": 100
+  },
+  "Ana Belén": {
+   "genres": [
+    "latin ballad"
+   ],
+   "matchedName": "Ana Belén",
+   "mbid": "f8dff62b-2cc1-4ce9-8def-05a45421f3fe",
+   "review": false,
+   "score": 100
+  },
+  "Ana Mena": {
+   "genres": [
+    "electropop",
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "Ana Mena",
+   "mbid": "905d9c0c-0632-4fab-a7b5-7d33b9699907",
+   "review": false,
+   "score": 100
+  },
+  "Antonio Molina": {
+   "genres": [],
+   "matchedName": "Antonio Molina",
+   "mbid": "4bb3e0a1-ad73-41b9-94ad-898299faa654",
+   "review": false,
+   "score": 100
+  },
+  "Antonio Orozco": {
+   "genres": [
+    "pop",
+    "latin pop"
+   ],
+   "matchedName": "Antonio Orozco",
+   "mbid": "a6909831-bb84-4ed8-ab5e-df6cab95abb7",
+   "review": false,
+   "score": 100
+  },
+  "Antonio Vega": {
+   "genres": [],
+   "matchedName": "Antonio Vega",
+   "mbid": "02a5c8da-cb9c-498a-8ec9-98bf7da4232d",
+   "review": false,
+   "score": 100
+  },
+  "Anuel AA": {
+   "genres": [
+    "latin",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "Anuel AA",
+   "mbid": "87a75fc3-59e7-4598-925c-8e230bce5db9",
+   "review": false,
+   "score": 100
+  },
+  "Aqua": {
+   "genres": [
+    "europop",
+    "bubblegum dance",
+    "eurodance",
+    "dance-pop",
+    "pop",
+    "electropop"
+   ],
+   "matchedName": "Aqua",
+   "mbid": "a1ed5e33-22ff-4e7d-a457-42f4309e135f",
+   "review": false,
+   "score": 100
+  },
+  "Arctic Monkeys": {
+   "genres": [
+    "indie rock",
+    "alternative rock",
+    "garage rock revival",
+    "post-punk revival",
+    "baroque pop",
+    "garage rock",
+    "neo-psychedelia",
+    "psychedelic rock",
+    "rock",
+    "art rock",
+    "dance",
+    "electronica",
+    "house",
+    "pop",
+    "psychedelic pop"
+   ],
+   "matchedName": "Arctic Monkeys",
+   "mbid": "ada7a83c-e3e1-40f1-93f9-3e73dbc9298a",
+   "review": false,
+   "score": 100
+  },
+  "Arde Bogotá": {
+   "genres": [
+    "alternative rock"
+   ],
+   "matchedName": "Arde Bogotá",
+   "mbid": "50170478-5516-4d9f-aa6a-130c1909ba8f",
+   "review": false,
+   "score": 100
+  },
+  "Aretha Franklin": {
+   "genres": [
+    "soul",
+    "gospel",
+    "deep soul",
+    "southern soul",
+    "jazz",
+    "quiet storm",
+    "r&b"
+   ],
+   "matchedName": "Aretha Franklin",
+   "mbid": "2f9ecbed-27be-40e6-abca-6de49d50299e",
+   "review": false,
+   "score": 100
+  },
+  "Ariana Grande": {
+   "genres": [
+    "pop",
+    "r&b",
+    "dance-pop",
+    "contemporary r&b",
+    "trap soul"
+   ],
+   "matchedName": "Ariana Grande",
+   "mbid": "f4fdbb4c-e4b7-47a0-b83b-d91bbfcfa387",
+   "review": false,
+   "score": 100
+  },
+  "Asfalto": {
+   "genres": [],
+   "matchedName": "Asfalto",
+   "mbid": "739a7067-9de2-430c-a177-e8da7597172e",
+   "review": false,
+   "score": 100
+  },
+  "Auryn": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Auryn",
+   "mbid": "843f1c03-3ae3-42ea-986f-bd0464b74ced",
+   "review": false,
+   "score": 100
+  },
+  "Australian Blonde": {
+   "genres": [
+    "indie rock"
+   ],
+   "matchedName": "Australian Blonde",
+   "mbid": "f8569f1a-ee2c-4d6d-b6b7-47f7156fc06c",
+   "review": false,
+   "score": 100
+  },
+  "Aviador Dro": {
+   "genres": [
+    "dance-pop",
+    "minimal synth"
+   ],
+   "matchedName": "El Aviador Dro",
+   "mbid": "c30cc8a0-2312-4332-9117-d0e6d77b4c65",
+   "review": true,
+   "score": 100
+  },
+  "Avicii": {
+   "genres": [
+    "progressive house",
+    "edm",
+    "electro house",
+    "dance-pop",
+    "electropop",
+    "electronic",
+    "festival progressive house",
+    "funky house",
+    "house",
+    "tropical house"
+   ],
+   "matchedName": "Avicii",
+   "mbid": "c85cfd6b-b1e9-4a50-bd55-eb725f04f7d5",
+   "review": false,
+   "score": 100
+  },
+  "Avril Lavigne": {
+   "genres": [
+    "pop punk",
+    "pop rock",
+    "alternative rock",
+    "post-grunge",
+    "pop",
+    "teen pop",
+    "acoustic rock",
+    "alternative pop",
+    "rock"
+   ],
+   "matchedName": "Avril Lavigne",
+   "mbid": "0103c1cc-4a09-4a5d-a344-56ad99a77193",
+   "review": false,
+   "score": 100
+  },
+  "Azúcar Moreno": {
+   "genres": [
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "Azúcar Moreno",
+   "mbid": "6673a67c-3281-4629-b08b-b9bf8db2384c",
+   "review": false,
+   "score": 100
+  },
+  "BTS": {
+   "genres": [
+    "k-pop",
+    "pop",
+    "dance"
+   ],
+   "matchedName": "BTS",
+   "mbid": "0d79fe8e-ba27-4859-bb8c-2f255f346853",
+   "review": false,
+   "score": 100
+  },
+  "Baccara": {
+   "genres": [],
+   "matchedName": "Baccara",
+   "mbid": "d17a5888-7775-4541-85d6-f6344f9e93b7",
+   "review": false,
+   "score": 100
+  },
+  "Backstreet Boys": {
+   "genres": [
+    "pop",
+    "teen pop",
+    "dance-pop",
+    "electropop"
+   ],
+   "matchedName": "Backstreet Boys",
+   "mbid": "2f569e60-0a1b-4fb9-95a4-3dc1525d1aad",
+   "review": false,
+   "score": 100
+  },
+  "Bad Bunny": {
+   "genres": [
+    "reggaeton",
+    "trap latino",
+    "latin",
+    "hip hop"
+   ],
+   "matchedName": "Bad Bunny",
+   "mbid": "89aa5ecb-59ad-46f5-b3eb-2d424e941f19",
+   "review": false,
+   "score": 100
+  },
+  "Bad Gyal": {
+   "genres": [
+    "dancehall",
+    "neoperreo",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "Bad Gyal",
+   "mbid": "9cb2e99f-d0ba-4aa5-a371-0006b0d34090",
+   "review": false,
+   "score": 100
+  },
+  "Bambino": {
+   "genres": [],
+   "matchedName": "Bambino",
+   "mbid": "c9509cef-d941-4172-aaf4-1f538030e03e",
+   "review": false,
+   "score": 100
+  },
+  "Bananarama": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "dance",
+    "electronic",
+    "hi-nrg",
+    "electropop",
+    "new wave",
+    "synth-pop"
+   ],
+   "matchedName": "Bananarama",
+   "mbid": "84d06499-0643-46b8-9e1f-45f743a53f5e",
+   "review": false,
+   "score": 100
+  },
+  "Barrabás": {
+   "genres": [
+    "disco",
+    "funk",
+    "latin rock",
+    "rock"
+   ],
+   "matchedName": "Barrabás",
+   "mbid": "87d0c089-3641-436e-bceb-737b9f506f65",
+   "review": false,
+   "score": 100
+  },
+  "Barricada": {
+   "genres": [],
+   "matchedName": "Barricada",
+   "mbid": "8fe43356-6902-4311-a80c-f221bfcf3efb",
+   "review": false,
+   "score": 100
+  },
+  "Barry White": {
+   "genres": [
+    "soul",
+    "disco",
+    "funk",
+    "smooth soul",
+    "easy listening",
+    "pop",
+    "pop soul",
+    "quiet storm",
+    "r&b"
+   ],
+   "matchedName": "Barry White",
+   "mbid": "b904d624-9e05-4398-8f4f-88fbcf022f79",
+   "review": false,
+   "score": 100
+  },
+  "Barón Rojo": {
+   "genres": [
+    "heavy metal",
+    "hard rock",
+    "metal"
+   ],
+   "matchedName": "Barón Rojo",
+   "mbid": "fae59483-47cf-4499-aa30-f07c120983dd",
+   "review": false,
+   "score": 100
+  },
+  "Beastie Boys": {
+   "genres": [
+    "hip hop",
+    "rap rock",
+    "east coast hip hop",
+    "experimental hip hop",
+    "hardcore punk",
+    "rock",
+    "alternative hip hop",
+    "alternative rock",
+    "funk",
+    "hardcore hip hop"
+   ],
+   "matchedName": "Beastie Boys",
+   "mbid": "9beb62b2-88db-4cea-801e-162cd344ee53",
+   "review": false,
+   "score": 100
+  },
+  "Bebe": {
+   "genres": [
+    "pop",
+    "dance-pop"
+   ],
+   "matchedName": "Bebe Rexha",
+   "mbid": "db8fad3a-e131-47a1-8782-c2ee93708cdd",
+   "review": true,
+   "score": 100
+  },
+  "Becky G": {
+   "genres": [
+    "latin",
+    "reggaeton",
+    "hip hop",
+    "latin pop",
+    "pop rap",
+    "contemporary r&b",
+    "cumbia",
+    "dance-pop",
+    "pop",
+    "teen pop"
+   ],
+   "matchedName": "Becky G",
+   "mbid": "eb90c8b8-d733-4c14-a293-105c3d1ba9b3",
+   "review": false,
+   "score": 100
+  },
+  "Bee Gees": {
+   "genres": [
+    "disco",
+    "pop",
+    "baroque pop",
+    "soft rock",
+    "blue-eyed soul",
+    "dance",
+    "pop rock",
+    "psychedelic pop",
+    "rock"
+   ],
+   "matchedName": "Bee Gees",
+   "mbid": "bf0f7e29-dfe1-416c-b5c6-f9ebc19ea810",
+   "review": false,
+   "score": 100
+  },
+  "Belén Aguilera": {
+   "genres": [],
+   "matchedName": "Belén Aguilera",
+   "mbid": "f54449dc-fa40-40cd-959a-d3737f8fc41c",
+   "review": false,
+   "score": 100
+  },
+  "Ben E. King": {
+   "genres": [
+    "soul",
+    "funk",
+    "jazz pop",
+    "pop",
+    "pop soul",
+    "r&b",
+    "traditional pop",
+    "vocal jazz"
+   ],
+   "matchedName": "Ben E. King",
+   "mbid": "837555ba-012e-45f1-9a9c-9628da13ee54",
+   "review": false,
+   "score": 100
+  },
+  "Benson Boone": {
+   "genres": [
+    "pop",
+    "pop rock"
+   ],
+   "matchedName": "Benson Boone",
+   "mbid": "62b914a7-d775-4bb4-bb5e-d46e7df115b5",
+   "review": false,
+   "score": 100
+  },
+  "Beret": {
+   "genres": [],
+   "matchedName": "Beret",
+   "mbid": "0336861a-ee58-4b9b-a819-8f3111c8fba4",
+   "review": false,
+   "score": 100
+  },
+  "Beyoncé": {
+   "genres": [
+    "pop",
+    "r&b",
+    "contemporary r&b",
+    "pop rap",
+    "soul",
+    "dance-pop",
+    "dance",
+    "hip hop",
+    "alternative r&b",
+    "country",
+    "disco",
+    "house",
+    "pop soul",
+    "singer-songwriter",
+    "teen pop",
+    "trap",
+    "americana",
+    "club",
+    "contemporary country",
+    "electropop",
+    "funk",
+    "future bass",
+    "hip hop soul",
+    "neo soul",
+    "progressive house",
+    "southern hip hop"
+   ],
+   "matchedName": "Beyoncé",
+   "mbid": "859d0860-d480-4efd-970c-c05d5f1776b8",
+   "review": false,
+   "score": 100
+  },
+  "Billie Eilish": {
+   "genres": [
+    "electropop",
+    "alternative pop",
+    "pop",
+    "alternative r&b",
+    "art pop",
+    "bedroom pop",
+    "contemporary r&b",
+    "indie pop",
+    "singer-songwriter",
+    "electronic",
+    "electronica",
+    "pop rock",
+    "pop soul"
+   ],
+   "matchedName": "Billie Eilish",
+   "mbid": "f4abc0b5-3f7a-4eff-8f78-ac078dbce533",
+   "review": false,
+   "score": 100
+  },
+  "Billy Idol": {
+   "genres": [
+    "rock",
+    "hard rock",
+    "new wave",
+    "classic rock",
+    "alternative dance",
+    "electronic",
+    "pop rock",
+    "punk",
+    "punk rock"
+   ],
+   "matchedName": "Billy Idol",
+   "mbid": "47c8f88b-987a-4b64-9175-2b1b57809727",
+   "review": false,
+   "score": 100
+  },
+  "Billy Joel": {
+   "genres": [
+    "piano rock",
+    "pop",
+    "rock",
+    "pop rock",
+    "soft rock",
+    "classic rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "Billy Joel",
+   "mbid": "64b94289-9474-4d43-8c93-918ccc1920d1",
+   "review": false,
+   "score": 100
+  },
+  "Bizarrap": {
+   "genres": [
+    "trap latino",
+    "hip hop",
+    "latin",
+    "pop",
+    "reggaeton",
+    "trap",
+    "trap edm"
+   ],
+   "matchedName": "Bizarrap",
+   "mbid": "3b6abaef-febf-4cfe-943f-6a20cf0afdad",
+   "review": false,
+   "score": 100
+  },
+  "Black Eyed Peas": {
+   "genres": [
+    "hip hop",
+    "pop rap",
+    "dance-pop",
+    "pop",
+    "west coast hip hop"
+   ],
+   "matchedName": "Black Eyed Peas",
+   "mbid": "d5be5333-4171-427e-8e12-732087c6b78e",
+   "review": false,
+   "score": 100
+  },
+  "Black Sabbath": {
+   "genres": [
+    "heavy metal",
+    "hard rock",
+    "traditional doom metal",
+    "metal",
+    "doom metal",
+    "classic rock",
+    "rock",
+    "blues rock"
+   ],
+   "matchedName": "Black Sabbath",
+   "mbid": "5182c1d9-c7d2-4dad-afa0-ccfeada921a8",
+   "review": false,
+   "score": 100
+  },
+  "Blanca Paloma": {
+   "genres": [],
+   "matchedName": "Blanca Paloma",
+   "mbid": "92cfcad0-5541-41ea-aba7-7f37af5e6e45",
+   "review": false,
+   "score": 100
+  },
+  "Blas Cantó": {
+   "genres": [],
+   "matchedName": "Blas Cantó",
+   "mbid": "81f476c8-9ad1-4771-a5b6-1fe53cbf7481",
+   "review": false,
+   "score": 100
+  },
+  "Blink-182": {
+   "genres": [
+    "pop punk",
+    "punk rock",
+    "skate punk",
+    "alternative rock",
+    "pop rock",
+    "punk"
+   ],
+   "matchedName": "blink‐182",
+   "mbid": "0743b15a-3c32-48c8-ad58-cb325350befa",
+   "review": true,
+   "score": 100
+  },
+  "Blondie": {
+   "genres": [
+    "new wave",
+    "disco",
+    "rock",
+    "pop",
+    "power pop",
+    "punk",
+    "pop rock",
+    "punk rock"
+   ],
+   "matchedName": "Blondie",
+   "mbid": "4d2956d1-a3f7-44bb-9a41-67563e1a0c94",
+   "review": false,
+   "score": 100
+  },
+  "Blur": {
+   "genres": [
+    "alternative rock",
+    "britpop",
+    "indie rock",
+    "art rock",
+    "experimental rock",
+    "neo-psychedelia",
+    "noise rock",
+    "post-grunge",
+    "shoegaze",
+    "grunge",
+    "madchester",
+    "rock",
+    "slacker rock"
+   ],
+   "matchedName": "Blur",
+   "mbid": "ba853904-ae25-4ebb-89d6-c44cfbd71bd2",
+   "review": false,
+   "score": 100
+  },
+  "Bob Dylan": {
+   "genres": [
+    "folk rock",
+    "folk",
+    "rock",
+    "blues rock",
+    "singer-songwriter",
+    "contemporary folk",
+    "country rock",
+    "blues",
+    "pop rock",
+    "country",
+    "classic rock",
+    "gospel",
+    "jazz",
+    "roots rock",
+    "traditional pop"
+   ],
+   "matchedName": "Bob Dylan",
+   "mbid": "72c536dc-7137-4477-a521-567eeb840fa8",
+   "review": false,
+   "score": 100
+  },
+  "Bob Marley": {
+   "genres": [
+    "reggae",
+    "roots reggae",
+    "ska",
+    "dub",
+    "jamaican ska",
+    "rocksteady"
+   ],
+   "matchedName": "Bob Marley & The Wailers",
+   "mbid": "c296e10c-110a-4103-9e77-47bfebb7fb2e",
+   "review": true,
+   "score": 100
+  },
+  "Bob Sinclar": {
+   "genres": [
+    "electro house",
+    "french house",
+    "house",
+    "dance-pop",
+    "electronic",
+    "hip house"
+   ],
+   "matchedName": "Bob Sinclar",
+   "mbid": "f9ab44f1-7b19-4ecb-830c-403abcf36cd1",
+   "review": false,
+   "score": 100
+  },
+  "Boikot": {
+   "genres": [
+    "punk rock",
+    "rock"
+   ],
+   "matchedName": "Boikot",
+   "mbid": "e8c70743-2890-402b-bc49-539b609a33bb",
+   "review": false,
+   "score": 100
+  },
+  "Bon Jovi": {
+   "genres": [
+    "rock",
+    "hard rock",
+    "glam metal",
+    "arena rock",
+    "pop rock",
+    "heartland rock",
+    "aor",
+    "classic rock"
+   ],
+   "matchedName": "Bon Jovi",
+   "mbid": "5dcdb5eb-cb72-4e6e-9e63-b7bace604965",
+   "review": false,
+   "score": 100
+  },
+  "Boney M.": {
+   "genres": [
+    "disco",
+    "europop",
+    "pop",
+    "dance-pop",
+    "soul"
+   ],
+   "matchedName": "Boney M.",
+   "mbid": "5403bf6e-bc1d-4e62-b31f-926a2bf66a14",
+   "review": false,
+   "score": 100
+  },
+  "Britney Spears": {
+   "genres": [
+    "pop",
+    "teen pop",
+    "dance-pop",
+    "electropop",
+    "electro house",
+    "contemporary r&b",
+    "dance"
+   ],
+   "matchedName": "Britney Spears",
+   "mbid": "45a663b5-b1cb-4a91-bff6-2bef7bbfdd76",
+   "review": false,
+   "score": 100
+  },
+  "Bruce Springsteen": {
+   "genres": [
+    "rock",
+    "heartland rock",
+    "americana",
+    "singer-songwriter",
+    "folk",
+    "pop rock",
+    "aor",
+    "contemporary folk",
+    "rock and roll"
+   ],
+   "matchedName": "Bruce Springsteen",
+   "mbid": "70248960-cb53-4ea4-943a-edb18f7d336f",
+   "review": false,
+   "score": 100
+  },
+  "Bruno Lomas": {
+   "genres": [],
+   "matchedName": "Bruno Lomas",
+   "mbid": "4c48e947-a6bb-4b25-9e94-211f9bfb0e7f",
+   "review": false,
+   "score": 100
+  },
+  "Bruno Mars": {
+   "genres": [
+    "pop",
+    "funk",
+    "r&b",
+    "rock",
+    "soul"
+   ],
+   "matchedName": "Bruno Mars",
+   "mbid": "afb680f2-b6eb-4cd7-a70b-a63b25c763d5",
+   "review": false,
+   "score": 100
+  },
+  "Bryan Adams": {
+   "genres": [
+    "rock",
+    "soft rock",
+    "pop rock",
+    "aor",
+    "hard rock",
+    "power pop",
+    "classic rock",
+    "heartland rock",
+    "new wave"
+   ],
+   "matchedName": "Bryan Adams",
+   "mbid": "4dbf5678-7a31-406a-abbe-232f8ac2cd63",
+   "review": false,
+   "score": 100
+  },
+  "Bunbury": {
+   "genres": [
+    "rock",
+    "pop",
+    "latin",
+    "latin rock"
+   ],
+   "matchedName": "Bunbury",
+   "mbid": "9047fd95-770f-4a8a-a6e3-3b071a882e4d",
+   "review": false,
+   "score": 100
+  },
+  "Burning": {
+   "genres": [
+    "reggae",
+    "roots reggae"
+   ],
+   "matchedName": "Burning Spear",
+   "mbid": "16dad944-c492-43dd-88ed-e0b7ac520c40",
+   "review": true,
+   "score": 100
+  },
+  "Bustamante": {
+   "genres": [],
+   "matchedName": "David Bustamante",
+   "mbid": "52d95505-a5bf-46d1-90a4-7d51316e6400",
+   "review": true,
+   "score": 100
+  },
+  "C. Tangana": {
+   "genres": [
+    "hip hop"
+   ],
+   "matchedName": "C. Tangana",
+   "mbid": "46d3689c-23e6-46f7-8ad6-c12f13ac9dea",
+   "review": false,
+   "score": 100
+  },
+  "CNCO": {
+   "genres": [
+    "latin pop",
+    "reggaeton",
+    "dance-pop",
+    "latin",
+    "pop"
+   ],
+   "matchedName": "CNCO",
+   "mbid": "c2258df3-cfce-4dec-a721-33ca87c1be8f",
+   "review": false,
+   "score": 100
+  },
+  "Café Quijano": {
+   "genres": [],
+   "matchedName": "Café Quijano",
+   "mbid": "227f3e04-feb2-4741-b73f-70e266d32bf0",
+   "review": false,
+   "score": 100
+  },
+  "Café Tacvba": {
+   "genres": [
+    "latin",
+    "alternative rock",
+    "rock"
+   ],
+   "matchedName": "Café Tacvba",
+   "mbid": "c2b37a39-c66a-44b2-b190-a69485ae5d95",
+   "review": false,
+   "score": 100
+  },
+  "Calle 13": {
+   "genres": [
+    "hip hop"
+   ],
+   "matchedName": "Calle 13",
+   "mbid": "5be7d200-5499-4bba-b29b-1ac554199d23",
+   "review": false,
+   "score": 100
+  },
+  "Calvin Harris": {
+   "genres": [
+    "dance-pop",
+    "edm",
+    "electronic",
+    "electropop",
+    "electro house",
+    "nu disco",
+    "progressive house",
+    "club",
+    "dance",
+    "festival progressive house",
+    "funktronica",
+    "melodic house",
+    "melodic techno",
+    "pop",
+    "synth-pop",
+    "uk garage",
+    "complextro",
+    "contemporary r&b",
+    "disco",
+    "electro-disco",
+    "hip house",
+    "house"
+   ],
+   "matchedName": "Calvin Harris",
+   "mbid": "8dd98bdc-80ec-4e93-8509-2f46bafc09a7",
+   "review": false,
+   "score": 100
+  },
+  "Camarón de la Isla": {
+   "genres": [
+    "flamenco",
+    "nuevo flamenco"
+   ],
+   "matchedName": "Camarón de la Isla",
+   "mbid": "1f25c419-4084-40bc-9bac-c39f375384c5",
+   "review": false,
+   "score": 100
+  },
+  "Camela": {
+   "genres": [
+    "tecnorumba"
+   ],
+   "matchedName": "Camela",
+   "mbid": "9e4231ae-bcd3-4a3a-9b20-99260df477a1",
+   "review": false,
+   "score": 100
+  },
+  "Camila Cabello": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "electropop",
+    "hyperpop",
+    "latin pop",
+    "r&b"
+   ],
+   "matchedName": "Camila Cabello",
+   "mbid": "01b8b5bf-06cb-45da-85fb-61ada72fcd69",
+   "review": false,
+   "score": 100
+  },
+  "Camilo Sesto": {
+   "genres": [
+    "canción melódica",
+    "latin",
+    "latin ballad",
+    "pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Camilo Sesto",
+   "mbid": "138fe36a-0888-40d2-9390-3d9be0d74f07",
+   "review": false,
+   "score": 100
+  },
+  "Cardi B": {
+   "genres": [
+    "hip hop",
+    "east coast hip hop",
+    "pop",
+    "alternative pop",
+    "hardcore hip hop",
+    "pop rap",
+    "trap",
+    "trap soul"
+   ],
+   "matchedName": "Cardi B",
+   "mbid": "2f3c4d70-0462-40da-bba3-0aec5772c556",
+   "review": false,
+   "score": 100
+  },
+  "Carlos Vives": {
+   "genres": [
+    "latin",
+    "latin pop",
+    "vallenato",
+    "cumbia",
+    "pop",
+    "reggaeton",
+    "rock",
+    "salsa",
+    "singer-songwriter"
+   ],
+   "matchedName": "Carlos Vives",
+   "mbid": "ac367c2e-7783-41e5-a184-131da6b0c166",
+   "review": false,
+   "score": 100
+  },
+  "Carolina Durante": {
+   "genres": [],
+   "matchedName": "Carolina Durante",
+   "mbid": "0ccf84e9-8a5a-46f9-9849-2cee3dd64c58",
+   "review": false,
+   "score": 100
+  },
+  "Carpenters": {
+   "genres": [
+    "easy listening",
+    "soft rock",
+    "baroque pop",
+    "country pop",
+    "pop",
+    "christmas music",
+    "rock"
+   ],
+   "matchedName": "Carpenters",
+   "mbid": "4580d83b-093e-4241-91fb-2dd71f5f1f3f",
+   "review": false,
+   "score": 100
+  },
+  "Cat Stevens": {
+   "genres": [
+    "folk rock",
+    "rock",
+    "singer-songwriter",
+    "baroque pop",
+    "contemporary folk",
+    "folk",
+    "folk pop",
+    "pop rock",
+    "soft rock"
+   ],
+   "matchedName": "Cat Stevens",
+   "mbid": "e2345fdf-2be7-47c5-a6dd-be64353ad134",
+   "review": false,
+   "score": 100
+  },
+  "Cecilia": {
+   "genres": [],
+   "matchedName": "Cecilia",
+   "mbid": "5159bca1-dccc-4a88-a9ce-df8879ca82e5",
+   "review": false,
+   "score": 100
+  },
+  "Celine Dion": {
+   "genres": [
+    "pop",
+    "soft rock",
+    "contemporary r&b",
+    "pop soul"
+   ],
+   "matchedName": "Céline Dion",
+   "mbid": "847e8a0c-cc20-4213-9e16-975515c2a926",
+   "review": false,
+   "score": 100
+  },
+  "Celtas Cortos": {
+   "genres": [
+    "celtic rock"
+   ],
+   "matchedName": "Celtas Cortos",
+   "mbid": "e41b4871-a98d-494a-8cea-b9ba1a3ade1b",
+   "review": false,
+   "score": 100
+  },
+  "Central Cee": {
+   "genres": [
+    "hip hop",
+    "uk drill",
+    "grime",
+    "trap"
+   ],
+   "matchedName": "Central Cee",
+   "mbid": "b0337af1-8d93-4671-b6c9-ba306bf942bf",
+   "review": false,
+   "score": 100
+  },
+  "Chambao": {
+   "genres": [
+    "flamenco",
+    "latin"
+   ],
+   "matchedName": "Chambao",
+   "mbid": "b44eab39-900f-446f-af67-0512a88e54ec",
+   "review": false,
+   "score": 100
+  },
+  "Chanel": {
+   "genres": [],
+   "matchedName": "Chanel",
+   "mbid": "a4f4fa8a-48bd-4d26-b3b7-88e57e908ffe",
+   "review": false,
+   "score": 100
+  },
+  "Chappell Roan": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "synth-pop",
+    "alternative pop",
+    "indie pop",
+    "electropop",
+    "pop rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "Chappell Roan",
+   "mbid": "56a55378-f155-48de-80a5-d80104221267",
+   "review": false,
+   "score": 100
+  },
+  "Charlie Puth": {
+   "genres": [
+    "pop",
+    "contemporary r&b",
+    "ballad",
+    "dance-pop",
+    "neo soul",
+    "soul"
+   ],
+   "matchedName": "Charlie Puth",
+   "mbid": "525f1f1c-03f0-4bc8-8dfd-e7521f87631b",
+   "review": false,
+   "score": 100
+  },
+  "Chayanne": {
+   "genres": [
+    "latin",
+    "latin pop"
+   ],
+   "matchedName": "Chayanne",
+   "mbid": "327e24c0-95b4-4754-b509-108dc7f8abfa",
+   "review": false,
+   "score": 100
+  },
+  "Chenoa": {
+   "genres": [],
+   "matchedName": "Chenoa",
+   "mbid": "84d36e65-e9a1-4259-80a5-1b92cbe45162",
+   "review": false,
+   "score": 100
+  },
+  "Cher": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "disco",
+    "rock",
+    "baroque pop",
+    "folk",
+    "folk pop",
+    "folk rock",
+    "pop rock",
+    "soft rock"
+   ],
+   "matchedName": "Cher",
+   "mbid": "bfcc6d75-a6a5-4bc6-8282-47aec8531818",
+   "review": false,
+   "score": 100
+  },
+  "Chic": {
+   "genres": [
+    "disco",
+    "funk",
+    "contemporary r&b",
+    "dance-pop",
+    "electronic",
+    "r&b",
+    "synth funk"
+   ],
+   "matchedName": "Chic",
+   "mbid": "a4ed036b-5f18-439c-b1e1-96d205bab255",
+   "review": false,
+   "score": 100
+  },
+  "Chicago": {
+   "genres": [
+    "rock",
+    "soft rock",
+    "aor",
+    "pop rock",
+    "jazz",
+    "jazz rock",
+    "pop"
+   ],
+   "matchedName": "Chicago",
+   "mbid": "3f5be744-e867-42fb-8913-5fd69e4099b5",
+   "review": false,
+   "score": 100
+  },
+  "Chimo Bayo": {
+   "genres": [
+    "makina"
+   ],
+   "matchedName": "Chimo Bayo",
+   "mbid": "bba7d3bb-3dee-4753-b435-862d052868e0",
+   "review": false,
+   "score": 100
+  },
+  "Christina Aguilera": {
+   "genres": [
+    "pop",
+    "contemporary r&b",
+    "dance-pop",
+    "electropop",
+    "soul",
+    "teen pop",
+    "rock"
+   ],
+   "matchedName": "Christina Aguilera",
+   "mbid": "b202beb7-99bd-47e7-8b72-195c8d72ebdd",
+   "review": false,
+   "score": 100
+  },
+  "Christina Rosenvinge": {
+   "genres": [],
+   "matchedName": "Christina Rosenvinge",
+   "mbid": "d4ee5700-7e28-4008-abda-2239fd6a3d44",
+   "review": false,
+   "score": 100
+  },
+  "Chuck Berry": {
+   "genres": [
+    "rock and roll",
+    "rock",
+    "blues",
+    "blues rock",
+    "classic rock",
+    "rockabilly",
+    "soul"
+   ],
+   "matchedName": "Chuck Berry",
+   "mbid": "592a3b6d-c42b-4567-99c9-ecf63bd66499",
+   "review": false,
+   "score": 100
+  },
+  "Cliff Richard": {
+   "genres": [
+    "pop",
+    "rock and roll",
+    "rock",
+    "baroque pop",
+    "christmas music",
+    "pop rock",
+    "schlager",
+    "soft rock"
+   ],
+   "matchedName": "Cliff Richard",
+   "mbid": "b5c2fdfc-d037-45b8-84f9-09ebb7ff8aa1",
+   "review": false,
+   "score": 100
+  },
+  "Coldplay": {
+   "genres": [
+    "alternative rock",
+    "pop",
+    "pop rock",
+    "rock",
+    "post-britpop",
+    "piano rock",
+    "art pop",
+    "britpop",
+    "dream pop"
+   ],
+   "matchedName": "Coldplay",
+   "mbid": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+   "review": false,
+   "score": 100
+  },
+  "Coolio": {
+   "genres": [
+    "hip hop",
+    "west coast hip hop",
+    "gangsta rap",
+    "conscious hip hop",
+    "contemporary r&b",
+    "g-funk",
+    "pop rap"
+   ],
+   "matchedName": "Coolio",
+   "mbid": "cc30e630-8c75-4d78-b205-8e2edc6bdaa7",
+   "review": false,
+   "score": 100
+  },
+  "Cream": {
+   "genres": [
+    "blues rock",
+    "rock",
+    "hard rock",
+    "psychedelic rock",
+    "jam band",
+    "psychedelic pop",
+    "acid rock",
+    "classic rock",
+    "pop rock",
+    "psychedelic"
+   ],
+   "matchedName": "Cream",
+   "mbid": "04cd0cfd-bfd1-4c36-bc38-95c35e2c045f",
+   "review": false,
+   "score": 100
+  },
+  "Creed": {
+   "genres": [
+    "rock",
+    "alternative rock",
+    "post-grunge",
+    "hard rock"
+   ],
+   "matchedName": "Creed",
+   "mbid": "4b1a830b-0a1f-42e5-b8d5-1d6743912e99",
+   "review": false,
+   "score": 100
+  },
+  "Creedence Clearwater Revival": {
+   "genres": [
+    "swamp rock",
+    "rock",
+    "country rock",
+    "roots rock",
+    "blues rock",
+    "southern rock",
+    "classic rock",
+    "folk rock",
+    "rock and roll",
+    "rockabilly",
+    "soft rock"
+   ],
+   "matchedName": "Creedence Clearwater Revival",
+   "mbid": "109958eb-a335-4c5e-907e-597ff4c6af46",
+   "review": false,
+   "score": 100
+  },
+  "Cruz Cafuné": {
+   "genres": [
+    "hip hop",
+    "r&b",
+    "trap"
+   ],
+   "matchedName": "Cruz Cafuné",
+   "mbid": "34652ef4-3f17-4eed-ba15-237c49373329",
+   "review": false,
+   "score": 100
+  },
+  "Culture Club": {
+   "genres": [
+    "new wave",
+    "pop",
+    "blue-eyed soul",
+    "dance-pop",
+    "new romantic",
+    "pop soul"
+   ],
+   "matchedName": "Culture Club",
+   "mbid": "81435053-e1a2-48a4-adfd-e89f310c7b38",
+   "review": false,
+   "score": 100
+  },
+  "Cyndi Lauper": {
+   "genres": [
+    "pop",
+    "blues",
+    "dance-pop",
+    "new wave",
+    "pop rock",
+    "rock"
+   ],
+   "matchedName": "Cyndi Lauper",
+   "mbid": "7bd9e20e-74b9-446a-a2ed-a223f82a36e7",
+   "review": false,
+   "score": 100
+  },
+  "Daddy Yankee": {
+   "genres": [
+    "reggaeton",
+    "latin",
+    "hip hop",
+    "latin pop",
+    "reggae",
+    "dance",
+    "electronic"
+   ],
+   "matchedName": "Daddy Yankee",
+   "mbid": "2f522f5c-111c-4ce8-8bd0-d82e97c227ad",
+   "review": false,
+   "score": 100
+  },
+  "Daft Punk": {
+   "genres": [
+    "electronic",
+    "house",
+    "french house",
+    "dance",
+    "disco",
+    "club",
+    "electro",
+    "electro house",
+    "electronic rock",
+    "electronica",
+    "french electro",
+    "funk",
+    "nu disco",
+    "synth-pop",
+    "edm",
+    "electroclash",
+    "jackin house",
+    "organic house",
+    "pop",
+    "r&b",
+    "techno",
+    "trap"
+   ],
+   "matchedName": "Daft Punk",
+   "mbid": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+   "review": false,
+   "score": 100
+  },
+  "Damien Rice": {
+   "genres": [
+    "folk",
+    "alternative folk",
+    "alternative rock",
+    "contemporary folk",
+    "folk rock",
+    "indie folk",
+    "indie rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "Damien Rice",
+   "mbid": "2119beb8-6ac5-4f21-82a4-b831c90c0024",
+   "review": false,
+   "score": 100
+  },
+  "Dani Fernández": {
+   "genres": [],
+   "matchedName": "Dani Fernández",
+   "mbid": "04775c0c-b529-4e1e-b3e5-196d23d14a53",
+   "review": false,
+   "score": 100
+  },
+  "Dani Martín": {
+   "genres": [],
+   "matchedName": "Dani Martín",
+   "mbid": "3dee032d-2eee-4dee-8e04-8028962b2479",
+   "review": false,
+   "score": 100
+  },
+  "Danza Invisible": {
+   "genres": [],
+   "matchedName": "Danza Invisible",
+   "mbid": "103f0d90-8de5-418b-b491-93470ad2e510",
+   "review": false,
+   "score": 100
+  },
+  "David Bisbal": {
+   "genres": [
+    "latin pop",
+    "latin",
+    "pop",
+    "ballad"
+   ],
+   "matchedName": "David Bisbal",
+   "mbid": "95c8b6b7-1e24-4987-804c-024f6b05cd91",
+   "review": false,
+   "score": 100
+  },
+  "David Bowie": {
+   "genres": [
+    "art rock",
+    "glam rock",
+    "alternative rock",
+    "pop",
+    "rock",
+    "art pop",
+    "new wave",
+    "pop rock",
+    "classic rock"
+   ],
+   "matchedName": "David Bowie",
+   "mbid": "5441c29d-3602-4898-b1a1-b77fa23b8e50",
+   "review": false,
+   "score": 100
+  },
+  "David DeMaría": {
+   "genres": [],
+   "matchedName": "David DeMaría",
+   "mbid": "70e3b9b0-22cb-4115-a613-e7faa4ae6f35",
+   "review": false,
+   "score": 100
+  },
+  "David Guetta": {
+   "genres": [
+    "house",
+    "dance-pop",
+    "dance",
+    "electro house",
+    "electronic",
+    "electropop",
+    "future rave",
+    "club",
+    "electroclash",
+    "festival progressive house",
+    "french house",
+    "pop",
+    "progressive house",
+    "tech house"
+   ],
+   "matchedName": "David Guetta",
+   "mbid": "302bd7b9-d012-4360-897a-93b00c855680",
+   "review": false,
+   "score": 100
+  },
+  "Deep Purple": {
+   "genres": [
+    "hard rock",
+    "rock",
+    "heavy metal",
+    "progressive rock",
+    "blues rock",
+    "classic rock"
+   ],
+   "matchedName": "Deep Purple",
+   "mbid": "79491354-3d83-40e3-9d8e-7592d58d790a",
+   "review": false,
+   "score": 100
+  },
+  "Def Con Dos": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Def Con Dos",
+   "mbid": "677002d6-385c-4c8a-8dc5-9d68d514a32f",
+   "review": false,
+   "score": 100
+  },
+  "Def Leppard": {
+   "genres": [
+    "hard rock",
+    "glam metal",
+    "heavy metal",
+    "rock",
+    "nwobhm",
+    "pop rock",
+    "aor",
+    "alternative rock",
+    "classic rock",
+    "glam",
+    "glam rock",
+    "post-grunge"
+   ],
+   "matchedName": "Def Leppard",
+   "mbid": "7249b899-8db8-43e7-9e6e-22f1e736024e",
+   "review": false,
+   "score": 100
+  },
+  "Deluxe": {
+   "genres": [
+    "hip hop"
+   ],
+   "matchedName": "Samy Deluxe",
+   "mbid": "14aa9e32-c377-4dc6-9162-2e6c67a8eaf4",
+   "review": true,
+   "score": 100
+  },
+  "Depeche Mode": {
+   "genres": [
+    "electronic",
+    "synth-pop",
+    "new wave",
+    "alternative rock",
+    "dark wave",
+    "alternative dance",
+    "electronic rock",
+    "electronica",
+    "new romantic",
+    "industrial",
+    "post-punk"
+   ],
+   "matchedName": "Depeche Mode",
+   "mbid": "8538e728-ca0b-4321-b7e5-cff6565dd4c0",
+   "review": false,
+   "score": 100
+  },
+  "Derribos Arias": {
+   "genres": [
+    "post-punk"
+   ],
+   "matchedName": "Derribos Arias",
+   "mbid": "99e62a7d-6ad2-41e5-af11-863fce599d91",
+   "review": false,
+   "score": 100
+  },
+  "Destiny's Child": {
+   "genres": [
+    "pop",
+    "contemporary r&b",
+    "dance-pop",
+    "pop soul",
+    "r&b",
+    "christmas music"
+   ],
+   "matchedName": "Destiny’s Child",
+   "mbid": "a796b92e-c137-4895-9c89-10f900617a4f",
+   "review": true,
+   "score": 100
+  },
+  "Dire Straits": {
+   "genres": [
+    "rock",
+    "soft rock",
+    "classic rock",
+    "pop rock",
+    "roots rock",
+    "blues rock",
+    "pub rock",
+    "rock and roll",
+    "sophisti-pop"
+   ],
+   "matchedName": "Dire Straits",
+   "mbid": "614e3804-7d34-41ba-857f-811bad7c2b7a",
+   "review": false,
+   "score": 100
+  },
+  "Doja Cat": {
+   "genres": [
+    "hip hop",
+    "pop",
+    "pop rap",
+    "west coast hip hop",
+    "alternative rock",
+    "grunge",
+    "post-grunge",
+    "power pop",
+    "rock",
+    "trap"
+   ],
+   "matchedName": "Doja Cat",
+   "mbid": "5df62a88-cac9-490a-b62c-c7c88f4020f4",
+   "review": false,
+   "score": 100
+  },
+  "Don Omar": {
+   "genres": [
+    "reggaeton",
+    "latin"
+   ],
+   "matchedName": "Don Omar",
+   "mbid": "afbdfac9-2955-4404-ae22-c08bf1c1b51e",
+   "review": false,
+   "score": 100
+  },
+  "Donna Summer": {
+   "genres": [
+    "disco",
+    "dance",
+    "soul",
+    "dance-pop",
+    "electronic",
+    "hi-nrg",
+    "pop",
+    "pop soul",
+    "rock",
+    "smooth soul"
+   ],
+   "matchedName": "Donna Summer",
+   "mbid": "b60527cc-54f3-4bbe-a01b-dcf34c95ae14",
+   "review": false,
+   "score": 100
+  },
+  "Dorian": {
+   "genres": [],
+   "matchedName": "Dorian",
+   "mbid": "77826b4f-a3fc-4d7a-97dc-df4b43c23902",
+   "review": false,
+   "score": 100
+  },
+  "Dover": {
+   "genres": [
+    "rock",
+    "alternative rock",
+    "punk"
+   ],
+   "matchedName": "Dover",
+   "mbid": "74508b04-b376-4f38-966c-f16d53eab3de",
+   "review": false,
+   "score": 100
+  },
+  "Dr. Dre": {
+   "genres": [
+    "hip hop",
+    "west coast hip hop",
+    "g-funk",
+    "gangsta rap",
+    "hardcore hip hop",
+    "instrumental hip hop",
+    "pop rap"
+   ],
+   "matchedName": "Dr. Dre",
+   "mbid": "5f6ab597-f57a-40da-be9e-adad48708203",
+   "review": false,
+   "score": 100
+  },
+  "Drake": {
+   "genres": [
+    "hip hop",
+    "r&b",
+    "contemporary r&b",
+    "pop rap",
+    "alternative r&b",
+    "pop",
+    "trap",
+    "hardcore hip hop",
+    "southern hip hop"
+   ],
+   "matchedName": "Drake",
+   "mbid": "9fff2f8a-21e6-47de-a2b8-7f449929d43f",
+   "review": false,
+   "score": 100
+  },
+  "Dua Lipa": {
+   "genres": [
+    "dance-pop",
+    "pop",
+    "contemporary r&b",
+    "electropop",
+    "synth-pop",
+    "nu disco",
+    "alternative pop",
+    "boogie",
+    "dream pop",
+    "europop",
+    "funktronica",
+    "house",
+    "indie pop",
+    "hypnagogic pop",
+    "leftfield",
+    "r&b"
+   ],
+   "matchedName": "Dua Lipa",
+   "mbid": "6f1a58bf-9b1b-49cf-a44a-6cefad7ae04f",
+   "review": false,
+   "score": 100
+  },
+  "Duncan Dhu": {
+   "genres": [],
+   "matchedName": "Duncan Dhu",
+   "mbid": "60a14c16-ac69-4898-b0cd-12cb87e327c9",
+   "review": false,
+   "score": 100
+  },
+  "Duran Duran": {
+   "genres": [
+    "new wave",
+    "pop",
+    "new romantic",
+    "rock",
+    "synth-pop",
+    "alternative rock",
+    "dance",
+    "electro",
+    "electronic",
+    "pop rock"
+   ],
+   "matchedName": "Duran Duran",
+   "mbid": "1a1cd7f3-e5df-4eca-bae2-2757c9e656b5",
+   "review": false,
+   "score": 100
+  },
+  "Dusty Springfield": {
+   "genres": [
+    "pop",
+    "blue-eyed soul",
+    "pop soul",
+    "soul",
+    "baroque pop",
+    "philly soul",
+    "r&b"
+   ],
+   "matchedName": "Dusty Springfield",
+   "mbid": "b896aa8c-2761-40ce-b485-0e1fffd26167",
+   "review": false,
+   "score": 100
+  },
+  "Dvicio": {
+   "genres": [
+    "latin",
+    "latin pop"
+   ],
+   "matchedName": "DVICIO",
+   "mbid": "8e2d0fca-9113-454f-89cd-59a2401e6cbc",
+   "review": false,
+   "score": 100
+  },
+  "Décima Víctima": {
+   "genres": [],
+   "matchedName": "Décima Víctima",
+   "mbid": "f3243cd7-3ef3-4e68-b02d-61fcfab3e405",
+   "review": false,
+   "score": 100
+  },
+  "Dúo Dinámico": {
+   "genres": [],
+   "matchedName": "Dúo Dinámico",
+   "mbid": "c5399dec-9fb1-4054-a414-eaa54f1f4a77",
+   "review": false,
+   "score": 100
+  },
+  "Eagles": {
+   "genres": [
+    "rock",
+    "country rock",
+    "classic rock",
+    "folk rock",
+    "soft rock",
+    "pop",
+    "pop rock"
+   ],
+   "matchedName": "Eagles",
+   "mbid": "f46bd570-5768-462e-b84c-c7c993bbf47e",
+   "review": false,
+   "score": 100
+  },
+  "Earth, Wind & Fire": {
+   "genres": [
+    "funk",
+    "soul",
+    "disco",
+    "r&b",
+    "big band",
+    "dance",
+    "jazz",
+    "progressive soul",
+    "psychedelic soul",
+    "quiet storm",
+    "smooth soul"
+   ],
+   "matchedName": "Earth, Wind & Fire",
+   "mbid": "535afeda-2538-435d-9dd1-5e10be586774",
+   "review": false,
+   "score": 100
+  },
+  "Ed Sheeran": {
+   "genres": [
+    "pop",
+    "folk pop",
+    "dance-pop",
+    "folk",
+    "singer-songwriter",
+    "soft rock"
+   ],
+   "matchedName": "Ed Sheeran",
+   "mbid": "b8a7c51f-362c-4dcb-a259-bc6e0095f0a6",
+   "review": false,
+   "score": 100
+  },
+  "Efecto Mariposa": {
+   "genres": [],
+   "matchedName": "Efecto Mariposa",
+   "mbid": "92d10e96-8e61-4c7b-80fe-3169af4beda4",
+   "review": false,
+   "score": 100
+  },
+  "Efecto Pasillo": {
+   "genres": [
+    "pop rock",
+    "alternative rock",
+    "funk",
+    "latin rock"
+   ],
+   "matchedName": "Efecto Pasillo",
+   "mbid": "97a3adde-88ff-4fcb-b96f-48e136aa4830",
+   "review": false,
+   "score": 100
+  },
+  "Eiffel 65": {
+   "genres": [
+    "europop",
+    "italo dance",
+    "eurodance",
+    "bubblegum dance",
+    "bubblegum pop",
+    "edm",
+    "euro house",
+    "italo house",
+    "pop",
+    "synth-pop"
+   ],
+   "matchedName": "Eiffel 65",
+   "mbid": "6ee7a715-e0c0-46d0-a215-2e17001699fc",
+   "review": false,
+   "score": 100
+  },
+  "El Barrio": {
+   "genres": [
+    "flamenco"
+   ],
+   "matchedName": "El Barrio",
+   "mbid": "b6d756a2-bb87-4c7f-9c26-e12ae0e56b8d",
+   "review": false,
+   "score": 100
+  },
+  "El Canto del Loco": {
+   "genres": [
+    "latin rock"
+   ],
+   "matchedName": "El Canto del Loco",
+   "mbid": "ee74192c-d21f-4de7-83e5-eed93e07ac07",
+   "review": false,
+   "score": 100
+  },
+  "El Kanka": {
+   "genres": [],
+   "matchedName": "El Kanka",
+   "mbid": "ea103218-16a7-4260-b1d7-1d1fea4d1d8c",
+   "review": false,
+   "score": 100
+  },
+  "El Sueño de Morfeo": {
+   "genres": [],
+   "matchedName": "El Sueño de Morfeo",
+   "mbid": "537ad152-3d35-4b64-9612-e348510da71a",
+   "review": false,
+   "score": 100
+  },
+  "El Último de la Fila": {
+   "genres": [],
+   "matchedName": "El Último de la Fila",
+   "mbid": "a8b6eecf-1bad-465e-a806-4179c4e436e6",
+   "review": false,
+   "score": 100
+  },
+  "Electric Light Orchestra": {
+   "genres": [
+    "progressive rock",
+    "art rock",
+    "pop rock",
+    "symphonic prog",
+    "symphonic rock",
+    "crossover prog",
+    "pop",
+    "progressive",
+    "progressive pop",
+    "rock",
+    "classic rock"
+   ],
+   "matchedName": "Electric Light Orchestra",
+   "mbid": "0c502791-4ee9-4c5f-9696-0602b721ff3b",
+   "review": false,
+   "score": 100
+  },
+  "Ella Baila Sola": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Ella Baila Sola",
+   "mbid": "1c06b04b-3a86-402f-ba74-67c1643f9fd2",
+   "review": false,
+   "score": 100
+  },
+  "Elton John": {
+   "genres": [
+    "pop",
+    "piano rock",
+    "pop rock",
+    "rock",
+    "singer-songwriter",
+    "rock and roll",
+    "soft rock",
+    "classic rock"
+   ],
+   "matchedName": "Elton John",
+   "mbid": "b83bc61f-8451-4a5d-8b8e-7e9ed295e822",
+   "review": false,
+   "score": 100
+  },
+  "Elvis Presley": {
+   "genres": [
+    "rock and roll",
+    "rockabilly",
+    "rock",
+    "country",
+    "pop",
+    "blues",
+    "blue-eyed soul",
+    "gospel",
+    "pop rock",
+    "r&b",
+    "christmas music",
+    "country rock",
+    "soul"
+   ],
+   "matchedName": "Elvis Presley",
+   "mbid": "01809552-4f87-45b0-afff-2c6f0730a3be",
+   "review": false,
+   "score": 100
+  },
+  "Emilia": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Emilia",
+   "mbid": "025df4dd-aaab-46e2-ba0c-6c6909a4ffe6",
+   "review": false,
+   "score": 100
+  },
+  "Eminem": {
+   "genres": [
+    "hip hop",
+    "hardcore hip hop",
+    "pop rap",
+    "boom bap",
+    "conscious hip hop",
+    "horrorcore",
+    "trap"
+   ],
+   "matchedName": "Eminem",
+   "mbid": "b95ce3ff-3d05-4e87-9e01-c97b66af13d4",
+   "review": false,
+   "score": 100
+  },
+  "Encarnita Polo": {
+   "genres": [
+    "flamenco pop",
+    "pop"
+   ],
+   "matchedName": "Encarnita Polo",
+   "mbid": "2d72a8d9-74f8-4d63-bfa8-e50147c62a85",
+   "review": false,
+   "score": 100
+  },
+  "Engelbert Humperdinck": {
+   "genres": [
+    "pop",
+    "ballad",
+    "easy listening"
+   ],
+   "matchedName": "Engelbert Humperdinck",
+   "mbid": "62c28bc0-f696-4c50-8e54-5f8e9120bdb8",
+   "review": false,
+   "score": 100
+  },
+  "Enrique Iglesias": {
+   "genres": [
+    "pop",
+    "latin pop",
+    "electropop",
+    "electro house",
+    "latin"
+   ],
+   "matchedName": "Enrique Iglesias",
+   "mbid": "35f866dc-c061-48ba-8157-cf2e0eac4857",
+   "review": false,
+   "score": 100
+  },
+  "Enrique y Ana": {
+   "genres": [],
+   "matchedName": "Enrique y Ana",
+   "mbid": "ad371ec4-5f42-491b-ac70-f51e39d7a461",
+   "review": false,
+   "score": 100
+  },
+  "Erasure": {
+   "genres": [
+    "synth-pop",
+    "dance-pop",
+    "pop",
+    "electronic",
+    "alternative dance",
+    "new wave",
+    "pop rock",
+    "dance",
+    "rock"
+   ],
+   "matchedName": "Erasure",
+   "mbid": "43b58c98-3779-4b04-9a23-1c95cca3a145",
+   "review": false,
+   "score": 100
+  },
+  "Eric Clapton": {
+   "genres": [
+    "blues",
+    "blues rock",
+    "rock",
+    "soft rock"
+   ],
+   "matchedName": "Eric Clapton",
+   "mbid": "618b6900-0618-4f1e-b835-bccb17f84294",
+   "review": false,
+   "score": 100
+  },
+  "Eskorbuto": {
+   "genres": [
+    "punk"
+   ],
+   "matchedName": "Eskorbuto",
+   "mbid": "fd7432e5-2ec0-4197-a38e-cfc26ef2789c",
+   "review": false,
+   "score": 100
+  },
+  "Estopa": {
+   "genres": [
+    "flamenco pop",
+    "pop rock",
+    "rumba flamenca",
+    "flamenco",
+    "rock"
+   ],
+   "matchedName": "Estopa",
+   "mbid": "49fc7e46-5441-4b7e-996a-12dddf22a632",
+   "review": false,
+   "score": 100
+  },
+  "Europe": {
+   "genres": [
+    "hard rock",
+    "glam metal",
+    "heavy metal",
+    "rock",
+    "aor",
+    "arena rock",
+    "pop metal"
+   ],
+   "matchedName": "Europe",
+   "mbid": "ccfe7a3c-1a45-4984-a8d0-644549cefe61",
+   "review": false,
+   "score": 100
+  },
+  "Eurythmics": {
+   "genres": [
+    "new wave",
+    "synth-pop",
+    "pop",
+    "pop rock",
+    "art pop"
+   ],
+   "matchedName": "Eurythmics",
+   "mbid": "b4d32cff-f19e-455f-86c4-f347d824ca61",
+   "review": false,
+   "score": 100
+  },
+  "Evanescence": {
+   "genres": [
+    "alternative metal",
+    "metal",
+    "symphonic metal",
+    "alternative rock",
+    "symphonic rock",
+    "rock",
+    "gothic metal",
+    "heavy metal",
+    "piano rock",
+    "post-grunge"
+   ],
+   "matchedName": "Evanescence",
+   "mbid": "f4a31f0a-51dd-4fa7-986d-3095c40c5ed9",
+   "review": false,
+   "score": 100
+  },
+  "Extremoduro": {
+   "genres": [
+    "rock",
+    "hard rock",
+    "progressive rock",
+    "rock urbano"
+   ],
+   "matchedName": "Extremoduro",
+   "mbid": "f59163ba-1a7a-4349-b0fd-fb9582ebe333",
+   "review": false,
+   "score": 100
+  },
+  "Faithless": {
+   "genres": [
+    "electronic",
+    "trip hop",
+    "trance",
+    "house",
+    "progressive house",
+    "dance",
+    "dance-pop",
+    "downtempo",
+    "progressive trance",
+    "techno"
+   ],
+   "matchedName": "Faithless",
+   "mbid": "23d9d74d-c95e-46a6-be26-a6075c49747a",
+   "review": false,
+   "score": 100
+  },
+  "Falco": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "neue deutsche welle",
+    "new wave",
+    "pop rock",
+    "pop rap",
+    "rock"
+   ],
+   "matchedName": "Falco",
+   "mbid": "dcd95aa4-f3ff-492d-a621-8518ada0f58b",
+   "review": false,
+   "score": 100
+  },
+  "Fangoria": {
+   "genres": [
+    "electropop",
+    "synth-pop"
+   ],
+   "matchedName": "Fangoria",
+   "mbid": "0579e174-f377-4fbb-a3bf-db7ddc7aabb1",
+   "review": false,
+   "score": 100
+  },
+  "Farruko": {
+   "genres": [
+    "latin",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "Farruko",
+   "mbid": "d2b3524f-67e8-45ef-bfc1-693cac525135",
+   "review": false,
+   "score": 100
+  },
+  "Fatboy Slim": {
+   "genres": [
+    "big beat",
+    "electronic"
+   ],
+   "matchedName": "Fatboy Slim",
+   "mbid": "34c63966-445c-4613-afe1-4f0e1e53ae9a",
+   "review": false,
+   "score": 100
+  },
+  "Feid": {
+   "genres": [
+    "latin",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "Feid",
+   "mbid": "eaee97f6-f2e4-414a-966c-f31a1fb4696a",
+   "review": false,
+   "score": 100
+  },
+  "Fito & Fitipaldis": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Fito & Fitipaldis",
+   "mbid": "16903d74-9a6a-4cd3-9081-1d752703e8ed",
+   "review": false,
+   "score": 100
+  },
+  "Fleetwood Mac": {
+   "genres": [
+    "rock",
+    "soft rock",
+    "blues rock",
+    "pop rock",
+    "blues",
+    "british blues",
+    "pop",
+    "art pop",
+    "classic rock"
+   ],
+   "matchedName": "Fleetwood Mac",
+   "mbid": "bd13909f-1c29-4c27-a874-d4aaf27c5b1a",
+   "review": false,
+   "score": 100
+  },
+  "Fontaines D.C.": {
+   "genres": [
+    "post-punk",
+    "indie rock",
+    "rock",
+    "gothic rock"
+   ],
+   "matchedName": "Fontaines D.C.",
+   "mbid": "fd87acc7-e0a0-4a45-bc2a-d2ab5c10be68",
+   "review": false,
+   "score": 100
+  },
+  "Four Tops": {
+   "genres": [
+    "soul",
+    "funk",
+    "motown",
+    "pop soul",
+    "smooth soul",
+    "r&b"
+   ],
+   "matchedName": "Four Tops",
+   "mbid": "0d21b01f-21f2-419b-8d98-4158ba0c0aa4",
+   "review": false,
+   "score": 100
+  },
+  "France Gall": {
+   "genres": [
+    "pop",
+    "yé-yé",
+    "chanson française",
+    "disco",
+    "french house",
+    "rock"
+   ],
+   "matchedName": "France Gall",
+   "mbid": "385966f0-b912-4755-bad6-4780ebf3f4cd",
+   "review": false,
+   "score": 100
+  },
+  "Frank Ocean": {
+   "genres": [
+    "contemporary r&b",
+    "alternative r&b",
+    "pop",
+    "r&b"
+   ],
+   "matchedName": "Frank Ocean",
+   "mbid": "e520459c-dff4-491d-a6e4-c97be35e0044",
+   "review": false,
+   "score": 100
+  },
+  "Frank Sinatra": {
+   "genres": [
+    "jazz",
+    "swing",
+    "traditional pop",
+    "vocal jazz",
+    "big band",
+    "christmas music",
+    "easy listening",
+    "lounge",
+    "pop"
+   ],
+   "matchedName": "Frank Sinatra",
+   "mbid": "197450cd-0124-4164-b723-3c22dd16494d",
+   "review": false,
+   "score": 100
+  },
+  "Franz Ferdinand": {
+   "genres": [
+    "indie rock",
+    "post-punk revival",
+    "art rock",
+    "dance-punk",
+    "alternative dance",
+    "alternative rock",
+    "new wave",
+    "post-punk",
+    "dance-rock",
+    "indie pop",
+    "indietronica",
+    "pop",
+    "rock"
+   ],
+   "matchedName": "Franz Ferdinand",
+   "mbid": "aa7a2827-f74b-473c-bd79-03d065835cf7",
+   "review": false,
+   "score": 100
+  },
+  "Fred again..": {
+   "genres": [
+    "electronic",
+    "edm",
+    "uk garage",
+    "future garage",
+    "dance",
+    "stutter house",
+    "bass house",
+    "bassline",
+    "breakbeat",
+    "breaks",
+    "club",
+    "deep house",
+    "downtempo",
+    "drum and bass",
+    "electronica",
+    "future bass",
+    "grime",
+    "hip hop",
+    "house",
+    "latin",
+    "pop",
+    "trap"
+   ],
+   "matchedName": "Fred again..",
+   "mbid": "bca46a0c-25c9-42ca-98c2-e64c8a5e337e",
+   "review": false,
+   "score": 100
+  },
+  "Fórmula V": {
+   "genres": [],
+   "matchedName": "Fórmula V",
+   "mbid": "865453f1-b770-43b5-93cf-2ac43e28b82f",
+   "review": false,
+   "score": 100
+  },
+  "Gabinete Caligari": {
+   "genres": [
+    "new wave",
+    "pop rock",
+    "rock"
+   ],
+   "matchedName": "Gabinete Caligari",
+   "mbid": "aa179aa4-5bfc-4814-b113-a6476fe26cbc",
+   "review": false,
+   "score": 100
+  },
+  "Genesis": {
+   "genres": [
+    "progressive rock",
+    "symphonic prog",
+    "progressive pop",
+    "art rock",
+    "soft rock",
+    "pop",
+    "rock",
+    "pop rock",
+    "rock opera",
+    "folk",
+    "progressive"
+   ],
+   "matchedName": "Genesis",
+   "mbid": "8e3fcd7d-bda1-4ca0-b987-b8528d2ee74e",
+   "review": false,
+   "score": 100
+  },
+  "George Michael": {
+   "genres": [
+    "pop",
+    "blue-eyed soul",
+    "pop rock",
+    "pop soul",
+    "r&b",
+    "soul",
+    "ballad",
+    "contemporary r&b",
+    "dance-pop",
+    "dance-rock",
+    "jazz",
+    "smooth jazz",
+    "smooth soul",
+    "soft rock",
+    "sophisti-pop"
+   ],
+   "matchedName": "George Michael",
+   "mbid": "ccb8f30e-4d71-40c4-8b1d-846dafe73e2c",
+   "review": false,
+   "score": 100
+  },
+  "Georgie Dann": {
+   "genres": [],
+   "matchedName": "Georgie Dann",
+   "mbid": "ad9a97da-84fc-4fc0-9869-0b0762f8dbaf",
+   "review": false,
+   "score": 100
+  },
+  "Gigliola Cinquetti": {
+   "genres": [
+    "ballad",
+    "pop"
+   ],
+   "matchedName": "Gigliola Cinquetti",
+   "mbid": "5fd6d882-1461-46f2-b82c-8d33c4084f10",
+   "review": false,
+   "score": 100
+  },
+  "Glass Animals": {
+   "genres": [
+    "electronic",
+    "indie rock",
+    "indietronica",
+    "pop",
+    "indie pop",
+    "psychedelic pop",
+    "psychedelic rock"
+   ],
+   "matchedName": "Glass Animals",
+   "mbid": "20395131-fbde-43ce-b141-b700cfdae99c",
+   "review": false,
+   "score": 100
+  },
+  "Gloria Gaynor": {
+   "genres": [
+    "disco",
+    "soul",
+    "dance-pop",
+    "philly soul",
+    "pop soul"
+   ],
+   "matchedName": "Gloria Gaynor",
+   "mbid": "d5c51c36-ac67-4727-91ed-ee9f0df81a2d",
+   "review": false,
+   "score": 100
+  },
+  "Glutamato Ye-Yé": {
+   "genres": [
+    "pop rock"
+   ],
+   "matchedName": "Glutamato Ye-Ye",
+   "mbid": "3fc6d679-c2f7-4faa-a5b6-57f91f56d9b1",
+   "review": false,
+   "score": 100
+  },
+  "Golpes Bajos": {
+   "genres": [],
+   "matchedName": "Golpes Bajos",
+   "mbid": "d41fb023-b2e4-4661-b441-2a7b0e5f1190",
+   "review": false,
+   "score": 100
+  },
+  "Gorillaz": {
+   "genres": [
+    "alternative rock",
+    "electronic",
+    "trip hop",
+    "hip hop",
+    "electropop",
+    "alternative dance",
+    "art pop",
+    "electronica",
+    "rock",
+    "synth-pop"
+   ],
+   "matchedName": "Gorillaz",
+   "mbid": "e21857d5-3256-4547-afb3-4b6ded592596",
+   "review": false,
+   "score": 100
+  },
+  "Gracie Abrams": {
+   "genres": [
+    "pop",
+    "folk pop",
+    "bedroom pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Gracie Abrams",
+   "mbid": "f7441bc7-d7de-4813-a2fc-31a4033d396d",
+   "review": false,
+   "score": 100
+  },
+  "Green Day": {
+   "genres": [
+    "punk rock",
+    "pop punk",
+    "alternative rock",
+    "rock",
+    "punk",
+    "power pop"
+   ],
+   "matchedName": "Green Day",
+   "mbid": "084308bd-1654-436f-ba03-df6697104e19",
+   "review": false,
+   "score": 100
+  },
+  "Grupo Frontera": {
+   "genres": [
+    "norteño",
+    "regional mexicano",
+    "americana",
+    "cumbia norteña mexicana",
+    "latin"
+   ],
+   "matchedName": "Grupo Frontera",
+   "mbid": "4c57c827-4ce3-4cf4-9492-0ff7f1ee2b0f",
+   "review": false,
+   "score": 100
+  },
+  "Guitarricadelafuente": {
+   "genres": [],
+   "matchedName": "Guitarricadelafuente",
+   "mbid": "68416724-6cc4-41ee-b81c-1ce169c00f03",
+   "review": false,
+   "score": 100
+  },
+  "Guns N' Roses": {
+   "genres": [
+    "hard rock",
+    "glam metal",
+    "heavy metal",
+    "rock",
+    "art rock",
+    "aor",
+    "arena rock",
+    "punk rock"
+   ],
+   "matchedName": "Guns N’ Roses",
+   "mbid": "eeb1195b-f213-4ce1-b28c-8565211f8e43",
+   "review": true,
+   "score": 100
+  },
+  "Haddaway": {
+   "genres": [
+    "eurodance",
+    "pop"
+   ],
+   "matchedName": "Haddaway",
+   "mbid": "6508cf1d-4da2-4d71-81ec-0e072338991f",
+   "review": false,
+   "score": 100
+  },
+  "Harry Styles": {
+   "genres": [
+    "pop",
+    "funk",
+    "new wave",
+    "rock",
+    "soft rock",
+    "soul",
+    "synth-pop"
+   ],
+   "matchedName": "Harry Styles",
+   "mbid": "7eb1ce54-a355-41f9-8d68-e018b096d427",
+   "review": false,
+   "score": 100
+  },
+  "Hombres G": {
+   "genres": [
+    "pop rock"
+   ],
+   "matchedName": "Hombres G",
+   "mbid": "8b1628a7-130a-4faf-96d8-2418bd9043c2",
+   "review": false,
+   "score": 100
+  },
+  "Hozier": {
+   "genres": [
+    "blues",
+    "blues rock",
+    "soul",
+    "indie rock",
+    "pop soul",
+    "rock",
+    "chamber pop",
+    "folk rock",
+    "pop",
+    "pop rock",
+    "r&b",
+    "singer-songwriter"
+   ],
+   "matchedName": "Hozier",
+   "mbid": "b4691384-50c3-4afd-9988-51d3ec5db65d",
+   "review": false,
+   "score": 100
+  },
+  "Héroes del Silencio": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Héroes del Silencio",
+   "mbid": "4bb712d6-8be9-4c09-810a-eb3bed2be345",
+   "review": false,
+   "score": 100
+  },
+  "INXS": {
+   "genres": [
+    "rock",
+    "new wave",
+    "alternative rock",
+    "pop",
+    "pop rock"
+   ],
+   "matchedName": "INXS",
+   "mbid": "481bf5f9-2e7c-4c44-b08a-05b32bc7c00d",
+   "review": false,
+   "score": 100
+  },
+  "Iggy Pop": {
+   "genres": [
+    "rock",
+    "punk rock",
+    "garage rock",
+    "hard rock",
+    "classic rock",
+    "proto-punk",
+    "punk"
+   ],
+   "matchedName": "Iggy Pop",
+   "mbid": "f37b3f31-b1f8-4b88-8cb5-b34f709b17d7",
+   "review": false,
+   "score": 100
+  },
+  "Ike & Tina Turner": {
+   "genres": [
+    "soul",
+    "pop soul",
+    "blues",
+    "funk"
+   ],
+   "matchedName": "Ike & Tina Turner",
+   "mbid": "1c7b3786-b99a-40ab-81e4-f3056da19e13",
+   "review": false,
+   "score": 100
+  },
+  "Ilegales": {
+   "genres": [
+    "rock",
+    "rock and roll"
+   ],
+   "matchedName": "Ilegales",
+   "mbid": "268ddefc-d0e1-45f3-962b-835365088442",
+   "review": false,
+   "score": 100
+  },
+  "Imagine Dragons": {
+   "genres": [
+    "alternative rock",
+    "pop rock",
+    "indie pop",
+    "pop",
+    "alternative pop",
+    "electropop",
+    "indietronica",
+    "rock"
+   ],
+   "matchedName": "Imagine Dragons",
+   "mbid": "012151a8-0f9a-44c9-997f-ebd68b5389f9",
+   "review": false,
+   "score": 100
+  },
+  "Iron Maiden": {
+   "genres": [
+    "heavy metal",
+    "nwobhm",
+    "metal"
+   ],
+   "matchedName": "Iron Maiden",
+   "mbid": "ca891d65-d9b0-4258-89f7-e6ba29d83767",
+   "review": false,
+   "score": 100
+  },
+  "Isabel Pantoja": {
+   "genres": [
+    "copla",
+    "flamenco",
+    "latin",
+    "latin ballad",
+    "sevillanas"
+   ],
+   "matchedName": "Isabel Pantoja",
+   "mbid": "730e5c7d-4d24-4a43-bc30-85c9ce41e35b",
+   "review": false,
+   "score": 100
+  },
+  "Iván Ferreiro": {
+   "genres": [],
+   "matchedName": "Iván Ferreiro",
+   "mbid": "feaef10b-cae5-40d9-89d3-9a5cf4dec8da",
+   "review": false,
+   "score": 100
+  },
+  "Izal": {
+   "genres": [],
+   "matchedName": "IZAL",
+   "mbid": "8d1e76c8-80b0-44b9-9e86-25d148323a9e",
+   "review": false,
+   "score": 100
+  },
+  "J Balvin": {
+   "genres": [
+    "reggaeton",
+    "hip hop",
+    "latin",
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "J Balvin",
+   "mbid": "5bdeb32d-56a5-4b6d-a768-264101fa0a0a",
+   "review": false,
+   "score": 100
+  },
+  "Jack Johnson": {
+   "genres": [
+    "folk",
+    "folk rock",
+    "soft rock",
+    "blues rock",
+    "indie pop",
+    "pop",
+    "rock",
+    "singer-songwriter",
+    "surf"
+   ],
+   "matchedName": "Jack Johnson",
+   "mbid": "ff6e677f-91dd-4986-a174-8db0474b1799",
+   "review": false,
+   "score": 100
+  },
+  "James Blunt": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "soft rock",
+    "acoustic rock",
+    "folk rock",
+    "piano rock",
+    "rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "James Blunt",
+   "mbid": "ebee61b4-bbdd-4087-9bcb-d5aa099088ec",
+   "review": false,
+   "score": 100
+  },
+  "James Brown": {
+   "genres": [
+    "soul",
+    "funk",
+    "disco",
+    "blues",
+    "christmas music"
+   ],
+   "matchedName": "James Brown",
+   "mbid": "20ff3303-4fe2-4a47-a1b6-291e26aa3438",
+   "review": false,
+   "score": 100
+  },
+  "Janis Joplin": {
+   "genres": [
+    "blues rock",
+    "psychedelic rock",
+    "rock",
+    "soul",
+    "acid rock",
+    "blues",
+    "acoustic blues",
+    "folk",
+    "gospel"
+   ],
+   "matchedName": "Janis Joplin",
+   "mbid": "76c9a186-75bd-436a-85c0-823e3efddb7f",
+   "review": false,
+   "score": 100
+  },
+  "Jarabe de Palo": {
+   "genres": [
+    "latin rock",
+    "pop rock",
+    "rock"
+   ],
+   "matchedName": "Jarabe de Palo",
+   "mbid": "38b511a2-76fa-4a1e-9b7a-e2a6efa6399b",
+   "review": false,
+   "score": 100
+  },
+  "Jarcha": {
+   "genres": [],
+   "matchedName": "Jarcha",
+   "mbid": "53652abb-507e-4b3e-97ed-fc62916c40d9",
+   "review": false,
+   "score": 100
+  },
+  "Jason Mraz": {
+   "genres": [
+    "pop rock",
+    "pop",
+    "acoustic rock"
+   ],
+   "matchedName": "Jason Mraz",
+   "mbid": "82eb8936-7bf6-4577-8320-a2639465206d",
+   "review": false,
+   "score": 100
+  },
+  "Jay-Z": {
+   "genres": [
+    "pop rap",
+    "east coast hip hop",
+    "hip hop",
+    "boom bap",
+    "chipmunk soul",
+    "hardcore hip hop",
+    "pop"
+   ],
+   "matchedName": "Jay-Z",
+   "mbid": "f82bcf78-5b69-4622-a5ef-73800768d9ac",
+   "review": false,
+   "score": 100
+  },
+  "Jeanette": {
+   "genres": [
+    "latin",
+    "latin ballad",
+    "latin pop"
+   ],
+   "matchedName": "Jeanette",
+   "mbid": "327a9b38-0817-4cce-858e-84ce8f56864b",
+   "review": false,
+   "score": 100
+  },
+  "Jefferson Airplane": {
+   "genres": [
+    "psychedelic rock",
+    "rock",
+    "acid rock",
+    "folk rock",
+    "psychedelic pop",
+    "garage rock",
+    "pop rock",
+    "psychedelic",
+    "psychedelic folk"
+   ],
+   "matchedName": "Jefferson Airplane",
+   "mbid": "39c2a93d-9afa-4a22-9bba-c087ab056e1c",
+   "review": false,
+   "score": 100
+  },
+  "Jimi Hendrix": {
+   "genres": [
+    "blues rock",
+    "psychedelic rock",
+    "rock",
+    "acid rock",
+    "hard rock",
+    "classic rock",
+    "jam band",
+    "psychedelic soul"
+   ],
+   "matchedName": "Jimi Hendrix",
+   "mbid": "06fb1c8b-566e-4cb2-985b-b467c90781d4",
+   "review": false,
+   "score": 100
+  },
+  "Jimmy Cliff": {
+   "genres": [
+    "reggae",
+    "jamaican ska",
+    "ska",
+    "reggae-pop",
+    "rocksteady",
+    "roots reggae",
+    "soul"
+   ],
+   "matchedName": "Jimmy Cliff",
+   "mbid": "2caa54a7-b08c-41da-b892-3a41abe778be",
+   "review": false,
+   "score": 100
+  },
+  "Joan Baez": {
+   "genres": [
+    "folk",
+    "americana",
+    "singer-songwriter",
+    "country",
+    "gospel",
+    "pop",
+    "rock",
+    "roots rock"
+   ],
+   "matchedName": "Joan Baez",
+   "mbid": "92d37892-6186-4459-9cc1-f0dde57652d0",
+   "review": false,
+   "score": 100
+  },
+  "Joan Manuel Serrat": {
+   "genres": [
+    "contemporary folk",
+    "nova cançó",
+    "nueva canción",
+    "nueva canción española",
+    "singer-songwriter"
+   ],
+   "matchedName": "Joan Manuel Serrat",
+   "mbid": "64e96700-d880-452e-803d-e4d7628b0224",
+   "review": false,
+   "score": 100
+  },
+  "Joaquín Sabina": {
+   "genres": [
+    "rock",
+    "latin ballad",
+    "pop",
+    "pop rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "Joaquín Sabina",
+   "mbid": "a992aada-7108-455d-9747-0b7b6a089e8d",
+   "review": false,
+   "score": 100
+  },
+  "Johnny Cash": {
+   "genres": [
+    "country",
+    "rockabilly",
+    "folk",
+    "country gospel",
+    "americana",
+    "blues",
+    "outlaw country",
+    "gospel",
+    "rock and roll",
+    "classic country"
+   ],
+   "matchedName": "Johnny Cash",
+   "mbid": "d43d12a1-2dc9-4257-a2fd-0a3bb1081b86",
+   "review": false,
+   "score": 100
+  },
+  "José Luis Perales": {
+   "genres": [
+    "jazz",
+    "latin ballad",
+    "latin pop",
+    "trova"
+   ],
+   "matchedName": "José Luis Perales",
+   "mbid": "86845ceb-170e-4bc2-9006-cb360867d04b",
+   "review": false,
+   "score": 100
+  },
+  "Journey": {
+   "genres": [
+    "rock",
+    "aor",
+    "arena rock",
+    "hard rock",
+    "pop rock",
+    "soft rock",
+    "classic rock",
+    "progressive rock"
+   ],
+   "matchedName": "Journey",
+   "mbid": "abd506e1-6f2b-4d6f-b937-92c267f6f88b",
+   "review": false,
+   "score": 100
+  },
+  "Joy Division": {
+   "genres": [
+    "post-punk",
+    "new wave",
+    "gothic rock",
+    "rock"
+   ],
+   "matchedName": "Joy Division",
+   "mbid": "9a58fda3-f4ed-4080-a3a5-f457aac9fcdd",
+   "review": false,
+   "score": 100
+  },
+  "Juan Magán": {
+   "genres": [
+    "dance",
+    "electro latino",
+    "electronic",
+    "latin",
+    "merengue",
+    "reggaeton"
+   ],
+   "matchedName": "Juan Magán",
+   "mbid": "fe2d4768-80a4-4a00-b606-4872b6996a6a",
+   "review": false,
+   "score": 100
+  },
+  "Juan Pardo": {
+   "genres": [],
+   "matchedName": "Juan Pardo",
+   "mbid": "edd51705-91c1-4f08-8760-c4ecb4c1699d",
+   "review": false,
+   "score": 100
+  },
+  "Juanes": {
+   "genres": [
+    "latin",
+    "latin pop",
+    "pop",
+    "pop rock",
+    "rock",
+    "latin rock"
+   ],
+   "matchedName": "Juanes",
+   "mbid": "8b0f05ce-354e-4121-9e0b-8b4732ea844f",
+   "review": false,
+   "score": 100
+  },
+  "Judeline": {
+   "genres": [],
+   "matchedName": "Judeline",
+   "mbid": "b828d419-2928-4286-9509-5d920d524358",
+   "review": false,
+   "score": 100
+  },
+  "Julieta Venegas": {
+   "genres": [
+    "indie pop",
+    "pop",
+    "pop rock",
+    "folk rock",
+    "latin",
+    "rock"
+   ],
+   "matchedName": "Julieta Venegas",
+   "mbid": "601f8530-9009-4f73-94fb-a355b4497b70",
+   "review": false,
+   "score": 100
+  },
+  "Julio Iglesias": {
+   "genres": [
+    "canción melódica",
+    "ballad",
+    "latin",
+    "latin ballad",
+    "pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Julio Iglesias",
+   "mbid": "3be4099e-f180-4038-af84-ae18a09eab02",
+   "review": false,
+   "score": 100
+  },
+  "Justin Bieber": {
+   "genres": [
+    "pop",
+    "teen pop",
+    "dance-pop",
+    "contemporary country",
+    "pop rap",
+    "r&b",
+    "reggaeton",
+    "tropical house"
+   ],
+   "matchedName": "Justin Bieber",
+   "mbid": "e0140a67-e4d1-4f13-8a01-364355bee46e",
+   "review": false,
+   "score": 100
+  },
+  "Justin Timberlake": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "r&b",
+    "contemporary r&b",
+    "disco",
+    "boogie",
+    "electropop",
+    "neo soul",
+    "synth funk"
+   ],
+   "matchedName": "Justin Timberlake",
+   "mbid": "596ffa74-3d08-44ef-b113-765d43d12738",
+   "review": false,
+   "score": 100
+  },
+  "KC and the Sunshine Band": {
+   "genres": [
+    "dance-pop",
+    "disco",
+    "funk",
+    "pop",
+    "pop soul"
+   ],
+   "matchedName": "KC and the Sunshine Band",
+   "mbid": "76a5a114-ed6a-4eb6-8a81-ad5768d4b41c",
+   "review": false,
+   "score": 100
+  },
+  "Kaiser Chiefs": {
+   "genres": [
+    "indie rock",
+    "britpop",
+    "dance-pop",
+    "alternative rock",
+    "pop rock",
+    "post-punk revival",
+    "power pop",
+    "rock",
+    "synth-pop"
+   ],
+   "matchedName": "Kaiser Chiefs",
+   "mbid": "90218af4-4d58-4821-8d41-2ee295ebbe21",
+   "review": false,
+   "score": 100
+  },
+  "Kaka de Luxe": {
+   "genres": [
+    "punk"
+   ],
+   "matchedName": "Kaka de Luxe",
+   "mbid": "8dfa0f49-a1e3-4d67-99aa-3f75b68d64e1",
+   "review": false,
+   "score": 100
+  },
+  "Kanye West": {
+   "genres": [],
+   "matchedName": "Kanye West Tribute Band",
+   "mbid": "0eb17834-1d29-47ef-a422-9dc68d73c5e4",
+   "review": true,
+   "score": 100
+  },
+  "Karina": {
+   "genres": [],
+   "matchedName": "Karina",
+   "mbid": "27568173-a21f-45b6-b489-366150ee467d",
+   "review": false,
+   "score": 100
+  },
+  "Karol G": {
+   "genres": [
+    "reggaeton",
+    "latin",
+    "r&b"
+   ],
+   "matchedName": "KAROL G",
+   "mbid": "de22adae-f8ac-414f-b653-b0162611bd60",
+   "review": false,
+   "score": 100
+  },
+  "Kase.O": {
+   "genres": [],
+   "matchedName": "Kase.O",
+   "mbid": "3ef162aa-8497-4062-b6d1-a063f0cbf1ae",
+   "review": false,
+   "score": 100
+  },
+  "Katy Perry": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "bubblegum pop",
+    "dance-pop",
+    "electropop",
+    "disco",
+    "synth-pop",
+    "teen pop"
+   ],
+   "matchedName": "Katy Perry",
+   "mbid": "122d63fc-8671-43e4-9752-34e846d62a9c",
+   "review": false,
+   "score": 100
+  },
+  "Keane": {
+   "genres": [
+    "alternative rock",
+    "piano rock",
+    "post-britpop",
+    "indie pop",
+    "pop rock",
+    "rock",
+    "synth-pop"
+   ],
+   "matchedName": "Keane",
+   "mbid": "c7020c6d-cae9-4db3-92a7-e5c561cbad50",
+   "review": false,
+   "score": 100
+  },
+  "Kendrick Lamar": {
+   "genres": [
+    "hip hop",
+    "conscious hip hop",
+    "jazz rap",
+    "west coast hip hop",
+    "hardcore hip hop",
+    "pop",
+    "alternative hip hop",
+    "pop rap",
+    "trap",
+    "dance",
+    "disco",
+    "future bass",
+    "gangsta rap",
+    "house",
+    "jazz",
+    "r&b"
+   ],
+   "matchedName": "Kendrick Lamar",
+   "mbid": "381086ea-f511-4aba-bdf9-71c753dc5077",
+   "review": false,
+   "score": 100
+  },
+  "Ketama": {
+   "genres": [
+    "alternative folk",
+    "flamenco"
+   ],
+   "matchedName": "Ketama",
+   "mbid": "7fe8e911-d706-44d9-b633-702065f8fd6c",
+   "review": false,
+   "score": 100
+  },
+  "Kiko Veneno": {
+   "genres": [],
+   "matchedName": "Kiko Veneno",
+   "mbid": "f1899faf-50de-4bf5-9939-bb2e720e629b",
+   "review": false,
+   "score": 100
+  },
+  "Kim Wilde": {
+   "genres": [
+    "pop",
+    "synth-pop",
+    "dance-pop",
+    "hi-nrg",
+    "new wave",
+    "pop rock"
+   ],
+   "matchedName": "Kim Wilde",
+   "mbid": "4b462375-c508-432a-8c88-ceeec38b16ae",
+   "review": false,
+   "score": 100
+  },
+  "Kings of Leon": {
+   "genres": [
+    "alternative rock",
+    "indie rock",
+    "southern rock",
+    "garage rock",
+    "pop rock",
+    "rock",
+    "garage rock revival"
+   ],
+   "matchedName": "Kings of Leon",
+   "mbid": "6ffb8ea9-2370-44d8-b678-e9237bbd347b",
+   "review": false,
+   "score": 100
+  },
+  "Kiss": {
+   "genres": [
+    "hard rock",
+    "glam rock",
+    "glam metal",
+    "rock",
+    "classic rock",
+    "heavy metal",
+    "aor",
+    "arena rock",
+    "glam",
+    "pop rock",
+    "alternative metal",
+    "disco",
+    "grunge",
+    "metal"
+   ],
+   "matchedName": "KISS",
+   "mbid": "e1f1e33e-2e4c-4d43-b91b-7064068d3283",
+   "review": false,
+   "score": 100
+  },
+  "Kool & The Gang": {
+   "genres": [
+    "funk",
+    "disco",
+    "jazz-funk",
+    "contemporary r&b",
+    "electronic",
+    "jazz",
+    "pop soul",
+    "soul",
+    "synth funk"
+   ],
+   "matchedName": "Kool & the Gang",
+   "mbid": "2469950a-f0ca-425a-bfbc-baf55ea3afde",
+   "review": false,
+   "score": 100
+  },
+  "Kortatu": {
+   "genres": [
+    "punk rock",
+    "ska",
+    "ska punk"
+   ],
+   "matchedName": "Kortatu",
+   "mbid": "74241690-77b4-4ce7-8237-9f71a14f50b7",
+   "review": false,
+   "score": 100
+  },
+  "Kraftwerk": {
+   "genres": [
+    "electronic",
+    "krautrock",
+    "synth-pop",
+    "electro",
+    "techno",
+    "progressive electronic"
+   ],
+   "matchedName": "Kraftwerk",
+   "mbid": "5700dcd4-c139-4f31-aa3e-6382b9af9032",
+   "review": false,
+   "score": 100
+  },
+  "Kygo": {
+   "genres": [
+    "tropical house",
+    "dance",
+    "deep house",
+    "downtempo",
+    "edm",
+    "house",
+    "club",
+    "electronic",
+    "electronica",
+    "pop",
+    "progressive house"
+   ],
+   "matchedName": "Kygo",
+   "mbid": "ba0e7638-0cd6-4ff4-8987-c3e224d22c23",
+   "review": false,
+   "score": 100
+  },
+  "La Banda Trapera del Río": {
+   "genres": [
+    "punk rock"
+   ],
+   "matchedName": "La Banda Trapera Del Río",
+   "mbid": "d2ab2a63-35bd-4d6f-82c0-fad8dc36618f",
+   "review": false,
+   "score": 100
+  },
+  "La Cabra Mecánica": {
+   "genres": [],
+   "matchedName": "La Cabra Mecánica",
+   "mbid": "d922f74d-c16f-466a-8be5-5ade0b3de0ee",
+   "review": false,
+   "score": 100
+  },
+  "La Frontera": {
+   "genres": [],
+   "matchedName": "La Frontera",
+   "mbid": "7efc2872-0206-4f1b-a7fc-1056628ce254",
+   "review": false,
+   "score": 100
+  },
+  "La Guardia": {
+   "genres": [],
+   "matchedName": "La Guardia",
+   "mbid": "8d463760-a2f0-4a44-9e37-764f87af7279",
+   "review": false,
+   "score": 100
+  },
+  "La La Love You": {
+   "genres": [],
+   "matchedName": "La La Love You",
+   "mbid": "eeac91f1-ea41-4559-b29a-4764e053bafe",
+   "review": false,
+   "score": 100
+  },
+  "La Oreja de Van Gogh": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "donosti sound",
+    "electropop",
+    "latin",
+    "power pop"
+   ],
+   "matchedName": "La Oreja de Van Gogh",
+   "mbid": "a7c38944-b3fa-4a3d-a4bd-d3b3b06f0cbf",
+   "review": false,
+   "score": 100
+  },
+  "La Pegatina": {
+   "genres": [
+    "rumba catalana"
+   ],
+   "matchedName": "La Pegatina",
+   "mbid": "be21bd32-0edc-4075-8872-1ca274a14893",
+   "review": false,
+   "score": 100
+  },
+  "La Polla Records": {
+   "genres": [
+    "punk"
+   ],
+   "matchedName": "La Polla Records",
+   "mbid": "cd3f2331-160b-4ed3-9f2d-f0c54fcc1c63",
+   "review": false,
+   "score": 100
+  },
+  "La Quinta Estación": {
+   "genres": [
+    "latin",
+    "pop",
+    "latin ballad",
+    "latin pop",
+    "pop rock"
+   ],
+   "matchedName": "La Quinta Estación",
+   "mbid": "09c85751-d9fa-4dc3-bc7d-6ab15ac809de",
+   "review": false,
+   "score": 100
+  },
+  "La Unión": {
+   "genres": [
+    "new wave",
+    "pop rock"
+   ],
+   "matchedName": "La Unión",
+   "mbid": "c4cc2564-afdf-4c62-86b3-68a49ac42ec1",
+   "review": false,
+   "score": 100
+  },
+  "Lady Gaga": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "electropop",
+    "pop rock",
+    "synth-pop",
+    "electronic",
+    "dance",
+    "americana",
+    "art pop",
+    "edm",
+    "electro house",
+    "jazz",
+    "rock"
+   ],
+   "matchedName": "Lady Gaga",
+   "mbid": "650e7db6-b795-4eb5-a702-5ea2fc46c848",
+   "review": false,
+   "score": 100
+  },
+  "Lana Del Rey": {
+   "genres": [
+    "indie pop",
+    "pop",
+    "dream pop",
+    "electronic",
+    "alternative pop",
+    "art pop",
+    "chamber pop",
+    "singer-songwriter",
+    "trip hop",
+    "neo-psychedelia",
+    "ballad"
+   ],
+   "matchedName": "Lana Del Rey",
+   "mbid": "b7539c32-53e7-4908-bda3-81449c367da6",
+   "review": false,
+   "score": 100
+  },
+  "Las Grecas": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Las Grecas",
+   "mbid": "f5328883-b5c0-40ac-a259-371b867e7acc",
+   "review": false,
+   "score": 100
+  },
+  "Laura Branigan": {
+   "genres": [
+    "pop",
+    "ballad",
+    "synth-pop"
+   ],
+   "matchedName": "Laura Branigan",
+   "mbid": "917976a6-75b1-46af-b57b-71f13de20422",
+   "review": false,
+   "score": 100
+  },
+  "Lauryn Hill": {
+   "genres": [
+    "hip hop",
+    "neo soul",
+    "alternative hip hop",
+    "contemporary r&b"
+   ],
+   "matchedName": "Ms. Lauryn Hill",
+   "mbid": "e8414012-4a1c-4ad4-be5e-fc55294e28cc",
+   "review": true,
+   "score": 100
+  },
+  "Led Zeppelin": {
+   "genres": [
+    "hard rock",
+    "rock",
+    "blues rock",
+    "classic rock",
+    "folk rock",
+    "heavy metal",
+    "arena rock",
+    "progressive rock"
+   ],
+   "matchedName": "Led Zeppelin",
+   "mbid": "678d88b2-87b0-403b-b63d-5da7465aecc3",
+   "review": false,
+   "score": 100
+  },
+  "Leiva": {
+   "genres": [],
+   "matchedName": "Leiva",
+   "mbid": "abe0a421-66ed-4401-9144-1e9aa832ed24",
+   "review": false,
+   "score": 100
+  },
+  "Lewis Capaldi": {
+   "genres": [
+    "pop",
+    "singer-songwriter",
+    "blue-eyed soul"
+   ],
+   "matchedName": "Lewis Capaldi",
+   "mbid": "526aab94-697f-44a9-b630-41d1c0505953",
+   "review": false,
+   "score": 100
+  },
+  "Leño": {
+   "genres": [
+    "rock urbano",
+    "hard rock",
+    "rock"
+   ],
+   "matchedName": "Leño",
+   "mbid": "42941f4b-d3ea-4d78-a5af-2be59bc2acd6",
+   "review": false,
+   "score": 100
+  },
+  "Lil Nas X": {
+   "genres": [
+    "pop rap",
+    "hip hop",
+    "trap"
+   ],
+   "matchedName": "Lil Nas X",
+   "mbid": "0b30341b-b59d-4979-8130-b66c0e475321",
+   "review": false,
+   "score": 100
+  },
+  "Limp Bizkit": {
+   "genres": [
+    "nu metal",
+    "rapcore",
+    "rap metal",
+    "rap rock",
+    "alternative metal",
+    "rock",
+    "alternative rock",
+    "metal",
+    "hip hop",
+    "pop rock"
+   ],
+   "matchedName": "Limp Bizkit",
+   "mbid": "8f9d6bb2-dba4-4cca-9967-cc02b9f4820c",
+   "review": false,
+   "score": 100
+  },
+  "Linkin Park": {
+   "genres": [
+    "nu metal",
+    "rock",
+    "rap rock",
+    "metal",
+    "alternative rock",
+    "rap metal"
+   ],
+   "matchedName": "Linkin Park",
+   "mbid": "f59c5520-5f46-4d2c-b2c4-822eabf53419",
+   "review": false,
+   "score": 100
+  },
+  "Lionel Richie": {
+   "genres": [
+    "soul",
+    "contemporary r&b",
+    "r&b",
+    "pop",
+    "pop soul",
+    "smooth soul",
+    "country pop",
+    "disco",
+    "soft rock"
+   ],
+   "matchedName": "Lionel Richie",
+   "mbid": "3cb25fb2-5547-4b05-adec-1a5e37830d46",
+   "review": false,
+   "score": 100
+  },
+  "Lluís Llach": {
+   "genres": [],
+   "matchedName": "Lluís Llach",
+   "mbid": "c231e5c5-2191-460a-80e0-602a6b519538",
+   "review": false,
+   "score": 100
+  },
+  "Lola Flores": {
+   "genres": [
+    "copla",
+    "latin",
+    "sevillanas"
+   ],
+   "matchedName": "Lola Flores",
+   "mbid": "e9abb900-fba0-4e1b-ae09-a7ea8f72551b",
+   "review": false,
+   "score": 100
+  },
+  "Lola Índigo": {
+   "genres": [
+    "latin pop",
+    "reggaeton",
+    "dance-pop",
+    "electropop"
+   ],
+   "matchedName": "Lola Indigo",
+   "mbid": "c56f7a49-0e17-4fd8-a830-d334fe773434",
+   "review": false,
+   "score": 100
+  },
+  "Lole y Manuel": {
+   "genres": [],
+   "matchedName": "Lole y Manuel",
+   "mbid": "863de8b5-4283-48f4-84fa-330cd073f84a",
+   "review": false,
+   "score": 100
+  },
+  "Lone Star": {
+   "genres": [
+    "rock",
+    "rock and roll"
+   ],
+   "matchedName": "Lone Star",
+   "mbid": "c5cae874-88c2-446c-8ba6-26ac78505d89",
+   "review": false,
+   "score": 100
+  },
+  "Loquillo": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Loquillo",
+   "mbid": "efe3d002-46b7-4c66-a090-975b9cbb1947",
+   "review": false,
+   "score": 100
+  },
+  "Lorde": {
+   "genres": [
+    "pop",
+    "alternative pop",
+    "synth-pop",
+    "art pop",
+    "indie pop",
+    "alternative rock",
+    "dance-pop",
+    "folk pop",
+    "indietronica",
+    "singer-songwriter"
+   ],
+   "matchedName": "Lorde",
+   "mbid": "8e494408-8620-4c6a-82c2-c2ca4a1e4f12",
+   "review": false,
+   "score": 100
+  },
+  "Lori Meyers": {
+   "genres": [
+    "indie pop"
+   ],
+   "matchedName": "Lori Meyers",
+   "mbid": "9cdb07de-bd54-4985-9494-849ff7ad95ed",
+   "review": false,
+   "score": 100
+  },
+  "Los Bravos": {
+   "genres": [
+    "beat music",
+    "rock"
+   ],
+   "matchedName": "Los Bravos",
+   "mbid": "78357965-ea3e-409b-90e7-8c0dfb116288",
+   "review": false,
+   "score": 100
+  },
+  "Los Brincos": {
+   "genres": [
+    "beat music",
+    "pop rock",
+    "rock"
+   ],
+   "matchedName": "Los Brincos",
+   "mbid": "73414ffa-27ce-4028-8c92-e2b11ae76a1d",
+   "review": false,
+   "score": 100
+  },
+  "Los Canarios": {
+   "genres": [],
+   "matchedName": "Trío Los Canarios",
+   "mbid": "1196b426-1813-4e9a-9af6-67943015a6c2",
+   "review": true,
+   "score": 100
+  },
+  "Los Chichos": {
+   "genres": [],
+   "matchedName": "Los Chichos",
+   "mbid": "d54ea4a6-0b9c-4e47-bed0-289ae9ff4037",
+   "review": false,
+   "score": 100
+  },
+  "Los Delinqüentes": {
+   "genres": [],
+   "matchedName": "Los Delinqüentes",
+   "mbid": "428743da-1684-4bd4-9d0c-89f34df5f529",
+   "review": false,
+   "score": 100
+  },
+  "Los Diablos": {
+   "genres": [],
+   "matchedName": "Los Diablos",
+   "mbid": "4bf1357a-ffd7-4e0c-a503-17b2591b038d",
+   "review": false,
+   "score": 100
+  },
+  "Los Enemigos": {
+   "genres": [],
+   "matchedName": "Los Enemigos",
+   "mbid": "e3922bc3-c7dc-4eba-a1ee-ba07e14737f4",
+   "review": false,
+   "score": 100
+  },
+  "Los Manolos": {
+   "genres": [],
+   "matchedName": "Los Manolos",
+   "mbid": "2b671f8e-5660-400d-99b2-fe4de44d647a",
+   "review": false,
+   "score": 100
+  },
+  "Los Mustang": {
+   "genres": [
+    "rock",
+    "rock and roll"
+   ],
+   "matchedName": "Los Mustang",
+   "mbid": "3f886cc7-51bc-4eda-aba7-d64308afa542",
+   "review": false,
+   "score": 100
+  },
+  "Los Nikis": {
+   "genres": [
+    "punk"
+   ],
+   "matchedName": "Los Nikis",
+   "mbid": "6994f98a-a41e-4d74-af5b-9e3fab3c19b4",
+   "review": false,
+   "score": 100
+  },
+  "Los Payos": {
+   "genres": [],
+   "matchedName": "Los Payos",
+   "mbid": "955e7190-1fb9-47fd-9266-d65fd6abea0d",
+   "review": false,
+   "score": 100
+  },
+  "Los Pecos": {
+   "genres": [],
+   "matchedName": "Los Pecos",
+   "mbid": "5ac1f0f5-103e-48bf-b92f-c3f0deeda22c",
+   "review": false,
+   "score": 100
+  },
+  "Los Pekenikes": {
+   "genres": [
+    "pop",
+    "baroque pop",
+    "instrumental"
+   ],
+   "matchedName": "Los Pekenikes",
+   "mbid": "07165ce7-b09f-4255-900a-0260f2e1d5a0",
+   "review": false,
+   "score": 100
+  },
+  "Los Planetas": {
+   "genres": [
+    "indie rock",
+    "shoegaze"
+   ],
+   "matchedName": "Los Planetas",
+   "mbid": "6f28b158-4d1a-4f31-9339-7f381e3c4ee1",
+   "review": false,
+   "score": 100
+  },
+  "Los Puntos": {
+   "genres": [],
+   "matchedName": "Los Puntos",
+   "mbid": "0f09f5b9-632a-48f3-b853-391d430816f0",
+   "review": false,
+   "score": 100
+  },
+  "Los Rebeldes": {
+   "genres": [],
+   "matchedName": "Los Rebeldes",
+   "mbid": "44bedd0a-64b4-4e3a-a5d7-efe1a556a549",
+   "review": false,
+   "score": 100
+  },
+  "Los Relámpagos": {
+   "genres": [
+    "instrumental rock",
+    "rock and roll"
+   ],
+   "matchedName": "Los Relámpagos",
+   "mbid": "8c2e8560-60fd-4adb-b4e7-b1d4c0600fdc",
+   "review": false,
+   "score": 100
+  },
+  "Los Rodríguez": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Los Rodríguez",
+   "mbid": "af84ee9f-534a-4f7f-844b-188ba1c47e87",
+   "review": false,
+   "score": 100
+  },
+  "Los Ronaldos": {
+   "genres": [],
+   "matchedName": "Los Ronaldos",
+   "mbid": "8ff7e1b4-18f8-48ec-a8a0-793ab1a5511c",
+   "review": false,
+   "score": 100
+  },
+  "Los Salvajes": {
+   "genres": [
+    "rock",
+    "rock and roll"
+   ],
+   "matchedName": "Los Salvajes",
+   "mbid": "66606728-67d5-4f0d-bf5f-2211e7bff523",
+   "review": false,
+   "score": 100
+  },
+  "Los Secretos": {
+   "genres": [
+    "new wave",
+    "pop rock"
+   ],
+   "matchedName": "Los Secretos",
+   "mbid": "ec5872e7-9d15-4624-b949-c82e700fd2e9",
+   "review": false,
+   "score": 100
+  },
+  "Los Sirex": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Los Sírex",
+   "mbid": "9ff8b38b-dc5f-4082-85c1-6ade5c0a811f",
+   "review": false,
+   "score": 100
+  },
+  "Los Stop": {
+   "genres": [],
+   "matchedName": "Los Stop",
+   "mbid": "73dd2df4-8d0a-4bb2-9f0e-933a180c7b9a",
+   "review": false,
+   "score": 100
+  },
+  "Los Suaves": {
+   "genres": [
+    "hard rock",
+    "rock"
+   ],
+   "matchedName": "Los Suaves",
+   "mbid": "69747c42-016c-4705-9a9c-a411cd859b46",
+   "review": false,
+   "score": 100
+  },
+  "Los Toreros Muertos": {
+   "genres": [],
+   "matchedName": "Los Toreros Muertos",
+   "mbid": "49608d4c-f37b-4048-a865-de391a72083b",
+   "review": false,
+   "score": 100
+  },
+  "Los del Río": {
+   "genres": [
+    "flamenco pop",
+    "latin",
+    "rumba flamenca",
+    "sevillanas"
+   ],
+   "matchedName": "Los del Río",
+   "mbid": "c152ed9f-7a4c-4006-af2d-ed8b7126b0a0",
+   "review": false,
+   "score": 100
+  },
+  "Los Ángeles": {
+   "genres": [
+    "classical"
+   ],
+   "matchedName": "Los Angeles Philharmonic",
+   "mbid": "98e4313e-dfb0-4084-805c-3e42ef9301d0",
+   "review": true,
+   "score": 100
+  },
+  "Lou Reed": {
+   "genres": [
+    "art rock",
+    "rock",
+    "glam rock",
+    "hard rock",
+    "noise",
+    "pop rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "Lou Reed",
+   "mbid": "9d1ebcfe-4c15-4d18-95d3-d919898638a1",
+   "review": false,
+   "score": 100
+  },
+  "Love of Lesbian": {
+   "genres": [
+    "indie pop",
+    "indie rock"
+   ],
+   "matchedName": "Love of Lesbian",
+   "mbid": "31ab8f5f-b5d7-41a2-80ef-13084aaf0eab",
+   "review": false,
+   "score": 100
+  },
+  "Luis Aguilé": {
+   "genres": [
+    "latin ballad",
+    "singer-songwriter"
+   ],
+   "matchedName": "Luis Aguilé",
+   "mbid": "35365c9e-645d-4637-a649-9a9445c0be9e",
+   "review": false,
+   "score": 100
+  },
+  "Luis Eduardo Aute": {
+   "genres": [],
+   "matchedName": "Luis Eduardo Aute",
+   "mbid": "35542d25-c761-49fa-a402-f752c5789517",
+   "review": false,
+   "score": 100
+  },
+  "Luis Fonsi": {
+   "genres": [
+    "latin",
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "Luis Fonsi",
+   "mbid": "d68fda90-ab8d-4799-be56-317ba4ae700f",
+   "review": false,
+   "score": 100
+  },
+  "Lulu": {
+   "genres": [
+    "pop",
+    "baroque pop",
+    "blue-eyed soul",
+    "pop rock",
+    "pop soul"
+   ],
+   "matchedName": "Lulu",
+   "mbid": "002e9f6e-13af-4347-83c5-f5ace70e0ec4",
+   "review": false,
+   "score": 100
+  },
+  "Luz Casal": {
+   "genres": [
+    "rock",
+    "pop",
+    "pop rock"
+   ],
+   "matchedName": "Luz Casal",
+   "mbid": "d9502075-0f5c-4514-b443-de0890340001",
+   "review": false,
+   "score": 100
+  },
+  "Lynyrd Skynyrd": {
+   "genres": [
+    "southern rock",
+    "hard rock",
+    "rock",
+    "acoustic rock",
+    "blues rock",
+    "boogie rock",
+    "classic rock"
+   ],
+   "matchedName": "Lynyrd Skynyrd",
+   "mbid": "c544ed4d-2390-4442-a83e-1ea2883b09c8",
+   "review": false,
+   "score": 100
+  },
+  "M-Clan": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "M-Clan",
+   "mbid": "681a63e0-d70d-4f9e-ac8c-f21b9e63be75",
+   "review": false,
+   "score": 100
+  },
+  "Macaco": {
+   "genres": [
+    "flamenco",
+    "hip hop",
+    "nuevo flamenco",
+    "reggae"
+   ],
+   "matchedName": "Macaco",
+   "mbid": "d7fd44c7-2642-479f-b302-5892de24f545",
+   "review": false,
+   "score": 100
+  },
+  "Macklemore & Ryan Lewis": {
+   "genres": [
+    "hip hop",
+    "pop rap"
+   ],
+   "matchedName": "Macklemore & Ryan Lewis",
+   "mbid": "97b226c8-7140-4da3-91ac-15e62e131a81",
+   "review": false,
+   "score": 100
+  },
+  "Madonna": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "art pop",
+    "electropop",
+    "contemporary r&b",
+    "synth-pop",
+    "electronic",
+    "electronica",
+    "jazz",
+    "pop rock",
+    "bubblegum pop",
+    "club",
+    "country pop",
+    "easy listening",
+    "edm",
+    "new wave",
+    "trip hop"
+   ],
+   "matchedName": "Madonna",
+   "mbid": "79239441-bfd5-4981-a70c-55c3f15c1287",
+   "review": false,
+   "score": 100
+  },
+  "Mago de Oz": {
+   "genres": [
+    "heavy metal",
+    "power metal",
+    "folk metal",
+    "hard rock",
+    "celtic",
+    "celtic metal",
+    "metal",
+    "rock urbano"
+   ],
+   "matchedName": "Mägo de Oz",
+   "mbid": "fa3b825f-7c85-4377-b393-d28a2016e293",
+   "review": false,
+   "score": 100
+  },
+  "Major Lazer": {
+   "genres": [
+    "dancehall",
+    "electronic",
+    "electropop",
+    "edm",
+    "moombahton",
+    "art pop",
+    "dance-pop",
+    "jungle terror"
+   ],
+   "matchedName": "Major Lazer",
+   "mbid": "75be165a-ad83-4d12-bd28-f589a15c479f",
+   "review": false,
+   "score": 100
+  },
+  "Mala Rodríguez": {
+   "genres": [
+    "hip hop"
+   ],
+   "matchedName": "Mala Rodríguez",
+   "mbid": "7d6d748f-13fc-4f9c-adc8-087d34c4bdef",
+   "review": false,
+   "score": 100
+  },
+  "Maldita Nerea": {
+   "genres": [
+    "pop rock"
+   ],
+   "matchedName": "Maldita Nerea",
+   "mbid": "03fcdaa0-e2c7-4be6-a533-94665ccdab57",
+   "review": false,
+   "score": 100
+  },
+  "Maluma": {
+   "genres": [
+    "reggaeton",
+    "latin",
+    "latin pop",
+    "trap latino",
+    "pop rock"
+   ],
+   "matchedName": "Maluma",
+   "mbid": "e8979f75-9110-4df8-ac70-898898d080d1",
+   "review": false,
+   "score": 100
+  },
+  "Malú": {
+   "genres": [],
+   "matchedName": "Malú",
+   "mbid": "ba340d34-dbe4-4624-8f0c-53460e7f5325",
+   "review": false,
+   "score": 100
+  },
+  "Manolo Escobar": {
+   "genres": [
+    "copla",
+    "flamenco",
+    "latin",
+    "sevillanas"
+   ],
+   "matchedName": "Manolo Escobar",
+   "mbid": "7880a76e-09fb-48b5-a9f3-faab0167c877",
+   "review": false,
+   "score": 100
+  },
+  "Manolo García": {
+   "genres": [],
+   "matchedName": "Manolo García",
+   "mbid": "1c8309da-9789-40bf-b9c2-e20064263820",
+   "review": false,
+   "score": 100
+  },
+  "Manu Chao": {
+   "genres": [
+    "folk",
+    "latin",
+    "reggae",
+    "ska",
+    "worldbeat",
+    "country",
+    "electronic",
+    "pop",
+    "punk",
+    "rock"
+   ],
+   "matchedName": "Manu Chao",
+   "mbid": "7570a0dd-5a67-401b-b19a-261eee01a284",
+   "review": false,
+   "score": 100
+  },
+  "Manuel Carrasco": {
+   "genres": [],
+   "matchedName": "Manuel Carrasco",
+   "mbid": "e194045c-6fa4-4508-b9a9-dc928665308f",
+   "review": false,
+   "score": 100
+  },
+  "Manuel Turizo": {
+   "genres": [
+    "latin",
+    "latin pop",
+    "reggaeton"
+   ],
+   "matchedName": "Manuel Turizo",
+   "mbid": "30a57b7b-47c9-4234-86fd-9b8ff660e7cb",
+   "review": false,
+   "score": 100
+  },
+  "Manzanita": {
+   "genres": [
+    "flamenco"
+   ],
+   "matchedName": "Manzanita",
+   "mbid": "71ee4b6b-d578-4ee0-817b-7fbbb5d8bd82",
+   "review": false,
+   "score": 100
+  },
+  "Maná": {
+   "genres": [
+    "latin",
+    "pop",
+    "pop rock",
+    "rock",
+    "latin pop",
+    "latin rock"
+   ],
+   "matchedName": "Maná",
+   "mbid": "55441123-89a2-49ab-ae3f-df7a3e86835a",
+   "review": false,
+   "score": 100
+  },
+  "Marea": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Marea",
+   "mbid": "da4fb281-2156-442c-87ad-0e02e8a86077",
+   "review": false,
+   "score": 100
+  },
+  "Mari Trini": {
+   "genres": [
+    "canción melódica",
+    "latin ballad",
+    "singer-songwriter"
+   ],
+   "matchedName": "Mari Trini",
+   "mbid": "dc8633d7-f4e8-4017-b037-8fd154fc8f00",
+   "review": false,
+   "score": 100
+  },
+  "Maria del Mar Bonet": {
+   "genres": [
+    "folk"
+   ],
+   "matchedName": "Maria del Mar Bonet",
+   "mbid": "f9b438e7-2930-4a09-902d-cd7b65bb452f",
+   "review": false,
+   "score": 100
+  },
+  "Mariah Carey": {
+   "genres": [
+    "pop",
+    "contemporary r&b",
+    "dance-pop",
+    "christmas music",
+    "soul",
+    "r&b",
+    "easy listening",
+    "hip hop",
+    "pop soul",
+    "quiet storm"
+   ],
+   "matchedName": "Mariah Carey",
+   "mbid": "494e8d09-f85b-4543-892f-a5096aed1cd4",
+   "review": false,
+   "score": 100
+  },
+  "Marifé de Triana": {
+   "genres": [
+    "flamenco"
+   ],
+   "matchedName": "Marifé de Triana",
+   "mbid": "d480e809-ebfa-4df1-afa0-014c47d8e114",
+   "review": false,
+   "score": 100
+  },
+  "Marisol": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Marisol",
+   "mbid": "0b5b2f50-ba40-4e32-a3ec-1c5d24757ba4",
+   "review": false,
+   "score": 100
+  },
+  "Maroon 5": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "rock",
+    "alternative rock",
+    "dance-pop",
+    "funk rock",
+    "dance",
+    "electropop",
+    "grunge",
+    "indie rock",
+    "neo-psychedelia",
+    "pop punk",
+    "power pop",
+    "psychedelic rock"
+   ],
+   "matchedName": "Maroon 5",
+   "mbid": "0ab49580-c84f-44d4-875f-d83760ea2cfe",
+   "review": false,
+   "score": 100
+  },
+  "Marta Sánchez": {
+   "genres": [
+    "dance-pop",
+    "pop"
+   ],
+   "matchedName": "Marta Sánchez",
+   "mbid": "6781af9a-175c-4b27-917d-da89060aa15d",
+   "review": false,
+   "score": 100
+  },
+  "Martin Garrix": {
+   "genres": [
+    "edm",
+    "big room house",
+    "electro house",
+    "dance-pop",
+    "festival progressive house",
+    "tropical house"
+   ],
+   "matchedName": "Martin Garrix",
+   "mbid": "3e1f2ee4-16be-4406-bf18-6173840cf2b1",
+   "review": false,
+   "score": 100
+  },
+  "Marvin Gaye": {
+   "genres": [
+    "soul",
+    "funk",
+    "smooth soul",
+    "motown",
+    "pop soul",
+    "contemporary r&b",
+    "progressive soul"
+   ],
+   "matchedName": "Marvin Gaye",
+   "mbid": "afdb7919-059d-43c1-b668-ba1d265e7e42",
+   "review": false,
+   "score": 100
+  },
+  "María Becerra": {
+   "genres": [
+    "latin",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "María Becerra",
+   "mbid": "a69b643d-2cd9-4914-8a1a-3f3797a7323c",
+   "review": false,
+   "score": 100
+  },
+  "María José Llergo": {
+   "genres": [],
+   "matchedName": "María José Llergo",
+   "mbid": "03be3a68-c84e-4d41-a25e-a76c0edbd11a",
+   "review": false,
+   "score": 100
+  },
+  "Massiel": {
+   "genres": [],
+   "matchedName": "Massiel",
+   "mbid": "d797e11e-f963-48f1-8076-67d5748cc5d6",
+   "review": false,
+   "score": 100
+  },
+  "Mecano": {
+   "genres": [
+    "pop",
+    "synth-pop"
+   ],
+   "matchedName": "Mecano",
+   "mbid": "3be5dee4-5fa6-45a5-97c2-98914580bafa",
+   "review": false,
+   "score": 100
+  },
+  "Meghan Trainor": {
+   "genres": [
+    "doo-wop",
+    "pop",
+    "bubblegum pop",
+    "dance-pop",
+    "blue-eyed soul",
+    "r&b",
+    "soul"
+   ],
+   "matchedName": "Meghan Trainor",
+   "mbid": "b2029169-2574-4305-820f-252a5fde3697",
+   "review": false,
+   "score": 100
+  },
+  "Melendi": {
+   "genres": [
+    "flamenco",
+    "pop",
+    "pop rock",
+    "rock",
+    "rumba"
+   ],
+   "matchedName": "Melendi",
+   "mbid": "86d61837-890c-4d04-aeec-30d70ad77298",
+   "review": false,
+   "score": 100
+  },
+  "Merche": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Merche",
+   "mbid": "4b855fb3-a209-427b-b108-e55b7480a85a",
+   "review": false,
+   "score": 100
+  },
+  "Metallica": {
+   "genres": [
+    "thrash metal",
+    "heavy metal",
+    "metal",
+    "hard rock",
+    "rock"
+   ],
+   "matchedName": "Metallica",
+   "mbid": "65f4f0c5-ef9e-490c-aee3-909e7ae6b2ab",
+   "review": false,
+   "score": 100
+  },
+  "Michael Bublé": {
+   "genres": [
+    "jazz",
+    "pop",
+    "jazz pop",
+    "big band",
+    "swing"
+   ],
+   "matchedName": "Michael Bublé",
+   "mbid": "611700cf-27f0-4dc9-ae80-c513a767853e",
+   "review": false,
+   "score": 100
+  },
+  "Michael Jackson": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "disco",
+    "contemporary r&b",
+    "pop soul",
+    "soul",
+    "r&b",
+    "new jack swing",
+    "pop rock",
+    "boogie",
+    "dance",
+    "hip hop",
+    "pop rap"
+   ],
+   "matchedName": "Michael Jackson",
+   "mbid": "f27ec8db-af05-4f36-916e-3d57f91ecf5e",
+   "review": false,
+   "score": 100
+  },
+  "Micky": {
+   "genres": [],
+   "matchedName": "Micky Wolf",
+   "mbid": "53d23af5-c674-4a8b-a99b-6888e942b28e",
+   "review": true,
+   "score": 100
+  },
+  "Micky y Los Tonys": {
+   "genres": [],
+   "matchedName": "Micky y Los Tonys",
+   "mbid": "f4d397ab-940b-41fd-a403-94d3bb749556",
+   "review": false,
+   "score": 100
+  },
+  "Miguel Bosé": {
+   "genres": [
+    "latin",
+    "pop",
+    "ballad",
+    "latin ballad",
+    "latin pop"
+   ],
+   "matchedName": "Miguel Bosé",
+   "mbid": "98ad7a28-1949-4786-b1f6-4fa05b9b440c",
+   "review": false,
+   "score": 100
+  },
+  "Miguel Ríos": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Miguel Ríos",
+   "mbid": "cfd5e4f3-e73d-4f8e-a315-6b99c7b1c3f7",
+   "review": false,
+   "score": 100
+  },
+  "Miley Cyrus": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "rock",
+    "dance-pop",
+    "electropop",
+    "power pop",
+    "teen pop",
+    "contemporary r&b",
+    "country",
+    "country pop",
+    "hip hop"
+   ],
+   "matchedName": "Miley Cyrus",
+   "mbid": "7e9bd05a-117f-4cce-87bc-e011527a8b18",
+   "review": false,
+   "score": 100
+  },
+  "Miss Caffeina": {
+   "genres": [],
+   "matchedName": "Miss Caffeina",
+   "mbid": "4a4db4a6-dad0-4038-bff1-c5a47fc85681",
+   "review": false,
+   "score": 100
+  },
+  "Moby": {
+   "genres": [
+    "electronic",
+    "ambient",
+    "downtempo",
+    "techno",
+    "electronica",
+    "house",
+    "pop rock",
+    "ambient techno",
+    "pop",
+    "rock",
+    "trance",
+    "trip hop"
+   ],
+   "matchedName": "Moby",
+   "mbid": "8970d868-0723-483b-a75b-51088913d3d4",
+   "review": false,
+   "score": 100
+  },
+  "Mocedades": {
+   "genres": [
+    "pop",
+    "canción melódica",
+    "folk",
+    "folk pop"
+   ],
+   "matchedName": "Mocedades",
+   "mbid": "9c2f1f4c-8e54-4ba8-8904-9c1edb33c739",
+   "review": false,
+   "score": 100
+  },
+  "Modern Talking": {
+   "genres": [
+    "electronic",
+    "eurodance",
+    "europop",
+    "electro-disco",
+    "euro-disco",
+    "hi-nrg",
+    "pop",
+    "synth-pop"
+   ],
+   "matchedName": "Modern Talking",
+   "mbid": "98913495-8867-43b3-aa8d-db88ee4d4cdc",
+   "review": false,
+   "score": 100
+  },
+  "Morad": {
+   "genres": [
+    "afro trap",
+    "dancehall",
+    "pop rap",
+    "trap latino"
+   ],
+   "matchedName": "Morad",
+   "mbid": "ebca1d88-3991-48e4-bd79-2f219f9c2342",
+   "review": false,
+   "score": 100
+  },
+  "Muchachito Bombo Infierno": {
+   "genres": [],
+   "matchedName": "Muchachito Bombo Infierno",
+   "mbid": "a059eb85-58fd-4afd-9379-84ba9f3528f4",
+   "review": false,
+   "score": 100
+  },
+  "Mumford & Sons": {
+   "genres": [
+    "folk pop",
+    "indie folk",
+    "rock",
+    "alternative rock",
+    "americana",
+    "folk rock",
+    "pop rock",
+    "stomp and holler"
+   ],
+   "matchedName": "Mumford & Sons",
+   "mbid": "c44e9c22-ef82-4a77-9bcd-af6c958446d6",
+   "review": false,
+   "score": 100
+  },
+  "Muse": {
+   "genres": [
+    "alternative rock",
+    "rock",
+    "progressive rock",
+    "symphonic rock",
+    "pop rock",
+    "alternative dance",
+    "alternative metal",
+    "art rock",
+    "neo-progressive rock",
+    "post-grunge"
+   ],
+   "matchedName": "Muse",
+   "mbid": "9c9f1380-2516-4fc9-a3e6-f9f61941d090",
+   "review": false,
+   "score": 100
+  },
+  "Myke Towers": {
+   "genres": [
+    "latin",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "Myke Towers",
+   "mbid": "d2945137-b01d-4195-9f82-64d20f8ba657",
+   "review": false,
+   "score": 100
+  },
+  "Måneskin": {
+   "genres": [
+    "rock",
+    "alternative rock",
+    "pop rock",
+    "funk rock",
+    "glam rock",
+    "hard rock",
+    "rock and roll"
+   ],
+   "matchedName": "Måneskin",
+   "mbid": "3862342a-43c4-4cdb-8250-bfdbfb5e1419",
+   "review": false,
+   "score": 100
+  },
+  "Nach": {
+   "genres": [
+    "hip hop"
+   ],
+   "matchedName": "Nach",
+   "mbid": "ff734df1-6795-43ec-84a7-ae04b356dad1",
+   "review": false,
+   "score": 100
+  },
+  "Nacha Pop": {
+   "genres": [],
+   "matchedName": "Nacha Pop",
+   "mbid": "c3fd37fe-2f09-47a7-bae2-4b86f6d70f59",
+   "review": false,
+   "score": 100
+  },
+  "Nancy Sinatra": {
+   "genres": [
+    "pop",
+    "classic rock",
+    "rock"
+   ],
+   "matchedName": "Nancy Sinatra",
+   "mbid": "c2e36518-9c3b-4dcb-82ad-a3fc7fe99c67",
+   "review": false,
+   "score": 100
+  },
+  "Natos y Waor": {
+   "genres": [],
+   "matchedName": "Natos y Waor",
+   "mbid": "947f21fa-4244-433c-8d51-bf43513d3f71",
+   "review": false,
+   "score": 100
+  },
+  "Navajita Plateá": {
+   "genres": [],
+   "matchedName": "Navajita Plateá",
+   "mbid": "05db30fc-3221-4cfa-849b-1647d8c24188",
+   "review": false,
+   "score": 100
+  },
+  "Nebulossa": {
+   "genres": [],
+   "matchedName": "Nebulossa",
+   "mbid": "36105d8b-023f-4f5d-8075-d2ec8f891b5c",
+   "review": false,
+   "score": 100
+  },
+  "Neil Young": {
+   "genres": [
+    "rock",
+    "folk rock",
+    "country rock",
+    "folk",
+    "classic rock",
+    "hard rock",
+    "contemporary folk",
+    "country"
+   ],
+   "matchedName": "Neil Young",
+   "mbid": "75167b8b-44e4-407b-9d35-effe87b223cf",
+   "review": false,
+   "score": 100
+  },
+  "Nelly": {
+   "genres": [
+    "hip hop",
+    "pop rap",
+    "southern hip hop",
+    "contemporary r&b",
+    "hip hop soul",
+    "pop",
+    "pop soul",
+    "r&b",
+    "southern soul",
+    "trap soul",
+    "underground hip hop"
+   ],
+   "matchedName": "Nelly",
+   "mbid": "811900b2-68fc-4d41-8bad-69b7a1f4d628",
+   "review": false,
+   "score": 100
+  },
+  "Nelly Furtado": {
+   "genres": [
+    "pop",
+    "folk",
+    "alternative rock",
+    "eurodance",
+    "indie rock",
+    "singer-songwriter",
+    "soft rock"
+   ],
+   "matchedName": "Nelly Furtado",
+   "mbid": "13655113-cd16-4b43-9dca-cadbbf26ee05",
+   "review": false,
+   "score": 100
+  },
+  "Nena": {
+   "genres": [
+    "pop",
+    "neue deutsche welle",
+    "new wave",
+    "pop rock",
+    "synth-pop"
+   ],
+   "matchedName": "Nena",
+   "mbid": "38bfaa7f-ee98-48cb-acd0-946d7aeecd76",
+   "review": false,
+   "score": 100
+  },
+  "Nena Daconte": {
+   "genres": [],
+   "matchedName": "Nena Daconte",
+   "mbid": "a03bdd54-fe66-4785-a027-05fbf544e2cd",
+   "review": false,
+   "score": 100
+  },
+  "New Order": {
+   "genres": [
+    "new wave",
+    "post-punk",
+    "electronic",
+    "alternative dance",
+    "synth-pop",
+    "alternative rock",
+    "dance",
+    "dance-rock",
+    "house",
+    "pop",
+    "rock"
+   ],
+   "matchedName": "New Order",
+   "mbid": "f1106b17-dcbb-45f6-b938-199ccfab50cc",
+   "review": false,
+   "score": 100
+  },
+  "Nickelback": {
+   "genres": [
+    "hard rock",
+    "post-grunge",
+    "rock",
+    "pop rock",
+    "alternative rock",
+    "death metal",
+    "electropop",
+    "funk rock"
+   ],
+   "matchedName": "Nickelback",
+   "mbid": "bc710bcf-8815-42cf-bad2-3f1d12246aeb",
+   "review": false,
+   "score": 100
+  },
+  "Nicki Minaj": {
+   "genres": [
+    "hip hop",
+    "pop",
+    "electronic",
+    "pop rap",
+    "r&b",
+    "contemporary r&b",
+    "east coast hip hop",
+    "hardcore hip hop"
+   ],
+   "matchedName": "Nicki Minaj",
+   "mbid": "1036b808-f58c-4a3e-b461-a2c4492ecf1b",
+   "review": false,
+   "score": 100
+  },
+  "Nicki Nicole": {
+   "genres": [
+    "alternative r&b",
+    "latin pop",
+    "pop rap",
+    "trap latino"
+   ],
+   "matchedName": "Nicki Nicole",
+   "mbid": "c1a07a33-72c3-4f2d-801a-37c57923daf5",
+   "review": false,
+   "score": 100
+  },
+  "Nicky Jam": {
+   "genres": [
+    "reggaeton",
+    "latin"
+   ],
+   "matchedName": "Nicky Jam",
+   "mbid": "c458e9dc-e0d5-45ea-9e83-f9d0395f030d",
+   "review": false,
+   "score": 100
+  },
+  "Nil Moliner": {
+   "genres": [],
+   "matchedName": "Nil Moliner",
+   "mbid": "80a8dd38-31a7-4d04-84f2-e605a512f7c2",
+   "review": false,
+   "score": 100
+  },
+  "Nina Simone": {
+   "genres": [
+    "jazz",
+    "soul",
+    "blues",
+    "r&b",
+    "vocal jazz",
+    "soul jazz",
+    "classical",
+    "folk",
+    "pop soul"
+   ],
+   "matchedName": "Nina Simone",
+   "mbid": "2944824d-4c26-476f-a981-be849081942f",
+   "review": false,
+   "score": 100
+  },
+  "Nine Inch Nails": {
+   "genres": [
+    "industrial rock",
+    "industrial",
+    "alternative rock",
+    "electronic",
+    "industrial metal",
+    "electro-industrial",
+    "rock",
+    "post-industrial",
+    "dance",
+    "dark ambient",
+    "electronic rock",
+    "hip hop",
+    "nu metal",
+    "pop",
+    "techno"
+   ],
+   "matchedName": "Nine Inch Nails",
+   "mbid": "b7ffd2af-418f-4be2-bdd1-22f8b48613da",
+   "review": false,
+   "score": 100
+  },
+  "Nino Bravo": {
+   "genres": [],
+   "matchedName": "Nino Bravo",
+   "mbid": "2b5e746c-f565-4a29-9fae-ed1d914e9070",
+   "review": false,
+   "score": 100
+  },
+  "Nirvana": {
+   "genres": [
+    "grunge",
+    "alternative rock",
+    "rock",
+    "noise rock",
+    "acoustic rock",
+    "sludge metal",
+    "alternative metal",
+    "pigfuck",
+    "post-hardcore",
+    "punk",
+    "punk rock"
+   ],
+   "matchedName": "Nirvana",
+   "mbid": "5b11f4ce-a62d-471e-81fc-a69a8278c7da",
+   "review": false,
+   "score": 100
+  },
+  "Niña Pastori": {
+   "genres": [],
+   "matchedName": "Niña Pastori",
+   "mbid": "3d6470bc-3929-4997-8ef0-56859fd0ab8a",
+   "review": false,
+   "score": 100
+  },
+  "No Doubt": {
+   "genres": [
+    "ska punk",
+    "pop rock",
+    "alternative rock",
+    "third wave ska",
+    "pop",
+    "rock",
+    "ska",
+    "power pop"
+   ],
+   "matchedName": "No Doubt",
+   "mbid": "fbd2a255-1d57-4d31-ac11-65b671c19958",
+   "review": false,
+   "score": 100
+  },
+  "Noah Kahan": {
+   "genres": [
+    "folk pop",
+    "pop",
+    "folk"
+   ],
+   "matchedName": "Noah Kahan",
+   "mbid": "a2a3f910-b188-43e7-81d0-f1ac2a2f3e12",
+   "review": false,
+   "score": 100
+  },
+  "Norah Jones": {
+   "genres": [
+    "vocal jazz",
+    "jazz",
+    "singer-songwriter",
+    "jazz pop",
+    "blues",
+    "folk",
+    "indie pop",
+    "pop",
+    "christmas music",
+    "country",
+    "pop soul",
+    "traditional pop"
+   ],
+   "matchedName": "Norah Jones",
+   "mbid": "985c709c-7771-4de3-9024-7bda29ebe3f9",
+   "review": false,
+   "score": 100
+  },
+  "OBK": {
+   "genres": [],
+   "matchedName": "OBK",
+   "mbid": "ecb620f5-7d8b-40e3-a4f0-b4db4842359c",
+   "review": false,
+   "score": 100
+  },
+  "Oasis": {
+   "genres": [
+    "britpop",
+    "alternative rock",
+    "rock",
+    "neo-psychedelia",
+    "indie rock",
+    "psychedelic rock",
+    "acoustic rock",
+    "hard rock",
+    "madchester",
+    "noise pop",
+    "pop rock"
+   ],
+   "matchedName": "Oasis",
+   "mbid": "39ab1aed-75e0-4140-bd47-540276886b60",
+   "review": false,
+   "score": 100
+  },
+  "Objetivo Birmania": {
+   "genres": [],
+   "matchedName": "Objetivo Birmania",
+   "mbid": "89f2fcc1-081d-4f86-9a94-dc3471a69f28",
+   "review": false,
+   "score": 100
+  },
+  "Obús": {
+   "genres": [
+    "heavy metal"
+   ],
+   "matchedName": "Obús",
+   "mbid": "6de071b1-e801-4ef6-926a-ebb8e9eea0b8",
+   "review": false,
+   "score": 100
+  },
+  "Of Monsters and Men": {
+   "genres": [
+    "indie rock",
+    "folk",
+    "indie folk",
+    "folk pop",
+    "indie pop",
+    "pop",
+    "rock"
+   ],
+   "matchedName": "Of Monsters and Men",
+   "mbid": "9e103f85-7af7-41d7-b83b-49ba8f0c5abf",
+   "review": false,
+   "score": 100
+  },
+  "Ojos de Brujo": {
+   "genres": [
+    "flamenco"
+   ],
+   "matchedName": "Ojos de Brujo",
+   "mbid": "ab1b3f93-99ba-4a5b-868f-e412ab0a57fb",
+   "review": false,
+   "score": 100
+  },
+  "Olivia Rodrigo": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "pop punk",
+    "power pop",
+    "singer-songwriter",
+    "folk pop",
+    "musical",
+    "rock"
+   ],
+   "matchedName": "Olivia Rodrigo",
+   "mbid": "6925db17-f35e-42f3-a4eb-84ee6bf5d4b0",
+   "review": false,
+   "score": 100
+  },
+  "Olé Olé": {
+   "genres": [],
+   "matchedName": "Olé Olé",
+   "mbid": "014aa6e8-bf90-4aca-97a1-ae46b9ddede4",
+   "review": false,
+   "score": 100
+  },
+  "One Direction": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "pop rock",
+    "teen pop",
+    "folk pop",
+    "power pop"
+   ],
+   "matchedName": "One Direction",
+   "mbid": "1a425bbd-cca4-4b2c-aeb7-71cb176c828a",
+   "review": false,
+   "score": 100
+  },
+  "OneRepublic": {
+   "genres": [
+    "pop",
+    "folk pop",
+    "rock"
+   ],
+   "matchedName": "OneRepublic",
+   "mbid": "c33c2065-b1c3-4406-b066-d33a9e2ea71a",
+   "review": false,
+   "score": 100
+  },
+  "Otis Redding": {
+   "genres": [
+    "soul",
+    "deep soul",
+    "southern soul",
+    "r&b",
+    "blues",
+    "blues rock",
+    "psychedelic rock"
+   ],
+   "matchedName": "Otis Redding",
+   "mbid": "82b1f5fd-cd31-41a9-b5d4-7e33f0eb9751",
+   "review": false,
+   "score": 100
+  },
+  "OutKast": {
+   "genres": [
+    "hip hop",
+    "southern hip hop",
+    "pop rap",
+    "pop",
+    "conscious hip hop",
+    "contemporary r&b",
+    "dirty south",
+    "funk"
+   ],
+   "matchedName": "OutKast",
+   "mbid": "73fdb566-a9b1-494c-9f32-51768ec9fd27",
+   "review": false,
+   "score": 100
+  },
+  "Ozuna": {
+   "genres": [
+    "reggaeton",
+    "latin",
+    "trap latino"
+   ],
+   "matchedName": "Ozuna",
+   "mbid": "f2651b63-a44d-4d1d-ba64-d981d971ecd1",
+   "review": false,
+   "score": 100
+  },
+  "Pablo Alborán": {
+   "genres": [
+    "pop",
+    "latin",
+    "latin pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Pablo Alborán",
+   "mbid": "c62936e1-7f2a-4c99-b09b-a5bc85d6c1f3",
+   "review": false,
+   "score": 100
+  },
+  "Pablo Guerrero": {
+   "genres": [
+    "singer-songwriter"
+   ],
+   "matchedName": "Pablo Guerrero",
+   "mbid": "69c322b1-14fd-4ee1-bb9d-707e36b99afc",
+   "review": false,
+   "score": 100
+  },
+  "Paco Pil": {
+   "genres": [
+    "makina"
+   ],
+   "matchedName": "Paco Pil",
+   "mbid": "0a6eb8ac-43e2-4f51-8c2f-b978b96fa8ed",
+   "review": false,
+   "score": 100
+  },
+  "Paco de Lucía": {
+   "genres": [
+    "flamenco",
+    "flamenco jazz",
+    "jazz",
+    "latin jazz",
+    "modern classical"
+   ],
+   "matchedName": "Paco de Lucía",
+   "mbid": "7bc8dd01-35ea-4b18-a64d-3a364dc76a52",
+   "review": false,
+   "score": 100
+  },
+  "Papa Roach": {
+   "genres": [
+    "nu metal",
+    "hard rock",
+    "alternative rock",
+    "alternative metal",
+    "rap rock",
+    "pop rock",
+    "heavy metal"
+   ],
+   "matchedName": "Papa Roach",
+   "mbid": "c5eb9407-caeb-4303-b383-6929aa94021c",
+   "review": false,
+   "score": 100
+  },
+  "Parálisis Permanente": {
+   "genres": [
+    "punk"
+   ],
+   "matchedName": "Parálisis Permanente",
+   "mbid": "8b4d7237-5ec8-4201-a702-4b95819d3890",
+   "review": false,
+   "score": 100
+  },
+  "Pearl Jam": {
+   "genres": [
+    "grunge",
+    "alternative rock",
+    "rock",
+    "hard rock",
+    "classic rock",
+    "experimental rock",
+    "funk rock",
+    "indie rock",
+    "pop rock",
+    "acoustic rock",
+    "art rock",
+    "post-grunge"
+   ],
+   "matchedName": "Pearl Jam",
+   "mbid": "83b9cbe7-9857-49e2-ab8e-b57b01038103",
+   "review": false,
+   "score": 100
+  },
+  "Peggy Gou": {
+   "genres": [
+    "dance",
+    "edm",
+    "electronic",
+    "house",
+    "techno"
+   ],
+   "matchedName": "Peggy Gou",
+   "mbid": "4c41d78d-9dd5-430d-81ea-286052158293",
+   "review": false,
+   "score": 100
+  },
+  "Peret": {
+   "genres": [],
+   "matchedName": "Peret",
+   "mbid": "796481a3-2977-45b6-84b3-eb06bb10a903",
+   "review": false,
+   "score": 100
+  },
+  "Pereza": {
+   "genres": [],
+   "matchedName": "Pereza",
+   "mbid": "9ea1ba7d-1d21-4208-9b8d-4b2d1cba5a82",
+   "review": false,
+   "score": 100
+  },
+  "Peso Pluma": {
+   "genres": [
+    "corrido tumbado",
+    "regional mexicano"
+   ],
+   "matchedName": "Peso Pluma",
+   "mbid": "75e4f8ef-34c3-44fd-8467-88a7d9599f77",
+   "review": false,
+   "score": 100
+  },
+  "Pet Shop Boys": {
+   "genres": [
+    "synth-pop",
+    "pop",
+    "electronic",
+    "electropop",
+    "house",
+    "dance-pop",
+    "disco",
+    "art pop",
+    "new wave"
+   ],
+   "matchedName": "Pet Shop Boys",
+   "mbid": "be540c02-7898-4b79-9acc-c8122c7d9e83",
+   "review": false,
+   "score": 100
+  },
+  "Peter Tosh": {
+   "genres": [
+    "reggae",
+    "jamaican ska",
+    "rocksteady",
+    "roots reggae"
+   ],
+   "matchedName": "Peter Tosh",
+   "mbid": "7db6aae5-6644-4513-9bfc-ca2e79d4469c",
+   "review": false,
+   "score": 100
+  },
+  "Peter, Paul and Mary": {
+   "genres": [
+    "folk"
+   ],
+   "matchedName": "Peter, Paul and Mary",
+   "mbid": "3d621c94-2356-4532-ad52-79e0ef73e20c",
+   "review": false,
+   "score": 100
+  },
+  "Petula Clark": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "sunshine pop",
+    "vocal jazz"
+   ],
+   "matchedName": "Petula Clark",
+   "mbid": "40e69149-45a7-4dab-8128-c5a4d9654eeb",
+   "review": false,
+   "score": 100
+  },
+  "Pharrell Williams": {
+   "genres": [
+    "contemporary r&b",
+    "hip hop",
+    "pop",
+    "pop rap",
+    "pop soul",
+    "r&b",
+    "soul"
+   ],
+   "matchedName": "Pharrell Williams",
+   "mbid": "149f91ef-1287-46da-9a8e-87fee02f1471",
+   "review": false,
+   "score": 100
+  },
+  "Phil Collins": {
+   "genres": [
+    "soft rock",
+    "pop",
+    "pop rock",
+    "rock",
+    "aor",
+    "art pop",
+    "easy listening",
+    "pop soul",
+    "progressive pop",
+    "progressive rock",
+    "sophisti-pop",
+    "synth-pop"
+   ],
+   "matchedName": "Phil Collins",
+   "mbid": "401c3991-b76b-499d-8082-9f2df958ef78",
+   "review": false,
+   "score": 100
+  },
+  "Pignoise": {
+   "genres": [
+    "alternative rock",
+    "pop punk",
+    "pop rock"
+   ],
+   "matchedName": "Pignoise",
+   "mbid": "1dcee96e-7d8c-4ba1-ae62-bbb694033966",
+   "review": false,
+   "score": 100
+  },
+  "Pink": {
+   "genres": [
+    "progressive rock",
+    "psychedelic rock",
+    "rock",
+    "art rock",
+    "space rock",
+    "progressive",
+    "rock opera",
+    "classic rock",
+    "psychedelic",
+    "blues rock",
+    "acid rock",
+    "experimental rock",
+    "psychedelic pop",
+    "symphonic rock"
+   ],
+   "matchedName": "Pink Floyd",
+   "mbid": "83d91898-7763-47d7-b03b-b92132375c47",
+   "review": true,
+   "score": 100
+  },
+  "Pink Floyd": {
+   "genres": [
+    "progressive rock",
+    "psychedelic rock",
+    "rock",
+    "art rock",
+    "space rock",
+    "progressive",
+    "rock opera",
+    "classic rock",
+    "psychedelic",
+    "blues rock",
+    "acid rock",
+    "experimental rock",
+    "psychedelic pop",
+    "symphonic rock"
+   ],
+   "matchedName": "Pink Floyd",
+   "mbid": "83d91898-7763-47d7-b03b-b92132375c47",
+   "review": false,
+   "score": 100
+  },
+  "Platero y Tú": {
+   "genres": [],
+   "matchedName": "Platero y Tú",
+   "mbid": "2b4b6e6b-3e93-4902-8047-fbe76225f794",
+   "review": false,
+   "score": 100
+  },
+  "Post Malone": {
+   "genres": [
+    "hip hop",
+    "pop rap",
+    "trap",
+    "alternative r&b",
+    "cloud rap",
+    "contemporary r&b",
+    "country",
+    "r&b"
+   ],
+   "matchedName": "Post Malone",
+   "mbid": "b1e26560-60e5-4236-bbdb-9aa5a8d5ee19",
+   "review": false,
+   "score": 100
+  },
+  "Presuntos Implicados": {
+   "genres": [
+    "blues",
+    "folk",
+    "funk",
+    "jazz",
+    "pop"
+   ],
+   "matchedName": "Presuntos Implicados",
+   "mbid": "aaf63fb7-b4c2-43b9-9ab0-4ab8f73ba546",
+   "review": false,
+   "score": 100
+  },
+  "Prince": {
+   "genres": [
+    "funk",
+    "pop",
+    "contemporary r&b",
+    "rock",
+    "funk rock",
+    "neo-psychedelia",
+    "r&b",
+    "soul",
+    "synth funk",
+    "dance-pop",
+    "minneapolis sound",
+    "pop rock",
+    "psychedelic soul",
+    "afro house",
+    "club",
+    "dance",
+    "dance-rock",
+    "deep house",
+    "disco",
+    "future bass",
+    "house",
+    "jazz",
+    "organic house",
+    "pop soul",
+    "psychedelic pop",
+    "trap"
+   ],
+   "matchedName": "Prince",
+   "mbid": "070d193a-845c-479f-980e-bef15710653e",
+   "review": false,
+   "score": 100
+  },
+  "Prince Royce": {
+   "genres": [
+    "bachata",
+    "latin",
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "Prince Royce",
+   "mbid": "d1689304-23ac-4eae-a147-bd2e4100581a",
+   "review": false,
+   "score": 100
+  },
+  "Procol Harum": {
+   "genres": [
+    "progressive rock",
+    "crossover prog",
+    "psychedelic pop",
+    "rock",
+    "art rock"
+   ],
+   "matchedName": "Procol Harum",
+   "mbid": "44119570-4d53-46e7-a447-bd18608c28d8",
+   "review": false,
+   "score": 100
+  },
+  "Ptazeta": {
+   "genres": [],
+   "matchedName": "Ptazeta",
+   "mbid": "91b214df-43b3-4910-a76e-29c9a51d4c95",
+   "review": false,
+   "score": 100
+  },
+  "Public Enemy": {
+   "genres": [
+    "east coast hip hop",
+    "hip hop",
+    "conscious hip hop",
+    "hardcore hip hop",
+    "political hip hop"
+   ],
+   "matchedName": "Public Enemy",
+   "mbid": "bf2e15d0-4b77-469e-bfb4-f8414415baca",
+   "review": false,
+   "score": 100
+  },
+  "Pulp": {
+   "genres": [
+    "britpop",
+    "alternative rock",
+    "art rock",
+    "indie pop",
+    "glam rock",
+    "post-punk",
+    "chamber pop",
+    "rock",
+    "alternative pop",
+    "indie rock",
+    "madchester",
+    "pop"
+   ],
+   "matchedName": "Pulp",
+   "mbid": "76b2e842-5e85-4c97-ab62-d5bc315595b5",
+   "review": false,
+   "score": 100
+  },
+  "Queen": {
+   "genres": [
+    "rock",
+    "glam rock",
+    "hard rock",
+    "art rock",
+    "pop rock",
+    "classic rock",
+    "symphonic rock",
+    "progressive rock",
+    "baroque pop",
+    "disco"
+   ],
+   "matchedName": "Queen",
+   "mbid": "0383dadf-2a4e-4d10-a46a-e9e041da8eb3",
+   "review": false,
+   "score": 100
+  },
+  "Quevedo": {
+   "genres": [],
+   "matchedName": "Quevedo",
+   "mbid": "ef9bb29f-f466-4e28-8064-32558f4bb2df",
+   "review": false,
+   "score": 100
+  },
+  "R.E.M.": {
+   "genres": [
+    "alternative rock",
+    "jangle pop",
+    "pop rock",
+    "folk rock",
+    "power pop",
+    "rock",
+    "alternative country",
+    "chamber pop",
+    "glam rock",
+    "grunge",
+    "neo-psychedelia",
+    "acoustic rock",
+    "electronic rock"
+   ],
+   "matchedName": "R.E.M.",
+   "mbid": "ea4dfa26-f633-4da6-a52a-f49ea4897b58",
+   "review": false,
+   "score": 100
+  },
+  "Radio Futura": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Radio Futura",
+   "mbid": "f7616ee5-bad8-45c9-986f-0cf47d4407df",
+   "review": false,
+   "score": 100
+  },
+  "Radiohead": {
+   "genres": [
+    "alternative rock",
+    "art rock",
+    "rock",
+    "experimental rock",
+    "electronic",
+    "indie rock",
+    "art pop",
+    "electronica",
+    "experimental",
+    "post-britpop",
+    "ambient pop",
+    "britpop",
+    "chamber pop",
+    "crossover prog",
+    "electronic rock",
+    "idm",
+    "indietronica",
+    "post-grunge"
+   ],
+   "matchedName": "Radiohead",
+   "mbid": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+   "review": false,
+   "score": 100
+  },
+  "Rage Against the Machine": {
+   "genres": [
+    "alternative metal",
+    "rap metal",
+    "funk metal",
+    "rap rock",
+    "alternative rock",
+    "nu metal",
+    "heavy metal",
+    "metal"
+   ],
+   "matchedName": "Rage Against the Machine",
+   "mbid": "3798b104-01cb-484c-a3b0-56adc6399b80",
+   "review": false,
+   "score": 100
+  },
+  "Raimon": {
+   "genres": [
+    "nova cançó"
+   ],
+   "matchedName": "Raimon",
+   "mbid": "0c209518-e6bc-43d5-93c6-961d27eda85c",
+   "review": false,
+   "score": 100
+  },
+  "Ralphie Choo": {
+   "genres": [],
+   "matchedName": "Ralphie Choo",
+   "mbid": "ec80bc0a-c081-40bf-b65c-472651a40783",
+   "review": false,
+   "score": 100
+  },
+  "Ramoncín": {
+   "genres": [],
+   "matchedName": "Ramoncín",
+   "mbid": "658d4de1-b803-42c7-b365-31e5032f5f9e",
+   "review": false,
+   "score": 100
+  },
+  "Ramones": {
+   "genres": [
+    "punk rock",
+    "pop punk",
+    "punk",
+    "power pop"
+   ],
+   "matchedName": "Ramones",
+   "mbid": "d6ed7887-a401-47a8-893c-34b967444d26",
+   "review": false,
+   "score": 100
+  },
+  "Raphael": {
+   "genres": [
+    "latin ballad",
+    "canción melódica",
+    "pop"
+   ],
+   "matchedName": "Raphael",
+   "mbid": "b34cfe02-994d-40dc-854f-bf54a23dd405",
+   "review": false,
+   "score": 100
+  },
+  "Rauw Alejandro": {
+   "genres": [
+    "latin",
+    "hip hop",
+    "reggaeton",
+    "trap latino"
+   ],
+   "matchedName": "Rauw Alejandro",
+   "mbid": "197b70c7-8910-4030-ad03-632d82aa40e3",
+   "review": false,
+   "score": 100
+  },
+  "Ray Charles": {
+   "genres": [
+    "jazz",
+    "soul",
+    "blues",
+    "r&b",
+    "jazz blues"
+   ],
+   "matchedName": "Ray Charles",
+   "mbid": "2ce02909-598b-44ef-a456-151ba0a3bd70",
+   "review": false,
+   "score": 100
+  },
+  "Rayden": {
+   "genres": [],
+   "matchedName": "Rayden",
+   "mbid": "1b98a682-db60-42de-a6c0-5519cf8c3108",
+   "review": false,
+   "score": 100
+  },
+  "Red Hot Chili Peppers": {
+   "genres": [
+    "funk rock",
+    "alternative rock",
+    "rock",
+    "rap rock",
+    "pop rock",
+    "funk metal",
+    "funk"
+   ],
+   "matchedName": "Red Hot Chili Peppers",
+   "mbid": "8bfac288-ccc5-448d-9573-c33ea2aa5c30",
+   "review": false,
+   "score": 100
+  },
+  "Reincidentes": {
+   "genres": [
+    "rock"
+   ],
+   "matchedName": "Reincidentes",
+   "mbid": "47a40555-4df7-41f5-a4a5-6033b198a3e3",
+   "review": false,
+   "score": 100
+  },
+  "Rels B": {
+   "genres": [],
+   "matchedName": "Rels B",
+   "mbid": "c1a3132a-c23e-4283-8f9a-4080dc52a177",
+   "review": false,
+   "score": 100
+  },
+  "Revólver": {
+   "genres": [],
+   "matchedName": "Revólver",
+   "mbid": "ee0c3b44-5443-416b-900d-826d2139f0f7",
+   "review": false,
+   "score": 100
+  },
+  "Rick Astley": {
+   "genres": [
+    "blue-eyed soul",
+    "dance-pop",
+    "pop"
+   ],
+   "matchedName": "Rick Astley",
+   "mbid": "db92a151-1ac2-438b-bc43-b82e149ddd50",
+   "review": false,
+   "score": 100
+  },
+  "Ricky Martin": {
+   "genres": [
+    "latin pop",
+    "dance-pop",
+    "electro latino",
+    "electropop",
+    "pop",
+    "ballad",
+    "latin"
+   ],
+   "matchedName": "Ricky Martin",
+   "mbid": "70ea63ea-70dc-4b63-951a-2c249d2b3b0a",
+   "review": false,
+   "score": 100
+  },
+  "Rigoberta Bandini": {
+   "genres": [],
+   "matchedName": "Rigoberta Bandini",
+   "mbid": "671e0cc5-bb2b-430d-946f-aa0ebb38e1af",
+   "review": false,
+   "score": 100
+  },
+  "Rihanna": {
+   "genres": [
+    "pop",
+    "r&b",
+    "contemporary r&b",
+    "dance-pop",
+    "hip hop",
+    "dance",
+    "dancehall",
+    "electropop",
+    "pop soul",
+    "electro house",
+    "reggae",
+    "edm"
+   ],
+   "matchedName": "Rihanna",
+   "mbid": "73e5e69d-3554-40d8-8516-00cb38737a1c",
+   "review": false,
+   "score": 100
+  },
+  "Robbie Williams": {
+   "genres": [
+    "pop",
+    "britpop",
+    "pop rock",
+    "rock",
+    "swing",
+    "alternative rock",
+    "dance-pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Robbie Williams",
+   "mbid": "db4624cf-0e44-481e-a9dc-2142b833ec2f",
+   "review": false,
+   "score": 100
+  },
+  "Robert Miles": {
+   "genres": [
+    "electronic",
+    "dream trance",
+    "house",
+    "trance",
+    "ambient",
+    "progressive house",
+    "techno",
+    "ambient house",
+    "club",
+    "dance",
+    "disco",
+    "downtempo",
+    "edm",
+    "electronica",
+    "eurodance",
+    "melodic house",
+    "melodic techno",
+    "nu jazz",
+    "pop",
+    "psychedelic rock",
+    "psytrance",
+    "trip hop"
+   ],
+   "matchedName": "Robert Miles",
+   "mbid": "e83144dd-bb95-49fe-b1dd-00bab25cca9e",
+   "review": false,
+   "score": 100
+  },
+  "Robin Schulz": {
+   "genres": [
+    "house",
+    "dance-pop",
+    "deep house",
+    "edm",
+    "electronic",
+    "tropical house"
+   ],
+   "matchedName": "Robin Schulz",
+   "mbid": "163218c2-9e0f-4d2d-aecb-ebbdef6aab70",
+   "review": false,
+   "score": 100
+  },
+  "Rocío Dúrcal": {
+   "genres": [
+    "pop",
+    "ranchera",
+    "canción melódica",
+    "latin"
+   ],
+   "matchedName": "Rocío Dúrcal",
+   "mbid": "b8ba2ae6-a233-4b9c-bce3-ea7a7803c946",
+   "review": false,
+   "score": 100
+  },
+  "Rocío Jurado": {
+   "genres": [
+    "copla",
+    "flamenco",
+    "latin",
+    "latin ballad"
+   ],
+   "matchedName": "Rocío Jurado",
+   "mbid": "ad0a0af5-be4d-4302-84af-4e69bf91b201",
+   "review": false,
+   "score": 100
+  },
+  "Rod Stewart": {
+   "genres": [
+    "rock",
+    "blues rock",
+    "pop rock",
+    "pop",
+    "soft rock",
+    "folk rock",
+    "roots rock"
+   ],
+   "matchedName": "Rod Stewart",
+   "mbid": "a35237a0-4f47-40a6-b6f3-1e786db23402",
+   "review": false,
+   "score": 100
+  },
+  "Romeo Santos": {
+   "genres": [
+    "bachata",
+    "latin"
+   ],
+   "matchedName": "Romeo Santos",
+   "mbid": "35f343df-3b87-4475-b0e4-d2ba5cc26eea",
+   "review": false,
+   "score": 100
+  },
+  "Rosa López": {
+   "genres": [],
+   "matchedName": "Rosa López",
+   "mbid": "6d8d0515-4316-4b29-93d1-3b700cfa306d",
+   "review": false,
+   "score": 100
+  },
+  "Rosalía": {
+   "genres": [
+    "flamenco",
+    "reggaeton",
+    "flamenco pop",
+    "latin",
+    "latin pop",
+    "hip hop",
+    "pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "ROSALÍA",
+   "mbid": "25f3abd9-63b5-471a-bd25-feb9672dfa11",
+   "review": false,
+   "score": 100
+  },
+  "Rosana": {
+   "genres": [
+    "latin pop",
+    "pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Rosana",
+   "mbid": "f75752c9-73a3-4f3e-8477-a42cd9629ec5",
+   "review": false,
+   "score": 100
+  },
+  "Rosendo": {
+   "genres": [
+    "hard rock",
+    "blues rock",
+    "rock",
+    "rock and roll",
+    "rock urbano"
+   ],
+   "matchedName": "Rosendo",
+   "mbid": "4c7e8420-1ed6-4878-8b86-70bdd3ee5803",
+   "review": false,
+   "score": 100
+  },
+  "Roxette": {
+   "genres": [
+    "pop",
+    "rock",
+    "pop rock",
+    "europop",
+    "dance-pop",
+    "power pop",
+    "soft rock"
+   ],
+   "matchedName": "Roxette",
+   "mbid": "d3b2711f-2baa-441a-be95-14945ca7e6ea",
+   "review": false,
+   "score": 100
+  },
+  "Roy Orbison": {
+   "genres": [
+    "rockabilly",
+    "pop",
+    "pop rock",
+    "rock and roll",
+    "rock",
+    "blue-eyed soul",
+    "classic rock",
+    "country",
+    "country pop",
+    "folk rock",
+    "singer-songwriter",
+    "traditional pop"
+   ],
+   "matchedName": "Roy Orbison",
+   "mbid": "0bbbc496-c7b5-4b3f-bb6d-bd312827d6e5",
+   "review": false,
+   "score": 100
+  },
+  "Rozalén": {
+   "genres": [
+    "folk pop",
+    "singer-songwriter"
+   ],
+   "matchedName": "Rozalén",
+   "mbid": "0432dc38-a03b-4325-9609-1caada06f47a",
+   "review": false,
+   "score": 100
+  },
+  "Rulo y la Contrabanda": {
+   "genres": [],
+   "matchedName": "Rulo y la Contrabanda",
+   "mbid": "e2f62e96-ba18-46ab-b549-af1034ee9dd1",
+   "review": false,
+   "score": 100
+  },
+  "Run-D.M.C.": {
+   "genres": [
+    "east coast hip hop",
+    "hip hop",
+    "rap rock",
+    "hardcore hip hop",
+    "new jack swing",
+    "old school hip hop"
+   ],
+   "matchedName": "Run‐D.M.C.",
+   "mbid": "5ecc3f72-20a6-47a0-8dc5-fb0b3dadeea0",
+   "review": true,
+   "score": 100
+  },
+  "SZA": {
+   "genres": [
+    "contemporary r&b",
+    "electronic",
+    "r&b",
+    "alternative r&b",
+    "hip hop soul",
+    "neo soul",
+    "pop",
+    "soul"
+   ],
+   "matchedName": "SZA",
+   "mbid": "272989c8-5535-492d-a25c-9f58803e027f",
+   "review": false,
+   "score": 100
+  },
+  "Sabrina Carpenter": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "electropop"
+   ],
+   "matchedName": "Sabrina Carpenter",
+   "mbid": "1882fe91-cdd9-49c9-9956-8e06a3810bd4",
+   "review": false,
+   "score": 100
+  },
+  "Sade": {
+   "genres": [
+    "smooth jazz",
+    "contemporary r&b",
+    "jazz pop",
+    "soul",
+    "smooth soul",
+    "sophisti-pop",
+    "jazz",
+    "trip hop",
+    "downtempo",
+    "pop",
+    "quiet storm"
+   ],
+   "matchedName": "Sade",
+   "mbid": "67930b3e-e00b-469f-8c74-fd69f20522ec",
+   "review": false,
+   "score": 100
+  },
+  "Saiko": {
+   "genres": [],
+   "matchedName": "Saiko",
+   "mbid": "00a8bf3d-acbc-4e17-8e07-ab5d3ae550e8",
+   "review": false,
+   "score": 100
+  },
+  "Salomé": {
+   "genres": [],
+   "matchedName": "Salomé de Bahia",
+   "mbid": "449c7223-7ab1-4b33-aba5-6da9dac3497c",
+   "review": true,
+   "score": 100
+  },
+  "Sam Cooke": {
+   "genres": [
+    "soul",
+    "gospel",
+    "pop soul",
+    "r&b",
+    "southern soul",
+    "traditional pop",
+    "vocal jazz"
+   ],
+   "matchedName": "Sam Cooke",
+   "mbid": "6c8fd0be-d961-454c-aee0-4366a6dbc993",
+   "review": false,
+   "score": 100
+  },
+  "Sam Fender": {
+   "genres": [
+    "alternative rock",
+    "indie rock",
+    "heartland rock",
+    "rock"
+   ],
+   "matchedName": "Sam Fender",
+   "mbid": "3478a5d1-bd96-4584-aa54-4d6e0a329658",
+   "review": false,
+   "score": 100
+  },
+  "Sam Smith": {
+   "genres": [
+    "pop",
+    "soul",
+    "pop soul",
+    "blue-eyed soul",
+    "alternative r&b",
+    "contemporary r&b",
+    "r&b",
+    "synth funk"
+   ],
+   "matchedName": "Sam Smith",
+   "mbid": "5a85c140-dcf9-4dd2-b2c8-aff0471549f3",
+   "review": false,
+   "score": 100
+  },
+  "Sandie Shaw": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Sandie Shaw",
+   "mbid": "16963107-9288-43a2-946c-81de2f5eddfa",
+   "review": false,
+   "score": 100
+  },
+  "Sandra": {
+   "genres": [
+    "pop",
+    "euro-disco",
+    "eurodance",
+    "europop",
+    "synth-pop"
+   ],
+   "matchedName": "Sandra",
+   "mbid": "9809d784-037f-46e7-8d2d-7ecad897f355",
+   "review": false,
+   "score": 100
+  },
+  "Sangre Azul": {
+   "genres": [],
+   "matchedName": "Sangre Azul",
+   "mbid": "9e3c80a5-5c9a-48b5-ad35-d69ca9eaa066",
+   "review": false,
+   "score": 100
+  },
+  "Savage Garden": {
+   "genres": [
+    "pop",
+    "alternative rock",
+    "dance-pop",
+    "pop rock",
+    "rock"
+   ],
+   "matchedName": "Savage Garden",
+   "mbid": "a871fd87-50f7-4032-b06d-da56779edcce",
+   "review": false,
+   "score": 100
+  },
+  "Seal": {
+   "genres": [
+    "soul",
+    "pop",
+    "pop soul",
+    "baroque pop",
+    "dance-pop",
+    "downtempo",
+    "pop rock",
+    "r&b"
+   ],
+   "matchedName": "Seal",
+   "mbid": "f053ae01-dae6-4aae-9883-e8c279fdbef4",
+   "review": false,
+   "score": 100
+  },
+  "Sean Paul": {
+   "genres": [
+    "dancehall",
+    "pop",
+    "dance-pop",
+    "electropop",
+    "ragga",
+    "reggae",
+    "hip hop"
+   ],
+   "matchedName": "Sean Paul",
+   "mbid": "c3da3346-2643-48a7-93cd-011f6834b3d7",
+   "review": false,
+   "score": 100
+  },
+  "Sebastián Yatra": {
+   "genres": [
+    "latin pop",
+    "latin",
+    "reggaeton",
+    "edm",
+    "latin ballad",
+    "pop",
+    "r&b",
+    "teen pop"
+   ],
+   "matchedName": "Sebastián Yatra",
+   "mbid": "151d9c35-43b8-49b9-a69a-5db6525dbcd2",
+   "review": false,
+   "score": 100
+  },
+  "Sech": {
+   "genres": [
+    "reggaeton",
+    "latin"
+   ],
+   "matchedName": "Sech",
+   "mbid": "709f5e96-51cd-49b4-a8e4-0ca0bf808de3",
+   "review": false,
+   "score": 100
+  },
+  "Second": {
+   "genres": [
+    "ebm",
+    "minimal synth",
+    "new beat"
+   ],
+   "matchedName": "A Split‐Second",
+   "mbid": "bf270b87-6da7-485b-8c5b-0d02c9c47f41",
+   "review": true,
+   "score": 100
+  },
+  "Seguridad Social": {
+   "genres": [
+    "latin pop",
+    "latin rock"
+   ],
+   "matchedName": "Seguridad Social",
+   "mbid": "facc27a0-b02b-4f20-b2c5-1e7f8e732952",
+   "review": false,
+   "score": 100
+  },
+  "Selena Gomez": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "electropop",
+    "teen pop",
+    "alternative r&b",
+    "contemporary r&b",
+    "electro house",
+    "rock",
+    "alternative pop",
+    "art pop",
+    "brostep",
+    "electro-disco",
+    "club",
+    "dance",
+    "hip hop",
+    "latin",
+    "latin pop",
+    "pop rock"
+   ],
+   "matchedName": "Selena Gomez",
+   "mbid": "e4bc69e2-a064-4f93-ada1-f7f209cc1cc3",
+   "review": false,
+   "score": 100
+  },
+  "Semen Up": {
+   "genres": [],
+   "matchedName": "Semen Up",
+   "mbid": "1fb771c3-f038-4fbd-a6a2-bd4c5aa9d912",
+   "review": false,
+   "score": 100
+  },
+  "Sen Senra": {
+   "genres": [],
+   "matchedName": "Sen Senra",
+   "mbid": "14e3ab81-da70-4cb7-b73e-c50aeee3fa46",
+   "review": false,
+   "score": 100
+  },
+  "Sergio Dalma": {
+   "genres": [
+    "latin ballad",
+    "pop"
+   ],
+   "matchedName": "Sergio Dalma",
+   "mbid": "7f8759ee-4ddc-4a6b-9d17-0771e1022db7",
+   "review": false,
+   "score": 100
+  },
+  "Sergio y Estíbaliz": {
+   "genres": [
+    "folk pop",
+    "latin ballad"
+   ],
+   "matchedName": "Sergio y Estíbaliz",
+   "mbid": "1235bf45-400b-47de-93d0-da25d6c02c14",
+   "review": false,
+   "score": 100
+  },
+  "Sex Pistols": {
+   "genres": [
+    "punk rock",
+    "punk"
+   ],
+   "matchedName": "Sex Pistols",
+   "mbid": "e5db18cb-4b1f-496d-a308-548b611090d3",
+   "review": false,
+   "score": 100
+  },
+  "Shaggy": {
+   "genres": [
+    "dancehall",
+    "reggae",
+    "ragga",
+    "reggae-pop",
+    "dance-pop",
+    "r&b"
+   ],
+   "matchedName": "Shaggy",
+   "mbid": "fc63d806-ca89-4ea3-a404-ee6de695743f",
+   "review": false,
+   "score": 100
+  },
+  "Shakira": {
+   "genres": [
+    "pop",
+    "latin pop",
+    "pop rock",
+    "dance-pop",
+    "latin"
+   ],
+   "matchedName": "Shakira",
+   "mbid": "bf24ca37-25f4-4e34-9aec-460b94364cfc",
+   "review": false,
+   "score": 100
+  },
+  "Shawn Mendes": {
+   "genres": [
+    "pop",
+    "folk pop",
+    "pop rock",
+    "pop soul",
+    "teen pop",
+    "piano rock"
+   ],
+   "matchedName": "Shawn Mendes",
+   "mbid": "b7d92248-97e3-4450-8057-6fe06738f735",
+   "review": false,
+   "score": 100
+  },
+  "Shinova": {
+   "genres": [],
+   "matchedName": "Shinova",
+   "mbid": "2468709c-679b-401b-a88d-412fcbcc3ec1",
+   "review": false,
+   "score": 100
+  },
+  "Sia": {
+   "genres": [
+    "pop",
+    "electropop",
+    "dance-pop",
+    "indie pop",
+    "alternative pop",
+    "art pop"
+   ],
+   "matchedName": "Sia",
+   "mbid": "2f548675-008d-4332-876c-108b0c7ab9c5",
+   "review": false,
+   "score": 100
+  },
+  "Sidecars": {
+   "genres": [],
+   "matchedName": "Sidecars",
+   "mbid": "baf94a28-565f-4807-a051-da2a3a44ab5e",
+   "review": false,
+   "score": 100
+  },
+  "Sidonie": {
+   "genres": [],
+   "matchedName": "Sidonie",
+   "mbid": "99849c03-4d4a-46cc-8e20-3852d0ca0746",
+   "review": false,
+   "score": 100
+  },
+  "Siloé": {
+   "genres": [],
+   "matchedName": "Siloé",
+   "mbid": "88f0bc3b-48aa-4723-bbc7-dbcdd16b36eb",
+   "review": false,
+   "score": 100
+  },
+  "Simon & Garfunkel": {
+   "genres": [
+    "folk rock",
+    "folk",
+    "folk pop",
+    "rock",
+    "singer-songwriter",
+    "contemporary folk",
+    "pop"
+   ],
+   "matchedName": "Simon & Garfunkel",
+   "mbid": "5d02f264-e225-41ff-83f7-d9b1f0b1874a",
+   "review": false,
+   "score": 100
+  },
+  "Simple Minds": {
+   "genres": [
+    "new wave",
+    "rock",
+    "electronic",
+    "post-punk",
+    "art rock",
+    "pop rock",
+    "glam rock",
+    "pop",
+    "soft rock",
+    "synth-pop"
+   ],
+   "matchedName": "Simple Minds",
+   "mbid": "f41490ce-fe39-435d-86c0-ab5ce098b423",
+   "review": false,
+   "score": 100
+  },
+  "Simply Red": {
+   "genres": [
+    "blue-eyed soul",
+    "pop",
+    "soul",
+    "dance-pop",
+    "sophisti-pop",
+    "pop soul",
+    "r&b",
+    "soft rock"
+   ],
+   "matchedName": "Simply Red",
+   "mbid": "a9100753-f539-43cf-bcc9-579566fb512e",
+   "review": false,
+   "score": 100
+  },
+  "Siniestro Total": {
+   "genres": [
+    "punk",
+    "rock"
+   ],
+   "matchedName": "Siniestro Total",
+   "mbid": "d320be5e-ba25-4113-8b22-5c64ab87fcd2",
+   "review": false,
+   "score": 100
+  },
+  "Sinéad O'Connor": {
+   "genres": [
+    "alternative rock",
+    "pop",
+    "celtic",
+    "folk",
+    "folk rock",
+    "pop rock",
+    "rock",
+    "singer-songwriter"
+   ],
+   "matchedName": "Sinéad O’Connor",
+   "mbid": "c78a77fa-507c-4c07-947a-0355029453bd",
+   "review": true,
+   "score": 100
+  },
+  "Sister Sledge": {
+   "genres": [
+    "disco",
+    "dance-pop",
+    "pop soul",
+    "funk",
+    "soul",
+    "boogie"
+   ],
+   "matchedName": "Sister Sledge",
+   "mbid": "1ed00158-c6a3-45cd-819c-2f91997fc480",
+   "review": false,
+   "score": 100
+  },
+  "Ska-P": {
+   "genres": [
+    "ska",
+    "ska punk"
+   ],
+   "matchedName": "Ska-P",
+   "mbid": "2de794c8-8826-48d0-90e0-6900183ba9e0",
+   "review": false,
+   "score": 100
+  },
+  "Slipknot": {
+   "genres": [
+    "nu metal",
+    "alternative metal",
+    "metal",
+    "alternative rock",
+    "heavy metal"
+   ],
+   "matchedName": "Slipknot",
+   "mbid": "a466c2a2-6517-42fb-a160-1087c3bafd9f",
+   "review": false,
+   "score": 100
+  },
+  "Small Faces": {
+   "genres": [
+    "psychedelic rock",
+    "mod",
+    "psychedelic pop",
+    "british rhythm & blues",
+    "pop rock",
+    "rock",
+    "blues rock"
+   ],
+   "matchedName": "Small Faces",
+   "mbid": "7771a68c-ef6a-400f-978d-64050d45a54c",
+   "review": false,
+   "score": 100
+  },
+  "Snap!": {
+   "genres": [
+    "eurodance",
+    "hip house",
+    "dance-pop",
+    "electronic",
+    "euro house",
+    "house"
+   ],
+   "matchedName": "Snap!",
+   "mbid": "cd23732d-ffd2-444e-8884-53475d7ac7d9",
+   "review": false,
+   "score": 100
+  },
+  "Snoop Dogg": {
+   "genres": [
+    "hip hop",
+    "gangsta rap",
+    "g-funk",
+    "west coast hip hop",
+    "christian hip hop"
+   ],
+   "matchedName": "Snoop Dogg",
+   "mbid": "f90e8b26-9e52-4669-a5c9-e28529c47894",
+   "review": false,
+   "score": 100
+  },
+  "Snow Patrol": {
+   "genres": [
+    "alternative rock",
+    "indie rock",
+    "pop rock",
+    "noise pop",
+    "post-britpop",
+    "power pop",
+    "rock"
+   ],
+   "matchedName": "Snow Patrol",
+   "mbid": "a66999a7-ae5c-460e-ba94-1a01143ae847",
+   "review": false,
+   "score": 100
+  },
+  "Soft Cell": {
+   "genres": [
+    "synth-pop",
+    "electronic",
+    "minimal synth",
+    "new wave",
+    "pop"
+   ],
+   "matchedName": "Soft Cell",
+   "mbid": "7fb50287-029d-47cc-825a-235ca28024b2",
+   "review": false,
+   "score": 100
+  },
+  "Soundgarden": {
+   "genres": [
+    "grunge",
+    "alternative rock",
+    "alternative metal",
+    "hard rock",
+    "psychedelic rock",
+    "sludge metal"
+   ],
+   "matchedName": "Soundgarden",
+   "mbid": "153c9281-268f-4cf3-8938-f5a4593e5df4",
+   "review": false,
+   "score": 100
+  },
+  "Spice Girls": {
+   "genres": [
+    "dance-pop",
+    "pop",
+    "teen pop",
+    "contemporary r&b"
+   ],
+   "matchedName": "Spice Girls",
+   "mbid": "bf0caafc-2b20-4e07-ab85-87e14ff430ce",
+   "review": false,
+   "score": 100
+  },
+  "Stevie Wonder": {
+   "genres": [
+    "soul",
+    "contemporary r&b",
+    "funk",
+    "pop",
+    "pop soul"
+   ],
+   "matchedName": "Stevie Wonder",
+   "mbid": "1ee18fb3-18a6-4c7f-8ba0-bc41cdd0462e",
+   "review": false,
+   "score": 100
+  },
+  "Stone Temple Pilots": {
+   "genres": [
+    "grunge",
+    "alternative rock",
+    "hard rock",
+    "alternative metal",
+    "neo-psychedelia",
+    "acoustic rock",
+    "post-grunge",
+    "power pop",
+    "rock"
+   ],
+   "matchedName": "Stone Temple Pilots",
+   "mbid": "8c32bb01-58a3-453b-8050-8c0620edb0e5",
+   "review": false,
+   "score": 100
+  },
+  "Suede": {
+   "genres": [
+    "alternative rock",
+    "britpop",
+    "glam rock",
+    "art rock",
+    "rock"
+   ],
+   "matchedName": "Suede",
+   "mbid": "a55c2f1b-3f3f-4d6a-aa30-5e186dbadce6",
+   "review": false,
+   "score": 100
+  },
+  "Supersubmarina": {
+   "genres": [],
+   "matchedName": "Supersubmarina",
+   "mbid": "d1f8ab94-3e6b-487e-865d-bbbdf30312e7",
+   "review": false,
+   "score": 100
+  },
+  "Supertramp": {
+   "genres": [
+    "progressive rock",
+    "rock",
+    "art rock",
+    "pop rock",
+    "art pop",
+    "classic rock",
+    "crossover prog",
+    "progressive pop",
+    "soft rock"
+   ],
+   "matchedName": "Supertramp",
+   "mbid": "d2ff6b6b-fc30-48dc-8952-06f9d8fc64f8",
+   "review": false,
+   "score": 100
+  },
+  "Survivor": {
+   "genres": [
+    "hard rock",
+    "rock",
+    "aor",
+    "pop rock"
+   ],
+   "matchedName": "Survivor",
+   "mbid": "55ef024a-6cc0-49ed-8ce2-2e12193c0f46",
+   "review": false,
+   "score": 100
+  },
+  "Swedish House Mafia": {
+   "genres": [
+    "house",
+    "electro house",
+    "electronic",
+    "progressive house",
+    "dance",
+    "dance-pop",
+    "edm",
+    "electropop",
+    "festival progressive house"
+   ],
+   "matchedName": "Swedish House Mafia",
+   "mbid": "99075985-0d80-4692-a15e-b16f78831792",
+   "review": false,
+   "score": 100
+  },
+  "System of a Down": {
+   "genres": [
+    "alternative metal",
+    "alternative rock",
+    "nu metal",
+    "heavy metal",
+    "hard rock"
+   ],
+   "matchedName": "System of a Down",
+   "mbid": "cc0b7089-c08d-4c10-b6b0-873582c17fd6",
+   "review": false,
+   "score": 100
+  },
+  "Sôber": {
+   "genres": [
+    "metal"
+   ],
+   "matchedName": "Sôber",
+   "mbid": "f55d136a-1602-4a54-8efb-5cf44cea0ab1",
+   "review": false,
+   "score": 100
+  },
+  "T. Rex": {
+   "genres": [
+    "glam rock",
+    "rock",
+    "folk rock",
+    "psychedelic pop",
+    "pop rock",
+    "psychedelic folk",
+    "psychedelic rock"
+   ],
+   "matchedName": "T. Rex",
+   "mbid": "c842d29f-a297-48cd-bb71-4f77fd672b16",
+   "review": false,
+   "score": 100
+  },
+  "TLC": {
+   "genres": [
+    "contemporary r&b",
+    "pop",
+    "pop rap",
+    "crunk",
+    "new jack swing",
+    "r&b"
+   ],
+   "matchedName": "TLC",
+   "mbid": "99790314-885a-4975-8614-9c5bc890364d",
+   "review": false,
+   "score": 100
+  },
+  "Taburete": {
+   "genres": [],
+   "matchedName": "Taburete",
+   "mbid": "2a4a7d97-dda9-4675-b787-4b1570734096",
+   "review": false,
+   "score": 100
+  },
+  "Take That": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "teen pop",
+    "electropop",
+    "europop",
+    "soft rock"
+   ],
+   "matchedName": "Take That",
+   "mbid": "24d2505b-388c-46cc-8a64-48223ea6d78d",
+   "review": false,
+   "score": 100
+  },
+  "Talking Heads": {
+   "genres": [
+    "new wave",
+    "post-punk",
+    "art punk",
+    "art pop",
+    "funk rock",
+    "pop rock",
+    "rock",
+    "art rock"
+   ],
+   "matchedName": "Talking Heads",
+   "mbid": "a94a7155-c79d-4409-9fcf-220cb0e4dc3a",
+   "review": false,
+   "score": 100
+  },
+  "Tam Tam Go!": {
+   "genres": [
+    "pop"
+   ],
+   "matchedName": "Tam Tam Go!",
+   "mbid": "98024747-6524-4cbe-8802-5dd4f86d68fa",
+   "review": false,
+   "score": 100
+  },
+  "Tate McRae": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "contemporary r&b",
+    "pop rock"
+   ],
+   "matchedName": "Tate McRae",
+   "mbid": "f9133869-f87c-459c-9aa7-2f176cda7e06",
+   "review": false,
+   "score": 100
+  },
+  "Taylor Swift": {
+   "genres": [
+    "pop",
+    "country",
+    "country pop",
+    "singer-songwriter",
+    "pop rock",
+    "contemporary country",
+    "synth-pop",
+    "indie folk",
+    "alternative pop",
+    "electropop",
+    "chamber pop",
+    "folk pop",
+    "indie pop",
+    "teen pop",
+    "americana",
+    "dance-pop"
+   ],
+   "matchedName": "Taylor Swift",
+   "mbid": "20244d07-534f-4eff-b4d4-930878889970",
+   "review": false,
+   "score": 100
+  },
+  "Tears for Fears": {
+   "genres": [
+    "new wave",
+    "art pop",
+    "pop rock",
+    "synth-pop",
+    "psychedelic pop",
+    "sophisti-pop",
+    "pop"
+   ],
+   "matchedName": "Tears for Fears",
+   "mbid": "7c7f9c94-dee8-4903-892b-6cf44652e2de",
+   "review": false,
+   "score": 100
+  },
+  "Teddy Swims": {
+   "genres": [
+    "soul",
+    "pop",
+    "pop soul",
+    "alternative rock",
+    "rock",
+    "country"
+   ],
+   "matchedName": "Teddy Swims",
+   "mbid": "35feae82-8b2c-4f8f-ae7a-af5662848947",
+   "review": false,
+   "score": 100
+  },
+  "Tego Calderón": {
+   "genres": [
+    "reggaeton",
+    "latin"
+   ],
+   "matchedName": "Tego Calderón",
+   "mbid": "6efb297a-d135-4b1b-8c6f-097c9670e647",
+   "review": false,
+   "score": 100
+  },
+  "Tequila": {
+   "genres": [
+    "rock",
+    "latin",
+    "latin rock"
+   ],
+   "matchedName": "Tequila",
+   "mbid": "77e232fa-288b-43c6-8c2f-6af543b275f5",
+   "review": false,
+   "score": 100
+  },
+  "The Animals": {
+   "genres": [
+    "blues rock",
+    "psychedelic rock",
+    "british blues",
+    "british rhythm & blues",
+    "mod",
+    "rock"
+   ],
+   "matchedName": "The Animals",
+   "mbid": "4d8afa16-4018-4ca8-8b5e-ede8f9314562",
+   "review": false,
+   "score": 100
+  },
+  "The Bangles": {
+   "genres": [
+    "pop",
+    "jangle pop",
+    "paisley underground",
+    "pop rock",
+    "power pop",
+    "new wave",
+    "punk"
+   ],
+   "matchedName": "The Bangles",
+   "mbid": "f31ec2ac-9071-4306-acd1-d2c8321033b5",
+   "review": false,
+   "score": 100
+  },
+  "The Beach Boys": {
+   "genres": [
+    "surf rock",
+    "pop",
+    "sunshine pop",
+    "pop rock",
+    "psychedelic pop",
+    "baroque pop",
+    "progressive pop",
+    "vocal surf",
+    "classic rock",
+    "rock"
+   ],
+   "matchedName": "The Beach Boys",
+   "mbid": "ebfc1398-8d96-47e3-82c3-f782abcdb13d",
+   "review": false,
+   "score": 100
+  },
+  "The Beatles": {
+   "genres": [
+    "rock",
+    "pop",
+    "pop rock",
+    "psychedelic pop",
+    "merseybeat",
+    "psychedelic rock",
+    "classic rock",
+    "rock and roll",
+    "britpop",
+    "mainstream rock"
+   ],
+   "matchedName": "The Beatles",
+   "mbid": "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+   "review": false,
+   "score": 100
+  },
+  "The Byrds": {
+   "genres": [
+    "folk rock",
+    "country rock",
+    "psychedelic rock",
+    "rock",
+    "jangle pop",
+    "pop",
+    "pop rock",
+    "psychedelic pop",
+    "raga rock",
+    "classic rock",
+    "country",
+    "folk",
+    "psychedelic",
+    "soft rock"
+   ],
+   "matchedName": "The Byrds",
+   "mbid": "2819834e-4e08-47b0-a2c4-b7672318e8f0",
+   "review": false,
+   "score": 100
+  },
+  "The Chainsmokers": {
+   "genres": [
+    "electro house",
+    "edm",
+    "dance-pop",
+    "electronic",
+    "electropop",
+    "future bass"
+   ],
+   "matchedName": "The Chainsmokers",
+   "mbid": "91a81925-92f9-4fc9-b897-93cf01226282",
+   "review": false,
+   "score": 100
+  },
+  "The Chemical Brothers": {
+   "genres": [
+    "electronic",
+    "big beat",
+    "breakbeat",
+    "neo-psychedelia",
+    "progressive house",
+    "techno"
+   ],
+   "matchedName": "The Chemical Brothers",
+   "mbid": "1946a82a-f927-40c2-8235-38d64f50d043",
+   "review": false,
+   "score": 100
+  },
+  "The Clash": {
+   "genres": [
+    "punk rock",
+    "dance-punk",
+    "new wave",
+    "post-punk",
+    "punk",
+    "reggae rock",
+    "funk",
+    "rock"
+   ],
+   "matchedName": "The Clash",
+   "mbid": "8f92558c-2baa-4758-8c38-615519e9deda",
+   "review": false,
+   "score": 100
+  },
+  "The Cranberries": {
+   "genres": [
+    "alternative rock",
+    "rock",
+    "pop rock",
+    "dream pop",
+    "jangle pop",
+    "acoustic rock",
+    "celtic rock",
+    "chamber pop",
+    "ethereal wave",
+    "soft rock"
+   ],
+   "matchedName": "The Cranberries",
+   "mbid": "c98d40fd-f6cf-4b26-883e-eaa515ee2851",
+   "review": false,
+   "score": 100
+  },
+  "The Cure": {
+   "genres": [
+    "gothic rock",
+    "new wave",
+    "post-punk",
+    "alternative rock",
+    "rock",
+    "punk",
+    "synth-pop",
+    "dance-rock",
+    "gothic",
+    "indie rock",
+    "jangle pop",
+    "pop",
+    "pop rock"
+   ],
+   "matchedName": "The Cure",
+   "mbid": "69ee3720-a7cb-4402-b48d-a02c366f2bcf",
+   "review": false,
+   "score": 100
+  },
+  "The Doors": {
+   "genres": [
+    "psychedelic rock",
+    "blues rock",
+    "acid rock",
+    "rock",
+    "classic rock",
+    "hard rock",
+    "art rock",
+    "gothic",
+    "gothic rock",
+    "pop",
+    "proto-punk",
+    "psychedelic",
+    "rock and roll"
+   ],
+   "matchedName": "The Doors",
+   "mbid": "9efff43b-3b29-4082-824e-bc82f646f93d",
+   "review": false,
+   "score": 100
+  },
+  "The Everly Brothers": {
+   "genres": [
+    "pop",
+    "rockabilly",
+    "close harmony",
+    "country pop",
+    "pop rock",
+    "rock and roll"
+   ],
+   "matchedName": "The Everly Brothers",
+   "mbid": "091ec508-877f-4e3c-92a3-10903bbbc7ad",
+   "review": false,
+   "score": 100
+  },
+  "The Fray": {
+   "genres": [
+    "alternative rock",
+    "rock",
+    "pop"
+   ],
+   "matchedName": "The Fray",
+   "mbid": "2ddd167f-5b8a-4372-b350-6ad50493bac0",
+   "review": false,
+   "score": 100
+  },
+  "The Hollies": {
+   "genres": [
+    "pop",
+    "pop rock",
+    "psychedelic pop",
+    "rock",
+    "beat music",
+    "sunshine pop",
+    "baroque pop",
+    "soft rock"
+   ],
+   "matchedName": "The Hollies",
+   "mbid": "d4305549-6b4e-4a57-b24d-8af0743fe191",
+   "review": false,
+   "score": 100
+  },
+  "The Human League": {
+   "genres": [
+    "synth-pop",
+    "new wave",
+    "electronic",
+    "minimal synth",
+    "new romantic",
+    "pop"
+   ],
+   "matchedName": "The Human League",
+   "mbid": "7adaabfb-acfb-47bc-8c7c-59471c2f0db8",
+   "review": false,
+   "score": 100
+  },
+  "The Killers": {
+   "genres": [
+    "alternative rock",
+    "indie rock",
+    "pop rock",
+    "heartland rock",
+    "new wave",
+    "post-punk revival",
+    "rock",
+    "christmas music"
+   ],
+   "matchedName": "The Killers",
+   "mbid": "95e1ead9-4d31-4808-a7ac-32c3614c116b",
+   "review": false,
+   "score": 100
+  },
+  "The Kinks": {
+   "genres": [
+    "rock",
+    "mod",
+    "beat music",
+    "rock and roll",
+    "classic rock",
+    "garage rock",
+    "pop",
+    "pop rock",
+    "proto-punk"
+   ],
+   "matchedName": "The Kinks",
+   "mbid": "17b53d9f-5c63-4a09-a593-dde4608e0db9",
+   "review": false,
+   "score": 100
+  },
+  "The Lumineers": {
+   "genres": [
+    "americana",
+    "indie folk",
+    "folk pop",
+    "alternative country",
+    "stomp and holler",
+    "country folk",
+    "folk",
+    "folk rock",
+    "indie pop",
+    "piano rock"
+   ],
+   "matchedName": "The Lumineers",
+   "mbid": "bfcb6630-9b31-4e63-b11f-7b0363be72b5",
+   "review": false,
+   "score": 100
+  },
+  "The Mamas & The Papas": {
+   "genres": [
+    "sunshine pop",
+    "folk pop",
+    "folk rock",
+    "pop",
+    "pop rock",
+    "psychedelic folk",
+    "psychedelic pop",
+    "rock"
+   ],
+   "matchedName": "The Mamas & the Papas",
+   "mbid": "ff294730-0315-440d-a543-54005779c15b",
+   "review": false,
+   "score": 100
+  },
+  "The Monkees": {
+   "genres": [
+    "pop",
+    "sunshine pop",
+    "pop rock",
+    "psychedelic pop",
+    "rock",
+    "country pop"
+   ],
+   "matchedName": "The Monkees",
+   "mbid": "b8549efe-f4fd-4dc0-8ef1-226e9c400233",
+   "review": false,
+   "score": 100
+  },
+  "The Notorious B.I.G.": {
+   "genres": [
+    "hip hop",
+    "east coast hip hop",
+    "gangsta rap",
+    "hardcore hip hop",
+    "boom bap"
+   ],
+   "matchedName": "The Notorious B.I.G.",
+   "mbid": "d5d97b2b-b83b-4976-814a-056d9076c8c3",
+   "review": false,
+   "score": 100
+  },
+  "The Offspring": {
+   "genres": [
+    "punk rock",
+    "pop punk",
+    "punk",
+    "skate punk",
+    "melodic hardcore",
+    "rock",
+    "ska punk",
+    "alternative rock",
+    "comedy rock",
+    "grunge"
+   ],
+   "matchedName": "The Offspring",
+   "mbid": "23a03e33-a603-404e-bcbf-2c00159d7067",
+   "review": false,
+   "score": 100
+  },
+  "The Police": {
+   "genres": [
+    "new wave",
+    "rock",
+    "pop rock",
+    "post-punk",
+    "reggae rock",
+    "indie rock",
+    "punk"
+   ],
+   "matchedName": "The Police",
+   "mbid": "9e0e2b01-41db-4008-bd8b-988977d6019a",
+   "review": false,
+   "score": 100
+  },
+  "The Prodigy": {
+   "genres": [
+    "big beat",
+    "electronic",
+    "breakbeat",
+    "breakbeat hardcore",
+    "dance",
+    "rave",
+    "hardcore breaks",
+    "techno",
+    "alternative dance",
+    "electronic rock",
+    "electronica"
+   ],
+   "matchedName": "The Prodigy",
+   "mbid": "4a4ee089-93b1-4470-af9a-6ff575d32704",
+   "review": false,
+   "score": 100
+  },
+  "The Righteous Brothers": {
+   "genres": [
+    "blue-eyed soul",
+    "brill building",
+    "pop",
+    "r&b"
+   ],
+   "matchedName": "The Righteous Brothers",
+   "mbid": "1ac3366a-a0e9-4a55-8f6e-796fce32a3b2",
+   "review": false,
+   "score": 100
+  },
+  "The Rolling Stones": {
+   "genres": [
+    "rock",
+    "blues rock",
+    "classic rock",
+    "psychedelic rock",
+    "british rhythm & blues",
+    "pop rock",
+    "rock and roll",
+    "blues"
+   ],
+   "matchedName": "The Rolling Stones",
+   "mbid": "b071f9fa-14b0-4217-8e97-eb41da73f598",
+   "review": false,
+   "score": 100
+  },
+  "The Shadows": {
+   "genres": [
+    "rock",
+    "beat music",
+    "pop",
+    "pop rock",
+    "surf rock"
+   ],
+   "matchedName": "The Shadows",
+   "mbid": "c7cf4584-bfb1-4cf5-be41-aef384310bbb",
+   "review": false,
+   "score": 100
+  },
+  "The Smiths": {
+   "genres": [
+    "jangle pop",
+    "indie pop",
+    "post-punk",
+    "indie rock",
+    "alternative rock",
+    "new wave",
+    "rock",
+    "britpop",
+    "pop"
+   ],
+   "matchedName": "The Smiths",
+   "mbid": "40f5d9e4-2de7-4f2d-ad41-e31a9a9fea27",
+   "review": false,
+   "score": 100
+  },
+  "The Strokes": {
+   "genres": [
+    "indie rock",
+    "garage rock revival",
+    "post-punk revival",
+    "new wave",
+    "rock",
+    "synth-pop",
+    "garage rock"
+   ],
+   "matchedName": "The Strokes",
+   "mbid": "f181961b-20f7-459e-89de-920ef03c7ed0",
+   "review": false,
+   "score": 100
+  },
+  "The Supremes": {
+   "genres": [
+    "soul",
+    "disco",
+    "motown",
+    "pop",
+    "pop soul",
+    "psychedelic soul",
+    "r&b"
+   ],
+   "matchedName": "The Supremes",
+   "mbid": "c1aa2ec9-53e7-4d90-8d36-bac75832e986",
+   "review": false,
+   "score": 100
+  },
+  "The Temptations": {
+   "genres": [
+    "soul",
+    "contemporary r&b",
+    "funk",
+    "motown",
+    "pop soul",
+    "psychedelic soul",
+    "pop",
+    "r&b",
+    "smooth soul"
+   ],
+   "matchedName": "The Temptations",
+   "mbid": "d8df96ae-8fcf-4997-b3e6-e5d1aaf0f69e",
+   "review": false,
+   "score": 100
+  },
+  "The Troggs": {
+   "genres": [
+    "garage rock",
+    "pop rock",
+    "rock",
+    "freakbeat",
+    "proto-punk"
+   ],
+   "matchedName": "The Troggs",
+   "mbid": "4aec87a5-f33e-4bd6-89f2-0c96188c8372",
+   "review": false,
+   "score": 100
+  },
+  "The Velvet Underground": {
+   "genres": [
+    "experimental rock",
+    "art rock",
+    "proto-punk",
+    "noise rock",
+    "rock",
+    "psychedelic rock",
+    "pop rock",
+    "garage rock"
+   ],
+   "matchedName": "The Velvet Underground",
+   "mbid": "94b0fb9d-a066-4823-b2ec-af1d324bcfcf",
+   "review": false,
+   "score": 100
+  },
+  "The Verve": {
+   "genres": [
+    "alternative rock",
+    "britpop",
+    "neo-psychedelia",
+    "post-britpop",
+    "shoegaze",
+    "rock",
+    "space rock revival"
+   ],
+   "matchedName": "The Verve",
+   "mbid": "d4d17620-fd97-4574-92a8-a2cb7e72ce42",
+   "review": false,
+   "score": 100
+  },
+  "The Weeknd": {
+   "genres": [
+    "r&b",
+    "alternative r&b",
+    "contemporary r&b",
+    "dance-pop",
+    "synth-pop",
+    "pop",
+    "hypnagogic pop"
+   ],
+   "matchedName": "The Weeknd",
+   "mbid": "c8b03190-306c-4120-bb0b-6f2ebfc06ea9",
+   "review": false,
+   "score": 100
+  },
+  "The White Stripes": {
+   "genres": [
+    "alternative rock",
+    "indie rock",
+    "blues rock",
+    "garage rock revival",
+    "garage rock",
+    "rock",
+    "garage punk",
+    "pop",
+    "post-punk revival",
+    "punk blues"
+   ],
+   "matchedName": "The White Stripes",
+   "mbid": "11ae9fbb-f3d7-4a47-936f-4c0a04d3b3b5",
+   "review": false,
+   "score": 100
+  },
+  "The Who": {
+   "genres": [
+    "rock",
+    "hard rock",
+    "classic rock",
+    "mod",
+    "art rock",
+    "freakbeat",
+    "pop rock",
+    "rock opera",
+    "british rhythm & blues"
+   ],
+   "matchedName": "The Who",
+   "mbid": "9fdaa16b-a6c4-4831-b87c-bc9ca8ce7eaa",
+   "review": false,
+   "score": 100
+  },
+  "The Yardbirds": {
+   "genres": [
+    "blues rock",
+    "psychedelic rock",
+    "mod",
+    "british rhythm & blues",
+    "british blues",
+    "freakbeat",
+    "rock"
+   ],
+   "matchedName": "The Yardbirds",
+   "mbid": "191de76f-a224-445d-b041-54df16d65bf7",
+   "review": false,
+   "score": 100
+  },
+  "The Zombies": {
+   "genres": [
+    "baroque pop",
+    "psychedelic pop",
+    "beat music",
+    "british rhythm & blues",
+    "pop",
+    "rock",
+    "art pop",
+    "pop rock"
+   ],
+   "matchedName": "The Zombies",
+   "mbid": "230ca093-1d00-4c57-9235-147942f66930",
+   "review": false,
+   "score": 100
+  },
+  "Tina Turner": {
+   "genres": [
+    "soul",
+    "pop",
+    "pop rock",
+    "pop soul",
+    "rock"
+   ],
+   "matchedName": "Tina Turner",
+   "mbid": "9072df14-b61e-42e2-b4f4-6bbb7fdb5586",
+   "review": false,
+   "score": 100
+  },
+  "Tini": {
+   "genres": [
+    "latin",
+    "latin pop"
+   ],
+   "matchedName": "TINI",
+   "mbid": "95bad1d4-ba1f-4060-940b-d415d66e934e",
+   "review": false,
+   "score": 100
+  },
+  "Tiësto": {
+   "genres": [
+    "trance",
+    "electronic",
+    "dance",
+    "electro house",
+    "house",
+    "dance-pop",
+    "edm",
+    "progressive house",
+    "progressive trance",
+    "tech trance"
+   ],
+   "matchedName": "Tiësto",
+   "mbid": "aabb1d9f-be12-45b3-a84d-a1fc3e8181fd",
+   "review": false,
+   "score": 100
+  },
+  "Tom Jones": {
+   "genres": [
+    "pop",
+    "pop soul",
+    "traditional pop",
+    "ballad",
+    "blue-eyed soul"
+   ],
+   "matchedName": "Tom Jones",
+   "mbid": "57c6f649-6cde-48a7-8114-2a200247601a",
+   "review": false,
+   "score": 100
+  },
+  "Toto": {
+   "genres": [
+    "pop rock",
+    "rock",
+    "aor",
+    "hard rock",
+    "jazz fusion",
+    "soft rock",
+    "yacht rock",
+    "neo-progressive rock",
+    "pagan black metal",
+    "progressive rock"
+   ],
+   "matchedName": "Toto",
+   "mbid": "aab5c954-cabe-432e-899e-1c4f99757327",
+   "review": false,
+   "score": 100
+  },
+  "Travis": {
+   "genres": [
+    "britpop",
+    "indie rock",
+    "alternative rock",
+    "indie pop",
+    "post-britpop",
+    "jangle pop",
+    "pop rock",
+    "rock"
+   ],
+   "matchedName": "Travis",
+   "mbid": "22a40b75-affc-4e69-8884-266d087e4751",
+   "review": false,
+   "score": 100
+  },
+  "Triana": {
+   "genres": [
+    "progressive rock",
+    "pop rock"
+   ],
+   "matchedName": "Triana",
+   "mbid": "035813fb-7e1b-4a32-a066-ca280a5a425c",
+   "review": false,
+   "score": 100
+  },
+  "Trueno": {
+   "genres": [
+    "trap latino"
+   ],
+   "matchedName": "Trueno",
+   "mbid": "db607377-aace-4a32-a439-373b7236df7e",
+   "review": false,
+   "score": 100
+  },
+  "Twenty One Pilots": {
+   "genres": [
+    "alternative rock",
+    "indie pop",
+    "alternative hip hop",
+    "electropop",
+    "pop rap",
+    "hip hop",
+    "indietronica",
+    "alternative pop",
+    "piano rock",
+    "rock"
+   ],
+   "matchedName": "twenty one pilots",
+   "mbid": "a6c6897a-7415-4f8d-b5a5-3a5e05f3be67",
+   "review": false,
+   "score": 100
+  },
+  "U2": {
+   "genres": [
+    "alternative rock",
+    "rock",
+    "post-punk",
+    "pop rock",
+    "alternative dance",
+    "arena rock",
+    "electronic",
+    "alternative pop",
+    "dance-rock",
+    "indie rock",
+    "new wave"
+   ],
+   "matchedName": "U2",
+   "mbid": "a3cb23fc-acd3-4ce0-8f36-1e5aa6a18432",
+   "review": false,
+   "score": 100
+  },
+  "UB40": {
+   "genres": [
+    "reggae",
+    "dub",
+    "pop",
+    "reggae-pop",
+    "roots reggae"
+   ],
+   "matchedName": "UB40",
+   "mbid": "7113aab7-628f-4050-ae49-dbecac110ca8",
+   "review": false,
+   "score": 100
+  },
+  "Underworld": {
+   "genres": [
+    "electronic",
+    "progressive house",
+    "techno",
+    "alternative dance",
+    "ambient",
+    "electronica",
+    "new wave",
+    "downtempo",
+    "experimental",
+    "house",
+    "psychedelic",
+    "synth-pop"
+   ],
+   "matchedName": "Underworld",
+   "mbid": "ba2f4f3b-0293-4bc8-bb94-2f73b5207343",
+   "review": false,
+   "score": 100
+  },
+  "Usher": {
+   "genres": [
+    "contemporary r&b",
+    "soul",
+    "club",
+    "crunk",
+    "hip hop",
+    "pop",
+    "pop rap",
+    "r&b",
+    "dance-pop",
+    "trap"
+   ],
+   "matchedName": "Usher",
+   "mbid": "3414d446-735a-443c-931f-10634f57e5b9",
+   "review": false,
+   "score": 100
+  },
+  "Van Halen": {
+   "genres": [
+    "hard rock",
+    "rock",
+    "glam metal"
+   ],
+   "matchedName": "Van Halen",
+   "mbid": "b665b768-0d83-4363-950c-31ed39317c15",
+   "review": false,
+   "score": 100
+  },
+  "Vanesa Martín": {
+   "genres": [],
+   "matchedName": "Vanesa Martín",
+   "mbid": "6ad51e23-612a-4c58-93b5-c9dab61e4926",
+   "review": false,
+   "score": 100
+  },
+  "Vetusta Morla": {
+   "genres": [],
+   "matchedName": "Vetusta Morla",
+   "mbid": "b185451a-9edd-46df-8046-1db7e9594f5a",
+   "review": false,
+   "score": 100
+  },
+  "Village People": {
+   "genres": [
+    "disco",
+    "electronic"
+   ],
+   "matchedName": "Village People",
+   "mbid": "f19d3d49-be22-4ca6-9903-64d86984fbf2",
+   "review": false,
+   "score": 100
+  },
+  "Violadores del Verso": {
+   "genres": [
+    "hip hop"
+   ],
+   "matchedName": "Violadores del Verso",
+   "mbid": "43706fe2-bf24-4b1b-8d0b-28f8439b3d55",
+   "review": false,
+   "score": 100
+  },
+  "Viva Suecia": {
+   "genres": [],
+   "matchedName": "Viva Suecia",
+   "mbid": "7cf4537a-6c0f-47f9-827b-c4cc830cab92",
+   "review": false,
+   "score": 100
+  },
+  "Víctor Manuel": {
+   "genres": [
+    "contemporary folk",
+    "latin ballad",
+    "singer-songwriter"
+   ],
+   "matchedName": "Víctor Manuel",
+   "mbid": "e9c8cad5-d9e2-4e64-9b4f-44cb5bc80701",
+   "review": false,
+   "score": 100
+  },
+  "Wet Leg": {
+   "genres": [
+    "indie rock",
+    "indie pop",
+    "post-punk revival",
+    "post-punk"
+   ],
+   "matchedName": "Wet Leg",
+   "mbid": "90744b3e-363a-458e-8da1-e3e392a489c4",
+   "review": false,
+   "score": 100
+  },
+  "Wham!": {
+   "genres": [
+    "pop",
+    "dance-pop",
+    "christmas music",
+    "synth-pop"
+   ],
+   "matchedName": "Wham!",
+   "mbid": "d570bb31-b9ca-45a4-a2d9-11b186d9c159",
+   "review": false,
+   "score": 100
+  },
+  "Whitney Houston": {
+   "genres": [
+    "contemporary r&b",
+    "pop",
+    "dance-pop",
+    "pop soul",
+    "r&b",
+    "soul",
+    "quiet storm",
+    "dance",
+    "disco",
+    "easy listening",
+    "synth-pop"
+   ],
+   "matchedName": "Whitney Houston",
+   "mbid": "0307edfc-437c-4b48-8700-80680e66a228",
+   "review": false,
+   "score": 100
+  },
+  "Wilson Pickett": {
+   "genres": [
+    "soul"
+   ],
+   "matchedName": "Wilson Pickett",
+   "mbid": "fc6214b3-6d82-4803-be74-01ece1723e42",
+   "review": false,
+   "score": 100
+  },
+  "Wisin & Yandel": {
+   "genres": [
+    "reggaeton",
+    "latin"
+   ],
+   "matchedName": "Wisin & Yandel",
+   "mbid": "3deeb747-c228-4d33-9892-f0aa081783c3",
+   "review": false,
+   "score": 100
+  },
+  "Wu-Tang Clan": {
+   "genres": [
+    "hip hop",
+    "boom bap",
+    "east coast hip hop",
+    "hardcore hip hop"
+   ],
+   "matchedName": "Wu‐Tang Clan",
+   "mbid": "0febdcf7-4e1f-4661-9493-b40427de2c13",
+   "review": true,
+   "score": 100
+  },
+  "Xoel López": {
+   "genres": [],
+   "matchedName": "Xoel López",
+   "mbid": "40e1497c-f8d0-4c33-88c4-e079229790e9",
+   "review": false,
+   "score": 100
+  },
+  "Yes": {
+   "genres": [
+    "progressive rock",
+    "symphonic prog",
+    "rock",
+    "art rock",
+    "progressive pop",
+    "classic rock",
+    "pop rock",
+    "aor",
+    "disco",
+    "electronic",
+    "garage rock",
+    "hard rock",
+    "progressive",
+    "psychedelic rock",
+    "synth-pop"
+   ],
+   "matchedName": "Yes",
+   "mbid": "c1d4f2ba-cf39-460c-9528-6b827d3417a1",
+   "review": false,
+   "score": 100
+  },
+  "Young Miko": {
+   "genres": [
+    "hip hop",
+    "latin",
+    "reggaeton",
+    "trap",
+    "trap latino"
+   ],
+   "matchedName": "Young Miko",
+   "mbid": "c4442130-e7f2-40aa-bcab-b921cc45a365",
+   "review": false,
+   "score": 100
+  },
+  "Zahara": {
+   "genres": [
+    "indie pop",
+    "singer-songwriter",
+    "synth-pop"
+   ],
+   "matchedName": "Zahara",
+   "mbid": "fe4cc36c-cfc5-45d1-90f9-d61ebf40559f",
+   "review": false,
+   "score": 100
+  },
+  "a-ha": {
+   "genres": [
+    "new wave",
+    "pop",
+    "synth-pop",
+    "dance-pop",
+    "sophisti-pop"
+   ],
+   "matchedName": "a‐ha",
+   "mbid": "7364dea6-ca9a-48e3-be01-b44ad0d19897",
+   "review": true,
+   "score": 100
+  },
+  "Álex Ubago": {
+   "genres": [
+    "latin",
+    "latin ballad",
+    "latin pop",
+    "pop",
+    "pop rock"
+   ],
+   "matchedName": "Álex Ubago",
+   "mbid": "38e3d9bd-5ff2-47f2-8519-52bf7572dd1c",
+   "review": false,
+   "score": 100
+  },
+  "Álvaro Soler": {
+   "genres": [
+    "latin pop",
+    "pop"
+   ],
+   "matchedName": "Álvaro Soler",
+   "mbid": "4863c533-61cd-4287-93a1-3157732ecfd5",
+   "review": false,
+   "score": 100
+  },
+  "Ángeles del Infierno": {
+   "genres": [
+    "hard rock",
+    "heavy metal",
+    "metal"
+   ],
+   "matchedName": "Ángeles del Infierno",
+   "mbid": "df8c54f5-e3f2-44f3-ac45-405ff0abe2eb",
+   "review": false,
+   "score": 100
+  },
+  "Ñu": {
+   "genres": [
+    "celtic rock",
+    "folk rock",
+    "heavy metal",
+    "progressive rock",
+    "hard rock",
+    "metal",
+    "progressive folk",
+    "rock",
+    "rock urbano"
+   ],
+   "matchedName": "Ñu",
+   "mbid": "2586f88c-6ffc-4fbd-913f-6c45121265ed",
+   "review": false,
+   "score": 100
+  }
+ },
+ "unresolved": [
+  "Andy y Lucas",
+  "Bebo & Cigala",
+  "Booker T. & the M.G.'s",
+  "Concha Velasco",
+  "Jhay Cortez",
+  "Juan y Junior",
+  "Los Módulos",
+  "Los Zombies",
+  "Rosario Flores",
+  "Tote King"
+ ]
+}
