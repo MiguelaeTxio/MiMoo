@@ -1,0 +1,601 @@
+{
+ "_nota": [
+  "Candidatos para los artistas de la seccion 'incorrectos' de",
+  "artist_disambiguation.json que aun no tienen MBID fijado.",
+  "Este archivo NO decide nada: es material para elegir con",
+  "evidencia. Una vez elegido, el MBID se copia al campo 'mbid'",
+  "del artista en artist_disambiguation.json y se relanza el",
+  "enriquecimiento, que entonces le pedira sus generos reales."
+ ],
+ "propuestas": {
+  "Bebe": {
+   "candidatos": [
+    {
+     "actividad": "1989-08-30",
+     "desambiguacion": "",
+     "generos": [
+      "pop",
+      "dance-pop"
+     ],
+     "mbid": "db8fad3a-e131-47a1-8782-c2ee93708cdd",
+     "nombre": "Bebe Rexha",
+     "pais": "US",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1978-05-09",
+     "desambiguacion": "Spanish flamenco/pop vocalist",
+     "generos": [
+      "latin pop"
+     ],
+     "mbid": "1f4c0c5a-be94-43e2-ab01-1aa623daa530",
+     "nombre": "Bebe",
+     "pais": "ES",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1962-09-17",
+     "desambiguacion": "American gospel/soul singer, R&B producer and radio presenter",
+     "generos": [
+      "gospel",
+      "pop",
+      "soul"
+     ],
+     "mbid": "8c86f18c-6703-473c-a1ca-482abd0cca27",
+     "nombre": "BeBe Winans",
+     "pais": "US",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "2011",
+     "desambiguacion": "",
+     "generos": [
+      "indie rock",
+      "rock"
+     ],
+     "mbid": "b91a3d2a-bd11-46fe-938d-e4c57bc1df4b",
+     "nombre": "Bestia Bebé",
+     "pais": "AR",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "Latin / Reggaeton artist",
+     "generos": [
+      "reggaeton"
+     ],
+     "mbid": "c4ef34fc-3e6a-4629-ab50-5c9d9513b697",
+     "nombre": "Bebe",
+     "pais": "",
+     "tipo": "Person"
+    }
+   ],
+   "resolucion_erronea": "Bebe Rexha"
+  },
+  "Burning": {
+   "candidatos": [
+    {
+     "actividad": "1945-03-01",
+     "desambiguacion": "",
+     "generos": [
+      "reggae",
+      "roots reggae"
+     ],
+     "mbid": "16dad944-c492-43dd-88ed-e0b7ac520c40",
+     "nombre": "Burning Spear",
+     "pais": "JM",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1974",
+     "desambiguacion": "Spanish rock band",
+     "generos": [
+      "rock"
+     ],
+     "mbid": "7015f9da-a820-4787-935e-f2e426e36829",
+     "nombre": "Burning",
+     "pais": "ES",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1988",
+     "desambiguacion": "",
+     "generos": [
+      "punk rock",
+      "reggae"
+     ],
+     "mbid": "ffbe6832-9ab2-465e-8154-050d3a85b61d",
+     "nombre": "Burning Heads",
+     "pais": "FR",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1997",
+     "desambiguacion": "",
+     "generos": [
+      "power metal"
+     ],
+     "mbid": "7d3411e7-b580-48e1-bc77-4ed43989af0e",
+     "nombre": "Burning Point",
+     "pais": "FI",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "2015",
+     "desambiguacion": "Swiss metal band",
+     "generos": [
+      "power metal",
+      "heavy metal"
+     ],
+     "mbid": "35aaf2e1-50fa-4bb6-9e12-1b8bbdeca266",
+     "nombre": "Burning Witches",
+     "pais": "CH",
+     "tipo": "Group"
+    }
+   ],
+   "resolucion_erronea": "Burning Spear"
+  },
+  "Deluxe": {
+   "candidatos": [
+    {
+     "actividad": "1977-12-19",
+     "desambiguacion": "",
+     "generos": [
+      "hip hop"
+     ],
+     "mbid": "14aa9e32-c377-4dc6-9162-2e6c67a8eaf4",
+     "nombre": "Samy Deluxe",
+     "pais": "DE",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1972 - 1978",
+     "desambiguacion": "",
+     "generos": [
+      "art rock",
+      "progressive rock"
+     ],
+     "mbid": "96742ec2-b733-4ac6-b493-7e056a43b357",
+     "nombre": "Be Bop Deluxe",
+     "pais": "GB",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "2007",
+     "desambiguacion": "French electro/hip‐hop band",
+     "generos": [
+      "electropop"
+     ],
+     "mbid": "b83531c2-58fe-40e6-9d2c-0d98be764073",
+     "nombre": "Deluxe",
+     "pais": "FR",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1977-07-18",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "54d86cc6-2c30-47b4-bb68-cf5d82560e5c",
+     "nombre": "Tim Deluxe",
+     "pais": "GB",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1995",
+     "desambiguacion": "",
+     "generos": [
+      "art pop",
+      "trip hop"
+     ],
+     "mbid": "04fa6faa-6b42-4c7a-b1db-9aa20b7e4853",
+     "nombre": "Pepe Deluxé",
+     "pais": "FI",
+     "tipo": "Group"
+    }
+   ],
+   "resolucion_erronea": "Samy Deluxe"
+  },
+  "Kanye West": {
+   "candidatos": [
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "0eb17834-1d29-47ef-a422-9dc68d73c5e4",
+     "nombre": "Kanye West Tribute Band",
+     "pais": "",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "2025-01-01",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "48c25fb5-480f-48ca-86f3-8aba60bc6ce9",
+     "nombre": "Kanye West & Hatsune Miku",
+     "pais": "US",
+     "tipo": "Group"
+    }
+   ],
+   "resolucion_erronea": "Kanye West Tribute Band"
+  },
+  "Los Canarios": {
+   "candidatos": [
+    {
+     "actividad": "?",
+     "desambiguacion": "trío huasteco",
+     "generos": [],
+     "mbid": "1196b426-1813-4e9a-9af6-67943015a6c2",
+     "nombre": "Trío Los Canarios",
+     "pais": "MX",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "regional Mexican",
+     "generos": [],
+     "mbid": "f0791e32-0e73-4bc1-ada1-dce90f970503",
+     "nombre": "Los Canarios de Michoacán",
+     "pais": "MX",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "03795fa7-2ba9-45a4-98a0-f2a51bc9499b",
+     "nombre": "Los Canarios de Coahuila",
+     "pais": "MX",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "5d275656-d123-4a44-8fa5-1ceca23f353a",
+     "nombre": "Los Canarios del Perú",
+     "pais": "PE",
+     "tipo": "Group"
+    }
+   ],
+   "resolucion_erronea": "Trío Los Canarios"
+  },
+  "Los Ángeles": {
+   "candidatos": [
+    {
+     "actividad": "1919",
+     "desambiguacion": "",
+     "generos": [
+      "classical"
+     ],
+     "mbid": "98e4313e-dfb0-4084-805c-3e42ef9301d0",
+     "nombre": "Los Angeles Philharmonic",
+     "pais": "California",
+     "tipo": "Orchestra"
+    },
+    {
+     "actividad": "1968",
+     "desambiguacion": "",
+     "generos": [
+      "bolero-beat",
+      "ballad",
+      "latin",
+      "latin ballad",
+      "música cebolla",
+      "pop"
+     ],
+     "mbid": "3febb873-0757-47a2-b9cb-baa2cf0e5b91",
+     "nombre": "Los Ángeles Negros",
+     "pais": "CL",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1976",
+     "desambiguacion": "",
+     "generos": [
+      "cumbia",
+      "cumbia mexicana",
+      "cumbia sonidera",
+      "latin"
+     ],
+     "mbid": "dcb5e5c6-5f21-4266-b5b6-556f54a6b6b5",
+     "nombre": "Los Ángeles Azules",
+     "pais": "MX",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1963",
+     "desambiguacion": "Spanish beat/power pop band",
+     "generos": [
+      "beat music",
+      "merseybeat"
+     ],
+     "mbid": "8fcb0a0f-cb32-4652-8c1d-a0a9770eeacf",
+     "nombre": "Los Angeles",
+     "pais": "ES",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1923-11-01 - 2005-01-15",
+     "desambiguacion": "Spanish soprano",
+     "generos": [
+      "classical"
+     ],
+     "mbid": "6f10f924-50bd-4492-ba08-5777ffa51ca6",
+     "nombre": "Victoria de los Ángeles",
+     "pais": "ES",
+     "tipo": "Person"
+    }
+   ],
+   "resolucion_erronea": "Los Angeles Philharmonic"
+  },
+  "Micky": {
+   "candidatos": [
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "53d23af5-c674-4a8b-a99b-6888e942b28e",
+     "nombre": "Micky Wolf",
+     "pais": "DE",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1945-03-08",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "e97b6d05-3020-48e2-ac8b-29b71add512b",
+     "nombre": "Micky Dolenz",
+     "pais": "US",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1972-08-20",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "8ce2cd73-17b2-4059-9bc1-468c2282dd7f",
+     "nombre": "Micky Modelle",
+     "pais": "Belfast",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "5ec19ba2-9f90-4f65-a59f-61b59e37c5af",
+     "nombre": "Micky Erbe",
+     "pais": "",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "urban latin",
+     "generos": [
+      "latin"
+     ],
+     "mbid": "1d482396-f2ff-4179-ba2a-77a5f0b37f37",
+     "nombre": "Micky",
+     "pais": "",
+     "tipo": ""
+    }
+   ],
+   "resolucion_erronea": "Micky Wolf"
+  },
+  "Pink": {
+   "candidatos": [
+    {
+     "actividad": "1965 - 2014",
+     "desambiguacion": "",
+     "generos": [
+      "progressive rock",
+      "psychedelic rock",
+      "rock",
+      "art rock",
+      "space rock",
+      "progressive",
+      "rock opera",
+      "classic rock",
+      "psychedelic",
+      "blues rock",
+      "acid rock",
+      "experimental rock",
+      "psychedelic pop",
+      "symphonic rock"
+     ],
+     "mbid": "83d91898-7763-47d7-b03b-b92132375c47",
+     "nombre": "Pink Floyd",
+     "pais": "England",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1980-08",
+     "desambiguacion": "",
+     "generos": [
+      "experimental",
+      "neo-psychedelia",
+      "psychedelic rock",
+      "ambient",
+      "electronic",
+      "avant-garde",
+      "experimental rock",
+      "folk",
+      "minimal wave",
+      "neofolk",
+      "noise",
+      "progressive rock",
+      "space rock revival",
+      "synth-pop",
+      "dark ambient",
+      "dark wave",
+      "experimental electronic",
+      "gothic rock",
+      "industrial",
+      "post-industrial",
+      "post-punk",
+      "psychedelic",
+      "psychedelic folk",
+      "space rock",
+      "tape music"
+     ],
+     "mbid": "38f0dd4f-bcbb-4e7a-afae-a41a2bbf9d74",
+     "nombre": "The Legendary Pink Dots",
+     "pais": "GB",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1994",
+     "desambiguacion": "",
+     "generos": [
+      "lounge",
+      "cocktail nation",
+      "jazz pop"
+     ],
+     "mbid": "113e0972-077f-423b-9b5f-3cc8a5bafa0f",
+     "nombre": "Pink Martini",
+     "pais": "US",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1973-04-16",
+     "desambiguacion": "",
+     "generos": [
+      "j-pop",
+      "singer-songwriter"
+     ],
+     "mbid": "ffa25bb8-a082-4b47-aa4c-9ef48df98dc6",
+     "nombre": "BONNIE PINK",
+     "pais": "JP",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1978-06-24",
+     "desambiguacion": "",
+     "generos": [
+      "lo-fi",
+      "psychedelic pop",
+      "experimental",
+      "hypnagogic pop",
+      "indie pop",
+      "neo-psychedelia",
+      "new wave",
+      "post-punk",
+      "zolo"
+     ],
+     "mbid": "5882e375-503f-4bd2-89b1-967e0bfcb199",
+     "nombre": "Ariel Pink",
+     "pais": "US",
+     "tipo": "Person"
+    }
+   ],
+   "resolucion_erronea": "Pink Floyd"
+  },
+  "Salomé": {
+   "candidatos": [
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "449c7223-7ab1-4b33-aba5-6da9dac3497c",
+     "nombre": "Salomé de Bahia",
+     "pais": "Paris",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1987",
+     "desambiguacion": "pianist",
+     "generos": [],
+     "mbid": "959efb83-f3ed-4b16-9843-0462fd614074",
+     "nombre": "Salome Scheidegger",
+     "pais": "New York",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1986-02-20",
+     "desambiguacion": "Swiss pop artist Salome Clausen",
+     "generos": [],
+     "mbid": "6855714d-c0b5-4646-ba63-b93bf90a47fb",
+     "nombre": "Salome",
+     "pais": "CH",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "1939-06-21",
+     "desambiguacion": "ESC 1969 for Spain",
+     "generos": [],
+     "mbid": "7fa32778-1021-4f46-93bd-596545f2b50c",
+     "nombre": "Salomé",
+     "pais": "ES",
+     "tipo": "Person"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "French prog group",
+     "generos": [],
+     "mbid": "3a9b8918-13ad-4755-b10b-b62bcb7889d8",
+     "nombre": "Salomé",
+     "pais": "FR",
+     "tipo": "Group"
+    }
+   ],
+   "resolucion_erronea": "Salomé de Bahia"
+  },
+  "Second": {
+   "candidatos": [
+    {
+     "actividad": "1985",
+     "desambiguacion": "Belgian new beat / EBM band",
+     "generos": [
+      "ebm",
+      "minimal synth",
+      "new beat"
+     ],
+     "mbid": "bf270b87-6da7-485b-8c5b-0d02c9c47f41",
+     "nombre": "A Split‐Second",
+     "pais": "BE",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1985",
+     "desambiguacion": "German wave band",
+     "generos": [
+      "electropop",
+      "synth-pop"
+     ],
+     "mbid": "80eaf359-657f-4b52-8779-05d0246b4e0d",
+     "nombre": "Second Decay",
+     "pais": "DE",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "1997 - 2023-12-30",
+     "desambiguacion": "Spanish band",
+     "generos": [],
+     "mbid": "7286e960-1365-4747-8f57-56b00c4d54e9",
+     "nombre": "Second",
+     "pais": "ES",
+     "tipo": "Group"
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "",
+     "generos": [],
+     "mbid": "2c029186-3940-4f78-a8f4-622e149e6dc5",
+     "nombre": "Second∞Sight",
+     "pais": "",
+     "tipo": ""
+    },
+    {
+     "actividad": "?",
+     "desambiguacion": "EBM",
+     "generos": [
+      "ebm"
+     ],
+     "mbid": "9ce83aa7-ef84-421d-8148-13b2762f6d7e",
+     "nombre": "Second Version",
+     "pais": "",
+     "tipo": "Group"
+    }
+   ],
+   "resolucion_erronea": "A Split‐Second"
+  }
+ }
+}
