@@ -25,15 +25,30 @@ jobs:
       - name: Rastrear MusicBrainz y construir el arbol
         run: python3 tools/build_genre_tree.py
 
+      # Se sube ANTES de intentar commitear. El rastreo cuesta mas de
+      # una hora y vive en una maquina efimera: si el commit falla, el
+      # dato no se puede perder con el runner.
+      - name: Salvar el arbol como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genre-tree
+          path: app/src/main/assets/genre_tree.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Commitear el arbol si ha cambiado
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- app/src/main/assets/genre_tree.json; then
+          # 'git add' primero: 'git diff' a secas no ve los archivos
+          # nuevos sin seguimiento, y daba 'sin cambios' sobre un
+          # archivo recien creado.
+          git add app/src/main/assets/genre_tree.json
+          if git diff --cached --quiet; then
             echo "El arbol no ha cambiado respecto al commit anterior."
             exit 0
           fi
-          git add app/src/main/assets/genre_tree.json
           git commit -F - <<'EOF'
           data: regenerar el arbol de generos desde MusicBrainz
 
