@@ -56,6 +56,7 @@ import urllib.request
 
 BASE = "https://musicbrainz.org/ws/2"
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
+DISAMBIGUATION_PATH = "app/src/main/assets/artist_disambiguation.json"
 
 USER_AGENT = "MiMoo-ArtistGenres/1.0 ( https://github.com/MiguelaeTxio/MiMoo )"
 DELAY_SECONDS = 1.1
@@ -64,7 +65,20 @@ SCORE_THRESHOLD = 90
 
 
 def fold(value):
-    """Normaliza para comparar nombres: sin tildes, sin mayusculas."""
+    """Normaliza para comparar nombres: sin tildes, sin mayusculas.
+
+    MusicBrainz escribe los nombres con tipografia fina -- apostrofo
+    curvo en 'Guns N'Roses', guion no ASCII en 'a-ha', 'Wu-Tang Clan',
+    'blink-182', 'Run-D.M.C.'. Sin unificar esos caracteres, diez
+    artistas correctos salian marcados como dudosos y enterraban a los
+    que de verdad estaban mal resueltos.
+    """
+    for fancy, plain in (
+        ("\u2019", "'"), ("\u2018", "'"), ("\u02bc", "'"),
+        ("\u2010", "-"), ("\u2011", "-"), ("\u2012", "-"),
+        ("\u2013", "-"), ("\u2014", "-"),
+    ):
+        value = value.replace(fancy, plain)
     stripped = unicodedata.normalize("NFKD", value)
     stripped = "".join(c for c in stripped if not unicodedata.combining(c))
     return re.sub(r"\s+", " ", stripped).strip().lower()
@@ -148,6 +162,16 @@ def main():
     with open(DICT_PATH, encoding="utf-8") as handle:
         dictionary = json.load(handle)
 
+    try:
+        with open(DISAMBIGUATION_PATH, encoding="utf-8") as handle:
+            disambiguation = json.load(handle)
+    except FileNotFoundError:
+        disambiguation = {}
+    wrong = disambiguation.get("incorrectos", {})
+    confirmed = disambiguation.get("confirmados", {})
+    print("Desambiguacion: %d incorrectos, %d confirmados.\n"
+          % (len(wrong), len(confirmed)), flush=True)
+
     names = sorted({
         entry["artist"]
         for decade in dictionary.values()
@@ -159,8 +183,34 @@ def main():
 
     resolved = {}
     unresolved = []
+    skipped = []
     for position, name in enumerate(names, 1):
         print("[%d/%d] %s" % (position, total, name), flush=True)
+
+        # Artistas que la busqueda automatica resuelve mal. Sin MBID
+        # fijado a mano se SALTAN: se quedan con su 'genre' original en
+        # vez de recibir generos de otro artista. Grueso antes que falso.
+        if name in wrong:
+            forced = wrong[name].get("mbid")
+            if not forced:
+                print("    saltado: %s (se resolvia como '%s')"
+                      % ("sin MBID fijado", wrong[name].get("devolvia", "?")), flush=True)
+                skipped.append(name)
+                continue
+            try:
+                genres = lookup_genres(forced)
+                time.sleep(DELAY_SECONDS)
+            except RuntimeError as error:
+                print("    FALLO DEFINITIVO: %s" % error, flush=True)
+                unresolved.append(name)
+                continue
+            resolved[name] = {
+                "mbid": forced, "matchedName": name, "score": 100,
+                "genres": genres, "review": False, "desambiguado": True,
+            }
+            print("    MBID fijado a mano -> %s" % (genres[:4] or "sin generos"), flush=True)
+            continue
+
         try:
             hit = search_artist(name)
             time.sleep(DELAY_SECONDS)
@@ -177,7 +227,12 @@ def main():
 
         matched = hit.get("name") or ""
         score = int(hit.get("score") or 0)
-        suspicious = fold(matched) != fold(name) or score < SCORE_THRESHOLD
+        # Los confirmados devuelven otro nombre pero son el mismo
+        # artista: no vuelven a marcarse dudosos en cada pasada.
+        if confirmed.get(name) == matched:
+            suspicious = False
+        else:
+            suspicious = fold(matched) != fold(name) or score < SCORE_THRESHOLD
         resolved[name] = {
             "mbid": hit["id"],
             "matchedName": matched,
@@ -206,7 +261,8 @@ def main():
 
     with open("app/src/main/assets/artist_genre_resolution.json", "w", encoding="utf-8") as handle:
         json.dump(
-            {"resolved": resolved, "unresolved": sorted(unresolved)},
+            {"resolved": resolved, "unresolved": sorted(unresolved),
+         "skipped": sorted(skipped)},
             handle, ensure_ascii=False, indent=1, sort_keys=True,
         )
         handle.write("\n")
@@ -223,6 +279,7 @@ def main():
     print("  ...sin generos propios:      %d" % no_genres)
     print("  ...marcados para revisar:    %d" % to_review)
     print("Sin resolver:                  %d" % len(unresolved))
+    print("Saltados por desambiguacion:   %d" % len(skipped))
     print("Entradas enriquecidas:         %d de %d" % (enriched, entries_total))
     if unresolved:
         print("\nSin resolver: %s" % ", ".join(unresolved[:25]))

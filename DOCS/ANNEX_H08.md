@@ -1313,6 +1313,48 @@ Implementado:
 
 ---
 
+## S023 -- INCIDENCIA ABIERTA: `resolveAnchor()` fija el ancla equivocada
+
+Descubierta al revisar juntas las 658 resoluciones de artista del
+rastreo de S023. **No la introdujo el rastreo: estaba viva en la app y
+el rastreo la saco a la luz.**
+
+`RadioRepository.resolveAnchor()` busca `artist:"NOMBRE"` con `limit=5`
+y se queda con el **primer** resultado, sin comprobar que el nombre
+devuelto se parezca al buscado. Con nombres largos acierta casi
+siempre. Con nombres cortos o ambiguos, no:
+
+| Se pide | MusicBrainz devuelve | Ancla que queda fijada |
+|---|---|---|
+| Pink | Pink Floyd | progressive rock, psychedelic rock |
+| Los Ángeles | Los Angeles Philharmonic | classical |
+| Burning | Burning Spear | reggae, roots reggae |
+| Bebe | Bebe Rexha | pop, dance-pop |
+| Deluxe | Samy Deluxe | hip hop |
+| Second | A Split-Second | ebm, minimal synth |
+
+Hoy, arrancar una radio desde Pink construye una cadena de Pink Floyd.
+Y como el ancla fija genero Y pais desde el primer tema y no se vuelve
+a derivar, **el error contamina la cadena entera**, no un tema suelto.
+
+Ojo con la relacion con `classical`: en S016 se ordeno sacar `classical`
+del todo. Por esta via vuelve a entrar, porque no llega como genero de
+un tema sino como genero de un ancla mal resuelta.
+
+**Estado.** El lado del diccionario ya esta cubierto:
+`app/src/main/assets/artist_disambiguation.json` lista los diez casos
+y el rastreador los salta, de modo que ninguna entrada recibe generos
+de otro artista. **El lado de la app NO esta cubierto**: la app todavia
+no lee ese archivo y `resolveAnchor()` sigue como estaba.
+
+**Pendiente.** Que `resolveAnchor()` consulte `artist_disambiguation.json`
+antes de aceptar el primer resultado, y que descarte los resultados
+cuyo nombre no case con el buscado una vez normalizada la tipografia.
+No se metio en el bloque de S023 sin consultarlo con Miguel Angel,
+porque toca el motor y no el dato.
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
 **Bloque principal, acordado con Miguel Ángel al cierre de S022:

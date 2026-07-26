@@ -1,0 +1,43 @@
+{
+ "_nota": [
+  "Resoluciones de artista que la busqueda automatica de MusicBrainz hace mal.",
+  "",
+  "tools/enrich_dictionary_genres.py replica el camino de RadioRepository.resolveAnchor():",
+  "busca artist:\"NOMBRE\" y se queda con el PRIMER resultado. Con 658 artistas eso acierta",
+  "casi siempre, pero falla en homonimos y en nombres cortos, y cuando falla no se queda",
+  "corto: inyecta generos FALSOS. 'Pink' devolvia Pink Floyd, y con el progressive rock.",
+  "Un genero grueso es impreciso; un genero falso es peor.",
+  "",
+  "COMO SE USA:",
+  "  incorrectos  -> la busqueda automatica da otro artista.",
+  "                  Con 'mbid' relleno, se usa ese y no se busca.",
+  "                  Con 'mbid' en null, el artista se SALTA y se queda sin conjunto de",
+  "                  generos, conservando su 'genre' original. Grueso antes que falso.",
+  "  confirmados  -> MusicBrainz devuelve un nombre distinto pero es el mismo artista.",
+  "                  Solo sirve para no marcarlos como dudosos una y otra vez.",
+  "",
+  "PENDIENTE: RadioRepository.resolveAnchor() tiene esta misma debilidad EN TIEMPO REAL.",
+  "Hoy, arrancar una radio desde Pink fija Pink Floyd como ancla. Este archivo todavia no",
+  "lo corrige: la app no lo lee. Anotado en ANNEX_H08.md como incidencia abierta."
+ ],
+
+ "incorrectos": {
+  "Bebe": { "devolvia": "Bebe Rexha", "mbid": null },
+  "Burning": { "devolvia": "Burning Spear", "mbid": null },
+  "Deluxe": { "devolvia": "Samy Deluxe", "mbid": null },
+  "Kanye West": { "devolvia": "Kanye West Tribute Band", "mbid": null },
+  "Los Canarios": { "devolvia": "Trío Los Canarios", "mbid": null },
+  "Los Ángeles": { "devolvia": "Los Angeles Philharmonic", "mbid": null },
+  "Micky": { "devolvia": "Micky Wolf", "mbid": null },
+  "Pink": { "devolvia": "Pink Floyd", "mbid": null },
+  "Salomé": { "devolvia": "Salomé de Bahia", "mbid": null },
+  "Second": { "devolvia": "A Split‐Second", "mbid": null }
+ },
+
+ "confirmados": {
+  "Aviador Dro": "El Aviador Dro",
+  "Bob Marley": "Bob Marley & The Wailers",
+  "Bustamante": "David Bustamante",
+  "Lauryn Hill": "Ms. Lauryn Hill"
+ }
+}

@@ -716,12 +716,10 @@
    "score": 100
   },
   "Bebe": {
-   "genres": [
-    "pop",
-    "dance-pop"
-   ],
+   "genres": [],
    "matchedName": "Bebe Rexha",
    "mbid": "db8fad3a-e131-47a1-8782-c2ee93708cdd",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -1168,12 +1166,10 @@
    "score": 100
   },
   "Burning": {
-   "genres": [
-    "reggae",
-    "roots reggae"
-   ],
+   "genres": [],
    "matchedName": "Burning Spear",
    "mbid": "16dad944-c492-43dd-88ed-e0b7ac520c40",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -1899,11 +1895,10 @@
    "score": 100
   },
   "Deluxe": {
-   "genres": [
-    "hip hop"
-   ],
+   "genres": [],
    "matchedName": "Samy Deluxe",
    "mbid": "14aa9e32-c377-4dc6-9162-2e6c67a8eaf4",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -3527,6 +3522,7 @@
    "genres": [],
    "matchedName": "Kanye West Tribute Band",
    "mbid": "0eb17834-1d29-47ef-a422-9dc68d73c5e4",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -4116,6 +4112,7 @@
    "genres": [],
    "matchedName": "Trío Los Canarios",
    "mbid": "1196b426-1813-4e9a-9af6-67943015a6c2",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -4314,11 +4311,10 @@
    "score": 100
   },
   "Los Ángeles": {
-   "genres": [
-    "classical"
-   ],
+   "genres": [],
    "matchedName": "Los Angeles Philharmonic",
    "mbid": "98e4313e-dfb0-4084-805c-3e42ef9301d0",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -4867,6 +4863,7 @@
    "genres": [],
    "matchedName": "Micky Wolf",
    "mbid": "53d23af5-c674-4a8b-a99b-6888e942b28e",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -5747,24 +5744,10 @@
    "score": 100
   },
   "Pink": {
-   "genres": [
-    "progressive rock",
-    "psychedelic rock",
-    "rock",
-    "art rock",
-    "space rock",
-    "progressive",
-    "rock opera",
-    "classic rock",
-    "psychedelic",
-    "blues rock",
-    "acid rock",
-    "experimental rock",
-    "psychedelic pop",
-    "symphonic rock"
-   ],
+   "genres": [],
    "matchedName": "Pink Floyd",
    "mbid": "83d91898-7763-47d7-b03b-b92132375c47",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -6470,6 +6453,7 @@
    "genres": [],
    "matchedName": "Salomé de Bahia",
    "mbid": "449c7223-7ab1-4b33-aba5-6da9dac3497c",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
@@ -6616,13 +6600,10 @@
    "score": 100
   },
   "Second": {
-   "genres": [
-    "ebm",
-    "minimal synth",
-    "new beat"
-   ],
+   "genres": [],
    "matchedName": "A Split‐Second",
    "mbid": "bf270b87-6da7-485b-8c5b-0d02c9c47f41",
+   "purgado": "resolucion incorrecta, ver artist_disambiguation.json",
    "review": true,
    "score": 100
   },
