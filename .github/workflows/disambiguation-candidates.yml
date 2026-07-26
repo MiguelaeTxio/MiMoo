@@ -1,0 +1,55 @@
+name: Listar candidatos de desambiguacion (MusicBrainz)
+
+# Disparo MANUAL. Alrededor de un minuto: 10 nombres con unos pocos
+# candidatos cada uno, a una peticion por segundo.
+on:
+  workflow_dispatch:
+
+jobs:
+  list-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Consultar candidatos
+        run: python3 tools/list_disambiguation_candidates.py
+
+      - name: Salvar los candidatos como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disambiguation-candidates
+          path: app/src/main/assets/artist_disambiguation_candidates.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commitear si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/assets/artist_disambiguation_candidates.json
+          if git diff --cached --quiet; then
+            echo "Nada que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: candidatos para los artistas mal desambiguados
+
+          Salida de tools/list_disambiguation_candidates.py. Material
+          para elegir el MBID correcto con evidencia -- desambiguacion,
+          pais, tipo, anos de actividad y generos de cada candidato --
+          en vez de aceptar el primer resultado a ciegas, que es lo que
+          hacia que 'Pink' resolviese a Pink Floyd.
+          EOF
+          git pull --rebase origin main
+          git push
