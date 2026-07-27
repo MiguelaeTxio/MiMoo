@@ -204,13 +204,11 @@ class RadioRepository @Inject constructor(
             // Nótese que 'classical' reentraba por aquí pese a haberse
             // ordenado sacarlo del todo en S016: no llegaba como género
             // de un tema, sino de un ancla mal resuelta.
-            val candidates = musicBrainzApiService
-                .searchArtists(
-                    query = buildArtistQuery(sourceArtist),
-                    limit = ANCHOR_SEARCH_LIMIT,
-                )
-                .artists
-            val sourceMbid = pickAnchorArtist(sourceArtist, candidates)
+            //
+            // S024 -- la búsqueda ya no es un único intento con el
+            // nombre entero: si ese falla, se prueba palabra por
+            // palabra (ver `findAnchorArtistMbid()`).
+            val sourceMbid = findAnchorArtistMbid(sourceArtist)
             if (sourceMbid == null) {
                 return null
             }
@@ -668,6 +666,7 @@ class RadioRepository @Inject constructor(
     private fun pickAnchorArtist(
         sourceArtist: String,
         candidates: List<MusicBrainzArtistSummary>,
+        quiet: Boolean = false,
     ): String? {
         val wanted = SearchNormalizer.normalizeArtistName(sourceArtist)
 
@@ -681,7 +680,9 @@ class RadioRepository @Inject constructor(
         }
 
         if (candidates.isEmpty()) {
-            log("resolveAnchor('$sourceArtist') -- MusicBrainz no encontró NINGÚN artista con ese nombre (searchArtists vacío)")
+            if (!quiet) {
+                log("resolveAnchor('$sourceArtist') -- MusicBrainz no encontró NINGÚN artista con ese nombre (searchArtists vacío)")
+            }
             return null
         }
 
@@ -697,20 +698,108 @@ class RadioRepository @Inject constructor(
             val got = SearchNormalizer.normalizeArtistName(candidate.name)
             got == wanted ||
                 tight(got) == tight(wanted) ||
+                sameWords(got, wanted) ||
                 (canonical != null && (got == canonical || tight(got) == tight(canonical)))
         }
 
         if (match == null) {
-            log(
-                "resolveAnchor('$sourceArtist') -- ningún candidato coincide con el nombre buscado; " +
-                    "descartados: ${candidates.joinToString(", ") { it.name }}. No se fija ancla."
-            )
+            if (!quiet) {
+                log(
+                    "resolveAnchor('$sourceArtist') -- ningún candidato coincide con el nombre buscado; " +
+                        "descartados: ${candidates.joinToString(", ") { it.name }}. No se fija ancla."
+                )
+            }
             return null
         }
         if (match !== candidates.first()) {
             log("resolveAnchor('$sourceArtist') -- se descarta '${candidates.first().name}' y se toma '${match.name}' por coincidencia de nombre")
         }
         return match.id
+    }
+
+    /**
+     * ¿Son los dos nombres las MISMAS palabras, en cualquier orden?
+     *
+     * S024, regla de Miguel Ángel: *"las búsquedas no se deben ni de
+     * invertir, ni de esto ni de lo otro -- se debe buscar por
+     * palabras"*.
+     *
+     * La etiqueta de un archivo trae a menudo el nombre en formato de
+     * catálogo, `Apellido, Nombre`, que MusicBrainz no conoce:
+     * `Beethoven, Ludwig van` no existe, `Ludwig van Beethoven` sí. En
+     * el log de S023 ese nombre se buscó doce veces y volvió vacío las
+     * doce.
+     *
+     * Comparar CONJUNTOS de palabras lo resuelve sin ninguna regla
+     * especial para las comas, y sin invertir nada:
+     *
+     *     'Beethoven, Ludwig van'    -> {beethoven, ludwig, van}
+     *     'Ludwig van Beethoven'     -> {ludwig, van, beethoven}   IGUAL
+     *
+     * Y no reabre lo que cerró S023, porque exige igualdad y no
+     * inclusión: sobra una palabra y ya no cuela.
+     *
+     *     'Los Ángeles'              -> {los, angeles}
+     *     'Los Angeles Philharmonic' -> {los, angeles, philharmonic}  NO
+     *     'Pink' -> {pink}   vs   'Pink Floyd' -> {pink, floyd}       NO
+     *
+     * Generaliza estrictamente la comparación exacta que ya había: dos
+     * cadenas iguales tienen siempre el mismo conjunto de palabras.
+     */
+    private fun sameWords(a: String, b: String): Boolean {
+        val wordsA = wordsOf(a)
+        if (wordsA.isEmpty()) return false
+        return wordsA == wordsOf(b)
+    }
+
+    private fun wordsOf(value: String): Set<String> =
+        value.split(" ").filter { it.isNotBlank() }.toSet()
+
+    /**
+     * Busca el artista del ancla en MusicBrainz: primero el nombre
+     * entero, y si no aparece, palabra por palabra (S024).
+     *
+     * Es la misma mecánica que [identifyFromTitleWords] aplicada al
+     * NOMBRE en vez de al título -- que es donde faltaba. En el log de
+     * S023, la 9ª de Beethoven llegó a probar cinco prefijos del
+     * título (`Symphony No. 9 in D`... hasta `Symphony`) y ni una sola
+     * vez las palabras del nombre del artista, que era donde estaba la
+     * respuesta desde el principio.
+     *
+     * La palabra solo sirve para ALCANZAR la ficha; quien decide si
+     * vale es [pickAnchorArtist] contra el nombre completo. Buscando
+     * `Beethoven` llega `Ludwig van Beethoven`, cuyo conjunto de
+     * palabras es el del nombre original, y se acepta. Buscando `van`
+     * llegarían cien artistas y ninguno pasaría el filtro.
+     */
+    private suspend fun findAnchorArtistMbid(sourceArtist: String): String? {
+        val direct = musicBrainzApiService
+            .searchArtists(
+                query = buildArtistQuery(sourceArtist),
+                limit = ANCHOR_SEARCH_LIMIT,
+            )
+            .artists
+        pickAnchorArtist(sourceArtist, direct)?.let { return it }
+
+        val words = wordsOf(SearchNormalizer.normalizeArtistName(sourceArtist))
+            .filter { it.length > 2 }
+            .take(MAX_TITLE_WORDS_FOR_ARTIST)
+        if (words.size < 2) return null
+
+        for (word in words) {
+            val hits = musicBrainzApiService
+                .searchArtists(
+                    query = buildArtistQuery(word),
+                    limit = ANCHOR_SEARCH_LIMIT,
+                )
+                .artists
+            pickAnchorArtist(sourceArtist, hits, quiet = true)?.let { mbid ->
+                log("resolveAnchor('$sourceArtist') -- no aparecía con el nombre entero; resuelto buscando por la palabra '$word'")
+                return mbid
+            }
+        }
+        log("resolveAnchor('$sourceArtist') -- tampoco aparece buscando palabra por palabra (${words.joinToString()}). No se fija ancla.")
+        return null
     }
 
     private companion object {
