@@ -375,19 +375,16 @@ def discogs_styles(name, token, decade=None):
     #   Natos y Waor  entrada 'hip hop' -> tech house, electro
     #   Los Pecos     entrada 'pop'     -> cumbia, guaracha (grupo latinoamericano)
     #
+    # OJO -- el pais NO viene en el listado `/artists/{id}/releases`,
+    # solo en el detalle de cada disco. En la pasada anterior este
+    # contraste se hizo sobre el listado y quedo en nada: mismas cifras,
+    # mismos homonimos. Se recoge aqui, dentro del bucle que ya pide los
+    # detalles para los estilos, y se decide al terminar.
+    #
     # Si NINGUN disco declara pais, no se castiga: puede ser una ficha
     # pobre y no un homonimo.
-    countries = {
-        (r.get("country") or "").strip()
-        for r in own
-        if (r.get("country") or "").strip()
-    }
-    if countries and not any(c.lower() == "spain" for c in countries):
-        print("    discogs: descartado por pais (edita en %s, y la entrada es espanola)"
-              % ", ".join(sorted(countries)[:5]), flush=True)
-        return artist_id, []
-
     styles = Counter()
+    countries = set()
     examined = 0
     for release in own:
         if examined >= 12:
@@ -414,8 +411,16 @@ def discogs_styles(name, token, decade=None):
         if len(credited) > 3:
             continue
         examined += 1
+        country = (detail.get("country") or "").strip()
+        if country:
+            countries.add(country)
         for style in detail.get("styles") or []:
             styles[style] += 1
+
+    if countries and not any(c.lower() == "spain" for c in countries):
+        print("    discogs: descartado por pais (edita en %s, y la entrada es espanola)"
+              % ", ".join(sorted(countries)[:5]), flush=True)
+        return artist_id, []
     return artist_id, [s for s, _ in styles.most_common()]
 
 
