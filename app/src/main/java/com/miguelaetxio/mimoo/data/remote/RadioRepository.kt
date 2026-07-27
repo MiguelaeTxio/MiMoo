@@ -406,19 +406,34 @@ class RadioRepository @Inject constructor(
         excludeLower: Set<String>,
         isClassical: Boolean,
     ): List<String> = try {
+        val query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin, isClassical)
         // S010 -- offset aleatorio, no siempre 0, para variar entre
         // sesiones de Radio con el mismo ancla (ver historial de esta
         // función en versiones anteriores del archivo).
         val randomOffset = (0..90 step 10).toList().random()
-        val found = musicBrainzApiService
-            .searchArtists(
-                query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin, isClassical),
-                limit = 10,
-                offset = randomOffset,
-            )
+
+        suspend fun fetch(offset: Int) = musicBrainzApiService
+            .searchArtists(query = query, limit = 10, offset = offset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
+
+        var found = fetch(randomOffset)
+        // S024 -- el offset aleatorio se pasa de largo cuando el
+        // conjunto es pequeño, y ahí devuelve vacío. Verificado en log
+        // real con ancla 'Radio Futura' (rock/ES/1980): la misma
+        // consulta dio 10 y 9 candidatos, y a la vuelta siguiente 0
+        // "tras excluir 3 ya usados" -- de 10 a 0 quitando 3 no cuadra.
+        // No era que MusicBrainz se hubiera quedado sin artistas: era
+        // que el offset había caído más allá del final. El código lo
+        // leía como "eslabón roto para este cupo" y mataba la porción.
+        if (found.isEmpty() && randomOffset > 0) {
+            log(
+                "findCandidates('$genre') -- vacío con offset $randomOffset; " +
+                    "se reintenta desde el principio por si el desplazamiento se pasó del final"
+            )
+            found = fetch(0)
+        }
         // El servicio ha respondido. Que la lista venga vacía es una
         // respuesta legítima, no un fallo: el contador se reinicia
         // igual.

@@ -502,8 +502,22 @@ def main():
     targets = []
     for decade, block in sorted(dictionary.items()):
         for entry in block.get("es") or []:
-            if not entry.get("genres"):
-                targets.append((int(decade), entry["artist"]))
+            genres = entry.get("genres") or []
+            # S024 -- el criterio de objetivo era "no tiene `genres`", y
+            # se quedaba corto. Radio Futura SI tenia conjunto, pero era
+            # `['rock']`: una sola etiqueta, y carpeta raiz. Un conjunto
+            # asi no sirve para anclar -- matchesGenre() cae al ultimo
+            # peldano y solo acepta entradas que lleven literalmente
+            # 'rock', o sea 10 artistas de las 51 del bloque de los 80.
+            # Verificado en log real: la radio de Radio Futura se agoto
+            # y entro en bucle repitiendo Ilegales, Sabina y Burning.
+            #
+            # Lo que hace falta no es TENER generos, es tener al menos
+            # uno CONCRETO. Son 41 entradas mas, sumadas a las 31 que
+            # siguen vacias: 72 de 352 que no pueden anclar bien.
+            if genres and any(is_specific(tree_key(g)) for g in genres):
+                continue
+            targets.append((int(decade), entry["artist"]))
     # Un artista puede aparecer en varias decadas: se sondea una vez.
     seen = set()
     unique = []

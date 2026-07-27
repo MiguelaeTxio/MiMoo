@@ -221,6 +221,20 @@ def compatible(styles, coarse, by_key, nodes, descendants):
     return False
 
 
+def merge(existing, landed):
+    """Une lo que ya habia con lo nuevo, sin duplicar y sin perder nada.
+
+    S024 -- las entradas del tipo `['rock']` ya traian una etiqueta
+    correcta, solo que inservible por si sola. No se sustituye: se
+    conserva y se le anaden las concretas, que es lo que le faltaba.
+    """
+    out = list(existing)
+    for genre in landed:
+        if genre not in out:
+            out.append(genre)
+    return out
+
+
 def main():
     nodes, by_key, descendants = load_tree()
     print("Arbol de generos: %d etiquetas.\n" % len(nodes), flush=True)
@@ -270,7 +284,12 @@ def main():
     dropped = Counter()
     for decade, block in sorted(dictionary.items()):
         for entry in block.get("es") or []:
-            if entry.get("genres"):
+            existing = entry.get("genres") or []
+            # S024 -- mismo criterio que probe_genre_sources.py: lo que
+            # descalifica a una entrada como ancla no es no tener
+            # generos, es no tener ninguno CONCRETO. `['rock']` es un
+            # conjunto, pero como ancla no sirve para nada.
+            if existing and any(is_specific(tree_key(g)) for g in existing):
                 continue
             artist = entry["artist"]
             override = manual.get(artist)
@@ -280,7 +299,7 @@ def main():
                     if tree_key(g) in by_key
                 ]
                 if landed:
-                    entry["genres"] = landed
+                    entry["genres"] = merge(existing, landed)
                     filled += 1
                     filled_artists.add(artist)
                     manual_used.add(artist)
@@ -299,10 +318,11 @@ def main():
                     "decade": int(decade),
                     "genre": entry.get("genre", ""),
                     "discogsRaw": styles,
+                    "generosActuales": existing,
                     "motivo": "Discogs no da ningun estilo que exista en el arbol",
                 })
                 continue
-            entry["genres"] = landed
+            entry["genres"] = merge(existing, landed)
             filled += 1
             filled_artists.add(artist)
 
