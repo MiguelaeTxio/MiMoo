@@ -148,10 +148,21 @@ class KnownHitsRepository @Inject constructor(
 
     /**
      * Pool de un origen para una década concreta o, si `decadeBegin`
-     * es null, de TODAS las décadas conocidas (mismo criterio que la
-     * versión S011 de esta clase para "sin ancla de década fijada" --
-     * puede no haber `life-span.begin` en MusicBrainz para el artista
-     * que arrancó la sesión).
+     * es null, de TODAS las décadas conocidas.
+     *
+     * **S024 -- ese "todas" ya no lo usa la Radio.** Era un resto de
+     * S011 y en el log de S023 se vio lo que hacía: la copla de Carlos
+     * Cano no se pudo fechar (MusicBrainz no tiene fecha para esa
+     * actuación), el ancla quedó con `década=null`, y en vez de
+     * restringir se abrió el diccionario entero -- la radio de una
+     * copla de 1999 sirvió David Bisbal, La Oreja de Van Gogh, Aitana
+     * y Dvicio. `randomHit()` y `knownArtists()` cortan ahora antes de
+     * llegar aquí.
+     *
+     * El "todas las décadas" se conserva porque lo siguen necesitando
+     * `lookupHit()`/`isKnownHitArtist()`, que son consultas de "¿está
+     * este artista en el diccionario, en cualquier época?" y no
+     * alimentan la cadena de la Radio.
      *
      * **Historial S020.** Antes recibía un `requireEs: Boolean` y
      * servía `d.es + d.intl` cuando era `false`, lo que metía el
@@ -319,6 +330,13 @@ class KnownHitsRepository @Inject constructor(
             return preferred.ifEmpty { allowed }.randomOrNull()
         }
 
+        // S024 -- sin década NO se sirve nada de aquí. Ver
+        // `pool()`: una década nula abría las SIETE, y eso es
+        // exactamente lo contrario de filtrar. En el log de S023 una
+        // copla de Carlos Cano se quedó sin fechar y su radio sirvió
+        // Aitana y Dvicio.
+        if (decadeBegin == null) return null
+
         // S022 -- MODO DEGRADADO. Con MusicBrainz caído, el
         // diccionario es lo único que sostiene la Radio, y filtrar
         // además por género lo deja seco: una sesión anclada en
@@ -357,6 +375,10 @@ class KnownHitsRepository @Inject constructor(
         relaxGenre: Boolean = false,
         anchorGenres: Set<String> = emptySet(),
     ): List<String> {
+        // S024 -- mismo guardián que `randomHit()`: sin década no se
+        // sirve, en vez de servir las siete.
+        if (decadeBegin == null) return emptyList()
+
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun artistsOf(candidates: List<KnownHit>): List<String> =
             candidates.map { it.artist }.distinct()

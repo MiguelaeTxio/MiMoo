@@ -1085,50 +1085,30 @@ class PlayerManager @Inject constructor(
             )
             return null
         }
+        // S024 -- aquí ya NO se deriva ancla de la biblioteca local.
+        //
+        // Miguel Ángel puso la 9ª de Beethoven. La cascada entera falló
+        // (el nombre venía como 'Beethoven, Ludwig van', y 'American
+        // Bach Soloists' existe en MusicBrainz pero sin géneros
+        // propios), se sorteó la biblioteca, salió The Offspring, y la
+        // Radio de una sinfonía sirvió INXS, The Smiths, Depeche Mode,
+        // Def Leppard y The Cure.
+        //
+        // `resolveAnchorFromDisco()` recorría los artistas descargados
+        // en orden ALEATORIO (`.shuffled()`) y anclaba en el primero
+        // que resolviera perfil. Desde el asiento del usuario eso es
+        // exactamente un artista arbitrario -- justo lo que el propio
+        // código decía querer evitar dos guardas más arriba ("antes no
+        // arrancar Radio que anclarla en un artista arbitrario").
+        // La guarda existía, pero solo saltaba si el fallo había sido
+        // de red; cuando el ancla de verdad no resolvía, se sorteaba.
+        //
+        // Sin ancla no hay Radio: la siguiente ronda lo reintenta.
         RadioDebugLogger.log(
             appContext, storageManager,
             "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado en NINGUNO de los " +
-                "intentos (canal, H05, título) -- derivando ancla de disco (biblioteca local), NUNCA clásica",
-        )
-        return resolveAnchorFromDisco(excludeArtistName = anchorArtistName)
-    }
-
-    /**
-     * S016 -- último recurso de anclaje de sesión, reemplaza el
-     * antiguo fallback fijo a "classical". Recorre artistas ya
-     * descargados (misma fuente que el cupo de disco) en orden
-     * aleatorio y resuelve el primero cuyo perfil MusicBrainz tenga al
-     * menos un género -- ese perfil (género/país/década) se convierte
-     * en el ancla de la sesión completa. `null` si no hay biblioteca o
-     * ninguna resuelve perfil -- la Radio no arranca esta vez, en vez
-     * de arrancar con un género arbitrario sin relación con el usuario.
-     */
-    private suspend fun resolveAnchorFromDisco(excludeArtistName: String): RadioAnchor? {
-        val candidates = searchResultTrackRepository.getAllOnce()
-            .mapNotNull { it.artist }
-            .distinct()
-            .filter { !it.equals(excludeArtistName, ignoreCase = true) }
-            .shuffled()
-        for (artistName in candidates) {
-            val profile = radioRepository.lookupArtistProfile(artistName) ?: continue
-            val genre = profile.genres.firstOrNull() ?: continue
-            val isSpanish = profile.country == "ES" || knownHitsRepository.isKnownSpanishArtist(artistName)
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "resolveAnchorFromDisco() -- ancla derivada de disco: '$artistName' " +
-                    "(género='$genre', país=${profile.country}, década=${profile.decadeBegin}, es=$isSpanish)",
-            )
-            return RadioAnchor(
-                genre = genre,
-                country = profile.country,
-                decadeBegin = profile.decadeBegin,
-                isSpanishOrigin = isSpanish,
-            )
-        }
-        RadioDebugLogger.log(
-            appContext, storageManager,
-            "resolveAnchorFromDisco() -- ni la biblioteca local tiene nada resoluble -- " +
-                "la Radio no arranca esta vez, eslabón roto de verdad",
+                "intentos (canal, H05, título, palabras del nombre) -- NO se sortea la biblioteca: " +
+                "la Radio no arranca sobre este tema",
         )
         return null
     }
