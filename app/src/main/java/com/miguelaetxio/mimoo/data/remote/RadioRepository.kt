@@ -69,6 +69,33 @@ data class RadioAnchor(
     val country: String?,
     val decadeBegin: Int? = null,
     val isSpanishOrigin: Boolean = false,
+    /**
+     * Repertorio clásico (S024).
+     *
+     * **Qué implica: el país deja de filtrar POR COMPLETO.** Orden de
+     * Miguel Ángel -- *"en la radio de la clásica no deberíamos
+     * filtrar por origen, restringimos demasiado si filtramos por
+     * origen"*, precisada después: *"no se trata de permitir
+     * españoles, se trata de permitir cualquiera -- alemanes,
+     * franceses, ingleses, italianos, españoles, rusos, checos, y de
+     * cualquier país del mundo"*.
+     *
+     * No es una excepción para España: es que la dimensión país
+     * desaparece. Ni `country:ES` ni `NOT country:ES` -- ninguna
+     * cláusula de país.
+     *
+     * La separación dura España/extranjero que cerró S020 existe
+     * porque en música popular el origen SE NOTA: un ancla de Mecano
+     * no debe traer a Duran Duran. El repertorio clásico es
+     * internacional por naturaleza y se escucha como un solo cuerpo:
+     * Beethoven, Debussy, Elgar, Vivaldi, Chaikovski, Dvořák y Falla
+     * son la misma radio. Filtrar por país ahí no ordena nada y
+     * estrecha el pool justo donde ya iba corto.
+     *
+     * No deroga la regla de S020: la deja fuera de un repertorio donde
+     * nunca tuvo sentido.
+     */
+    val isClassical: Boolean = false,
 ) {
     /** ¿Comparte este candidato algún género con el ancla? */
     fun sharesGenreWith(candidateGenres: Set<String>): Boolean {
@@ -115,6 +142,9 @@ data class RadioAnchor(
 class RadioRepository @Inject constructor(
     private val musicBrainzApiService: MusicBrainzApiService,
     private val knownHitsRepository: KnownHitsRepository,
+    // S024 -- para marcar el ancla como de repertorio clasico en el
+    // momento en que se fija, y que todo lo demas lo herede de ahi.
+    private val genreTree: GenreTree,
     @ApplicationContext private val appContext: Context,
     private val storageManager: StorageManager,
 ) {
@@ -247,10 +277,15 @@ class RadioRepository @Inject constructor(
             val allGenres = genres.map { it.name.lowercase().trim() }
                 .filter { it.isNotBlank() }
                 .toSet()
+            val isClassical = allGenres.any {
+                it == "classical" || genreTree.isDescendantOf(it, "classical")
+            }
             log(
                 "resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: " +
                     "género='$chosenGenre', país=$sourceCountry, década=$decadeBegin, " +
-                    "origen español=$isSpanishOrigin, géneros=[${allGenres.joinToString()}]"
+                    "origen español=$isSpanishOrigin, clásica=$isClassical" +
+                    (if (isClassical) " (el origen NO filtra)" else "") +
+                    ", géneros=[${allGenres.joinToString()}]"
             )
             RadioAnchor(
                 genre = chosenGenre,
@@ -258,6 +293,7 @@ class RadioRepository @Inject constructor(
                 country = sourceCountry,
                 decadeBegin = decadeBegin,
                 isSpanishOrigin = isSpanishOrigin,
+                isClassical = isClassical,
             )
         } catch (e: Exception) {
             noteFailure(e)
@@ -301,7 +337,13 @@ class RadioRepository @Inject constructor(
         // respetar). Mismo cambio y misma razón que en
         // KnownHitsRepository.randomHit() y en
         // PlayerManager.pickDiscoCandidate().
-        val candidates = findCandidates(anchor.genre, anchor.isSpanishOrigin, anchor.decadeBegin, excludeLower)
+        val candidates = findCandidates(
+            anchor.genre,
+            anchor.isSpanishOrigin,
+            anchor.decadeBegin,
+            excludeLower,
+            anchor.isClassical,
+        )
         val preferred = candidates.filter { it.lowercase() !in avoidLower }
         val chosen = preferred.ifEmpty { candidates }.randomOrNull()
         if (chosen == null) {
@@ -362,13 +404,18 @@ class RadioRepository @Inject constructor(
         isSpanishOrigin: Boolean,
         decadeBegin: Int?,
         excludeLower: Set<String>,
+        isClassical: Boolean,
     ): List<String> = try {
         // S010 -- offset aleatorio, no siempre 0, para variar entre
         // sesiones de Radio con el mismo ancla (ver historial de esta
         // función en versiones anteriores del archivo).
         val randomOffset = (0..90 step 10).toList().random()
         val found = musicBrainzApiService
-            .searchArtists(query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin), limit = 10, offset = randomOffset)
+            .searchArtists(
+                query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin, isClassical),
+                limit = 10,
+                offset = randomOffset,
+            )
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
@@ -390,11 +437,23 @@ class RadioRepository @Inject constructor(
      * ancla no española -> `NOT country:ES`, para que el cupo de
      * artistas desconocidos no devuelva españoles en una sesión
      * extranjera.
+     *
+     * S024 -- salvo en repertorio clásico, donde NO se pone cláusula
+     * de país ninguna. Ni `country:ES` ni `NOT country:ES`: entran
+     * alemanes, franceses, ingleses, italianos, rusos, checos,
+     * españoles y de donde sea. Ver `RadioAnchor.isClassical`.
      */
-    private fun buildGenreQuery(genre: String, isSpanishOrigin: Boolean, decadeBegin: Int?): String {
+    private fun buildGenreQuery(
+        genre: String,
+        isSpanishOrigin: Boolean,
+        decadeBegin: Int?,
+        isClassical: Boolean,
+    ): String {
         fun escape(value: String) = value.replace("\"", "")
         var query = "tag:\"${escape(genre)}\""
-        query += if (isSpanishOrigin) " AND country:ES" else " AND NOT country:ES"
+        if (!isClassical) {
+            query += if (isSpanishOrigin) " AND country:ES" else " AND NOT country:ES"
+        }
         if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
         return query
     }

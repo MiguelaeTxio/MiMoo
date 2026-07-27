@@ -243,11 +243,6 @@ class PlayerManager @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val streamResolver: StreamResolver,
     private val knownHitsRepository: com.miguelaetxio.mimoo.data.remote.KnownHitsRepository,
-    // S024 -- hace falta el arbol para saber si el ancla es de
-    // repertorio clasico, y decidirlo con la taxonomia real en vez de
-    // con una lista de generos escrita a mano (ver
-    // `isClassicalAnchor()`).
-    private val genreTree: com.miguelaetxio.mimoo.data.remote.GenreTree,
     // S013/S014 -- fuente de "disco" del cupo 80/10/10 (10%, ver
     // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
     // descargados para poder ofrecer alguno como parte de la Radio.
@@ -1326,11 +1321,21 @@ class PlayerManager @Inject constructor(
         }
     }
 
+    /**
+     * S024 -- en repertorio clásico el origen NO separa: se consulta
+     * el diccionario entero con `Origin.ANY`, sin distinguir español
+     * de extranjero. Ver `RadioAnchor.isClassical`. `ANY` ya existía
+     * en el enum desde S020 pero ningún camino de la Radio lo usaba;
+     * este es el primero.
+     */
     private fun anchorOrigin(anchor: RadioAnchor) =
-        if (anchor.isSpanishOrigin) {
-            com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.ES
-        } else {
-            com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.INTL
+        when {
+            anchor.isClassical ->
+                com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.ANY
+            anchor.isSpanishOrigin ->
+                com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.ES
+            else ->
+                com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.INTL
         }
 
     /**
@@ -1662,10 +1667,14 @@ class PlayerManager @Inject constructor(
             // S020 -- separación dura en los dos sentidos. País
             // desconocido en MusicBrainz cuenta como NO español: con
             // ancla española queda fuera, con ancla extranjera entra.
-            val originOk = if (anchor.isSpanishOrigin) {
-                profile.country == "ES"
-            } else {
-                profile.country != "ES"
+            //
+            // S024 -- salvo en clásica, donde el país no filtra en
+            // absoluto: cualquier intérprete de la biblioteca vale,
+            // sea de donde sea. Ver `RadioAnchor.isClassical`.
+            val originOk = when {
+                anchor.isClassical -> true
+                anchor.isSpanishOrigin -> profile.country == "ES"
+                else -> profile.country != "ES"
             }
             if (!originOk) null else ProfiledArtist(artistName, profile)
         }
@@ -1763,18 +1772,11 @@ class PlayerManager @Inject constructor(
     /**
      * ¿El ancla de esta sesión es repertorio clásico?
      *
-     * Se decide contra `genre_tree.json` -- el género del ancla es
-     * `classical` o cuelga de él -- y no contra una lista escrita a
-     * mano. Para la 9ª de Beethoven el ancla trae `[classical,
-     * classical period, concerto, mass, opera, orchestral, romantic
-     * classical, sonata, symphony]`, y basta con que uno cuelgue.
+     * Se decide una sola vez, al fijar el ancla en
+     * `RadioRepository.resolveAnchor()`, contra `genre_tree.json` y no
+     * contra una lista escrita a mano. Aquí solo se lee.
      */
-    private fun isClassicalAnchor(): Boolean {
-        val anchor = radioAnchor ?: return false
-        val genres = (anchor.genres.ifEmpty { setOf(anchor.genre) })
-            .map { it.lowercase().trim() }
-        return genres.any { it == "classical" || genreTree.isDescendantOf(it, "classical") }
-    }
+    private fun isClassicalAnchor(): Boolean = radioAnchor?.isClassical == true
 
     /**
      * ¿El título delata que esto NO es una canción suelta?
