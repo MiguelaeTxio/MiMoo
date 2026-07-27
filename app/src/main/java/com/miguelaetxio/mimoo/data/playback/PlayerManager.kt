@@ -1777,6 +1777,37 @@ class PlayerManager @Inject constructor(
     }
 
     /**
+     * ¿El título delata que esto NO es una canción suelta?
+     *
+     * S024, idea de Miguel Ángel: *"full album o greatest hits podemos
+     * descartarlos por nombre igual que interview, chap, capítulo,
+     * álbum completo, grandes éxitos, película completa, entrevista"*.
+     * El nombre es evidencia directa; la duración era solo un indicio,
+     * y uno malo -- dejaba fuera la 9ª de Beethoven entera.
+     *
+     * **Se compara por PALABRA COMPLETA, no por subcadena.** El filtro
+     * anterior hacía `title.contains(hint)` a pelo, y con esa lista
+     * ampliada eso habría descartado a Tracy Chap-man por 'chap' y
+     * cualquier cosa de Cap-itol Records por 'cap'. Con límite de
+     * palabra, 'capitulo' no casa dentro de 'Chapman'.
+     *
+     * **Se pliegan los acentos** con el mismo normalizador que usa
+     * todo lo demás, para que 'álbum completo' case con un título
+     * escrito 'Album Completo' o 'ALBUM COMPLETO'.
+     *
+     * Deliberadamente FUERA de la lista: 'mix' a secas. "Original
+     * Mix", "Club Mix" y "Extended Mix" son temas sueltos legítimos en
+     * electrónica; solo se descarta 'megamix', que sí delata.
+     */
+    private fun looksLikeNonSong(title: String): Boolean {
+        val normalized = com.miguelaetxio.mimoo.util.SearchNormalizer.normalize(title)
+        if (normalized.isBlank()) return false
+        return NON_SONG_TITLE_HINTS.any { hint ->
+            Regex("(^|\\s)" + Regex.escape(hint) + "($|\\s)").containsMatchIn(normalized)
+        }
+    }
+
+    /**
      * Búsqueda gratuita en YouTube + filtro de duración/compilación +
      * resolución de stream -- mismo mecanismo que ya existía antes de
      * S013, ahora reutilizado por los cupos de diccionario,
@@ -1807,9 +1838,7 @@ class PlayerManager @Inject constructor(
         }
         val track = searchResult.tracks.firstOrNull { candidate ->
             candidate.durationSeconds in 1..maxSeconds &&
-                COMPILATION_TITLE_HINTS.none { hint ->
-                    candidate.title.contains(hint, ignoreCase = true)
-                } &&
+                !looksLikeNonSong(candidate.title) &&
                 matchesArtist(artist, candidate.title, candidate.channelTitle)
         }
         if (track == null) {
@@ -2386,13 +2415,58 @@ class PlayerManager @Inject constructor(
          * short compilation (e.g. a 14-minute "Top 10") could slip
          * through on duration alone.
          */
-        val COMPILATION_TITLE_HINTS = listOf(
+        /**
+         * S024 -- ampliación pedida por Miguel Ángel, y el criterio de
+         * comparación pasa de subcadena cruda a PALABRA COMPLETA sobre
+         * el título ya plegado de acentos (ver `looksLikeNonSong()`).
+         *
+         * Las seis originales de S009 se conservan; se añade el
+         * castellano, que faltaba por completo pese a que buena parte
+         * de la biblioteca es española, y las categorías que no son
+         * música en absoluto: entrevistas, capítulos, documentales,
+         * audiolibros, películas.
+         */
+        val NON_SONG_TITLE_HINTS = listOf(
+            // Recopilaciones y discos enteros -- ingles
             "full album",
             "greatest hits",
             "playlist",
             "compilation",
             "best songs of",
             "best of",
+            "all songs",
+            "complete works",
+            "full concert",
+            "megamix",
+            "top 10",
+            "top 20",
+            "top 50",
+            "top 100",
+            // Recopilaciones y discos enteros -- castellano
+            "album completo",
+            "disco completo",
+            "grandes exitos",
+            "sus mejores",
+            "lo mejor de",
+            "los mejores",
+            "recopilacion",
+            "recopilatorio",
+            "concierto completo",
+            "exitos",
+            // Contenido que directamente no es una cancion
+            "interview",
+            "entrevista",
+            "chapter",
+            "capitulo",
+            "episode",
+            "episodio",
+            "podcast",
+            "documentary",
+            "documental",
+            "audiobook",
+            "audiolibro",
+            "full movie",
+            "pelicula completa",
         )
     }
 }
