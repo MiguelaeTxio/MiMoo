@@ -1504,20 +1504,51 @@ class PlayerManager @Inject constructor(
         anchorExclusion: Set<String>,
         avoidNames: Set<String>,
     ): QueueItem? {
-        val artist = radioRepository.suggestRelatedArtist(anchor, anchorExclusion, avoidNames)
-        if (artist != null) {
+        // S024 -- antes esto pedía UN artista, intentaba UNA resolución
+        // en YouTube, y si esa fallaba daba la porción entera por
+        // agotada. Verificado en log real sobre la 9ª de Beethoven:
+        //
+        //   suggestRelatedArtist(...) -> 'Richard Strauss' (10 candidatos)
+        //   resolveYoutubeCandidate(query='Richard Strauss') -- 0 de 6 pasaron
+        //   exhaustPortion(...) -- porción UNKNOWN AGOTADA
+        //
+        // Diez candidatos encontrados, uno probado, nueve tirados. Y el
+        // motivo que se escribía era falso: MusicBrainz SÍ devolvía
+        // artistas nuevos; lo que fallaba era la resolución en YouTube.
+        //
+        // No es un problema de clásica -- le pasa igual a cualquier
+        // ancla cuyo primer candidato no resuelva.
+        val triedNames = mutableSetOf<String>()
+        var suggestedAny = false
+        repeat(UNKNOWN_CANDIDATE_ATTEMPTS) {
+            val artist = radioRepository.suggestRelatedArtist(
+                anchor,
+                anchorExclusion + triedNames,
+                avoidNames,
+            ) ?: return@repeat
+            suggestedAny = true
+            triedNames += artist
             val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null)
             if (item != null && knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
-                    "fetchFromUnknown(ancla='$anchorArtistName') -> desconocido: '$artist'",
+                    "fetchFromUnknown(ancla='$anchorArtistName') -> desconocido: '$artist'" +
+                        (if (triedNames.size > 1) " (tras ${triedNames.size - 1} que no resolvieron)" else ""),
                 )
                 return item
             }
         }
+        // El motivo distingue ahora los dos casos, que exigen arreglos
+        // distintos: sin sugerencias es MusicBrainz; con sugerencias que
+        // no resuelven es el filtro de YouTube.
         exhaustPortion(
             RadioPortion.UNKNOWN, anchorArtistName,
-            "MusicBrainz no devuelve artistas nuevos para el ancla",
+            if (!suggestedAny) {
+                "MusicBrainz no devuelve artistas nuevos para el ancla"
+            } else {
+                "los $UNKNOWN_CANDIDATE_ATTEMPTS candidatos probados no resolvieron en YouTube " +
+                    "(${triedNames.joinToString()})"
+            },
         )
         return null
     }
@@ -1804,7 +1835,21 @@ class PlayerManager @Inject constructor(
     private fun looksLikeNonSong(title: String): Boolean {
         val normalized = com.miguelaetxio.mimoo.util.SearchNormalizer.normalize(title)
         if (normalized.isBlank()) return false
-        return NON_SONG_TITLE_HINTS.any { hint ->
+        // S024 -- en repertorio clásico solo se aplica la lista de "esto
+        // no es música". Verificado en log real: buscando 'Richard
+        // Strauss' pasaron 0 de 6 resultados PESE a haber subido el tope
+        // a 45 minutos, o sea que no los tumbaba la duración sino los
+        // avisos de compilación. Y es que en clásica "Best of", "Complete
+        // Works" o "Full Concert" no delatan una chapuza: son la forma
+        // habitual en que se publica el repertorio. Con el tope de 45
+        // minutos acotando la duración, dejarlos entrar es preferible a
+        // quedarse sin radio.
+        val hints = if (isClassicalAnchor()) {
+            NOT_MUSIC_TITLE_HINTS
+        } else {
+            NOT_MUSIC_TITLE_HINTS + COMPILATION_TITLE_HINTS
+        }
+        return hints.any { hint ->
             Regex("(^|\\s)" + Regex.escape(hint) + "($|\\s)").containsMatchIn(normalized)
         }
     }
@@ -2418,18 +2463,11 @@ class PlayerManager @Inject constructor(
          * through on duration alone.
          */
         /**
-         * S024 -- ampliación pedida por Miguel Ángel, y el criterio de
-         * comparación pasa de subcadena cruda a PALABRA COMPLETA sobre
-         * el título ya plegado de acentos (ver `looksLikeNonSong()`).
-         *
-         * Las seis originales de S009 se conservan; se añade el
-         * castellano, que faltaba por completo pese a que buena parte
-         * de la biblioteca es española, y las categorías que no son
-         * música en absoluto: entrevistas, capítulos, documentales,
-         * audiolibros, películas.
+         * Recopilaciones y discos enteros. En repertorio clásico NO se
+         * aplican -- ver `looksLikeNonSong()`.
          */
-        val NON_SONG_TITLE_HINTS = listOf(
-            // Recopilaciones y discos enteros -- ingles
+        val COMPILATION_TITLE_HINTS = listOf(
+            // ingles
             "full album",
             "greatest hits",
             "playlist",
@@ -2444,7 +2482,7 @@ class PlayerManager @Inject constructor(
             "top 20",
             "top 50",
             "top 100",
-            // Recopilaciones y discos enteros -- castellano
+            // castellano
             "album completo",
             "disco completo",
             "grandes exitos",
@@ -2455,7 +2493,14 @@ class PlayerManager @Inject constructor(
             "recopilatorio",
             "concierto completo",
             "exitos",
-            // Contenido que directamente no es una cancion
+        )
+
+        /**
+         * Contenido que directamente NO es música. Se aplica siempre,
+         * también en clásica: una entrevista o un capítulo de podcast no
+         * pintan nada en ninguna radio.
+         */
+        val NOT_MUSIC_TITLE_HINTS = listOf(
             "interview",
             "entrevista",
             "chapter",
@@ -2470,5 +2515,17 @@ class PlayerManager @Inject constructor(
             "full movie",
             "pelicula completa",
         )
+
+        /**
+         * Candidatos distintos que se prueban en la porción de
+         * exploración antes de darla por agotada (S024).
+         *
+         * Antes era uno implícito: se pedía un artista, se intentaba
+         * resolverlo en YouTube, y si fallaba se cerraba la porción
+         * entera aunque MusicBrainz hubiera devuelto diez candidatos.
+         * Cuatro acota el coste -- son cuatro búsquedas de YouTube en el
+         * peor caso, solo cuando los anteriores fallan.
+         */
+        const val UNKNOWN_CANDIDATE_ATTEMPTS = 4
     }
 }
