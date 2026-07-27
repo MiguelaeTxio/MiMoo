@@ -287,13 +287,26 @@ def translate_to_english(title):
 
 # ---------------------------------------------------------------- discogs
 
-def discogs_styles(name, token):
+def discogs_styles(name, token, decade=None):
     """Conjunto de 'style' agregado sobre los lanzamientos del artista.
 
     El campo 'genre' de Discogs es demasiado grueso (Latin, Rock, Pop);
     el que sirve es 'style'. Se agrega sobre varios lanzamientos porque
     en Discogs el estilo vive en el disco, no en el artista -- y esa
     agregacion es justo la forma de dato que consume matchesGenre().
+
+    S024 -- HOMONIMOS. Casar el nombre exacto no basta, igual que no
+    bastaba en MusicBrainz (fue todo el trabajo de S023). Con solo el
+    nombre salian:
+
+        Chanel     -> house, garage house, grime  (es pop, Eurovision)
+        Formula V  -> funk, disco, electro        (grupo beat de 1960)
+        Los Pecos  -> cumbia, guaracha            (duo de baladas)
+
+    Se exige ademas que el artista PUBLIQUE en la epoca de la entrada:
+    al menos un disco propio dentro de [decada-15, decada+15]. No es
+    criterio musical -- es la misma idea que la regla de Miguel Angel
+    de que la decada la marca el tema, aplicada a verificar identidad.
     """
     headers = {"Authorization": "Discogs token=%s" % token}
     search = fetch_json("%s/database/search?%s" % (DISCOGS_API, urllib.parse.urlencode({
@@ -334,13 +347,28 @@ def discogs_styles(name, token):
     #   comp  -- ademas se descartan los formatos marcados como
     #            recopilacion, que agregan estilos de terceros aunque
     #            el papel sea 'Main' (los 'grandes exitos de varios').
+    own = [
+        r for r in (releases.get("releases") or [])
+        if (r.get("role") or "Main") == "Main"
+    ]
+
+    # Contraste de epoca. Si el artista que ha casado por nombre no
+    # publica nada cerca de la decada de la entrada, no es el nuestro.
+    if decade is not None:
+        years = [
+            int(r["year"]) for r in own
+            if str(r.get("year") or "").isdigit() and int(r["year"]) > 1900
+        ]
+        if years and not any(decade - 15 <= y <= decade + 15 for y in years):
+            print("    discogs: descartado por epoca (publica %d-%d, entrada %d)"
+                  % (min(years), max(years), decade), flush=True)
+            return artist_id, []
+
     styles = Counter()
     examined = 0
-    for release in releases.get("releases") or []:
+    for release in own:
         if examined >= 12:
             break
-        if (release.get("role") or "Main") != "Main":
-            continue
         main_id = release.get("main_release") or release.get("id")
         if not main_id or release.get("type") not in (None, "master", "release"):
             continue
@@ -481,7 +509,7 @@ def main():
         time.sleep(DELAY_SECONDS)
 
         if token:
-            _, dg = discogs_styles(artist, token)
+            _, dg = discogs_styles(artist, token, decade)
             row["discogs"] = dg
             time.sleep(DELAY_SECONDS)
         else:
