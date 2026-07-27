@@ -178,6 +178,48 @@ def show(label, stats):
     ), flush=True)
 
 
+def compatible(styles, coarse, by_key, nodes, descendants):
+    """¿Los estilos de Discogs pegan con el genero grueso de la entrada?
+
+    S024 -- ultimo colador contra homonimos, y no cuesta red. El
+    contraste de epoca del sondeo caza al homonimo de OTRA epoca
+    (Formula V, Taburete, Los Canarios, Rayden quedaron vacios), pero
+    no al que publica a la vez:
+
+        Chanel    entrada 'pop'  -> Discogs [house, garage house, electro]
+        Los Pecos entrada 'pop'  -> Discogs [cumbia, guaracha, psychedelic]
+
+    Chanel Terrero canta pop y Los Pecos eran un duo de baladas. Los
+    que ha encontrado Discogs son otros.
+
+    El campo `genre` de cada entrada esta escrito a mano y es grueso,
+    pero acierta en la FAMILIA, que es justo lo que hace falta aqui. Se
+    exige que al menos un estilo de Discogs sea ese genero, cuelgue de
+    el, lo contenga, o sea hermano suyo. 'house' no cuelga de 'pop' por
+    ningun lado; 'garage house' tampoco.
+
+    Si la entrada no trae genero grueso utilizable, no se bloquea nada:
+    grueso antes que falso, pero tampoco se inventa una sospecha.
+    """
+    coarse_real = by_key.get(tree_key(coarse or ""))
+    if not coarse_real:
+        return True
+    def parents(genre):
+        return [p.lower().strip() for p in (nodes.get(genre) or {}).get("parents") or []]
+    coarse_parents = set(parents(coarse_real))
+    for style in styles:
+        real = by_key.get(tree_key(style))
+        if not real:
+            continue
+        if real == coarse_real:
+            return True
+        if real in descendants(coarse_real) or coarse_real in descendants(real):
+            return True
+        if coarse_parents & set(parents(real)):
+            return True
+    return False
+
+
 def main():
     nodes, by_key, descendants = load_tree()
     print("Arbol de generos: %d etiquetas.\n" % len(nodes), flush=True)
@@ -208,6 +250,7 @@ def main():
     filled = 0
     filled_artists = set()
     leftover = {}
+    suspicious = {}
     dropped = Counter()
     for decade, block in sorted(dictionary.items()):
         for entry in block.get("es") or []:
@@ -228,6 +271,7 @@ def main():
                     "decade": int(decade),
                     "genre": entry.get("genre", ""),
                     "discogsRaw": styles,
+                    "motivo": "Discogs no da ningun estilo que exista en el arbol",
                 })
                 continue
             entry["genres"] = landed
@@ -239,7 +283,8 @@ def main():
         handle.write("\n")
 
     with open(LEFTOVER_PATH, "w", encoding="utf-8") as handle:
-        json.dump(leftover, handle, ensure_ascii=False, indent=1, sort_keys=True)
+        json.dump({"sin_dato": leftover, "sospechosos": suspicious},
+                  handle, ensure_ascii=False, indent=1, sort_keys=True)
         handle.write("\n")
 
     after = simulate(dictionary, nodes, descendants)
@@ -255,8 +300,15 @@ def main():
     print("Entradas ES rellenadas:        %d" % filled)
     print("Artistas distintos:            %d" % len(filled_artists))
     print("Entradas ES aun sin conjunto:  %d de %d" % (still_empty, total_es))
-    print("Artistas sin nada aprovechable: %d (en %s)"
-          % (len(leftover), LEFTOVER_PATH))
+    print("Artistas sin dato aprovechable: %d" % len(leftover))
+    print("Apartados por sospecha de homonimo: %d" % len(suspicious))
+    print("  (los dos listados en %s)" % LEFTOVER_PATH)
+    if suspicious:
+        print()
+        print("Apartados -- NO se les ha escrito nada:")
+        for name, info in sorted(suspicious.items()):
+            print("   %-24s entrada='%s'  Discogs=%s"
+                  % (name, info["genre"], ", ".join(info["discogsLanded"])))
     print()
     print("Simulacion sobre pools reales:", flush=True)
     show("ANTES", before)

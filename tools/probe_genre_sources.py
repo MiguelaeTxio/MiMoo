@@ -364,6 +364,29 @@ def discogs_styles(name, token, decade=None):
                   % (min(years), max(years), decade), flush=True)
             return artist_id, []
 
+    # Contraste de PAIS. Los 125 artistas sondeados son espanoles por
+    # construccion -- salen del bloque `es` del diccionario. Un artista
+    # que ha casado por nombre pero no edita NUNCA en Espana no es el
+    # nuestro. Caza al homonimo contemporaneo, que el contraste de
+    # epoca no ve:
+    #
+    #   Chanel        entrada 'pop'     -> house, garage house, electro
+    #   Leiva         entrada 'rock'    -> tech house, deep house, techno
+    #   Natos y Waor  entrada 'hip hop' -> tech house, electro
+    #   Los Pecos     entrada 'pop'     -> cumbia, guaracha (grupo latinoamericano)
+    #
+    # Si NINGUN disco declara pais, no se castiga: puede ser una ficha
+    # pobre y no un homonimo.
+    countries = {
+        (r.get("country") or "").strip()
+        for r in own
+        if (r.get("country") or "").strip()
+    }
+    if countries and not any(c.lower() == "spain" for c in countries):
+        print("    discogs: descartado por pais (edita en %s, y la entrada es espanola)"
+              % ", ".join(sorted(countries)[:5]), flush=True)
+        return artist_id, []
+
     styles = Counter()
     examined = 0
     for release in own:
