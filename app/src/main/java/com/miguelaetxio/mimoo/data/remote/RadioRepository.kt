@@ -274,9 +274,36 @@ class RadioRepository @Inject constructor(
             // campo country=ES de MusicBrainz como respaldo.
             val isSpanishOrigin = knownHitsRepository.isKnownSpanishArtist(sourceArtist) ||
                 sourceCountry == "ES"
-            val allGenres = genres.map { it.name.lowercase().trim() }
+            // S024 -- el ancla se enriquece con lo que el DICCIONARIO
+            // sabe de este artista, no solo con lo que da MusicBrainz.
+            //
+            // Para el bloque español MusicBrainz es pobre: de Radio
+            // Futura devuelve únicamente `rock`, carpeta raíz de 129
+            // descendientes. Con un ancla así `matchesGenre()` cae al
+            // último peldaño y solo acepta entradas que lleven
+            // literalmente `rock` -- diez artistas de los 226 que tiene
+            // ya el bloque ES de los 80. El diccionario, tras el
+            // enriquecimiento con Discogs, tiene de ese mismo grupo
+            // `[rock, pop rock, new wave, alternative rock, synth-pop]`.
+            //
+            // Sin esto las 675 entradas nuevas no se aprovechan cuando
+            // el ancla es justo uno de esos artistas, que es el caso
+            // más frecuente: la Radio suele arrancar sobre un tema
+            // conocido.
+            val fromMusicBrainz = genres.map { it.name.lowercase().trim() }
                 .filter { it.isNotBlank() }
                 .toSet()
+            val fromDictionary = knownHitsRepository.genresOfArtist(sourceArtist)
+                .map { it.lowercase().trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
+            val allGenres = fromMusicBrainz + fromDictionary
+            if (fromDictionary.isNotEmpty()) {
+                log(
+                    "resolveAnchor('$sourceArtist') -- géneros del diccionario añadidos al ancla: " +
+                        "[${(fromDictionary - fromMusicBrainz).joinToString()}]"
+                )
+            }
             val isClassical = allGenres.any {
                 it == "classical" || genreTree.isDescendantOf(it, "classical")
             }

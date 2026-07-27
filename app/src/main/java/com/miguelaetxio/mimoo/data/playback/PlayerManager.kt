@@ -1573,45 +1573,23 @@ class PlayerManager @Inject constructor(
             }
         }
 
-        // S024 -- PELDAÑO DE TEMAS DESCONOCIDOS.
+        // S024 -- los TEMAS no catalogados NO se sirven desde aqui.
         //
-        // Precisión de Miguel Ángel: *"cuando se ponen de
-        // desconocidos, nos referimos a temas Y artistas (...)
-        // desconocidas quiere decir que no han entrado en lista de
-        // éxito, o que están muy abajo y no han llegado a hacer lista
-        // de éxito del año"*.
+        // Se anadieron a esta porcion en esta misma sesion, por
+        // impulso, y produjeron el desastre que reporto Miguel Angel:
+        // se buscaba en YouTube el nombre del artista a secas y se
+        // aceptaba lo que viniera. Con 'Los Locos' vino
+        // "Los locos, Presentacion. Carnaval de Cadiz 2026" en una
+        // radio anclada en la movida madrilena.
         //
-        // O sea que la porción no se acaba cuando MusicBrainz deja de
-        // dar artistas NUEVOS: sigue habiendo temas no catalogados de
-        // artistas que cumplen el ancla, y el catálogo no-éxito de
-        // cualquier artista es profundo. Por eso esta porción no puede
-        // agotarse -- ver `exhaustPortion()`.
+        // El diseno documentado los coloca en CONOCIDOS, no aqui
+        // (DOCS/ANNEX_H08.md, tabla de porciones):
         //
-        // La única cautela es la suya: *"no poner del mismo artista
-        // más de una canción de cada diez"*, que ya impone la ventana
-        // de `RADIO_ARTIST_WINDOW` en `fetchRoundCandidate()`.
+        //   Conocidos     1o temas conocidos; 2o artistas conocidos
+        //                 con temas NO catalogados
+        //   Desconocidos  artistas sin exito catalogado, via MusicBrainz
         //
-        // Se pide un artista del diccionario que cumpla el ancla y se
-        // busca en YouTube SIN título concreto, que es justo lo que
-        // devuelve material fuera de lista.
-        // Aqui NO se excluyen los artistas ya usados: son justo de los
-        // que queremos OTRO tema. La unica restriccion es la ventana de
-        // diez, que es la que puso Miguel Angel.
-        val deepArtists = knownHitsRepository.knownArtists(
-            anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
-            anchorGenres = anchor.genres,
-        ).filter { !it.equals(anchorArtistName, ignoreCase = true) && !isArtistTooRecent(it) }
-        for (artist in deepArtists.shuffled().take(UNKNOWN_CANDIDATE_ATTEMPTS)) {
-            val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null)
-            if (item != null && knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs) {
-                RadioDebugLogger.log(
-                    appContext, storageManager,
-                    "fetchFromUnknown(ancla='$anchorArtistName') -> tema no catalogado de '$artist' " +
-                        "('${item.title}')",
-                )
-                return item
-            }
-        }
+        // `fetchFromKnown()` ya implementa ese peldano 2. Aqui sobraba.
         // El motivo distingue ahora los dos casos, que exigen arreglos
         // distintos: sin sugerencias es MusicBrainz; con sugerencias que
         // no resuelven es el filtro de YouTube.

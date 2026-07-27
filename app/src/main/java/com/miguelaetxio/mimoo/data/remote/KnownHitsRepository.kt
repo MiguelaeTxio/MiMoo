@@ -437,6 +437,35 @@ class KnownHitsRepository @Inject constructor(
      * diccionario en CUALQUIER década, antes de caer al campo
      * `country` de MusicBrainz como respaldo (ver RadioRepository).
      */
+    /**
+     * Géneros que el diccionario conoce de un artista, mirando todas
+     * las décadas y los dos orígenes.
+     *
+     * S024 -- existe para enriquecer el ANCLA. `resolveAnchor()` la
+     * construye desde MusicBrainz, y para el bloque español MusicBrainz
+     * es pobre: de Radio Futura solo da `rock`, carpeta raíz de 129
+     * descendientes con la que `matchesGenre()` cae al último peldaño y
+     * solo acepta lo que lleve literalmente `rock`. El diccionario, tras
+     * el enriquecimiento con Discogs, tiene de ese mismo grupo
+     * `[rock, pop rock, new wave, alternative rock, synth-pop]`.
+     *
+     * Sin esto, las 675 entradas nuevas del bloque español no se
+     * aprovechan cuando el ancla es justo uno de esos artistas.
+     */
+    fun genresOfArtist(artist: String): Set<String> {
+        val artistLower = artist.trim().lowercase()
+        if (artistLower.isBlank()) return emptySet()
+        val found = mutableSetOf<String>()
+        for (decade in byDecade.values) {
+            for (hit in decade.es + decade.intl) {
+                if (hit.artist.lowercase() == artistLower) {
+                    found += hit.genreSet
+                }
+            }
+        }
+        return found
+    }
+
     fun isKnownSpanishArtist(artist: String): Boolean {
         val artistLower = artist.trim().lowercase()
         if (artistLower.isBlank()) return false
