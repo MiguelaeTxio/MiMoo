@@ -312,13 +312,35 @@ def discogs_styles(name, token):
 
     time.sleep(DELAY_SECONDS)
     releases = fetch_json("%s/artists/%s/releases?%s" % (
-        DISCOGS_API, artist_id, urllib.parse.urlencode({"per_page": 25, "sort": "year"})
+        DISCOGS_API, artist_id, urllib.parse.urlencode({"per_page": 50, "sort": "year"})
     ), headers)
     if not releases:
         return artist_id, []
 
+    # S024, fallo real detectado al revisar el primer relleno. Sin
+    # filtrar aqui, el listado de un artista incluye TODO aquello donde
+    # aparece, y de ahi salian disparates:
+    #
+    #   Taburete       -> merengue, guaguanco, calypso, candombe...
+    #   Antonio Molina -> techno, makina, euro house...
+    #
+    # Taburete es pop rock y Antonio Molina cantaba coplas y murio en
+    # 1992. Los estilos no eran suyos: venian de recopilatorios de
+    # varios interpretes donde salia un tema suyo, y el disco entero
+    # aporta sus estilos al Counter.
+    #
+    #   role  -- 'Main' es obra propia. 'Appearance', 'TrackAppearance'
+    #            y 'Remix' son discos de otros.
+    #   comp  -- ademas se descartan los formatos marcados como
+    #            recopilacion, que agregan estilos de terceros aunque
+    #            el papel sea 'Main' (los 'grandes exitos de varios').
     styles = Counter()
-    for release in (releases.get("releases") or [])[:12]:
+    examined = 0
+    for release in releases.get("releases") or []:
+        if examined >= 12:
+            break
+        if (release.get("role") or "Main") != "Main":
+            continue
         main_id = release.get("main_release") or release.get("id")
         if not main_id or release.get("type") not in (None, "master", "release"):
             continue
@@ -326,6 +348,21 @@ def discogs_styles(name, token):
         detail = fetch_json("%s/releases/%s" % (DISCOGS_API, main_id), headers)
         if not detail:
             continue
+        formats = " ".join(
+            "%s %s" % (f.get("name") or "", " ".join(f.get("descriptions") or []))
+            for f in detail.get("formats") or []
+        ).lower()
+        if "compilation" in formats:
+            continue
+        # Un disco con muchos artistas distintos en los creditos es un
+        # recopilatorio aunque no venga marcado como tal.
+        credited = {
+            (a.get("name") or "").strip()
+            for a in detail.get("artists") or []
+        }
+        if len(credited) > 3:
+            continue
+        examined += 1
         for style in detail.get("styles") or []:
             styles[style] += 1
     return artist_id, [s for s, _ in styles.most_common()]
