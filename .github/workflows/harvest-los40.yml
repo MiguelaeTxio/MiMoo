@@ -1,0 +1,57 @@
+name: Cosechar listas de Los 40 (Espana)
+
+# Disparo MANUAL. Fase 1 de la ampliacion del diccionario: cosechar y
+# medir. NO toca known_hit_artists.json.
+on:
+  workflow_dispatch:
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cosechar las listas
+        run: python3 tools/harvest_los40_charts.py
+
+      - name: Salvar la cosecha como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-los40
+          path: |
+            tools/chart_los40_raw.json
+            tools/chart_los40_report.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commitear la cosecha si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_los40_raw.json tools/chart_los40_report.json
+          if git diff --cached --quiet; then
+            echo "La cosecha no ha cambiado respecto al commit anterior."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: cosecha de los numeros uno de Los 40 Principales
+
+          Salida de tools/harvest_los40_charts.py. Fase 1 de la
+          ampliacion del diccionario: se cosecha y se mide, no se
+          fusiona nada todavia. Una entrada de lista no trae genero, y
+          matchesGenre() descarta las entradas sin generos, asi que
+          antes de fusionar hay que enriquecer los artistas nuevos.
+          EOF
+          git pull --rebase origin main
+          git push
