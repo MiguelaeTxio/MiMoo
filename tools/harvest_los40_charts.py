@@ -59,7 +59,17 @@ OUT_REPORT = "tools/chart_los40_report.json"
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
 
 API = "https://es.wikipedia.org/w/api.php"
-PAGE = "Anexo:Los números uno de Los 40 Principales (España) %d"
+# La lista cambio de nombre por el camino: de 'Los 40 Principales' a
+# 'LOS40'. Las paginas de 2017 en adelante no aparecian con el titulo
+# antiguo -- nueve anos perdidos en la primera cosecha. Se prueban
+# varias formas y se usa la primera que exista.
+PAGE_TEMPLATES = [
+    "Anexo:Los números uno de Los 40 Principales (España) %d",
+    "Anexo:Los números uno de LOS40 (España) %d",
+    "Anexo:Los números uno de LOS40 %d",
+    "Anexo:Canciones número uno de Los 40 Principales (España) %d",
+    "Anexo:Sencillos number-one de Los 40 Principales (España) %d",
+]
 FIRST_YEAR = 1966
 LAST_YEAR = 2025
 
@@ -166,6 +176,24 @@ def parse_year(text, year):
                 quoted = QUOTED.search(row)
                 if quoted:
                     song, artist = clean(quoted.group(1)), links[0][1]
+                else:
+                    # S024 -- 711 filas se perdian en la primera cosecha
+                    # por exigir dos enlaces. En buena parte de los anos
+                    # el artista va enlazado y la cancion NO, en texto
+                    # plano dentro de su celda. Se rescata tomando la
+                    # celda con texto que no contiene el enlace ni es
+                    # una fecha.
+                    cells = [clean(c) for c in CELL_SPLIT.split(row)]
+                    linked = fold(links[0][1])
+                    plain = [
+                        c for c in cells
+                        if c and 2 < len(c) < 90
+                        and fold(c) != linked
+                        and not NOISE.match(c)
+                        and not re.match(r"^\d+$", c)
+                    ]
+                    if plain:
+                        song, artist = plain[0], links[0][1]
             if not song or not artist:
                 if row.count("|") >= 2 and len(row.strip()) > 20:
                     unparsed += 1
@@ -192,10 +220,17 @@ def main():
     missing_pages = []
     unparsed_total = 0
     for year in range(FIRST_YEAR, LAST_YEAR + 1):
-        text = wikitext(PAGE % year)
+        text = None
+        used = None
+        for template in PAGE_TEMPLATES:
+            text = wikitext(template % year)
+            if text is not None:
+                used = template
+                break
+            time.sleep(DELAY_SECONDS)
         if text is None:
             missing_pages.append(year)
-            print("[%d] pagina no encontrada" % year, flush=True)
+            print("[%d] pagina no encontrada con ningun titulo conocido" % year, flush=True)
             time.sleep(DELAY_SECONDS)
             continue
         rows, unparsed = parse_year(text, year)
