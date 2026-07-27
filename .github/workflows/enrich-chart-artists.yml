@@ -1,0 +1,49 @@
+name: Enriquecer artistas de las listas
+
+# Disparo MANUAL. Fase 2: pais y genero de los artistas cosechados.
+# NO toca known_hit_artists.json -- la fusion es un paso aparte.
+on:
+  workflow_dispatch:
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Enriquecer
+        env:
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+        run: python3 tools/enrich_chart_artists.py
+
+      - name: Salvar como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-enriched
+          path: tools/chart_los40_enriched.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commitear si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_los40_enriched.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios."
+            exit 0
+          fi
+          git commit -m "data: pais y genero de los artistas de las listas de Los 40"
+          git pull --rebase origin main
+          git push
