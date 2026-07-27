@@ -22,8 +22,7 @@
     "Punk",
     "Glam",
     "Pop Rock",
-    "Post-Punk",
-    "Pop Punk"
+    "Post-Punk"
    ],
    "wikidata": [
     "pop rock"
@@ -87,16 +86,9 @@
   "Antonio Molina": {
    "decade": 1960,
    "discogs": [
-    "Techno",
-    "Synth-pop",
-    "Makina",
-    "Electro",
     "Flamenco",
     "Bolero",
-    "Mambo",
-    "Breaks",
-    "Euro House",
-    "House"
+    "Mambo"
    ],
    "wikidata": [],
    "wikipedia": []
@@ -195,16 +187,8 @@
   "Blanca Paloma": {
    "decade": 2020,
    "discogs": [
-    "Ballad",
-    "Dance-pop",
     "Flamenco",
-    "Europop",
-    "Synth-pop",
-    "Ethno-pop",
-    "Indie Pop",
-    "Hard Rock",
-    "Catalan Music",
-    "Galician Traditional"
+    "Ballad"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -274,10 +258,9 @@
    "decade": 2010,
    "discogs": [
     "Indie Rock",
-    "Alternative Rock",
     "Indie Pop",
-    "Synth-pop",
-    "Shoegaze"
+    "Alternative Rock",
+    "Synth-pop"
    ],
    "wikidata": [
     "punk rock",
@@ -301,13 +284,8 @@
    "decade": 2020,
    "discogs": [
     "House",
-    "Electro",
     "Garage House",
-    "Electro House",
-    "Rhythm & Blues",
-    "Soul",
-    "Grime",
-    "RnB/Swing"
+    "Electro"
    ],
    "wikidata": [],
    "wikipedia": []
@@ -328,16 +306,17 @@
   "Christina Rosenvinge": {
    "decade": 2000,
    "discogs": [
-    "Pop Rock",
+    "Indie Rock",
     "Folk Rock",
     "Soft Rock",
     "Indie Pop",
     "Art Rock",
-    "Indie Rock",
     "Rock & Roll",
+    "Pop Rock",
     "Alternative Rock",
     "Acoustic",
-    "Heavy Metal"
+    "Post Rock",
+    "Vocal"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -354,14 +333,7 @@
   },
   "Dani Fernández": {
    "decade": 2020,
-   "discogs": [
-    "Alternative Rock",
-    "Electro",
-    "Power Pop",
-    "Mod",
-    "Latin Pop",
-    "Free Jazz"
-   ],
+   "discogs": [],
    "wikidata": [
     "pop music",
     "Latin pop"
@@ -375,7 +347,8 @@
     "Ballad",
     "Rockabilly",
     "Rock & Roll",
-    "Alternative Rock"
+    "Alternative Rock",
+    "Europop"
    ],
    "wikidata": [
     "pop music"
@@ -438,8 +411,8 @@
    "discogs": [
     "Pop Rock",
     "Rockabilly",
-    "Acoustic",
     "Rock & Roll",
+    "Acoustic",
     "Indie Rock",
     "Indie Pop",
     "Power Pop",
@@ -459,8 +432,7 @@
     "Coldwave",
     "Post-Punk",
     "New Wave",
-    "Goth Rock",
-    "Alternative Rock"
+    "Goth Rock"
    ],
    "wikidata": [
     "punk rock"
@@ -474,12 +446,10 @@
    "discogs": [
     "Ballad",
     "Rock & Roll",
-    "Pop Rock",
     "Vocal",
     "Soundtrack",
-    "Soft Rock",
-    "Rhythm & Blues",
     "Surf",
+    "Pop Rock",
     "Yé-Yé"
    ],
    "wikidata": [
@@ -504,9 +474,7 @@
     "Pop Rock",
     "Folk",
     "Rumba",
-    "Bolero",
-    "Comedy",
-    "Nueva Cancion"
+    "Bolero"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -519,10 +487,7 @@
     "Pop Rock",
     "Vocal",
     "Celtic",
-    "Latin Pop",
-    "Ballad",
-    "Flamenco",
-    "Rhythm & Blues"
+    "Ballad"
    ],
    "wikidata": [
     "pop rock",
@@ -560,9 +525,8 @@
    "discogs": [
     "Funk",
     "Disco",
-    "Soul",
     "Electro",
-    "Conscious"
+    "Soul"
    ],
    "wikidata": [
     "pop music"
@@ -590,13 +554,11 @@
    "decade": 1980,
    "discogs": [
     "Synth-pop",
-    "New Wave",
     "Indie Rock",
     "Pop Rock",
+    "New Wave",
     "Salsa",
-    "Art Rock",
-    "Alternative Rock",
-    "Goth Rock"
+    "Art Rock"
    ],
    "wikidata": [
     "new wave",
@@ -631,9 +593,7 @@
     "Alternative Rock",
     "Post Rock",
     "Experimental",
-    "Pop Rock",
-    "Indie Pop",
-    "Indie Rock"
+    "Pop Rock"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -645,8 +605,8 @@
    "decade": 2010,
    "discogs": [
     "Pop Rock",
-    "Indie Rock",
-    "Indie Pop"
+    "Indie Pop",
+    "Indie Rock"
    ],
    "wikidata": [
     "indie rock"
@@ -692,22 +652,12 @@
   "Judeline": {
    "decade": 2020,
    "discogs": [
-    "Reggaeton",
     "Flamenco",
-    "Score",
-    "Trap",
+    "Reggaeton",
     "Hip Hop",
     "Downtempo",
     "Indie Pop",
-    "Vocal",
-    "Alt-Pop",
-    "Ballad",
-    "Soundtrack",
-    "Darkwave",
-    "Industrial",
-    "Synthwave",
-    "Electro",
-    "Dark Electro"
+    "Vocal"
    ],
    "wikidata": [
     "indie pop"
@@ -745,7 +695,8 @@
     "Flamenco",
     "Pop Rock",
     "Rumba",
-    "Vocal"
+    "Vocal",
+    "Acoustic"
    ],
    "wikidata": [
     "pop music"
@@ -792,12 +743,10 @@
    "discogs": [
     "Pop Punk",
     "Power Pop",
-    "Alternative Rock",
-    "Indie Rock",
-    "Emo",
     "Pop Rock",
     "Alt-Pop",
-    "Indie Pop"
+    "Indie Pop",
+    "Alternative Rock"
    ],
    "wikidata": [
     "pop-punk"
@@ -817,11 +766,7 @@
     "Tech House",
     "Deep House",
     "Techno",
-    "House",
-    "Tribal House",
-    "Progressive House",
-    "Progressive Trance",
-    "Acid"
+    "House"
    ],
    "wikidata": [],
    "wikipedia": []
@@ -830,8 +775,8 @@
    "decade": 1960,
    "discogs": [
     "Catalan Music",
-    "Ballad",
     "Nueva Cancion",
+    "Ballad",
     "Folk"
    ],
    "wikidata": [
@@ -851,14 +796,7 @@
   },
   "Los Canarios": {
    "decade": 1960,
-   "discogs": [
-    "Pop Rock",
-    "Rock & Roll",
-    "House",
-    "Latin",
-    "Banda",
-    "Corrido"
-   ],
+   "discogs": [],
    "wikidata": [],
    "wikipedia": [
     "Pop rock",
@@ -961,8 +899,7 @@
    "discogs": [
     "Cumbia",
     "Guaracha",
-    "Psychedelic",
-    "Beat"
+    "Psychedelic"
    ],
    "wikidata": [],
    "wikipedia": []
@@ -972,7 +909,8 @@
    "discogs": [
     "Pop Rock",
     "Ballad",
-    "Vocal"
+    "Vocal",
+    "Psychedelic Rock"
    ],
    "wikidata": [
     "pop music"
@@ -1203,7 +1141,6 @@
   "Natos y Waor": {
    "decade": 2010,
    "discogs": [
-    "Gangsta",
     "Tech House",
     "Electro"
    ],
@@ -1224,17 +1161,8 @@
   "Nebulossa": {
    "decade": 2020,
    "discogs": [
-    "Europop",
     "Synth-pop",
-    "Pop Rock",
-    "Catalan Music",
-    "Dance-pop",
-    "Italo-Disco",
-    "Disco",
-    "Reggaeton",
-    "Indie Pop",
-    "Ballad",
-    "Euro-Disco"
+    "Italo-Disco"
    ],
    "wikidata": [
     "electropop",
@@ -1264,10 +1192,7 @@
    "decade": 2010,
    "discogs": [
     "Latin Pop",
-    "Europop",
-    "Indie Pop",
-    "Ska",
-    "Pop Rock"
+    "Indie Pop"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -1403,14 +1328,7 @@
    "discogs": [
     "Reggaeton",
     "Latin Pop",
-    "Dance-pop",
-    "Bachata",
-    "Latin",
-    "Hardcore Hip-Hop",
-    "Pop Rap",
-    "Hip Hop",
-    "Electro House",
-    "Pop Rock"
+    "Latin"
    ],
    "wikidata": [
     "Latin trap",
@@ -1421,8 +1339,7 @@
   "Quevedo": {
    "decade": 2020,
    "discogs": [
-    "Reggaeton",
-    "Trap"
+    "Reggaeton"
    ],
    "wikidata": [],
    "wikipedia": []
@@ -1430,21 +1347,9 @@
   "Ralphie Choo": {
    "decade": 2020,
    "discogs": [
-    "Alt-Pop",
-    "Reggaeton",
-    "Trap",
-    "Ballad",
-    "Bossanova",
     "Jungle",
-    "Europop",
-    "Latin Pop",
-    "Folk",
-    "Villancicos",
-    "Holiday",
-    "Indie Pop",
-    "Acoustic",
-    "Neofolk",
-    "Folk Rock"
+    "Trap",
+    "Reggaeton"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -1469,21 +1374,7 @@
   },
   "Rayden": {
    "decade": 2010,
-   "discogs": [
-    "Ballad",
-    "Freestyle",
-    "Hi NRG",
-    "Synth-pop",
-    "Boom Bap",
-    "Trova",
-    "Hardcore",
-    "Hardstyle",
-    "Breakbeat",
-    "Breaks",
-    "Funk",
-    "Vocal",
-    "Light Music"
-   ],
+   "discogs": [],
    "wikidata": [
     "hip-hop"
    ],
@@ -1587,9 +1478,7 @@
    "decade": 2020,
    "discogs": [
     "Instrumental",
-    "Conscious",
-    "Makina",
-    "Hip Hop"
+    "Makina"
    ],
    "wikidata": [
     "pop rock",
@@ -1606,11 +1495,10 @@
   "Sangre Azul": {
    "decade": 1980,
    "discogs": [
-    "Glam",
     "Classic Rock",
+    "Glam",
     "Hard Rock",
-    "Heavy Metal",
-    "AOR"
+    "Heavy Metal"
    ],
    "wikidata": [
     "hard rock"
@@ -1713,10 +1601,7 @@
    "discogs": [
     "Ballad",
     "Pop Rock",
-    "Religious",
-    "Hardcore Hip-Hop",
-    "Euro-Disco",
-    "Dance-pop"
+    "Religious"
    ],
    "wikidata": [],
    "wikipedia": []
@@ -1727,10 +1612,7 @@
     "Pop Rock",
     "Indie Rock",
     "Indie Pop",
-    "Alternative Rock",
-    "Bolero",
-    "Europop",
-    "Latin Pop"
+    "Alternative Rock"
    ],
    "wikidata": [
     "indie rock",
@@ -1745,36 +1627,17 @@
   },
   "Taburete": {
    "decade": 2010,
-   "discogs": [
-    "Rumba",
-    "Latin Pop",
-    "Folk",
-    "Cubano",
-    "Son",
-    "Merengue",
-    "Guaguancó",
-    "Bolero",
-    "Mento",
-    "Porro",
-    "Calypso",
-    "Reggae",
-    "Afro-Cuban",
-    "Afrobeat",
-    "Funk",
-    "Aboriginal",
-    "African",
-    "Spirituals",
-    "Candombe"
-   ],
+   "discogs": [],
    "wikidata": [],
    "wikipedia": []
   },
   "Tote King": {
    "decade": 2000,
    "discogs": [
-    "Hip Hop",
     "Conscious",
-    "Boom Bap"
+    "Hip Hop",
+    "Boom Bap",
+    "Hardcore Hip-Hop"
    ],
    "wikidata": [],
    "wikipedia": [
@@ -1783,12 +1646,7 @@
   },
   "Vanesa Martín": {
    "decade": 2010,
-   "discogs": [
-    "Vocal",
-    "Indie Pop",
-    "Pop Rock",
-    "Ballad"
-   ],
+   "discogs": [],
    "wikidata": [
     "Latin pop"
    ],
@@ -1798,8 +1656,8 @@
    "decade": 2000,
    "discogs": [
     "Indie Rock",
-    "Indie Pop",
     "Alternative Rock",
+    "Indie Pop",
     "Pop Rock"
    ],
    "wikidata": [
@@ -1815,8 +1673,8 @@
   "Viva Suecia": {
    "decade": 2010,
    "discogs": [
-    "Indie Pop",
     "Indie Rock",
+    "Indie Pop",
     "Pop Rock",
     "Alternative Rock"
    ],
@@ -1827,8 +1685,7 @@
    "decade": 2010,
    "discogs": [
     "Indie Pop",
-    "Indie Rock",
-    "Big Beat"
+    "Indie Rock"
    ],
    "wikidata": [
     "pop music"
@@ -1842,12 +1699,12 @@
  },
  "summary": {
   "discogs": {
-   "concrete": 107,
-   "covered": 108,
-   "labels": 556,
-   "landed": 450,
+   "concrete": 102,
+   "covered": 103,
+   "labels": 418,
+   "landed": 342,
    "total": 125,
-   "useful": 107
+   "useful": 102
   },
   "wikidata": {
    "concrete": 45,
