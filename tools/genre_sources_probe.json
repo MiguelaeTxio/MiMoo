@@ -1,77 +1,5 @@
 {
  "artists": {
-  "Aguaviva": {
-   "decade": 1970,
-   "discogs": [
-    "Folk Rock",
-    "Poetry",
-    "Prog Rock",
-    "Chanson",
-    "Neo-Romantic",
-    "Vocal",
-    "Acoustic"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Alaska y Los Pegamoides": {
-   "decade": 1980,
-   "discogs": [
-    "New Wave",
-    "Synth-pop",
-    "Punk",
-    "Glam",
-    "Pop Rock",
-    "Post-Punk"
-   ],
-   "wikidata": [
-    "pop rock"
-   ],
-   "wikipedia": [
-    "Electropop",
-    "dance-pop",
-    "synth-pop",
-    "house music",
-    "art pop"
-   ]
-  },
-  "Alizzz": {
-   "decade": 2020,
-   "discogs": [
-    "Hip Hop",
-    "House",
-    "Breaks",
-    "Electro",
-    "Dubstep",
-    "RnB/Swing",
-    "Synth-pop",
-    "Electro House",
-    "Jersey Club",
-    "Pop Rap",
-    "Son"
-   ],
-   "wikidata": [
-    "contemporary R&B",
-    "indie pop"
-   ],
-   "wikipedia": [
-    "R&B",
-    "Electronica (music)"
-   ]
-  },
-  "Amistades Peligrosas": {
-   "decade": 1990,
-   "discogs": [
-    "Pop Rock",
-    "Synth-pop",
-    "Vocal",
-    "Europop"
-   ],
-   "wikidata": [
-    "pop music"
-   ],
-   "wikipedia": []
-  },
   "Andy y Lucas": {
    "decade": 2000,
    "discogs": [],
@@ -83,71 +11,18 @@
     "flamenco"
    ]
   },
-  "Antonio Molina": {
-   "decade": 1960,
-   "discogs": [
-    "Flamenco",
-    "Bolero",
-    "Mambo"
-   ],
+  "Auryn": {
+   "decade": 2010,
+   "discogs": [],
    "wikidata": [],
-   "wikipedia": []
-  },
-  "Antonio Vega": {
-   "decade": 1990,
-   "discogs": [
-    "Pop Rock"
-   ],
-   "wikidata": [
-    "pop music"
-   ],
    "wikipedia": [
     "Pop music",
-    "Rock music"
-   ]
-  },
-  "Asfalto": {
-   "decade": 1970,
-   "discogs": [
-    "Prog Rock",
-    "Pop Rock",
-    "Classic Rock",
-    "Hard Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Bambino": {
-   "decade": 1970,
-   "discogs": [
-    "Flamenco",
-    "Rumba",
-    "Religious",
-    "Villancicos",
-    "Holiday",
-    "Aboriginal",
-    "African",
-    "Afro-Cuban"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Barricada": {
-   "decade": 1980,
-   "discogs": [
-    "Hard Rock",
-    "Punk",
-    "Rock & Roll"
-   ],
-   "wikidata": [
-    "hard rock",
-    "Basque radical rock"
-   ],
-   "wikipedia": [
-    "Hard rock",
-    "heavy metal music",
-    "AllMusic",
-    "punk rock"
+    "pop rock",
+    "teen pop",
+    "soft rock",
+    "electro pop",
+    "britpop",
+    "dance pop"
    ]
   },
   "Bebo & Cigala": {
@@ -155,26 +30,6 @@
    "discogs": [],
    "wikidata": [],
    "wikipedia": []
-  },
-  "Belén Aguilera": {
-   "decade": 2020,
-   "discogs": [
-    "Indie Pop",
-    "Ballad",
-    "Alt-Pop",
-    "Vocal",
-    "Synth-pop"
-   ],
-   "wikidata": [
-    "pop music",
-    "electronica",
-    "rhythm and blues"
-   ],
-   "wikipedia": [
-    "Pop music",
-    "Electronica",
-    "Rhythm and blues"
-   ]
   },
   "Beret": {
    "decade": 2010,
@@ -184,49 +39,38 @@
     "Latin pop"
    ]
   },
-  "Blanca Paloma": {
-   "decade": 2020,
+  "Boikot": {
+   "decade": 1990,
    "discogs": [
-    "Flamenco",
-    "Ballad"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "New flamenco"
-   ]
-  },
-  "Blas Cantó": {
-   "decade": 2010,
-   "discogs": [
-    "Vocal",
-    "Ballad",
-    "Europop",
-    "Funk",
-    "Folk",
-    "Acoustic"
+    "Punk",
+    "Pop Rock",
+    "Hard Rock"
    ],
    "wikidata": [
-    "Latin pop",
-    "pop music"
-   ],
-   "wikipedia": [
-    "Pop music"
-   ]
-  },
-  "Bruno Lomas": {
-   "decade": 1960,
-   "discogs": [
-    "Rock & Roll",
-    "Vocal",
-    "Soul"
-   ],
-   "wikidata": [
+    "punk rock",
     "rock music"
    ],
    "wikipedia": [
-    "Rock music",
-    "Rockabilly"
+    "Hardcore punk",
+    "Punk rock",
+    "Ska punk"
    ]
+  },
+  "Burning": {
+   "decade": 1970,
+   "discogs": [
+    "Rock & Roll",
+    "Classic Rock",
+    "Pop Rock",
+    "Hard Rock",
+    "Glam",
+    "Theme"
+   ],
+   "wikidata": [
+    "thriller film",
+    "drama film"
+   ],
+   "wikipedia": []
   },
   "Bustamante": {
    "decade": 2000,
@@ -234,44 +78,29 @@
    "wikidata": [],
    "wikipedia": []
   },
-  "Café Quijano": {
-   "decade": 2000,
-   "discogs": [
-    "Bolero",
-    "Afro-Cuban",
-    "Vallenato",
-    "Pop Rock",
-    "Latin",
-    "Euro House"
-   ],
-   "wikidata": [
-    "rock music"
-   ],
-   "wikipedia": [
-    "Rock music",
-    "Pop music",
-    "blues",
-    "Latin music (genre)"
-   ]
-  },
-  "Carolina Durante": {
+  "C. Tangana": {
    "decade": 2010,
    "discogs": [
-    "Indie Rock",
-    "Indie Pop",
-    "Alternative Rock",
-    "Synth-pop"
+    "Alt-Pop",
+    "Hip Hop",
+    "Trap",
+    "Boom Bap",
+    "Pop Rap",
+    "Reggaeton"
    ],
    "wikidata": [
-    "punk rock",
-    "indie rock",
-    "pop rock"
+    "hip-hop",
+    "new flamenco",
+    "pop rap"
    ],
    "wikipedia": [
-    "Rock music",
-    "pop rock",
-    "indie rock",
-    "pop-punk"
+    "Spanish hip hop",
+    "Reggaeton",
+    "Contemporary R&B",
+    "Pop rap",
+    "Latin pop",
+    "Afrobeat",
+    "Latin music"
    ]
   },
   "Cecilia": {
@@ -279,51 +108,6 @@
    "discogs": [],
    "wikidata": [],
    "wikipedia": []
-  },
-  "Chanel": {
-   "decade": 2020,
-   "discogs": [
-    "House",
-    "Garage House",
-    "Electro"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Chenoa": {
-   "decade": 2000,
-   "discogs": [
-    "Europop"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Pop music",
-    "Dance-pop",
-    "Contemporary R&B",
-    "Latin pop"
-   ]
-  },
-  "Christina Rosenvinge": {
-   "decade": 2000,
-   "discogs": [
-    "Indie Rock",
-    "Folk Rock",
-    "Soft Rock",
-    "Indie Pop",
-    "Art Rock",
-    "Rock & Roll",
-    "Pop Rock",
-    "Alternative Rock",
-    "Acoustic",
-    "Post Rock",
-    "Vocal"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Alternative rock",
-    "Pop music",
-    "Indie music"
-   ]
   },
   "Concha Velasco": {
    "decade": 1960,
@@ -340,51 +124,20 @@
    ],
    "wikipedia": []
   },
-  "Dani Martín": {
-   "decade": 2010,
+  "Def Con Dos": {
+   "decade": 1990,
    "discogs": [
-    "Pop Rock",
-    "Ballad",
-    "Rockabilly",
-    "Rock & Roll",
-    "Alternative Rock",
-    "Europop"
+    "Hip Hop",
+    "Nu Metal",
+    "Punk",
+    "Hardcore",
+    "Hard Rock"
    ],
    "wikidata": [
-    "pop music"
+    "rapcore"
    ],
    "wikipedia": [
-    "Alternative rock",
-    "Pop rock",
-    "Pop music"
-   ]
-  },
-  "Danza Invisible": {
-   "decade": 1980,
-   "discogs": [
-    "New Wave",
-    "Alternative Rock",
-    "Pop Rock",
-    "Synth-pop"
-   ],
-   "wikidata": [
-    "new wave"
-   ],
-   "wikipedia": []
-  },
-  "David DeMaría": {
-   "decade": 2000,
-   "discogs": [
-    "Ballad",
-    "Vocal"
-   ],
-   "wikidata": [
-    "pop music"
-   ],
-   "wikipedia": [
-    "Flamenco",
-    "Latin pop",
-    "Latin ballad"
+    "Rap metal"
    ]
   },
   "Deluxe": {
@@ -406,59 +159,6 @@
    "wikidata": [],
    "wikipedia": []
   },
-  "Duncan Dhu": {
-   "decade": 1980,
-   "discogs": [
-    "Pop Rock",
-    "Rockabilly",
-    "Rock & Roll",
-    "Acoustic",
-    "Indie Rock",
-    "Indie Pop",
-    "Power Pop",
-    "Ballad"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Rock en español",
-    "rockabilly",
-    "soft rock",
-    "pop rock"
-   ]
-  },
-  "Décima Víctima": {
-   "decade": 1980,
-   "discogs": [
-    "Coldwave",
-    "Post-Punk",
-    "New Wave",
-    "Goth Rock"
-   ],
-   "wikidata": [
-    "punk rock"
-   ],
-   "wikipedia": [
-    "Post-punk"
-   ]
-  },
-  "Dúo Dinámico": {
-   "decade": 1960,
-   "discogs": [
-    "Ballad",
-    "Rock & Roll",
-    "Vocal",
-    "Soundtrack",
-    "Surf",
-    "Pop Rock",
-    "Yé-Yé"
-   ],
-   "wikidata": [
-    "pop music"
-   ],
-   "wikipedia": [
-    "Pop (music)"
-   ]
-  },
   "Efecto Mariposa": {
    "decade": 2000,
    "discogs": [],
@@ -468,48 +168,18 @@
     "rock"
    ]
   },
-  "El Kanka": {
-   "decade": 2010,
+  "Ella Baila Sola": {
+   "decade": 1990,
    "discogs": [
-    "Pop Rock",
+    "Ballad",
     "Folk",
-    "Rumba",
-    "Bolero"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Singer-songwriter"
-   ]
-  },
-  "El Sueño de Morfeo": {
-   "decade": 2000,
-   "discogs": [
-    "Pop Rock",
-    "Vocal",
-    "Celtic",
-    "Ballad"
+    "Country"
    ],
    "wikidata": [
-    "pop rock",
-    "Celtic music",
-    "folk music",
-    "pop music"
+    "pop rock"
    ],
    "wikipedia": [
-    "Pop rock",
-    "Celtic music",
-    "power pop"
-   ]
-  },
-  "El Último de la Fila": {
-   "decade": 1980,
-   "discogs": [
-    "Pop Rock",
-    "Rock & Roll"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Pop-rock"
+    "Pop music"
    ]
   },
   "Enrique y Ana": {
@@ -519,6 +189,36 @@
    ],
    "wikidata": [],
    "wikipedia": []
+  },
+  "Eskorbuto": {
+   "decade": 1980,
+   "discogs": [
+    "Punk",
+    "Hardcore"
+   ],
+   "wikidata": [
+    "punk rock",
+    "anarcho-punk"
+   ],
+   "wikipedia": []
+  },
+  "Fito & Fitipaldis": {
+   "decade": 2000,
+   "discogs": [
+    "Pop Rock"
+   ],
+   "wikidata": [
+    "rock music"
+   ],
+   "wikipedia": [
+    "Rock and roll",
+    "blues rock",
+    "rockabilly",
+    "rhythm and blues",
+    "Swing music",
+    "jazz",
+    "Latin rock"
+   ]
   },
   "Fórmula V": {
    "decade": 1960,
@@ -530,109 +230,25 @@
     "Pop music"
    ]
   },
-  "Georgie Dann": {
-   "decade": 1970,
+  "Héroes del Silencio": {
+   "decade": 1990,
    "discogs": [
-    "Chanson",
-    "Vocal",
-    "Twist",
     "Pop Rock",
-    "Yé-Yé",
-    "Beat",
-    "Rock & Roll",
-    "Ballad"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Golpes Bajos": {
-   "decade": 1980,
-   "discogs": [
-    "Synth-pop",
-    "Indie Rock",
-    "Pop Rock",
-    "New Wave",
-    "Salsa",
-    "Art Rock"
+    "Alternative Rock",
+    "Hard Rock"
    ],
    "wikidata": [
-    "new wave",
-    "electronic pop",
-    "pop art"
+    "rock music",
+    "pop rock",
+    "hard rock",
+    "cumbia"
    ],
    "wikipedia": [
-    "Sophisti-pop",
-    "new wave music",
-    "art pop",
+    "Rock music",
+    "hard rock",
+    "gothic rock",
     "post-punk"
    ]
-  },
-  "Guitarricadelafuente": {
-   "decade": 2020,
-   "discogs": [
-    "Indie Pop",
-    "Ballad",
-    "Vocal"
-   ],
-   "wikidata": [
-    "contemporary folk music"
-   ],
-   "wikipedia": [
-    "New flamenco",
-    "chamber folk"
-   ]
-  },
-  "Iván Ferreiro": {
-   "decade": 2000,
-   "discogs": [
-    "Alternative Rock",
-    "Post Rock",
-    "Experimental",
-    "Pop Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Indie rock",
-    "indie pop"
-   ]
-  },
-  "Izal": {
-   "decade": 2010,
-   "discogs": [
-    "Pop Rock",
-    "Indie Pop",
-    "Indie Rock"
-   ],
-   "wikidata": [
-    "indie rock"
-   ],
-   "wikipedia": []
-  },
-  "Jarcha": {
-   "decade": 1970,
-   "discogs": [
-    "Folk",
-    "Ballad",
-    "Flamenco",
-    "Political",
-    "Poetry",
-    "Copla"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Juan Pardo": {
-   "decade": 1970,
-   "discogs": [
-    "Ballad",
-    "Vocal"
-   ],
-   "wikidata": [
-    "easy listening",
-    "pop music",
-    "rock music"
-   ],
-   "wikipedia": []
   },
   "Juan y Junior": {
    "decade": 1960,
@@ -644,23 +260,15 @@
     "Pop music"
    ]
   },
-  "Judeline": {
-   "decade": 2020,
+  "Kaka de Luxe": {
+   "decade": 1970,
    "discogs": [
-    "Flamenco",
-    "Reggaeton",
-    "Hip Hop",
-    "Downtempo",
-    "Indie Pop",
-    "Vocal"
+    "Punk"
    ],
    "wikidata": [
-    "indie pop"
+    "punk rock"
    ],
-   "wikipedia": [
-    "Pop music",
-    "Indie"
-   ]
+   "wikipedia": []
   },
   "Karina": {
    "decade": 1960,
@@ -668,124 +276,67 @@
    "wikidata": [],
    "wikipedia": []
   },
-  "Kase.O": {
-   "decade": 2010,
-   "discogs": [
-    "Hardcore Hip-Hop",
-    "Jazzy Hip-Hop",
-    "Gangsta"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Hip-hop",
-    "Hardcore hip-hop",
-    "Political hip-hop",
-    "Jazz rap",
-    "Funk"
-   ]
-  },
-  "Kiko Veneno": {
-   "decade": 1980,
-   "discogs": [
-    "Flamenco",
-    "Pop Rock",
-    "Rumba",
-    "Vocal",
-    "Acoustic"
-   ],
-   "wikidata": [
-    "pop music"
-   ],
-   "wikipedia": []
-  },
-  "La Cabra Mecánica": {
-   "decade": 2000,
-   "discogs": [
-    "Pop Rock",
-    "Rumba",
-    "Cumbia",
-    "Prog Rock"
-   ],
-   "wikidata": [
-    "pop rock",
-    "Catalan rumba"
-   ],
-   "wikipedia": []
-  },
-  "La Frontera": {
-   "decade": 1980,
-   "discogs": [
-    "Rock & Roll",
-    "Country Rock",
-    "Pop Rock",
-    "Alternative Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "La Guardia": {
-   "decade": 1980,
-   "discogs": [
-    "Pop Rock",
-    "Ballad",
-    "Vocal"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "La La Love You": {
-   "decade": 2020,
-   "discogs": [
-    "Pop Punk",
-    "Power Pop",
-    "Pop Rock",
-    "Alt-Pop",
-    "Indie Pop",
-    "Alternative Rock"
-   ],
-   "wikidata": [
-    "pop-punk"
-   ],
-   "wikipedia": [
-    "Pop-punk",
-    "Indie rock",
-    "Alternative rock",
-    "Geek rock",
-    "Power pop",
-    "Pop rock"
-   ]
-  },
-  "Leiva": {
-   "decade": 2010,
-   "discogs": [
-    "Tech House",
-    "Deep House",
-    "Techno",
-    "House"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Lluís Llach": {
-   "decade": 1960,
-   "discogs": [
-    "Catalan Music",
-    "Nueva Cancion",
-    "Ballad",
-    "Folk"
-   ],
-   "wikidata": [
-    "protest song"
-   ],
-   "wikipedia": []
-  },
-  "Lole y Manuel": {
+  "La Banda Trapera del Río": {
    "decade": 1970,
    "discogs": [
-    "Flamenco"
+    "Punk",
+    "Hard Rock",
+    "Garage Rock",
+    "Rock & Roll"
+   ],
+   "wikidata": [
+    "rock music",
+    "punk rock",
+    "garage rock"
+   ],
+   "wikipedia": []
+  },
+  "La Polla Records": {
+   "decade": 1980,
+   "discogs": [
+    "Punk"
+   ],
+   "wikidata": [
+    "punk rock"
+   ],
+   "wikipedia": [
+    "Punk rock",
+    "hardcore punk"
+   ]
+  },
+  "Las Grecas": {
+   "decade": 1970,
+   "discogs": [
+    "Flamenco",
+    "Rumba",
+    "Pop Rock",
+    "Funk",
+    "Glam",
+    "Prog Rock",
+    "Psychedelic Rock"
    ],
    "wikidata": [
     "new flamenco"
+   ],
+   "wikipedia": [
+    "Flamenco",
+    "Rock music"
+   ]
+  },
+  "Loquillo": {
+   "decade": 1980,
+   "discogs": [
+    "Rock & Roll",
+    "Rockabilly",
+    "Chanson",
+    "Folk Rock"
+   ],
+   "wikidata": [
+    "rock music",
+    "rockabilly",
+    "country rock",
+    "soft rock",
+    "hard rock"
    ],
    "wikipedia": []
   },
@@ -799,41 +350,6 @@
     "progressive rock"
    ]
   },
-  "Los Chichos": {
-   "decade": 1970,
-   "discogs": [
-    "Rumba",
-    "Flamenco"
-   ],
-   "wikidata": [
-    "rumba flamenca"
-   ],
-   "wikipedia": [
-    "Rumba flamenca"
-   ]
-  },
-  "Los Delinqüentes": {
-   "decade": 2000,
-   "discogs": [
-    "Rumba",
-    "Flamenco",
-    "Pachanga",
-    "Acoustic",
-    "Folk Rock",
-    "Southern Rock",
-    "Punk",
-    "Blues Rock",
-    "Reggae",
-    "Pop Rock"
-   ],
-   "wikidata": [
-    "Cuban rumba",
-    "pop music",
-    "rock music",
-    "flamenco"
-   ],
-   "wikipedia": []
-  },
   "Los Diablos": {
    "decade": 1960,
    "discogs": [],
@@ -844,87 +360,51 @@
     "Classical Music"
    ]
   },
-  "Los Enemigos": {
-   "decade": 1980,
-   "discogs": [
-    "Rock & Roll",
-    "Blues Rock",
-    "Hard Rock",
-    "Garage Rock",
-    "Pop Rock",
-    "Classic Rock"
-   ],
-   "wikidata": [
-    "rock and roll"
-   ],
-   "wikipedia": []
-  },
-  "Los Manolos": {
-   "decade": 1990,
-   "discogs": [
-    "Rumba",
-    "Flamenco",
-    "Europop"
-   ],
-   "wikidata": [
-    "Catalan rumba"
-   ],
-   "wikipedia": []
-  },
   "Los Módulos": {
    "decade": 1960,
    "discogs": [],
    "wikidata": [],
    "wikipedia": []
   },
-  "Los Payos": {
-   "decade": 1960,
+  "Los Nikis": {
+   "decade": 1980,
    "discogs": [
-    "Vocal",
-    "Rumba",
-    "Calypso"
+    "Punk",
+    "Pop Rock",
+    "Pop Punk",
+    "Rock & Roll",
+    "New Wave"
    ],
    "wikidata": [
-    "Latin pop"
+    "pop-punk"
    ],
-   "wikipedia": []
+   "wikipedia": [
+    "Pop-punk",
+    "punk rock"
+   ]
   },
-  "Los Pecos": {
-   "decade": 1970,
-   "discogs": [
-    "Cumbia",
-    "Guaracha",
-    "Psychedelic"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Los Puntos": {
-   "decade": 1970,
+  "Los Rodríguez": {
+   "decade": 1990,
    "discogs": [
     "Pop Rock",
-    "Ballad",
-    "Vocal",
-    "Psychedelic Rock"
+    "Classic Rock",
+    "Rock & Roll"
    ],
    "wikidata": [
-    "pop music"
+    "rock music"
    ],
-   "wikipedia": []
+   "wikipedia": [
+    "Rock and roll",
+    "Latin rock",
+    "blues rock"
+   ]
   },
-  "Los Rebeldes": {
-   "decade": 1980,
+  "Los Sirex": {
+   "decade": 1960,
    "discogs": [
-    "Rockabilly",
+    "Beat",
     "Rock & Roll",
-    "Garage Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Los Ronaldos": {
-   "decade": 1980,
-   "discogs": [
+    "Theme",
     "Pop Rock"
    ],
    "wikidata": [
@@ -932,136 +412,93 @@
    ],
    "wikipedia": []
   },
-  "Los Stop": {
-   "decade": 1960,
+  "M-Clan": {
+   "decade": 1990,
    "discogs": [
-    "Vocal",
-    "Beat",
-    "Pop Rock",
-    "Soul",
-    "Chanson"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Los Toreros Muertos": {
-   "decade": 1980,
-   "discogs": [
-    "Pop Rock",
-    "Parody",
-    "Ska",
-    "Funk",
-    "Disco",
-    "Punk"
-   ],
-   "wikidata": [
-    "rock en español"
-   ],
-   "wikipedia": [
-    "Rock en español",
-    "Punk rock",
-    "Pop music",
-    "Comedy rock"
-   ]
-  },
-  "Los Zombies": {
-   "decade": 1980,
-   "discogs": [
-    "Beat",
-    "Surf",
+    "Southern Rock",
     "Rock & Roll",
-    "Garage Rock"
+    "Hard Rock"
    ],
    "wikidata": [],
    "wikipedia": []
   },
-  "Luis Eduardo Aute": {
-   "decade": 1970,
-   "discogs": [
-    "Ballad",
-    "Folk",
-    "Vocal"
-   ],
-   "wikidata": [
-    "trova",
-    "animated film"
-   ],
-   "wikipedia": []
-  },
-  "Malú": {
+  "Mala Rodríguez": {
    "decade": 2000,
    "discogs": [
+    "Instrumental",
+    "Hardcore Hip-Hop"
+   ],
+   "wikidata": [
+    "alternative hip-hop",
+    "Latin hip-hop",
+    "reggaeton",
+    "flamenco"
+   ],
+   "wikipedia": [
+    "Alternative hip hop",
+    "Latin rap",
+    "reggaeton",
+    "flamenco"
+   ]
+  },
+  "Marea": {
+   "decade": 2000,
+   "discogs": [
+    "Alternative Rock",
+    "Pop Rock",
+    "Indie Rock",
+    "Hard Rock"
+   ],
+   "wikidata": [],
+   "wikipedia": []
+  },
+  "Maria del Mar Bonet": {
+   "decade": 1960,
+   "discogs": [
+    "Catalan Music",
+    "Folk",
     "Vocal",
+    "Ballad",
+    "Nueva Cancion",
+    "Psychedelic Rock"
+   ],
+   "wikidata": [
+    "nova cançó",
+    "music of Mediterranea",
+    "folk, world and country"
+   ],
+   "wikipedia": [
+    "Singer-songwriter"
+   ]
+  },
+  "Marisol": {
+   "decade": 1960,
+   "discogs": [
+    "Soundtrack",
+    "Flamenco",
+    "Rumba",
+    "Vocal",
+    "Story",
+    "Copla",
+    "Holiday",
+    "Villancicos",
+    "Ballad"
+   ],
+   "wikidata": [
+    "Peruvian cumbia"
+   ],
+   "wikipedia": []
+  },
+  "Merche": {
+   "decade": 2000,
+   "discogs": [
+    "Latin",
     "Ballad"
    ],
    "wikidata": [],
    "wikipedia": [
     "Latin pop",
-    "Flamenco",
-    "Latin ballad",
-    "Copla (music)",
-    "Pop rock"
-   ]
-  },
-  "Manolo García": {
-   "decade": 2000,
-   "discogs": [
-    "Pop Rock",
-    "Acoustic",
-    "Folk Rock",
-    "Post Rock",
-    "Rock & Roll"
-   ],
-   "wikidata": [
-    "pop rock"
-   ],
-   "wikipedia": []
-  },
-  "Manuel Carrasco": {
-   "decade": 2010,
-   "discogs": [
-    "Ballad",
-    "Vocal",
-    "Rock & Roll"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Latin pop",
-    "Flamenco",
-    "Pop rock",
-    "Contemporary folk music"
-   ]
-  },
-  "María José Llergo": {
-   "decade": 2020,
-   "discogs": [
-    "Flamenco",
-    "Downtempo",
-    "Copla",
-    "Theme"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Flamenco",
-    "Flamenco pop"
-   ]
-  },
-  "Massiel": {
-   "decade": 1960,
-   "discogs": [
-    "Vocal",
-    "Ballad",
-    "Chanson",
-    "Promotional",
-    "Beat"
-   ],
-   "wikidata": [
-    "pop music"
-   ],
-   "wikipedia": [
-    "Latin pop",
-    "Latin ballad",
-    "Protest song"
+    "Latin ballad"
    ]
   },
   "Micky": {
@@ -1073,298 +510,92 @@
     "Pop music"
    ]
   },
-  "Micky y Los Tonys": {
+  "Miguel Ríos": {
    "decade": 1960,
    "discogs": [
+    "Rock & Roll",
+    "Twist",
+    "Pop Rock",
+    "Rockabilly",
+    "Vocal",
+    "Soundtrack",
     "Beat",
-    "Surf"
+    "Soft Rock"
    ],
    "wikidata": [
-    "rock music"
+    "rock and roll",
+    "baroque pop",
+    "new wave",
+    "symphonic rock",
+    "pop music",
+    "pop rock",
+    "Latin rock",
+    "progressive rock",
+    "arena rock"
    ],
-   "wikipedia": []
+   "wikipedia": [
+    "Rock and roll",
+    "progressive rock",
+    "blues rock",
+    "latin rock",
+    "arena rock",
+    "symphonic rock",
+    "Pop music",
+    "jazz",
+    "New wave music",
+    "baroque pop"
+   ]
   },
-  "Miss Caffeina": {
-   "decade": 2010,
+  "Nach": {
+   "decade": 2000,
+   "discogs": [],
+   "wikidata": [
+    "hip-hop"
+   ],
+   "wikipedia": [
+    "Latin hip-hop",
+    "Conscious hip hop",
+    "Hip-hop soul",
+    "Political hip-hop"
+   ]
+  },
+  "Parálisis Permanente": {
+   "decade": 1980,
+   "discogs": [
+    "Punk",
+    "Goth Rock",
+    "New Wave",
+    "Alternative Rock"
+   ],
+   "wikidata": [
+    "punk rock",
+    "post-punk",
+    "deathrock"
+   ],
+   "wikipedia": [
+    "Post-punk",
+    "Deathrock",
+    "Gothic rock",
+    "Punk rock"
+   ]
+  },
+  "Radio Futura": {
+   "decade": 1980,
    "discogs": [
     "Pop Rock",
-    "Indie Pop",
+    "New Wave",
     "Alternative Rock",
-    "Indie Rock",
-    "Acoustic",
-    "Rock & Roll",
     "Synth-pop"
    ],
    "wikidata": [
-    "indie rock",
-    "indie pop"
-   ],
-   "wikipedia": [
-    "pop music"
-   ]
-  },
-  "Muchachito Bombo Infierno": {
-   "decade": 2000,
-   "discogs": [
-    "Flamenco",
-    "Funk",
-    "Rumba",
-    "Fusion"
-   ],
-   "wikidata": [
-    "rhumba",
-    "funk",
-    "swing",
-    "rock and roll",
-    "rumba flamenca",
     "rock music"
    ],
-   "wikipedia": []
-  },
-  "Nacha Pop": {
-   "decade": 1980,
-   "discogs": [
-    "Pop Rock"
-   ],
-   "wikidata": [
-    "pop rock"
-   ],
    "wikipedia": [
-    "Pop rock"
-   ]
-  },
-  "Natos y Waor": {
-   "decade": 2010,
-   "discogs": [
-    "Tech House",
-    "Electro"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Navajita Plateá": {
-   "decade": 1990,
-   "discogs": [
-    "Flamenco",
-    "Vocal"
-   ],
-   "wikidata": [
-    "flamenco jazz"
-   ],
-   "wikipedia": []
-  },
-  "Nebulossa": {
-   "decade": 2020,
-   "discogs": [
-    "Synth-pop",
-    "Italo-Disco"
-   ],
-   "wikidata": [
-    "electropop",
-    "synth-pop"
-   ],
-   "wikipedia": [
-    "Electropop"
-   ]
-  },
-  "Nena Daconte": {
-   "decade": 2000,
-   "discogs": [
-    "Pop Rock",
-    "Vocal",
-    "Acoustic",
-    "Ballad",
-    "Indie Pop"
-   ],
-   "wikidata": [
-    "pop rock"
-   ],
-   "wikipedia": [
-    "Pop music"
-   ]
-  },
-  "Nil Moliner": {
-   "decade": 2010,
-   "discogs": [
-    "Latin Pop",
-    "Indie Pop"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Pop music"
-   ]
-  },
-  "Nino Bravo": {
-   "decade": 1970,
-   "discogs": [
-    "Ballad",
-    "Soul",
-    "Vocal"
-   ],
-   "wikidata": [
-    "easy listening",
-    "Latin ballad",
-    "baroque pop"
-   ],
-   "wikipedia": [
-    "Latin pop",
-    "Latin ballad",
-    "Baroque pop"
-   ]
-  },
-  "Niña Pastori": {
-   "decade": 1990,
-   "discogs": [
-    "Flamenco",
-    "Villancicos",
-    "Folk",
-    "Vocal"
-   ],
-   "wikidata": [
-    "flamenco"
-   ],
-   "wikipedia": [
-    "Flamenco"
-   ]
-  },
-  "OBK": {
-   "decade": 1990,
-   "discogs": [
-    "Synth-pop",
-    "Techno",
-    "House"
-   ],
-   "wikidata": [
-    "synth-pop"
-   ],
-   "wikipedia": [
-    "Synth-pop",
-    "Trance music"
-   ]
-  },
-  "Objetivo Birmania": {
-   "decade": 1980,
-   "discogs": [
-    "Synth-pop",
-    "Pop Rock",
-    "Latin",
-    "Funk"
-   ],
-   "wikidata": [
-    "war film",
-    "action film"
-   ],
-   "wikipedia": [
-    "Category:Drama films",
-    "Category:War films"
-   ]
-  },
-  "Olé Olé": {
-   "decade": 1980,
-   "discogs": [
-    "Synth-pop",
-    "Latin",
-    "Disco",
-    "Europop"
-   ],
-   "wikidata": [
-    "synth-pop",
-    "new wave",
-    "dance-pop"
-   ],
-   "wikipedia": []
-  },
-  "Peret": {
-   "decade": 1960,
-   "discogs": [
-    "Rumba",
-    "Flamenco",
-    "Religious",
-    "Villancicos",
-    "Holiday"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Catalan rumba"
-   ]
-  },
-  "Pereza": {
-   "decade": 2000,
-   "discogs": [
-    "Pop Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Alternative rock",
-    "rock and roll",
-    "pop rock",
-    "country rock"
-   ]
-  },
-  "Platero y Tú": {
-   "decade": 1990,
-   "discogs": [
-    "Classic Rock",
-    "Rock & Roll",
-    "Punk"
-   ],
-   "wikidata": [
-    "rock and roll"
-   ],
-   "wikipedia": [
-    "Hard rock",
-    "Boogie rock",
-    "Rock and roll",
-    "Blues rock"
-   ]
-  },
-  "Ptazeta": {
-   "decade": 2020,
-   "discogs": [
-    "Reggaeton",
-    "Latin Pop",
-    "Latin"
-   ],
-   "wikidata": [
-    "Latin trap",
-    "reggaeton"
-   ],
-   "wikipedia": []
-  },
-  "Quevedo": {
-   "decade": 2020,
-   "discogs": [
-    "Reggaeton"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Ralphie Choo": {
-   "decade": 2020,
-   "discogs": [
-    "Jungle",
-    "Trap",
-    "Reggaeton"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Urban contemporary music",
-    "Lo-fi music"
-   ]
-  },
-  "Ramoncín": {
-   "decade": 1970,
-   "discogs": [
-    "Punk",
-    "New Wave",
-    "Pop Rock"
-   ],
-   "wikidata": [
-    "glam rock"
-   ],
-   "wikipedia": [
-    "Proto-punk",
-    "Glam rock"
+    "Latin rock",
+    "Punk rock",
+    "Pop rock",
+    "New wave music",
+    "Reggae"
    ]
   },
   "Rayden": {
@@ -1375,134 +606,25 @@
    ],
    "wikipedia": []
   },
-  "Rels B": {
-   "decade": 2010,
-   "discogs": [
-    "Trap",
-    "Reggaeton"
-   ],
-   "wikidata": [
-    "Spanish hip-hop",
-    "dancehall",
-    "Latin R&B",
-    "reggaeton",
-    "Latin pop",
-    "Latin hip-hop"
-   ],
-   "wikipedia": [
-    "Latin R&B",
-    "Dancehall",
-    "Latin pop",
-    "Spanish hip hop",
-    "Reggaeton"
-   ]
-  },
-  "Revólver": {
+  "Reincidentes": {
    "decade": 1990,
    "discogs": [
-    "Pop Rock",
-    "Classic Rock",
-    "Space Rock",
-    "Rock & Roll"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Rigoberta Bandini": {
-   "decade": 2020,
-   "discogs": [
-    "Dance-pop",
-    "Indie Pop",
-    "Eurodance",
-    "Europop"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Dance music",
-    "power pop",
-    "indietronica",
-    "baroque pop"
-   ]
-  },
-  "Rosa López": {
-   "decade": 2000,
-   "discogs": [
-    "Europop",
-    "Ballad",
-    "Vocal",
-    "Rumba",
-    "Gospel",
-    "Euro-Disco"
+    "Punk",
+    "Hard Rock"
    ],
    "wikidata": [
-    "pop music"
+    "punk rock"
    ],
    "wikipedia": [
-    "Pop music",
-    "Ballad",
-    "Dance music"
+    "rock music",
+    "Punk rock"
    ]
-  },
-  "Rosario Flores": {
-   "decade": 1990,
-   "discogs": [
-    "Pop Rock",
-    "Flamenco",
-    "Rumba",
-    "Vocal"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Pop music",
-    "Rock music",
-    "Cuban rumba",
-    "Flamenco"
-   ]
-  },
-  "Rulo y la Contrabanda": {
-   "decade": 2010,
-   "discogs": [
-    "Rock & Roll",
-    "Indie Pop",
-    "Pop Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Saiko": {
-   "decade": 2020,
-   "discogs": [
-    "Instrumental",
-    "Makina"
-   ],
-   "wikidata": [
-    "pop rock",
-    "synth-pop"
-   ],
-   "wikipedia": []
   },
   "Salomé": {
    "decade": 1960,
    "discogs": [],
    "wikidata": [],
    "wikipedia": []
-  },
-  "Sangre Azul": {
-   "decade": 1980,
-   "discogs": [
-    "Classic Rock",
-    "Glam",
-    "Hard Rock",
-    "Heavy Metal"
-   ],
-   "wikidata": [
-    "hard rock"
-   ],
-   "wikipedia": [
-    "Pop metal",
-    "hard rock",
-    "Album-oriented rock"
-   ]
   },
   "Second": {
    "decade": 2010,
@@ -1520,100 +642,45 @@
    ],
    "wikipedia": []
   },
-  "Sen Senra": {
-   "decade": 2020,
-   "discogs": [
-    "Garage Rock",
-    "Lo-Fi",
-    "Indie Rock",
-    "Trip Hop",
-    "Chicago Blues",
-    "Acoustic",
-    "Pop Rock",
-    "Alternative Rock",
-    "Indie Pop",
-    "Soul",
-    "Contemporary R&B",
-    "Cloud Rap"
-   ],
-   "wikidata": [
-    "contemporary R&B",
-    "pop music",
-    "garage rock"
-   ],
-   "wikipedia": []
-  },
-  "Shinova": {
-   "decade": 2010,
-   "discogs": [
-    "Alternative Rock",
-    "Pop Rock",
-    "Indie Pop",
-    "Indie Rock"
-   ],
-   "wikidata": [
-    "indie rock",
-    "alternative rock"
-   ],
-   "wikipedia": [
-    "Alternative rock",
-    "Indie rock",
-    "Pop rock",
-    "Alternative metal",
-    "Hard rock"
-   ]
-  },
-  "Sidecars": {
-   "decade": 2010,
-   "discogs": [
-    "Pop Rock",
-    "Alternative Rock",
-    "Vocal",
-    "Soft Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": []
-  },
-  "Sidonie": {
-   "decade": 2000,
-   "discogs": [
-    "Psychedelic Rock",
-    "Pop Rock",
-    "Indie Rock",
-    "Alternative Rock",
-    "Art Rock",
-    "Acid Rock"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Indie rock",
-    "Neo-psychedelia",
-    "Indie español"
-   ]
-  },
   "Siloé": {
    "decade": 2020,
    "discogs": [],
    "wikidata": [],
    "wikipedia": []
   },
-  "Supersubmarina": {
-   "decade": 2010,
+  "Siniestro Total": {
+   "decade": 1980,
    "discogs": [
+    "Punk",
+    "New Wave",
     "Pop Rock",
-    "Indie Rock",
-    "Indie Pop",
     "Alternative Rock"
    ],
    "wikidata": [
-    "indie rock",
-    "indie folk",
-    "pop rock",
-    "alternative rock"
+    "rock music",
+    "punk rock",
+    "blues rock"
+   ],
+   "wikipedia": [
+    "Rock music",
+    "punk rock",
+    "punk blues"
+   ]
+  },
+  "Sôber": {
+   "decade": 2000,
+   "discogs": [
+    "Alternative Rock",
+    "Hard Rock",
+    "Pop Rock"
+   ],
+   "wikidata": [
+    "alternative rock",
+    "alternative metal"
    ],
    "wikipedia": [
     "Alternative rock",
-    "Pop rock"
+    "Alternative metal"
    ]
   },
   "Taburete": {
@@ -1622,101 +689,53 @@
    "wikidata": [],
    "wikipedia": []
   },
-  "Tote King": {
-   "decade": 2000,
+  "Tam Tam Go!": {
+   "decade": 1980,
    "discogs": [
-    "Conscious",
-    "Hip Hop",
-    "Boom Bap",
-    "Hardcore Hip-Hop"
-   ],
-   "wikidata": [],
-   "wikipedia": [
-    "Hip-hop"
-   ]
-  },
-  "Vanesa Martín": {
-   "decade": 2010,
-   "discogs": [
-    "Vocal",
-    "Indie Pop",
-    "Pop Rock",
-    "Ballad"
-   ],
-   "wikidata": [
-    "Latin pop"
-   ],
-   "wikipedia": []
-  },
-  "Vetusta Morla": {
-   "decade": 2000,
-   "discogs": [
-    "Indie Rock",
-    "Alternative Rock",
-    "Indie Pop",
     "Pop Rock"
    ],
-   "wikidata": [
-    "indie rock"
-   ],
-   "wikipedia": [
-    "Indie rock",
-    "Alternative rock",
-    "Indie pop",
-    "Pop rock"
-   ]
-  },
-  "Viva Suecia": {
-   "decade": 2010,
-   "discogs": [
-    "Indie Rock",
-    "Indie Pop",
-    "Pop Rock",
-    "Alternative Rock"
-   ],
    "wikidata": [],
    "wikipedia": []
   },
-  "Xoel López": {
-   "decade": 2010,
+  "Violadores del Verso": {
+   "decade": 2000,
    "discogs": [
-    "Indie Pop",
-    "Indie Rock"
+    "Hardcore Hip-Hop"
    ],
    "wikidata": [
-    "pop music"
+    "hip-hop",
+    "hardcore hip-hop"
    ],
    "wikipedia": [
-    "Indie pop",
-    "Alternative pop",
-    "Pop music"
+    "Rap music",
+    "hip hop music"
    ]
   }
  },
  "summary": {
   "discogs": {
-   "concrete": 101,
-   "covered": 102,
-   "labels": 415,
-   "landed": 339,
-   "total": 125,
-   "useful": 101
+   "concrete": 27,
+   "covered": 31,
+   "labels": 112,
+   "landed": 93,
+   "total": 56,
+   "useful": 30
   },
   "wikidata": {
-   "concrete": 45,
-   "covered": 71,
-   "labels": 121,
-   "landed": 104,
-   "total": 125,
-   "useful": 66
+   "concrete": 18,
+   "covered": 36,
+   "labels": 75,
+   "landed": 67,
+   "total": 56,
+   "useful": 33
   },
   "wikipedia": {
-   "concrete": 49,
-   "covered": 65,
-   "labels": 168,
-   "landed": 146,
-   "total": 125,
-   "useful": 61
+   "concrete": 22,
+   "covered": 30,
+   "labels": 91,
+   "landed": 85,
+   "total": 56,
+   "useful": 30
   }
  }
 }
