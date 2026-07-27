@@ -458,9 +458,14 @@ class KnownHitsRepository @Inject constructor(
         val found = mutableSetOf<String>()
         for (decade in byDecade.values) {
             for (hit in decade.es + decade.intl) {
-                if (hit.artist.lowercase() == artistLower) {
-                    found += hit.genreSet
-                }
+                if (hit.artist.lowercase() != artistLower) continue
+                // `RawHit` es el reflejo crudo del JSON: `genres` puede
+                // venir vacío, y entonces vale el `genre` suelto. Es la
+                // misma convención que usa el resto de la clase al
+                // construir `KnownHit.genreSet`.
+                found += hit.genres.ifEmpty { listOf(hit.genre) }
+                    .map { it.lowercase().trim() }
+                    .filter { it.isNotBlank() }
             }
         }
         return found
