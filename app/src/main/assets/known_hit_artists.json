@@ -43,6 +43,10 @@
    {
     "artist": "Los Payos",
     "genre": "rumba",
+    "genres": [
+     "rumba",
+     "calypso"
+    ],
     "song": "María Isabel"
    },
    {
@@ -62,6 +66,11 @@
    {
     "artist": "Los Stop",
     "genre": "pop",
+    "genres": [
+     "beat music",
+     "pop rock",
+     "soul"
+    ],
     "song": "El Turista 1.999.999"
    },
    {
@@ -83,6 +92,11 @@
    {
     "artist": "Lluís Llach",
     "genre": "folk",
+    "genres": [
+     "nueva canción",
+     "ballad",
+     "folk"
+    ],
     "song": "L'Estaca"
    },
    {
@@ -112,6 +126,11 @@
    {
     "artist": "Antonio Molina",
     "genre": "copla",
+    "genres": [
+     "flamenco",
+     "bolero",
+     "mambo"
+    ],
     "song": "Soy Minero"
    },
    {
@@ -139,6 +158,13 @@
    {
     "artist": "Dúo Dinámico",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "rock and roll",
+     "surf",
+     "pop rock",
+     "yé-yé"
+    ],
     "song": "Quince Años Tiene Mi Amor"
    },
    {
@@ -153,6 +179,10 @@
    {
     "artist": "Massiel",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "beat music"
+    ],
     "song": "La, La, La"
    },
    {
@@ -207,6 +237,10 @@
    {
     "artist": "Micky y Los Tonys",
     "genre": "rock",
+    "genres": [
+     "beat music",
+     "surf"
+    ],
     "song": "La Luna y el Toro"
    },
    {
@@ -241,6 +275,10 @@
    {
     "artist": "Peret",
     "genre": "rumba",
+    "genres": [
+     "rumba",
+     "flamenco"
+    ],
     "song": "Una Lágrima"
    },
    {
@@ -284,6 +322,10 @@
    {
     "artist": "Bruno Lomas",
     "genre": "pop",
+    "genres": [
+     "rock and roll",
+     "soul"
+    ],
     "song": "La Novia"
    },
    {
@@ -319,11 +361,22 @@
    {
     "artist": "Dúo Dinámico",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "rock and roll",
+     "surf",
+     "pop rock",
+     "yé-yé"
+    ],
     "song": "Perdóname"
    },
    {
     "artist": "Massiel",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "beat music"
+    ],
     "song": "Rosas en el Mar"
    },
    {
@@ -1269,6 +1322,10 @@
    {
     "artist": "Los Chichos",
     "genre": "rumba",
+    "genres": [
+     "rumba",
+     "flamenco"
+    ],
     "song": "Quiero Ser Libre"
    },
    {
@@ -1282,6 +1339,9 @@
    {
     "artist": "Lole y Manuel",
     "genre": "flamenco",
+    "genres": [
+     "flamenco"
+    ],
     "song": "Todo Es de Color"
    },
    {
@@ -1308,6 +1368,10 @@
    {
     "artist": "Bambino",
     "genre": "rumba",
+    "genres": [
+     "flamenco",
+     "rumba"
+    ],
     "song": "Procuro Olvidarte"
    },
    {
@@ -1329,6 +1393,11 @@
    {
     "artist": "Asfalto",
     "genre": "rock",
+    "genres": [
+     "pop rock",
+     "classic rock",
+     "hard rock"
+    ],
     "song": "Rocinante"
    },
    {
@@ -1360,6 +1429,11 @@
    {
     "artist": "Ramoncín",
     "genre": "punk",
+    "genres": [
+     "punk",
+     "new wave",
+     "pop rock"
+    ],
     "song": "Marica de Terciopelo"
    },
    {
@@ -1386,16 +1460,31 @@
    {
     "artist": "Aguaviva",
     "genre": "folk",
+    "genres": [
+     "folk rock",
+     "poetry"
+    ],
     "song": "Poetas Andaluces"
    },
    {
     "artist": "Jarcha",
     "genre": "folk",
+    "genres": [
+     "folk",
+     "ballad",
+     "flamenco",
+     "poetry",
+     "copla"
+    ],
     "song": "Libertad Sin Ira"
    },
    {
     "artist": "Luis Eduardo Aute",
     "genre": "folk",
+    "genres": [
+     "ballad",
+     "folk"
+    ],
     "song": "Al Alba"
    },
    {
@@ -1421,11 +1510,21 @@
    {
     "artist": "Lluís Llach",
     "genre": "folk",
+    "genres": [
+     "nueva canción",
+     "ballad",
+     "folk"
+    ],
     "song": "Viatge a Ítaca"
    },
    {
     "artist": "Los Puntos",
     "genre": "pop",
+    "genres": [
+     "pop rock",
+     "ballad",
+     "psychedelic rock"
+    ],
     "song": "Cuando Salga la Luna"
    },
    {
@@ -1436,6 +1535,9 @@
    {
     "artist": "Juan Pardo",
     "genre": "pop",
+    "genres": [
+     "ballad"
+    ],
     "song": "La Charanga"
    },
    {
@@ -1485,6 +1587,10 @@
    {
     "artist": "Massiel",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "beat music"
+    ],
     "song": "Rosas En El Mar"
    },
    {
@@ -1501,6 +1607,10 @@
    {
     "artist": "Nino Bravo",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "soul"
+    ],
     "song": "Libre"
    },
    {
@@ -1517,6 +1627,11 @@
    {
     "artist": "Los Pecos",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "pop",
+     "soft rock"
+    ],
     "song": "Vestido Azul"
    },
    {
@@ -1530,6 +1645,10 @@
    {
     "artist": "Peret",
     "genre": "rumba",
+    "genres": [
+     "rumba",
+     "flamenco"
+    ],
     "song": "Borracho"
    },
    {
@@ -1621,6 +1740,13 @@
    {
     "artist": "Georgie Dann",
     "genre": "pop",
+    "genres": [
+     "pop rock",
+     "yé-yé",
+     "beat music",
+     "rock and roll",
+     "ballad"
+    ],
     "song": "El Chiringuito"
    }
   ],
@@ -2455,21 +2581,37 @@
    {
     "artist": "Los Ronaldos",
     "genre": "rock",
+    "genres": [
+     "pop rock"
+    ],
     "song": "Adiós Papá"
    },
    {
     "artist": "El Último de la Fila",
     "genre": "rock",
+    "genres": [
+     "pop rock",
+     "rock and roll"
+    ],
     "song": "Insurrección"
    },
    {
     "artist": "La Guardia",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "ballad"
+    ],
     "song": "Cuando Brille el Sol"
    },
    {
     "artist": "Los Rebeldes",
     "genre": "rock",
+    "genres": [
+     "rockabilly",
+     "rock and roll",
+     "garage rock"
+    ],
     "song": "Mediterráneo"
    },
    {
@@ -2496,6 +2638,14 @@
    {
     "artist": "Los Enemigos",
     "genre": "rock",
+    "genres": [
+     "rock and roll",
+     "blues rock",
+     "hard rock",
+     "garage rock",
+     "pop rock",
+     "classic rock"
+    ],
     "song": "John Wayne"
    },
    {
@@ -2511,6 +2661,12 @@
    {
     "artist": "La Frontera",
     "genre": "rock",
+    "genres": [
+     "rock and roll",
+     "country rock",
+     "pop rock",
+     "alternative rock"
+    ],
     "song": "El Límite"
    },
    {
@@ -2594,6 +2750,12 @@
    {
     "artist": "Sangre Azul",
     "genre": "heavy metal",
+    "genres": [
+     "classic rock",
+     "glam",
+     "hard rock",
+     "heavy metal"
+    ],
     "song": "Cuerpo a Cuerpo"
    },
    {
@@ -2608,6 +2770,11 @@
    {
     "artist": "Décima Víctima",
     "genre": "new wave",
+    "genres": [
+     "coldwave",
+     "post-punk",
+     "new wave"
+    ],
     "song": "Un Buen Momento"
    },
    {
@@ -2621,11 +2788,24 @@
    {
     "artist": "Los Zombies",
     "genre": "pop",
+    "genres": [
+     "beat music",
+     "surf",
+     "rock and roll",
+     "garage rock"
+    ],
     "song": "Groenlandia"
    },
    {
     "artist": "Los Toreros Muertos",
     "genre": "pop",
+    "genres": [
+     "pop rock",
+     "ska",
+     "funk",
+     "disco",
+     "punk"
+    ],
     "song": "Mi Agüita Amarilla"
    },
    {
@@ -2636,6 +2816,12 @@
    {
     "artist": "Olé Olé",
     "genre": "pop",
+    "genres": [
+     "synth-pop",
+     "latin",
+     "disco",
+     "europop"
+    ],
     "song": "No Controles"
    },
    {
@@ -2730,16 +2916,32 @@
    {
     "artist": "Kiko Veneno",
     "genre": "flamenco",
+    "genres": [
+     "flamenco",
+     "pop rock",
+     "rumba"
+    ],
     "song": "Volando Voy"
    },
    {
     "artist": "Nacha Pop",
     "genre": "pop rock",
+    "genres": [
+     "pop rock"
+    ],
     "song": "La Chica de Ayer"
    },
    {
     "artist": "Golpes Bajos",
     "genre": "pop",
+    "genres": [
+     "synth-pop",
+     "indie rock",
+     "pop rock",
+     "new wave",
+     "salsa",
+     "art rock"
+    ],
     "song": "Malos Tiempos para la Lírica"
    },
    {
@@ -2763,16 +2965,39 @@
    {
     "artist": "Alaska y Los Pegamoides",
     "genre": "pop",
+    "genres": [
+     "new wave",
+     "synth-pop",
+     "punk",
+     "glam",
+     "pop rock",
+     "post-punk"
+    ],
     "song": "Bailando"
    },
    {
     "artist": "Danza Invisible",
     "genre": "pop rock",
+    "genres": [
+     "new wave",
+     "alternative rock",
+     "pop rock",
+     "synth-pop"
+    ],
     "song": "Sabor de Amor"
    },
    {
     "artist": "Duncan Dhu",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "rockabilly",
+     "rock and roll",
+     "indie rock",
+     "indie pop",
+     "power pop",
+     "ballad"
+    ],
     "song": "En Algún Lugar"
    },
    {
@@ -2787,6 +3012,13 @@
    {
     "artist": "Dúo Dinámico",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "rock and roll",
+     "surf",
+     "pop rock",
+     "yé-yé"
+    ],
     "song": "Resistiré"
    },
    {
@@ -2800,6 +3032,12 @@
    {
     "artist": "Objetivo Birmania",
     "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "pop rock",
+     "latin",
+     "funk"
+    ],
     "song": "Desidia"
    },
    {
@@ -2833,6 +3071,11 @@
    {
     "artist": "Barricada",
     "genre": "rock",
+    "genres": [
+     "hard rock",
+     "punk",
+     "rock and roll"
+    ],
     "song": "No Hay Tregua"
    }
   ],
@@ -3799,6 +4042,12 @@
    {
     "artist": "Revólver",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "classic rock",
+     "space rock",
+     "rock and roll"
+    ],
     "song": "El Roce de Tu Piel"
    },
    {
@@ -3821,6 +4070,9 @@
    {
     "artist": "Antonio Vega",
     "genre": "pop",
+    "genres": [
+     "pop rock"
+    ],
     "song": "El Sitio de Mi Recreo"
    },
    {
@@ -3905,16 +4157,28 @@
    {
     "artist": "Niña Pastori",
     "genre": "flamenco",
+    "genres": [
+     "flamenco",
+     "folk"
+    ],
     "song": "Cai"
    },
    {
     "artist": "Rosario Flores",
     "genre": "flamenco",
+    "genres": [
+     "pop rock",
+     "flamenco",
+     "rumba"
+    ],
     "song": "Mucho por Vivir"
    },
    {
     "artist": "Navajita Plateá",
     "genre": "flamenco",
+    "genres": [
+     "flamenco"
+    ],
     "song": "Noches de Bohemia"
    },
    {
@@ -3928,6 +4192,11 @@
    {
     "artist": "Los Manolos",
     "genre": "rumba",
+    "genres": [
+     "rumba",
+     "flamenco",
+     "europop"
+    ],
     "song": "Amigos para Siempre"
    },
    {
@@ -3972,6 +4241,11 @@
    {
     "artist": "OBK",
     "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "techno",
+     "house"
+    ],
     "song": "De Qué Me Sirve Llorar"
    },
    {
@@ -4093,6 +4367,11 @@
    {
     "artist": "Amistades Peligrosas",
     "genre": "pop",
+    "genres": [
+     "pop rock",
+     "synth-pop",
+     "europop"
+    ],
     "song": "Estoy Enamorado"
    },
    {
@@ -4198,6 +4477,12 @@
    {
     "artist": "La Frontera",
     "genre": "rock",
+    "genres": [
+     "rock and roll",
+     "country rock",
+     "pop rock",
+     "alternative rock"
+    ],
     "song": "Ni Un Minuto Más"
    },
    {
@@ -4211,6 +4496,11 @@
    {
     "artist": "Platero y Tú",
     "genre": "rock",
+    "genres": [
+     "classic rock",
+     "rock and roll",
+     "punk"
+    ],
     "song": "Espina de Pez"
    },
    {
@@ -5245,11 +5535,23 @@
    {
     "artist": "Manolo García",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "folk rock",
+     "post-rock",
+     "rock and roll"
+    ],
     "song": "Pájaros de Barro"
    },
    {
     "artist": "Iván Ferreiro",
     "genre": "pop rock",
+    "genres": [
+     "alternative rock",
+     "post-rock",
+     "experimental",
+     "pop rock"
+    ],
     "song": "Turnedo"
    },
    {
@@ -5280,11 +5582,25 @@
    {
     "artist": "Sidonie",
     "genre": "indie rock",
+    "genres": [
+     "psychedelic rock",
+     "pop rock",
+     "indie rock",
+     "alternative rock",
+     "art rock",
+     "acid rock"
+    ],
     "song": "Fascinado"
    },
    {
     "artist": "Vetusta Morla",
     "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "alternative rock",
+     "indie pop",
+     "pop rock"
+    ],
     "song": "Un Día en el Mundo"
    },
    {
@@ -5346,11 +5662,21 @@
    {
     "artist": "David DeMaría",
     "genre": "pop",
+    "genres": [
+     "ballad"
+    ],
     "song": "Precisamente Ahora"
    },
    {
     "artist": "Rosa López",
     "genre": "pop",
+    "genres": [
+     "europop",
+     "ballad",
+     "rumba",
+     "gospel",
+     "euro-disco"
+    ],
     "song": "Europe's Living a Celebration"
    },
    {
@@ -5361,11 +5687,21 @@
    {
     "artist": "La Cabra Mecánica",
     "genre": "rumba",
+    "genres": [
+     "pop rock",
+     "rumba",
+     "cumbia"
+    ],
     "song": "La Lista de la Compra"
    },
    {
     "artist": "Muchachito Bombo Infierno",
     "genre": "rumba",
+    "genres": [
+     "flamenco",
+     "funk",
+     "rumba"
+    ],
     "song": "Siempre Que Quieras"
    },
    {
@@ -5379,6 +5715,11 @@
    {
     "artist": "Rosario Flores",
     "genre": "flamenco",
+    "genres": [
+     "pop rock",
+     "flamenco",
+     "rumba"
+    ],
     "song": "Algo Contigo"
    },
    {
@@ -5413,6 +5754,11 @@
    {
     "artist": "Tote King",
     "genre": "hip hop",
+    "genres": [
+     "hip hop",
+     "boom bap",
+     "hardcore hip hop"
+    ],
     "song": "Un Tipo Cualquiera"
    },
    {
@@ -5485,6 +5831,17 @@
    {
     "artist": "Christina Rosenvinge",
     "genre": "rock",
+    "genres": [
+     "indie rock",
+     "folk rock",
+     "soft rock",
+     "indie pop",
+     "art rock",
+     "rock and roll",
+     "pop rock",
+     "alternative rock",
+     "post-rock"
+    ],
     "song": "Que Diferente Es Todo"
    },
    {
@@ -5499,11 +5856,23 @@
    {
     "artist": "Nena Daconte",
     "genre": "pop",
+    "genres": [
+     "pop rock",
+     "ballad",
+     "indie pop"
+    ],
     "song": "Tenía Tanto Que Darte"
    },
    {
     "artist": "Café Quijano",
     "genre": "pop",
+    "genres": [
+     "bolero",
+     "vallenato",
+     "pop rock",
+     "latin",
+     "euro house"
+    ],
     "song": "La Lola"
    },
    {
@@ -5517,6 +5886,9 @@
    {
     "artist": "Chenoa",
     "genre": "pop",
+    "genres": [
+     "europop"
+    ],
     "song": "Cuando Tú Vas"
    },
    {
@@ -5540,11 +5912,19 @@
    {
     "artist": "El Sueño de Morfeo",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "celtic",
+     "ballad"
+    ],
     "song": "Nuestro Momento"
    },
    {
     "artist": "Pereza",
     "genre": "rock",
+    "genres": [
+     "pop rock"
+    ],
     "song": "El Rey de la Fiesta"
    },
    {
@@ -5569,11 +5949,25 @@
    {
     "artist": "Malú",
     "genre": "pop",
+    "genres": [
+     "ballad"
+    ],
     "song": "Aprendiz"
    },
    {
     "artist": "Los Delinqüentes",
     "genre": "flamenco",
+    "genres": [
+     "rumba",
+     "flamenco",
+     "pachanga",
+     "folk rock",
+     "southern rock",
+     "punk",
+     "blues rock",
+     "reggae",
+     "pop rock"
+    ],
     "song": "Que Bonito"
    },
    {
@@ -6594,6 +6988,11 @@
    {
     "artist": "Sidecars",
     "genre": "rock",
+    "genres": [
+     "pop rock",
+     "alternative rock",
+     "soft rock"
+    ],
     "song": "Cuestión de Suerte"
    },
    {
@@ -6604,6 +7003,12 @@
    {
     "artist": "Viva Suecia",
     "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "indie pop",
+     "pop rock",
+     "alternative rock"
+    ],
     "song": "El Bien"
    },
    {
@@ -6622,6 +7027,12 @@
    {
     "artist": "Supersubmarina",
     "genre": "indie rock",
+    "genres": [
+     "pop rock",
+     "indie rock",
+     "indie pop",
+     "alternative rock"
+    ],
     "song": "Cientos de Miles"
    },
    {
@@ -6632,21 +7043,43 @@
    {
     "artist": "Shinova",
     "genre": "indie rock",
+    "genres": [
+     "alternative rock",
+     "pop rock",
+     "indie pop",
+     "indie rock"
+    ],
     "song": "La Buena Suerte"
    },
    {
     "artist": "Carolina Durante",
     "genre": "punk",
+    "genres": [
+     "indie rock",
+     "indie pop",
+     "alternative rock",
+     "synth-pop"
+    ],
     "song": "Cayetano"
    },
    {
     "artist": "Xoel López",
     "genre": "folk",
+    "genres": [
+     "indie pop",
+     "indie rock"
+    ],
     "song": "Tierra"
    },
    {
     "artist": "El Kanka",
     "genre": "folk",
+    "genres": [
+     "pop rock",
+     "folk",
+     "rumba",
+     "bolero"
+    ],
     "song": "Lo Mal Que Estoy y lo Poco Que Me Quejo"
    },
    {
@@ -6665,16 +7098,28 @@
    {
     "artist": "Kase.O",
     "genre": "hip hop",
+    "genres": [
+     "hardcore hip hop"
+    ],
     "song": "Basureta"
    },
    {
     "artist": "Natos y Waor",
     "genre": "hip hop",
+    "genres": [
+     "hardcore hip hop",
+     "gangsta rap",
+     "boom bap"
+    ],
     "song": "Hasta el Amanecer"
    },
    {
     "artist": "Rels B",
     "genre": "hip hop",
+    "genres": [
+     "trap",
+     "reggaeton"
+    ],
     "song": "Cómo Dormiste?"
    },
    {
@@ -6711,11 +7156,21 @@
    {
     "artist": "Blas Cantó",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "europop",
+     "funk",
+     "folk"
+    ],
     "song": "Él No Soy Yo"
    },
    {
     "artist": "Nil Moliner",
     "genre": "pop",
+    "genres": [
+     "latin pop",
+     "indie pop"
+    ],
     "song": "Soldadito de Hierro"
    },
    {
@@ -6780,16 +7235,28 @@
    {
     "artist": "Malú",
     "genre": "pop",
+    "genres": [
+     "ballad"
+    ],
     "song": "Como un Único Ser"
    },
    {
     "artist": "Manuel Carrasco",
     "genre": "pop",
+    "genres": [
+     "ballad",
+     "rock and roll"
+    ],
     "song": "Que Nadie"
    },
    {
     "artist": "Vanesa Martín",
     "genre": "pop",
+    "genres": [
+     "indie pop",
+     "pop rock",
+     "ballad"
+    ],
     "song": "Complicidad"
    },
    {
@@ -6851,11 +7318,25 @@
    {
     "artist": "Dani Martín",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "ballad",
+     "rockabilly",
+     "rock and roll",
+     "alternative rock",
+     "europop"
+    ],
     "song": "Cero"
    },
    {
     "artist": "Vetusta Morla",
     "genre": "rock",
+    "genres": [
+     "indie rock",
+     "alternative rock",
+     "indie pop",
+     "pop rock"
+    ],
     "song": "Copenhague"
    },
    {
@@ -6875,11 +7356,25 @@
    {
     "artist": "Leiva",
     "genre": "rock",
+    "genres": [
+     "rock",
+     "pop rock",
+     "alternative rock",
+     "rock and roll"
+    ],
     "song": "Complicado"
    },
    {
     "artist": "Miss Caffeina",
     "genre": "pop",
+    "genres": [
+     "pop rock",
+     "indie pop",
+     "alternative rock",
+     "indie rock",
+     "rock and roll",
+     "synth-pop"
+    ],
     "song": "Verano"
    },
    {
@@ -6894,6 +7389,11 @@
    {
     "artist": "Izal",
     "genre": "rock",
+    "genres": [
+     "pop rock",
+     "indie pop",
+     "indie rock"
+    ],
     "song": "Copacabana"
    },
    {
@@ -6919,6 +7419,11 @@
    {
     "artist": "Rulo y la Contrabanda",
     "genre": "rock",
+    "genres": [
+     "rock and roll",
+     "indie pop",
+     "pop rock"
+    ],
     "song": "Nada Que No Sepas Tú"
    },
    {
@@ -7872,6 +8377,12 @@
    {
     "artist": "Viva Suecia",
     "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "indie pop",
+     "pop rock",
+     "alternative rock"
+    ],
     "song": "La Voz del Presidente"
    },
    {
@@ -7882,11 +8393,23 @@
    {
     "artist": "Carolina Durante",
     "genre": "punk",
+    "genres": [
+     "indie rock",
+     "indie pop",
+     "alternative rock",
+     "synth-pop"
+    ],
     "song": "Elige Tu Propia Aventura"
    },
    {
     "artist": "Leiva",
     "genre": "rock",
+    "genres": [
+     "rock",
+     "pop rock",
+     "alternative rock",
+     "rock and roll"
+    ],
     "song": "Superpoderes"
    },
    {
@@ -7900,16 +8423,48 @@
    {
     "artist": "Dani Martín",
     "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "ballad",
+     "rockabilly",
+     "rock and roll",
+     "alternative rock",
+     "europop"
+    ],
     "song": "Portales"
    },
    {
     "artist": "Sen Senra",
     "genre": "pop",
+    "genres": [
+     "garage rock",
+     "lo-fi",
+     "indie rock",
+     "trip hop",
+     "chicago blues",
+     "pop rock",
+     "alternative rock",
+     "indie pop",
+     "soul",
+     "contemporary r&b",
+     "cloud rap"
+    ],
     "song": "Corazón Cromado"
    },
    {
     "artist": "Alizzz",
     "genre": "pop",
+    "genres": [
+     "hip hop",
+     "house",
+     "breaks",
+     "electro",
+     "dubstep",
+     "synth-pop",
+     "electro house",
+     "jersey club",
+     "pop rap"
+    ],
     "song": "El Encuentro"
    },
    {
@@ -7933,46 +8488,93 @@
    {
     "artist": "Belén Aguilera",
     "genre": "pop",
+    "genres": [
+     "indie pop",
+     "ballad",
+     "synth-pop"
+    ],
     "song": "Multiverso"
    },
    {
     "artist": "La La Love You",
     "genre": "pop",
+    "genres": [
+     "pop punk",
+     "power pop",
+     "pop rock",
+     "indie pop",
+     "alternative rock"
+    ],
     "song": "El Fin del Mundo"
    },
    {
     "artist": "Nil Moliner",
     "genre": "pop",
+    "genres": [
+     "latin pop",
+     "indie pop"
+    ],
     "song": "Mi Religión"
    },
    {
     "artist": "Chanel",
     "genre": "pop",
+    "genres": [
+     "pop",
+     "latin pop",
+     "dance-pop"
+    ],
     "song": "SloMo"
    },
    {
     "artist": "Judeline",
     "genre": "pop",
+    "genres": [
+     "flamenco",
+     "reggaeton",
+     "hip hop",
+     "downtempo",
+     "indie pop"
+    ],
     "song": "Canijo"
    },
    {
     "artist": "Ralphie Choo",
     "genre": "pop",
+    "genres": [
+     "jungle",
+     "trap",
+     "reggaeton"
+    ],
     "song": "Máquina Culona"
    },
    {
     "artist": "Blanca Paloma",
     "genre": "flamenco",
+    "genres": [
+     "flamenco",
+     "ballad"
+    ],
     "song": "Eaea"
    },
    {
     "artist": "María José Llergo",
     "genre": "flamenco",
+    "genres": [
+     "flamenco",
+     "downtempo",
+     "copla"
+    ],
     "song": "Superpoder"
    },
    {
     "artist": "Saiko",
     "genre": "hip hop",
+    "genres": [
+     "reggaeton",
+     "trap",
+     "pop"
+    ],
     "song": "Polaris"
    },
    {
@@ -7989,6 +8591,11 @@
    {
     "artist": "Ptazeta",
     "genre": "hip hop",
+    "genres": [
+     "reggaeton",
+     "latin pop",
+     "latin"
+    ],
     "song": "Mami"
    },
    {
@@ -8042,21 +8649,38 @@
    {
     "artist": "Quevedo",
     "genre": "hip hop",
+    "genres": [
+     "reggaeton"
+    ],
     "song": "Quédate"
    },
    {
     "artist": "Nebulossa",
     "genre": "pop",
+    "genres": [
+     "synth-pop",
+     "italo-disco"
+    ],
     "song": "Zorra"
    },
    {
     "artist": "Guitarricadelafuente",
     "genre": "pop",
+    "genres": [
+     "indie pop",
+     "ballad"
+    ],
     "song": "Maripili"
    },
    {
     "artist": "Rigoberta Bandini",
     "genre": "pop",
+    "genres": [
+     "dance-pop",
+     "indie pop",
+     "eurodance",
+     "europop"
+    ],
     "song": "Ay Mamá"
    },
    {
@@ -8122,11 +8746,20 @@
    {
     "artist": "Quevedo",
     "genre": "reggaeton",
+    "genres": [
+     "reggaeton"
+    ],
     "song": "Bzrp Music Sessions #52"
    },
    {
     "artist": "Rigoberta Bandini",
     "genre": "pop",
+    "genres": [
+     "dance-pop",
+     "indie pop",
+     "eurodance",
+     "europop"
+    ],
     "song": "In Spain We Call It Soledad"
    },
    {
@@ -8148,11 +8781,28 @@
    {
     "artist": "Guitarricadelafuente",
     "genre": "folk",
+    "genres": [
+     "indie pop",
+     "ballad"
+    ],
     "song": "Mil y Una Noches"
    },
    {
     "artist": "Sen Senra",
     "genre": "r&b",
+    "genres": [
+     "garage rock",
+     "lo-fi",
+     "indie rock",
+     "trip hop",
+     "chicago blues",
+     "pop rock",
+     "alternative rock",
+     "indie pop",
+     "soul",
+     "contemporary r&b",
+     "cloud rap"
+    ],
     "song": "Milagro"
    },
    {

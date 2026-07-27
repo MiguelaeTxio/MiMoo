@@ -52,6 +52,7 @@ from collections import Counter
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
 TREE_PATH = "app/src/main/assets/genre_tree.json"
 PROBE_PATH = "tools/genre_sources_probe.json"
+MANUAL_PATH = "tools/spanish_genres_manual.json"
 LEFTOVER_PATH = "tools/spanish_genres_leftover.json"
 
 MAX_DESCENDANTS = 25
@@ -242,6 +243,20 @@ def main():
               "Se relanza el sondeo con DISCOGS_TOKEN presente.")
         return 1
 
+    # S024 -- los cinco que Discogs resolvia como homonimo y que ni el
+    # contraste de epoca ni el de pais lograron descartar. Sus generos
+    # NO los inventa el modelo: cada uno viene con su fuente citada en
+    # el propio archivo. Tienen precedencia sobre Discogs.
+    try:
+        with open(MANUAL_PATH, encoding="utf-8") as handle:
+            manual = {
+                k: v for k, v in json.load(handle).items()
+                if not k.startswith("_")
+            }
+    except FileNotFoundError:
+        manual = {}
+    print("Resueltos a mano con fuente citada: %d\n" % len(manual), flush=True)
+
     with open(DICT_PATH, encoding="utf-8") as handle:
         dictionary = json.load(handle)
 
@@ -251,12 +266,25 @@ def main():
     filled_artists = set()
     leftover = {}
     suspicious = {}
+    manual_used = set()
     dropped = Counter()
     for decade, block in sorted(dictionary.items()):
         for entry in block.get("es") or []:
             if entry.get("genres"):
                 continue
             artist = entry["artist"]
+            override = manual.get(artist)
+            if override:
+                landed = [
+                    by_key[tree_key(g)] for g in override["generos"]
+                    if tree_key(g) in by_key
+                ]
+                if landed:
+                    entry["genres"] = landed
+                    filled += 1
+                    filled_artists.add(artist)
+                    manual_used.add(artist)
+                    continue
             styles = (probe.get(artist) or {}).get("discogs") or []
             landed = []
             for style in styles:
@@ -298,6 +326,9 @@ def main():
 
     print("--- RESULTADO ---\n", flush=True)
     print("Entradas ES rellenadas:        %d" % filled)
+    print("  ...de Discogs:               %d" % (len(filled_artists) - len(manual_used)))
+    print("  ...resueltos a mano:         %d (%s)"
+          % (len(manual_used), ", ".join(sorted(manual_used)) or "-"))
     print("Artistas distintos:            %d" % len(filled_artists))
     print("Entradas ES aun sin conjunto:  %d de %d" % (still_empty, total_es))
     print("Artistas sin dato aprovechable: %d" % len(leftover))

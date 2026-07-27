@@ -1,0 +1,33 @@
+{
+ "_nota": "S024. Los cinco artistas que Discogs resolvia como un HOMONIMO y que ningun filtro automatico logro descartar (epoca ni pais). Miguel Angel pidio explicitamente que los resolviera el modelo en vez de hacerlo el a mano. La restriccion de S023 -- 'el genero no lo inventa el modelo' -- se respeta: NINGUNA de estas etiquetas sale de la opinion del modelo. Todas salen de una fuente consultada, citada en 'fuente'. Solo se escriben etiquetas que existen en genre_tree.json, y se prefiere la subcategoria concreta a la carpeta raiz, porque 'pop' o 'hip hop' a secas no discriminan nada y dejarian la entrada igual que estaba.",
+ "Chanel": {
+  "decada": 2020,
+  "generos": ["pop", "latin pop", "dance-pop"],
+  "fuente": "Wikipedia EN, infobox 'Genres: Pop'. Wikipedia ES y buscabiografias describen «SloMo» como cancion de ritmo latino y urbano; de ahi 'latin pop' y 'dance-pop'.",
+  "porque_fallaba": "Discogs devolvia House, Garage House, Electro -- otro artista llamado Chanel, del mismo periodo, por eso el contraste de epoca no lo veia."
+ },
+ "Leiva": {
+  "decada": 2010,
+  "generos": ["rock", "pop rock", "alternative rock", "rock and roll"],
+  "fuente": "Wikipedia ES: «cantautor y multiinstrumentista espanol de rock (...) carrera como solista de rock alternativo». Wikipedia EN, infobox de Pereza, su banda anterior: 'Alternative rock, rock and roll, pop rock, country rock'.",
+  "porque_fallaba": "Discogs devolvia Tech House, Deep House, Techno, House -- un DJ homonimo en activo a la vez."
+ },
+ "Natos y Waor": {
+  "decada": 2010,
+  "generos": ["hardcore hip hop", "gangsta rap", "boom bap"],
+  "fuente": "Wikipedia ES: «duo espanol de hip hop», «relevo generacional del rap clasico basado en introducir el rap ganster en la escena». La Fonoteca y su propia biografia oficial: duo de rap madrileno.",
+  "porque_fallaba": "Discogs devolvia Tech House, Electro. Nota: 'rap' no existe en el arbol y 'hip hop' es carpeta raiz (96 descendientes), asi que se usan las subcategorias concretas que si estan y que la fuente respalda."
+ },
+ "Saiko": {
+  "decada": 2020,
+  "generos": ["reggaeton", "trap", "pop"],
+  "fuente": "Wikipedia EN, infobox 'Genres: Reggaeton; trap'. Wikipedia ES: «cantante y compositor espanol de los generos reggueton, pop y trap».",
+  "porque_fallaba": "Discogs devolvia Instrumental, Makina."
+ },
+ "Los Pecos": {
+  "decada": 1970,
+  "generos": ["ballad", "pop", "soft rock"],
+  "fuente": "niPOPniJAZZ: «canciones de pop espanol, especialmente las baladas romanticas». Spotify: «un referente del pop espanol». Pedro Herrero en entrevista (Guioteca): «nos hemos dedicado al pop». Palau Sant Jordi: «baladas melodicas».",
+  "porque_fallaba": "Discogs devolvia Cumbia, Guaracha, Psychedelic -- unos Los Pecos latinoamericanos de la misma epoca, que por eso escapaban al contraste de epoca."
+ }
+}
