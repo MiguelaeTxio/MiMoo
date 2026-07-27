@@ -1,0 +1,66 @@
+name: Sondear fuentes de generos (bloque espanol)
+
+# Disparo MANUAL. Es un sondeo de decision, no un paso de build: se
+# lanza cuando hay que elegir de que fuente sale el genero de las
+# entradas espanolas, no en cada push.
+#
+# No escribe nada en el diccionario. Solo mide y deja el informe.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Sondear las fuentes
+        env:
+          # Opcional: sin el, la parte de Discogs se salta con aviso en
+          # vez de fallar. Wikidata y Wikipedia no necesitan clave.
+          DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+        run: python3 tools/probe_genre_sources.py
+
+      # Se sube ANTES de intentar commitear, mismo criterio que
+      # genre-tree.yml: el sondeo cuesta tiempo y vive en una maquina
+      # efimera. Si el commit falla, el dato no se pierde con el runner.
+      - name: Salvar el informe como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genre-sources-probe
+          path: tools/genre_sources_probe.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commitear el informe si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/genre_sources_probe.json
+          if git diff --cached --quiet; then
+            echo "El informe no ha cambiado respecto al commit anterior."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: sondeo de fuentes de genero para el bloque espanol
+
+          Salida de tools/probe_genre_sources.py, ejecutado a mano desde
+          Actions. Mide cobertura, riqueza y -- lo que decide --
+          aterrizaje del vocabulario de cada fuente en genre_tree.json.
+
+          No modifica known_hit_artists.json: el genero no lo inventa el
+          modelo, y de que fuente sale es decision de Miguel Angel.
+          EOF
+          git pull --rebase origin main
+          git push
