@@ -189,7 +189,11 @@
     "artist": "Marisol",
     "genre": "pop",
     "genres": [
-     "pop"
+     "pop",
+     "flamenco",
+     "rumba",
+     "copla",
+     "ballad"
     ],
     "song": "Corazón Contento"
    },
@@ -259,7 +263,12 @@
     "artist": "Miguel Ríos",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "rock and roll",
+     "pop rock",
+     "rockabilly",
+     "beat music",
+     "soft rock"
     ],
     "song": "El Río"
    },
@@ -306,7 +315,10 @@
     "artist": "Los Sirex",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "beat music",
+     "rock and roll",
+     "pop rock"
     ],
     "song": "Buenas Noches, Princesa"
    },
@@ -383,7 +395,12 @@
     "artist": "Miguel Ríos",
     "genre": "pop rock",
     "genres": [
-     "rock"
+     "rock",
+     "rock and roll",
+     "pop rock",
+     "rockabilly",
+     "beat music",
+     "soft rock"
     ],
     "song": "Vuelvo a Granada"
    },
@@ -439,7 +456,10 @@
     "artist": "Los Sirex",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "beat music",
+     "rock and roll",
+     "pop rock"
     ],
     "song": "Que Se Mueran los Feos"
    },
@@ -465,7 +485,10 @@
     "artist": "Maria del Mar Bonet",
     "genre": "folk",
     "genres": [
-     "folk"
+     "folk",
+     "ballad",
+     "nueva canción",
+     "psychedelic rock"
     ],
     "song": "Què Volen Aquesta Gent?"
    }
@@ -1332,7 +1355,13 @@
     "artist": "Las Grecas",
     "genre": "rumba",
     "genres": [
-     "rock"
+     "rock",
+     "flamenco",
+     "rumba",
+     "pop rock",
+     "funk",
+     "glam",
+     "psychedelic rock"
     ],
     "song": "Te Estoy Amando Locamente"
    },
@@ -1386,7 +1415,12 @@
     "artist": "Burning",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "rock and roll",
+     "classic rock",
+     "pop rock",
+     "hard rock",
+     "glam"
     ],
     "song": "Qué Hace una Chica Como Tú en un Sitio Como Éste"
    },
@@ -1440,7 +1474,11 @@
     "artist": "La Banda Trapera del Río",
     "genre": "punk",
     "genres": [
-     "punk rock"
+     "punk rock",
+     "punk",
+     "hard rock",
+     "garage rock",
+     "rock and roll"
     ],
     "song": "Ciutat Podrida"
    },
@@ -1638,7 +1676,12 @@
     "artist": "Miguel Ríos",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "rock and roll",
+     "pop rock",
+     "rockabilly",
+     "beat music",
+     "soft rock"
     ],
     "song": "El Himno a la Alegría"
    },
@@ -2673,7 +2716,11 @@
     "artist": "Los Nikis",
     "genre": "punk",
     "genres": [
-     "punk"
+     "punk",
+     "pop rock",
+     "pop punk",
+     "rock and roll",
+     "new wave"
     ],
     "song": "La Amenaza Amarilla"
    },
@@ -2682,7 +2729,10 @@
     "genre": "punk",
     "genres": [
      "punk",
-     "rock"
+     "rock",
+     "new wave",
+     "pop rock",
+     "alternative rock"
     ],
     "song": "Bailaré Sobre Tu Tumba"
    },
@@ -2857,7 +2907,11 @@
     "artist": "Radio Futura",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "pop rock",
+     "new wave",
+     "alternative rock",
+     "synth-pop"
     ],
     "song": "Escuela de Calor"
    },
@@ -2865,7 +2919,10 @@
     "artist": "Loquillo",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "rock and roll",
+     "rockabilly",
+     "folk rock"
     ],
     "song": "Cadillac Solitario"
    },
@@ -2958,7 +3015,12 @@
     "artist": "Burning",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "rock and roll",
+     "classic rock",
+     "pop rock",
+     "hard rock",
+     "glam"
     ],
     "song": "Nadie Como Tú"
    },
@@ -3025,7 +3087,9 @@
     "artist": "Parálisis Permanente",
     "genre": "rock",
     "genres": [
-     "punk"
+     "punk",
+     "new wave",
+     "alternative rock"
     ],
     "song": "Autosuficiencia"
    },
@@ -3044,7 +3108,8 @@
     "artist": "Tam Tam Go!",
     "genre": "pop rock",
     "genres": [
-     "pop"
+     "pop",
+     "pop rock"
     ],
     "song": "Manuel Raquel"
    },
@@ -4063,7 +4128,8 @@
     "artist": "Tam Tam Go!",
     "genre": "pop rock",
     "genres": [
-     "pop"
+     "pop",
+     "pop rock"
     ],
     "song": "Espaldas Mojadas"
    },
@@ -4094,7 +4160,9 @@
     "artist": "Reincidentes",
     "genre": "punk",
     "genres": [
-     "rock"
+     "rock",
+     "punk",
+     "hard rock"
     ],
     "song": "Ansiedad"
    },
@@ -4103,7 +4171,10 @@
     "genre": "punk",
     "genres": [
      "punk rock",
-     "rock"
+     "rock",
+     "punk",
+     "pop rock",
+     "hard rock"
     ],
     "song": "La Ruta del Che"
    },
@@ -4318,7 +4389,10 @@
     "artist": "Héroes del Silencio",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "pop rock",
+     "alternative rock",
+     "hard rock"
     ],
     "song": "Entre Dos Tierras"
    },
@@ -4402,7 +4476,10 @@
     "artist": "Los Rodríguez",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "pop rock",
+     "classic rock",
+     "rock and roll"
     ],
     "song": "Sin Documentos"
    },
@@ -4434,7 +4511,10 @@
     "artist": "Ella Baila Sola",
     "genre": "pop",
     "genres": [
-     "pop"
+     "pop",
+     "ballad",
+     "folk",
+     "country"
     ],
     "song": "Nada de Nada"
    },
@@ -4489,7 +4569,10 @@
     "artist": "M-Clan",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "southern rock",
+     "rock and roll",
+     "hard rock"
     ],
     "song": "Frío"
    },
@@ -4507,7 +4590,11 @@
     "artist": "Def Con Dos",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "hip hop",
+     "nu metal",
+     "punk",
+     "hard rock"
     ],
     "song": "Armas pal Pueblo"
    },
@@ -5626,7 +5713,10 @@
     "artist": "Sôber",
     "genre": "rock",
     "genres": [
-     "metal"
+     "metal",
+     "alternative rock",
+     "hard rock",
+     "pop rock"
     ],
     "song": "Diez Años"
    },
@@ -5655,7 +5745,9 @@
     "artist": "Merche",
     "genre": "pop",
     "genres": [
-     "pop"
+     "pop",
+     "latin",
+     "ballad"
     ],
     "song": "Abre Tu Mente"
    },
@@ -5731,7 +5823,8 @@
     "artist": "Violadores del Verso",
     "genre": "hip hop",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "hardcore hip hop"
     ],
     "song": "Vicios y Virtudes"
    },
@@ -5747,7 +5840,9 @@
     "artist": "Mala Rodríguez",
     "genre": "hip hop",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "instrumental",
+     "hardcore hip hop"
     ],
     "song": "Tengo un Trato"
    },
@@ -5900,7 +5995,11 @@
     "artist": "Marea",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "alternative rock",
+     "pop rock",
+     "indie rock",
+     "hard rock"
     ],
     "song": "180 Grados"
    },
@@ -5942,7 +6041,8 @@
     "artist": "Fito & Fitipaldis",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "pop rock"
     ],
     "song": "Soldadito Marinero"
    },
@@ -6981,7 +7081,8 @@
     "artist": "Fito & Fitipaldis",
     "genre": "rock",
     "genres": [
-     "rock"
+     "rock",
+     "pop rock"
     ],
     "song": "Antes de Que Cuente Diez"
    },
@@ -7290,7 +7391,11 @@
     "artist": "C. Tangana",
     "genre": "hip hop",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "trap",
+     "boom bap",
+     "pop rap",
+     "reggaeton"
     ],
     "song": "Mala Mujer"
    },
@@ -8708,7 +8813,11 @@
     "artist": "C. Tangana",
     "genre": "hip hop",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "trap",
+     "boom bap",
+     "pop rap",
+     "reggaeton"
     ],
     "song": "Ateo"
    },
@@ -8716,7 +8825,11 @@
     "artist": "C. Tangana",
     "genre": "flamenco",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "trap",
+     "boom bap",
+     "pop rap",
+     "reggaeton"
     ],
     "song": "Tú Me Dejaste de Querer"
    },
@@ -8724,7 +8837,11 @@
     "artist": "C. Tangana",
     "genre": "pop",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "trap",
+     "boom bap",
+     "pop rap",
+     "reggaeton"
     ],
     "song": "Nominao"
    },

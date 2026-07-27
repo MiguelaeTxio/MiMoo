@@ -3,60 +3,79 @@
   "Andy y Lucas": {
    "decade": 2000,
    "discogsRaw": [],
+   "generosActuales": [],
+   "genre": "pop",
+   "motivo": "Discogs no da ningun estilo que exista en el arbol"
+  },
+  "Auryn": {
+   "decade": 2010,
+   "discogsRaw": [],
+   "generosActuales": [
+    "pop"
+   ],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Bebo & Cigala": {
    "decade": 2000,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "bolero",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Beret": {
    "decade": 2010,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Bustamante": {
    "decade": 2000,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Cecilia": {
    "decade": 1970,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Concha Velasco": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Dani Fernández": {
    "decade": 2020,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Deluxe": {
    "decade": 2000,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Dorian": {
    "decade": 2010,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "indie rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Efecto Mariposa": {
    "decade": 2000,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
@@ -65,84 +84,107 @@
    "discogsRaw": [
     "Educational"
    ],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Fórmula V": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Juan y Junior": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Karina": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Los Canarios": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Los Diablos": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Los Módulos": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Micky": {
    "decade": 1970,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
+   "motivo": "Discogs no da ningun estilo que exista en el arbol"
+  },
+  "Nach": {
+   "decade": 2000,
+   "discogsRaw": [],
+   "generosActuales": [
+    "hip hop"
+   ],
+   "genre": "hip hop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Rayden": {
    "decade": 2010,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "hip hop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Salomé": {
    "decade": 1960,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Second": {
    "decade": 2010,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "indie rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Semen Up": {
    "decade": 1980,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Siloé": {
    "decade": 2020,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "indie rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   },
   "Taburete": {
    "decade": 2010,
    "discogsRaw": [],
+   "generosActuales": [],
    "genre": "pop rock",
    "motivo": "Discogs no da ningun estilo que exista en el arbol"
   }

@@ -237,6 +237,16 @@ def merge(existing, landed):
 
 def main():
     nodes, by_key, descendants = load_tree()
+
+    def is_specific(key):
+        """La etiqueta existe en el arbol Y no es carpeta raiz.
+
+        Mismo tope de 25 descendientes que GenreTree en la app. Es lo
+        que separa un genero que sirve para anclar de uno que no:
+        'rock' existe, pero con 129 descendientes no discrimina nada.
+        """
+        real = by_key.get(key)
+        return bool(real) and len(descendants(real)) <= MAX_DESCENDANTS
     print("Arbol de generos: %d etiquetas.\n" % len(nodes), flush=True)
 
     try:
