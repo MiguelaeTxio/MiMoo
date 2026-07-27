@@ -483,7 +483,6 @@ class PlayerManager @Inject constructor(
                     radioAnchor = null
                     radioUsedArtists.clear()
                     radioRecentArtists.clear()
-                    radioBlockedArtists.clear()
                     radioTracksAccepted = 0
                     radioPortionUsed.clear()
                     radioPortionExhausted.clear()
@@ -781,13 +780,6 @@ class PlayerManager @Inject constructor(
      * preferencia suave.
      */
     private val radioRecentArtists = ArrayDeque<String>()
-
-    /**
-     * Artistas agotados para el resto de la sesión por haber intentado
-     * repetir dentro de la ventana. Exclusión DURA, a diferencia de
-     * `radioUsedArtists`.
-     */
-    private val radioBlockedArtists = mutableSetOf<String>()
 
     /**
      * ¿Ha sonado este artista dentro de las últimas
@@ -1182,9 +1174,10 @@ class PlayerManager @Inject constructor(
         // usados en sesiones recientes.
         val avoidNames = radioUsedArtists.map { it.lowercase() }.toSet() +
             radioSessionHistoryManager.recentlyUsedLower()
-        // `radioBlockedArtists` es exclusión DURA, no preferencia: son
-        // los que ya se agotaron por reincidir dentro de la ventana.
-        val anchorExclusion = setOf(anchorArtistName.lowercase()) + radioBlockedArtists
+        // S024 -- ya no hay lista negra de artistas: la ventana de
+        // `RADIO_ARTIST_WINDOW` descarta por vuelta, no para siempre.
+        // Solo se excluye el ancla, que no tiene sentido devolver.
+        val anchorExclusion = setOf(anchorArtistName.lowercase())
 
         for (portion in portionsDueThisRound()) {
             val item = when (portion) {
@@ -1212,16 +1205,28 @@ class PlayerManager @Inject constructor(
                 // cinco canciones (...) si ponemos un artista, 20
                 // canciones, ponemos otra vez, no pasa nada, pero dos
                 // veces cada diez, ya estamos incurriendo en
-                // repetición."* Reincidir dentro de la ventana no solo
-                // descarta el candidato: agota al artista para el resto
-                // de la sesión, para no volver a tropezar con él.
+                // repetición."*
+                //
+                // S024 -- se RETIRA el veto permanente. Reincidir
+                // dentro de la ventana descarta el candidato de esta
+                // vuelta y nada más: el artista sigue disponible en
+                // cuanto salga de las últimas diez canciones. Es lo que
+                // dijo Miguel Ángel al precisar la regla: *"de cada
+                // diez canciones no se puede repetir el artista;
+                // cuando pasen las diez, se puede volver a poner una
+                // del mismo artista"*.
+                //
+                // Vetar al artista para toda la sesión convertía una
+                // ventana deslizante en una lista negra que solo
+                // crecía, y en un pool pequeño la dejaba seca en pocas
+                // vueltas. Es una de las causas de que la sesión
+                // acabara viviendo del fallback que repite.
                 if (isArtistTooRecent(item.artist)) {
-                    item.artist?.let { radioBlockedArtists.add(it.lowercase()) }
                     RadioDebugLogger.log(
                         appContext, storageManager,
                         "fetchRoundCandidate(ancla='$anchorArtistName') -- '${item.artist}' repetiría " +
-                            "dentro de las últimas $RADIO_ARTIST_WINDOW canciones: descartado y " +
-                            "marcado como agotado para esta sesión",
+                            "dentro de las últimas $RADIO_ARTIST_WINDOW canciones: descartado esta " +
+                            "vuelta, vuelve a estar disponible al salir de la ventana",
                     )
                     continue
                 }
@@ -1295,6 +1300,35 @@ class PlayerManager @Inject constructor(
 
     /** Marca una porción como agotada y registra el reparto resultante. */
     private fun exhaustPortion(portion: RadioPortion, anchorArtistName: String, reason: String) {
+        // S024 -- DESCONOCIDOS NO SE AGOTA JAMÁS.
+        //
+        // Es diseño de Miguel Ángel, recogido literal en
+        // `DOCS/ANNEX_H08.md`: *"Desconocidos: en la práctica no se
+        // agota. Es prácticamente imposible agotar el último baremo
+        // aunque no repitamos temas."* Y en la escalera de
+        // degradación: *"si se agotan los artistas pq no debemos
+        // repetir temas, se siguen poniendo de artistas
+        // desconocidos"*. Es el peldaño FINAL, el que sostiene la
+        // Radio cuando todo lo demás se ha acabado.
+        //
+        // El código lo marcaba agotado permanentemente en cuanto una
+        // tanda de búsquedas fallaba, y eso es lo que empujaba la
+        // sesión entera a `resolveFinalFallback()`, que repite a
+        // propósito. De ahí "Cadillac Solitario" siete veces en un
+        // solo log.
+        //
+        // Disco y Conocidos SÍ pueden agotarse: son conjuntos finitos
+        // -- la biblioteca local y el diccionario. MusicBrainz no lo
+        // es. Que una vuelta no dé resultado no significa que no vaya
+        // a darlo la siguiente.
+        if (portion == RadioPortion.UNKNOWN) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchFromUnknown(ancla='$anchorArtistName') -- sin resultado esta vuelta " +
+                    "($reason). La porción DESCONOCIDOS sigue viva: no se agota nunca.",
+            )
+            return
+        }
         if (!radioPortionExhausted.add(portion)) return
         val reparto = RadioPortion.values()
             .filter { it !in radioPortionExhausted }
@@ -1538,6 +1572,46 @@ class PlayerManager @Inject constructor(
                 return item
             }
         }
+
+        // S024 -- PELDAÑO DE TEMAS DESCONOCIDOS.
+        //
+        // Precisión de Miguel Ángel: *"cuando se ponen de
+        // desconocidos, nos referimos a temas Y artistas (...)
+        // desconocidas quiere decir que no han entrado en lista de
+        // éxito, o que están muy abajo y no han llegado a hacer lista
+        // de éxito del año"*.
+        //
+        // O sea que la porción no se acaba cuando MusicBrainz deja de
+        // dar artistas NUEVOS: sigue habiendo temas no catalogados de
+        // artistas que cumplen el ancla, y el catálogo no-éxito de
+        // cualquier artista es profundo. Por eso esta porción no puede
+        // agotarse -- ver `exhaustPortion()`.
+        //
+        // La única cautela es la suya: *"no poner del mismo artista
+        // más de una canción de cada diez"*, que ya impone la ventana
+        // de `RADIO_ARTIST_WINDOW` en `fetchRoundCandidate()`.
+        //
+        // Se pide un artista del diccionario que cumpla el ancla y se
+        // busca en YouTube SIN título concreto, que es justo lo que
+        // devuelve material fuera de lista.
+        // Aqui NO se excluyen los artistas ya usados: son justo de los
+        // que queremos OTRO tema. La unica restriccion es la ventana de
+        // diez, que es la que puso Miguel Angel.
+        val deepArtists = knownHitsRepository.knownArtists(
+            anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
+            anchorGenres = anchor.genres,
+        ).filter { !it.equals(anchorArtistName, ignoreCase = true) && !isArtistTooRecent(it) }
+        for (artist in deepArtists.shuffled().take(UNKNOWN_CANDIDATE_ATTEMPTS)) {
+            val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null)
+            if (item != null && knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchFromUnknown(ancla='$anchorArtistName') -> tema no catalogado de '$artist' " +
+                        "('${item.title}')",
+                )
+                return item
+            }
+        }
         // El motivo distingue ahora los dos casos, que exigen arreglos
         // distintos: sin sugerencias es MusicBrainz; con sugerencias que
         // no resuelven es el filtro de YouTube.
@@ -1591,16 +1665,32 @@ class PlayerManager @Inject constructor(
                 "origen_es=${anchor.isSpanishOrigin}",
         )
 
-        val hit = knownHitsRepository.randomHit(
+        // S024 -- primero se intenta SIN repetir nada. Antes se pasaba
+        // `excludeSongKeys = emptySet()` directamente, o sea que se
+        // repetía aunque hubiera material sin estrenar.
+        val fresh = knownHitsRepository.randomHit(
+            anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
+            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames,
+            anchorGenres = anchor.genres,
+        )
+        // Y si de verdad hay que repetir, se repite EL MÁS ANTIGUO, no
+        // uno al azar. Con diez temas disponibles el azar daba
+        // 'Cadillac Solitario' siete veces mientras otros no salían
+        // ninguna -- verificado en log real. Por antigüedad suenan los
+        // diez antes de volver a ninguno.
+        val hit = fresh ?: knownHitsRepository.randomHit(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
             excludeSongKeys = emptySet(), avoidArtists = avoidNames,
+            anchorGenres = anchor.genres,
+            playOrder = radioUsedSongs.toList(),
         )
         if (hit != null) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
-                    "resolveFinalFallback(ancla='$anchorArtistName') -> repitiendo tema conocido: " +
+                    "resolveFinalFallback(ancla='$anchorArtistName') -> " +
+                        (if (fresh != null) "tema sin estrenar: " else "repitiendo el más antiguo: ") +
                         "'${hit.artist}' - '${hit.song}'",
                 )
                 acceptRadioItem(RadioPortion.KNOWN, item)
@@ -2312,7 +2402,6 @@ class PlayerManager @Inject constructor(
         radioAnchor = null
         radioUsedArtists.clear()
         radioRecentArtists.clear()
-        radioBlockedArtists.clear()
         radioTracksAccepted = 0
         radioPortionUsed.clear()
         radioPortionExhausted.clear()

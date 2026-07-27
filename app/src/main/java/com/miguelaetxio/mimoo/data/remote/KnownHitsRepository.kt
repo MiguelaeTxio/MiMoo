@@ -322,12 +322,34 @@ class KnownHitsRepository @Inject constructor(
         avoidArtists: Set<String> = emptySet(),
         relaxGenre: Boolean = false,
         anchorGenres: Set<String> = emptySet(),
+        /**
+         * Orden en que han sonado los temas de esta sesión, del más
+         * antiguo al más reciente (S024).
+         *
+         * Cuando NO está vacío se entiende que estamos repitiendo a la
+         * fuerza, y entonces no se elige al azar: se elige el que
+         * sonó hace más tiempo. Con diez temas disponibles, el azar
+         * daba "Cadillac Solitario" siete veces mientras otros no
+         * salían ninguna -- verificado en log real. Por antigüedad
+         * suenan los diez antes de repetir ninguno.
+         *
+         * `radioUsedSongs` es un `mutableSetOf()`, que en Kotlin es un
+         * LinkedHashSet: ya conserva el orden de inserción, así que la
+         * antigüedad sale gratis sin estructura nueva.
+         */
+        playOrder: List<String> = emptyList(),
     ): KnownHit? {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun pick(candidates: List<KnownHit>): KnownHit? {
             val allowed = candidates.filter { songKey(it.artist, it.song) !in excludeSongKeys }
             val preferred = allowed.filter { it.artist.lowercase() !in avoidLower }
-            return preferred.ifEmpty { allowed }.randomOrNull()
+            val usable = preferred.ifEmpty { allowed }
+            if (playOrder.isEmpty()) return usable.randomOrNull()
+            // El que no haya sonado nunca gana a cualquiera que sí.
+            return usable.minByOrNull { hit ->
+                val position = playOrder.indexOf(songKey(hit.artist, hit.song))
+                if (position < 0) Int.MIN_VALUE else position
+            }
         }
 
         // S024 -- sin década NO se sirve nada de aquí. Ver
