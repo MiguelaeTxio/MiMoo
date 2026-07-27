@@ -243,6 +243,11 @@ class PlayerManager @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val streamResolver: StreamResolver,
     private val knownHitsRepository: com.miguelaetxio.mimoo.data.remote.KnownHitsRepository,
+    // S024 -- hace falta el arbol para saber si el ancla es de
+    // repertorio clasico, y decidirlo con la taxonomia real en vez de
+    // con una lista de generos escrita a mano (ver
+    // `isClassicalAnchor()`).
+    private val genreTree: com.miguelaetxio.mimoo.data.remote.GenreTree,
     // S013/S014 -- fuente de "disco" del cupo 80/10/10 (10%, ver
     // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
     // descargados para poder ofrecer alguno como parte de la Radio.
@@ -1756,6 +1761,22 @@ class PlayerManager @Inject constructor(
     }
 
     /**
+     * ¿El ancla de esta sesión es repertorio clásico?
+     *
+     * Se decide contra `genre_tree.json` -- el género del ancla es
+     * `classical` o cuelga de él -- y no contra una lista escrita a
+     * mano. Para la 9ª de Beethoven el ancla trae `[classical,
+     * classical period, concerto, mass, opera, orchestral, romantic
+     * classical, sonata, symphony]`, y basta con que uno cuelgue.
+     */
+    private fun isClassicalAnchor(): Boolean {
+        val anchor = radioAnchor ?: return false
+        val genres = (anchor.genres.ifEmpty { setOf(anchor.genre) })
+            .map { it.lowercase().trim() }
+        return genres.any { it == "classical" || genreTree.isDescendantOf(it, "classical") }
+    }
+
+    /**
      * Búsqueda gratuita en YouTube + filtro de duración/compilación +
      * resolución de stream -- mismo mecanismo que ya existía antes de
      * S013, ahora reutilizado por los cupos de diccionario,
@@ -1771,8 +1792,21 @@ class PlayerManager @Inject constructor(
     ): QueueItem? = try {
         val query = if (songTitle != null) "$artist $songTitle" else artist
         val searchResult = externalLinkResolver.searchYoutube(query, limit = 6)
+        // S024 -- el tope de 15 minutos deja fuera el repertorio
+        // clásico entero. Miguel Ángel puso la 9ª de Beethoven, que
+        // dura 18:34: el ancla NO pasaba su propio filtro, y por eso
+        // una radio anclada en ella se quedaba seca en tres temas
+        // ("0 de 6 resultados pasaron el filtro" sobre François
+        // Couperin). Quince minutos delatan una compilación en pop;
+        // en un movimiento sinfónico, una obertura o un concierto no
+        // delatan nada.
+        val maxSeconds = if (isClassicalAnchor()) {
+            RADIO_MAX_CLASSICAL_SECONDS
+        } else {
+            RADIO_MAX_TRACK_SECONDS
+        }
         val track = searchResult.tracks.firstOrNull { candidate ->
-            candidate.durationSeconds in 1..RADIO_MAX_TRACK_SECONDS &&
+            candidate.durationSeconds in 1..maxSeconds &&
                 COMPILATION_TITLE_HINTS.none { hint ->
                     candidate.title.contains(hint, ignoreCase = true)
                 } &&
@@ -1782,7 +1816,8 @@ class PlayerManager @Inject constructor(
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- 0 de " +
-                    "${searchResult.tracks.size} resultados pasaron el filtro de duración/compilación",
+                    "${searchResult.tracks.size} resultados pasaron el filtro de duración " +
+                    "(tope ${maxSeconds / 60} min)/compilación",
             )
             null
         } else {
@@ -2313,6 +2348,23 @@ class PlayerManager @Inject constructor(
          * fetchOneRadioTrack()'s docstring.
          */
         const val RADIO_MAX_TRACK_SECONDS = 15 * 60
+
+        /**
+         * S024 -- tope propio para repertorio clásico.
+         *
+         * Los 15 minutos de [RADIO_MAX_TRACK_SECONDS] se pusieron para
+         * cazar "Full Album" y "Greatest Hits" en música popular,
+         * donde esa duración delata una compilación. En clásica no
+         * delata nada: la 9ª de Beethoven que puso Miguel Ángel dura
+         * 18:34, o sea que el propio tema del ancla no pasaba el
+         * filtro, y su radio se quedaba seca en tres temas.
+         *
+         * Cuarenta y cinco minutos cubren movimientos, sinfonías
+         * completas y conciertos, y siguen dejando fuera la ópera
+         * íntegra y las recopilaciones de tres horas. Los avisos de
+         * compilación del título siguen aplicando igual.
+         */
+        const val RADIO_MAX_CLASSICAL_SECONDS = 45 * 60
 
         /**
          * H08 -- palabras en el título que delatan una compilación
