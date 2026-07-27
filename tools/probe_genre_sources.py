@@ -96,10 +96,20 @@ def tree_key(value):
     'rock and roll'. Sin esto el aterrizaje se subestima por
     tipografia, no por vocabulario, y la comparacion entre fuentes
     dejaria de ser justa.
+
+    S024 -- se retira ademas el sufijo ' music', convencion de
+    Wikidata ('pop music', 'rock music', 'folk music'). AVISO medido en
+    la primera pasada: esto sube la cobertura bruta de Wikidata de 46 a
+    66 artistas y los que reciben una etiqueta CONCRETA solo de 44 a
+    45, porque casi todo lo que entra por aqui es 'pop' y 'rock', las
+    dos carpetas raiz. Se normaliza por correccion, no porque ayude.
     """
     folded = fold(value).replace("&", " and ")
     folded = folded.replace("-", " ").replace("/", " ")
-    return re.sub(r"\s+", " ", folded).strip()
+    folded = re.sub(r"\s+", " ", folded).strip()
+    if folded.endswith(" music"):
+        folded = folded[:-len(" music")].strip()
+    return folded
 
 
 def fetch_json(url, headers=None):
@@ -189,7 +199,8 @@ def wikidata_genres(name):
 # -------------------------------------------------------------- wikipedia
 
 INFOBOX_GENRE = re.compile(
-    r"^\s*\|\s*(?:g[eé]nero|genre)s?\s*=\s*(.+)$", re.IGNORECASE | re.MULTILINE
+    r"^\s*\|\s*(?:g[eé]nero|genre)s?\s*=\s*(.*?)(?=^\s*\|\s*\w|^\s*\}\})",
+    re.IGNORECASE | re.MULTILINE | re.DOTALL,
 )
 WIKILINK = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 
@@ -200,6 +211,20 @@ def wikipedia_genres(name, lang):
     Se extraen solo los enlaces internos del campo: el texto suelto que
     los acompana ('influencias de', notas entre parentesis) no es
     vocabulario, es prosa.
+
+    S024 -- dos correcciones tras la primera pasada del sondeo:
+
+    1. El campo suele empezar por una plantilla de lista
+       (`{{flatlist|`, `{{hlist|`) y continuar en las lineas
+       siguientes. Capturando una sola linea, el 'genero' que salia era
+       literalmente la cadena '{{flatlist|' -- 14 veces en 125
+       artistas. Ahora se captura hasta el siguiente campo o el cierre
+       de la infobox, y se retiran los nombres de plantilla.
+    2. Las etiquetas de es.wikipedia vienen en castellano ('Rock
+       alternativo', 'Pop latino') y el arbol esta en ingles. NO se
+       traducen a mano: se resuelve el titulo ingles del propio
+       articulo enlazado via langlinks, que es dato de Wikipedia y no
+       criterio del modelo.
     """
     api = "https://%s.wikipedia.org/w/api.php" % lang
     data = fetch_json("%s?%s" % (api, urllib.parse.urlencode({
@@ -221,13 +246,43 @@ def wikipedia_genres(name, lang):
             continue
         field = match.group(1)
         found = [g.strip() for g in WIKILINK.findall(field) if g.strip()]
-        if found:
-            return found
-        # Sin enlaces: se acepta texto plano corto separado por comas.
-        plain = re.sub(r"\{\{[^}]*\}\}", " ", field)
-        parts = [p.strip(" ,.;") for p in re.split(r"[,/]| y ", plain)]
-        return [p for p in parts if p and len(p) < 40]
+        if not found:
+            # Sin enlaces: texto plano, ya sin plantillas ni marcas.
+            plain = re.sub(r"\{\{[^}]*\}\}", " ", field)
+            plain = re.sub(r"<[^>]*>", " ", plain).replace("*", " ")
+            parts = [p.strip(" ,.;|") for p in re.split(r"[,/\n]| y ", plain)]
+            found = [p for p in parts if p and 2 < len(p) < 40]
+        found = [g for g in found if not g.lower().startswith(("flatlist", "hlist", "plainlist"))]
+        if lang == "es":
+            found = [translate_to_english(g) for g in found]
+        return [g for g in found if g]
     return []
+
+
+_LANGLINK_CACHE = {}
+
+
+def translate_to_english(title):
+    """Titulo ingles de un articulo de es.wikipedia, via langlinks.
+
+    'Rock alternativo' -> 'Alternative rock'. Si no hay enlace de
+    idioma se devuelve el titulo original: grueso antes que falso.
+    """
+    if title in _LANGLINK_CACHE:
+        return _LANGLINK_CACHE[title]
+    data = fetch_json("https://es.wikipedia.org/w/api.php?%s" % urllib.parse.urlencode({
+        "action": "query", "prop": "langlinks", "lllang": "en", "titles": title,
+        "redirects": 1, "format": "json",
+    }))
+    result = title
+    if data:
+        for page in ((data.get("query") or {}).get("pages") or {}).values():
+            for link in page.get("langlinks") or []:
+                if link.get("*"):
+                    result = link["*"]
+    _LANGLINK_CACHE[title] = result
+    time.sleep(DELAY_SECONDS)
+    return result
 
 
 # ---------------------------------------------------------------- discogs
@@ -301,9 +356,51 @@ def preflight(tree, token):
     return ok
 
 
+_TREE_NODES = {}
+_DESCENDANTS = {}
+# Mismo tope que GenreTree.MAX_DESCENDANTS_TO_DESCEND en la app: por
+# encima de 25 descendientes un genero es carpeta raiz y no significa
+# nada como criterio musical.
+MAX_DESCENDANTS = 25
+
+
+def descendants(genre):
+    key = genre.lower().strip()
+    if key in _DESCENDANTS:
+        return _DESCENDANTS[key]
+    found = set()
+    pending = [key]
+    while pending:
+        current = pending.pop()
+        for child in (_TREE_NODES.get(current) or {}).get("children") or []:
+            child = child.lower().strip()
+            if child not in found:
+                found.add(child)
+                pending.append(child)
+    _DESCENDANTS[key] = found
+    return found
+
+
+def is_specific(key):
+    """La etiqueta existe en el arbol Y no es carpeta raiz."""
+    real = _BY_KEY.get(key)
+    if not real:
+        return False
+    return len(descendants(real)) <= MAX_DESCENDANTS
+
+
+_BY_KEY = {}
+
+
 def main():
+    global _TREE_NODES, _BY_KEY
     with open(TREE_PATH, encoding="utf-8") as handle:
-        tree = {tree_key(k) for k in (json.load(handle).get("genres") or {})}
+        _TREE_NODES = {
+            k.lower().strip(): v
+            for k, v in (json.load(handle).get("genres") or {}).items()
+        }
+    _BY_KEY = {tree_key(k): k for k in _TREE_NODES}
+    tree = set(_BY_KEY)
     print("Arbol de generos: %d etiquetas.\n" % len(tree), flush=True)
 
     with open(DICT_PATH, encoding="utf-8") as handle:
@@ -359,8 +456,12 @@ def main():
               flush=True)
 
     print("\n--- RESUMEN DEL SONDEO ---\n", flush=True)
-    print("%-11s %10s %9s %12s %10s" %
-          ("fuente", "cobertura", "riqueza", "aterrizaje", "utiles"), flush=True)
+    print("'concretos' = artistas que reciben al menos una etiqueta que", flush=True)
+    print("el arbol reconoce Y que no es carpeta raiz. Es la unica cifra", flush=True)
+    print("que mueve la Radio: cubrir a alguien con 'pop' no sirve.\n", flush=True)
+    print("%-11s %10s %9s %12s %10s %11s" %
+          ("fuente", "cobertura", "riqueza", "aterrizaje", "utiles", "concretos"),
+          flush=True)
     summary = {}
     for source in sources:
         if source == "discogs" and not token:
@@ -377,14 +478,20 @@ def main():
             a for a, r in results.items()
             if any(tree_key(g) in tree for g in r[source])
         ]
+        concrete = [
+            a for a, r in results.items()
+            if any(is_specific(tree_key(g)) for g in r[source])
+        ]
         summary[source] = {
             "covered": len(covered), "total": len(unique),
-            "labels": len(labels), "landed": len(landed), "useful": len(useful),
+            "labels": len(labels), "landed": len(landed),
+            "useful": len(useful), "concrete": len(concrete),
         }
-        print("%-11s %6d/%-3d %9.1f %8d/%-4d %6d/%-3d" % (
+        print("%-11s %6d/%-3d %9.1f %8d/%-4d %6d/%-3d %7d/%-3d" % (
             source, len(covered), len(unique),
             (len(labels) / len(covered)) if covered else 0.0,
             len(landed), len(labels), len(useful), len(unique),
+            len(concrete), len(unique),
         ), flush=True)
 
     print("\nEtiquetas mas frecuentes que NO estan en el arbol:", flush=True)
