@@ -84,18 +84,29 @@ data class QueueItem(
      * S010: "EL PISTOLERO -pistones" emparejó con un release
      * atribuido a "Kris", sin relación real). `channelTitle` es el
      * nombre del canal de YouTube de ESE vídeo concreto (ya limpio de
-     * sufijos "- Topic"/"VEVO"/"Oficial", ver link_resolver.py) --
-     * mucho más fiable como ancla para la Radio (H08), que necesita
-     * precisión, no solo una etiqueta aproximada para mostrar.
+     * sufijos "- Topic"/"VEVO"/"Oficial", ver link_resolver.py).
+     *
+     * S025 -- ESTE CAMPO NO TIENE NADA QUE VER CON EL ANCLA DE LA
+     * RADIO (H08). S010 lo declaró aquí "más fiable como ancla"; era
+     * falso y costó varias sesiones de radios descarriladas. El canal
+     * describe a QUIEN SUBIÓ el vídeo, no QUÉ ES el vídeo: solo
+     * acierta por casualidad, cuando el canal resulta ser el artista.
+     * Sigue siendo válido para mostrar en pantalla, para H11 (Canales)
+     * y para comprobar si un vídeo candidato es de verdad del artista
+     * pedido (`matchesArtist`), que es una verificación y no una
+     * fuente de identidad.
      * ---
      * S010 -- different from `artist`. `artist` is H05's "structured
      * artist" (AlbumMatchRepository): a heuristic match against
      * MusicBrainz releases by title, useful for organizing the
      * Library but with real false positives on ambiguous/obscure
      * titles. `channelTitle` is that specific video's YouTube channel
-     * name (already cleaned of "- Topic"/"VEVO"/"Oficial" suffixes) --
-     * much more reliable as Radio's anchor, which needs precision, not
-     * just an approximate display label.
+     * name (already cleaned of "- Topic"/"VEVO"/"Oficial" suffixes).
+     *
+     * S025 -- this field has nothing to do with Radio's anchor (H08).
+     * It describes WHO UPLOADED the video, not WHAT it is. Still valid
+     * for display, for H11 (Channels) and for verifying a candidate
+     * video really belongs to the requested artist.
      */
     val channelTitle: String? = null,
     /**
@@ -435,41 +446,59 @@ class PlayerManager @Inject constructor(
                     // MusicBrainz), it retries from here instead of
                     // giving up entirely -- see
                     // topUpRadioQueueIfNeeded().
-                    // S010 -- se prefiere channelTitle sobre artist
-                    // como ancla: artist es el emparejamiento
-                    // heurístico de H05 (AlbumMatchRepository), con
-                    // falsos positivos reales en títulos ambiguos
-                    // (ver QueueItem.channelTitle); channelTitle es
-                    // el nombre de canal real de ese vídeo concreto,
-                    // más fiable para esto en concreto aunque para
-                    // mostrar en pantalla siga prefiriéndose artist
-                    // (ver el resto de la app: artist ?: channelTitle).
+                    // S025 -- EL NOMBRE DEL CANAL NO ENTRA EN EL ANCLA.
+                    // NUNCA, POR NINGUNA VÍA.
+                    //
+                    // Orden de Miguel Ángel, sin matices: *"el canal no
+                    // tiene absolutamente nada que ver con el ancla.
+                    // ¿Qué vamos a anclar, con el nombre del canal?
+                    // Esto va de canciones, títulos de canciones y
+                    // nombres de grupos y artistas. No va de nombres de
+                    // canales."*
+                    //
+                    // S024 retiró el canal de la CASCADA de intentos
+                    // (ver resolveAnchorWithFallbacks), pero lo dejó
+                    // vivo aquí, que es donde de verdad nacía: era la
+                    // SEMILLA de la identidad del ancla. Consecuencias
+                    // reales, medidas en el log de S024:
+                    //
+                    //   1. El log entero decía ancla='OlvidadasCanciones'
+                    //      -- el nombre de un canal de recopilaciones --
+                    //      cuando el tema era de Pistones.
+                    //   2. Peor que cosmético: ese nombre es el que
+                    //      alimenta `anchorExclusion` en
+                    //      fetchRoundCandidate(). Se estaba excluyendo
+                    //      de la radio a un artista que no existe,
+                    //      mientras el ancla real quedaba libre para
+                    //      volver a salir sorteada en su propia radio.
+                    //
+                    // La identidad se siembra ahora solo de lo que
+                    // describe el CONTENIDO del vídeo: el artista
+                    // estructurado de H05 y, si no lo hay, el artista
+                    // partido del propio título ("Artista - Canción").
+                    // Si no hay ninguno de los dos, no hay ancla y la
+                    // Radio no arranca sobre este tema -- mismo
+                    // principio ya establecido más abajo: antes no
+                    // arrancar que anclar en ruido.
                     // ---
-                    // S010 -- channelTitle is preferred over artist as
-                    // the anchor: artist is H05's heuristic match, with
-                    // real false positives on ambiguous titles;
-                    // channelTitle is that specific video's real
-                    // channel name, more reliable for this specific
-                    // purpose even though display elsewhere still
-                    // prefers artist.
-                    radioAnchorArtist = currentItem?.channelTitle?.takeIf { it.isNotBlank() }
-                        ?: currentItem?.artist?.takeIf { it.isNotBlank() }
-                    // S010 -- respaldo para cuando el nombre de canal
-                    // no sea un artista real en absoluto (p.ej.
-                    // "OldGuitar8", un canal de recopilaciones, sin
-                    // ningún resultado en MusicBrainz -- reportado por
-                    // Miguel Ángel, S010 continuación). Solo se guarda
-                    // si es distinto del principal, para no repetir el
-                    // mismo intento fallido dos veces -- ver
-                    // fetchOneRadioTrack().
+                    // S025 -- the channel name is never part of the
+                    // anchor, by any route. Identity is seeded only from
+                    // what describes the video's CONTENT: H05's
+                    // structured artist, else the artist parsed from the
+                    // title. Neither means no anchor, and Radio simply
+                    // doesn't start on this track.
+                    radioAnchorArtist = currentItem?.artist?.takeIf { it.isNotBlank() }
+                        ?: parseArtistFromTitle(currentItem?.title)
+                    // S025 -- el artista estructurado de H05 es el
+                    // primer peldaño de la cascada y se guarda SIEMPRE.
+                    // Antes se guardaba solo si difería del nombre del
+                    // canal; con el canal fuera, esa condición dejaría
+                    // el peldaño vacío justo cuando el dato es bueno
+                    // (radioAnchorArtist ya sería ese mismo artista).
                     // ---
-                    // S010 -- fallback for when the channel name isn't
-                    // a real artist at all (e.g. "OldGuitar8", a
-                    // compilation channel, no results in MusicBrainz).
-                    // Only stored if different from the primary one, to
-                    // avoid repeating the same failed attempt twice.
-                    radioAnchorArtistFallback = currentItem?.artist
-                        ?.takeIf { it.isNotBlank() && !it.equals(radioAnchorArtist, ignoreCase = true) }
+                    // S025 -- H05's structured artist is the cascade's
+                    // first step and is now always stored.
+                    radioAnchorArtistFallback = currentItem?.artist?.takeIf { it.isNotBlank() }
                     radioAnchorTrackTitle = currentItem?.title
                     // S010 -- nueva sesión de Radio: invalida el
                     // género+país cacheado y la lista de ya-usados de
@@ -939,49 +968,40 @@ class PlayerManager @Inject constructor(
     }
 
     /**
-     * S010 -- CUATRO intentos en cadena para fijar el ancla de una
-     * sesión de Radio, cada uno solo si el anterior no encontró NADA
-     * en MusicBrainz:
-     *   1. Nombre de canal de YouTube (más fiable en general, pero
-     *      inútil si el canal es una resubida ajena -- p.ej. "Radio
-     *      Futura - Escuela de Calor" subida por un canal random
-     *      llamado "OldGuitar8", nada que ver con la banda real).
-     *   2. Artista estructurado de H05 (emparejamiento heurístico
-     *      contra MusicBrainz por título -- puede no existir para esa
-     *      pista en absoluto).
-     *   3. Parseado del propio título del vídeo, patrón
-     *      "Artista - Canción" (extremadamente común en YouTube,
-     *      incluso en resubidas de canales random como el caso de
-     *      arriba).
-     *   4. FIX REAL S016 (reemplaza el antiguo fallback fijo a género
-     *      "classical" de S010 -- orden explícita y repetida de Miguel
-     *      Ángel: NUNCA MÁS cae a género fijo, en ningún punto del
-     *      flujo) -- si ninguno de los tres anteriores encontró NADA
-     *      (caso real: "Def Con Dos Armas pal pueblo", subida por un
-     *      canal random sin relación, sin artista de H05, sin guion en
-     *      el título que parsear), el ancla se deriva de disco: un
-     *      artista al azar de la biblioteca local ya descargada, cuyo
-     *      perfil (género/país/década) se resuelve vía MusicBrainz
-     *      igual que en pickDiscoCandidate(). Si tampoco eso da nada,
-     *      la función devuelve `null` y la Radio no arranca esta vez.
+     * S025 -- TRES intentos en cadena para fijar el ancla de una
+     * sesión de Radio, todos sobre fuentes que describen el CONTENIDO
+     * del vídeo. Cada uno se prueba solo si el anterior no encontró
+     * NADA en MusicBrainz (un fallo de RED no baja de peldaño: ver
+     * `lastFailureWasTransient` más abajo):
+     *   1. Artista estructurado de H05 (dato real de la pista;
+     *      emparejamiento heurístico contra MusicBrainz por título,
+     *      puede no existir para esa pista en absoluto).
+     *   2. Parseado del propio título del vídeo, patrón
+     *      "Artista - Canción" -- extremadamente común en YouTube,
+     *      y funciona incluso en resubidas de canales ajenos.
+     *   3. Búsqueda por palabras del título (S023, idea de Miguel
+     *      Ángel tras el caso "Led Zeppelin Immigrant song", que no
+     *      lleva " - " y por tanto el peldaño 2 no sabía leer).
+     *
+     * Si los tres fallan, la función devuelve `null` y la Radio no
+     * arranca sobre este tema. NUNCA se rellena con un género fijo
+     * (fuera desde S016) ni con un artista sorteado de la biblioteca
+     * local (fuera desde S024): las dos veces que se intentó, el
+     * resultado fue una radio sin relación con lo que sonaba.
+     *
+     * HISTÓRICO -- el nombre del canal de YouTube fue peldaño 1 en
+     * S010, peldaño 3 en S023, se retiró de esta cascada en S024 y
+     * dejó de ser semilla de la identidad del ancla en S025. No
+     * vuelve: describe a QUIEN SUBIÓ el vídeo, no QUÉ ES.
      * ---
-     * S023 -- intentos encadenados, por FIABILIDAD DE LA FUENTE y no
-     * por si resuelven o no, cada uno solo si el anterior no encontró
-     * NADA en MusicBrainz:
-     *   1. Artista estructurado de H05 (dato real de la pista).
-     *   2. Parseado del propio título, patrón "Artista - Tema".
-     *   3. Nombre del canal de YouTube -- ÚLTIMO, porque describe a
-     *      quien subió el vídeo y no lo que el vídeo es.
-     *   4. FIX REAL S016 (reemplaza el fallback "classical" de S010,
-     *      orden explícita y repetida de Miguel Ángel: NUNCA MÁS cae a
-     *      género fijo) -- si ninguno de los tres anteriores encontró
-     *      NADA en MusicBrainz, el ancla se deriva de disco: un
-     *      artista al azar de la biblioteca local ya descargada, cuyo
-     *      perfil (género/país/década) se resuelve vía MusicBrainz
-     *      igual que en pickDiscoCandidate(). Si tampoco eso da nada
-     *      (sin descargas, o ninguna resuelve perfil), la función
-     *      devuelve `null` y la Radio simplemente no arranca esta vez
-     *      -- nunca rellenar con un género arbitrario sin relación.
+     * S025 -- THREE chained attempts to fix a Radio session's anchor,
+     * all on sources that describe the video's CONTENT: H05's
+     * structured artist, the artist parsed from the title, and a
+     * word-by-word title lookup. If all three fail, Radio doesn't
+     * start on this track -- never a fixed genre, never a random
+     * artist from the local library. The YouTube channel name was
+     * removed from this cascade in S024 and from anchor identity
+     * altogether in S025.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
         // Histórico. S010 dio un respaldo para canales que NO son un
@@ -1029,7 +1049,7 @@ class PlayerManager @Inject constructor(
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "resolveAnchorWithFallbacks() -- ancla fijada desde $source: '$name' " +
-                        "(canal='$anchorArtistName', título='$radioAnchorTrackTitle')",
+                        "(título='$radioAnchorTrackTitle')",
                 )
                 // S023 -- adoptar el nombre que de verdad resolvió. Sin
                 // esto, el resto de la sesión seguía arrastrando el del
@@ -1143,7 +1163,7 @@ class PlayerManager @Inject constructor(
         RadioDebugLogger.log(
             appContext, storageManager,
             "fetchOneRadioTrack() -- ancla '$anchorArtistName' sin resultado en NINGUNO de los " +
-                "intentos (canal, H05, título, palabras del nombre) -- NO se sortea la biblioteca: " +
+                "intentos (H05, título, palabras del título) -- NO se sortea la biblioteca: " +
                 "la Radio no arranca sobre este tema",
         )
         return null
@@ -1876,7 +1896,16 @@ class PlayerManager @Inject constructor(
             uri = track.filePath!!,
             title = track.title,
             isLocal = true,
-            artist = track.artist ?: track.channelTitle,
+            // S025 -- ya no cae al nombre del canal. Este candidato
+            // sale de la biblioteca local y se ha filtrado justo arriba
+            // por `it.artist.equals(chosenArtist)`, así que `artist`
+            // nunca es nulo aquí; el respaldo era código muerto y a la
+            // vez una vía más para que un nombre de canal acabara
+            // figurando como artista dentro de una sesión de Radio (y
+            // entrando en radioUsedArtists / la ventana de repetición).
+            // ---
+            // S025 -- no longer falls back to the channel name.
+            artist = track.artist,
             isFromRadio = true,
             youtubeId = track.youtubeId,
             channelTitle = track.channelTitle,
