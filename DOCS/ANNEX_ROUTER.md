@@ -34,17 +34,29 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
+| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
-| H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
+| H13 | `DOCS/ANNEX_H13.md` | ← **EN PROGRESO** |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-07-28** — PCH explícito de Miguel Ángel al cierre de S024:
+  H08 pasa a PAUSADO, H13 pasa a EN PROGRESO. No hay incidencia: el
+  objetivo que abrió S023 y S024 (que la Radio no se agote) queda
+  cumplido y medido — mediana de 44 candidatos en el bloque español
+  frente a un objetivo de ~15, y 5% de entradas con menos de 5. Miguel
+  Ángel decide dedicar la siguiente sesión a UX del reproductor:
+  *"comenzamos la sesión siguiente con UX, hay varias cosas que
+  comprobar, como el funcionamiento de los botones y el aspecto de
+  algunos ítems. En el ExoPlayer, descargar no funciona, por ejemplo.
+  Hay que repasar todos los botones a ver cómo está el código."* La
+  hoja de ruta de `ANNEX_H13.md` queda reescrita con ese encargo.
 
 - **2026-07-15** — Enrutador creado (migración desde el marcador que
   antes vivía en la tabla de `MASTER_DOCUMENT.md`, instrucción de

@@ -1582,126 +1582,359 @@ añadiría más "pop".
 
 ---
 
+### COMPLETADAS EN S024
+
+Sesión larga, con dos mitades muy distintas. La primera fue arreglar
+fallos del motor uno a uno, según iban apareciendo en los logs de
+dispositivo. La segunda empezó cuando Miguel Ángel paró esa dinámica:
+
+> *"Esta forma de probar, caso no contemplado, implementar caso,
+> probar, caso no contemplado, implementar caso, conlleva a una
+> implementación eterna."*
+
+Tenía razón, y medirlo lo confirmó: el problema de fondo no era que
+faltaran casos en el filtro, sino que el pool era tan pequeño que
+**cualquier** exigencia del filtro lo dejaba seco. Ese cambio de
+enfoque es lo que cerró el objetivo del hito.
+
+**El objetivo de S023 se cumple por primera vez.** Recorrido de la
+mediana de candidatos del bloque español a lo largo de la sesión:
+
+    partida                                 7    (18% con <5 candidatos)
+    relleno con Discogs                    10    (11%)
+    anclas que solo tenían carpetas raíz   12     (9%)
+    ampliación con listas de Los 40        44     (5%)
+
+    objetivo fijado al cerrar S023:  mediana ~15, menos del 5%
+
+#### 1. Búsqueda por palabras del NOMBRE del artista
+
+Regla dictada por Miguel Ángel al ver fallar la 9ª de Beethoven:
+*"las búsquedas no se deben ni de invertir, ni de esto ni de lo otro
+— se debe buscar por palabras"*.
+
+La búsqueda por palabras existía desde S023 pero solo se aplicaba al
+TÍTULO del tema. Sobre `Beethoven, Ludwig van` —formato de catálogo
+que trae la etiqueta del archivo y que MusicBrainz no conoce— se
+probaron cinco prefijos del título y ni una sola vez las palabras del
+nombre. Ese nombre se buscó doce veces en un solo log y volvió vacío
+las doce.
+
+`findAnchorArtistMbid()` aplica ahora la misma mecánica al nombre, y
+`pickAnchorArtist()` acepta por igualdad de CONJUNTO de palabras. No
+se invierte nada ni se interpretan comas: el formato `Apellido,
+Nombre` se resuelve como efecto lateral de la regla general. No
+reabre lo que cerró S023 porque exige igualdad y no inclusión —
+`Los Ángeles` no casa con `Los Angeles Philharmonic`, `Pink` no casa
+con `Pink Floyd`.
+
+#### 2. La década nula abría las siete décadas
+
+`pool()` hacía `if (decadeBegin != null) byDecade[decadeBegin] else
+byDecade.values`: no tener década significaba TODAS. Se vio entero en
+un log — la copla *"Ay, pena, penita, pena"* de Carlos Cano no se pudo
+fechar (MusicBrainz no tiene fecha para esa actuación de TV), el ancla
+quedó con década nula, y la radio de una copla de 1999 sirvió David
+Bisbal, La Oreja de Van Gogh, **Aitana** y Dvicio.
+
+`randomHit()` y `knownArtists()` cortan antes de llegar a `pool()`.
+No toca la regla de S023: la década la sigue marcando el TEMA. Lo que
+cambia es que no tener dato pase de significar "todo vale" a "de aquí
+no sale nada".
+
+#### 3. La Radio ya no se ancla en un artista sorteado
+
+Con la 9ª de Beethoven la cascada falló entera y
+`resolveAnchorFromDisco()` recorrió la biblioteca local **en orden
+aleatorio**, anclando en el primero que resolviera perfil. Salió The
+Offspring, y la Radio de una sinfonía sirvió INXS, The Smiths, Depeche
+Mode, Def Leppard y The Cure.
+
+El propio código declaraba el principio correcto dos guardas más
+arriba (*"antes no arrancar Radio que anclarla en un artista
+arbitrario"*), pero esa guarda solo saltaba ante fallo de red. Función
+retirada entera.
+
+#### 4. Repertorio clásico
+
+Miguel Ángel rechazó que "no arrancar" fuera un resultado aceptable:
+*"que con el mejor compositor de todos los tiempos la radio no
+arranque es un fallo más que garrafal"*. Y tenía razón — el log
+demostraba que el anclaje ya funcionaba y que lo que fallaba era
+dejar sonar lo que la propia app encontraba.
+
+- **Tope de duración propio, 45 minutos.** `RADIO_MAX_TRACK_SECONDS`
+  eran 15, y el tema del ancla duraba 18:34: el ancla no pasaba su
+  propio filtro. Se decide contra `genre_tree.json`
+  (`RadioAnchor.isClassical`), no contra una lista escrita a mano.
+- **El país deja de filtrar POR COMPLETO.** Orden de Miguel Ángel,
+  precisada: *"no se trata de permitir españoles, se trata de permitir
+  cualquiera — alemanes, franceses, ingleses, italianos, españoles,
+  rusos, checos, y de cualquier país del mundo"*. Ni `country:ES` ni
+  `NOT country:ES`, en los tres sitios donde el país filtraba.
+  `Origin.ANY` existía en el enum desde S020 sin que ningún camino de
+  la Radio lo usara; éste es el primero.
+- **El filtro de compilación no se aplica en clásica.** Con el tope ya
+  en 45 minutos seguían pasando 0 de 6 resultados: no era la duración
+  sino la lista de nombres. Buscar `Richard Strauss` devuelve sobre
+  todo *Best of*, *Complete Works* y *Full Concert*, que en clásica es
+  cómo se publica el repertorio.
+
+#### 5. Filtro por nombre de lo que no es una canción
+
+Idea de Miguel Ángel: *"full album o greatest hits podemos descartarlos
+por nombre igual que interview, chap, capítulo, álbum completo,
+grandes éxitos, película completa, entrevista"*. La lista pasa de 6 a
+37 términos, con el castellano que faltaba por completo.
+
+**Cambió también el criterio de comparación, y era necesario:** el
+filtro hacía `title.contains(hint)` a pelo, y con la lista ampliada
+eso habría descartado a Tracy CHAPman por `chap` y a CAPitol Records
+por `cap`. Ahora se compara por palabra completa sobre el título
+plegado de acentos. Deliberadamente fuera: `mix` a secas, porque
+"Original Mix" y "Extended Mix" son temas legítimos.
+
+Partida en dos listas, porque en clásica solo aplica la segunda:
+`COMPILATION_TITLE_HINTS` (recopilaciones) y `NOT_MUSIC_TITLE_HINTS`
+(entrevistas, capítulos, documentales, audiolibros, películas).
+
+#### 6. Cuatro estrangulamientos del pool, todos por exceso de celo
+
+Aparecieron uno a uno en los logs, y en conjunto explican por qué la
+Radio se agotaba pese a tener material:
+
+1. **La exploración se rendía al primer fallo.** `fetchFromUnknown()`
+   pedía UN artista, intentaba UNA resolución en YouTube, y si fallaba
+   daba la porción entera por agotada — con diez candidatos
+   encontrados. Ahora prueba hasta cuatro. El motivo que escribía en
+   el log era además falso: decía que MusicBrainz no daba artistas
+   cuando sí los daba.
+2. **El offset aleatorio se pasaba del final.** `findCandidates()`
+   pedía con `offset` aleatorio entre 0 y 90 (S010, para dar variedad)
+   y sobre un conjunto de ~15 artistas un offset de 90 devuelve vacío.
+   El código lo leía como "eslabón roto". Ahora reintenta desde el
+   principio.
+3. **La porción DESCONOCIDOS se agotaba.** Contradice el diseño
+   dictado por Miguel Ángel y recogido literal en este mismo anexo:
+   *"Desconocidos: en la práctica no se agota. Es prácticamente
+   imposible agotar el último baremo aunque no repitamos temas."*
+   Disco y Conocidos sí pueden agotarse — son finitos. MusicBrainz no
+   lo es.
+4. **La ventana de diez vetaba para toda la sesión.** Al detectar que
+   un artista repetiría dentro de la ventana lo metía en lista negra
+   permanente, convirtiendo una ventana deslizante en una lista que
+   solo crecía. Miguel Ángel lo precisó: *"de cada diez canciones no
+   se puede repetir el artista; cuando pasen las diez, se puede volver
+   a poner una del mismo artista"*. `radioBlockedArtists` retirada.
+
+#### 7. Sondeo de fuentes de género — Discogs elegido
+
+Miguel Ángel pidió sondear cuál de las fuentes candidatas daba mejor
+resultado. Se hizo desde GitHub Actions (idea suya, porque la red del
+entorno del modelo va por lista blanca y Wikidata, Discogs y
+MusicBrainz están todas bloqueadas), con
+`tools/probe_genre_sources.py`.
+
+    fuente      cobertura   riqueza   CONCRETOS
+    discogs      102/125       4.1     101/125
+    wikipedia     65/125       2.6      49/125
+    wikidata      71/125       1.7      45/125
+
+**La cifra que decidió fue "concretos"** — artistas que reciben una
+etiqueta que el árbol reconoce Y que no es carpeta raíz. Wikidata
+cubría 71 pero casi todo con `pop music` y `rock music`, que caen en
+las raíces y dejan la entrada igual que estaba.
+
+El sondeo necesitó **cuatro pasadas** por errores del modelo, todos
+detectados revisando el resultado antes de escribir en el diccionario
+—que no se tocó hasta tenerlo limpio— y todos anotados en el código:
+
+- No se filtraba el papel del artista, y entraban recopilatorios de
+  varios intérpretes: Taburete recibía *merengue, guaguancó, calypso*
+  y Antonio Molina *techno, makina, euro house*.
+- Homónimos de otra época: Fórmula V con *funk, disco, electro*.
+  Resuelto con contraste de época contra la década de la entrada.
+- El contraste de país se hizo sobre el listado de discos, donde ese
+  campo NO existe — sólo está en el detalle. Fue un no-op completo:
+  cuarta pasada con cifras idénticas a la tercera.
+- Un colador que contrastaba los estilos contra el `genre` grueso de
+  la entrada apartaba 28 artistas y la mayoría eran BUENOS, porque
+  `pop rock` no cuelga de `pop` en el árbol de MusicBrainz. Retirado.
+
+Quedaron **cinco homónimos** que ningún filtro automático cazó, porque
+son contemporáneos: Chanel (house), Leiva (techno), Natos y Waor (tech
+house), Saiko (makina) y Los Pecos (cumbia). Miguel Ángel pidió que
+los resolviera el modelo. Se hizo **sin violar la restricción de
+S023**: ninguna etiqueta sale de la opinión del modelo, todas de una
+fuente consultada y citada en `tools/spanish_genres_manual.json`, con
+el motivo por el que Discogs fallaba en cada uno.
+
+#### 8. Las anclas que solo tenían carpetas raíz
+
+Clase que se escapó al primer relleno. El criterio de objetivo era "no
+tiene `genres`", y se quedaba corto: **Radio Futura SÍ tenía conjunto,
+pero era `['rock']`** — una etiqueta, y carpeta raíz de 129
+descendientes. Con eso `matchesGenre()` cae al último peldaño y solo
+acepta entradas que lleven literalmente `rock`: diez artistas de las
+51 del bloque ES de los ochenta. Su radio se agotaba y entraba en
+bucle.
+
+Lo que descalifica a una entrada como ancla no es no tener géneros, es
+no tener ninguno CONCRETO. Medido: 31 sin conjunto + 41 con solo
+raíces = **72 de 352 inservibles como ancla**. Ambas herramientas usan
+ahora ese criterio, y el relleno FUSIONA en vez de sustituir.
+
+#### 9. Ampliación del diccionario con las listas de Los 40
+
+La palanca que cerró el objetivo, en tres fases con herramienta y
+workflow propios:
+
+| fase | herramienta | resultado |
+|---|---|---|
+| 1 · cosecha | `harvest_los40_charts.py` | 2121 canciones, 946 artistas, 1966–2025 |
+| 2 · enriquecer | `enrich_chart_artists.py` | país y género: 378 vía MusicBrainz, 154 vía Discogs, 332 ya en el diccionario |
+| 3 · fusión | `merge_charts_into_dictionary.py` | 675 canciones españolas añadidas |
+
+Fuente: `Anexo:Los números uno de Los 40 Principales (España) {año}`
+de Wikipedia. La lista cambió de nombre a `LOS40` por el camino, lo
+que perdió nueve años en la primera pasada; se prueban ahora cinco
+formas del título por año.
+
+**Solo españolas, decisión de Miguel Ángel** — el bloque internacional
+ya iba holgado con mediana 26 y meter ahí 1338 canciones más sería
+trabajo sin retorno. El tamaño del asset se le consultó y lo descartó
+como problema: son 277 KB.
+
+    bloque ES   352 -> 1027 entradas
+    total       777 -> 1452
+
+Criterios de admisión: artista español (por MusicBrainz o por estar ya
+en el bloque `es`), al menos un género CONCRETO, y sin duplicar. La
+década sale del AÑO en que la canción fue número uno — regla de S023
+aplicada, y aquí sale gratis porque es justo lo que da la lista.
+
+#### 10. El ancla se enriquece con el diccionario
+
+Descubierto al ver que las 675 canciones nuevas no se estaban
+aprovechando: `resolveAnchor()` construye el ancla desde
+**MusicBrainz**, no desde el diccionario. Y MusicBrainz, de Radio
+Futura, solo da `rock`. Así que la entrada quedó enriquecida a
+`[rock, pop rock, new wave, alternative rock, synth-pop]` y el ancla
+siguió siendo `[rock]` a secas.
+
+`KnownHitsRepository.genresOfArtist()` y unión de las dos fuentes.
+**Ésta fue la pieza que hizo funcionar todo lo demás**: con el ancla
+ancha, la sesión de prueba sirvió catorce temas de la movida
+madrileña seguidos —Azul y Negro, Los Zombies, La Década Prodigiosa,
+Los Elegantes, Ramoncín, Glutamato Ye-Yé, Tino Casal, Rey Lui,
+Extremoduro, Los Nikis, Loco Mía, Olé Olé, The Refrescos, Orquesta
+Mondragón— con **cero repeticiones, cero violaciones de la ventana de
+diez y cero porciones agotadas**.
+
+#### 11. El canal deja de ser fuente de ancla. Nunca más
+
+Orden de Miguel Ángel, sin matices: *"el canal no puede ser objeto de
+ancla nunca. ¿Qué vamos a anclar por canal? De hecho lo que estamos es
+contaminando las anclas si metemos los nombres de los canales."*
+
+S023 ya lo había bajado a último peldaño tras el caso "Radio Futura -
+Divina" subido por un canal llamado *Kurt Cobain*. Bajarlo no bastó:
+volvió a colarse en S024 en cuanto el peldaño bueno falló, y la radio
+sirvió Lou Reed.
+
+La cadena completa fue instructiva y quedó en el log:
+
+    resolveAnchor('Radio Futura') -- EXCEPCIÓN: SocketTimeout
+    resolveAnchor('Kurt Cobain')  -- ...
+    ancla fijada: género='grunge', país=US, década=null
+    fetchFromDisco(ancla='Kurt Cobain') -> 'Lou Reed'
+
+**El peldaño bueno no falló por no resolver: falló por un timeout.** Y
+la cascada lo trató igual que un "no existe". De ahí: ancla
+grunge/US/sin década → el diccionario no sirve nada → KNOWN agotada al
+segundo → su 80% se reparte a DISCO → Lou Reed, que en una radio de
+grunge estadounidense es una elección impecable.
+
+Dos correcciones: el canal sale de la cascada, y **un fallo transitorio
+aborta el anclaje en vez de bajar de peldaño** — es la lección de S022
+(*"un 503 no es 'este artista no tiene géneros', es 'ahora no'"*), que
+no se estaba aplicando aquí pese a existir ya `lastFailureWasTransient`.
+
+#### 12. Un peldaño mal colocado, y por qué importa
+
+Al decir Miguel Ángel que "desconocidos" incluye temas y no solo
+artistas, el modelo añadió a `fetchFromUnknown()` un peldaño que
+buscaba en YouTube el nombre del artista a secas. Con `Los Locos` vino
+**"Los locos, Presentación. Carnaval de Cádiz 2026"** en una radio
+anclada en la movida madrileña.
+
+El diseño documentado en este anexo ya coloca los temas no catalogados
+en CONOCIDOS (peldaño 2), no en Desconocidos, y `fetchFromKnown()` ya
+lo implementaba. Se retiró. Queda anotado porque el reproche de Miguel
+Ángel era el correcto: *"¿de qué sirve tener todo lo que tenemos
+documentado?"* — la respuesta estaba escrita y no se leyó.
+
+#### Incidencia comprobada y desmentida
+
+Miguel Ángel sospechó que las cuotas se habían pisado (*"ya nos
+limpiamos el culo con las cuotas"*). Se comprobó con el recuento del
+log: KNOWN=49, UNKNOWN=16, DISCO=1 — un 74/24/1 con Disco agotada y su
+10% repartido a KNOWN=85% y UNKNOWN=15%. `effectiveQuotaPercent()`
+reparte exactamente como él lo dictó, incluido el encadenado. Lo que
+fallaba era el contenido de un cupo, no el reparto.
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
-**Objetivo único acordado con Miguel Ángel al cierre de S023: que la
-Radio no se agote.** Todo lo demás queda detrás.
+El objetivo que abrió S023 y S024 —**que la Radio no se agote**— está
+cumplido y medido: mediana española de 44 candidatos y 5% de entradas
+con menos de 5, contra un objetivo de ~15 y menos del 5%. Lo que sigue
+son cabos sueltos, ninguno bloqueante.
 
-El diagnóstico está hecho y medido (ver "Medición del diccionario" en
-S023 continuación). No falta volumen: falta DATO DE GÉNERO en el lado
-español, donde MusicBrainz apenas cataloga. Esto es una sesión de datos,
-no de motor.
+### 1. La única excepción viva a "no se repite nunca"
 
-### 1. Rellenar el género de las 151 españolas sin conjunto
+`resolveFinalFallback()` todavía puede repetir un tema cuando las tres
+porciones fallan en la misma vuelta. Se dejó repitiendo **el más
+antiguo** en vez de al azar —usando que `radioUsedSongs` es un
+`LinkedHashSet` y ya conserva el orden—, pero repite.
 
-Es la palanca principal. 43% del bloque español, y 81 de ellas llevan
-`pop` o `rock` a secas, que no sirven para cruzar con ningún ancla
-específica.
+En la última sesión de prueba no llegó a dispararse ni una vez. Aun
+así, Miguel Ángel dijo que un tema no se repite NUNCA, y eso obliga a
+decidir qué hace la Radio cuando de verdad no queda nada: **pararse o
+repetir**. *Decisión pendiente de Miguel Ángel — no tomarla por él.*
 
-MusicBrainz no las tiene, así que hay que decidir CON MIGUEL ÁNGEL de
-dónde sale el dato. Opciones a plantearle, sin elegir por él:
+### 2. Bloque internacional sin ampliar
 
-- Otra fuente pública con mejor cobertura española (Discogs tiene
-  `style` por lanzamiento; Wikipedia/Wikidata tienen género por
-  artista).
-- Por lotes revisados por él, que es como se hizo la desambiguación de
-  S023 y funcionó.
+Mediana 26 frente a los 44 del español. Las **1338 canciones no
+españolas** de la cosecha están ya descargadas y enriquecidas en
+`tools/chart_los40_raw.json` y `tools/chart_los40_enriched.json`: la
+fusión sería ejecutar `merge_charts_into_dictionary.py` con el criterio
+de país invertido. Miguel Ángel lo descartó para S024 por no aportar
+donde ya sobra, pero el material está listo si cambia de idea.
 
-**Restricción heredada de S023, no negociable:** el género no lo
-inventa el modelo. Si el dato no está en una fuente, se pregunta; no se
-rellena a ojo. Fue el origen de `GENRE_FAMILIES` y de todo el trabajo
-de esta sesión.
+### 3. Repertorio clásico sin volver a probar
 
-### 2. Medir DESPUÉS, con el mismo método
+Lo del país sin filtrar y el tope de 45 minutos entraron después de la
+última prueba de clásica. Falta una escucha larga anclada en una obra
+clásica para confirmar que no se agota.
 
-La simulación que produjo las cifras de S023 -- tratar cada entrada
-como ancla y contar candidatos en su pool de década+origen -- es
-reproducible y debe repetirse al terminar. Criterio de éxito
-propuesto: que ninguna década española baje de ~15 candidatos de
-mediana, y que las entradas con menos de 5 candidatos caigan por
-debajo del 5% (hoy: 17% global, casi todo español).
+### 4. 766 filas de Wikipedia sin interpretar
 
-### 3. Si tras 1 y 2 sigue agotándose, entonces sí tocar el motor
+El parseo de `harvest_los40_charts.py` reporta 766 filas de las tablas
+que no logra leer. No se sabe qué hay ahí sin mirarlo — podría ser un
+formato de tabla que se escapa en algún tramo de años. Recuperarlas
+ampliaría la cosecha, aunque el objetivo ya está cumplido sin ellas.
 
-Y no antes. Dos vías posibles, a decidir con las cifras delante:
+### 5. Pendientes menores heredados de S023
 
-- Relajar la separación dura de origen cuando el pool español se
-  agota. **Ojo: contradice la orden explícita de S020** ("el origen
-  separa España y extranjero en los DOS sentidos"), así que requiere
-  que Miguel Ángel la revise, no se toca por iniciativa propia.
-- Ampliar la ventana de década a la contigua antes de repetir tema.
-  Menos invasivo, pero también toca una regla suya.
-
-### 4. Pendientes menores, si sobra sesión
-
-- `lookupArtistProfile()` sigue derivando la década del `life-span`
-  del artista para los candidatos del cupo DISCO -- mismo defecto
-  corregido en `resolveAnchor()`, con menos daño porque descarta un
-  candidato suelto en vez de condicionar la sesión.
-- `sharesGenreWith()` en `RadioAnchor` es intersección exacta sin
-  árbol. Estricta pero nunca falsa. Meterlo exige resolver que
-  `RadioAnchor` es una `data class` sin inyección.
-- Cinco artistas sin MBID (Deluxe, Kanye West, Los Canarios, Micky,
-  Pink). Kanye West y Pink deberían resolverse ya solos con el límite
-  de búsqueda en 25: **comprobarlo antes** de buscarles MBID a mano.
-- Verificación en dispositivo del modo degradado (hacen falta cuatro
-  fallos SEGUIDOS) y de las reglas de no repetición en una sesión
-  larga.
-- Verificación en dos dispositivos (PASO 5 de H07), ajena a este hito.
-
-### Lo que NO hay que volver a tocar
-
-El bloque de géneros de S023 está cerrado y verificado en dispositivo:
-árbol, fechado por tema, cascada del ancla por fiabilidad de fuente, y
-búsqueda por palabras. Si algo de eso falla, es una incidencia nueva
-con log, no material de hoja de ruta.
+- La década del `life-span` en `lookupArtistProfile()` sigue
+  derivándose del artista y no del tema. Importa menos desde que el
+  anclaje por sorteo se retiró, pero afecta al cupo de disco.
+- Comprobar si Kanye West y Pink resuelven MBID solos ahora que el
+  límite de búsqueda está en 25.
+- La etiqueta `ancla=` del log muestra a veces el nombre viejo en el
+  primer candidato de cada vuelta. Cosmético, pero dificulta leer los
+  logs.
 
 ---
-
-## Hoja de Ruta anterior (S022), ya cubierta
-
-Pedía enriquecer el diccionario con el conjunto de géneros de cada
-entrada y dejar de depender de `GENRE_FAMILIES`. Cubierto en S023, y
-más allá de lo que pedía: las familias no quedaron como respaldo, se
-eliminaron. Sus dos decisiones de criterio musical pendientes —Tears
-for Fears y New Order— quedaron resueltas por los datos y no por
-criterio del modelo (ver COMPLETADAS EN S023).
-
-Lo único suyo que NO se cubrió es la verificación en dispositivo del
-modo degradado y de las reglas de no repetición, arrastrada al punto 6
-de la hoja de ruta vigente.
-
----
-
-## Hoja de Ruta anterior (S021), ya cubierta
-
-Lógica y datos estaban completos; lo que quedaba era verificación en
-dispositivo, y de su resultado dependía todo lo demás. Esa
-verificación se hizo en S022 y es lo que destapó todo lo de arriba.
-
-1. **Escucha larga en dispositivo real**, revisando
-   `radio_relacionados_debug.txt`:
-   - Que **ninguna** línea sirva una década distinta a la del ancla. Si
-     aparece alguna, queda una quinta fuga sin localizar y ese es el
-     trabajo de la sesión.
-   - Cuántos `0 de N resultados pasaron el filtro` de
-     `matchesArtist()`. Si abundan, el criterio está demasiado apretado
-     y hay que relajarlo (p. ej. comparar por token normalizado en vez
-     de por subcadena completa).
-   - Cuándo se declara agotada cada porción y si `effectiveQuotaPercent()`
-     reparte de verdad el porcentaje liberado.
-2. **Según el resultado**, corregir lo que el log delate. Sin log, no
-   hay nada que corregir a ciegas.
-3. **Solo si Miguel Ángel lo pide**: failover de Radio-Browser ante
-   503/timeout, que es H09 y no H08.
-
----
-
-## Fuera de Alcance de Este Hito
-
-- Cualquier forma de "me gusta"/entrenamiento de preferencias más allá
-  de favoritos ya existentes (H03) — no se ha planteado, no está en
-  el objetivo descrito por Miguel Ángel.
-- Playlists colaborativas o compartidas entre Miguel Ángel y Silvia —
-  no mencionado, fuera de alcance salvo que se pida explícitamente.
-

@@ -89,24 +89,73 @@ todavía que Miguel Ángel los incluye en "etc.":**
 
 ## HOJA DE RUTA PARA LA SESIÓN QUE RETOME H13
 
-1. **Preguntar primero, no asumir.** Confirmar con Miguel Ángel:
-   - ¿"Chapitas" significa fondo tipo `FilterChip`/`glassChip`
-     relleno cuando el control está activo, o algo distinto (badge,
-     punto indicador, etc.)?
-   - ¿Qué controles concretos entran en el "etc." además de
-     aleatorio y cíclico? (repasar con él la lista de "Otros
-     candidatos" de arriba).
-   - ¿Afecta solo al reproductor expandido, o también al
-     mini-reproductor colapsado?
-2. Una vez cerrado el alcance, implementar los cambios visuales en
-   `PlayerBar.kt` (y `PlayerBarViewModel.kt` si hiciera falta exponer
-   algún estado nuevo -- no debería, `shuffleModeEnabled`/
-   `repeatModeEnabled` ya existen en `PlaybackState`).
-3. Verificar visualmente (PASO 4 de `newflow-android-edit`) antes de
-   cada commit, prestando atención a contraste sobre el fondo de
-   cristal real de la app, no solo a que el código compile.
-4. Cierre de sesión: actualizar este anexo con lo construido y
-   `RESUMPTION_POINT.md`.
+Encargo de Miguel Ángel al cerrar S024, que redefine el alcance de la
+sesión que retome este hito:
+
+> *"Comenzamos la sesión siguiente con UX, hay varias cosas que
+> comprobar, como el funcionamiento de los botones y el aspecto de
+> algunos ítems. En el ExoPlayer, descargar no funciona, por ejemplo.
+> Hay que repasar todos los botones a ver cómo está el código."*
+
+O sea: **repaso sistemático de la UX del reproductor**, no un retoque
+puntual. Dos frentes distintos que conviene no mezclar.
+
+### 1. Incidencia concreta y reportada: descargar no funciona
+
+Único bug con reporte explícito. Miguel Ángel lo sitúa "en el
+ExoPlayer", que en la práctica significa la barra de reproducción. Hay
+que reproducirlo antes de tocar nada: no se sabe todavía si el botón
+no responde, si responde y la descarga falla, o si descarga y no se
+refleja en la interfaz.
+
+Contexto que ya existe y hay que leer antes: S019 de este mismo anexo
+derivó por completo hacia un bug de descargas (yt-dlp, restricción por
+edad). **Comprobar primero si esto es una regresión de aquello o un
+fallo distinto** antes de abrir camino nuevo.
+
+### 2. Repaso sistemático de todos los botones
+
+Miguel Ángel pide revisar **cómo está el código** de los botones, no
+solo su comportamiento visible. Enfoque sugerido, a confirmar con él:
+
+1. Inventariar todos los controles de `PlayerBar.kt` — reproducir /
+   pausar, anterior, siguiente, aleatorio, cíclico, favorito,
+   descargar, colapsar, menú de tres puntos.
+2. Por cada uno: qué estado lee, qué acción dispara, si refleja el
+   estado real o uno derivado, y si el `onClick` puede quedar sin
+   efecto en algún estado (cola vacía, tema local frente a streaming,
+   Radio activa).
+3. Anotar los que estén mal ANTES de arreglar ninguno, y presentarle
+   la lista para que priorice. **No arreglar sobre la marcha** — es
+   justo el patrón que él criticó en S024 (*"caso no contemplado,
+   implementar caso, probar, caso no contemplado... conlleva a una
+   implementación eterna"*).
+
+### 3. Aspecto de algunos ítems
+
+Mencionado sin concretar. **Preguntar cuáles** antes de proponer nada;
+no asumir que se refiere a las chapitas de S018, que ya están hechas y
+verificadas.
+
+### 4. Pendiente heredado, sin cerrar desde S018
+
+El "etc." del alcance original de H13 sigue sin definirse. Las
+preguntas que quedaron abiertas y siguen sin respuesta:
+
+- ¿Qué controles entran en el "etc." además de aleatorio y cíclico?
+  (repasar con él la lista de "Otros candidatos" de este anexo).
+- ¿Afecta solo al reproductor expandido, o también al
+  mini-reproductor colapsado?
+
+Es probable que el repaso sistemático del punto 2 conteste a las dos
+por sí solo.
+
+### Método
+
+Verificar visualmente (PASO 4 de `newflow-android-edit`) antes de cada
+commit, prestando atención al contraste sobre el fondo de cristal real
+de la app y no solo a que compile. Las pruebas de comportamiento las
+hace Miguel Ángel en dispositivo.
 
 ---
 

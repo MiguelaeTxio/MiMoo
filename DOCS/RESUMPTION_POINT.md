@@ -1,123 +1,114 @@
 # PUNTO DE REANUDACIÓN — MiMoo
 
-**Última sesión cerrada:** S023 (2026-07-26)
-**Hito EN PROGRESO:** H08 — Radio (`DOCS/ANNEX_H08.md`)
+**Última sesión cerrada:** S024 (2026-07-28)
+**Hito EN PROGRESO:** H13 — UX del Reproductor (`DOCS/ANNEX_H13.md`)
 
 > El estado de los hitos vive **exclusivamente** en
 > `DOCS/ANNEX_ROUTER.md`. Este archivo no lo declara ni lo duplica.
 
 ---
 
-## Dónde se quedó S023
+## Qué hacer en la siguiente sesión
 
-El bloque de géneros de H08 quedó **cerrado y verificado en
-dispositivo**. Arrancó de una observación de Miguel Ángel: el cruce de
-géneros metía en el mismo saco `new wave` y `dark wave` por parecerse
-el nombre, y así se acabaría poniendo reguetón con reggae.
+La hoja de ruta completa está en `DOCS/ANNEX_H13.md`. En una línea:
+**repaso sistemático de la UX del reproductor**, por encargo de Miguel
+Ángel al cerrar S024.
 
-Lo que había de verdad era peor que una comparación por nombre: eran
-22 sacos de géneros escritos por el modelo. Se sustituyeron por la
-taxonomía real de MusicBrainz.
+Tres cosas, en este orden:
 
-**Regla que gobierna ahora la pertenencia**, cerrada por Miguel Ángel
-con su analogía de la taxonomía animal — oso hormiguero y oso polar
-comparten ancestro y no son parientes:
-
-1. Intersección directa sobre un género **concreto**.
-2. Descenso desde el ancla, nunca ascenso, y solo desde carpetas
-   contenidas.
-3. Hermanos bajo un padre concreto, como último peldaño.
-
-Nunca se sube al padre y nunca se recorren aristas de influencia.
-
-**Segunda regla suya, igual de importante:** la década la marca el
-TEMA, nunca el artista.
+1. **Descargar no funciona** — único bug con reporte explícito. Miguel
+   Ángel lo sitúa "en el ExoPlayer", que en la práctica es la barra de
+   reproducción. Reproducirlo antes de tocar nada, y comprobar primero
+   si es una regresión del bug de descargas de S019 (yt-dlp,
+   restricción por edad) o un fallo distinto.
+2. **Repasar TODOS los botones** de `PlayerBar.kt`, mirando el código y
+   no solo el comportamiento visible: qué estado lee cada uno, qué
+   dispara, y si puede quedar sin efecto en algún estado (cola vacía,
+   local frente a streaming, Radio activa). **Anotar todos los fallos
+   antes de arreglar ninguno** y presentarle la lista para que
+   priorice.
+3. **Aspecto de "algunos ítems"** — mencionado sin concretar.
+   Preguntarle cuáles; no asumir que son las chapitas de S018, que ya
+   están hechas y verificadas.
 
 ---
 
-## Estado real del código y los datos
+## Dónde se quedó S024 (H08 — Radio)
 
-- `genre_tree.json` — 2176 géneros con parentesco real, dentro del APK.
-- `known_hit_artists.json` — 621 de 777 entradas (79,9%) con conjunto
-  real de géneros.
-- `GENRE_FAMILIES` **eliminado**. `matchesGenre()` cruza contra
-  `GenreTree`.
-- La década del ancla sale de `resolveTrackDecade()`: diccionario →
-  `first-release-date` de MusicBrainz → sin fijar.
-- `resolveAnchor()` y `lookupArtistProfile()` comprueban que el
-  artista devuelto sea el buscado antes de aceptarlo.
-- El cupo DISCO ya no se agota por fallos de red.
+**El objetivo que abrió S023 y S024 está cumplido y medido.** Que la
+Radio no se agote. Recorrido de la mediana de candidatos del bloque
+español a lo largo de la sesión:
 
-Verificado en dispositivo: una radio de P!nk pasó de Cat Stevens y
-Lynyrd Skynyrd (los 70, del nacimiento de la artista) a The Killers,
-Keane, Kings Of Leon y Kaiser Chiefs.
+    partida                                 7    (18% con <5 candidatos)
+    relleno con Discogs                    10    (11%)
+    anclas que solo tenían carpetas raíz   12     (9%)
+    ampliación con listas de Los 40        44     (5%)
 
----
+    objetivo fijado al cerrar S023:  mediana ~15, menos del 5%
 
-## La sesión se reabrió tras el primer cierre
+Verificado además en dispositivo: una sesión anclada en Radio Futura
+sirvió catorce temas seguidos de la movida madrileña con **cero
+repeticiones, cero violaciones de la ventana de diez artistas y cero
+porciones agotadas**.
 
-Al probar en dispositivo aparecieron tres fallos más, todos sobre **de
-dónde sale el artista que ancla la Radio**:
+Lo que cambió el rumbo de la sesión fue una observación de Miguel
+Ángel a mitad de camino: *"esta forma de probar, caso no contemplado,
+implementar caso, probar, caso no contemplado, implementar caso,
+conlleva a una implementación eterna"*. Medirlo le dio la razón — el
+cuello de botella no era la calidad del filtro sino el volumen del
+diccionario, que pasó de 352 a 1027 entradas españolas con los números
+uno de Los 40 entre 1966 y 2025.
 
-- El ancla salía del **nombre del canal de YouTube**. "Radio Futura -
-  Divina" se ancló en *Kurt Cobain*, el canal que subió el vídeo. La
-  cascada pasa a ordenarse por fiabilidad de la FUENTE: artista
-  estructurado → título → canal.
-- Un ancla cuyo conjunto entero fuese una carpeta raíz (`rock`)
-  **agotaba el diccionario entero**. Cuarto peldaño añadido.
-- Un título sin guion (`Led Zeppelin Immigrant song`) no se sabía
-  leer, y la sesión acababa anclada en un artista sorteado al azar.
-  Idea de Miguel Ángel, implementada: partir el título por palabras y
-  probar prefijos del más largo al más corto.
-
-Verificado en dispositivo: una radio desde `Led Zeppelin Immigrant
-song` ancla en Led Zeppelin, hard rock, GB, 1970, y sirve Black
-Sabbath, Genesis y Lou Reed.
+El detalle completo, con las doce áreas trabajadas y las cuatro
+pasadas que costó el sondeo de fuentes, está en `COMPLETADAS EN S024`
+dentro de `DOCS/ANNEX_H08.md`.
 
 ---
 
-## Próximos pasos — OBJETIVO ÚNICO: que la Radio no se agote
+## Decisión pendiente de Miguel Ángel
 
-Acordado con Miguel Ángel al cierre. Ver la hoja de ruta completa en
-`DOCS/ANNEX_H08.md`.
+**No tomarla por él.** `resolveFinalFallback()` todavía puede repetir
+un tema cuando las tres porciones fallan en la misma vuelta. Se dejó
+repitiendo *el más antiguo* en vez de al azar, y en la última prueba no
+llegó a dispararse ni una vez — pero repite.
 
-**El diagnóstico ya está hecho y medido, la próxima sesión no tiene que
-volver a investigarlo.** El diccionario NO está corto de volumen (777
-entradas, 104-116 por década, por encima del objetivo). Lo que falta es
-dato de género en el lado español:
-
-    entradas SIN conjunto de géneros    media de géneros
-    español    151 de 352  (43%)              2,7
-    intl         5 de 425  ( 1%)              7,8
-
-MusicBrainz apenas cataloga a los artistas españoles, y 81 de esas 151
-llevan `pop` o `rock` a secas. Por eso una radio anclada en un español
-agota: no faltan entradas, falta el dato justo donde más se necesita.
-
-Es una sesión de DATOS, no de motor. Y la primera decisión es de Miguel
-Ángel: de qué fuente sale ese género, ya que MusicBrainz no lo tiene.
-El modelo no lo inventa -- fue el origen de `GENRE_FAMILIES` y de todo
-el trabajo de S023.
+Miguel Ángel dijo que un tema no se repite NUNCA. Eso obliga a decidir
+qué hace la Radio cuando de verdad no queda nada: **pararse o
+repetir**. Está anotado como punto 1 de la hoja de ruta de
+`ANNEX_H08.md`.
 
 ---
 
-## Pendiente de Miguel Ángel, no técnico
+## Cabos sueltos de H08, ninguno bloqueante
 
-- **Umbral de descenso.** `MAX_DESCENDANTS_TO_DESCEND = 25` sale de
-  medir el árbol, no de la intuición. Pero la radio de P!nk tira hacia
-  el indie/rock de los 2000 más que hacia el pop, porque su género
-  principal es `pop`, la carpeta raíz. Queda a su juicio, tras
-  escuchar más radios, si eso se ajusta y dónde.
+- **Bloque internacional sin ampliar** — mediana 26 frente a 44 del
+  español. Las 1338 canciones no españolas de la cosecha están ya
+  descargadas y enriquecidas en `tools/chart_los40_raw.json` y
+  `tools/chart_los40_enriched.json`; la fusión sería ejecutar
+  `merge_charts_into_dictionary.py` con el criterio de país invertido.
+  Miguel Ángel lo descartó para S024 por no aportar donde ya sobra.
+- **Repertorio clásico sin volver a probar** — el país sin filtrar y el
+  tope de 45 minutos entraron después de la última prueba de clásica.
+- **766 filas de Wikipedia sin interpretar** por el parseo de
+  `harvest_los40_charts.py`.
+- Tres pendientes menores heredados de S023, detallados al final de la
+  hoja de ruta de `ANNEX_H08.md`.
 
-- **Fuente del género español.** Primera decisión de la próxima
-  sesión, y no la puede tomar el modelo: MusicBrainz no cataloga a
-  esos 151 artistas. Opciones a plantearle -- otra fuente pública con
-  mejor cobertura española, o por lotes revisados por él, como se hizo
-  con la desambiguación de S023.
+---
 
-- **Pantalla en blanco al navegar.** Reportada al final de S023 y
-  ajena a H08 — no se tocó interfaz. Al entrar en Ajustes el hueco del
-  NavGraph queda vacío y se recupera solo abriendo el menú lateral.
-  Decidió no perseguirla ("déjalo, se recupera, no hay problema").
-  Documentada en `ANNEX_H08.md` con lo que la evidencia descarta.
-  Encaja en H13.
+## Herramientas nuevas disponibles
+
+Todas se ejecutan desde GitHub Actions con disparo manual, porque la
+red del entorno del modelo va por lista blanca y Wikidata, Discogs y
+MusicBrainz están bloqueadas.
+
+| herramienta | workflow | qué hace |
+|---|---|---|
+| `probe_genre_sources.py` | `probe-genre-sources.yml` | compara cobertura de género de Discogs, Wikipedia y Wikidata |
+| `harvest_los40_charts.py` | `harvest-los40.yml` | cosecha los números uno de Los 40, 1966–2025 |
+| `enrich_chart_artists.py` | `enrich-chart-artists.yml` | país y género de los artistas cosechados |
+| `fill_spanish_genres.py` | — (local) | rellena géneros del bloque español |
+| `merge_charts_into_dictionary.py` | — (local) | fusiona la cosecha en el diccionario |
+
+`enrich-chart-artists.yml` y `probe-genre-sources.yml` necesitan el
+secret `DISCOGS_TOKEN`, ya dado de alta en el repositorio.
