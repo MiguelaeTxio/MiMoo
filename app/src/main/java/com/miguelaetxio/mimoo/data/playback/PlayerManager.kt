@@ -1834,8 +1834,21 @@ class PlayerManager @Inject constructor(
             // S024 -- salvo en clásica, donde el país no filtra en
             // absoluto: cualquier intérprete de la biblioteca vale,
             // sea de donde sea. Ver `RadioAnchor.isClassical`.
+            //
+            // S025 -- el origen es el PAÍS del ancla, no un booleano.
+            // Misma orden y mismo cambio que en
+            // RadioRepository.buildGenreQuery(): si el ancla es Led
+            // Zeppelin (GB), esta porción tiene que traer británicos, y
+            // no "todo lo que no sea español". Cuando MusicBrainz no da
+            // país del ancla se conserva el comportamiento antiguo, que
+            // es lo único honesto sin el dato.
+            // ---
+            // S025 -- origin is the anchor's actual country, not a
+            // boolean; same change as in buildGenreQuery(). Falls back
+            // to the old behaviour when the anchor has no country.
             val originOk = when {
                 anchor.isClassical -> true
+                anchor.country != null -> profile.country == anchor.country
                 anchor.isSpanishOrigin -> profile.country == "ES"
                 else -> profile.country != "ES"
             }

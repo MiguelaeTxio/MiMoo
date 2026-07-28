@@ -363,18 +363,30 @@ class RadioRepository @Inject constructor(
             val isClassical = allGenres.any {
                 it == "classical" || genreTree.isDescendantOf(it, "classical")
             }
+            // S025 -- en clásica NI origen NI década. Orden de Miguel
+            // Ángel: *"en clásica es clásica. No tenemos ni origen ni
+            // década, solo género"*. S024 ya había sacado el país; la
+            // década seguía filtrando, y no debe: el repertorio clásico
+            // se escucha como un solo cuerpo, y fechar a Beethoven en
+            // una década deja fuera a Vivaldi y a Debussy sin ninguna
+            // razón musical.
+            // ---
+            // S025 -- classical takes neither origin nor decade, only
+            // genre. S024 removed the country; the decade was still
+            // filtering and shouldn't.
+            val effectiveDecade = if (isClassical) null else decadeBegin
             log(
                 "resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: " +
-                    "género='$chosenGenre', país=$sourceCountry, década=$decadeBegin, " +
+                    "género='$chosenGenre', país=$sourceCountry, década=$effectiveDecade, " +
                     "origen español=$isSpanishOrigin, clásica=$isClassical" +
-                    (if (isClassical) " (el origen NO filtra)" else "") +
+                    (if (isClassical) " (ni el origen ni la década filtran)" else "") +
                     ", géneros=[${allGenres.joinToString()}]"
             )
             RadioAnchor(
                 genre = chosenGenre,
                 genres = allGenres.ifEmpty { setOf(chosenGenre.lowercase()) },
                 country = sourceCountry,
-                decadeBegin = decadeBegin,
+                decadeBegin = effectiveDecade,
                 isSpanishOrigin = isSpanishOrigin,
                 isClassical = isClassical,
             )
@@ -423,6 +435,7 @@ class RadioRepository @Inject constructor(
         val candidates = findCandidates(
             anchor.genre,
             anchor.isSpanishOrigin,
+            anchor.country,
             anchor.decadeBegin,
             excludeLower,
             anchor.isClassical,
@@ -431,13 +444,13 @@ class RadioRepository @Inject constructor(
         val chosen = preferred.ifEmpty { candidates }.randomOrNull()
         if (chosen == null) {
             log(
-                "suggestRelatedArtist(género='${anchor.genre}', origen_es=${anchor.isSpanishOrigin}, " +
-                    "década=${anchor.decadeBegin}) -- 0 candidatos en la vuelta única género+década " +
+                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}, " +
+                    "década=${anchor.decadeBegin}) -- 0 candidatos en la vuelta única género+país+década " +
                     "(tras excluir ${excludeArtists.size} ya usados) -- eslabón roto para este cupo"
             )
         } else {
             log(
-                "suggestRelatedArtist(género='${anchor.genre}', origen_es=${anchor.isSpanishOrigin}, " +
+                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}, " +
                     "década=${anchor.decadeBegin}) -> '$chosen' (${candidates.size} candidatos)"
             )
         }
@@ -485,11 +498,12 @@ class RadioRepository @Inject constructor(
     private suspend fun findCandidates(
         genre: String,
         isSpanishOrigin: Boolean,
+        country: String?,
         decadeBegin: Int?,
         excludeLower: Set<String>,
         isClassical: Boolean,
     ): List<String> = try {
-        val query = buildGenreQuery(genre, isSpanishOrigin, decadeBegin, isClassical)
+        val query = buildGenreQuery(genre, isSpanishOrigin, country, decadeBegin, isClassical)
         // S010 -- offset aleatorio, no siempre 0, para variar entre
         // sesiones de Radio con el mismo ancla (ver historial de esta
         // función en versiones anteriores del archivo).
@@ -524,35 +538,69 @@ class RadioRepository @Inject constructor(
         found
     } catch (e: Exception) {
         noteFailure(e)
-        log("findCandidates(género='$genre', origen_es=$isSpanishOrigin, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+        log("findCandidates(género='$genre', país=${country ?: "?"}, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
         emptyList()
     }
 
     /**
-     * S020 -- el origen separa España y extranjero en los DOS
-     * sentidos, igual que el diccionario
-     * (`KnownHitsRepository.Origin`). Ancla española -> `country:ES`;
-     * ancla no española -> `NOT country:ES`, para que el cupo de
-     * artistas desconocidos no devuelva españoles en una sesión
-     * extranjera.
+     * S025 -- EL ORIGEN LO MARCA EL PAÍS DEL PRIMER TEMA, SEA EL QUE
+     * SEA.
      *
-     * S024 -- salvo en repertorio clásico, donde NO se pone cláusula
-     * de país ninguna. Ni `country:ES` ni `NOT country:ES`: entran
-     * alemanes, franceses, ingleses, italianos, rusos, checos,
-     * españoles y de donde sea. Ver `RadioAnchor.isClassical`.
+     * Orden de Miguel Ángel, repetida hasta el hartazgo y con razón:
+     * *"la canción inicial marca el ancla para toda la sesión, pero no
+     * solamente la música española, que ya lo tenemos bien, sino en
+     * todo: origen, género y década, en música española Y en música
+     * extranjera"*.
+     *
+     * Hasta aquí el origen no era un país sino un BOOLEANO. S020
+     * separó España y extranjero en los dos sentidos: ancla española
+     * -> `country:ES`; ancla no española -> `NOT country:ES`. Para una
+     * sesión española funciona; para cualquier otra, "no español" es
+     * el mundo entero menos un país, o sea no filtrar. Verificado en
+     * el log de S025, ancla Led Zeppelin (GB), hard rock, 1980:
+     *
+     *   suggestRelatedArtist(género='hard rock', origen_es=false, década=1980)
+     *     -> '人間椅子'      (Japón)
+     *     -> 'B’z'           (Japón)
+     *     -> 'Ария'          (Rusia)
+     *     -> 'Böhse Onkelz'  (Alemania)
+     *     -> 'The 69 Eyes'   (Finlandia)
+     *
+     * Ahora la cláusula es `country:<país del ancla>`, igual de dura
+     * para GB que para ES. Si MusicBrainz no da país del artista ancla
+     * se mantiene el comportamiento antiguo como respaldo: es lo único
+     * honesto cuando el dato no existe, y así una sesión española no
+     * pierde el filtro que ya tenía.
+     *
+     * S024/S025 -- salvo en repertorio clásico, donde NO se pone
+     * cláusula de país NI de década. Orden de Miguel Ángel: *"en
+     * clásica es clásica; no tenemos ni origen ni década, solo
+     * género"*. Ver `RadioAnchor.isClassical`.
+     * ---
+     * S025 -- origin is now the anchor track's actual country, applied
+     * as hard for GB as it already was for ES. It used to be a boolean
+     * (`country:ES` / `NOT country:ES`), which for any non-Spanish
+     * anchor meant the whole world minus one country. Falls back to the
+     * old boolean only when MusicBrainz gives no country at all.
+     * Classical takes neither a country nor a decade clause.
      */
     private fun buildGenreQuery(
         genre: String,
         isSpanishOrigin: Boolean,
+        country: String?,
         decadeBegin: Int?,
         isClassical: Boolean,
     ): String {
         fun escape(value: String) = value.replace("\"", "")
         var query = "tag:\"${escape(genre)}\""
         if (!isClassical) {
-            query += if (isSpanishOrigin) " AND country:ES" else " AND NOT country:ES"
+            query += when {
+                country != null -> " AND country:${escape(country)}"
+                isSpanishOrigin -> " AND country:ES"
+                else -> " AND NOT country:ES"
+            }
+            if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
         }
-        if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
         return query
     }
 
