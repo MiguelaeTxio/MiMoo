@@ -422,12 +422,38 @@ class KnownHitsRepository @Inject constructor(
     }
 
     /**
-     * Clave de no-repetición de un tema. Normaliza a minúsculas y
-     * recorta, para que "Bon Jovi - Livin' on a Prayer" y
-     * "bon jovi - livin' on a prayer" cuenten como el mismo tema.
+     * Clave de no-repetición de un tema.
+     *
+     * S025 -- antes era `artist.trim().lowercase() + "|" +
+     * song.trim().lowercase()`, y con eso la regla "un tema jamás
+     * vuelve a sonar" era inaplicable en la práctica: el tema se
+     * REGISTRA en `radioUsedSongs` con el título del vídeo de YouTube
+     * ('LA UNIÓN - Lobo Hombre en París (1984)') y se COMPRUEBA contra
+     * el título del diccionario ('Lobo-Hombre en París'). Dos cadenas
+     * que nunca van a ser iguales, así que la exclusión dura solo
+     * pillaba el caso de que YouTube devolviese EXACTAMENTE el mismo
+     * vídeo. En el log de Miguel Ángel esa canción sonó tres veces en
+     * una hora, y las tres veces el sistema la dio por "sin estrenar".
+     *
+     * Ahora las dos mitades se reducen a su esqueleto -- artista vía
+     * `normalizeArtistName()`, título vía `songTitleKey()`, ambas sin
+     * acentos, sin puntuación, sin mayúsculas y sin espacios -- de
+     * modo que la clave es la misma se llegue por donde se llegue: por
+     * el diccionario, por YouTube o por la biblioteca local.
+     * ---
+     * S025 -- both halves are now reduced to a stable skeleton so the
+     * key is identical whether the track arrives from the dictionary,
+     * from YouTube or from the local library. It used to compare a raw
+     * YouTube video title against a dictionary title, which made the
+     * "never repeat a song" rule unenforceable.
      */
-    fun songKey(artist: String?, song: String?): String =
-        (artist.orEmpty().trim().lowercase() + "|" + song.orEmpty().trim().lowercase())
+    fun songKey(artist: String?, song: String?): String {
+        val artistPart = SearchNormalizer.tight(
+            SearchNormalizer.normalizeArtistName(artist.orEmpty())
+        )
+        val songPart = SearchNormalizer.songTitleKey(song.orEmpty(), artist)
+        return "$artistPart|$songPart"
+    }
 
 
     /**

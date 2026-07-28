@@ -94,4 +94,141 @@ object SearchNormalizer {
         }
         return normalize(withoutLeadingThe)
     }
+
+    /**
+     * S025 -- quita TODOS los espacios de una cadena ya normalizada.
+     *
+     * `normalize()` BORRA la puntuación en vez de sustituirla por
+     * espacio, así que 'Lobo-Hombre' queda "lobohombre" y 'Lobo Hombre'
+     * queda "lobo hombre": la misma canción, dos cadenas distintas. Es
+     * el mismo agujero que S023 encontró con 'M-Clan' / 'M Clan' y
+     * resolvió localmente en `RadioRepository.pickAnchorArtist()` con
+     * una función `tight()` privada. Aquí se sube al normalizador
+     * compartido porque la clave de canción lo necesita igual.
+     * ---
+     * S025 -- strips every space from an already-normalized string, so
+     * that 'Lobo-Hombre' and 'Lobo Hombre' collapse to one key.
+     */
+    fun tight(value: String): String = value.replace(" ", "")
+
+    /**
+     * S025 -- clave estable de una CANCIÓN, pensada para deduplicar.
+     *
+     * Fallo reportado por Miguel Ángel: *"un tema JAMÁS debe volver a
+     * escucharse"*, y sonaba tres veces en la misma sesión. Del log:
+     *
+     *   10:31  resolveYoutubeCandidate(query='La Unión')
+     *            -> añadido: 'LA UNIÓN - Lobo Hombre en París (1984)'
+     *   11:16  resolveFinalFallback -> tema sin estrenar:
+     *            'La Unión' - 'Lobo-Hombre en París'
+     *   11:26  resolveFinalFallback -> tema sin estrenar:
+     *            'La Unión' - 'Lobo hombre en París'
+     *
+     * Las tres veces el sistema la daba por "sin estrenar", y tenía
+     * razón según su propia clave: el tema se REGISTRA con el título
+     * del vídeo de YouTube y se COMPRUEBA con el título del
+     * diccionario, que nunca son la misma cadena. Además `normalize()`
+     * borra el guion sin dejar espacio, así que 'Lobo-Hombre' y 'Lobo
+     * Hombre' tampoco casaban entre sí.
+     *
+     * Se reduce el título a su esqueleto, en este orden:
+     *   1. Fuera lo que va entre paréntesis o corchetes -- ahí viven
+     *      los años y las coletillas: "(1984)", "(con letra)", "[HD]".
+     *   2. Se parte por " - ". Si el primer trozo ES el artista, se
+     *      tira: el título de YouTube casi siempre repite el nombre
+     *      del grupo delante ("LA UNIÓN - Lobo Hombre en París").
+     *   3. Se tiran los trozos finales que sean solo coletilla
+     *      ("Clip Oficial Alta Calidad HQ", "Videoclip Remasterizado").
+     *   4. Fuera los años sueltos que hayan quedado.
+     *   5. `normalize()` + `tight()`: sin acentos, sin puntuación, sin
+     *      mayúsculas y sin espacios.
+     *
+     * Los tres títulos de arriba dan "lobohombreenparis". El mismo
+     * tema en otro vídeo, con otro subtítulo o con el guion puesto de
+     * otra manera, también.
+     *
+     * ALCANCE DELIBERADO: una versión en directo, una remasterizada y
+     * la de estudio colapsan a la misma clave. Es lo correcto bajo la
+     * regla de Miguel Ángel -- es la misma canción, y no quiere oírla
+     * dos veces. Si algún día se quisiera distinguirlas, hay que
+     * hacerlo aquí y no en las llamadas.
+     * ---
+     * S025 -- stable key for a SONG, for deduplication. Strips
+     * bracketed segments, a leading artist prefix, trailing decoration
+     * segments and stray years, then folds accents, punctuation, case
+     * and spaces. Live/remastered/studio versions deliberately collapse
+     * to the same key: it's the same song.
+     */
+    fun songTitleKey(title: String, artist: String? = null): String {
+        val withoutBrackets = title
+            .replace(Regex("\\([^()]*\\)"), " ")
+            .replace(Regex("\\[[^\\[\\]]*\\]"), " ")
+        val parts = withoutBrackets
+            .split(" - ", " – ", " — ")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toMutableList()
+        val artistKey = artist?.let { tight(normalizeArtistName(it)) }.orEmpty()
+        if (artistKey.isNotEmpty()) {
+            // El nombre del grupo puede ir delante ("LA UNIÓN - Lobo
+            // Hombre en París") o detrás ("santa lucia - miguel rios").
+            // Los dos casos salen del log real de Miguel Ángel.
+            if (parts.size > 1 && tight(normalizeArtistName(parts.first())) == artistKey) {
+                parts.removeAt(0)
+            }
+            if (parts.size > 1 && tight(normalizeArtistName(parts.last())) == artistKey) {
+                parts.removeAt(parts.size - 1)
+            }
+        }
+        while (parts.size > 1 && isOnlyDecoration(parts.last())) {
+            parts.removeAt(parts.size - 1)
+        }
+        val skeleton = parts.joinToString(" ")
+            .replace(Regex("\\b(19|20)\\d{2}\\b"), " ")
+        // Coletillas que van PEGADAS al título, sin separador propio:
+        // "ESTAMOS DESESPERADOS HQ", "...de la carretera HD". Se podan
+        // palabra a palabra desde el final, y solo las inequívocas
+        // (`STRONG_DECORATION`): las de relleno como "de" o "la" no se
+        // tocan aquí, o "Devuélveme a mi Chica" perdería el final.
+        val words = normalize(skeleton).split(" ").filter { it.isNotBlank() }.toMutableList()
+        while (words.size > 1 && words.last() in STRONG_DECORATION) {
+            words.removeAt(words.size - 1)
+        }
+        val key = words.joinToString("")
+        // Red de seguridad: si de tanto podar no queda nada (un título
+        // que fuera SOLO coletillas y año), vale más una clave sucia
+        // que una clave vacía -- dos temas distintos con clave vacía
+        // colapsarían en uno y se perdería un tema para siempre.
+        return key.ifBlank { tight(normalize(title)) }
+    }
+
+    private fun isOnlyDecoration(segment: String): Boolean {
+        val words = normalize(segment).split(" ").filter { it.isNotBlank() }
+        return words.isNotEmpty() && words.all { it in STRONG_DECORATION || it in FILLER_WORDS }
+    }
+
+    /**
+     * S025 -- coletillas inequívocas. Se podan también sueltas al final
+     * del título, porque en YouTube van pegadas sin separador propio.
+     */
+    private val STRONG_DECORATION = setOf(
+        "hq", "hd", "uhd", "4k", "8k", "1080p", "720p", "hifi", "full",
+        "video", "videoclip", "clip", "audio", "oficial", "official", "officiel",
+        "remastered", "remasterizado", "remasterizada", "remaster",
+        "karaoke", "instrumental", "cover", "live", "directo", "vivo",
+        "lyrics", "lyric", "subtitulado", "subtitulos",
+    )
+
+    /**
+     * S025 -- palabras de relleno. NUNCA se podan sueltas: solo sirven
+     * para decidir que un trozo ENTERO del título ("Clip Oficial Alta
+     * Calidad HQ") es coletilla y se puede tirar completo. Así una
+     * canción que se llame de verdad "Directo al corazón" conserva su
+     * nombre.
+     */
+    private val FILLER_WORDS = setOf(
+        "alta", "calidad", "sonido", "musica", "music", "version",
+        "original", "originale", "letra", "letras", "concierto",
+        "con", "en", "el", "la", "los", "las", "y", "de", "del", "al",
+    )
 }
