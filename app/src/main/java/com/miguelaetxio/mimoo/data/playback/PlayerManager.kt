@@ -984,32 +984,41 @@ class PlayerManager @Inject constructor(
      *      -- nunca rellenar con un género arbitrario sin relación.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
-        // S023 -- EL NOMBRE DEL CANAL PASA A ÚLTIMO. Miguel Ángel puso
-        // "Radio Futura - Divina" y la Radio se ancló en KURT COBAIN,
-        // que es el nombre del canal que subió el vídeo. Ancla
-        // 'grunge', país US, origen español=false, y la sesión devolvió
-        // The Strokes, R.E.M., The Smiths y Travis. Radio Futura no
-        // tenía ninguna posibilidad.
+        // Histórico. S010 dio un respaldo para canales que NO son un
+        // artista ("OldGuitar8", sin resultados en MusicBrainz): solo
+        // saltaba cuando el canal FALLABA. S023 descubrió el agujero
+        // con "Radio Futura - Divina" subido por un canal llamado
+        // 'Kurt Cobain': un artista real, que resuelve perfectamente, y
+        // por eso nunca se llegaba al título -- donde estaba el dato
+        // bueno. Aquella sesión devolvió The Strokes, R.E.M. y The
+        // Smiths. S023 bajó el canal a último peldaño.
         //
-        // Por qué no bastaba el respaldo de S010. Aquel se diseñó para
-        // canales que NO son un artista ("OldGuitar8", sin resultados
-        // en MusicBrainz): solo salta cuando el canal FALLA. 'Kurt
-        // Cobain' es un artista real, resuelve perfectamente, y por eso
-        // nunca se llegaba al título -- donde estaba el dato bueno.
+        // S024 -- EL CANAL NO ES FUENTE DE ANCLA. NUNCA.
         //
-        // La lección es de fuente, no de validación: el canal describe
-        // a QUIEN SUBIÓ el vídeo, el título describe QUÉ ES. Por eso el
-        // orden ahora va por fiabilidad de la fuente y no por si
-        // resuelve o no. En palabras de Miguel Ángel: "no podemos
-        // buscar por el nombre de quien lo sube".
+        // Orden de Miguel Ángel, sin matices: *"el canal no puede ser
+        // objeto de ancla nunca. ¿Qué vamos a anclar por canal? Los
+        // nombres de los canales, ¿qué tienen que ver? De hecho, lo
+        // que estamos es contaminando las anclas si metemos los
+        // nombres de los canales."*
         //
-        // S020 sigue vigente en lo suyo: el artista estructurado (H05,
-        // dato real de la pista) va por delante del canal. Lo que
-        // cambia es que el título también.
+        // S023 ya lo había bajado a último peldaño tras el caso "Radio
+        // Futura - Divina" subido por un canal llamado 'Kurt Cobain',
+        // que ancló la sesión en grunge estadounidense. Bajarlo no
+        // bastó: en S024 volvió a colarse en cuanto el peldaño bueno
+        // falló por un timeout de red, y la radio sirvió Lou Reed.
+        //
+        // La razón de fondo es de fuente, no de orden: el canal
+        // describe a QUIEN SUBIÓ el vídeo, no QUÉ ES. Un dato que solo
+        // acierta por casualidad -- cuando el canal resulta ser el
+        // artista -- no es un dato, es ruido con suerte. Se retira.
+        //
+        // Quedan las tres fuentes que describen el contenido: el
+        // artista estructurado (H05, dato real de la pista), el
+        // artista partido del título, y la búsqueda por palabras del
+        // título de más abajo.
         val attempts = buildList {
             add("artista estructurado" to radioAnchorArtistFallback)
             add("título del tema" to parseArtistFromTitle(radioAnchorTrackTitle))
-            add("nombre del canal" to anchorArtistName)
         }
 
         val tried = mutableSetOf<String>()
