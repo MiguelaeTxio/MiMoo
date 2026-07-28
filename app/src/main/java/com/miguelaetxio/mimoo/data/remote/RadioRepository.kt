@@ -254,33 +254,9 @@ class RadioRepository @Inject constructor(
             noteSuccess()
             val genres = sourceDetail.genres
                 .filter { it.name.isNotBlank() }
-            if (genres.isEmpty()) {
-                log("resolveAnchor('$sourceArtist', mbid=$sourceMbid) -- encontrado en MusicBrainz pero SIN géneros propios (inc=genres vacío) -- no se puede fijar ancla")
-                return null
-            }
-            // S020 -- ancla DETERMINISTA. Antes era `genres.random()`:
-            // de todos los géneros del artista se echaba a suertes uno
-            // y ese decidía la sesión entera. Ahora manda el más
-            // votado por la comunidad de MusicBrainz, con desempate
-            // alfabético para que el mismo artista dé SIEMPRE el mismo
-            // ancla (dos sesiones de Pixies deben anclarse igual).
-            val chosenGenre = genres
-                .sortedWith(compareByDescending<MusicBrainzGenre> { it.count }.thenBy { it.name.lowercase() })
-                .first()
-                .name
-            log(
-                "resolveAnchor('$sourceArtist') -- géneros de MusicBrainz por votos: " +
-                    genres.sortedByDescending { it.count }.joinToString { "${it.name}(${it.count})" } +
-                    " -> elegido '$chosenGenre'"
-            )
-            val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
-            val decadeBegin = resolveTrackDecade(sourceArtist, sourceTrackTitle)
-            // S013/S014, punto 4 -- "grupo español" se decide primero
-            // por el diccionario de éxitos (barato, sin ambigüedad de
-            // MusicBrainz) y, si el artista no está en él, por el
-            // campo country=ES de MusicBrainz como respaldo.
-            val isSpanishOrigin = knownHitsRepository.isKnownSpanishArtist(sourceArtist) ||
-                sourceCountry == "ES"
+            val fromMusicBrainz = genres.map { it.name.lowercase().trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
             // S024 -- el ancla se enriquece con lo que el DICCIONARIO
             // sabe de este artista, no solo con lo que da MusicBrainz.
             //
@@ -297,15 +273,88 @@ class RadioRepository @Inject constructor(
             // el ancla es justo uno de esos artistas, que es el caso
             // más frecuente: la Radio suele arrancar sobre un tema
             // conocido.
-            val fromMusicBrainz = genres.map { it.name.lowercase().trim() }
-                .filter { it.isNotBlank() }
-                .toSet()
+            //
+            // S025 -- EL DICCIONARIO SE CONSULTA AHORA, ANTES DE
+            // DECIDIR SI HAY ANCLA O NO.
+            //
+            // Hasta aquí el diccionario solo AMPLIABA un conjunto de
+            // géneros que MusicBrainz ya hubiera dado. Si MusicBrainz
+            // devolvía cero géneros se abortaba con `return null`
+            // cuarenta líneas antes de llegar a preguntarle -- aunque
+            // el diccionario supiera perfectamente de qué va el
+            // artista. Caso real del log de S024:
+            //
+            //   resolveAnchor('Pistones', mbid=378eb0e2-...) -- encontrado
+            //   en MusicBrainz pero SIN géneros propios -- no se puede
+            //   fijar ancla
+            //   ...
+            //   fetchOneRadioTrack() -- ancla sin resultado en NINGUNO
+            //   de los intentos -- la Radio no arranca sobre este tema
+            //
+            // Y en ese mismo log, 41 líneas antes, el diccionario había
+            // servido `'Pistones' - 'El pistolero' (género='new wave')`.
+            // El dato estaba en casa. Solo que se preguntaba tarde.
+            //
+            // Ahora se pregunta primero y solo se abandona el ancla si
+            // NINGUNA de las dos fuentes sabe nada.
+            // ---
+            // S025 -- the local dictionary is now consulted BEFORE
+            // deciding whether there's an anchor at all. It used to only
+            // widen a genre set MusicBrainz had already provided; if
+            // MusicBrainz returned none, we bailed out before ever
+            // asking. We now give up only if neither source knows
+            // anything about the artist.
             val fromDictionary = knownHitsRepository.genresOfArtist(sourceArtist)
                 .map { it.lowercase().trim() }
                 .filter { it.isNotBlank() }
                 .toSet()
+            if (fromMusicBrainz.isEmpty() && fromDictionary.isEmpty()) {
+                log(
+                    "resolveAnchor('$sourceArtist', mbid=$sourceMbid) -- sin géneros ni en " +
+                        "MusicBrainz (inc=genres vacío) ni en el diccionario local -- no se puede fijar ancla"
+                )
+                return null
+            }
+            // S020 -- ancla DETERMINISTA. Antes era `genres.random()`:
+            // de todos los géneros del artista se echaba a suertes uno
+            // y ese decidía la sesión entera. Ahora manda el más
+            // votado por la comunidad de MusicBrainz, con desempate
+            // alfabético para que el mismo artista dé SIEMPRE el mismo
+            // ancla (dos sesiones de Pixies deben anclarse igual).
+            val chosenGenre = if (genres.isNotEmpty()) {
+                val byVotes = genres
+                    .sortedWith(compareByDescending<MusicBrainzGenre> { it.count }.thenBy { it.name.lowercase() })
+                    .first()
+                    .name
+                log(
+                    "resolveAnchor('$sourceArtist') -- géneros de MusicBrainz por votos: " +
+                        genres.sortedByDescending { it.count }.joinToString { "${it.name}(${it.count})" } +
+                        " -> elegido '$byVotes'"
+                )
+                byVotes
+            } else {
+                // S025 -- el diccionario no lleva votos de comunidad, así
+                // que el desempate es alfabético a secas. Sigue siendo
+                // determinista, que es lo que exige S020: el mismo
+                // artista debe anclar siempre igual.
+                val fromDict = fromDictionary.sorted().first()
+                log(
+                    "resolveAnchor('$sourceArtist') -- MusicBrainz no da géneros para este artista; " +
+                        "ancla tomada del DICCIONARIO local: [${fromDictionary.joinToString()}] " +
+                        "-> elegido '$fromDict'"
+                )
+                fromDict
+            }
+            val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
+            val decadeBegin = resolveTrackDecade(sourceArtist, sourceTrackTitle)
+            // S013/S014, punto 4 -- "grupo español" se decide primero
+            // por el diccionario de éxitos (barato, sin ambigüedad de
+            // MusicBrainz) y, si el artista no está en él, por el
+            // campo country=ES de MusicBrainz como respaldo.
+            val isSpanishOrigin = knownHitsRepository.isKnownSpanishArtist(sourceArtist) ||
+                sourceCountry == "ES"
             val allGenres = fromMusicBrainz + fromDictionary
-            if (fromDictionary.isNotEmpty()) {
+            if (fromDictionary.isNotEmpty() && fromMusicBrainz.isNotEmpty()) {
                 log(
                     "resolveAnchor('$sourceArtist') -- géneros del diccionario añadidos al ancla: " +
                         "[${(fromDictionary - fromMusicBrainz).joinToString()}]"
