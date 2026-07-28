@@ -123,6 +123,74 @@ class SearchResultTrackRepository @Inject constructor(
     suspend fun markQueued(youtubeId: String) = dao.markQueued(youtubeId)
 
     /**
+     * S025 -- igual que markQueued(), pero a prueba de pistas que nunca
+     * llegaron a tener fila en Room. Fallo reportado por Miguel Ángel:
+     * *"el botón de descargar del reproductor no descarga. Pulsas y no
+     * descarga nada."*
+     *
+     * Es EXACTAMENTE el mismo fallo que S010 encontró y arregló para el
+     * botón de favorito (ver setFavoriteEnsuringRow más abajo), solo
+     * que al de descarga nunca se le dio el mismo tratamiento. Las
+     * pistas que añade la Radio (H08, fetchOneRadioTrack) y las que
+     * llegan de MusicBrainz en H12 son transitorias: viven solo en la
+     * cola en memoria de PlayerManager, sin fila en Room. Y TODAS las
+     * escrituras de descarga del DAO son UPDATE puros por youtubeId
+     * (markQueued, updateDownloadStatus, updateDownloadProgress,
+     * updateDownloadResult): sin fila, actualizan cero filas en
+     * silencio, sin ningún error.
+     *
+     * El efecto visible es justo el descrito. El botón se pinta porque
+     * `downloadStatus` es null y null no es DONE/QUEUED/DOWNLOADING;
+     * al pulsarlo se encola el WorkRequest y el worker incluso puede
+     * bajar el archivo (no lee Room, saca todo de su inputData), pero
+     * ni el estado ni la ruta del archivo se guardan en ninguna parte.
+     * Ni cambia el icono, ni aparece en Biblioteca, ni figura en
+     * Descargas. Desde el asiento del usuario: no pasa nada.
+     *
+     * Se llama desde DownloadQueueManager.enqueue(), que es el paso
+     * único por el que entran los ocho llamantes (reproductor,
+     * notificación, Búsqueda, Álbum, Canción, Descargas, Ajustes e
+     * importación por enlace), así que cierra la fuga para todos.
+     * ---
+     * S025 -- same as markQueued(), but safe for tracks that never got
+     * a row in Room. Exactly the same bug S010 found and fixed for the
+     * favorite button; the download button never got the same
+     * treatment. Every download write in the DAO is a plain UPDATE by
+     * youtubeId, so with no row they all silently update zero rows: the
+     * worker may even fetch the file, but nothing is ever recorded.
+     */
+    suspend fun markQueuedEnsuringRow(
+        youtubeId: String,
+        title: String,
+        artist: String?,
+        album: String?,
+        trackPosition: Int?,
+    ) {
+        if (dao.getById(youtubeId) != null) {
+            dao.markQueued(youtubeId)
+        } else {
+            dao.insert(
+                SearchResultTrack(
+                    youtubeId = youtubeId,
+                    title = title,
+                    // `channelTitle` no es nulable en la entidad y aquí
+                    // no siempre se conoce: en el reproductor el propio
+                    // enqueue() ya resuelve `artist` como
+                    // `artist ?: channelTitle ?: title`, así que este
+                    // es el mejor dato disponible en este punto.
+                    channelTitle = artist.orEmpty(),
+                    durationSeconds = 0,
+                    thumbnailUrl = null,
+                    artist = artist,
+                    album = album,
+                    trackPosition = trackPosition,
+                    downloadStatus = DownloadStatus.QUEUED,
+                ),
+            )
+        }
+    }
+
+    /**
      * Persiste el porcentaje real de descarga (0-100), reportado por
      * progress_hooks de yt-dlp vía Chaquopy.
      * ---

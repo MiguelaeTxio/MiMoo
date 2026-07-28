@@ -66,7 +66,18 @@ class DownloadQueueManager @Inject constructor(
         album: String? = null,
         trackPosition: Int? = null,
     ) {
-        repository.markQueued(youtubeId)
+        // S025 -- antes era `repository.markQueued(youtubeId)`, un
+        // UPDATE puro: si la pista no tenía fila en Room (Radio, H12,
+        // enlaces compartidos) no actualizaba nada, en silencio, y toda
+        // la descarga quedaba sin rastro. Ver
+        // SearchResultTrackRepository.markQueuedEnsuringRow().
+        repository.markQueuedEnsuringRow(
+            youtubeId = youtubeId,
+            title = title,
+            artist = artist,
+            album = album,
+            trackPosition = trackPosition,
+        )
 
         val inputData = Data.Builder()
             .putString(DownloadWorker.KEY_YOUTUBE_ID, youtubeId)
