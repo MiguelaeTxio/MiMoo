@@ -978,9 +978,22 @@ class RadioRepository @Inject constructor(
      * llegarían cien artistas y ninguno pasaría el filtro.
      */
     private suspend fun findAnchorArtistMbid(sourceArtist: String): String? {
+        // S025 -- MusicBrainz guarda a las personas al derecho ('Ludwig
+        // van Beethoven'), y el catálogo de H05 al revés ('Beethoven,
+        // Ludwig van'). Preguntar tal cual devolvía vacío siempre: en
+        // el log de S025 aparece cuatro veces
+        // "MusicBrainz no encontró NINGÚN artista con ese nombre".
+        // `reorderCommaName()` deja intactos los nombres de grupo con
+        // coma ('Earth, Wind & Fire'), así que aplicarlo aquí no tiene
+        // contraindicación.
+        // ---
+        // S025 -- MusicBrainz stores people forename-first while H05's
+        // catalogue stores them surname-first, so the query used to
+        // come back empty every time for composers.
+        val queryName = SearchNormalizer.reorderCommaName(sourceArtist)
         val direct = musicBrainzApiService
             .searchArtists(
-                query = buildArtistQuery(sourceArtist),
+                query = buildArtistQuery(queryName),
                 limit = ANCHOR_SEARCH_LIMIT,
             )
             .artists

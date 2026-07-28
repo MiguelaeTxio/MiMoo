@@ -85,8 +85,44 @@ object SearchNormalizer {
      * intencionadamente sin tocar, sin caso real detectado todavía (ver
      * DOCS/ANNEX_H12.md, S017).
      */
+    /**
+     * S025 -- "Apellido, Nombre" -> "Nombre Apellido".
+     *
+     * El catálogo de H05 guarda a los compositores como los guarda una
+     * ficha de disco: `Beethoven, Ludwig van`. MusicBrainz los tiene al
+     * derecho, `Ludwig van Beethoven`, así que la Radio preguntaba por
+     * un nombre que no existe. En el log de S025 sale cuatro veces:
+     *
+     *   resolveAnchor('Beethoven, Ludwig van') -- MusicBrainz no
+     *     encontró NINGÚN artista con ese nombre (searchArtists vacío)
+     *
+     * La vuelta solo se da cuando el nombre tiene UNA coma y lo que va
+     * detrás parece un nombre de pila: de una a tres palabras, sin
+     * `&` ni ` and `, y sin empezar por `the `. Esas tres exclusiones
+     * no son teóricas, salen del propio diccionario y de casos reales:
+     * `Earth, Wind & Fire`, `Peter, Paul and Mary` y `Tyler, The
+     * Creator` tienen coma y NO deben voltearse.
+     * ---
+     * S025 -- turns "Surname, Forename" into "Forename Surname", which
+     * is how MusicBrainz stores people. Only applies with a single
+     * comma and a forename-shaped tail, so band names with commas
+     * (Earth, Wind & Fire) are left alone.
+     */
+    fun reorderCommaName(name: String): String {
+        val parts = name.split(",")
+        if (parts.size != 2) return name
+        val surname = parts[0].trim()
+        val forename = parts[1].trim()
+        if (surname.isBlank() || forename.isBlank()) return name
+        val lower = forename.lowercase()
+        if (lower.startsWith("the ")) return name
+        if (forename.contains("&") || lower.contains(" and ")) return name
+        if (forename.split(" ").filter { it.isNotBlank() }.size > 3) return name
+        return "$forename $surname"
+    }
+
     fun normalizeArtistName(artist: String): String {
-        val trimmed = artist.trim()
+        val trimmed = reorderCommaName(artist.trim()).trim()
         val withoutLeadingThe = if (trimmed.startsWith("the ", ignoreCase = true)) {
             trimmed.substring(4)
         } else {

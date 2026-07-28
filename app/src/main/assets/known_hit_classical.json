@@ -1,0 +1,1052 @@
+[
+ {
+  "artist": "Ludwig van Beethoven",
+  "song": "Symphony No. 5 in C minor, Op. 67",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "classical period",
+   "symphony",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Ludwig van Beethoven",
+  "song": "Symphony No. 9 in D minor, Op. 125",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "classical period",
+   "symphony",
+   "choral symphony"
+  ]
+ },
+ {
+  "artist": "Ludwig van Beethoven",
+  "song": "Piano Sonata No. 14 'Moonlight'",
+  "genre": "sonata",
+  "genres": [
+   "classical",
+   "classical period",
+   "sonata"
+  ]
+ },
+ {
+  "artist": "Ludwig van Beethoven",
+  "song": "Für Elise",
+  "genre": "character piece",
+  "genres": [
+   "classical",
+   "classical period",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Ludwig van Beethoven",
+  "song": "Piano Concerto No. 5 'Emperor'",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "classical period",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Wolfgang Amadeus Mozart",
+  "song": "Eine kleine Nachtmusik",
+  "genre": "serenade",
+  "genres": [
+   "classical",
+   "classical period",
+   "serenade",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Wolfgang Amadeus Mozart",
+  "song": "Requiem in D minor, K. 626",
+  "genre": "requiem",
+  "genres": [
+   "classical",
+   "classical period",
+   "requiem",
+   "mass"
+  ]
+ },
+ {
+  "artist": "Wolfgang Amadeus Mozart",
+  "song": "Symphony No. 40 in G minor",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "classical period",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Wolfgang Amadeus Mozart",
+  "song": "Piano Sonata No. 11 'Alla Turca'",
+  "genre": "sonata",
+  "genres": [
+   "classical",
+   "classical period",
+   "sonata"
+  ]
+ },
+ {
+  "artist": "Wolfgang Amadeus Mozart",
+  "song": "The Magic Flute: Der Hölle Rache",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "classical period",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Johann Sebastian Bach",
+  "song": "Toccata and Fugue in D minor",
+  "genre": "toccata",
+  "genres": [
+   "classical",
+   "baroque",
+   "toccata",
+   "fugue"
+  ]
+ },
+ {
+  "artist": "Johann Sebastian Bach",
+  "song": "Air on the G String",
+  "genre": "baroque suite",
+  "genres": [
+   "classical",
+   "baroque",
+   "baroque suite",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Johann Sebastian Bach",
+  "song": "Brandenburg Concerto No. 3",
+  "genre": "concerto grosso",
+  "genres": [
+   "classical",
+   "baroque",
+   "concerto grosso"
+  ]
+ },
+ {
+  "artist": "Johann Sebastian Bach",
+  "song": "Cello Suite No. 1 in G major, Prelude",
+  "genre": "prelude",
+  "genres": [
+   "classical",
+   "baroque",
+   "prelude"
+  ]
+ },
+ {
+  "artist": "Johann Sebastian Bach",
+  "song": "Mass in B minor",
+  "genre": "mass",
+  "genres": [
+   "classical",
+   "baroque",
+   "mass"
+  ]
+ },
+ {
+  "artist": "Antonio Vivaldi",
+  "song": "The Four Seasons: Spring",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "baroque",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Antonio Vivaldi",
+  "song": "The Four Seasons: Winter",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "baroque",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Antonio Vivaldi",
+  "song": "Gloria in D major, RV 589",
+  "genre": "cantata",
+  "genres": [
+   "classical",
+   "baroque",
+   "cantata",
+   "mass"
+  ]
+ },
+ {
+  "artist": "George Frideric Handel",
+  "song": "Messiah: Hallelujah",
+  "genre": "oratorio",
+  "genres": [
+   "classical",
+   "baroque",
+   "oratorio"
+  ]
+ },
+ {
+  "artist": "George Frideric Handel",
+  "song": "Water Music: Alla Hornpipe",
+  "genre": "baroque suite",
+  "genres": [
+   "classical",
+   "baroque",
+   "baroque suite",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "George Frideric Handel",
+  "song": "Sarabande in D minor",
+  "genre": "baroque suite",
+  "genres": [
+   "classical",
+   "baroque",
+   "baroque suite"
+  ]
+ },
+ {
+  "artist": "Johann Pachelbel",
+  "song": "Canon in D major",
+  "genre": "baroque",
+  "genres": [
+   "classical",
+   "baroque",
+   "canzona"
+  ]
+ },
+ {
+  "artist": "Frédéric Chopin",
+  "song": "Nocturne Op. 9 No. 2",
+  "genre": "nocturne",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "nocturne"
+  ]
+ },
+ {
+  "artist": "Frédéric Chopin",
+  "song": "Étude Op. 10 No. 12 'Revolutionary'",
+  "genre": "étude",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "étude"
+  ]
+ },
+ {
+  "artist": "Frédéric Chopin",
+  "song": "Ballade No. 1 in G minor",
+  "genre": "romantic classical",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Frédéric Chopin",
+  "song": "Prelude Op. 28 No. 15 'Raindrop'",
+  "genre": "prelude",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "prelude"
+  ]
+ },
+ {
+  "artist": "Pyotr Ilyich Tchaikovsky",
+  "song": "Swan Lake: Scène",
+  "genre": "ballet",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "ballet",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Pyotr Ilyich Tchaikovsky",
+  "song": "The Nutcracker: Waltz of the Flowers",
+  "genre": "ballet",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "ballet"
+  ]
+ },
+ {
+  "artist": "Pyotr Ilyich Tchaikovsky",
+  "song": "1812 Overture",
+  "genre": "overture",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "overture",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Pyotr Ilyich Tchaikovsky",
+  "song": "Piano Concerto No. 1 in B-flat minor",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Claude Debussy",
+  "song": "Clair de Lune",
+  "genre": "impressionism",
+  "genres": [
+   "classical",
+   "impressionism",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Claude Debussy",
+  "song": "Prélude à l'après-midi d'un faune",
+  "genre": "impressionism",
+  "genres": [
+   "classical",
+   "impressionism",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Claude Debussy",
+  "song": "Arabesque No. 1",
+  "genre": "impressionism",
+  "genres": [
+   "classical",
+   "impressionism",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Maurice Ravel",
+  "song": "Boléro",
+  "genre": "impressionism",
+  "genres": [
+   "classical",
+   "impressionism",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Maurice Ravel",
+  "song": "Pavane pour une infante défunte",
+  "genre": "impressionism",
+  "genres": [
+   "classical",
+   "impressionism",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Erik Satie",
+  "song": "Gymnopédie No. 1",
+  "genre": "impressionism",
+  "genres": [
+   "classical",
+   "impressionism",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Antonín Dvořák",
+  "song": "Symphony No. 9 'From the New World'",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Antonín Dvořák",
+  "song": "Humoresque No. 7",
+  "genre": "character piece",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Edvard Grieg",
+  "song": "Peer Gynt: In the Hall of the Mountain King",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Edvard Grieg",
+  "song": "Piano Concerto in A minor",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Jean Sibelius",
+  "song": "Finlandia, Op. 26",
+  "genre": "symphonic poem",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Gustav Mahler",
+  "song": "Symphony No. 5: Adagietto",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Johannes Brahms",
+  "song": "Hungarian Dance No. 5",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Johannes Brahms",
+  "song": "Symphony No. 1 in C minor",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Johannes Brahms",
+  "song": "Wiegenlied 'Lullaby'",
+  "genre": "lied",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "lied"
+  ]
+ },
+ {
+  "artist": "Franz Schubert",
+  "song": "Ave Maria, D. 839",
+  "genre": "lied",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "lied"
+  ]
+ },
+ {
+  "artist": "Franz Schubert",
+  "song": "Symphony No. 8 'Unfinished'",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Franz Schubert",
+  "song": "Der Erlkönig",
+  "genre": "lied",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "lied"
+  ]
+ },
+ {
+  "artist": "Franz Liszt",
+  "song": "Hungarian Rhapsody No. 2",
+  "genre": "romantic classical",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Franz Liszt",
+  "song": "Liebestraum No. 3",
+  "genre": "romantic classical",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "nocturne"
+  ]
+ },
+ {
+  "artist": "Richard Wagner",
+  "song": "Ride of the Valkyries",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Richard Wagner",
+  "song": "Tristan und Isolde: Prelude",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "opera",
+   "prelude"
+  ]
+ },
+ {
+  "artist": "Giuseppe Verdi",
+  "song": "La traviata: Libiamo ne' lieti calici",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Giuseppe Verdi",
+  "song": "Nabucco: Va, pensiero",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Giuseppe Verdi",
+  "song": "Requiem: Dies irae",
+  "genre": "requiem",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "requiem"
+  ]
+ },
+ {
+  "artist": "Giacomo Puccini",
+  "song": "Turandot: Nessun dorma",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "verismo",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Giacomo Puccini",
+  "song": "Gianni Schicchi: O mio babbino caro",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "verismo",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Georges Bizet",
+  "song": "Carmen: Habanera",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Gioachino Rossini",
+  "song": "The Barber of Seville: Largo al factotum",
+  "genre": "opera buffa",
+  "genres": [
+   "classical",
+   "opera",
+   "opera buffa"
+  ]
+ },
+ {
+  "artist": "Gioachino Rossini",
+  "song": "William Tell Overture",
+  "genre": "overture",
+  "genres": [
+   "classical",
+   "overture",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Camille Saint-Saëns",
+  "song": "The Carnival of the Animals: The Swan",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Camille Saint-Saëns",
+  "song": "Danse macabre",
+  "genre": "symphonic poem",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Modest Mussorgsky",
+  "song": "Pictures at an Exhibition: The Great Gate of Kiev",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Modest Mussorgsky",
+  "song": "Night on Bald Mountain",
+  "genre": "symphonic poem",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Nikolai Rimsky-Korsakov",
+  "song": "Flight of the Bumblebee",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Nikolai Rimsky-Korsakov",
+  "song": "Scheherazade, Op. 35",
+  "genre": "symphonic poem",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Sergei Rachmaninoff",
+  "song": "Piano Concerto No. 2 in C minor",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Sergei Rachmaninoff",
+  "song": "Prelude in C-sharp minor",
+  "genre": "prelude",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "prelude"
+  ]
+ },
+ {
+  "artist": "Igor Stravinsky",
+  "song": "The Rite of Spring",
+  "genre": "ballet",
+  "genres": [
+   "classical",
+   "modern classical",
+   "ballet"
+  ]
+ },
+ {
+  "artist": "Igor Stravinsky",
+  "song": "The Firebird: Infernal Dance",
+  "genre": "ballet",
+  "genres": [
+   "classical",
+   "modern classical",
+   "ballet"
+  ]
+ },
+ {
+  "artist": "Sergei Prokofiev",
+  "song": "Romeo and Juliet: Dance of the Knights",
+  "genre": "ballet",
+  "genres": [
+   "classical",
+   "modern classical",
+   "ballet"
+  ]
+ },
+ {
+  "artist": "Sergei Prokofiev",
+  "song": "Peter and the Wolf",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Dmitri Shostakovich",
+  "song": "Symphony No. 5 in D minor",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "modern classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Dmitri Shostakovich",
+  "song": "Waltz No. 2",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Carl Orff",
+  "song": "Carmina Burana: O Fortuna",
+  "genre": "cantata",
+  "genres": [
+   "classical",
+   "modern classical",
+   "cantata"
+  ]
+ },
+ {
+  "artist": "Gustav Holst",
+  "song": "The Planets: Mars",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Edward Elgar",
+  "song": "Enigma Variations: Nimrod",
+  "genre": "theme and variations",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "theme and variations"
+  ]
+ },
+ {
+  "artist": "Edward Elgar",
+  "song": "Pomp and Circumstance March No. 1",
+  "genre": "march",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "march"
+  ]
+ },
+ {
+  "artist": "Ralph Vaughan Williams",
+  "song": "The Lark Ascending",
+  "genre": "english pastoral school",
+  "genres": [
+   "classical",
+   "english pastoral school",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Manuel de Falla",
+  "song": "El amor brujo: Danza ritual del fuego",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "modern classical",
+   "ballet"
+  ]
+ },
+ {
+  "artist": "Manuel de Falla",
+  "song": "Noches en los jardines de España",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "impressionism",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Isaac Albéniz",
+  "song": "Suite española: Asturias",
+  "genre": "character piece",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Enrique Granados",
+  "song": "Goyescas: Quejas o la maja y el ruiseñor",
+  "genre": "character piece",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Joaquín Rodrigo",
+  "song": "Concierto de Aranjuez: Adagio",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "modern classical",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Francisco Tárrega",
+  "song": "Recuerdos de la Alhambra",
+  "genre": "character piece",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Tomaso Albinoni",
+  "song": "Adagio in G minor",
+  "genre": "baroque",
+  "genres": [
+   "classical",
+   "baroque"
+  ]
+ },
+ {
+  "artist": "Gregorio Allegri",
+  "song": "Miserere mei, Deus",
+  "genre": "motet",
+  "genres": [
+   "classical",
+   "renaissance",
+   "motet"
+  ]
+ },
+ {
+  "artist": "Thomas Tallis",
+  "song": "Spem in alium",
+  "genre": "motet",
+  "genres": [
+   "classical",
+   "renaissance",
+   "motet"
+  ]
+ },
+ {
+  "artist": "Claudio Monteverdi",
+  "song": "Vespro della Beata Vergine",
+  "genre": "baroque",
+  "genres": [
+   "classical",
+   "baroque",
+   "mass"
+  ]
+ },
+ {
+  "artist": "Henry Purcell",
+  "song": "Dido and Aeneas: Dido's Lament",
+  "genre": "opera",
+  "genres": [
+   "classical",
+   "baroque",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Domenico Scarlatti",
+  "song": "Sonata in D minor, K. 141",
+  "genre": "sonata",
+  "genres": [
+   "classical",
+   "baroque",
+   "sonata"
+  ]
+ },
+ {
+  "artist": "Joseph Haydn",
+  "song": "Symphony No. 94 'Surprise'",
+  "genre": "symphony",
+  "genres": [
+   "classical",
+   "classical period",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Joseph Haydn",
+  "song": "String Quartet Op. 76 No. 3 'Emperor'",
+  "genre": "string quartet",
+  "genres": [
+   "classical",
+   "classical period",
+   "string quartet"
+  ]
+ },
+ {
+  "artist": "Felix Mendelssohn",
+  "song": "A Midsummer Night's Dream: Wedding March",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Felix Mendelssohn",
+  "song": "Violin Concerto in E minor",
+  "genre": "concerto",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "concerto"
+  ]
+ },
+ {
+  "artist": "Robert Schumann",
+  "song": "Kinderszenen: Träumerei",
+  "genre": "character piece",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "character piece"
+  ]
+ },
+ {
+  "artist": "Bedřich Smetana",
+  "song": "Má vlast: Vltava",
+  "genre": "symphonic poem",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Aram Khachaturian",
+  "song": "Spartacus: Adagio",
+  "genre": "ballet",
+  "genres": [
+   "classical",
+   "modern classical",
+   "ballet"
+  ]
+ },
+ {
+  "artist": "Samuel Barber",
+  "song": "Adagio for Strings",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Arvo Pärt",
+  "song": "Spiegel im Spiegel",
+  "genre": "holy minimalism",
+  "genres": [
+   "classical",
+   "holy minimalism",
+   "minimalism"
+  ]
+ },
+ {
+  "artist": "Philip Glass",
+  "song": "Glassworks: Opening",
+  "genre": "minimalism",
+  "genres": [
+   "classical",
+   "minimalism",
+   "contemporary classical"
+  ]
+ },
+ {
+  "artist": "George Gershwin",
+  "song": "Rhapsody in Blue",
+  "genre": "modern classical",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Johann Strauss II",
+  "song": "The Blue Danube",
+  "genre": "orchestral",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Johann Strauss II",
+  "song": "Radetzky March",
+  "genre": "march",
+  "genres": [
+   "classical",
+   "romantic classical",
+   "march"
+  ]
+ }
+]

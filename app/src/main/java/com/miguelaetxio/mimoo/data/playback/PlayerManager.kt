@@ -1463,6 +1463,7 @@ class PlayerManager @Inject constructor(
         if (!radioKnownSongsExhausted) {
             val hit = knownHitsRepository.randomHit(
                 anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), radioUsedSongs, avoidNames,
+                country = anchor.country, classical = anchor.isClassical,
                 relaxGenre = degraded,
                 anchorGenres = anchor.genres,
             )
@@ -1472,7 +1473,8 @@ class PlayerManager @Inject constructor(
                     RadioDebugLogger.log(
                         appContext, storageManager,
                         "fetchFromKnown(ancla='$anchorArtistName') -> tema conocido: '${hit.artist}' - " +
-                            "'${hit.song}' (género='${hit.genre}', ancla=género:'${anchor.genre}'/" +
+                            "'${hit.song}' (género='${hit.genre}', país='${hit.country ?: "-"}', " +
+                            "ancla=género:'${anchor.genre}'/país:${anchor.country ?: "-"}/" +
                             "década:${anchor.decadeBegin})",
                     )
                     return item
@@ -1489,6 +1491,7 @@ class PlayerManager @Inject constructor(
 
         val artists = knownHitsRepository.knownArtists(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), avoidNames,
+            country = anchor.country, classical = anchor.isClassical,
             relaxGenre = degraded,
             anchorGenres = anchor.genres,
         )
@@ -1714,6 +1717,7 @@ class PlayerManager @Inject constructor(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
             excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames,
             anchorGenres = anchor.genres,
+            country = anchor.country, classical = anchor.isClassical,
         )
         // Y si de verdad hay que repetir, se repite EL MÁS ANTIGUO, no
         // uno al azar. Con diez temas disponibles el azar daba
@@ -1725,6 +1729,7 @@ class PlayerManager @Inject constructor(
             excludeSongKeys = emptySet(), avoidArtists = avoidNames,
             anchorGenres = anchor.genres,
             playOrder = radioUsedSongs.toList(),
+            country = anchor.country, classical = anchor.isClassical,
         )
         if (hit != null) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)

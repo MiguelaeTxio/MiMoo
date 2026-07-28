@@ -65,6 +65,11 @@ class KnownHitsRepository @Inject constructor(
         val song: String,
         val genre: String,
         val genres: List<String> = emptyList(),
+        /**
+         * S025 -- país ISO del artista (`ES`, `GB`, `US`, `PR`...).
+         * Nulo solo en el repertorio clásico, donde el país no filtra.
+         */
+        val country: String? = null,
     ) {
         /**
          * Conjunto con el que cruzar contra el ancla. Las 161 entradas
@@ -83,6 +88,7 @@ class KnownHitsRepository @Inject constructor(
         val song: String = "",
         val genre: String = "",
         val genres: List<String> = emptyList(),
+        val country: String? = null,
     )
     private data class RawDecade(val es: List<RawHit> = emptyList(), val intl: List<RawHit> = emptyList())
 
@@ -97,6 +103,37 @@ class KnownHitsRepository @Inject constructor(
             raw.mapKeys { it.key.toInt() }
         } catch (e: Exception) {
             emptyMap()
+        }
+    }
+
+    /**
+     * S025 -- repertorio clásico, en asset aparte y SIN década ni país.
+     *
+     * Orden de Miguel Ángel: *"en clásica es clásica. No tenemos ni
+     * origen ni década, solo género"*. Por eso no cabe en
+     * `known_hit_artists.json`, que está organizado justamente por esas
+     * dos dimensiones: es una lista plana.
+     *
+     * Antes de esto el diccionario no tenía NI UNA entrada clásica, y
+     * `randomHit()` además corta en seco cuando la década es nula. Las
+     * dos cosas juntas dejaban la Radio de clásica completamente muda:
+     * verificado con Beethoven y la sonata 14 -- `backlog final: 0`.
+     * ---
+     * S025 -- classical repertoire, in its own asset and with neither
+     * decade nor country, since those are exactly the two dimensions
+     * the main dictionary is organized by. Before this there was not a
+     * single classical entry, which left classical Radio silent.
+     */
+    private val classicalHits: List<KnownHit> by lazy {
+        try {
+            val json = context.assets.open("known_hit_classical.json")
+                .bufferedReader()
+                .use { it.readText() }
+            val type = object : TypeToken<List<RawHit>>() {}.type
+            val raw: List<RawHit> = Gson().fromJson(json, type)
+            raw.map { KnownHit(it.artist, it.song, it.genre, it.genres, null) }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 
@@ -170,7 +207,7 @@ class KnownHitsRepository @Inject constructor(
      * extranjero. Miguel Ángel cerró la regla definitiva en S020:
      * separación dura en los dos sentidos.
      */
-    private fun pool(decadeBegin: Int?, origin: Origin): List<KnownHit> {
+    private fun pool(decadeBegin: Int?, origin: Origin, country: String? = null): List<KnownHit> {
         val decades = if (decadeBegin != null) listOfNotNull(byDecade[decadeBegin]) else byDecade.values.toList()
         return decades.flatMap { d ->
             val raw = when (origin) {
@@ -178,7 +215,19 @@ class KnownHitsRepository @Inject constructor(
                 Origin.INTL -> d.intl
                 Origin.ANY -> d.es + d.intl
             }
-            raw.map { KnownHit(it.artist, it.song, it.genre, it.genres) }
+            // S025 -- el origen es el PAÍS del ancla, no el bloque
+            // es/intl. Con ancla británica el bloque `intl` servía
+            // igualmente estadounidenses: en el log de Deep Purple
+            // (hard rock, GB, 1970) entraron Neil Young, Kiss, Alice
+            // Cooper y Lynyrd Skynyrd. Si el ancla no trae país se
+            // conserva el comportamiento por bloque, que es lo único
+            // honesto sin el dato.
+            // ---
+            // S025 -- origin is the anchor's country, not the es/intl
+            // block. Falls back to block-only when the anchor has no
+            // country.
+            val filtered = if (country != null) raw.filter { it.country == country } else raw
+            filtered.map { KnownHit(it.artist, it.song, it.genre, it.genres, it.country) }
         }
     }
 
@@ -338,6 +387,10 @@ class KnownHitsRepository @Inject constructor(
          * antigüedad sale gratis sin estructura nueva.
          */
         playOrder: List<String> = emptyList(),
+        /** S025 -- país del ancla; null = no filtrar por país. */
+        country: String? = null,
+        /** S025 -- ancla de repertorio clásico: sin década ni país. */
+        classical: Boolean = false,
     ): KnownHit? {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun pick(candidates: List<KnownHit>): KnownHit? {
@@ -350,6 +403,20 @@ class KnownHitsRepository @Inject constructor(
                 val position = playOrder.indexOf(songKey(hit.artist, hit.song))
                 if (position < 0) Int.MIN_VALUE else position
             }
+        }
+
+        // S025 -- la clásica entra por su propia lista, sin década ni
+        // país, y por tanto ANTES del guardián de década: es
+        // precisamente ese guardián el que dejaba muda la Radio de
+        // clásica (ancla con `decadeBegin=null` -> `return null`).
+        if (classical) {
+            val anchorSet = anchorGenres.ifEmpty { genre?.let { setOf(it) } ?: emptySet() }
+            val pooled = if (anchorSet.isEmpty()) {
+                classicalHits
+            } else {
+                classicalHits.filter { matchesGenre(it.genreSet, anchorSet) }
+            }
+            return pick(pooled.ifEmpty { classicalHits })
         }
 
         // S024 -- sin década NO se sirve nada de aquí. Ver
@@ -368,10 +435,10 @@ class KnownHitsRepository @Inject constructor(
         // conservan origen y década -- que es lo que se percibe -- y
         // se suelta el género. Que suene Mecano es infinitamente mejor
         // que no sonar nada o repetir.
-        if (relaxGenre) return pick(pool(decadeBegin, origin))
+        if (relaxGenre) return pick(pool(decadeBegin, origin, country))
         if (genre == null) return null
         val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
-        return pick(pool(decadeBegin, origin).filter { matchesGenre(it.genreSet, anchorSet) })
+        return pick(pool(decadeBegin, origin, country).filter { matchesGenre(it.genreSet, anchorSet) })
     }
 
     /**
@@ -396,23 +463,41 @@ class KnownHitsRepository @Inject constructor(
         avoidArtists: Set<String> = emptySet(),
         relaxGenre: Boolean = false,
         anchorGenres: Set<String> = emptySet(),
+        /** S025 -- país del ancla; null = no filtrar por país. */
+        country: String? = null,
+        /** S025 -- ancla de repertorio clásico: sin década ni país. */
+        classical: Boolean = false,
     ): List<String> {
-        // S024 -- mismo guardián que `randomHit()`: sin década no se
-        // sirve, en vez de servir las siete.
-        if (decadeBegin == null) return emptyList()
-
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun artistsOf(candidates: List<KnownHit>): List<String> =
             candidates.map { it.artist }.distinct()
 
+        // S025 -- igual que en `randomHit()`: la clásica va por su
+        // lista y antes del guardián de década.
+        if (classical) {
+            val anchorSet = anchorGenres.ifEmpty { genre?.let { setOf(it) } ?: emptySet() }
+            val pooled = if (anchorSet.isEmpty()) {
+                classicalHits
+            } else {
+                classicalHits.filter { matchesGenre(it.genreSet, anchorSet) }
+            }
+            val names = artistsOf(pooled.ifEmpty { classicalHits })
+            val (rep, fre) = names.partition { it.lowercase() in avoidLower }
+            return fre.shuffled() + rep.shuffled()
+        }
+
+        // S024 -- mismo guardián que `randomHit()`: sin década no se
+        // sirve, en vez de servir las siete.
+        if (decadeBegin == null) return emptyList()
+
         // S022 -- ver el comentario de `randomHit()`: en modo degradado
         // se sueltan los géneros y se conservan origen y década.
         val all = if (relaxGenre) {
-            artistsOf(pool(decadeBegin, origin))
+            artistsOf(pool(decadeBegin, origin, country))
         } else {
             if (genre == null) return emptyList()
             artistsOf(
-                pool(decadeBegin, origin).filter {
+                pool(decadeBegin, origin, country).filter {
                     matchesGenre(it.genreSet, anchorGenres.ifEmpty { setOf(genre) })
                 },
             )
@@ -479,12 +564,21 @@ class KnownHitsRepository @Inject constructor(
      * aprovechan cuando el ancla es justo uno de esos artistas.
      */
     fun genresOfArtist(artist: String): Set<String> {
-        val artistLower = artist.trim().lowercase()
-        if (artistLower.isBlank()) return emptySet()
+        if (artist.isBlank()) return emptySet()
+        // S025 -- se compara NORMALIZADO, no en minúsculas a secas: así
+        // 'Beethoven, Ludwig van' del catálogo de H05 casa con
+        // 'Ludwig van Beethoven' del diccionario. Ver
+        // SearchNormalizer.reorderCommaName().
+        val wanted = SearchNormalizer.normalizeArtistName(artist)
+        if (wanted.isBlank()) return emptySet()
         val found = mutableSetOf<String>()
+        for (hit in classicalHits) {
+            if (SearchNormalizer.normalizeArtistName(hit.artist) != wanted) continue
+            found += hit.genreSet
+        }
         for (decade in byDecade.values) {
             for (hit in decade.es + decade.intl) {
-                if (hit.artist.lowercase() != artistLower) continue
+                if (SearchNormalizer.normalizeArtistName(hit.artist) != wanted) continue
                 // `RawHit` es el reflejo crudo del JSON: `genres` puede
                 // venir vacío, y entonces vale el `genre` suelto. Es la
                 // misma convención que usa el resto de la clase al
