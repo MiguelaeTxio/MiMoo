@@ -1522,6 +1522,323 @@
      "soul"
     ],
     "country": "US"
+   },
+   {
+    "artist": "The Animals",
+    "song": "We Gotta Get Out of This Place",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "blues rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Them",
+    "song": "Gloria",
+    "genre": "garage rock",
+    "genres": [
+     "garage rock",
+     "rock",
+     "blues rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "The Moody Blues",
+    "song": "Nights in White Satin",
+    "genre": "progressive rock",
+    "genres": [
+     "progressive rock",
+     "psychedelic rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Donovan",
+    "song": "Sunshine Superman",
+    "genre": "folk rock",
+    "genres": [
+     "folk rock",
+     "psychedelic rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Marianne Faithfull",
+    "song": "As Tears Go By",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "folk"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "The Spencer Davis Group",
+    "song": "Gimme Some Lovin'",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "blues rock",
+     "soul"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Manfred Mann",
+    "song": "Do Wah Diddy Diddy",
+    "genre": "beat music",
+    "genres": [
+     "beat music",
+     "pop",
+     "rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Jacques Brel",
+    "song": "Ne me quitte pas",
+    "genre": "chanson à texte",
+    "genres": [
+     "chanson à texte",
+     "ballad"
+    ],
+    "country": "BE"
+   },
+   {
+    "artist": "Édith Piaf",
+    "song": "Non, je ne regrette rien",
+    "genre": "chanson réaliste",
+    "genres": [
+     "chanson réaliste",
+     "ballad"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Charles Aznavour",
+    "song": "La bohème",
+    "genre": "chanson à texte",
+    "genres": [
+     "chanson à texte",
+     "ballad"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Serge Gainsbourg",
+    "song": "Bonnie and Clyde",
+    "genre": "yé-yé",
+    "genres": [
+     "yé-yé",
+     "pop",
+     "chanson à texte"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Johnny Hallyday",
+    "song": "Le pénitencier",
+    "genre": "rock and roll",
+    "genres": [
+     "rock and roll",
+     "pop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Mina",
+    "song": "Se telefonando",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "ballad"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Adriano Celentano",
+    "song": "Azzurro",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "canzone napoletana"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Domenico Modugno",
+    "song": "Nel blu, dipinto di blu",
+    "genre": "canzone napoletana",
+    "genres": [
+     "canzone napoletana",
+     "pop",
+     "ballad"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Rita Pavone",
+    "song": "Cuore",
+    "genre": "yé-yé",
+    "genres": [
+     "yé-yé",
+     "pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Astrud Gilberto",
+    "song": "The Girl from Ipanema",
+    "genre": "bossa nova",
+    "genres": [
+     "bossa nova",
+     "jazz"
+    ],
+    "country": "BR"
+   },
+   {
+    "artist": "João Gilberto",
+    "song": "Chega de Saudade",
+    "genre": "bossa nova",
+    "genres": [
+     "bossa nova"
+    ],
+    "country": "BR"
+   },
+   {
+    "artist": "Antônio Carlos Jobim",
+    "song": "Desafinado",
+    "genre": "bossa nova",
+    "genres": [
+     "bossa nova",
+     "jazz"
+    ],
+    "country": "BR"
+   },
+   {
+    "artist": "Los Ángeles Negros",
+    "song": "Y volveré",
+    "genre": "bolero",
+    "genres": [
+     "bolero",
+     "ballad"
+    ],
+    "country": "CL"
+   },
+   {
+    "artist": "Armando Manzanero",
+    "song": "Somos novios",
+    "genre": "bolero",
+    "genres": [
+     "bolero",
+     "ballad"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "José José",
+    "song": "El triste",
+    "genre": "bolero",
+    "genres": [
+     "bolero",
+     "ballad"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Celia Cruz",
+    "song": "Bemba colorá",
+    "genre": "son cubano",
+    "genres": [
+     "son cubano",
+     "salsa"
+    ],
+    "country": "CU"
+   },
+   {
+    "artist": "Nancy Ames",
+    "song": "Cielito lindo",
+    "genre": "latin pop",
+    "genres": [
+     "latin pop",
+     "pop"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Creedence Clearwater Revival",
+    "song": "Bad Moon Rising",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "blues rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "The Ronettes",
+    "song": "Be My Baby",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "doo-wop",
+     "soul"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Percy Sledge",
+    "song": "When a Man Loves a Woman",
+    "genre": "soul",
+    "genres": [
+     "soul",
+     "r&b"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Sam & Dave",
+    "song": "Soul Man",
+    "genre": "soul",
+    "genres": [
+     "soul",
+     "funk",
+     "r&b"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Frankie Valli",
+    "song": "Can't Take My Eyes Off You",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "soul"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Bobby Hebb",
+    "song": "Sunny",
+    "genre": "soul",
+    "genres": [
+     "soul",
+     "pop",
+     "jazz"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Martha and the Vandellas",
+    "song": "Dancing in the Street",
+    "genre": "soul",
+    "genres": [
+     "soul",
+     "r&b"
+    ],
+    "country": "US"
    }
   ]
  },
@@ -3828,6 +4145,486 @@
      "synth-pop"
     ],
     "country": "GB"
+   },
+   {
+    "artist": "David Bowie",
+    "song": "Life on Mars?",
+    "genre": "glam rock",
+    "genres": [
+     "glam rock",
+     "art rock",
+     "rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Roxy Music",
+    "song": "Love Is the Drug",
+    "genre": "glam rock",
+    "genres": [
+     "glam rock",
+     "art rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Slade",
+    "song": "Cum On Feel the Noize",
+    "genre": "glam rock",
+    "genres": [
+     "glam rock",
+     "rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Sweet",
+    "song": "Ballroom Blitz",
+    "genre": "glam rock",
+    "genres": [
+     "glam rock",
+     "hard rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Wings",
+    "song": "Band on the Run",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "pop rock",
+     "soft rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "The Jam",
+    "song": "Down in the Tube Station at Midnight",
+    "genre": "punk rock",
+    "genres": [
+     "punk rock",
+     "new wave",
+     "mod revival"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Buzzcocks",
+    "song": "Ever Fallen in Love",
+    "genre": "punk rock",
+    "genres": [
+     "punk rock",
+     "new wave"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Ian Dury and the Blockheads",
+    "song": "Hit Me with Your Rhythm Stick",
+    "genre": "new wave",
+    "genres": [
+     "new wave",
+     "funk",
+     "punk rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Thin Lizzy",
+    "song": "The Boys Are Back in Town",
+    "genre": "hard rock",
+    "genres": [
+     "hard rock",
+     "rock"
+    ],
+    "country": "IE"
+   },
+   {
+    "artist": "Judas Priest",
+    "song": "Breaking the Law",
+    "genre": "heavy metal",
+    "genres": [
+     "heavy metal",
+     "hard rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Motörhead",
+    "song": "Ace of Spades",
+    "genre": "heavy metal",
+    "genres": [
+     "heavy metal",
+     "hard rock",
+     "punk rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Jethro Tull",
+    "song": "Aqualung",
+    "genre": "progressive rock",
+    "genres": [
+     "progressive rock",
+     "folk rock",
+     "hard rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Emerson, Lake & Palmer",
+    "song": "Lucky Man",
+    "genre": "progressive rock",
+    "genres": [
+     "progressive rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "King Crimson",
+    "song": "21st Century Schizoid Man",
+    "genre": "progressive rock",
+    "genres": [
+     "progressive rock",
+     "art rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "10cc",
+    "song": "I'm Not in Love",
+    "genre": "soft rock",
+    "genres": [
+     "soft rock",
+     "art rock",
+     "pop rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Kraftwerk",
+    "song": "Autobahn",
+    "genre": "electronic",
+    "genres": [
+     "electronic",
+     "krautrock",
+     "synth-pop"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Can",
+    "song": "Vitamin C",
+    "genre": "krautrock",
+    "genres": [
+     "krautrock",
+     "experimental rock"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Tangerine Dream",
+    "song": "Phaedra",
+    "genre": "berlin school",
+    "genres": [
+     "berlin school",
+     "electronic",
+     "ambient"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Giorgio Moroder",
+    "song": "From Here to Eternity",
+    "genre": "italo-disco",
+    "genres": [
+     "italo-disco",
+     "disco",
+     "electronic"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Amanda Lear",
+    "song": "Follow Me",
+    "genre": "italo-disco",
+    "genres": [
+     "italo-disco",
+     "disco"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Lucio Battisti",
+    "song": "Il mio canto libero",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Lucio Dalla",
+    "song": "4 marzo 1943",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "ballad"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Fabrizio De André",
+    "song": "La canzone di Marinella",
+    "genre": "folk",
+    "genres": [
+     "folk",
+     "ballad"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Michel Sardou",
+    "song": "Les lacs du Connemara",
+    "genre": "chanson à texte",
+    "genres": [
+     "chanson à texte",
+     "pop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Claude François",
+    "song": "Comme d'habitude",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "ballad"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Dalida",
+    "song": "Gigi l'amoroso",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "ballad"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Vangelis",
+    "song": "Chariots of Fire",
+    "genre": "new age",
+    "genres": [
+     "new age",
+     "electronic",
+     "orchestral"
+    ],
+    "country": "GR"
+   },
+   {
+    "artist": "Demis Roussos",
+    "song": "Forever and Ever",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "ballad"
+    ],
+    "country": "GR"
+   },
+   {
+    "artist": "Toots and the Maytals",
+    "song": "Pressure Drop",
+    "genre": "reggae",
+    "genres": [
+     "reggae",
+     "ska",
+     "rocksteady"
+    ],
+    "country": "JM"
+   },
+   {
+    "artist": "Curtis Mayfield",
+    "song": "Move On Up",
+    "genre": "soul",
+    "genres": [
+     "soul",
+     "funk"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Parliament",
+    "song": "Give Up the Funk",
+    "genre": "funk",
+    "genres": [
+     "funk",
+     "p-funk",
+     "soul"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "The Eagles",
+    "song": "Hotel California",
+    "genre": "soft rock",
+    "genres": [
+     "soft rock",
+     "rock",
+     "country rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Fleetwood Mac",
+    "song": "Go Your Own Way",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "soft rock",
+     "pop rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Steely Dan",
+    "song": "Reelin' In the Years",
+    "genre": "yacht rock",
+    "genres": [
+     "yacht rock",
+     "jazz rock",
+     "soft rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Aerosmith",
+    "song": "Dream On",
+    "genre": "hard rock",
+    "genres": [
+     "hard rock",
+     "rock",
+     "blues rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Patti Smith",
+    "song": "Because the Night",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "punk rock",
+     "art rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Carlos Santana",
+    "song": "Oye Como Va",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "rock",
+     "afro-cuban jazz"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Rubén Blades",
+    "song": "Pedro Navaja",
+    "genre": "salsa",
+    "genres": [
+     "salsa",
+     "son cubano"
+    ],
+    "country": "PA"
+   },
+   {
+    "artist": "Willie Colón",
+    "song": "El gran varón",
+    "genre": "salsa",
+    "genres": [
+     "salsa"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Fania All-Stars",
+    "song": "Quítate Tú",
+    "genre": "salsa",
+    "genres": [
+     "salsa",
+     "son cubano"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Roberto Carlos",
+    "song": "Detalles",
+    "genre": "bolero",
+    "genres": [
+     "bolero",
+     "ballad",
+     "pop"
+    ],
+    "country": "BR"
+   },
+   {
+    "artist": "Gilberto Gil",
+    "song": "Aquele Abraço",
+    "genre": "mpb",
+    "genres": [
+     "mpb",
+     "samba",
+     "tropicália"
+    ],
+    "country": "BR"
+   },
+   {
+    "artist": "Caetano Veloso",
+    "song": "Alegria, Alegria",
+    "genre": "mpb",
+    "genres": [
+     "mpb",
+     "tropicália"
+    ],
+    "country": "BR"
+   },
+   {
+    "artist": "Mercedes Sosa",
+    "song": "Gracias a la vida",
+    "genre": "nueva canción",
+    "genres": [
+     "nueva canción",
+     "folk"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Violeta Parra",
+    "song": "Volver a los 17",
+    "genre": "nueva canción",
+    "genres": [
+     "nueva canción",
+     "folk"
+    ],
+    "country": "CL"
+   },
+   {
+    "artist": "Sandro",
+    "song": "Rosa, Rosa",
+    "genre": "rock and roll",
+    "genres": [
+     "rock and roll",
+     "ballad",
+     "pop"
+    ],
+    "country": "AR"
    }
   ]
  },
@@ -7353,6 +8150,399 @@
      "synth-pop"
     ],
     "country": "GB"
+   },
+   {
+    "artist": "The Smiths",
+    "song": "There Is a Light That Never Goes Out",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "jangle pop",
+     "post-punk"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Siouxsie and the Banshees",
+    "song": "Cities in Dust",
+    "genre": "post-punk",
+    "genres": [
+     "post-punk",
+     "gothic rock",
+     "new wave"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Bauhaus",
+    "song": "Bela Lugosi's Dead",
+    "genre": "gothic rock",
+    "genres": [
+     "gothic rock",
+     "post-punk"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Echo & the Bunnymen",
+    "song": "The Killing Moon",
+    "genre": "post-punk",
+    "genres": [
+     "post-punk",
+     "new wave"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Tears for Fears",
+    "song": "Everybody Wants to Rule the World",
+    "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "new wave",
+     "pop rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Ultravox",
+    "song": "Vienna",
+    "genre": "new romantic",
+    "genres": [
+     "new romantic",
+     "synth-pop",
+     "new wave"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Spandau Ballet",
+    "song": "True",
+    "genre": "new romantic",
+    "genres": [
+     "new romantic",
+     "sophisti-pop",
+     "pop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "ABC",
+    "song": "The Look of Love",
+    "genre": "new romantic",
+    "genres": [
+     "new romantic",
+     "synth-pop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Yazoo",
+    "song": "Only You",
+    "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "new wave"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Frankie Goes to Hollywood",
+    "song": "Relax",
+    "genre": "hi-nrg",
+    "genres": [
+     "hi-nrg",
+     "synth-pop",
+     "dance-pop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Dead or Alive",
+    "song": "You Spin Me Round",
+    "genre": "hi-nrg",
+    "genres": [
+     "hi-nrg",
+     "synth-pop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Dexys Midnight Runners",
+    "song": "Come On Eileen",
+    "genre": "new wave",
+    "genres": [
+     "new wave",
+     "celtic rock",
+     "soul"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "The Housemartins",
+    "song": "Happy Hour",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "jangle pop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Iron Maiden",
+    "song": "Run to the Hills",
+    "genre": "heavy metal",
+    "genres": [
+     "heavy metal"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Opus",
+    "song": "Live Is Life",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "rock"
+    ],
+    "country": "AT"
+   },
+   {
+    "artist": "Ryuichi Sakamoto",
+    "song": "Merry Christmas Mr. Lawrence",
+    "genre": "electronic",
+    "genres": [
+     "electronic",
+     "new age",
+     "minimalism"
+    ],
+    "country": "JP"
+   },
+   {
+    "artist": "Yellow Magic Orchestra",
+    "song": "Rydeen",
+    "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "electronic"
+    ],
+    "country": "JP"
+   },
+   {
+    "artist": "Raffaella Carrà",
+    "song": "Ballo Ballo",
+    "genre": "italo-disco",
+    "genres": [
+     "italo-disco",
+     "disco",
+     "pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Righeira",
+    "song": "Vamos a la playa",
+    "genre": "italo-disco",
+    "genres": [
+     "italo-disco",
+     "synth-pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Gazebo",
+    "song": "I Like Chopin",
+    "genre": "italo-disco",
+    "genres": [
+     "italo-disco",
+     "synth-pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Baltimora",
+    "song": "Tarzan Boy",
+    "genre": "italo-disco",
+    "genres": [
+     "italo-disco",
+     "synth-pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Eros Ramazzotti",
+    "song": "Terra promessa",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Zucchero",
+    "song": "Senza una donna",
+    "genre": "blues rock",
+    "genres": [
+     "blues rock",
+     "pop rock",
+     "soul"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Indochine",
+    "song": "L'Aventurier",
+    "genre": "new wave",
+    "genres": [
+     "new wave",
+     "synth-pop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Jean-Michel Jarre",
+    "song": "Oxygène IV",
+    "genre": "electronic",
+    "genres": [
+     "electronic",
+     "ambient",
+     "berlin school"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Telephone",
+    "song": "Cendrillon",
+    "genre": "rock",
+    "genres": [
+     "rock",
+     "punk rock"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Bruce Springsteen",
+    "song": "Born in the U.S.A.",
+    "genre": "heartland rock",
+    "genres": [
+     "heartland rock",
+     "rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Beastie Boys",
+    "song": "Fight for Your Right",
+    "genre": "hip hop",
+    "genres": [
+     "hip hop",
+     "rap rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "R.E.M.",
+    "song": "The One I Love",
+    "genre": "jangle pop",
+    "genres": [
+     "jangle pop",
+     "alternative rock",
+     "indie rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Los Lobos",
+    "song": "La Bamba",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "rock and roll"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Soda Stereo",
+    "song": "De música ligera",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "new wave",
+     "pop rock"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Charly García",
+    "song": "Demoliendo hoteles",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "rock"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Los Prisioneros",
+    "song": "Tren al sur",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "new wave"
+    ],
+    "country": "CL"
+   },
+   {
+    "artist": "Caifanes",
+    "song": "La célula que explota",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "post-punk"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Juan Luis Guerra",
+    "song": "Ojalá que llueva café",
+    "genre": "merengue",
+    "genres": [
+     "merengue",
+     "bachata",
+     "latin pop"
+    ],
+    "country": "DO"
+   },
+   {
+    "artist": "Wilfrido Vargas",
+    "song": "El baile del perrito",
+    "genre": "merengue",
+    "genres": [
+     "merengue"
+    ],
+    "country": "DO"
+   },
+   {
+    "artist": "Luis Miguel",
+    "song": "La incondicional",
+    "genre": "latin pop",
+    "genres": [
+     "latin pop",
+     "ballad",
+     "bolero"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Chico Buarque",
+    "song": "Construção",
+    "genre": "mpb",
+    "genres": [
+     "mpb",
+     "samba"
+    ],
+    "country": "BR"
    }
   ]
  },
@@ -10797,6 +11987,268 @@
      "hardcore hip hop"
     ],
     "country": "US"
+   },
+   {
+    "artist": "Massive Attack",
+    "song": "Unfinished Sympathy",
+    "genre": "trip hop",
+    "genres": [
+     "trip hop",
+     "electronic",
+     "downtempo"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Portishead",
+    "song": "Glory Box",
+    "genre": "trip hop",
+    "genres": [
+     "trip hop",
+     "downtempo"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "The Corrs",
+    "song": "Breathless",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "celtic rock",
+     "pop"
+    ],
+    "country": "IE"
+   },
+   {
+    "artist": "Björk",
+    "song": "Army of Me",
+    "genre": "art pop",
+    "genres": [
+     "art pop",
+     "electronic",
+     "trip hop"
+    ],
+    "country": "IS"
+   },
+   {
+    "artist": "Ace of Base",
+    "song": "All That She Wants",
+    "genre": "eurodance",
+    "genres": [
+     "eurodance",
+     "reggae-pop",
+     "dance-pop"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "The Cardigans",
+    "song": "Lovefool",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "pop rock"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "Dr. Alban",
+    "song": "It's My Life",
+    "genre": "eurodance",
+    "genres": [
+     "eurodance",
+     "reggae-pop"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "Scatman John",
+    "song": "Scatman",
+    "genre": "eurodance",
+    "genres": [
+     "eurodance",
+     "jazz"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Corona",
+    "song": "The Rhythm of the Night",
+    "genre": "eurodance",
+    "genres": [
+     "eurodance",
+     "italo house"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Gigi D'Agostino",
+    "song": "L'Amour Toujours",
+    "genre": "italo dance",
+    "genres": [
+     "italo dance",
+     "eurodance"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Air",
+    "song": "Sexy Boy",
+    "genre": "downtempo",
+    "genres": [
+     "downtempo",
+     "electronic",
+     "dream pop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Manu Chao",
+    "song": "Clandestino",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "reggae",
+     "folk"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Rammstein",
+    "song": "Du Hast",
+    "genre": "industrial metal",
+    "genres": [
+     "industrial metal",
+     "neue deutsche härte",
+     "heavy metal"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Scooter",
+    "song": "How Much Is the Fish?",
+    "genre": "happy hardcore",
+    "genres": [
+     "happy hardcore",
+     "eurodance",
+     "techno"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Weezer",
+    "song": "Buddy Holly",
+    "genre": "power pop",
+    "genres": [
+     "power pop",
+     "alternative rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "TLC",
+    "song": "No Scrubs",
+    "genre": "contemporary r&b",
+    "genres": [
+     "contemporary r&b",
+     "hip hop soul",
+     "pop"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Shania Twain",
+    "song": "Man! I Feel Like a Woman!",
+    "genre": "country pop",
+    "genres": [
+     "country pop",
+     "country",
+     "pop"
+    ],
+    "country": "CA"
+   },
+   {
+    "artist": "Los Fabulosos Cadillacs",
+    "song": "Matador",
+    "genre": "ska",
+    "genres": [
+     "ska",
+     "latin rock"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Café Tacvba",
+    "song": "La Ingrata",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "ska"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Maná",
+    "song": "Rayando el sol",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "pop rock"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Carlos Vives",
+    "song": "La gota fría",
+    "genre": "vallenato",
+    "genres": [
+     "vallenato",
+     "cumbia",
+     "latin pop"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "Ricky Martin",
+    "song": "Livin' la Vida Loca",
+    "genre": "latin pop",
+    "genres": [
+     "latin pop",
+     "dance-pop",
+     "pop"
+    ],
+    "country": "PR"
+   },
+   {
+    "artist": "Marc Anthony",
+    "song": "Vivir mi vida",
+    "genre": "salsa",
+    "genres": [
+     "salsa",
+     "latin pop"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Elvis Crespo",
+    "song": "Suavemente",
+    "genre": "merengue",
+    "genres": [
+     "merengue",
+     "latin pop"
+    ],
+    "country": "PR"
+   },
+   {
+    "artist": "Buena Vista Social Club",
+    "song": "Chan Chan",
+    "genre": "son cubano",
+    "genres": [
+     "son cubano",
+     "bolero"
+    ],
+    "country": "CU"
    }
   ]
  },
@@ -14038,6 +15490,311 @@
      "latin"
     ],
     "country": "PR"
+   },
+   {
+    "artist": "Coldplay",
+    "song": "Clocks",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "post-britpop",
+     "pop rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Muse",
+    "song": "Time Is Running Out",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "space rock",
+     "progressive rock"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Adele",
+    "song": "Chasing Pavements",
+    "genre": "soul",
+    "genres": [
+     "soul",
+     "pop",
+     "blue-eyed soul"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Dizzee Rascal",
+    "song": "Fix Up, Look Sharp",
+    "genre": "grime",
+    "genres": [
+     "grime",
+     "uk garage",
+     "hip hop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "The Streets",
+    "song": "Dry Your Eyes",
+    "genre": "uk garage",
+    "genres": [
+     "uk garage",
+     "alternative hip hop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Sigur Rós",
+    "song": "Hoppípolla",
+    "genre": "post-rock",
+    "genres": [
+     "post-rock",
+     "ambient",
+     "dream pop"
+    ],
+    "country": "IS"
+   },
+   {
+    "artist": "Alicia Keys",
+    "song": "If I Ain't Got You",
+    "genre": "contemporary r&b",
+    "genres": [
+     "contemporary r&b",
+     "neo soul",
+     "soul"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Nelly Furtado",
+    "song": "Maneater",
+    "genre": "dance-pop",
+    "genres": [
+     "dance-pop",
+     "electropop",
+     "hip hop"
+    ],
+    "country": "CA"
+   },
+   {
+    "artist": "Feist",
+    "song": "1234",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "folk pop"
+    ],
+    "country": "CA"
+   },
+   {
+    "artist": "David Guetta",
+    "song": "Love Don't Let Me Go",
+    "genre": "french house",
+    "genres": [
+     "french house",
+     "house",
+     "electro house"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Justice",
+    "song": "D.A.N.C.E.",
+    "genre": "electro house",
+    "genres": [
+     "electro house",
+     "french house",
+     "nu disco"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Tiësto",
+    "song": "Adagio for Strings",
+    "genre": "trance",
+    "genres": [
+     "trance",
+     "progressive trance",
+     "electronic"
+    ],
+    "country": "NL"
+   },
+   {
+    "artist": "Armin van Buuren",
+    "song": "Shivers",
+    "genre": "trance",
+    "genres": [
+     "trance",
+     "progressive trance"
+    ],
+    "country": "NL"
+   },
+   {
+    "artist": "Sander van Doorn",
+    "song": "Riff",
+    "genre": "tech trance",
+    "genres": [
+     "tech trance",
+     "trance"
+    ],
+    "country": "NL"
+   },
+   {
+    "artist": "Röyksopp",
+    "song": "Eple",
+    "genre": "downtempo",
+    "genres": [
+     "downtempo",
+     "electronic",
+     "nu disco"
+    ],
+    "country": "NO"
+   },
+   {
+    "artist": "The Rasmus",
+    "song": "In the Shadows",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "gothic rock",
+     "pop rock"
+    ],
+    "country": "FI"
+   },
+   {
+    "artist": "HIM",
+    "song": "Join Me in Death",
+    "genre": "gothic rock",
+    "genres": [
+     "gothic rock",
+     "gothic metal",
+     "alternative rock"
+    ],
+    "country": "FI"
+   },
+   {
+    "artist": "Nightwish",
+    "song": "Nemo",
+    "genre": "symphonic metal",
+    "genres": [
+     "symphonic metal",
+     "power metal",
+     "gothic metal"
+    ],
+    "country": "FI"
+   },
+   {
+    "artist": "Rammstein",
+    "song": "Sonne",
+    "genre": "industrial metal",
+    "genres": [
+     "industrial metal",
+     "neue deutsche härte"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Tokio Hotel",
+    "song": "Durch den Monsun",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "alternative rock"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Laura Pausini",
+    "song": "La solitudine",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "ballad"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Tiziano Ferro",
+    "song": "Perdono",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "contemporary r&b"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Juanes",
+    "song": "A Dios le pido",
+    "genre": "latin pop",
+    "genres": [
+     "latin pop",
+     "latin rock",
+     "pop rock"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "Natalia Lafourcade",
+    "song": "En el 2000",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "indie pop"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Babasónicos",
+    "song": "Irresponsables",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "alternative rock"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Bersuit Vergarabat",
+    "song": "La Argentinidad al Palo",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock",
+     "ska"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Aterciopelados",
+    "song": "Bolero falaz",
+    "genre": "latin rock",
+    "genres": [
+     "latin rock"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "BoA",
+    "song": "No.1",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "dance-pop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "Utada Hikaru",
+    "song": "First Love",
+    "genre": "j-pop",
+    "genres": [
+     "j-pop",
+     "contemporary r&b",
+     "ballad"
+    ],
+    "country": "JP"
    }
   ]
  },
@@ -16228,6 +17985,348 @@
      "rock"
     ],
     "country": "US"
+   },
+   {
+    "artist": "Florence + the Machine",
+    "song": "Dog Days Are Over",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "art pop",
+     "baroque pop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Alt-J",
+    "song": "Breezeblocks",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "art rock",
+     "folktronica"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Disclosure",
+    "song": "Latch",
+    "genre": "uk garage",
+    "genres": [
+     "uk garage",
+     "deep house",
+     "electronic"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Rudimental",
+    "song": "Feel the Love",
+    "genre": "drum and bass",
+    "genres": [
+     "drum and bass",
+     "liquid funk",
+     "electronic"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Jessie J",
+    "song": "Price Tag",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "contemporary r&b",
+     "hip hop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Stormzy",
+    "song": "Shut Up",
+    "genre": "grime",
+    "genres": [
+     "grime",
+     "hip hop"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Zara Larsson",
+    "song": "Lush Life",
+    "genre": "dance-pop",
+    "genres": [
+     "dance-pop",
+     "tropical house",
+     "pop"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "Tove Lo",
+    "song": "Habits (Stay High)",
+    "genre": "electropop",
+    "genres": [
+     "electropop",
+     "synth-pop",
+     "pop"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "Lykke Li",
+    "song": "I Follow Rivers",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "dream pop",
+     "electropop"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "Icona Pop",
+    "song": "I Love It",
+    "genre": "electropop",
+    "genres": [
+     "electropop",
+     "dance-pop",
+     "synth-pop"
+    ],
+    "country": "SE"
+   },
+   {
+    "artist": "Afrojack",
+    "song": "Take Over Control",
+    "genre": "electro house",
+    "genres": [
+     "electro house",
+     "dutch house"
+    ],
+    "country": "NL"
+   },
+   {
+    "artist": "Milky Chance",
+    "song": "Stolen Dance",
+    "genre": "folktronica",
+    "genres": [
+     "folktronica",
+     "indie folk",
+     "reggae-pop"
+    ],
+    "country": "DE"
+   },
+   {
+    "artist": "Stromae",
+    "song": "Alors on danse",
+    "genre": "electropop",
+    "genres": [
+     "electropop",
+     "house",
+     "hip hop"
+    ],
+    "country": "BE"
+   },
+   {
+    "artist": "Angèle",
+    "song": "Balance ton quoi",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "electropop"
+    ],
+    "country": "BE"
+   },
+   {
+    "artist": "Christine and the Queens",
+    "song": "Christine",
+    "genre": "art pop",
+    "genres": [
+     "art pop",
+     "synth-pop",
+     "electropop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Taylor Swift",
+    "song": "Blank Space",
+    "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "electropop",
+     "pop"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Billie Eilish",
+    "song": "Bad Guy",
+    "genre": "electropop",
+    "genres": [
+     "electropop",
+     "art pop",
+     "alternative pop"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Vampire Weekend",
+    "song": "A-Punk",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "indie pop",
+     "afrobeats"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Carly Rae Jepsen",
+    "song": "Call Me Maybe",
+    "genre": "dance-pop",
+    "genres": [
+     "dance-pop",
+     "teen pop",
+     "synth-pop"
+    ],
+    "country": "CA"
+   },
+   {
+    "artist": "Tame Impala",
+    "song": "The Less I Know the Better",
+    "genre": "psychedelic pop",
+    "genres": [
+     "psychedelic pop",
+     "neo-psychedelia",
+     "indie rock"
+    ],
+    "country": "AU"
+   },
+   {
+    "artist": "Gotye",
+    "song": "Somebody That I Used to Know",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "art pop",
+     "alternative rock"
+    ],
+    "country": "AU"
+   },
+   {
+    "artist": "Flume",
+    "song": "Never Be Like You",
+    "genre": "future bass",
+    "genres": [
+     "future bass",
+     "electronic",
+     "contemporary r&b"
+    ],
+    "country": "AU"
+   },
+   {
+    "artist": "J Balvin",
+    "song": "Ginza",
+    "genre": "reggaeton",
+    "genres": [
+     "reggaeton",
+     "trap latino",
+     "latin pop"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "Karol G",
+    "song": "Mi Cama",
+    "genre": "reggaeton",
+    "genres": [
+     "reggaeton",
+     "trap latino"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "Ozuna",
+    "song": "Se Preparó",
+    "genre": "trap latino",
+    "genres": [
+     "trap latino",
+     "reggaeton"
+    ],
+    "country": "PR"
+   },
+   {
+    "artist": "Bad Bunny",
+    "song": "Soy Peor",
+    "genre": "trap latino",
+    "genres": [
+     "trap latino",
+     "reggaeton"
+    ],
+    "country": "PR"
+   },
+   {
+    "artist": "Natti Natasha",
+    "song": "Criminal",
+    "genre": "reggaeton",
+    "genres": [
+     "reggaeton",
+     "latin pop"
+    ],
+    "country": "DO"
+   },
+   {
+    "artist": "BTS",
+    "song": "DNA",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "dance-pop",
+     "hip hop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "BLACKPINK",
+    "song": "DDU-DU DDU-DU",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "hip hop",
+     "electropop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "PSY",
+    "song": "Gangnam Style",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "electropop",
+     "dance-pop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "Burna Boy",
+    "song": "Ye",
+    "genre": "afrobeats",
+    "genres": [
+     "afrobeats",
+     "dancehall"
+    ],
+    "country": "NG"
+   },
+   {
+    "artist": "Wizkid",
+    "song": "Ojuelegba",
+    "genre": "afrobeats",
+    "genres": [
+     "afrobeats"
+    ],
+    "country": "NG"
    }
   ]
  },
@@ -18165,6 +20264,312 @@
      "trap latino"
     ],
     "country": "PR"
+   },
+   {
+    "artist": "Fred again..",
+    "song": "Delilah",
+    "genre": "house",
+    "genres": [
+     "house",
+     "uk garage",
+     "electronic"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Raye",
+    "song": "Escapism",
+    "genre": "contemporary r&b",
+    "genres": [
+     "contemporary r&b",
+     "pop",
+     "house"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Lewis Capaldi",
+    "song": "Someone You Loved",
+    "genre": "ballad",
+    "genres": [
+     "ballad",
+     "pop",
+     "soul"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "Olivia Rodrigo",
+    "song": "Good 4 U",
+    "genre": "pop punk",
+    "genres": [
+     "pop punk",
+     "pop rock",
+     "alternative rock"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Post Malone",
+    "song": "Circles",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock",
+     "psychedelic pop",
+     "pop rap"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Lil Nas X",
+    "song": "Old Town Road",
+    "genre": "country rap",
+    "genres": [
+     "country rap",
+     "hip hop",
+     "country"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Zach Bryan",
+    "song": "Something in the Orange",
+    "genre": "country",
+    "genres": [
+     "country",
+     "americana",
+     "folk"
+    ],
+    "country": "US"
+   },
+   {
+    "artist": "Måneskin",
+    "song": "Zitti e buoni",
+    "genre": "glam rock",
+    "genres": [
+     "glam rock",
+     "hard rock",
+     "rock"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Blanco",
+    "song": "Mi fai impazzire",
+    "genre": "pop",
+    "genres": [
+     "pop"
+    ],
+    "country": "IT"
+   },
+   {
+    "artist": "Aitch",
+    "song": "Baby",
+    "genre": "hip hop",
+    "genres": [
+     "hip hop",
+     "grime"
+    ],
+    "country": "GB"
+   },
+   {
+    "artist": "NewJeans",
+    "song": "Super Shy",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "jersey club",
+     "dance-pop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "Stray Kids",
+    "song": "God's Menu",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "hip hop",
+     "electropop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "Jung Kook",
+    "song": "Seven",
+    "genre": "k-pop",
+    "genres": [
+     "k-pop",
+     "uk garage",
+     "pop"
+    ],
+    "country": "KR"
+   },
+   {
+    "artist": "Myke Towers",
+    "song": "LALA",
+    "genre": "reggaeton",
+    "genres": [
+     "reggaeton",
+     "trap latino"
+    ],
+    "country": "PR"
+   },
+   {
+    "artist": "Feid",
+    "song": "Normal",
+    "genre": "reggaeton",
+    "genres": [
+     "reggaeton",
+     "trap latino"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "Shakira",
+    "song": "Music Sessions #53",
+    "genre": "latin pop",
+    "genres": [
+     "latin pop",
+     "dembow",
+     "reggaeton"
+    ],
+    "country": "CO"
+   },
+   {
+    "artist": "Bizarrap",
+    "song": "Music Sessions #52",
+    "genre": "trap latino",
+    "genres": [
+     "trap latino",
+     "electronic",
+     "hip hop"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Nicki Nicole",
+    "song": "Wapo Traketero",
+    "genre": "trap latino",
+    "genres": [
+     "trap latino",
+     "hip hop"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Emilia",
+    "song": "No Se Ve",
+    "genre": "latin pop",
+    "genres": [
+     "latin pop",
+     "reggaeton"
+    ],
+    "country": "AR"
+   },
+   {
+    "artist": "Natanael Cano",
+    "song": "Amor Tumbado",
+    "genre": "corrido",
+    "genres": [
+     "corrido",
+     "regional mexicano",
+     "trap latino"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Carin León",
+    "song": "Primera Cita",
+    "genre": "regional mexicano",
+    "genres": [
+     "regional mexicano",
+     "norteño",
+     "banda sinaloense"
+    ],
+    "country": "MX"
+   },
+   {
+    "artist": "Burna Boy",
+    "song": "Last Last",
+    "genre": "afrobeats",
+    "genres": [
+     "afrobeats"
+    ],
+    "country": "NG"
+   },
+   {
+    "artist": "Rema",
+    "song": "Calm Down",
+    "genre": "afrobeats",
+    "genres": [
+     "afrobeats"
+    ],
+    "country": "NG"
+   },
+   {
+    "artist": "Tems",
+    "song": "Free Mind",
+    "genre": "alternative r&b",
+    "genres": [
+     "alternative r&b",
+     "afrobeats",
+     "neo soul"
+    ],
+    "country": "NG"
+   },
+   {
+    "artist": "Tyla",
+    "song": "Water",
+    "genre": "amapiano",
+    "genres": [
+     "amapiano",
+     "afrobeats",
+     "contemporary r&b"
+    ],
+    "country": "ZA"
+   },
+   {
+    "artist": "Aya Nakamura",
+    "song": "Djadja",
+    "genre": "afrobeats",
+    "genres": [
+     "afrobeats",
+     "pop",
+     "dancehall"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Gazo",
+    "song": "Drill FR",
+    "genre": "drill",
+    "genres": [
+     "drill",
+     "hip hop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Zaho de Sagazan",
+    "song": "La symphonie des éclairs",
+    "genre": "pop",
+    "genres": [
+     "pop",
+     "electropop",
+     "synth-pop"
+    ],
+    "country": "FR"
+   },
+   {
+    "artist": "Sofiane Pamart",
+    "song": "Solo",
+    "genre": "contemporary classical",
+    "genres": [
+     "contemporary classical",
+     "neoclassicism"
+    ],
+    "country": "FR"
    }
   ]
  }
