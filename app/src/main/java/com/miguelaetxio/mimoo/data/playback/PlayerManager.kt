@@ -1033,6 +1033,41 @@ class PlayerManager @Inject constructor(
                 radioAnchorArtist = name
                 return it
             }
+            // S024 -- UN FALLO DE RED NO AUTORIZA A BAJAR DE PELDAÑO.
+            //
+            // Verificado en log real, y es el caso que reporta Miguel
+            // Ángel al ver aparecer a Lou Reed:
+            //
+            //   resolveAnchor('Radio Futura') -- EXCEPCIÓN: SocketTimeout
+            //   resolveAnchor('Kurt Cobain') -- ...
+            //   ancla fijada: género='grunge', país=US, década=null
+            //
+            // El peldaño bueno -- el título, 'Radio Futura' -- no falló
+            // por no resolver: falló porque MusicBrainz no contestó a
+            // tiempo. Y la cascada lo trató igual que un "este artista
+            // no existe" y se fue al canal, que se llamaba 'Kurt
+            // Cobain'. De ahí en cadena: ancla grunge/US/sin década ->
+            // el diccionario no sirve nada -> KNOWN agotada al segundo
+            // -> su 80% se reparte a DISCO -> Lou Reed, que en una
+            // radio de grunge estadounidense encaja perfectamente.
+            //
+            // Es la lección de S022 escrita en `fetch_json()` de las
+            // herramientas -- *"un 503 no es 'este artista no tiene
+            // géneros', es 'ahora no'"* -- que aquí no se estaba
+            // aplicando pese a existir ya el indicador.
+            //
+            // Sin ancla no se arranca: la siguiente vuelta reintenta, y
+            // el orden por fiabilidad de fuente se respeta de verdad.
+            if (radioRepository.lastFailureWasTransient) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveAnchorWithFallbacks() -- '$name' ($source) falló por RED, no por no " +
+                        "resolver. No se baja al siguiente peldaño: se reintentará. " +
+                        "Anclar en una fuente peor por un timeout es como se coló 'Kurt Cobain' " +
+                        "en una radio de Radio Futura.",
+                )
+                return null
+            }
         }
 
         // S023 -- BÚSQUEDA POR PALABRAS, idea de Miguel Ángel tras ver

@@ -240,6 +240,13 @@ class RadioRepository @Inject constructor(
             // palabra (ver `findAnchorArtistMbid()`).
             val sourceMbid = findAnchorArtistMbid(sourceArtist)
             if (sourceMbid == null) {
+                // S024 -- la red FUNCIONÓ; lo que no hay es coincidencia.
+                // Hay que dejarlo dicho, porque la cascada de
+                // `resolveAnchorWithFallbacks()` decide si baja de
+                // peldaño mirando `lastFailureWasTransient`, y si se
+                // quedara sucio de un fallo anterior abortaría un
+                // anclaje perfectamente legítimo.
+                noteSuccess()
                 return null
             }
 
