@@ -36,7 +36,12 @@
     "artist": "Concha Velasco",
     "song": "La Chica Ye-Yé",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "copla",
+     "pop",
+     "schlager"
+    ]
    },
    {
     "artist": "Dúo Dinámico",
@@ -78,13 +83,29 @@
     "artist": "Fórmula V",
     "song": "Cuéntame",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "disco",
+     "electro",
+     "funk",
+     "pop",
+     "pop rock",
+     "soul"
+    ]
    },
    {
     "artist": "Fórmula V",
     "song": "Que Bueno, Que Bueno",
     "genre": "pop rock",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "disco",
+     "electro",
+     "funk",
+     "pop",
+     "pop rock",
+     "soul"
+    ]
    },
    {
     "artist": "Georgie Dann",
@@ -116,13 +137,21 @@
     "artist": "Juan y Junior",
     "song": "Anduriña",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "pop",
+     "pop rock"
+    ]
    },
    {
     "artist": "Juan y Junior",
     "song": "La Caza",
     "genre": "pop rock",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "pop",
+     "pop rock"
+    ]
    },
    {
     "artist": "Julio Iglesias",
@@ -142,7 +171,12 @@
     "artist": "Karina",
     "song": "El Baúl de los Recuerdos",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "pop",
+     "pop rock",
+     "yé-yé"
+    ]
    },
    {
     "artist": "Lluís Llach",
@@ -284,19 +318,35 @@
     "artist": "Los Canarios",
     "song": "Get On Your Knees",
     "genre": "rock",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "beat music",
+     "garage rock",
+     "rock"
+    ]
    },
    {
     "artist": "Los Diablos",
     "song": "El Vagabundo",
     "genre": "rock",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "beat music",
+     "pop",
+     "pop rock",
+     "rock"
+    ]
    },
    {
     "artist": "Los Módulos",
     "song": "Todo Tiene Su Fin",
     "genre": "rock",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "pop rock",
+     "progressive rock",
+     "rock"
+    ]
    },
    {
     "artist": "Los Mustang",
@@ -612,7 +662,12 @@
     "artist": "Salomé",
     "song": "Vivo Cantando",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "copla",
+     "pop",
+     "yé-yé"
+    ]
    },
    {
     "artist": "Víctor Manuel",
@@ -1065,7 +1120,9 @@
     "song": "Blowin' in the Wind",
     "genre": "folk",
     "genres": [
-     "folk"
+     "contemporary folk",
+     "folk",
+     "folk rock"
     ],
     "country": "US"
    },
@@ -1147,7 +1204,9 @@
     "song": "Puppet on a String",
     "genre": "pop",
     "genres": [
-     "pop"
+     "beat music",
+     "pop",
+     "yé-yé"
     ],
     "country": "GB"
    },
@@ -1528,8 +1587,12 @@
     "song": "We Gotta Get Out of This Place",
     "genre": "rock",
     "genres": [
-     "rock",
-     "blues rock"
+     "blues rock",
+     "british blues",
+     "british rhythm & blues",
+     "mod",
+     "psychedelic rock",
+     "rock"
     ],
     "country": "GB"
    },
@@ -1569,8 +1632,10 @@
     "song": "As Tears Go By",
     "genre": "pop",
     "genres": [
-     "pop",
-     "folk"
+     "baroque pop",
+     "folk",
+     "folk rock",
+     "pop"
     ],
     "country": "GB"
    },
@@ -1772,8 +1837,17 @@
     "song": "Bad Moon Rising",
     "genre": "rock",
     "genres": [
+     "blues rock",
+     "classic rock",
+     "country rock",
+     "folk rock",
      "rock",
-     "blues rock"
+     "rock and roll",
+     "rockabilly",
+     "roots rock",
+     "soft rock",
+     "southern rock",
+     "swamp rock"
     ],
     "country": "US"
    },
@@ -2141,7 +2215,12 @@
     "artist": "Cecilia",
     "song": "Un Ramito de Violetas",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "folk rock",
+     "pop",
+     "singer-songwriter"
+    ]
    },
    {
     "artist": "Desmadre 75",
@@ -2168,16 +2247,23 @@
     "artist": "Enrique y Ana",
     "song": "Chicas y Chicos",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "children's music",
+     "pop",
+     "schlager"
+    ]
    },
    {
     "artist": "Fórmula V",
     "song": "Eva María",
     "genre": "funk",
     "genres": [
-     "funk",
      "disco",
      "electro",
+     "funk",
+     "pop",
+     "pop rock",
      "soul"
     ],
     "country": "ES"
@@ -2436,7 +2522,9 @@
     "song": "Rosario",
     "genre": "punk",
     "genres": [
-     "punk"
+     "new wave",
+     "punk",
+     "punk rock"
     ],
     "country": "ES"
    },
@@ -2444,7 +2532,12 @@
     "artist": "Karina",
     "song": "En Un Mundo Nuevo",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "pop",
+     "pop rock",
+     "yé-yé"
+    ]
    },
    {
     "artist": "La Banda Trapera del Río",
@@ -2537,7 +2630,12 @@
     "artist": "Los Canarios",
     "song": "Ciclos",
     "genre": "rock",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "beat music",
+     "garage rock",
+     "rock"
+    ]
    },
    {
     "artist": "Los Chichos",
@@ -2553,7 +2651,13 @@
     "artist": "Los Diablos",
     "song": "Un Rayo de Sol",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "beat music",
+     "pop",
+     "pop rock",
+     "rock"
+    ]
    },
    {
     "artist": "Los Pecos",
@@ -2720,7 +2824,8 @@
     "song": "Adiós tristezas",
     "genre": "latin",
     "genres": [
-     "latin"
+     "latin",
+     "pop"
     ],
     "country": "ES"
    },
@@ -2728,14 +2833,19 @@
     "artist": "Micky",
     "song": "El Chico de la Armónica",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "latin",
+     "pop"
+    ]
    },
    {
     "artist": "Micky",
     "song": "The Mouth Organ Boy",
     "genre": "latin",
     "genres": [
-     "latin"
+     "latin",
+     "pop"
     ],
     "country": "ES"
    },
@@ -3969,8 +4079,9 @@
     "song": "Anarchy in the U.K.",
     "genre": "punk",
     "genres": [
-     "punk rock",
-     "punk"
+     "garage rock",
+     "punk",
+     "punk rock"
     ],
     "country": "GB"
    },
@@ -4151,8 +4262,14 @@
     "song": "Life on Mars?",
     "genre": "glam rock",
     "genres": [
-     "glam rock",
+     "alternative rock",
+     "art pop",
      "art rock",
+     "classic rock",
+     "glam rock",
+     "new wave",
+     "pop",
+     "pop rock",
      "rock"
     ],
     "country": "GB"
@@ -4307,9 +4424,12 @@
     "song": "Autobahn",
     "genre": "electronic",
     "genres": [
+     "electro",
      "electronic",
      "krautrock",
-     "synth-pop"
+     "progressive electronic",
+     "synth-pop",
+     "techno"
     ],
     "country": "DE"
    },
@@ -4484,9 +4604,15 @@
     "song": "Go Your Own Way",
     "genre": "rock",
     "genres": [
+     "art pop",
+     "blues",
+     "blues rock",
+     "british blues",
+     "classic rock",
+     "pop",
+     "pop rock",
      "rock",
-     "soft rock",
-     "pop rock"
+     "soft rock"
     ],
     "country": "GB"
    },
@@ -5238,7 +5364,9 @@
     "song": "Mucha Policía, Poca Diversión",
     "genre": "punk",
     "genres": [
-     "punk"
+     "hardcore punk",
+     "punk",
+     "punk rock"
     ],
     "country": "ES"
    },
@@ -5769,7 +5897,9 @@
     "song": "No Somos Nada",
     "genre": "punk",
     "genres": [
-     "punk"
+     "hardcore punk",
+     "punk",
+     "punk rock"
     ],
     "country": "ES"
    },
@@ -6998,7 +7128,12 @@
     "artist": "Semen Up",
     "song": "Lo Estás Haciendo Muy Bien",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "new wave",
+     "pop",
+     "synth-pop"
+    ]
    },
    {
     "artist": "Siniestro Total",
@@ -8156,9 +8291,15 @@
     "song": "There Is a Light That Never Goes Out",
     "genre": "indie rock",
     "genres": [
+     "alternative rock",
+     "britpop",
+     "indie pop",
      "indie rock",
      "jangle pop",
-     "post-punk"
+     "new wave",
+     "pop",
+     "post-punk",
+     "rock"
     ],
     "country": "GB"
    },
@@ -8198,9 +8339,13 @@
     "song": "Everybody Wants to Rule the World",
     "genre": "synth-pop",
     "genres": [
-     "synth-pop",
+     "art pop",
      "new wave",
-     "pop rock"
+     "pop",
+     "pop rock",
+     "psychedelic pop",
+     "sophisti-pop",
+     "synth-pop"
     ],
     "country": "GB"
    },
@@ -8293,7 +8438,9 @@
     "song": "Run to the Hills",
     "genre": "heavy metal",
     "genres": [
-     "heavy metal"
+     "heavy metal",
+     "metal",
+     "nwobhm"
     ],
     "country": "GB"
    },
@@ -8416,8 +8563,9 @@
     "song": "Cendrillon",
     "genre": "rock",
     "genres": [
-     "rock",
-     "punk rock"
+     "new wave",
+     "punk rock",
+     "rock"
     ],
     "country": "FR"
    },
@@ -8426,8 +8574,15 @@
     "song": "Born in the U.S.A.",
     "genre": "heartland rock",
     "genres": [
+     "americana",
+     "aor",
+     "contemporary folk",
+     "folk",
      "heartland rock",
-     "rock"
+     "pop rock",
+     "rock",
+     "rock and roll",
+     "singer-songwriter"
     ],
     "country": "US"
    },
@@ -8436,8 +8591,16 @@
     "song": "Fight for Your Right",
     "genre": "hip hop",
     "genres": [
+     "alternative hip hop",
+     "alternative rock",
+     "east coast hip hop",
+     "experimental hip hop",
+     "funk",
+     "hardcore hip hop",
+     "hardcore punk",
      "hip hop",
-     "rap rock"
+     "rap rock",
+     "rock"
     ],
     "country": "US"
    },
@@ -8446,9 +8609,20 @@
     "song": "The One I Love",
     "genre": "jangle pop",
     "genres": [
-     "jangle pop",
+     "acoustic rock",
+     "alternative country",
      "alternative rock",
-     "indie rock"
+     "chamber pop",
+     "electronic rock",
+     "folk rock",
+     "glam rock",
+     "grunge",
+     "indie rock",
+     "jangle pop",
+     "neo-psychedelia",
+     "pop rock",
+     "power pop",
+     "rock"
     ],
     "country": "US"
    },
@@ -11531,19 +11705,20 @@
     "song": "Losing My Religion",
     "genre": "rock",
     "genres": [
-     "alternative rock",
-     "jangle pop",
-     "pop rock",
-     "folk rock",
-     "power pop",
-     "rock",
+     "acoustic rock",
      "alternative country",
+     "alternative rock",
      "chamber pop",
+     "electronic rock",
+     "folk rock",
      "glam rock",
      "grunge",
+     "indie rock",
+     "jangle pop",
      "neo-psychedelia",
-     "acoustic rock",
-     "electronic rock"
+     "pop rock",
+     "power pop",
+     "rock"
     ],
     "country": "US"
    },
@@ -11699,11 +11874,13 @@
     "song": "Estoy Aquí",
     "genre": "pop",
     "genres": [
-     "pop",
-     "latin pop",
-     "pop rock",
      "dance-pop",
-     "latin"
+     "dembow",
+     "latin",
+     "latin pop",
+     "pop",
+     "pop rock",
+     "reggaeton"
     ],
     "country": "CO"
    },
@@ -11910,10 +12087,11 @@
     "genre": "r&b",
     "genres": [
      "contemporary r&b",
+     "crunk",
+     "hip hop soul",
+     "new jack swing",
      "pop",
      "pop rap",
-     "crunk",
-     "new jack swing",
      "r&b"
     ],
     "country": "US"
@@ -12036,9 +12214,20 @@
     "song": "All That She Wants",
     "genre": "eurodance",
     "genres": [
+     "bubblegum dance",
+     "club",
+     "dance-pop",
+     "electronic",
+     "euro house",
      "eurodance",
+     "europop",
+     "hi-nrg",
+     "pop",
+     "reggae",
      "reggae-pop",
-     "dance-pop"
+     "ska",
+     "synth-pop",
+     "techno"
     ],
     "country": "SE"
    },
@@ -12108,9 +12297,17 @@
     "song": "Clandestino",
     "genre": "latin rock",
     "genres": [
+     "country",
+     "electronic",
+     "folk",
+     "latin",
      "latin rock",
+     "pop",
+     "punk",
      "reggae",
-     "folk"
+     "rock",
+     "ska",
+     "worldbeat"
     ],
     "country": "FR"
    },
@@ -12152,8 +12349,12 @@
     "genre": "contemporary r&b",
     "genres": [
      "contemporary r&b",
+     "crunk",
      "hip hop soul",
-     "pop"
+     "new jack swing",
+     "pop",
+     "pop rap",
+     "r&b"
     ],
     "country": "US"
    },
@@ -12183,7 +12384,10 @@
     "song": "La Ingrata",
     "genre": "latin rock",
     "genres": [
+     "alternative rock",
+     "latin",
      "latin rock",
+     "rock",
      "ska"
     ],
     "country": "MX"
@@ -12193,8 +12397,12 @@
     "song": "Rayando el sol",
     "genre": "latin rock",
     "genres": [
+     "latin",
+     "latin pop",
      "latin rock",
-     "pop rock"
+     "pop",
+     "pop rock",
+     "rock"
     ],
     "country": "MX"
    },
@@ -12203,9 +12411,15 @@
     "song": "La gota fría",
     "genre": "vallenato",
     "genres": [
-     "vallenato",
      "cumbia",
-     "latin pop"
+     "latin",
+     "latin pop",
+     "pop",
+     "reggaeton",
+     "rock",
+     "salsa",
+     "singer-songwriter",
+     "vallenato"
     ],
     "country": "CO"
    },
@@ -12214,8 +12428,12 @@
     "song": "Livin' la Vida Loca",
     "genre": "latin pop",
     "genres": [
-     "latin pop",
+     "ballad",
      "dance-pop",
+     "electro latino",
+     "electropop",
+     "latin",
+     "latin pop",
      "pop"
     ],
     "country": "PR"
@@ -12550,7 +12768,12 @@
     "artist": "Andy y Lucas",
     "song": "Tanto la Quería",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "flamenco pop",
+     "pop",
+     "rumba"
+    ]
    },
    {
     "artist": "Antonio Orozco",
@@ -12640,7 +12863,12 @@
     "artist": "Bustamante",
     "song": "Dime",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "latin ballad",
+     "latin pop",
+     "pop"
+    ]
    },
    {
     "artist": "Café Quijano",
@@ -12983,7 +13211,12 @@
     "artist": "Efecto Mariposa",
     "song": "No Me Crees",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "indie pop",
+     "pop",
+     "pop rock"
+    ]
    },
    {
     "artist": "El Barrio",
@@ -14116,6 +14349,7 @@
     "song": "Efectos Vocales",
     "genre": "hip hop",
     "genres": [
+     "conscious hip hop",
      "hip hop"
     ],
     "country": "ES"
@@ -14647,9 +14881,11 @@
     "song": "Eres",
     "genre": "rock",
     "genres": [
-     "latin",
      "alternative rock",
-     "rock"
+     "latin",
+     "latin rock",
+     "rock",
+     "ska"
     ],
     "country": "MX"
    },
@@ -14658,7 +14894,9 @@
     "song": "Atrévete-te-te",
     "genre": "hip hop",
     "genres": [
-     "hip hop"
+     "hip hop",
+     "latin rock",
+     "reggaeton"
     ],
     "country": "PR"
    },
@@ -14974,7 +15212,11 @@
     "artist": "Kanye West",
     "song": "Gold Digger",
     "genre": "hip hop",
-    "country": "US"
+    "country": "US",
+    "genres": [
+     "hip hop",
+     "pop rap"
+    ]
    },
    {
     "artist": "Keane",
@@ -15057,16 +15299,17 @@
     "song": "Me Gustas Tú",
     "genre": "rock",
     "genres": [
-     "folk",
-     "latin",
-     "reggae",
-     "ska",
-     "worldbeat",
      "country",
      "electronic",
+     "folk",
+     "latin",
+     "latin rock",
      "pop",
      "punk",
-     "rock"
+     "reggae",
+     "rock",
+     "ska",
+     "worldbeat"
     ],
     "country": "FR"
    },
@@ -15130,16 +15373,17 @@
     "song": "Supermassive Black Hole",
     "genre": "rock",
     "genres": [
-     "alternative rock",
-     "rock",
-     "progressive rock",
-     "symphonic rock",
-     "pop rock",
      "alternative dance",
      "alternative metal",
+     "alternative rock",
      "art rock",
      "neo-progressive rock",
-     "post-grunge"
+     "pop rock",
+     "post-grunge",
+     "progressive rock",
+     "rock",
+     "space rock",
+     "symphonic rock"
     ],
     "country": "GB"
    },
@@ -15167,11 +15411,14 @@
     "song": "I'm Like a Bird",
     "genre": "pop",
     "genres": [
-     "pop",
-     "folk",
      "alternative rock",
+     "dance-pop",
+     "electropop",
      "eurodance",
+     "folk",
+     "hip hop",
      "indie rock",
+     "pop",
      "singer-songwriter",
      "soft rock"
     ],
@@ -15259,7 +15506,12 @@
     "artist": "Pink",
     "song": "Get the Party Started",
     "genre": "pop",
-    "country": "US"
+    "country": "US",
+    "genres": [
+     "dance-pop",
+     "pop",
+     "pop rock"
+    ]
    },
    {
     "artist": "Rihanna",
@@ -15315,11 +15567,13 @@
     "song": "Hips Don't Lie",
     "genre": "pop",
     "genres": [
-     "pop",
-     "latin pop",
-     "pop rock",
      "dance-pop",
-     "latin"
+     "dembow",
+     "latin",
+     "latin pop",
+     "pop",
+     "pop rock",
+     "reggaeton"
     ],
     "country": "CO"
    },
@@ -15497,8 +15751,14 @@
     "genre": "alternative rock",
     "genres": [
      "alternative rock",
+     "art pop",
+     "britpop",
+     "dream pop",
+     "piano rock",
+     "pop",
+     "pop rock",
      "post-britpop",
-     "pop rock"
+     "rock"
     ],
     "country": "GB"
    },
@@ -15507,9 +15767,17 @@
     "song": "Time Is Running Out",
     "genre": "alternative rock",
     "genres": [
+     "alternative dance",
+     "alternative metal",
      "alternative rock",
+     "art rock",
+     "neo-progressive rock",
+     "pop rock",
+     "post-grunge",
+     "progressive rock",
+     "rock",
      "space rock",
-     "progressive rock"
+     "symphonic rock"
     ],
     "country": "GB"
    },
@@ -15518,9 +15786,12 @@
     "song": "Chasing Pavements",
     "genre": "soul",
     "genres": [
-     "soul",
+     "blue-eyed soul",
+     "neo soul",
      "pop",
-     "blue-eyed soul"
+     "pop soul",
+     "r&b",
+     "soul"
     ],
     "country": "GB"
    },
@@ -15562,8 +15833,17 @@
     "genre": "contemporary r&b",
     "genres": [
      "contemporary r&b",
+     "hip hop",
+     "hip hop soul",
+     "jazz",
+     "jazz pop",
      "neo soul",
-     "soul"
+     "pop",
+     "pop soul",
+     "r&b",
+     "smooth soul",
+     "soul",
+     "southern soul"
     ],
     "country": "US"
    },
@@ -15572,9 +15852,16 @@
     "song": "Maneater",
     "genre": "dance-pop",
     "genres": [
+     "alternative rock",
      "dance-pop",
      "electropop",
-     "hip hop"
+     "eurodance",
+     "folk",
+     "hip hop",
+     "indie rock",
+     "pop",
+     "singer-songwriter",
+     "soft rock"
     ],
     "country": "CA"
    },
@@ -15593,9 +15880,20 @@
     "song": "Love Don't Let Me Go",
     "genre": "french house",
     "genres": [
+     "club",
+     "dance",
+     "dance-pop",
+     "electro house",
+     "electroclash",
+     "electronic",
+     "electropop",
+     "festival progressive house",
      "french house",
+     "future rave",
      "house",
-     "electro house"
+     "pop",
+     "progressive house",
+     "tech house"
     ],
     "country": "FR"
    },
@@ -15615,9 +15913,16 @@
     "song": "Adagio for Strings",
     "genre": "trance",
     "genres": [
-     "trance",
+     "dance",
+     "dance-pop",
+     "edm",
+     "electro house",
+     "electronic",
+     "house",
+     "progressive house",
      "progressive trance",
-     "electronic"
+     "tech trance",
+     "trance"
     ],
     "country": "NL"
    },
@@ -15690,6 +15995,7 @@
     "song": "Sonne",
     "genre": "industrial metal",
     "genres": [
+     "heavy metal",
      "industrial metal",
      "neue deutsche härte"
     ],
@@ -15730,9 +16036,12 @@
     "song": "A Dios le pido",
     "genre": "latin pop",
     "genres": [
+     "latin",
      "latin pop",
      "latin rock",
-     "pop rock"
+     "pop",
+     "pop rock",
+     "rock"
     ],
     "country": "CO"
    },
@@ -16046,7 +16355,9 @@
     "song": "Please Don't Go",
     "genre": "pop",
     "genres": [
-     "pop"
+     "dance-pop",
+     "pop",
+     "teen pop"
     ],
     "country": "ES"
    },
@@ -16063,7 +16374,12 @@
     "artist": "Beret",
     "song": "Lo Siento",
     "genre": "pop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "flamenco pop",
+     "latin pop",
+     "pop"
+    ]
    },
    {
     "artist": "Blas Cantó",
@@ -16856,7 +17172,12 @@
     "artist": "Rayden",
     "song": "Mírame",
     "genre": "hip hop",
-    "country": "ES"
+    "country": "ES",
+    "genres": [
+     "conscious hip hop",
+     "hip hop",
+     "pop rap"
+    ]
    },
    {
     "artist": "Rels B",
@@ -17373,11 +17694,12 @@
     "song": "Mi Gente",
     "genre": "reggaeton",
     "genres": [
-     "reggaeton",
      "hip hop",
      "latin",
      "latin pop",
-     "pop"
+     "pop",
+     "reggaeton",
+     "trap latino"
     ],
     "country": "CO"
    },
@@ -17714,14 +18036,16 @@
     "song": "Rockstar",
     "genre": "hip hop",
     "genres": [
-     "hip hop",
-     "pop rap",
-     "trap",
      "alternative r&b",
      "cloud rap",
      "contemporary r&b",
      "country",
-     "r&b"
+     "hip hop",
+     "pop rap",
+     "pop rock",
+     "psychedelic pop",
+     "r&b",
+     "trap"
     ],
     "country": "US"
    },
@@ -17844,11 +18168,13 @@
     "song": "Waka Waka",
     "genre": "pop",
     "genres": [
-     "pop",
-     "latin pop",
-     "pop rock",
      "dance-pop",
-     "latin"
+     "dembow",
+     "latin",
+     "latin pop",
+     "pop",
+     "pop rock",
+     "reggaeton"
     ],
     "country": "CO"
    },
@@ -18153,9 +18479,22 @@
     "song": "Blank Space",
     "genre": "synth-pop",
     "genres": [
-     "synth-pop",
+     "alternative pop",
+     "americana",
+     "chamber pop",
+     "contemporary country",
+     "country",
+     "country pop",
+     "dance-pop",
      "electropop",
-     "pop"
+     "folk pop",
+     "indie folk",
+     "indie pop",
+     "pop",
+     "pop rock",
+     "singer-songwriter",
+     "synth-pop",
+     "teen pop"
     ],
     "country": "US"
    },
@@ -18164,9 +18503,19 @@
     "song": "Bad Guy",
     "genre": "electropop",
     "genres": [
-     "electropop",
+     "alternative pop",
+     "alternative r&b",
      "art pop",
-     "alternative pop"
+     "bedroom pop",
+     "contemporary r&b",
+     "electronic",
+     "electronica",
+     "electropop",
+     "indie pop",
+     "pop",
+     "pop rock",
+     "pop soul",
+     "singer-songwriter"
     ],
     "country": "US"
    },
@@ -18230,9 +18579,12 @@
     "song": "Ginza",
     "genre": "reggaeton",
     "genres": [
+     "hip hop",
+     "latin",
+     "latin pop",
+     "pop",
      "reggaeton",
-     "trap latino",
-     "latin pop"
+     "trap latino"
     ],
     "country": "CO"
    },
@@ -18241,6 +18593,8 @@
     "song": "Mi Cama",
     "genre": "reggaeton",
     "genres": [
+     "latin",
+     "r&b",
      "reggaeton",
      "trap latino"
     ],
@@ -18251,8 +18605,9 @@
     "song": "Se Preparó",
     "genre": "trap latino",
     "genres": [
-     "trap latino",
-     "reggaeton"
+     "latin",
+     "reggaeton",
+     "trap latino"
     ],
     "country": "PR"
    },
@@ -18261,8 +18616,10 @@
     "song": "Soy Peor",
     "genre": "trap latino",
     "genres": [
-     "trap latino",
-     "reggaeton"
+     "hip hop",
+     "latin",
+     "reggaeton",
+     "trap latino"
     ],
     "country": "PR"
    },
@@ -18281,9 +18638,11 @@
     "song": "DNA",
     "genre": "k-pop",
     "genres": [
-     "k-pop",
+     "dance",
      "dance-pop",
-     "hip hop"
+     "hip hop",
+     "k-pop",
+     "pop"
     ],
     "country": "KR"
    },
@@ -19449,13 +19808,14 @@
     "song": "BZRP Music Sessions, Vol. 53",
     "genre": "hip hop",
     "genres": [
-     "trap latino",
+     "electronic",
      "hip hop",
      "latin",
      "pop",
      "reggaeton",
      "trap",
-     "trap edm"
+     "trap edm",
+     "trap latino"
     ],
     "country": "AR"
    },
@@ -19464,9 +19824,11 @@
     "song": "Dynamite",
     "genre": "pop",
     "genres": [
+     "dance",
+     "dance-pop",
+     "hip hop",
      "k-pop",
-     "pop",
-     "dance"
+     "pop"
     ],
     "country": "KR"
    },
@@ -19652,7 +20014,9 @@
     "song": "Rugíste",
     "genre": "pop",
     "genres": [
-     "pop"
+     "latin pop",
+     "pop",
+     "reggaeton"
     ],
     "country": "AR"
    },
@@ -19805,11 +20169,12 @@
     "song": "Rojo",
     "genre": "reggaeton",
     "genres": [
-     "reggaeton",
      "hip hop",
      "latin",
      "latin pop",
-     "pop"
+     "pop",
+     "reggaeton",
+     "trap latino"
     ],
     "country": "CO"
    },
@@ -19840,9 +20205,10 @@
     "song": "Bichota",
     "genre": "reggaeton",
     "genres": [
-     "reggaeton",
      "latin",
-     "r&b"
+     "r&b",
+     "reggaeton",
+     "trap latino"
     ],
     "country": "CO"
    },
@@ -19851,9 +20217,10 @@
     "song": "Provenza",
     "genre": "reggaeton",
     "genres": [
-     "reggaeton",
      "latin",
-     "r&b"
+     "r&b",
+     "reggaeton",
+     "trap latino"
     ],
     "country": "CO"
    },
@@ -19907,9 +20274,11 @@
     "song": "Forget Me",
     "genre": "pop",
     "genres": [
+     "ballad",
+     "blue-eyed soul",
      "pop",
      "singer-songwriter",
-     "blue-eyed soul"
+     "soul"
     ],
     "country": "GB"
    },
@@ -19918,8 +20287,10 @@
     "song": "Montero",
     "genre": "hip hop",
     "genres": [
-     "pop rap",
+     "country",
+     "country rap",
      "hip hop",
+     "pop rap",
      "trap"
     ],
     "country": "US"
@@ -19997,6 +20368,7 @@
     "genre": "hip hop",
     "genres": [
      "alternative r&b",
+     "hip hop",
      "latin pop",
      "pop rap",
      "trap latino"
@@ -20019,14 +20391,15 @@
     "song": "Drivers License",
     "genre": "pop",
     "genres": [
-     "pop",
-     "pop rock",
-     "pop punk",
-     "power pop",
-     "singer-songwriter",
+     "alternative rock",
      "folk pop",
      "musical",
-     "rock"
+     "pop",
+     "pop punk",
+     "pop rock",
+     "power pop",
+     "rock",
+     "singer-songwriter"
     ],
     "country": "US"
    },
@@ -20114,11 +20487,13 @@
     "song": "Monotonía",
     "genre": "pop",
     "genres": [
-     "pop",
-     "latin pop",
-     "pop rock",
      "dance-pop",
-     "latin"
+     "dembow",
+     "latin",
+     "latin pop",
+     "pop",
+     "pop rock",
+     "reggaeton"
     ],
     "country": "CO"
    },
@@ -20270,9 +20645,28 @@
     "song": "Delilah",
     "genre": "house",
     "genres": [
+     "bass house",
+     "bassline",
+     "breakbeat",
+     "breaks",
+     "club",
+     "dance",
+     "deep house",
+     "downtempo",
+     "drum and bass",
+     "edm",
+     "electronic",
+     "electronica",
+     "future bass",
+     "future garage",
+     "grime",
+     "hip hop",
      "house",
-     "uk garage",
-     "electronic"
+     "latin",
+     "pop",
+     "stutter house",
+     "trap",
+     "uk garage"
     ],
     "country": "GB"
    },
@@ -20293,7 +20687,9 @@
     "genre": "ballad",
     "genres": [
      "ballad",
+     "blue-eyed soul",
      "pop",
+     "singer-songwriter",
      "soul"
     ],
     "country": "GB"
@@ -20303,9 +20699,15 @@
     "song": "Good 4 U",
     "genre": "pop punk",
     "genres": [
+     "alternative rock",
+     "folk pop",
+     "musical",
+     "pop",
      "pop punk",
      "pop rock",
-     "alternative rock"
+     "power pop",
+     "rock",
+     "singer-songwriter"
     ],
     "country": "US"
    },
@@ -20314,9 +20716,16 @@
     "song": "Circles",
     "genre": "pop rock",
     "genres": [
+     "alternative r&b",
+     "cloud rap",
+     "contemporary r&b",
+     "country",
+     "hip hop",
+     "pop rap",
      "pop rock",
      "psychedelic pop",
-     "pop rap"
+     "r&b",
+     "trap"
     ],
     "country": "US"
    },
@@ -20325,9 +20734,11 @@
     "song": "Old Town Road",
     "genre": "country rap",
     "genres": [
+     "country",
      "country rap",
      "hip hop",
-     "country"
+     "pop rap",
+     "trap"
     ],
     "country": "US"
    },
@@ -20347,9 +20758,13 @@
     "song": "Zitti e buoni",
     "genre": "glam rock",
     "genres": [
+     "alternative rock",
+     "funk rock",
      "glam rock",
      "hard rock",
-     "rock"
+     "pop rock",
+     "rock",
+     "rock and roll"
     ],
     "country": "IT"
    },
@@ -20358,7 +20773,9 @@
     "song": "Mi fai impazzire",
     "genre": "pop",
     "genres": [
-     "pop"
+     "pop",
+     "pop rap",
+     "teen pop"
     ],
     "country": "IT"
    },
@@ -20410,6 +20827,7 @@
     "song": "LALA",
     "genre": "reggaeton",
     "genres": [
+     "latin",
      "reggaeton",
      "trap latino"
     ],
@@ -20420,6 +20838,7 @@
     "song": "Normal",
     "genre": "reggaeton",
     "genres": [
+     "latin",
      "reggaeton",
      "trap latino"
     ],
@@ -20430,8 +20849,12 @@
     "song": "Music Sessions #53",
     "genre": "latin pop",
     "genres": [
-     "latin pop",
+     "dance-pop",
      "dembow",
+     "latin",
+     "latin pop",
+     "pop",
+     "pop rock",
      "reggaeton"
     ],
     "country": "CO"
@@ -20441,9 +20864,14 @@
     "song": "Music Sessions #52",
     "genre": "trap latino",
     "genres": [
-     "trap latino",
      "electronic",
-     "hip hop"
+     "hip hop",
+     "latin",
+     "pop",
+     "reggaeton",
+     "trap",
+     "trap edm",
+     "trap latino"
     ],
     "country": "AR"
    },
@@ -20452,8 +20880,11 @@
     "song": "Wapo Traketero",
     "genre": "trap latino",
     "genres": [
-     "trap latino",
-     "hip hop"
+     "alternative r&b",
+     "hip hop",
+     "latin pop",
+     "pop rap",
+     "trap latino"
     ],
     "country": "AR"
    },
@@ -20463,6 +20894,7 @@
     "genre": "latin pop",
     "genres": [
      "latin pop",
+     "pop",
      "reggaeton"
     ],
     "country": "AR"
@@ -20494,7 +20926,8 @@
     "song": "Last Last",
     "genre": "afrobeats",
     "genres": [
-     "afrobeats"
+     "afrobeats",
+     "dancehall"
     ],
     "country": "NG"
    },

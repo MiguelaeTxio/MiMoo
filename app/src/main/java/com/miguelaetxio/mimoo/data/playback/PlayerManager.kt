@@ -1660,6 +1660,48 @@ class PlayerManager @Inject constructor(
         // El motivo distingue ahora los dos casos, que exigen arreglos
         // distintos: sin sugerencias es MusicBrainz; con sugerencias que
         // no resuelven es el filtro de YouTube.
+        // S025 -- UN FALLO DE RED NO ES UN CUPO AGOTADO.
+        //
+        // Observación de Miguel Ángel: *"tampoco es cuestión de que se
+        // dependa solo de diccionario. MusicBrainz existe."* Tenía
+        // razón, y esta es la razón técnica de que pareciera lo
+        // contrario. En su log de S025 hay trece llamadas seguidas
+        // caídas en dos minutos y medio:
+        //
+        //   21:46:16  lookupArtistProfile('Jesus and Mary Chain') -- SocketTimeoutException
+        //   21:46:27  lookupArtistProfile('Yes')                  -- SocketTimeoutException
+        //   ...
+        //   21:48:52  lookupArtistProfile('Pink Floyd')           -- HTTP 503
+        //
+        // `findCandidates()` captura la excepción y devuelve lista
+        // vacía, que aquí era indistinguible de "MusicBrainz no tiene
+        // más artistas". Se agotaba la porción, y agotada lo está para
+        // el RESTO DE LA SESIÓN: una avería de treinta segundos dejaba
+        // la Radio dependiendo solo del diccionario durante horas.
+        //
+        // `RadioRepository` ya sabía distinguirlo -- expone
+        // `lastFailureWasTransient`, que usa la cascada del ancla desde
+        // S022 para no derivar un ancla falsa por un timeout. Aquí
+        // simplemente no se consultaba. Si el último fallo fue de red,
+        // la porción se queda VIVA y vuelve a intentarlo en la
+        // siguiente vuelta, cuando MusicBrainz haya vuelto.
+        // ---
+        // S025 -- a network failure is not an exhausted quota. An empty
+        // candidate list from a timeout used to be indistinguishable
+        // from "no more artists", which killed the portion for the rest
+        // of the session over a transient outage. The repository
+        // already exposed `lastFailureWasTransient`; this simply asks.
+        if (!suggestedAny &&
+            (radioRepository.lastFailureWasTransient || radioRepository.isServiceDegraded)
+        ) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchFromUnknown(ancla='$anchorArtistName') -- sin candidatos por FALLO DE RED, " +
+                    "no por agotamiento: la porción sigue viva y se reintenta en la próxima vuelta",
+            )
+            return null
+        }
+
         exhaustPortion(
             RadioPortion.UNKNOWN, anchorArtistName,
             if (!suggestedAny) {
