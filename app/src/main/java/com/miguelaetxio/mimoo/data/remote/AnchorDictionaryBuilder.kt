@@ -2,7 +2,9 @@ package com.miguelaetxio.mimoo.data.remote
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 
@@ -61,6 +63,19 @@ class AnchorDictionaryBuilder @Inject constructor(
          * mantiene el recorrido completo en torno a la media hora.
          */
         const val MAX_PAGES_PER_GENRE = 5
+
+        /** Reintentos por página antes de abandonar ese género. */
+        const val MAX_ATTEMPTS_PER_PAGE = 3
+
+        /** Primera espera entre reintentos; se duplica en cada uno. */
+        const val RETRY_BASE_MILLIS = 3_000L
+
+        /**
+         * Géneros fallidos SEGUIDOS antes de rendirse. Uno o dos son
+         * una racha de 503 de MusicBrainz y no significan nada; ocho
+         * seguidos sí significan que no hay red.
+         */
+        const val MAX_CONSECUTIVE_GENRE_FAILURES = 8
     }
 
     /** Avance del recorrido, para pintarlo en Ajustes. */
@@ -118,6 +133,7 @@ class AnchorDictionaryBuilder @Inject constructor(
         val genres = anchorDictionary.seedGenres().filterNot { it in done }
         var resolved = 0
         var notFound = 0
+        var consecutiveFailures = 0
 
         for ((index, genre) in genres.withIndex()) {
             if (!currentCoroutineContext().isActive) {
@@ -127,20 +143,48 @@ class AnchorDictionaryBuilder @Inject constructor(
             onProgress(Progress(index, genres.size, resolved, notFound, genre))
 
             var pagesWithResults = 0
+            var genreFailed = false
             for (page in 0 until MAX_PAGES_PER_GENRE) {
                 if (!currentCoroutineContext().isActive) {
                     anchorDictionary.flush()
                     return Result.Stopped(resolved, notFound)
                 }
-                val artists = try {
-                    radioRepository.browseArtistsByGenre(genre, offset = page * PAGE_SIZE)
-                } catch (e: CancellationException) {
-                    anchorDictionary.flush()
-                    throw e
-                } catch (e: Exception) {
-                    anchorDictionary.flush()
-                    return Result.NetworkDown(resolved, notFound)
+
+                // S025 -- UN FALLO DE RED NO TIRA EL RECORRIDO.
+                //
+                // Antes bastaba un `catch` para abortarlo entero, y
+                // MusicBrainz da 503 a rachas: Miguel Ángel vio el
+                // recorrido morirse a los tres géneros, tirando media
+                // hora de trabajo. Ahora cada página se reintenta con
+                // espera creciente, y si aun así no sale se abandona
+                // ESE género y se sigue con el siguiente.
+                var artists: List<MusicBrainzArtistSummary>? = null
+                for (attempt in 0 until MAX_ATTEMPTS_PER_PAGE) {
+                    if (!currentCoroutineContext().isActive) {
+                        anchorDictionary.flush()
+                        return Result.Stopped(resolved, notFound)
+                    }
+                    artists = try {
+                        radioRepository.browseArtistsByGenre(genre, offset = page * PAGE_SIZE)
+                    } catch (e: CancellationException) {
+                        anchorDictionary.flush()
+                        throw e
+                    } catch (e: Exception) {
+                        null
+                    }
+                    if (artists != null) break
+                    // Espera creciente: 3s, 6s, 12s. Con un 503 por
+                    // carga, insistir de inmediato solo empeora las
+                    // cosas.
+                    delay(RETRY_BASE_MILLIS shl attempt)
                 }
+
+                if (artists == null) {
+                    genreFailed = true
+                    consecutiveFailures++
+                    break
+                }
+                consecutiveFailures = 0
                 if (artists.isEmpty()) break
                 pagesWithResults++
                 for (a in artists) {
@@ -153,8 +197,20 @@ class AnchorDictionaryBuilder @Inject constructor(
                 }
                 onProgress(Progress(index, genres.size, resolved, notFound, genre))
             }
+
             if (pagesWithResults > 0) anchorDictionary.flush()
-            anchorDictionary.markGenreDone(genre)
+
+            // Solo se da el género por recorrido si no se quedó a
+            // medias: si falló, se deja sin marcar para que el próximo
+            // intento lo repita.
+            if (!genreFailed) anchorDictionary.markGenreDone(genre)
+
+            // Se rinde únicamente si falla un género detrás de otro:
+            // eso ya no es una racha, es que no hay red.
+            if (consecutiveFailures >= MAX_CONSECUTIVE_GENRE_FAILURES) {
+                anchorDictionary.flush()
+                return Result.NetworkDown(resolved, notFound)
+            }
         }
 
         anchorDictionary.flush()
