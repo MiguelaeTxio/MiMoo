@@ -1212,6 +1212,14 @@ class PlayerManager @Inject constructor(
             if (anchor == null) {
                 null
             } else {
+                // S025 -- aprovechando que estamos con red por otra
+                // búsqueda, se vacía un poco el cajón de lo que quedó
+                // pendiente por no tenerla. Orden de Miguel Ángel:
+                // *"llegar y decir: vale, tengo que buscar este, tengo
+                // red, voy a ver en la cola de los que fallamos porque
+                // no teníamos red."* No influye en lo que suena; solo
+                // engorda el diccionario de la tarjeta.
+                radioRepository.reconcilePending()
                 fetchRoundCandidate(anchor, anchorArtistName)
             }
         } catch (e: Exception) {

@@ -97,6 +97,23 @@ class AnchorDictionary @Inject constructor(
         val title: String = "",
     )
 
+    /**
+     * S025 -- un ARTISTA que no está en el diccionario y que no se pudo
+     * preguntar por falta de red.
+     *
+     * Orden de Miguel Ángel: *"cuando no tengamos en nuestra base de
+     * datos a un artista y no tengamos red, guardarlo para cuando
+     * tengamos red y estemos realizando otra búsqueda, reconciliar ese
+     * artista, ese y todos los que haya en el cajón de sin red."*
+     *
+     * Hasta aquí solo se apuntaban TEMAS sin año. Faltaba la mitad
+     * importante: el artista desconocido, que es el que deja la Radio
+     * sin arrancar.
+     */
+    data class PendingArtist(
+        val artist: String = "",
+    )
+
     private val gson = Gson()
 
     // ---------------------------------------------------------------
@@ -124,6 +141,8 @@ class AnchorDictionary @Inject constructor(
     private val learnedTracks = mutableMapOf<String, TrackFacts>()
     private val pending = linkedSetOf<String>()
     private val pendingItems = mutableMapOf<String, Pending>()
+    private val pendingArtists = linkedSetOf<String>()
+    private val pendingArtistItems = mutableMapOf<String, PendingArtist>()
 
     @Volatile
     private var loaded = false
@@ -139,6 +158,15 @@ class AnchorDictionary @Inject constructor(
                 val k = trackKey(it.artist, it.title)
                 pending += k
                 pendingItems[k] = it
+            }
+        }
+        readPendingArtists()?.let { list ->
+            list.forEach {
+                val k = key(it.artist)
+                if (k.isNotBlank()) {
+                    pendingArtists += k
+                    pendingArtistItems[k] = it
+                }
             }
         }
     }
@@ -185,6 +213,10 @@ class AnchorDictionary @Inject constructor(
         if (previous != null && previous == facts) return
         learnedArtists[k] = facts
         writeArtists()
+        if (pendingArtists.remove(k)) {
+            pendingArtistItems.remove(k)
+            writePendingArtists()
+        }
     }
 
     /**
@@ -244,6 +276,47 @@ class AnchorDictionary @Inject constructor(
         }
     }
 
+    /**
+     * Apunta un artista que no está en el diccionario y que no se pudo
+     * preguntar. Si ya se conoce no se apunta: `artist()` lo resolvería
+     * sin red.
+     */
+    fun rememberPendingArtist(name: String?) {
+        if (name.isNullOrBlank()) return
+        ensureLoaded()
+        val k = key(name)
+        if (k.isBlank() || k in pendingArtists) return
+        if (learnedArtists.containsKey(k) || seed.containsKey(k)) return
+        if (pendingArtists.size >= MAX_PENDING) {
+            val oldest = pendingArtists.firstOrNull() ?: return
+            pendingArtists.remove(oldest)
+            pendingArtistItems.remove(oldest)
+        }
+        pendingArtists += k
+        pendingArtistItems[k] = PendingArtist(name)
+        writePendingArtists()
+    }
+
+    fun takePendingArtists(limit: Int): List<String> {
+        ensureLoaded()
+        return pendingArtists.take(limit).mapNotNull { pendingArtistItems[it]?.artist }
+    }
+
+    /** Saca un artista del cajón: o se resolvió, o no existe. */
+    fun dropPendingArtist(name: String) {
+        ensureLoaded()
+        val k = key(name)
+        if (pendingArtists.remove(k)) {
+            pendingArtistItems.remove(k)
+            writePendingArtists()
+        }
+    }
+
+    fun pendingArtistCount(): Int {
+        ensureLoaded()
+        return pendingArtists.size
+    }
+
     fun pendingCount(): Int {
         ensureLoaded()
         return pending.size
@@ -293,6 +366,21 @@ class AnchorDictionary @Inject constructor(
     } catch (e: Exception) {
         null
     }
+
+    private fun readPendingArtists(): List<PendingArtist>? = try {
+        val text = readText(FILE_PENDING_ARTISTS)
+        if (text.isNullOrBlank()) {
+            null
+        } else {
+            val type = object : TypeToken<List<PendingArtist>>() {}.type
+            gson.fromJson<List<PendingArtist>>(text, type)
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun writePendingArtists() =
+        writeText(FILE_PENDING_ARTISTS, gson.toJson(pendingArtistItems.values.toList()))
 
     private fun writeArtists() = writeText(FILE_ARTISTS, gson.toJson(learnedArtists.values.toList()))
     private fun writeTracks() = writeText(FILE_TRACKS, gson.toJson(learnedTracks.values.toList()))
@@ -364,6 +452,7 @@ class AnchorDictionary @Inject constructor(
         const val FILE_ARTISTS = "artistas.json"
         const val FILE_TRACKS = "temas.json"
         const val FILE_PENDING = "pendientes.json"
+        const val FILE_PENDING_ARTISTS = "pendientes_artistas.json"
 
         /**
          * Tope de la cola de pendientes. No es por espacio -- un JSON

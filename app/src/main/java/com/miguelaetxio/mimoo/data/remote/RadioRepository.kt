@@ -359,6 +359,89 @@ class RadioRepository @Inject constructor(
 
 
     /**
+     * S025 -- RECONCILIACIÓN DEL CAJÓN DE SIN RED.
+     *
+     * Orden de Miguel Ángel: *"cuando tengamos red y estemos realizando
+     * otra búsqueda, reconciliar ese artista, ese y todos los que haya
+     * en el cajón de sin red. Llegar y decir: vale, tengo que buscar
+     * este, tengo red, voy a ver en la cola de los que fallamos porque
+     * no teníamos red. Está este, pues vamos a darle ya, aunque no sea
+     * para ponerlo, pero por lo menos para tenerlo guardado en el
+     * diccionario."*
+     *
+     * Se llama en cada vuelta de la Radio, aprovechando que ya hay red
+     * probada. Resuelve un puñado por vuelta, no el cajón entero:
+     * MusicBrainz admite una petición por segundo y vaciar de golpe una
+     * cola de dos mil dejaría la Radio esperando. A razón de unos pocos
+     * por tema escuchado, el cajón se drena solo mientras se escucha
+     * música.
+     *
+     * No devuelve nada ni influye en lo que suena: su único efecto es
+     * engordar el diccionario de la tarjeta.
+     */
+    suspend fun reconcilePending() {
+        if (isServiceDegraded) return
+
+        val artists = anchorDictionary.takePendingArtists(RECONCILE_PER_ROUND)
+        for (name in artists) {
+            val mbid = try {
+                findAnchorArtistMbid(name)
+            } catch (e: Exception) {
+                noteFailure(e)
+                return
+            }
+            if (mbid == null) {
+                // La red funcionó y el artista no existe en MusicBrainz.
+                // Sacarlo del cajón: reintentarlo cada vuelta para
+                // siempre no lo va a hacer aparecer.
+                anchorDictionary.dropPendingArtist(name)
+                log("reconcilePending() -- '$name' no existe en MusicBrainz; fuera del cajón")
+                continue
+            }
+            val detail = try {
+                musicBrainzApiService.lookupArtist(mbid).also { noteSuccess() }
+            } catch (e: Exception) {
+                noteFailure(e)
+                return
+            }
+            val genres = detail.genres.map { it.name.lowercase().trim() }
+                .filter { it.isNotBlank() }
+                .sorted()
+            anchorDictionary.learnArtist(
+                AnchorDictionary.ArtistFacts(
+                    artist = name,
+                    country = detail.country?.trim()?.ifBlank { null },
+                    genres = genres,
+                    source = "musicbrainz",
+                ),
+            )
+            log(
+                "reconcilePending() -- '$name' resuelto y guardado en el diccionario: " +
+                    "país=${detail.country ?: "?"}, géneros=[${genres.joinToString()}]"
+            )
+        }
+
+        val tracks = anchorDictionary.takePending(RECONCILE_PER_ROUND)
+        for (item in tracks) {
+            val year = firstReleaseYearFromMusicBrainz(item.artist, item.title)
+            if (year == null) {
+                if (lastFailureWasTransient) return
+                anchorDictionary.dropPending(item.artist, item.title)
+                log(
+                    "reconcilePending() -- sin fecha para '${item.artist}' - '${item.title}'; " +
+                        "fuera del cajón"
+                )
+                continue
+            }
+            anchorDictionary.learnTrackYear(item.artist, item.title, year, "musicbrainz")
+            log(
+                "reconcilePending() -- '${item.artist}' - '${item.title}' -> $year, " +
+                    "guardado en el diccionario"
+            )
+        }
+    }
+
+    /**
      * S025 -- año de la PRIMERA edición de la obra. Se pregunta por
      * release-group además de por grabación, y se toma el más antiguo
      * de todo lo que venga: la primera edición del tema, no la
@@ -602,6 +685,10 @@ class RadioRepository @Inject constructor(
             )
         } catch (e: Exception) {
             noteFailure(e)
+            // S025 -- el artista no está en el diccionario Y no se ha
+            // podido preguntar. Al cajón, para resolverlo en cuanto
+            // vuelva la red aunque sea en otra sesión.
+            if (lastFailureWasTransient) anchorDictionary.rememberPendingArtist(sourceArtist)
             log("resolveAnchor('$sourceArtist') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
         }
@@ -1170,6 +1257,16 @@ class RadioRepository @Inject constructor(
          * significa cuatro fallos SEGUIDOS de verdad.
          */
         const val DEGRADED_THRESHOLD = 4
+
+        /**
+         * S025 -- cuántos pendientes se reconcilian por vuelta de la
+         * Radio. MusicBrainz admite una petición por segundo, así que
+         * vaciar de golpe una cola larga dejaría la Radio esperando. A
+         * este ritmo el cajón se drena solo mientras se escucha música,
+         * que es exactamente lo que pidió Miguel Ángel: aprovechar que
+         * ya hay red por otra búsqueda.
+         */
+        const val RECONCILE_PER_ROUND = 3
 
         /**
          * Candidatos que se piden al buscar el artista del ancla.
