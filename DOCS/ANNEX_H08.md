@@ -2496,3 +2496,43 @@ anclajes. Ya figuraba como pendiente en la hoja de ruta original de
 S025; esta sesión lo confirma como riesgo real, no solo teórico.
 
 **Sin verificar en dispositivo real todavía.**
+
+---
+
+## FALLO DE NOMBRE DE FICHERO ENCONTRADO POR MIGUEL ÁNGEL EN EL EXPLORADOR DE ARCHIVOS
+
+Miguel Ángel navegó él mismo hasta `Tarjeta SD > miMoo > MiMoo >
+diccionario` y encontró un único fichero: `temas.json.txt` (111 B) --
+no `temas.json`. El tamaño coincide exactamente con
+`AnchorDictionary.writeText('temas.json') -> OK, 111 caracteres` del
+log, confirmando que es el mismo fichero, mal nombrado.
+
+**Es la segunda vuelta del mismo fallo que ya se documentó en S025**
+(entonces con `application/json` → `.json.json`). El fix de S025 pasó
+a `text/plain` asumiendo que no tenía extensión canónica -- pero SÍ la
+tiene (`.txt`), y al menos el proveedor SAF de la tarjeta de Miguel
+Ángel se la añade igual cuando el nombre pedido no termina ya en ella.
+
+### Fix (commit `1b0e5b8`, compilado en verde)
+
+Cambiado a `application/octet-stream` (tipo "binario genérico" de
+Android, sin extensión canónica en el mapa de MIME del sistema -- no
+hay nada que un proveedor SAF pueda añadir), en los dos puntos de
+creación (`writeText()` y `cleanupStrayFiles()`). `findDoc()` ya
+tolera ficheros renombrados (busca por prefijo si el nombre exacto no
+aparece), así que `cleanupStrayFiles()` migrará solo, en la próxima
+carga, el `temas.json.txt` existente a un `temas.json` con el nombre
+correcto -- sin que Miguel Ángel tenga que borrar nada a mano.
+
+### Aclaración aparte -- la carpeta doble no es un fallo
+
+Miguel Ángel también preguntó por la ruta `miMoo > MiMoo`, que le
+pareció rara. **No es un fallo:** `miMoo` (minúscula) es la carpeta
+raíz que él mismo eligió con el selector de Android; `MiMoo`
+(mayúscula, `DIR_BASE`) es la subcarpeta que la propia app crea
+siempre dentro de la raíz elegida, para organizar su contenido --
+mismo patrón que usa `LibraryFolderReconciler.DICT_DIR` para las
+descargas. Coincidencia de nombres entre la carpeta que él eligió y la
+que crea la app, no un error de la app.
+
+**Sin verificar en dispositivo real todavía.**
