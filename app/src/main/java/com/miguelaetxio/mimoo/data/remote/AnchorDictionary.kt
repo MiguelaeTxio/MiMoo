@@ -266,17 +266,37 @@ class AnchorDictionary @Inject constructor(
     // Entrada/salida sobre la tarjeta
     // ---------------------------------------------------------------
 
-    private fun readArtists(): List<ArtistFacts>? = readList(FILE_ARTISTS)
-    private fun readTracks(): List<TrackFacts>? = readList(FILE_TRACKS)
-    private fun readPending(): List<Pending>? = readList(FILE_PENDING)
-
-    private inline fun <reified T> readList(name: String): List<T>? = try {
-        val text = readText(name)
+    private fun readArtists(): List<ArtistFacts>? = try {
+        val text = readText(FILE_ARTISTS)
         if (text.isNullOrBlank()) {
             null
         } else {
-            val type = object : TypeToken<List<T>>() {}.type
-            gson.fromJson<List<T>>(text, type)
+            val type = object : TypeToken<List<ArtistFacts>>() {}.type
+            gson.fromJson<List<ArtistFacts>>(text, type)
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun readTracks(): List<TrackFacts>? = try {
+        val text = readText(FILE_TRACKS)
+        if (text.isNullOrBlank()) {
+            null
+        } else {
+            val type = object : TypeToken<List<TrackFacts>>() {}.type
+            gson.fromJson<List<TrackFacts>>(text, type)
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun readPending(): List<Pending>? = try {
+        val text = readText(FILE_PENDING)
+        if (text.isNullOrBlank()) {
+            null
+        } else {
+            val type = object : TypeToken<List<Pending>>() {}.type
+            gson.fromJson<List<Pending>>(text, type)
         }
     } catch (e: Exception) {
         null
