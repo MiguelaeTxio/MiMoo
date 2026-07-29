@@ -359,6 +359,49 @@ class RadioRepository @Inject constructor(
 
 
     /**
+     * S025 -- resuelve UN artista y lo guarda en el diccionario de la
+     * tarjeta. Es lo que usa `AnchorDictionaryBuilder` desde el botón
+     * de Ajustes, y distingue los tres desenlaces que le importan al
+     * recorrido: resuelto, no existe, o no hay red.
+     */
+    enum class DictionaryOutcome { RESOLVED, NOT_FOUND, NETWORK_DOWN }
+
+    suspend fun resolveArtistFactsForDictionary(name: String): DictionaryOutcome {
+        val mbid = try {
+            findAnchorArtistMbid(name)
+        } catch (e: Exception) {
+            noteFailure(e)
+            return DictionaryOutcome.NETWORK_DOWN
+        }
+        if (mbid == null) {
+            anchorDictionary.dropPendingArtist(name)
+            return DictionaryOutcome.NOT_FOUND
+        }
+        val detail = try {
+            musicBrainzApiService.lookupArtist(mbid).also { noteSuccess() }
+        } catch (e: Exception) {
+            noteFailure(e)
+            return DictionaryOutcome.NETWORK_DOWN
+        }
+        val genres = detail.genres.map { it.name.lowercase().trim() }
+            .filter { it.isNotBlank() }
+            .sorted()
+        if (detail.country == null && genres.isEmpty()) {
+            anchorDictionary.dropPendingArtist(name)
+            return DictionaryOutcome.NOT_FOUND
+        }
+        anchorDictionary.learnArtist(
+            AnchorDictionary.ArtistFacts(
+                artist = name,
+                country = detail.country?.trim()?.ifBlank { null },
+                genres = genres,
+                source = "musicbrainz",
+            ),
+        )
+        return DictionaryOutcome.RESOLVED
+    }
+
+    /**
      * S025 -- RECONCILIACIÓN DEL CAJÓN DE SIN RED.
      *
      * Orden de Miguel Ángel: *"cuando tengamos red y estemos realizando

@@ -80,6 +80,9 @@ fun SettingsScreen(
     onOpenDrawer: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // S025 -- estado del constructor del diccionario del ancla (H08).
+    val dictionaryState by viewModel.dictionaryState.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshDictionaryCounts() }
     val pendingConsent by viewModel.pendingConsent.collectAsState()
     val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
     val context = LocalContext.current
@@ -328,6 +331,110 @@ fun SettingsScreen(
                 if (isWorking) {
                     Spacer(Modifier.height(12.dp))
                     CircularProgressIndicator(modifier = Modifier.height(20.dp))
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // S025 -- BOTÓN "CREAR BASE DE DATOS" (H08).
+            //
+            // Orden de Miguel Ángel: *"el botón de ajustes, que es
+            // fundamental, el de creación de base de datos. Un lanzador
+            // que diga 'hacer diccionario' y empezar grupo por grupo."*
+            //
+            // Sin esto el diccionario solo crece cuando la Radio
+            // tropieza con un artista, de tres en tres por vuelta. Aquí
+            // se recorre de golpe: el cajón de sin red primero y la
+            // biblioteca local después, que son los artistas que de
+            // verdad se escuchan y por tanto los que más veces van a
+            // anclar una sesión.
+            SettingsAccordionSection(
+                title = "Base de datos de la Radio",
+                expanded = expandedSection == "diccionario",
+                onToggle = {
+                    expandedSection = if (expandedSection == "diccionario") null else "diccionario"
+                },
+            ) {
+                Text(
+                    "La Radio necesita saber de dónde es cada artista y qué " +
+                        "género toca. Lo que se averigua se guarda en la tarjeta, " +
+                        "así que la próxima vez no hace falta conexión. Este " +
+                        "recorrido lo hace de golpe en vez de ir aprendiendo " +
+                        "poco a poco mientras escuchas.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+
+                when (val st = dictionaryState) {
+                    is SettingsViewModel.DictionaryState.Idle -> {
+                        Text(
+                            "Ya guardados: ${st.learned} artista(s). " +
+                                "Por averiguar: ${st.queued}." +
+                                if (st.pending > 0) " Pendientes por falta de red: ${st.pending}." else "",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(
+                            onClick = viewModel::startBuildingDictionary,
+                            enabled = st.queued > 0,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Icon(Icons.Filled.CloudDownload, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Crear base de datos")
+                        }
+                        if (st.queued == 0) {
+                            Text(
+                                "No hay nada por averiguar ahora mismo.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    is SettingsViewModel.DictionaryState.Running -> {
+                        LinearProgressIndicator(
+                            progress = {
+                                if (st.total > 0) st.done.toFloat() / st.total else 0f
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "${st.done} de ${st.total} — ${st.resolved} guardados, " +
+                                "${st.notFound} sin ficha",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (st.currentArtist.isNotBlank()) {
+                            Text(
+                                st.currentArtist,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        // Se puede parar cuando sea: lo resuelto está
+                        // escrito en la tarjeta desde el momento en que
+                        // se resolvió, no al final.
+                        TextButton(
+                            onClick = viewModel::stopBuildingDictionary,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Text("Parar")
+                        }
+                    }
+
+                    is SettingsViewModel.DictionaryState.Done -> {
+                        Text(st.message, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(
+                            onClick = viewModel::dismissDictionaryState,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Text("Aceptar")
+                        }
+                    }
                 }
             }
 
@@ -970,6 +1077,9 @@ private fun UpdateCheckSection(
     viewModel: AppUpdateViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // S025 -- estado del constructor del diccionario del ancla (H08).
+    val dictionaryState by viewModel.dictionaryState.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshDictionaryCounts() }
     val context = LocalContext.current
     var installErrorMessage by remember { mutableStateOf<String?>(null) }
 

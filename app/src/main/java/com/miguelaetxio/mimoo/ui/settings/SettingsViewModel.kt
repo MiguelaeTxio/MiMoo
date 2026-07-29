@@ -83,7 +83,87 @@ class SettingsViewModel @Inject constructor(
     private val cookiesManager: CookiesManager,
     private val autoSyncPusher: AutoSyncPusher,
     private val libraryMigrator: com.miguelaetxio.mimoo.data.library.LibraryMigrator,
+    // S025 -- constructor del diccionario del ancla (H08), lanzado
+    // desde el botón "Crear base de datos".
+    private val anchorDictionaryBuilder: com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder,
+    private val anchorDictionary: com.miguelaetxio.mimoo.data.remote.AnchorDictionary,
 ) : ViewModel() {
+
+    // -----------------------------------------------------------------
+    // S025 -- Crear base de datos del ancla
+    // -----------------------------------------------------------------
+
+    /**
+     * Estado del recorrido que construye el diccionario. `Idle` lleva
+     * el recuento de lo que ya hay y de lo que queda, para que el botón
+     * no sea un salto al vacío.
+     */
+    sealed interface DictionaryState {
+        data class Idle(val learned: Int, val pending: Int, val queued: Int) : DictionaryState
+        data class Running(
+            val done: Int,
+            val total: Int,
+            val resolved: Int,
+            val notFound: Int,
+            val currentArtist: String,
+        ) : DictionaryState
+        data class Done(val message: String) : DictionaryState
+    }
+
+    private val _dictionaryState =
+        MutableStateFlow<DictionaryState>(DictionaryState.Idle(0, 0, 0))
+    val dictionaryState: StateFlow<DictionaryState> = _dictionaryState.asStateFlow()
+
+    private var dictionaryJob: kotlinx.coroutines.Job? = null
+
+    fun refreshDictionaryCounts() {
+        viewModelScope.launch {
+            if (_dictionaryState.value is DictionaryState.Running) return@launch
+            val queued = runCatching { anchorDictionaryBuilder.pendingWork() }.getOrDefault(0)
+            _dictionaryState.value = DictionaryState.Idle(
+                learned = anchorDictionary.learnedArtistCount(),
+                pending = anchorDictionary.pendingArtistCount(),
+                queued = queued,
+            )
+        }
+    }
+
+    fun startBuildingDictionary() {
+        if (dictionaryJob?.isActive == true) return
+        dictionaryJob = viewModelScope.launch {
+            val result = anchorDictionaryBuilder.build { p ->
+                _dictionaryState.value = DictionaryState.Running(
+                    done = p.done,
+                    total = p.total,
+                    resolved = p.resolved,
+                    notFound = p.notFound,
+                    currentArtist = p.currentArtist,
+                )
+            }
+            _dictionaryState.value = DictionaryState.Done(
+                when (result) {
+                    is com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder.Result.Finished ->
+                        "Terminado. ${result.resolved} artista(s) añadidos al diccionario, " +
+                            "${result.notFound} sin ficha, ${result.skipped} ya estaban."
+                    is com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder.Result.Stopped ->
+                        "Parado. ${result.resolved} artista(s) añadidos antes de parar; " +
+                            "lo hecho ya está guardado."
+                    is com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder.Result.NetworkDown ->
+                        "Sin conexión con MusicBrainz. ${result.resolved} artista(s) añadidos " +
+                            "antes de cortarse; el resto queda para el próximo intento."
+                },
+            )
+        }
+    }
+
+    fun stopBuildingDictionary() {
+        dictionaryJob?.cancel()
+        dictionaryJob = null
+    }
+
+    fun dismissDictionaryState() {
+        refreshDictionaryCounts()
+    }
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
