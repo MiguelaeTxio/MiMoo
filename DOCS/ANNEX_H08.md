@@ -2248,11 +2248,82 @@ mitad de la sesión, antes del rediseño):**
 4. Sigue abierta la verificación física de dos dispositivos (H07,
    PASO 5) y el resto de la hoja de ruta original de H13 (auditoría de
    botones de `PlayerBar.kt`, aspecto de "algunos ítems").
-5. **Incidencia de proceso sin resolver:** `ANNEX_ROUTER.md` sigue
-   marcando H13 como el hito activo desde el cierre de S024, pero la
-   práctica totalidad del trabajo de esta sesión se hizo sobre H08 sin
-   que se ejecutara un PCH formal — la propia decisión de "seguir con
-   Radio" surgió de la dinámica de la conversación, no de una orden
-   explícita de cambio de hito. Miguel Ángel debe decidir al inicio de
-   la siguiente sesión si formaliza el PCH a H08 (que reflejaría mejor
-   dónde se ha trabajado de verdad) o retoma H13 tal cual estaba.
+5. **Incidencia de proceso, RESUELTA en S026 (ver más abajo):**
+   `ANNEX_ROUTER.md` marcaba H13 como hito activo desde el cierre de
+   S024 pese a que la práctica totalidad del trabajo de S025 fue sobre
+   H08. PCH formal ejecutado al arranque de S026 — ver
+   `DOCS/ANNEX_ROUTER.md`, entrada 2026-07-29.
+
+---
+
+## S026 (2026-07-29) — AUDITORÍA DE CÓDIGO: ¿SE USA DE VERDAD LA BASE
+DE DATOS?
+
+**Motivo.** S025 cerró extenuada por tokens y, según Miguel Ángel, sin
+seguir su propio criterio en varios puntos finales. Al arrancar S026
+reporta que la Radio sigue sin usar la base de datos construida —
+ejemplo dado: un tema de Led Zeppelin deriva a "rock sinfónico" en vez
+de hard rock/rock arena. Petición explícita: auditar el código real
+antes de dar nada por bueno, no fiarse de las notas de cierre.
+
+**Hallazgo: el ejemplo dado es literalmente el mismo caso, con las
+mismas palabras, que motivó el rediseño de S025** (ver más arriba,
+sección "S025", cita textual de Miguel Ángel: *"me he hinchado a
+escuchar rock sinfónico después de poner un tema de Led Zeppelin, que
+no me apetecía en absoluto"*). Es decir: no es un fallo nuevo — es el
+recuerdo del fallo que ya motivó la reescritura.
+
+**Verificado leyendo el código real, en el HEAD del repositorio tras
+S025 (commit `b760f544`), archivo por archivo:**
+
+1. `RadioRepository.resolveAnchor()` (línea 662) consulta
+   `anchorFromDictionary()` ANTES de tocar la red — confirmado, no es
+   una afirmación de comentario sin más: es el primer `return` posible
+   de la función.
+2. `RadioRepository.suggestRelatedArtist()` (línea 904) consulta
+   `anchorDictionary.artistsMatching()` ANTES de `findCandidatesForGenres()`
+   (la búsqueda en vivo) — confirmado igual, con log explícito ("DE LA
+   BASE DE DATOS, sin red") en el propio camino de éxito.
+3. La semilla de 1.161 artistas (`AnchorDictionary.seed`, línea 123)
+   se carga desde `app/src/main/assets/anchor_artists.json` — es un
+   ASSET EMPAQUETADO EN EL APK, no un fichero de la tarjeta SD que
+   dependa de haber pulsado "Crear base de datos" ni de haber escuchado
+   Radio antes. Está disponible desde la primera instalación de
+   cualquier build que incluya este commit.
+4. Comprobado el contenido real de ese fichero: la entrada de **Led
+   Zeppelin** existe (`país: GB`, `géneros: arena rock, blues rock,
+   classic rock, folk rock, hard rock, heavy metal, progressive rock,
+   rock`) — ninguno de esos ocho géneros es "rock sinfónico" ni nada
+   emparentado con `symphonic rock`.
+5. El emparejamiento de género usa el CONJUNTO completo del ancla, no
+   un único género alfabético, en las tres porciones: `fetchFromKnown()`
+   pasa `anchorGenres = anchor.genres` a `KnownHitsRepository.matchesGenre()`
+   (intersección + descenso en el árbol de géneros, nunca ascenso);
+   `suggestRelatedArtist()` construye la búsqueda con
+   `listOf(anchor.genre) + anchor.genres`; el propio `resolveAnchor()`
+   guarda `genres = allGenres` (unión diccionario + MusicBrainz), no
+   solo el género ganador por voto/alfabético.
+6. Confirmado en GitHub Actions (`GET /actions/runs`) que el commit de
+   cierre de S025 (`b760f544`) compiló y desplegó en verde
+   (`conclusion: success`, 2026-07-29T17:33:21Z) — el código auditado
+   arriba es el que de verdad llegó a compilarse, no una versión sin
+   probar.
+
+**Conclusión de la auditoría, con la honestidad que pide Miguel
+Ángel:** sobre el código, el punto central que S025 dio por resuelto
+("la base de datos se consulta primero") está correctamente resuelto
+y encadenado en los tres puntos donde importa (ancla, exploración,
+emparejamiento de género). No se ha encontrado ningún punto de
+conexión roto ni ausente. La explicación más probable de lo que Miguel
+Ángel sigue viendo es que el dispositivo no tuviera instalado todavía
+un APK posterior a este commit — el propio cierre de S025 dejó constancia
+de que nada de esto se había verificado en dispositivo real. Esto NO
+es una garantía de que el comportamiento en vivo sea correcto —
+sigue siendo cierto que nadie lo ha visto funcionar en un teléfono —
+solo que el código fuente no contiene el fallo descrito.
+
+**No verificado en esta auditoría, sigue pendiente:** todo lo que ya
+figuraba pendiente en la Hoja de Ruta anterior (puntos 1-4 de más
+arriba) — en particular el comportamiento real en dispositivo, y si la
+semilla de 1.161 artistas tiene errores de país/género en entradas
+distintas a Led Zeppelin.
