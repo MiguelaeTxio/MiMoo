@@ -285,7 +285,7 @@ class RadioRepository @Inject constructor(
             knownHitsRepository.isKnownSpanishArtist(sourceArtist)
 
         // PASO 5 -- la década, del TEMA ORIGINAL.
-        val decadeBegin = resolveOriginalDecade(sourceArtist, sourceTrackTitle, facts)
+        val decadeBegin = resolveOriginalDecade(sourceArtist, sourceTrackTitle)
 
         log(
             "resolveAnchor('$sourceArtist') -> ancla del DICCIONARIO (sin red): " +
@@ -303,33 +303,30 @@ class RadioRepository @Inject constructor(
     }
 
     /**
-     * S025 -- DÉCADA DEL TEMA ORIGINAL, NO DEL REMASTER.
+     * S025 -- DÉCADA DE LA PRIMERA EDICIÓN DEL TEMA.
      *
-     * Orden de Miguel Ángel: *"la década del tema original, no del
-     * remaster. Si hay que usar Wikipedia, usamos Wikipedia. Lo que
-     * tengamos que usar."*
+     * Orden de Miguel Ángel, y no hay nada más: *"para anclar la década
+     * miramos el tema, edición original del tema, la que sea, pues
+     * anclamos en esa década. Se acabó. No hay más."*
      *
      * El fallo que lo motiva, de su log:
      *
      *   resolveTrackDecade('Led Zeppelin' -- 'Black Dog')
-     *     -> década 1980 (primera publicación 1983), de MusicBrainz
+     *     -> década 1980 (primera publicación 1983)
      *
      * "Black Dog" es de noviembre de 1971. El 1983 salía de preguntar a
      * nivel de GRABACIÓN, donde una remasterización o un directo valen
-     * tanto como el original.
+     * tanto como el original. Lo que se busca es la PRIMERA edición.
      *
-     * Cascada: diccionario en tarjeta -> diccionario de éxitos ->
-     * MusicBrainz. Y sobre lo que salga, la REGLA DE COHERENCIA: un
-     * tema no puede ser anterior a que el artista empezara ni posterior
-     * a que se disolviera. Led Zeppelin se separó en 1980, así que 1983
-     * es imposible y se descarta en vez de anclar la sesión entera mal.
-     * Cuando no hay red y no se sabe, se apunta en la cola de
-     * pendientes para resolverlo cuando la haya.
+     * Cascada, y se para en la primera que conteste: diccionario en
+     * tarjeta -> diccionario de éxitos -> MusicBrainz. Si ninguna
+     * contesta, el tema se apunta en la cola de pendientes y se ancla
+     * igual por origen y género: no saber el año no puede parar la
+     * Radio.
      */
     private suspend fun resolveOriginalDecade(
         artist: String,
         trackTitle: String?,
-        facts: AnchorDictionary.ArtistFacts,
     ): Int? {
         val cleanTitle = trackTitle?.let { stripTitleNoise(it) }
 
@@ -355,30 +352,11 @@ class RadioRepository @Inject constructor(
             )
             return null
         }
-        if (!isYearCoherent(year, facts)) {
-            log(
-                "resolveOriginalDecade('$artist' -- '$cleanTitle') -- año $year DESCARTADO por incoherente: " +
-                    "el artista está activo ${facts.activeFrom ?: "?"}-${facts.activeTo ?: "hoy"}. " +
-                    "Se ancla por origen y género, sin década"
-            )
-            return null
-        }
         anchorDictionary.learnTrackYear(artist, cleanTitle, year, "musicbrainz")
         log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, de MusicBrainz; aprendido en la tarjeta")
         return (year / 10) * 10
     }
 
-    /**
-     * S025 -- regla de coherencia. Un margen de dos años a cada lado
-     * absorbe las fechas de publicación que se adelantan o retrasan
-     * respecto a la actividad registrada del artista.
-     */
-    private fun isYearCoherent(year: Int, facts: AnchorDictionary.ArtistFacts): Boolean {
-        if (year < 1850 || year > 2100) return false
-        facts.activeFrom?.let { if (year < it - 2) return false }
-        facts.activeTo?.let { if (year > it + 2) return false }
-        return true
-    }
 
     /**
      * S025 -- año de la PRIMERA edición de la obra. Se pregunta por
@@ -565,18 +543,7 @@ class RadioRepository @Inject constructor(
             // llamaba a `resolveTrackDecade()`, que aceptaba sin
             // comprobar el primer año que devolviera MusicBrainz y por
             // eso fechó "Black Dog" en 1983.
-            val decadeBegin = resolveOriginalDecade(
-                sourceArtist,
-                sourceTrackTitle,
-                AnchorDictionary.ArtistFacts(
-                    artist = sourceArtist,
-                    country = sourceCountry,
-                    genres = (fromMusicBrainz + fromDictionary).sorted(),
-                    activeFrom = sourceDetail.lifeSpan?.begin?.take(4)?.toIntOrNull(),
-                    activeTo = sourceDetail.lifeSpan?.end?.take(4)?.toIntOrNull(),
-                    source = "musicbrainz",
-                ),
-            )
+            val decadeBegin = resolveOriginalDecade(sourceArtist, sourceTrackTitle)
             // S013/S014, punto 4 -- "grupo español" se decide primero
             // por el diccionario de éxitos (barato, sin ambigüedad de
             // MusicBrainz) y, si el artista no está en él, por el
@@ -593,8 +560,6 @@ class RadioRepository @Inject constructor(
                     artist = sourceArtist,
                     country = sourceCountry,
                     genres = (fromMusicBrainz + fromDictionary).sorted(),
-                    activeFrom = sourceDetail.lifeSpan?.begin?.take(4)?.toIntOrNull(),
-                    activeTo = sourceDetail.lifeSpan?.end?.take(4)?.toIntOrNull(),
                     source = "musicbrainz",
                 ),
             )

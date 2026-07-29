@@ -2068,11 +2068,13 @@ Nace lleno y crece solo con el uso.
 **Procedencia.** Cada valor lleva de dónde salió y cuándo. Va al log,
 para que Miguel Ángel pueda juzgar el dato y no solo el resultado.
 
-**Coherencia.** Un valor solo se acepta si no se contradice con lo que
-ya se sabe. Un tema no puede ser anterior a la formación del grupo ni
-posterior a su disolución. *Black Dog* fechada en 1983 con Led Zeppelin
-disueltos en 1980 se habría caído sola. Si un valor no supera la
-comprobación se descarta y se baja al siguiente peldaño de la cascada.
+**Retirada en la misma sesión: no hay regla de coherencia.** Se llegó a
+escribir una que contrastaba el año del tema con los años de actividad
+del artista. Miguel Ángel la rechazó por inventada: *"yo en ningún
+momento he dicho que haya que estar comparando los años de edición con
+los años de disolución de las bandas"*. El año del tema es la fecha de
+su primera edición y nada más; si una fuente no la da, se pasa a la
+siguiente.
 
 **"No lo sé" es distinto de "no hay".** Sin año se ancla por país y
 género y se sigue; ni se para la Radio ni se abre el filtro. La Radio

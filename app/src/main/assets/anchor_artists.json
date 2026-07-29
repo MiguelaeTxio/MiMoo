@@ -100,8 +100,7 @@
    "classical",
    "concerto grosso",
    "orchestral"
-  ],
-  "activeFrom": 1958
+  ]
  },
  {
   "artist": "Ace of Base",
@@ -202,8 +201,7 @@
    "ballad",
    "pop rock",
    "soft rock"
-  ],
-  "activeFrom": 1975
+  ]
  },
  {
   "artist": "Aitana",
@@ -328,9 +326,7 @@
    "opera",
    "romantic classical",
    "zarzuela"
-  ],
-  "activeFrom": 1956,
-  "activeTo": 1999
+  ]
  },
  {
   "artist": "Alice Cooper",
@@ -390,9 +386,7 @@
    "concerto",
    "impressionism",
    "sonata"
-  ],
-  "activeFrom": 1940,
-  "activeTo": 2003
+  ]
  },
  {
   "artist": "Alizzz",
@@ -416,9 +410,7 @@
    "blues rock",
    "rock",
    "southern rock"
-  ],
-  "activeFrom": 1969,
-  "activeTo": 2014
+  ]
  },
  {
   "artist": "Alphaville",
@@ -562,8 +554,7 @@
    "classical",
    "opera",
    "romantic classical"
-  ],
-  "activeFrom": 1994
+  ]
  },
  {
   "artist": "Andrés Segovia",
@@ -573,9 +564,7 @@
    "character piece",
    "classical",
    "romantic classical"
-  ],
-  "activeFrom": 1909,
-  "activeTo": 1987
+  ]
  },
  {
   "artist": "Andrés do Barro",
@@ -616,8 +605,7 @@
    "classical",
    "opera",
    "romantic classical"
-  ],
-  "activeFrom": 1994
+  ]
  },
  {
   "artist": "Anne-Sophie Mutter",
@@ -627,8 +615,7 @@
    "concerto",
    "modern classical",
    "romantic classical"
-  ],
-  "activeFrom": 1976
+  ]
  },
  {
   "artist": "Antonio Flores",
@@ -646,9 +633,7 @@
    "bolero",
    "bolero español",
    "son cubano"
-  ],
-  "activeFrom": 1930,
-  "activeTo": 1977
+  ]
  },
  {
   "artist": "Antonio Mairena",
@@ -657,9 +642,7 @@
    "bulería",
    "fandango",
    "flamenco"
-  ],
-  "activeFrom": 1930,
-  "activeTo": 1983
+  ]
  },
  {
   "artist": "Antonio Molina",
@@ -751,8 +734,7 @@
    "art rock",
    "baroque pop",
    "indie rock"
-  ],
-  "activeFrom": 2001
+  ]
  },
  {
   "artist": "Arctic Monkeys",
@@ -836,9 +818,7 @@
    "bebop",
    "hard bop",
    "jazz"
-  ],
-  "activeFrom": 1942,
-  "activeTo": 1990
+  ]
  },
  {
   "artist": "Arthur Rubinstein",
@@ -848,9 +828,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 1900,
-  "activeTo": 1976
+  ]
  },
  {
   "artist": "Arturo Toscanini",
@@ -860,9 +838,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1896,
-  "activeTo": 1954
+  ]
  },
  {
   "artist": "Arvo Pärt",
@@ -1041,9 +1017,7 @@
    "blues rock",
    "hard rock",
    "rock"
-  ],
-  "activeFrom": 1973,
-  "activeTo": 1982
+  ]
  },
  {
   "artist": "Bad Gyal",
@@ -1183,8 +1157,7 @@
    "alternative rock",
    "art pop",
    "folk rock"
-  ],
-  "activeFrom": 1989
+  ]
  },
  {
   "artist": "Becky G",
@@ -1274,8 +1247,7 @@
    "orchestral",
    "romantic classical",
    "symphony"
-  ],
-  "activeFrom": 1882
+  ]
  },
  {
   "artist": "Bersuit Vergarabat",
@@ -1332,9 +1304,7 @@
    "jazz",
    "modal jazz",
    "post-bop"
-  ],
-  "activeFrom": 1956,
-  "activeTo": 1980
+  ]
  },
  {
   "artist": "Billie Eilish",
@@ -1363,9 +1333,7 @@
    "jazz",
    "swing",
    "vocal jazz"
-  ],
-  "activeFrom": 1933,
-  "activeTo": 1959
+  ]
  },
  {
   "artist": "Billy Idol",
@@ -1627,8 +1595,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1881
+  ]
  },
  {
   "artist": "Britney Spears",
@@ -1860,9 +1827,7 @@
    "bulería",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1969,
-  "activeTo": 1992
+  ]
  },
  {
   "artist": "Camel",
@@ -1871,8 +1836,7 @@
    "art rock",
    "progressive rock",
    "symphonic prog"
-  ],
-  "activeFrom": 1971
+  ]
  },
  {
   "artist": "Camela",
@@ -1961,9 +1925,7 @@
    "copla",
    "nueva canción española",
    "singer-songwriter"
-  ],
-  "activeFrom": 1975,
-  "activeTo": 2000
+  ]
  },
  {
   "artist": "Carlos Kleiber",
@@ -1973,9 +1935,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1954,
-  "activeTo": 2004
+  ]
  },
  {
   "artist": "Carlos Santana",
@@ -2017,8 +1977,7 @@
    "bulería",
    "fandango",
    "flamenco"
-  ],
-  "activeFrom": 1970
+  ]
  },
  {
   "artist": "Carolina Durante",
@@ -2075,8 +2034,7 @@
    "classical",
    "opera",
    "opera buffa"
-  ],
-  "activeFrom": 1987
+  ]
  },
  {
   "artist": "Celia Cruz",
@@ -2160,9 +2118,7 @@
    "hard bop",
    "jazz",
    "post-bop"
-  ],
-  "activeFrom": 1943,
-  "activeTo": 1979
+  ]
  },
  {
   "artist": "Charlie Parker",
@@ -2171,9 +2127,7 @@
    "bebop",
    "hard bop",
    "jazz"
-  ],
-  "activeFrom": 1940,
-  "activeTo": 1955
+  ]
  },
  {
   "artist": "Charlie Puth",
@@ -2233,9 +2187,7 @@
    "cool jazz",
    "jazz",
    "vocal jazz"
-  ],
-  "activeFrom": 1952,
-  "activeTo": 1988
+  ]
  },
  {
   "artist": "Chic",
@@ -2270,8 +2222,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1891
+  ]
  },
  {
   "artist": "Chico Buarque",
@@ -2373,9 +2324,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1960,
-  "activeTo": 2014
+  ]
  },
  {
   "artist": "Claudio Monteverdi",
@@ -2407,8 +2356,7 @@
    "hard rock",
    "pub rock",
    "rock"
-  ],
-  "activeFrom": 1973
+  ]
  },
  {
   "artist": "Coldplay",
@@ -2432,9 +2380,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1922,
-  "activeTo": 1958
+  ]
  },
  {
   "artist": "Concha Velasco",
@@ -2473,9 +2419,7 @@
    "big band",
    "jazz",
    "swing"
-  ],
-  "activeFrom": 1929,
-  "activeTo": 1984
+  ]
  },
  {
   "artist": "Courtney Barnett",
@@ -2484,8 +2428,7 @@
    "alternative rock",
    "garage rock",
    "indie rock"
-  ],
-  "activeFrom": 2012
+  ]
  },
  {
   "artist": "Coz",
@@ -2548,8 +2491,7 @@
    "jangle pop",
    "pop rock",
    "soft rock"
-  ],
-  "activeFrom": 1985
+  ]
  },
  {
   "artist": "Cruz Cafuné",
@@ -2700,8 +2642,7 @@
    "orchestral",
    "sonata",
    "symphony"
-  ],
-  "activeFrom": 1960
+  ]
  },
  {
   "artist": "Daniil Trifonov",
@@ -2711,8 +2652,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 2010
+  ]
  },
  {
   "artist": "Danza Invisible",
@@ -2740,9 +2680,7 @@
    "cool jazz",
    "jazz",
    "third stream"
-  ],
-  "activeFrom": 1946,
-  "activeTo": 2012
+  ]
  },
  {
   "artist": "David Bisbal",
@@ -2946,8 +2884,7 @@
    "bulería",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1997
+  ]
  },
  {
   "artist": "Dietrich Fischer-Dieskau",
@@ -2957,9 +2894,7 @@
    "lied",
    "opera",
    "romantic classical"
-  ],
-  "activeFrom": 1947,
-  "activeTo": 1992
+  ]
  },
  {
   "artist": "Dinosaur Jr.",
@@ -2968,8 +2903,7 @@
    "alternative rock",
    "indie rock",
    "noise rock"
-  ],
-  "activeFrom": 1984
+  ]
  },
  {
   "artist": "Dire Straits",
@@ -3012,9 +2946,7 @@
    "bebop",
    "big band",
    "jazz"
-  ],
-  "activeFrom": 1937,
-  "activeTo": 1993
+  ]
  },
  {
   "artist": "Django Reinhardt",
@@ -3023,9 +2955,7 @@
    "gypsy jazz",
    "jazz",
    "swing"
-  ],
-  "activeFrom": 1928,
-  "activeTo": 1953
+  ]
  },
  {
   "artist": "Dmitri Shostakovich",
@@ -3126,8 +3056,7 @@
    "alternative rock",
    "indie rock",
    "post-britpop"
-  ],
-  "activeFrom": 1998
+  ]
  },
  {
   "artist": "Dr. Alban",
@@ -3195,9 +3124,7 @@
    "jazz",
    "orchestral jazz",
    "swing"
-  ],
-  "activeFrom": 1923,
-  "activeTo": 1974
+  ]
  },
  {
   "artist": "Duncan Dhu",
@@ -3419,9 +3346,7 @@
    "bulería",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1964,
-  "activeTo": 2016
+  ]
  },
  {
   "artist": "El Sueño de Morfeo",
@@ -3470,8 +3395,7 @@
    "alternative rock",
    "art rock",
    "indie rock"
-  ],
-  "activeFrom": 1997
+  ]
  },
  {
   "artist": "Electric Light Orchestra",
@@ -3516,9 +3440,7 @@
    "jazz",
    "swing",
    "vocal jazz"
-  ],
-  "activeFrom": 1934,
-  "activeTo": 1993
+  ]
  },
  {
   "artist": "Ella baila sola",
@@ -3586,9 +3508,7 @@
    "classical period",
    "modern classical",
    "string quartet"
-  ],
-  "activeFrom": 1976,
-  "activeTo": 2023
+  ]
  },
  {
   "artist": "Emerson, Lake & Palmer",
@@ -3633,8 +3553,7 @@
    "electropop",
    "indie pop",
    "synth-pop"
-  ],
-  "activeFrom": 2008
+  ]
  },
  {
   "artist": "Encarnita Polo",
@@ -3680,9 +3599,7 @@
    "fandango",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1967,
-  "activeTo": 2010
+  ]
  },
  {
   "artist": "Enrique y Ana",
@@ -3762,8 +3679,7 @@
    "bulería",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1996
+  ]
  },
  {
   "artist": "Estrellita Castro",
@@ -3772,9 +3688,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1930,
-  "activeTo": 1980
+  ]
  },
  {
   "artist": "Europe",
@@ -3981,8 +3895,7 @@
    "alternative rock",
    "hard rock",
    "post-grunge"
-  ],
-  "activeFrom": 1994
+  ]
  },
  {
   "artist": "Four Tops",
@@ -4140,9 +4053,7 @@
    "blues rock",
    "hard rock",
    "rock"
-  ],
-  "activeFrom": 1968,
-  "activeTo": 1973
+  ]
  },
  {
   "artist": "Frédéric Chopin",
@@ -4364,9 +4275,7 @@
    "classical",
    "fugue",
    "sonata"
-  ],
-  "activeFrom": 1955,
-  "activeTo": 1982
+  ]
  },
  {
   "artist": "Gloria Gaynor",
@@ -4430,9 +4339,7 @@
    "copla",
    "fandango",
    "pasodoble"
-  ],
-  "activeFrom": 1954,
-  "activeTo": 2000
+  ]
  },
  {
   "artist": "Gracie Abrams",
@@ -4452,9 +4359,7 @@
    "folk rock",
    "jam band",
    "psychedelic rock"
-  ],
-  "activeFrom": 1965,
-  "activeTo": 1995
+  ]
  },
  {
   "artist": "Green Day",
@@ -4535,8 +4440,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 2004
+  ]
  },
  {
   "artist": "HIM",
@@ -4586,9 +4490,7 @@
    "orchestral",
    "romantic classical",
    "symphony"
-  ],
-  "activeFrom": 1938,
-  "activeTo": 1989
+  ]
  },
  {
   "artist": "Herbie Hancock",
@@ -4598,8 +4500,7 @@
    "jazz fusion",
    "jazz-funk",
    "post-bop"
-  ],
-  "activeFrom": 1961
+  ]
  },
  {
   "artist": "Hilary Hahn",
@@ -4608,8 +4509,7 @@
    "baroque",
    "classical",
    "concerto"
-  ],
-  "activeFrom": 1996
+  ]
  },
  {
   "artist": "Hombres G",
@@ -4696,8 +4596,7 @@
    "hard rock",
    "proto-punk",
    "punk rock"
-  ],
-  "activeFrom": 1967
+  ]
  },
  {
   "artist": "Igor Stravinsky",
@@ -4726,8 +4625,7 @@
    "classical",
    "concerto",
    "concerto grosso"
-  ],
-  "activeFrom": 1985
+  ]
  },
  {
   "artist": "Ilegales",
@@ -4758,9 +4656,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1927,
-  "activeTo": 1990
+  ]
  },
  {
   "artist": "Indochine",
@@ -4806,8 +4702,7 @@
    "bulería",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 2017
+  ]
  },
  {
   "artist": "Itzhak Perlman",
@@ -4817,8 +4712,7 @@
    "classical",
    "concerto",
    "romantic classical"
-  ],
-  "activeFrom": 1963
+  ]
  },
  {
   "artist": "Iván Ferreiro",
@@ -4873,9 +4767,7 @@
    "classical",
    "concerto",
    "romantic classical"
-  ],
-  "activeFrom": 1961,
-  "activeTo": 1973
+  ]
  },
  {
   "artist": "Jacques Brel",
@@ -4918,8 +4810,7 @@
    "classical",
    "concerto",
    "orchestral"
-  ],
-  "activeFrom": 1969
+  ]
  },
  {
   "artist": "Janis Joplin",
@@ -4972,9 +4863,7 @@
    "classical",
    "concerto",
    "romantic classical"
-  ],
-  "activeFrom": 1917,
-  "activeTo": 1972
+  ]
  },
  {
   "artist": "Jason Mraz",
@@ -5070,9 +4959,7 @@
    "alternative rock",
    "garage rock revival",
    "hard rock"
-  ],
-  "activeFrom": 2001,
-  "activeTo": 2012
+  ]
  },
  {
   "artist": "Jethro Tull",
@@ -5159,9 +5046,7 @@
    "classical",
    "opera",
    "opera seria"
-  ],
-  "activeFrom": 1952,
-  "activeTo": 1990
+  ]
  },
  {
   "artist": "Joaquín Rodrigo",
@@ -5237,9 +5122,7 @@
    "hard bop",
    "jazz",
    "modal jazz"
-  ],
-  "activeFrom": 1945,
-  "activeTo": 1967
+  ]
  },
  {
   "artist": "John Eliot Gardiner",
@@ -5250,8 +5133,7 @@
    "mass",
    "oratorio",
    "orchestral"
-  ],
-  "activeFrom": 1964
+  ]
  },
  {
   "artist": "Johnny Cash",
@@ -5285,8 +5167,7 @@
    "lied",
    "opera",
    "verismo"
-  ],
-  "activeFrom": 1994
+  ]
  },
  {
   "artist": "Joni Mitchell",
@@ -5296,8 +5177,7 @@
    "folk rock",
    "jazz",
    "singer-songwriter"
-  ],
-  "activeFrom": 1964
+  ]
  },
  {
   "artist": "Joseph Haydn",
@@ -5317,8 +5197,7 @@
    "opera",
    "verismo",
    "zarzuela"
-  ],
-  "activeFrom": 1970
+  ]
  },
  {
   "artist": "José José",
@@ -5345,8 +5224,7 @@
    "bulería",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1968
+  ]
  },
  {
   "artist": "José de Rico",
@@ -5466,9 +5344,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1938,
-  "activeTo": 1990
+  ]
  },
  {
   "artist": "Juanito Valderrama",
@@ -5478,9 +5354,7 @@
    "fandango",
    "flamenco",
    "pasodoble"
-  ],
-  "activeFrom": 1935,
-  "activeTo": 2002
+  ]
  },
  {
   "artist": "Judas Priest",
@@ -5509,9 +5383,7 @@
    "character piece",
    "classical",
    "renaissance"
-  ],
-  "activeFrom": 1950,
-  "activeTo": 2002
+  ]
  },
  {
   "artist": "Julieta Venegas",
@@ -5696,9 +5568,7 @@
    "jazz",
    "modal jazz",
    "post-bop"
-  ],
-  "activeFrom": 1965,
-  "activeTo": 2018
+  ]
  },
  {
   "artist": "Kendrick Lamar",
@@ -5731,9 +5601,7 @@
    "flamenco pop",
    "nuevo flamenco",
    "rumba"
-  ],
-  "activeFrom": 1984,
-  "activeTo": 2005
+  ]
  },
  {
   "artist": "Khatia Buniatishvili",
@@ -5743,8 +5611,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 2008
+  ]
  },
  {
   "artist": "Kiko Veneno",
@@ -5783,8 +5650,7 @@
    "progressive rock",
    "psychedelic rock",
    "stoner rock"
-  ],
-  "activeFrom": 2010
+  ]
  },
  {
   "artist": "Kings of Leon",
@@ -5863,8 +5729,7 @@
    "contemporary classical",
    "minimalism",
    "string quartet"
-  ],
-  "activeFrom": 1973
+  ]
  },
  {
   "artist": "Kygo",
@@ -5891,8 +5756,7 @@
    "hi-nrg",
    "pop",
    "synth-pop"
-  ],
-  "activeFrom": 1987
+  ]
  },
  {
   "artist": "La Banda Trapera del Río",
@@ -5966,9 +5830,7 @@
    "bulería",
    "fandango",
    "flamenco"
-  ],
-  "activeFrom": 1910,
-  "activeTo": 1949
+  ]
  },
  {
   "artist": "La Oreja de Van Gogh",
@@ -6075,8 +5937,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 1999
+  ]
  },
  {
   "artist": "Las Grecas",
@@ -6169,9 +6030,7 @@
    "orchestral",
    "romantic classical",
    "symphony"
-  ],
-  "activeFrom": 1943,
-  "activeTo": 1990
+  ]
  },
  {
   "artist": "Leonard Cohen",
@@ -6181,9 +6040,7 @@
    "folk",
    "folk rock",
    "singer-songwriter"
-  ],
-  "activeFrom": 1956,
-  "activeTo": 2016
+  ]
  },
  {
   "artist": "Lewis Capaldi",
@@ -6309,9 +6166,7 @@
    "flamenco",
    "nuevo flamenco",
    "rumba"
-  ],
-  "activeFrom": 1972,
-  "activeTo": 1994
+  ]
  },
  {
   "artist": "London Philharmonic Orchestra",
@@ -6320,8 +6175,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1932
+  ]
  },
  {
   "artist": "London Symphony Orchestra",
@@ -6331,8 +6185,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1904
+  ]
  },
  {
   "artist": "Lone Star",
@@ -6727,9 +6580,7 @@
    "jazz",
    "swing",
    "vocal jazz"
-  ],
-  "activeFrom": 1922,
-  "activeTo": 1971
+  ]
  },
  {
   "artist": "Love of Lesbian",
@@ -6747,9 +6598,7 @@
    "opera",
    "romantic classical",
    "verismo"
-  ],
-  "activeFrom": 1961,
-  "activeTo": 2007
+  ]
  },
  {
   "artist": "Lucio Battisti",
@@ -6885,9 +6734,7 @@
    "garage rock",
    "hard rock",
    "proto-punk"
-  ],
-  "activeFrom": 1964,
-  "activeTo": 1972
+  ]
  },
  {
   "artist": "Macaco",
@@ -7008,8 +6855,7 @@
    "alternative rock",
    "britpop",
    "punk rock"
-  ],
-  "activeFrom": 1986
+  ]
  },
  {
   "artist": "Manolo Caracol",
@@ -7018,9 +6864,7 @@
    "bulería",
    "copla",
    "flamenco"
-  ],
-  "activeFrom": 1929,
-  "activeTo": 1973
+  ]
  },
  {
   "artist": "Manolo Escobar",
@@ -7163,9 +7007,7 @@
    "opera",
    "opera seria",
    "verismo"
-  ],
-  "activeFrom": 1941,
-  "activeTo": 1974
+  ]
  },
  {
   "artist": "Maria del Mar Bonet",
@@ -7257,8 +7099,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 1957
+  ]
  },
  {
   "artist": "Martha and the Vandellas",
@@ -7393,9 +7234,7 @@
    "new wave",
    "pop rock",
    "reggae rock"
-  ],
-  "activeFrom": 1979,
-  "activeTo": 1986
+  ]
  },
  {
   "artist": "Mercedes Ferrer",
@@ -7470,8 +7309,7 @@
    "afro-cuban jazz",
    "jazz",
    "latin jazz"
-  ],
-  "activeFrom": 1979
+  ]
  },
  {
   "artist": "Michel Sardou",
@@ -7505,8 +7343,7 @@
    "hard rock",
    "post-punk",
    "rock"
-  ],
-  "activeFrom": 1976
+  ]
  },
  {
   "artist": "Miguel Bosé",
@@ -7535,8 +7372,7 @@
    "copla",
    "flamenco",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1993
+  ]
  },
  {
   "artist": "Miguel Ríos",
@@ -7557,9 +7393,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1932,
-  "activeTo": 1970
+  ]
  },
  {
   "artist": "Mikel Erentxun",
@@ -7578,9 +7412,7 @@
    "jazz",
    "jazz fusion",
    "modal jazz"
-  ],
-  "activeFrom": 1944,
-  "activeTo": 1991
+  ]
  },
  {
   "artist": "Miley Cyrus",
@@ -7705,9 +7537,7 @@
    "opera",
    "romantic classical",
    "verismo"
-  ],
-  "activeFrom": 1956,
-  "activeTo": 2018
+  ]
  },
  {
   "artist": "Morad",
@@ -7735,9 +7565,7 @@
    "classical",
    "concerto",
    "orchestral"
-  ],
-  "activeFrom": 1945,
-  "activeTo": 2007
+  ]
  },
  {
   "artist": "Muchachito Bombo Infierno",
@@ -7863,9 +7691,7 @@
    "character piece",
    "classical",
    "concerto"
-  ],
-  "activeFrom": 1947,
-  "activeTo": 1997
+  ]
  },
  {
   "artist": "Nat King Cole",
@@ -7875,9 +7701,7 @@
    "swing",
    "traditional pop",
    "vocal jazz"
-  ],
-  "activeFrom": 1937,
-  "activeTo": 1965
+  ]
  },
  {
   "artist": "Natalia Jiménez",
@@ -8038,8 +7862,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1842
+  ]
  },
  {
   "artist": "NewJeans",
@@ -8058,8 +7881,7 @@
    "art rock",
    "gothic rock",
    "post-punk"
-  ],
-  "activeFrom": 1983
+  ]
  },
  {
   "artist": "Nickelback",
@@ -8135,9 +7957,7 @@
    "cantata",
    "classical",
    "orchestral"
-  ],
-  "activeFrom": 1953,
-  "activeTo": 2016
+  ]
  },
  {
   "artist": "Nil Moliner",
@@ -8217,8 +8037,7 @@
    "flamenco pop",
    "folk",
    "nuevo flamenco"
-  ],
-  "activeFrom": 1996
+  ]
  },
  {
   "artist": "No Doubt",
@@ -8394,8 +8213,7 @@
    "impressionism",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1967
+  ]
  },
  {
   "artist": "Orquesta Mondragón",
@@ -8414,8 +8232,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1937
+  ]
  },
  {
   "artist": "Oscar Peterson",
@@ -8425,9 +8242,7 @@
    "cool jazz",
    "jazz",
    "swing"
-  ],
-  "activeFrom": 1945,
-  "activeTo": 2007
+  ]
  },
  {
   "artist": "Otis Redding",
@@ -8517,9 +8332,7 @@
    "modern classical",
    "nuevo flamenco",
    "rumba"
-  ],
-  "activeFrom": 1964,
-  "activeTo": 2014
+  ]
  },
  {
   "artist": "Paloma San Basilio",
@@ -8552,8 +8365,7 @@
    "bebop",
    "jazz",
    "latin jazz"
-  ],
-  "activeFrom": 1965
+  ]
  },
  {
   "artist": "Parliament",
@@ -8581,8 +8393,7 @@
    "jazz fusion",
    "post-bop",
    "smooth jazz"
-  ],
-  "activeFrom": 1974
+  ]
  },
  {
   "artist": "Pata Negra",
@@ -8592,9 +8403,7 @@
    "flamenco",
    "nuevo flamenco",
    "rumba"
-  ],
-  "activeFrom": 1981,
-  "activeTo": 1995
+  ]
  },
  {
   "artist": "Patti Smith",
@@ -8666,9 +8475,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1940,
-  "activeTo": 1980
+  ]
  },
  {
   "artist": "Percy Sledge",
@@ -8851,8 +8658,7 @@
    "alternative rock",
    "indie rock",
    "noise rock"
-  ],
-  "activeFrom": 1986
+  ]
  },
  {
   "artist": "Placebo",
@@ -8861,8 +8667,7 @@
    "alternative rock",
    "britpop",
    "post-punk"
-  ],
-  "activeFrom": 1994
+  ]
  },
  {
   "artist": "Platero y Tú",
@@ -8881,8 +8686,7 @@
    "opera",
    "verismo",
    "zarzuela"
-  ],
-  "activeFrom": 1959
+  ]
  },
  {
   "artist": "Portishead",
@@ -9046,8 +8850,7 @@
    "desert rock",
    "hard rock",
    "stoner rock"
-  ],
-  "activeFrom": 1996
+  ]
  },
  {
   "artist": "Quevedo",
@@ -9119,9 +8922,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1958,
-  "activeTo": 2014
+  ]
  },
  {
   "artist": "Raffaella Carrà",
@@ -9160,9 +8961,7 @@
    "hard rock",
    "heavy metal",
    "neoclassical metal"
-  ],
-  "activeFrom": 1975,
-  "activeTo": 1997
+  ]
  },
  {
   "artist": "Ralph Vaughan Williams",
@@ -9312,8 +9111,7 @@
    "classical",
    "opera",
    "romantic classical"
-  ],
-  "activeFrom": 1988
+  ]
  },
  {
   "artist": "Revólver",
@@ -9341,8 +9139,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1968
+  ]
  },
  {
   "artist": "Richard Wagner",
@@ -9503,9 +9300,7 @@
    "latin ballad",
    "pop",
    "ranchera"
-  ],
-  "activeFrom": 1961,
-  "activeTo": 2006
+  ]
  },
  {
   "artist": "Rocío Jurado",
@@ -9563,8 +9358,7 @@
    "reggaeton",
    "singer-songwriter",
    "trap latino"
-  ],
-  "activeFrom": 2017
+  ]
  },
  {
   "artist": "Rosana",
@@ -9650,8 +9444,7 @@
    "classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1888
+  ]
  },
  {
   "artist": "Rozalén",
@@ -9706,9 +9499,7 @@
    "hard rock",
    "heavy metal",
    "progressive rock"
-  ],
-  "activeFrom": 1968,
-  "activeTo": 2018
+  ]
  },
  {
   "artist": "Ryuichi Sakamoto",
@@ -9903,9 +9694,7 @@
    "bolero español",
    "copla",
    "pasodoble"
-  ],
-  "activeFrom": 1944,
-  "activeTo": 2012
+  ]
  },
  {
   "artist": "Sarah Vaughan",
@@ -9915,9 +9704,7 @@
    "jazz",
    "swing",
    "vocal jazz"
-  ],
-  "activeFrom": 1942,
-  "activeTo": 1990
+  ]
  },
  {
   "artist": "Savage Garden",
@@ -10236,9 +10023,7 @@
    "art rock",
    "grunge",
    "post-grunge"
-  ],
-  "activeFrom": 1992,
-  "activeTo": 2011
+  ]
  },
  {
   "artist": "Simon & Garfunkel",
@@ -10261,8 +10046,7 @@
    "modern classical",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1980
+  ]
  },
  {
   "artist": "Simple Minds",
@@ -10336,9 +10120,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1946,
-  "activeTo": 1997
+  ]
  },
  {
   "artist": "Sister Sledge",
@@ -10464,9 +10246,7 @@
    "experimental rock",
    "noise rock",
    "post-punk"
-  ],
-  "activeFrom": 1981,
-  "activeTo": 2011
+  ]
  },
  {
   "artist": "Soundgarden",
@@ -10506,9 +10286,7 @@
    "art rock",
    "new wave",
    "pop rock"
-  ],
-  "activeFrom": 1972,
-  "activeTo": 1984
+  ]
  },
  {
   "artist": "Stan Getz",
@@ -10517,9 +10295,7 @@
    "bossa nova",
    "cool jazz",
    "jazz"
-  ],
-  "activeFrom": 1943,
-  "activeTo": 1991
+  ]
  },
  {
   "artist": "Status Quo",
@@ -10528,8 +10304,7 @@
    "boogie rock",
    "hard rock",
    "rock"
-  ],
-  "activeFrom": 1962
+  ]
  },
  {
   "artist": "Steely Dan",
@@ -10547,8 +10322,7 @@
    "blues rock",
    "hard rock",
    "psychedelic rock"
-  ],
-  "activeFrom": 1967
+  ]
  },
  {
   "artist": "Stereophonics",
@@ -10557,8 +10331,7 @@
    "alternative rock",
    "britpop",
    "hard rock"
-  ],
-  "activeFrom": 1992
+  ]
  },
  {
   "artist": "Stevie Wonder",
@@ -10868,9 +10641,7 @@
    "art rock",
    "post-punk",
    "punk rock"
-  ],
-  "activeFrom": 1973,
-  "activeTo": 1978
+  ]
  },
  {
   "artist": "Tems",
@@ -10898,9 +10669,7 @@
    "opera",
    "opera buffa",
    "zarzuela"
-  ],
-  "activeFrom": 1955,
-  "activeTo": 2008
+  ]
  },
  {
   "artist": "Tete Montoliu",
@@ -10910,9 +10679,7 @@
    "hard bop",
    "jazz",
    "post-bop"
-  ],
-  "activeFrom": 1955,
-  "activeTo": 1997
+  ]
  },
  {
   "artist": "The Animals",
@@ -10934,9 +10701,7 @@
    "country rock",
    "folk rock",
    "roots rock"
-  ],
-  "activeFrom": 1967,
-  "activeTo": 1999
+  ]
  },
  {
   "artist": "The Bangles",
@@ -11043,8 +10808,7 @@
    "jangle pop",
    "post-punk",
    "psychedelic rock"
-  ],
-  "activeFrom": 1980
+  ]
  },
  {
   "artist": "The Clash",
@@ -11112,8 +10876,7 @@
    "rock",
    "soft rock",
    "yacht rock"
-  ],
-  "activeFrom": 1970
+  ]
  },
  {
   "artist": "The Doors",
@@ -11132,9 +10895,7 @@
    "psychedelic rock",
    "rock",
    "rock and roll"
-  ],
-  "activeFrom": 1965,
-  "activeTo": 1973
+  ]
  },
  {
   "artist": "The Eagles",
@@ -11152,9 +10913,7 @@
    "beat music",
    "garage rock",
    "pop rock"
-  ],
-  "activeFrom": 1964,
-  "activeTo": 1969
+  ]
  },
  {
   "artist": "The English Concert",
@@ -11164,8 +10923,7 @@
    "classical",
    "concerto grosso",
    "oratorio"
-  ],
-  "activeFrom": 1973
+  ]
  },
  {
   "artist": "The Everly Brothers",
@@ -11317,8 +11075,7 @@
    "art rock",
    "indie rock",
    "post-punk"
-  ],
-  "activeFrom": 1999
+  ]
  },
  {
   "artist": "The Notorious B.I.G.",
@@ -11368,8 +11125,7 @@
    "pop rock",
    "post-punk",
    "rock"
-  ],
-  "activeFrom": 1978
+  ]
  },
  {
   "artist": "The Prodigy",
@@ -11412,9 +11168,7 @@
    "alternative rock",
    "power pop",
    "punk rock"
-  ],
-  "activeFrom": 1979,
-  "activeTo": 1991
+  ]
  },
  {
   "artist": "The Righteous Brothers",
@@ -11627,9 +11381,7 @@
    "mod",
    "psychedelic rock",
    "rock"
-  ],
-  "activeFrom": 1963,
-  "activeTo": 1968
+  ]
  },
  {
   "artist": "The Zombies",
@@ -11653,9 +11405,7 @@
    "bebop",
    "hard bop",
    "jazz"
-  ],
-  "activeFrom": 1944,
-  "activeTo": 1982
+  ]
  },
  {
   "artist": "Them",
@@ -11760,9 +11510,7 @@
    "folk rock",
    "heartland rock",
    "rock"
-  ],
-  "activeFrom": 1976,
-  "activeTo": 2017
+  ]
  },
  {
   "artist": "Tomaso Albinoni",
@@ -11780,8 +11528,7 @@
    "flamenco",
    "nuevo flamenco",
    "rumba"
-  ],
-  "activeFrom": 1980
+  ]
  },
  {
   "artist": "Toots and the Maytals",
@@ -11968,8 +11715,7 @@
    "hard rock",
    "heavy metal",
    "progressive rock"
-  ],
-  "activeFrom": 1969
+  ]
  },
  {
   "artist": "Usher",
@@ -12004,8 +11750,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 2007
+  ]
  },
  {
   "artist": "Valery Gergiev",
@@ -12016,8 +11761,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1978
+  ]
  },
  {
   "artist": "Vampire Weekend",
@@ -12043,8 +11787,7 @@
   "genres": [
    "art rock",
    "progressive rock"
-  ],
-  "activeFrom": 1967
+  ]
  },
  {
   "artist": "Vanesa Martín",
@@ -12092,8 +11835,7 @@
    "flamenco",
    "nuevo flamenco",
    "rumba"
-  ],
-  "activeFrom": 1988
+  ]
  },
  {
   "artist": "Viceversa",
@@ -12147,9 +11889,7 @@
    "concerto",
    "romantic classical",
    "sonata"
-  ],
-  "activeFrom": 1928,
-  "activeTo": 1989
+  ]
  },
  {
   "artist": "Víctor Manuel",
@@ -12167,9 +11907,7 @@
    "jazz",
    "jazz fusion",
    "jazz-funk"
-  ],
-  "activeFrom": 1970,
-  "activeTo": 1986
+  ]
  },
  {
   "artist": "Weezer",
@@ -12187,9 +11925,7 @@
    "jazz",
    "jazz-funk",
    "soul jazz"
-  ],
-  "activeFrom": 1948,
-  "activeTo": 1968
+  ]
  },
  {
   "artist": "Wet Leg",
@@ -12218,8 +11954,7 @@
    "blues rock",
    "glam metal",
    "hard rock"
-  ],
-  "activeFrom": 1978
+  ]
  },
  {
   "artist": "Whitney Houston",
@@ -12246,8 +11981,7 @@
    "orchestral",
    "romantic classical",
    "symphony"
-  ],
-  "activeFrom": 1842
+  ]
  },
  {
   "artist": "Wilco",
@@ -12257,8 +11991,7 @@
    "americana",
    "country rock",
    "indie rock"
-  ],
-  "activeFrom": 1994
+  ]
  },
  {
   "artist": "Wilfrido Vargas",
@@ -12275,9 +12008,7 @@
    "orchestral",
    "romantic classical",
    "symphony"
-  ],
-  "activeFrom": 1922,
-  "activeTo": 1954
+  ]
  },
  {
   "artist": "Willie Colón",
@@ -12340,8 +12071,7 @@
    "heavy metal",
    "psychedelic rock",
    "stoner rock"
-  ],
-  "activeFrom": 2004
+  ]
  },
  {
   "artist": "Wu-Tang Clan",
@@ -12406,8 +12136,7 @@
    "classical",
    "concerto",
    "string quartet"
-  ],
-  "activeFrom": 1976
+  ]
  },
  {
   "artist": "Young Miko",
@@ -12427,8 +12156,7 @@
    "classical",
    "concerto",
    "sonata"
-  ],
-  "activeFrom": 2007
+  ]
  },
  {
   "artist": "ZZ Top",
@@ -12437,8 +12165,7 @@
    "blues rock",
    "boogie rock",
    "hard rock"
-  ],
-  "activeFrom": 1969
+  ]
  },
  {
   "artist": "Zach Bryan",
@@ -12484,8 +12211,7 @@
    "opera",
    "orchestral",
    "symphony"
-  ],
-  "activeFrom": 1961
+  ]
  },
  {
   "artist": "Zucchero",

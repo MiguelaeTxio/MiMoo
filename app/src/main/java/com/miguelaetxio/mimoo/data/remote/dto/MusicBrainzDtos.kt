@@ -129,21 +129,6 @@ data class MusicBrainzArtistDetail(
 
 data class MusicBrainzLifeSpan(
     @SerializedName("begin") val begin: String? = null,
-    /**
-     * S025 -- fecha de disolución/fallecimiento. La devuelve MusicBrainz
-     * junto a `begin` y hasta ahora se tiraba, pero es la mitad que
-     * falta de la regla de coherencia del ancla: un tema no puede ser
-     * posterior a que el artista dejara de existir. En el log de Miguel
-     * Ángel, "Black Dog" de Led Zeppelin se fechó en 1983 -- tres años
-     * después de que el grupo se disolviera -- y ese dato imposible
-     * ancló la sesión entera en los 80. Con `end` la comprobación es
-     * inmediata. Ver RadioRepository.isYearCoherent().
-     * ---
-     * S025 -- disband/death date. MusicBrainz returns it next to
-     * `begin`; it was being discarded. It's the missing half of the
-     * anchor's coherence rule.
-     */
-    @SerializedName("end") val end: String? = null,
 )
 
 /**

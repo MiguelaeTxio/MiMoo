@@ -78,14 +78,6 @@ class AnchorDictionary @Inject constructor(
         val artist: String = "",
         val country: String? = null,
         val genres: List<String> = emptyList(),
-        /**
-         * Años de actividad, para la regla de coherencia. Un tema no
-         * puede ser anterior a `activeFrom` ni posterior a `activeTo`:
-         * es lo que habría tumbado el "Black Dog -> 1983" del log de
-         * Miguel Ángel, con Led Zeppelin disueltos en 1980.
-         */
-        val activeFrom: Int? = null,
-        val activeTo: Int? = null,
         /** De dónde salió: `semilla`, `musicbrainz`, `discogs`... */
         val source: String = "semilla",
     )
