@@ -886,6 +886,34 @@ class RadioRepository @Inject constructor(
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
 
+        // S025 -- LA BASE DE DATOS CONSTRUIDA SE CONSULTA PRIMERO.
+        //
+        // Orden de Miguel Ángel, y llevaba razón en el fondo del asunto:
+        // *"quiero que la base de datos que he construido se use de una
+        // vez."* Hasta aquí `suggestRelatedArtist()` iba siempre en vivo
+        // a MusicBrainz, ignorando por completo los miles de artistas
+        // -- con país y géneros ya resueltos -- que el botón de Ajustes
+        // guardó en la tarjeta. Media hora de recorrido para nada.
+        //
+        // Ahora se pregunta primero a `AnchorDictionary`, que es
+        // instantáneo: sin red, sin el límite de una petición por
+        // segundo de MusicBrainz. Solo si de ahí no sale nada -- la
+        // base todavía no cubre ese género, o aún no se ha construido --
+        // se cae a la búsqueda en vivo, exactamente como antes.
+        val localGenres = (listOf(anchor.genre) + anchor.genres).toSet()
+        val fromDictionary = anchorDictionary
+            .artistsMatching(localGenres, anchor.country)
+            .filter { it.lowercase() !in excludeLower }
+        if (fromDictionary.isNotEmpty()) {
+            val preferredLocal = fromDictionary.filter { it.lowercase() !in avoidLower }
+            val chosenLocal = preferredLocal.ifEmpty { fromDictionary }.random()
+            log(
+                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}) -> " +
+                    "'$chosenLocal' (${fromDictionary.size} candidatos DE LA BASE DE DATOS, sin red)"
+            )
+            return chosenLocal
+        }
+
         // S020 -- cascada de DOS peldaños, nunca tres. El tercero
         // (`findCandidatesAnyGenre`: mantener década, soltar el género)
         // se elimina por la regla suprema de Miguel Ángel: "el género no

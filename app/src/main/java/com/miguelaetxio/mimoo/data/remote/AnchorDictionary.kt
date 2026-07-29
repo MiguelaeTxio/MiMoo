@@ -487,6 +487,35 @@ class AnchorDictionary @Inject constructor(
      * y es idéntica en los dos teléfonos, así que meterla en la copia
      * sería duplicar por nada varios cientos de kB en cada respaldo.
      */
+    /**
+     * S025 -- CONSULTA DIRECTA DE LA BASE DE DATOS CONSTRUIDA.
+     *
+     * Orden de Miguel Ángel, y con toda la razón: *"quiero que la base
+     * de datos que he construido se use de una vez."* Llevaba razón
+     * también en el fondo: se construyó una base de miles de artistas
+     * y la búsqueda de relacionados seguía yendo en vivo a MusicBrainz
+     * como si no existiera. `RadioRepository.findCandidates()` no la
+     * consultaba en ningún punto.
+     *
+     * Devuelve los artistas de la semilla y de lo aprendido cuyo país
+     * coincide y que comparten AL MENOS UN género con lo pedido. Es
+     * instantáneo -- sin red, sin límite de una petición por segundo --
+     * y es justo lo que media hora de recorrido debería servir para
+     * evitar.
+     */
+    fun artistsMatching(genres: Set<String>, country: String?): List<String> {
+        ensureLoaded()
+        val wanted = genres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
+        if (wanted.isEmpty()) return emptyList()
+        val pool = seed.values.asSequence() + learnedArtists.values.asSequence()
+        return pool
+            .filter { country == null || it.country == country }
+            .filter { it.genres.any { g -> g in wanted } }
+            .map { it.artist }
+            .distinct()
+            .toList()
+    }
+
     fun learnedArtistsSnapshot(): List<ArtistFacts> {
         ensureLoaded()
         return learnedArtists.values.toList()
