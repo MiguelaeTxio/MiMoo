@@ -88,7 +88,33 @@ jobs:
         run: chmod +x gradlew
 
       - name: Compilar APK debug
-        run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }}
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug -PversionCode=${{ github.run_number }} 2>&1 | tee /tmp/gradle.log
+
+      # S025 -- los errores de compilacion como ANOTACIONES del check.
+      #
+      # El zip de logs de Actions redirige a
+      # results-receiver.actions.githubusercontent.com, que no es
+      # accesible desde el entorno donde se diagnostica, asi que un
+      # fallo de compilacion obligaba a que Miguel Angel copiase el log
+      # a mano. Emitiendo `::error::` por cada linea `e: file://` de
+      # Kotlin, los errores quedan en
+      # /repos/.../check-runs/{id}/annotations, que si es accesible por
+      # API. Solo corre si la compilacion ha fallado.
+      - name: Publicar errores de compilacion como anotaciones
+        if: failure()
+        run: |
+          if [ ! -f /tmp/gradle.log ]; then
+            echo "::error::No hay /tmp/gradle.log"
+            exit 0
+          fi
+          grep -E "^e: |error: |FAILURE: |What went wrong|Caused by:" /tmp/gradle.log \
+            | head -40 \
+            | while IFS= read -r line; do
+                clean=$(printf '%s' "$line" | tr -d '\r' | sed 's/%/%25/g; s/\r/%0D/g')
+                echo "::error::${clean}"
+              done
 
       - name: Subir APK a PythonAnywhere
         env:
