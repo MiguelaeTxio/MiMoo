@@ -322,6 +322,55 @@ class AnchorDictionary @Inject constructor(
         return pending.size
     }
 
+    /**
+     * S025 -- BORRA TODO LO APRENDIDO.
+     *
+     * La primera versión del constructor sembró el diccionario con los
+     * artistas de la biblioteca local, y ese campo puede contener el
+     * nombre del canal de YouTube. Resultado: entradas como "Deep Purple
+     * Official" con país y géneros propios, exactamente lo que llevaba
+     * toda la sesión ordenándose sacar del sistema.
+     *
+     * Esa base de datos no se puede corregir entrada por entrada porque
+     * no hay forma de distinguir lo bueno de lo malo: se tira entera y
+     * se vuelve a construir con una fuente limpia. Se ejecuta una sola
+     * vez al actualizar, marcada con `FILE_WIPED`.
+     *
+     * La semilla del APK no se toca: no está contaminada.
+     */
+    fun wipeLearnedOnce() {
+        ensureLoaded()
+        if (!readText(FILE_WIPED).isNullOrBlank()) return
+        learnedArtists.clear()
+        learnedTracks.clear()
+        pending.clear()
+        pendingItems.clear()
+        pendingArtists.clear()
+        pendingArtistItems.clear()
+        writeArtists()
+        writeTracks()
+        writePending()
+        writePendingArtists()
+        writeText(FILE_WIPED, "S025")
+    }
+
+    /**
+     * S025 -- ¿este nombre huele a canal de YouTube y no a artista?
+     *
+     * No hay forma infalible de saberlo, pero sí hay marcas que un
+     * artista real prácticamente nunca lleva y un canal lleva casi
+     * siempre. Ante la duda se descarta: dejar fuera a un artista
+     * legítimo cuesta una entrada; meter un canal ensucia el
+     * diccionario y la Radio.
+     */
+    fun looksLikeChannelName(name: String): Boolean {
+        val n = " ${SearchNormalizer.normalizeArtistName(name)} "
+        if (n.isBlank()) return true
+        return CHANNEL_MARKERS.any { n.contains(" $it ") } ||
+            n.trim().split(" ").size > 6 ||
+            n.trim().length > 45
+    }
+
     // ---------------------------------------------------------------
     // Copia entre dispositivos de la MISMA cuenta (H07)
     // ---------------------------------------------------------------
@@ -527,6 +576,21 @@ class AnchorDictionary @Inject constructor(
         const val FILE_TRACKS = "temas.json"
         const val FILE_PENDING = "pendientes.json"
         const val FILE_PENDING_ARTISTS = "pendientes_artistas.json"
+        const val FILE_WIPED = "borrado_s025.txt"
+
+        /**
+         * S025 -- palabras que delatan un canal de YouTube y no un
+         * artista. Salen de casos reales del log de Miguel Ángel:
+         * "Deep Purple Official", "OlvidadasCanciones",
+         * "Valentina Lisitsa QOR Records Official channel".
+         */
+        val CHANNEL_MARKERS = setOf(
+            "official", "oficial", "channel", "canal", "vevo", "topic",
+            "records", "music", "musica", "tv", "hd", "hq", "video",
+            "videos", "oldies", "clasicos", "recopilacion", "recopilaciones",
+            "mix", "playlist", "radio", "fm", "productions", "media",
+            "entertainment", "studios", "label", "discos", "subs", "fan",
+        )
 
         /**
          * Tope de la cola de pendientes. No es por espacio -- un JSON

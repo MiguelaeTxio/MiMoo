@@ -119,6 +119,11 @@ class SettingsViewModel @Inject constructor(
     fun refreshDictionaryCounts() {
         viewModelScope.launch {
             if (_dictionaryState.value is DictionaryState.Running) return@launch
+            // S025 -- la base de datos que construyo la primera version
+            // del boton estaba contaminada con nombres de canal. No se
+            // puede corregir entrada por entrada: se tira entera, una
+            // sola vez, y se vuelve a construir con fuente limpia.
+            runCatching { anchorDictionary.wipeLearnedOnce() }
             val queued = runCatching { anchorDictionaryBuilder.pendingWork() }.getOrDefault(0)
             _dictionaryState.value = DictionaryState.Idle(
                 learned = anchorDictionary.learnedArtistCount(),
@@ -144,7 +149,12 @@ class SettingsViewModel @Inject constructor(
                 when (result) {
                     is com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder.Result.Finished ->
                         "Terminado. ${result.resolved} artista(s) añadidos al diccionario, " +
-                            "${result.notFound} sin ficha, ${result.skipped} ya estaban."
+                            "${result.notFound} sin ficha, ${result.skipped} ya estaban." +
+                            if (result.renamedFolders > 0) {
+                                " ${result.renamedFolders} carpeta(s) renombradas al nombre del artista."
+                            } else {
+                                ""
+                            }
                     is com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder.Result.Stopped ->
                         "Parado. ${result.resolved} artista(s) añadidos antes de parar; " +
                             "lo hecho ya está guardado."

@@ -152,7 +152,11 @@ class DownloadQueueManager @Inject constructor(
                 enqueue(
                     youtubeId = track.youtubeId,
                     title = track.title,
-                    artist = track.artist ?: track.channelTitle,
+                    // S025 -- el canal no es el artista. Ver
+                    // PlayerBarViewModel.downloadCurrentTrack().
+                    artist = track.artist
+                        ?: com.miguelaetxio.mimoo.util.SearchNormalizer.artistFromTitle(track.title)
+                        ?: track.title,
                     album = track.album,
                 )
             }

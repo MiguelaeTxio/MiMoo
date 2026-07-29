@@ -285,7 +285,15 @@ class PlayerBarViewModel @Inject constructor(
             downloadQueueManager.enqueue(
                 youtubeId = youtubeId,
                 title = title,
-                artist = track?.artist ?: current.currentChannelTitle ?: title,
+                // S025 -- el nombre del canal NO es el artista. Nunca.
+                // Antes caia a `currentChannelTitle` y por ahi entraban
+                // en la biblioteca carpetas como "Deep Purple Official".
+                // Si no hay artista real se parte del titulo
+                // ("Artista - Tema"); si tampoco, se deja el titulo y ya
+                // lo corregira la reconciliacion del boton de Ajustes.
+                artist = track?.artist
+                    ?: com.miguelaetxio.mimoo.util.SearchNormalizer.artistFromTitle(title)
+                    ?: title,
                 album = track?.album,
                 trackPosition = track?.trackPosition,
             )

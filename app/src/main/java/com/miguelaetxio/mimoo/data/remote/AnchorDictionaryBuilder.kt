@@ -51,6 +51,7 @@ class AnchorDictionaryBuilder @Inject constructor(
     private val anchorDictionary: AnchorDictionary,
     private val radioRepository: RadioRepository,
     private val trackDao: SearchResultTrackDao,
+    private val folderReconciler: LibraryFolderReconciler,
 ) {
 
     /** Avance del recorrido, para pintarlo en Ajustes. */
@@ -64,7 +65,12 @@ class AnchorDictionaryBuilder @Inject constructor(
 
     /** Cómo terminó el recorrido. */
     sealed interface Result {
-        data class Finished(val resolved: Int, val notFound: Int, val skipped: Int) : Result
+        data class Finished(
+            val resolved: Int,
+            val notFound: Int,
+            val skipped: Int,
+            val renamedFolders: Int = 0,
+        ) : Result
         data class Stopped(val resolved: Int, val notFound: Int) : Result
         data class NetworkDown(val resolved: Int, val notFound: Int) : Result
     }
@@ -104,8 +110,22 @@ class AnchorDictionaryBuilder @Inject constructor(
                     return Result.NetworkDown(resolved, notFound)
             }
         }
+        // S025 -- SEGUNDA FASE: arreglar el directorio en disco.
+        //
+        // Orden de Miguel Ángel: *"en el botón de generar la base de
+        // datos, cuando se pulse, debes incluir reconciliar los nombres
+        // de las carpetas y poner los nombres de los artistas y no los
+        // nombres de canales, que es un asco el directorio ahora
+        // mismo."*
+        //
+        // Las carpetas se crearon con lo que hubiera en
+        // `SearchResultTrack.artist`, que podía ser el canal. Esta fase
+        // recorre la raíz, detecta las que llevan nombre de canal y las
+        // renombra al artista real cuando se puede deducir.
+        onProgress(Progress(queue.size, queue.size, resolved, notFound, "Ordenando carpetas..."))
+        val renamed = folderReconciler.reconcile()
         onProgress(Progress(queue.size, queue.size, resolved, notFound, ""))
-        return Result.Finished(resolved, notFound, skipped)
+        return Result.Finished(resolved, notFound, skipped, renamed)
     }
 
     /**
@@ -122,6 +142,7 @@ class AnchorDictionaryBuilder @Inject constructor(
         fun add(name: String?) {
             val clean = name?.trim().orEmpty()
             if (clean.isBlank()) return
+            if (anchorDictionary.looksLikeChannelName(clean)) return
             val k = SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(clean))
             if (k.isBlank() || !seen.add(k)) return
             if (anchorDictionary.artist(clean) != null) return
@@ -131,10 +152,18 @@ class AnchorDictionaryBuilder @Inject constructor(
         // 1. El cajón de sin red, que es lo que ya se sabe que falta.
         anchorDictionary.takePendingArtists(Int.MAX_VALUE).forEach { add(it) }
 
-        // 2. La biblioteca local. Son los artistas que de verdad se
-        //    escuchan, así que son los que más veces van a anclar.
+        // 2. La biblioteca local, PERO filtrando lo que huele a canal.
+        //
+        //    La primera versión de esto metía `SearchResultTrack.artist`
+        //    tal cual, y ese campo podía traer el nombre del canal de
+        //    YouTube. Así entraron cosas como "Deep Purple Official" en
+        //    el diccionario. Ahora se descarta todo lo que
+        //    `looksLikeChannelName()` marque, y lo que quede se contrasta
+        //    además con la semilla: si el nombre no está en el índice de
+        //    artistas conocidos y encima huele a canal, fuera.
         trackDao.getAllOnce()
             .mapNotNull { it.artist }
+            .filterNot { anchorDictionary.looksLikeChannelName(it) }
             .forEach { add(it) }
 
         return queue

@@ -121,6 +121,24 @@ object SearchNormalizer {
         return "$forename $surname"
     }
 
+    /**
+     * S025 -- el artista que va delante en "Artista - Tema", o `null`
+     * si el título no trae ese patrón.
+     *
+     * Existe para que ningún sitio tenga que caer al nombre del canal
+     * cuando falta el artista. Orden de Miguel Ángel, repetida hasta el
+     * hartazgo: *"los nombres de los canales te los metes por donde te
+     * quepan, que aquí no nos hacen falta para nada."*
+     */
+    fun artistFromTitle(title: String?): String? {
+        val raw = title?.trim().orEmpty()
+        if (raw.isBlank()) return null
+        val head = raw.split(" - ", " – ", " — ").firstOrNull()?.trim().orEmpty()
+        if (head.isBlank() || head.length == raw.length) return null
+        if (head.length > 60) return null
+        return head
+    }
+
     fun normalizeArtistName(artist: String): String {
         val trimmed = reorderCommaName(artist.trim()).trim()
         val withoutLeadingThe = if (trimmed.startsWith("the ", ignoreCase = true)) {
