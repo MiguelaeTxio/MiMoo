@@ -2327,3 +2327,72 @@ figuraba pendiente en la Hoja de Ruta anterior (puntos 1-4 de más
 arriba) — en particular el comportamiento real en dispositivo, y si la
 semilla de 1.161 artistas tiene errores de país/género en entradas
 distintas a Led Zeppelin.
+
+---
+
+## CORRECCIÓN DE LA AUDITORÍA ANTERIOR, CON LOG REAL DE DISPOSITIVO
+
+Miguel Ángel aportó `radio_relacionados_debug.txt`, un log real de una
+sesión de Radio de Led Zeppelin de varias horas. Dos cosas quedan
+confirmadas y una queda corregida respecto a la auditoría de más
+arriba:
+
+- **Confirmado:** el dispositivo SÍ tiene instalado un build posterior
+  al commit auditado — el log muestra literalmente las líneas
+  predichas (`resolveAnchor(...) -> ancla del DICCIONARIO (sin red)`,
+  `suggestRelatedArtist(...) -> '...' (88 candidatos DE LA BASE DE
+  DATOS, sin red)`). La hipótesis de "APK desactualizado" queda
+  descartada por evidencia directa.
+- **Corregido:** pese a que la base de datos SÍ se consulta primero
+  (eso era correcto), el log muestra a Elton John y a Emerson, Lake &
+  Palmer colándose en la radio de Led Zeppelin de todos modos. La
+  auditoría anterior no había detectado esto porque no había log real
+  con el que contrastar el código — solo se había verificado que el
+  MECANISMO de consulta (diccionario antes que red) funcionaba, no que
+  el RESULTADO de la coincidencia de género fuera bueno.
+
+**Causa real, encontrada esta vez con el log delante:** Elton John
+comparte con Led Zeppelin únicamente `classic rock` (de ocho géneros);
+Emerson, Lake & Palmer comparte únicamente `progressive rock`. Ambas
+etiquetas tienen CERO descendientes en `genre_tree.json`, así que
+`GenreTree.isSpecific()` las trata como carpetas concretas de verdad,
+cuando en la práctica son etiquetas de formato de radio que MusicBrainz
+cuelga de casi cualquier artista de rock/pop de los 60-80 (63 de 1.682
+entradas del diccionario de éxitos y 46 de los 1.161 artistas de la
+semilla llevan `classic rock`).
+
+### Fix aplicado (commit `2923d28`, compilado en verde)
+
+Nuevo `GenreMatchQuality.kt`: objeto compartido por las tres porciones
+que puntúa la coincidencia como **FUERTE** (2+ géneros específicos
+compartidos) o **DÉBIL** (exactamente 1, o coincidencia por descenso/
+hermanos/ancla-genérica de rescate). Cada porción intenta primero la
+categoría FUERTE y solo cae a DÉBIL como último recurso si se queda
+sin candidatos — diseño pedido explícitamente por Miguel Ángel en vez
+de una lista negra de géneros genéricos:
+
+- **Conocidos (80%)** — `KnownHitsRepository.randomHit()`/
+  `knownArtists()`.
+- **Exploración (10%)** — `RadioRepository.suggestRelatedArtist()`;
+  `AnchorDictionary.artistsMatching()` ahora devuelve también los
+  géneros de cada candidato para poder puntuarlo.
+- **Disco (10%)** — `PlayerManager.fetchFromDisco()`, vía el nuevo
+  `RadioRepository.genreMatchQuality()` público (PlayerManager no
+  tiene acceso directo a `GenreTree`). `RadioAnchor.sharesGenreWith()`
+  retirada por quedar sin llamadores.
+
+Con este cambio, Emerson, Lake & Palmer y Elton John pasan a nivel
+DÉBIL/último recurso frente a Led Zeppelin; un candidato que comparta,
+por ejemplo, `hard rock` + `heavy metal` pasa a nivel FUERTE y se
+prefiere.
+
+**Respuesta directa a la pregunta de Miguel Ángel** ("¿llamamos a
+MusicBrainz siempre, o solo cuando no hay datos?"): confirmado sobre
+el propio log, MusicBrainz en vivo solo se llama cuando el diccionario
+local se queda sin candidatos tras aplicar las exclusiones de la
+sesión (`if (fromDictionary.isNotEmpty())` en `suggestRelatedArtist()`,
+sin tocar en este commit). La porción de Conocidos (80% del cupo)
+nunca ha llamado a MusicBrainz bajo ninguna circunstancia: es
+enteramente local, `KnownHitsRepository` es un asset empaquetado.
+
+**Sin verificar en dispositivo real todavía.**
