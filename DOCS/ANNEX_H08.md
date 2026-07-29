@@ -2449,3 +2449,50 @@ antes de compilar:
 **Sin verificar en dispositivo real todavía** -- pendiente que Miguel
 Ángel instale este build y confirme si la cola deja de mezclar
 Supertramp/ELP/Elton John con Led Zeppelin.
+
+---
+
+## TERCERA ITERACIÓN — Queen y Pink Floyd, causa en el DATO no en el ALGORITMO
+
+Miguel Ángel probó el build anterior (`3439312`) en dispositivo real.
+Log y captura de pantalla, 22:14-22:15: cola de Led Zeppelin con
+Queen, Motörhead, Jethro Tull y Pink Floyd. Su reacción, textual:
+*"Jethro Tull... puede coincidir en algún tema de rhythm and blues,
+vale. Pero de ahí a Queen y a Pink Floyd... hay un mundo enorme."*
+
+Verificado contra los datos reales antes de tocar nada: esta vez el
+algoritmo (`GenreMatchQuality`, sin cambios desde `3439312`) funcionaba
+exactamente como se diseñó. El problema estaba en el DATO: la propia
+semilla de Led Zeppelin (`anchor_artists.json`) incluye `progressive
+rock` entre sus ocho géneros -- etiqueta cuestionable para este
+artista, y ampliamente colgada por MusicBrainz en artistas muy
+distintos entre sí (Queen, Pink Floyd, Yes, Jethro Tull...). Con
+`progressive rock` en la semilla:
+- Queen comparte `{hard rock, progressive rock}` = 2 géneros
+  específicos → FUERTE.
+- Pink Floyd comparte `{blues rock, progressive rock}` = 2 → FUERTE.
+
+### Fix (commit `d2a8845`, compilado en verde)
+
+Se quita `progressive rock` de la entrada de Led Zeppelin en la
+semilla -- corrección de UN DATO concreto, no del algoritmo de
+coincidencia. Verificado por simulación contra los datos reales antes
+de compilar:
+- **Queen** se queda solo con `hard rock` compartido (1) → DÉBIL/
+  último recurso.
+- **Pink Floyd** se queda solo con `blues rock` compartido (1) →
+  DÉBIL/último recurso.
+- **Jethro Tull** sigue en FUERTE (comparte `folk rock` + `hard rock`,
+  sin depender de `progressive rock`) -- coherente con que Miguel
+  Ángel no lo cuestionó.
+- **Motörhead** no se ve afectado (`heavy metal` + `hard rock`).
+
+**Pendiente, sin poder verificarse desde este entorno de trabajo**
+(sin acceso de red a `musicbrainz.org`): auditar el resto de los
+1.161 artistas de la semilla por si tienen el mismo problema --
+etiquetas de género "de kitchen sink" con algún tag ampliamente
+sobre-usado que pueda seguir generando puentes falsos con otros
+anclajes. Ya figuraba como pendiente en la hoja de ruta original de
+S025; esta sesión lo confirma como riesgo real, no solo teórico.
+
+**Sin verificar en dispositivo real todavía.**
