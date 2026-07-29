@@ -1077,9 +1077,6 @@ private fun UpdateCheckSection(
     viewModel: AppUpdateViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    // S025 -- estado del constructor del diccionario del ancla (H08).
-    val dictionaryState by viewModel.dictionaryState.collectAsState()
-    androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshDictionaryCounts() }
     val context = LocalContext.current
     var installErrorMessage by remember { mutableStateOf<String?>(null) }
 
