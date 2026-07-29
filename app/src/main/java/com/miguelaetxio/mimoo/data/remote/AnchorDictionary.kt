@@ -709,9 +709,11 @@ class AnchorDictionary @Inject constructor(
      * volver a entrar en Ajustes ponía "Ya guardados: 0", y el
      * recorrido empezaba otra vez por el género 0.
      *
-     * Se crean ahora como `text/plain`, que no toca el nombre, y esta
-     * búsqueda acepta además cualquier variante que empiece por el
-     * nombre pedido, para recuperar lo que ya se escribió mal.
+     * Se crean ahora con `WRITE_MIME_TYPE` (S026:
+     * `application/octet-stream`, sin extensión canónica -- ver esa
+     * constante), que no toca el nombre, y esta búsqueda acepta además
+     * cualquier variante que empiece por el nombre pedido, para
+     * recuperar lo que ya se escribió mal con MIME anteriores.
      */
     private fun findDoc(dir: DocumentFile, name: String): DocumentFile? =
         docCache[name]
@@ -768,7 +770,7 @@ class AnchorDictionary @Inject constructor(
             if (content.isNullOrBlank()) continue
 
             val canonical = dir.findFile(name)
-                ?: dir.createFile("text/plain", name)
+                ?: dir.createFile(WRITE_MIME_TYPE, name)
                 ?: continue
             val written = runCatching {
                 context.contentResolver.openOutputStream(canonical.uri, "wt")?.use { out ->
@@ -813,11 +815,21 @@ class AnchorDictionary @Inject constructor(
         return try {
             val dir = dictionaryDir()
             if (dir != null) {
-                // `text/plain` a propósito: con `application/json` el
-                // proveedor SAF renombraba el fichero y se perdía todo.
-                // Ver findDoc().
+                // S026 -- SEGUNDA VUELTA DEL MISMO FALLO DE S025, esta vez
+                // con `text/plain`. Captura real de Miguel Ángel: el
+                // fichero en la tarjeta se llamaba `temas.json.txt`, no
+                // `temas.json` -- el proveedor SAF de su tarjeta también
+                // añade la extensión canónica del MIME (`.txt` para
+                // `text/plain`) cuando el nombre pedido no termina ya en
+                // ella, exactamente el mismo mecanismo que renombraba a
+                // `artistas.json.json` con `application/json`.
+                //
+                // `application/octet-stream` no tiene extensión canónica
+                // en el mapa de MIME de Android (es el tipo "binario
+                // genérico"), así que ningún proveedor SAF conocido le
+                // añade nada -- ver WRITE_MIME_TYPE.
                 val doc = findDoc(dir, name)
-                    ?: dir.createFile("text/plain", name)?.also { docCache[name] = it }
+                    ?: dir.createFile(WRITE_MIME_TYPE, name)?.also { docCache[name] = it }
                     ?: return false
                 context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
                     out.write(content.toByteArray())
@@ -871,6 +883,19 @@ class AnchorDictionary @Inject constructor(
         const val FILE_PENDING_ARTISTS = "pendientes_artistas.json"
         const val FILE_WIPED = "borrado_s025.txt"
         const val FILE_DONE_GENRES = "generos_recorridos.txt"
+
+        /**
+         * S026 -- MIME para crear los ficheros del diccionario en SAF.
+         * Ni `application/json` (S025: renombraba a `.json.json`) ni
+         * `text/plain` (S026: renombraba a `.json.txt`, visto en captura
+         * real de la tarjeta de Miguel Ángel) sirven -- ambos tienen
+         * extensión canónica en el mapa de MIME de Android, y al menos
+         * un proveedor SAF conocido la añade cuando el nombre pedido no
+         * termina ya en ella. `application/octet-stream` es el tipo
+         * "binario genérico", sin extensión canónica asociada, así que
+         * no hay nada que un proveedor pueda añadir.
+         */
+        const val WRITE_MIME_TYPE = "application/octet-stream"
 
         /** Todos los ficheros del diccionario, para la limpieza. */
         val ALL_FILES = listOf(
