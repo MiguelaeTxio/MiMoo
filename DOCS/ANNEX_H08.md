@@ -2536,3 +2536,55 @@ descargas. Coincidencia de nombres entre la carpeta que él eligió y la
 que crea la app, no un error de la app.
 
 **Sin verificar en dispositivo real todavía.**
+
+---
+
+## VERIFICACIÓN REAL DE EXISTENCIA DEL TEMA, O PARAR LA RADIO SIN RED
+
+Tras el fallo de "Free" (corto de Sony Animation colado en la Radio),
+Miguel Ángel pidió ir más allá del filtro de canal: verificar de
+verdad que el vídeo encontrado es un tema real del artista, contra
+cualquier fuente disponible (diccionario local, MusicBrainz, Discogs,
+Wikidata), y si no hay red para comprobarlo, **parar la Radio del
+todo** con aviso — nunca meter un vídeo sin verificar. Cita textual:
+*"el título del vídeo tiene que ser de un artista y de un tema de ese
+artista... si no coincide con ningún título de ese artista, se
+desecha. Y si no hay red no hay radio... antes parar que meter un
+vídeo que no viene a cuento."* Y, sobre qué fuente usar: *"me da igual
+validar contra MusicBrainz, Discogs, local, Wikidata o la fuente que
+sea. Lo que no quiero son audios de vídeos que no son canciones."*
+
+### Implementado (commit `4ddfecd`, compilado en verde)
+
+- **`RadioRepository.verifyTrackExists(artist, rawVideoTitle)`** (nueva):
+  reutiliza la misma cascada que ya usaba `resolveOriginalDecade()`
+  (diccionario en tarjeta → diccionario de éxitos → MusicBrainz →
+  Discogs → Wikidata), pero devuelve un resultado de tres vías —
+  `TrackExistence.Confirmed`/`NotFound`/`NetworkUnavailable` — en vez
+  de tratar "no sé" y "no hay red" igual. La distinción se apoya en
+  `lastFailureWasTransient`, el mismo mecanismo que ya usa
+  `reconcilePending()`.
+- **`PlayerManager.resolveYoutubeCandidate()`**: cuando no hay canción
+  conocida (Exploración, o "artista conocido, tema no catalogado" de
+  Conocidos), cada candidato que pasa el filtro de canal (ver bloque
+  anterior) se verifica contra `verifyTrackExists()` antes de
+  aceptarlo. Confirmado → se usa. No encontrado → se prueba el
+  siguiente candidato de los 6 que trae la búsqueda. Sin red → la
+  Radio se detiene del todo (no reintenta sola en la siguiente vuelta)
+  y se avisa a la UI. Con canción conocida (viene del diccionario, ya
+  es un dato curado por construcción) no se verifica -- sería
+  redundante.
+- **UI**: `PlayerBar.kt` muestra un `AlertDialog` ("Radio detenida")
+  con botón "Reintentar" (`PlayerManager.dismissRadioNetworkLost()`,
+  expuesto vía `PlayerBarViewModel`) que limpia el aviso y relanza el
+  reparto de la cola.
+
+**Alcance deliberadamente limitado a las búsquedas "solo artista".**
+Las porciones Conocidos (con canción catalogada) y Disco (pistas ya
+descargadas/reales) no necesitan esta verificación -- su dato ya es
+curado o real por construcción; extenderlo ahí sería redundante y
+solo añadiría llamadas de red innecesarias.
+
+**Sin verificar en dispositivo real todavía** -- en particular, que el
+aviso "Radio detenida" aparezca de verdad sin red, y que "Reintentar"
+relance la cola correctamente.
