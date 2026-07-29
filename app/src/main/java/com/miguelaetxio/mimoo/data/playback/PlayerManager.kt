@@ -1857,7 +1857,12 @@ class PlayerManager @Inject constructor(
         // es lo que Miguel Ángel lleva pidiendo desde el principio:
         // *"cuando la cuota de conocidos se acaba, nos queda la de
         // desconocidos, que no se acaba en la puta vida."*
-        val unknownItem = fetchFromUnknown(anchor, anchorArtistName, avoidNames)
+        val unknownItem = fetchFromUnknown(
+            anchor,
+            anchorArtistName,
+            anchorExclusion = setOf(anchorArtistName.lowercase()),
+            avoidNames = avoidNames,
+        )
         if (unknownItem != null) {
             RadioDebugLogger.log(
                 appContext, storageManager,
