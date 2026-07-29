@@ -130,11 +130,6 @@ class SettingsViewModel @Inject constructor(
         // describía.
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             if (_dictionaryState.value is DictionaryState.Running) return@launch
-            // S025 -- la base de datos que construyo la primera version
-            // del boton estaba contaminada con nombres de canal. No se
-            // puede corregir entrada por entrada: se tira entera, una
-            // sola vez, y se vuelve a construir con fuente limpia.
-            runCatching { anchorDictionary.wipeLearnedOnce() }
             val queued = runCatching { anchorDictionaryBuilder.pendingWork() }.getOrDefault(0)
             _dictionaryState.value = DictionaryState.Idle(
                 learned = anchorDictionary.learnedArtistCount(),

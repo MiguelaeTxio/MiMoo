@@ -381,8 +381,10 @@ class AnchorDictionary @Inject constructor(
     fun flush() {
         if (!dirtyArtists) return
         ensureLoaded()
-        writeArtists()
-        dirtyArtists = false
+        // S025 -- solo se da por guardado si la escritura fue bien. Si
+        // la tarjeta falla, `dirtyArtists` sigue en pie y el siguiente
+        // `flush()` lo reintenta, en vez de perder el lote en silencio.
+        if (writeArtists()) dirtyArtists = false
     }
 
     /** Géneros ya recorridos, para poder reanudar donde se dejó. */
@@ -421,6 +423,21 @@ class AnchorDictionary @Inject constructor(
     fun wipeLearnedOnce() {
         ensureLoaded()
         if (!readText(FILE_WIPED).isNullOrBlank()) return
+        // S025 -- LA MARCA SE ESCRIBE ANTES DE BORRAR NADA.
+        //
+        // Al revés era una mina, y estalló: se borraba primero y se
+        // marcaba al final, con un `writeText` que se tragaba los
+        // errores. Si esa escritura fallaba -- o la app moría por el
+        // ANR de Ajustes antes de llegar --, el borrado se repetía en
+        // CADA entrada a Ajustes y pulverizaba el trabajo una y otra
+        // vez. Reportado por Miguel Ángel: *"el trabajo anterior en la
+        // base de datos ha quedado pulverizado y no ha persistido en
+        // absoluto."*
+        //
+        // Si no se puede dejar constancia de que se ha borrado, no se
+        // borra. Es preferible arrastrar entradas sucias a perderlo
+        // todo en bucle.
+        if (!writeText(FILE_WIPED, "S025")) return
         learnedArtists.clear()
         learnedTracks.clear()
         pending.clear()
@@ -432,7 +449,6 @@ class AnchorDictionary @Inject constructor(
         writePending()
         writePendingArtists()
         writeText(FILE_DONE_GENRES, "")
-        writeText(FILE_WIPED, "S025")
     }
 
     /**
@@ -586,7 +602,8 @@ class AnchorDictionary @Inject constructor(
     private fun writePendingArtists() =
         writeText(FILE_PENDING_ARTISTS, gson.toJson(pendingArtistItems.values.toList()))
 
-    private fun writeArtists() = writeText(FILE_ARTISTS, gson.toJson(learnedArtists.values.toList()))
+    private fun writeArtists(): Boolean =
+        writeText(FILE_ARTISTS, gson.toJson(learnedArtists.values.toList()))
     private fun writeTracks() = writeText(FILE_TRACKS, gson.toJson(learnedTracks.values.toList()))
     private fun writePending() = writeText(FILE_PENDING, gson.toJson(pendingItems.values.toList()))
 
@@ -621,23 +638,26 @@ class AnchorDictionary @Inject constructor(
         null
     }
 
-    private fun writeText(name: String, content: String) {
-        try {
+    private fun writeText(name: String, content: String): Boolean {
+        return try {
             val dir = dictionaryDir()
             if (dir != null) {
                 val doc = dir.findFile(name) ?: dir.createFile("application/json", name)
-                doc?.let {
-                    context.contentResolver.openOutputStream(it.uri, "wt")?.use { out ->
-                        out.write(content.toByteArray())
-                    }
-                }
+                    ?: return false
+                context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
+                    out.write(content.toByteArray())
+                } != null
             } else {
                 File(context.filesDir, name).writeText(content)
+                true
             }
         } catch (e: Exception) {
             // Nunca romper la Radio por no poder escribir el
             // diccionario. Lo aprendido se queda en memoria para esta
-            // sesión y se reintentará al siguiente aprendizaje.
+            // sesión y se reintentará al siguiente aprendizaje. Pero se
+            // informa del fallo: `flush()` necesita saberlo para no dar
+            // por guardado lo que no lo está.
+            false
         }
     }
 
