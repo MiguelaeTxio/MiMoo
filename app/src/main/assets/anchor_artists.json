@@ -1,0 +1,12568 @@
+[
+ {
+  "artist": "10cc",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "pop rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "2 Unlimited",
+  "country": "NL",
+  "genres": [
+   "edm",
+   "electronic",
+   "euro house",
+   "eurodance",
+   "europop",
+   "hip house",
+   "house",
+   "pop",
+   "rave",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "2Pac",
+  "country": "US",
+  "genres": [
+   "conscious hip hop",
+   "g-funk",
+   "gangsta rap",
+   "hip hop",
+   "political hip hop",
+   "pop rap",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "50 Cent",
+  "country": "US",
+  "genres": [
+   "east coast hip hop",
+   "gangsta rap",
+   "hardcore hip hop",
+   "hip hop",
+   "pop rap",
+   "southern hip hop",
+   "trap"
+  ]
+ },
+ {
+  "artist": "ABBA",
+  "country": "SE",
+  "genres": [
+   "disco",
+   "euro-disco",
+   "europop",
+   "glam rock",
+   "mainstream rock",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "ABC",
+  "country": "GB",
+  "genres": [
+   "new romantic",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "AC/DC",
+  "country": "AU",
+  "genres": [
+   "blues rock",
+   "hard rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Abraham Mateo",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Academy of St Martin in the Fields",
+  "country": "GB",
+  "genres": [
+   "baroque",
+   "classical",
+   "concerto grosso",
+   "orchestral"
+  ],
+  "activeFrom": 1958
+ },
+ {
+  "artist": "Ace of Base",
+  "country": "SE",
+  "genres": [
+   "bubblegum dance",
+   "club",
+   "dance-pop",
+   "electronic",
+   "euro house",
+   "eurodance",
+   "europop",
+   "hi-nrg",
+   "pop",
+   "reggae",
+   "reggae-pop",
+   "ska",
+   "synth-pop",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Adamo",
+  "country": "BE",
+  "genres": [
+   "chanson française",
+   "europop",
+   "pop",
+   "schlager"
+  ]
+ },
+ {
+  "artist": "Adele",
+  "country": "GB",
+  "genres": [
+   "blue-eyed soul",
+   "neo soul",
+   "pop",
+   "pop soul",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Adriano Celentano",
+  "country": "IT",
+  "genres": [
+   "canzone napoletana",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Aerosmith",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "hard rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Afrojack",
+  "country": "NL",
+  "genres": [
+   "dutch house",
+   "electro house"
+  ]
+ },
+ {
+  "artist": "Aguaviva",
+  "country": "ES",
+  "genres": [
+   "folk rock",
+   "poetry"
+  ]
+ },
+ {
+  "artist": "Agustín Pantoja",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Air",
+  "country": "FR",
+  "genres": [
+   "downtempo",
+   "dream pop",
+   "electronic"
+  ]
+ },
+ {
+  "artist": "Air Supply",
+  "country": "AU",
+  "genres": [
+   "ballad",
+   "pop rock",
+   "soft rock"
+  ],
+  "activeFrom": 1975
+ },
+ {
+  "artist": "Aitana",
+  "country": "ES",
+  "genres": [
+   "electropop",
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Aitch",
+  "country": "GB",
+  "genres": [
+   "grime",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Al Green",
+  "country": "US",
+  "genres": [
+   "christmas music",
+   "contemporary gospel",
+   "gospel",
+   "smooth soul",
+   "soul",
+   "soul blues",
+   "southern soul"
+  ]
+ },
+ {
+  "artist": "Alan Walker",
+  "country": "NO",
+  "genres": [
+   "club",
+   "dance",
+   "dance-pop",
+   "edm",
+   "electro house",
+   "electronic",
+   "electropop",
+   "future bass",
+   "pop",
+   "progressive house",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Alanis Morissette",
+  "country": "CA",
+  "genres": [
+   "alternative rock",
+   "dance-pop",
+   "new jack swing",
+   "pop",
+   "pop rock",
+   "post-grunge",
+   "rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Alaska y Dinarama",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Alaska y Los Pegamoides",
+  "country": "ES",
+  "genres": [
+   "glam",
+   "new wave",
+   "pop rock",
+   "post-punk",
+   "punk",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Alejandro Fernández",
+  "country": "MX",
+  "genres": [
+   "ballad",
+   "bolero",
+   "latin",
+   "latin pop",
+   "mariachi",
+   "pop",
+   "pop rock",
+   "ranchera"
+  ]
+ },
+ {
+  "artist": "Alejandro Parreño",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Alejandro Sanz",
+  "country": "ES",
+  "genres": [
+   "flamenco pop",
+   "latin",
+   "latin pop",
+   "pop",
+   "rock",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Alfredo Kraus",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "opera",
+   "romantic classical",
+   "zarzuela"
+  ],
+  "activeFrom": 1956,
+  "activeTo": 1999
+ },
+ {
+  "artist": "Alice Cooper",
+  "country": "US",
+  "genres": [
+   "classic rock",
+   "garage rock",
+   "glam metal",
+   "glam rock",
+   "hard rock",
+   "heavy metal",
+   "new wave",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Alice in Chains",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "alternative metal",
+   "alternative rock",
+   "doom metal",
+   "glam metal",
+   "grunge",
+   "hard rock",
+   "heavy metal",
+   "rock",
+   "sludge metal",
+   "stoner metal"
+  ]
+ },
+ {
+  "artist": "Alicia Keys",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "hip hop",
+   "hip hop soul",
+   "jazz",
+   "jazz pop",
+   "neo soul",
+   "pop",
+   "pop soul",
+   "r&b",
+   "smooth soul",
+   "soul",
+   "southern soul"
+  ]
+ },
+ {
+  "artist": "Alicia de Larrocha",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "concerto",
+   "impressionism",
+   "sonata"
+  ],
+  "activeFrom": 1940,
+  "activeTo": 2003
+ },
+ {
+  "artist": "Alizzz",
+  "country": "ES",
+  "genres": [
+   "breaks",
+   "dubstep",
+   "electro",
+   "electro house",
+   "hip hop",
+   "house",
+   "jersey club",
+   "pop rap",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Allman Brothers Band",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "rock",
+   "southern rock"
+  ],
+  "activeFrom": 1969,
+  "activeTo": 2014
+ },
+ {
+  "artist": "Alphaville",
+  "country": "DE",
+  "genres": [
+   "alternative dance",
+   "dance-pop",
+   "dance-rock",
+   "dark disco",
+   "dark wave",
+   "darksynth",
+   "new wave",
+   "pop",
+   "progressive pop",
+   "sophisti-pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Alt-J",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "folktronica",
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Amaia",
+  "country": "ES",
+  "genres": [
+   "alternative pop"
+  ]
+ },
+ {
+  "artist": "Amaia Montero",
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Amanda Lear",
+  "country": "FR",
+  "genres": [
+   "disco",
+   "italo-disco"
+  ]
+ },
+ {
+  "artist": "Amaral",
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Amistades Peligrosas",
+  "country": "ES",
+  "genres": [
+   "europop",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Amy Winehouse",
+  "country": "GB",
+  "genres": [
+   "contemporary r&b",
+   "crossover jazz",
+   "jazz",
+   "jazz pop",
+   "neo soul",
+   "pop soul",
+   "r&b",
+   "soul",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "Ana Belén",
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Ana Curra",
+  "country": "ES",
+  "genres": [
+   "gothic rock",
+   "new wave",
+   "post-punk",
+   "punk",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Ana Guerra",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Ana Mena",
+  "country": "ES",
+  "genres": [
+   "electropop",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Ana Torroja",
+  "country": "ES",
+  "genres": [
+   "europop",
+   "garage house",
+   "house",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Ana y Johnny",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Andrea Bocelli",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "classical",
+   "opera",
+   "romantic classical"
+  ],
+  "activeFrom": 1994
+ },
+ {
+  "artist": "Andrés Segovia",
+  "country": "ES",
+  "genres": [
+   "baroque",
+   "character piece",
+   "classical",
+   "romantic classical"
+  ],
+  "activeFrom": 1909,
+  "activeTo": 1987
+ },
+ {
+  "artist": "Andrés do Barro",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Andy & Lucas",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "salsa"
+  ]
+ },
+ {
+  "artist": "Andy y Lucas",
+  "country": "ES",
+  "genres": [
+   "flamenco pop",
+   "pop",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Angèle",
+  "country": "BE",
+  "genres": [
+   "electropop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Anna Netrebko",
+  "country": "RU",
+  "genres": [
+   "classical",
+   "opera",
+   "romantic classical"
+  ],
+  "activeFrom": 1994
+ },
+ {
+  "artist": "Anne-Sophie Mutter",
+  "country": "DE",
+  "genres": [
+   "classical",
+   "concerto",
+   "modern classical",
+   "romantic classical"
+  ],
+  "activeFrom": 1976
+ },
+ {
+  "artist": "Antonio Flores",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Antonio Machín",
+  "country": "CU",
+  "genres": [
+   "bolero",
+   "bolero español",
+   "son cubano"
+  ],
+  "activeFrom": 1930,
+  "activeTo": 1977
+ },
+ {
+  "artist": "Antonio Mairena",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "fandango",
+   "flamenco"
+  ],
+  "activeFrom": 1930,
+  "activeTo": 1983
+ },
+ {
+  "artist": "Antonio Molina",
+  "country": "ES",
+  "genres": [
+   "bolero",
+   "flamenco",
+   "mambo"
+  ]
+ },
+ {
+  "artist": "Antonio Orozco",
+  "country": "ES",
+  "genres": [
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Antonio Vega",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Antonio Vivaldi",
+  "country": null,
+  "genres": [
+   "baroque",
+   "cantata",
+   "classical",
+   "concerto",
+   "mass"
+  ]
+ },
+ {
+  "artist": "Antonín Dvořák",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Antônio Carlos Jobim",
+  "country": "BR",
+  "genres": [
+   "bossa nova",
+   "jazz"
+  ]
+ },
+ {
+  "artist": "Anuel AA",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Aqua",
+  "country": "DK",
+  "genres": [
+   "bubblegum dance",
+   "dance-pop",
+   "electropop",
+   "eurodance",
+   "europop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Aram Khachaturian",
+  "country": null,
+  "genres": [
+   "ballet",
+   "classical",
+   "modern classical"
+  ]
+ },
+ {
+  "artist": "Arcade Fire",
+  "country": "CA",
+  "genres": [
+   "art rock",
+   "baroque pop",
+   "indie rock"
+  ],
+  "activeFrom": 2001
+ },
+ {
+  "artist": "Arctic Monkeys",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "baroque pop",
+   "dance",
+   "electronica",
+   "garage rock",
+   "garage rock revival",
+   "house",
+   "indie rock",
+   "neo-psychedelia",
+   "pop",
+   "post-punk revival",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Arde Bogotá",
+  "country": "ES",
+  "genres": [
+   "alternative rock"
+  ]
+ },
+ {
+  "artist": "Arena caliente",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Aretha Franklin",
+  "country": "US",
+  "genres": [
+   "deep soul",
+   "gospel",
+   "jazz",
+   "quiet storm",
+   "r&b",
+   "soul",
+   "southern soul"
+  ]
+ },
+ {
+  "artist": "Ariana Grande",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "dance-pop",
+   "pop",
+   "r&b",
+   "trap soul"
+  ]
+ },
+ {
+  "artist": "Armando Manzanero",
+  "country": "MX",
+  "genres": [
+   "ballad",
+   "bolero"
+  ]
+ },
+ {
+  "artist": "Armin van Buuren",
+  "country": "NL",
+  "genres": [
+   "progressive trance",
+   "trance"
+  ]
+ },
+ {
+  "artist": "Art Blakey",
+  "country": "US",
+  "genres": [
+   "bebop",
+   "hard bop",
+   "jazz"
+  ],
+  "activeFrom": 1942,
+  "activeTo": 1990
+ },
+ {
+  "artist": "Arthur Rubinstein",
+  "country": "PL",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 1900,
+  "activeTo": 1976
+ },
+ {
+  "artist": "Arturo Toscanini",
+  "country": "IT",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1896,
+  "activeTo": 1954
+ },
+ {
+  "artist": "Arvo Pärt",
+  "country": null,
+  "genres": [
+   "classical",
+   "holy minimalism",
+   "minimalism"
+  ]
+ },
+ {
+  "artist": "Asfalto",
+  "country": "ES",
+  "genres": [
+   "classic rock",
+   "hard rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Astrud Gilberto",
+  "country": "BR",
+  "genres": [
+   "bossa nova",
+   "jazz"
+  ]
+ },
+ {
+  "artist": "Aterciopelados",
+  "country": "CO",
+  "genres": [
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "Auryn",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Australian Blonde",
+  "country": "ES",
+  "genres": [
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Aviador Dro",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "minimal synth"
+  ]
+ },
+ {
+  "artist": "Avicii",
+  "country": "SE",
+  "genres": [
+   "dance-pop",
+   "edm",
+   "electro house",
+   "electronic",
+   "electropop",
+   "festival progressive house",
+   "funky house",
+   "house",
+   "progressive house",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Avril Lavigne",
+  "country": "CA",
+  "genres": [
+   "acoustic rock",
+   "alternative pop",
+   "alternative rock",
+   "pop",
+   "pop punk",
+   "pop rock",
+   "post-grunge",
+   "rock",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Aya Nakamura",
+  "country": "FR",
+  "genres": [
+   "afrobeats",
+   "dancehall",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Azul y Negro",
+  "country": "ES",
+  "genres": [
+   "disco",
+   "electro",
+   "euro-disco",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Azúcar Moreno",
+  "country": "ES",
+  "genres": [
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "BLACKPINK",
+  "country": "KR",
+  "genres": [
+   "electropop",
+   "hip hop",
+   "k-pop"
+  ]
+ },
+ {
+  "artist": "BTS",
+  "country": "KR",
+  "genres": [
+   "dance",
+   "dance-pop",
+   "hip hop",
+   "k-pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Babasónicos",
+  "country": "AR",
+  "genres": [
+   "alternative rock",
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "Baccara",
+  "country": "ES",
+  "genres": [
+   "disco"
+  ]
+ },
+ {
+  "artist": "Backstreet Boys",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Bad Bunny",
+  "country": "PR",
+  "genres": [
+   "hip hop",
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Bad Company",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "hard rock",
+   "rock"
+  ],
+  "activeFrom": 1973,
+  "activeTo": 1982
+ },
+ {
+  "artist": "Bad Gyal",
+  "country": "ES",
+  "genres": [
+   "dancehall",
+   "neoperreo",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Baltimora",
+  "country": "IT",
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Bambino",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Bananarama",
+  "country": "GB",
+  "genres": [
+   "dance",
+   "dance-pop",
+   "electronic",
+   "electropop",
+   "hi-nrg",
+   "new wave",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Barrabás",
+  "country": "ES",
+  "genres": [
+   "disco",
+   "funk",
+   "latin rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Barricada",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "punk",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Barry White",
+  "country": "US",
+  "genres": [
+   "disco",
+   "easy listening",
+   "funk",
+   "pop",
+   "pop soul",
+   "quiet storm",
+   "r&b",
+   "smooth soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Barón Rojo",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "metal"
+  ]
+ },
+ {
+  "artist": "Bauhaus",
+  "country": "GB",
+  "genres": [
+   "gothic rock",
+   "post-punk"
+  ]
+ },
+ {
+  "artist": "Beastie Boys",
+  "country": "US",
+  "genres": [
+   "alternative hip hop",
+   "alternative rock",
+   "east coast hip hop",
+   "experimental hip hop",
+   "funk",
+   "hardcore hip hop",
+   "hardcore punk",
+   "hip hop",
+   "rap rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Beatriz Luengo",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Bebe",
+  "country": "ES",
+  "genres": [
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Bebo & Cigala",
+  "country": "ES",
+  "genres": [
+   "bolero"
+  ]
+ },
+ {
+  "artist": "Beck",
+  "country": "US",
+  "genres": [
+   "alternative hip hop",
+   "alternative rock",
+   "art pop",
+   "folk rock"
+  ],
+  "activeFrom": 1989
+ },
+ {
+  "artist": "Becky G",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "cumbia",
+   "dance-pop",
+   "hip hop",
+   "latin",
+   "latin pop",
+   "pop",
+   "pop rap",
+   "reggaeton",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Bedřich Smetana",
+  "country": null,
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Bee Gees",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "blue-eyed soul",
+   "dance",
+   "disco",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Belén Aguilera",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "indie pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Ben E. King",
+  "country": "US",
+  "genres": [
+   "funk",
+   "jazz pop",
+   "pop",
+   "pop soul",
+   "r&b",
+   "soul",
+   "traditional pop",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "Benson Boone",
+  "country": "US",
+  "genres": [
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Beret",
+  "country": "ES",
+  "genres": [
+   "flamenco pop",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Berliner Philharmoniker",
+  "country": "DE",
+  "genres": [
+   "classical",
+   "orchestral",
+   "romantic classical",
+   "symphony"
+  ],
+  "activeFrom": 1882
+ },
+ {
+  "artist": "Bersuit Vergarabat",
+  "country": "AR",
+  "genres": [
+   "latin rock",
+   "ska"
+  ]
+ },
+ {
+  "artist": "Bertín Osborne",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Beyoncé",
+  "country": "US",
+  "genres": [
+   "alternative r&b",
+   "americana",
+   "club",
+   "contemporary country",
+   "contemporary r&b",
+   "country",
+   "dance",
+   "dance-pop",
+   "disco",
+   "electropop",
+   "funk",
+   "future bass",
+   "hip hop",
+   "hip hop soul",
+   "house",
+   "neo soul",
+   "pop",
+   "pop rap",
+   "pop soul",
+   "progressive house",
+   "r&b",
+   "singer-songwriter",
+   "soul",
+   "southern hip hop",
+   "teen pop",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Bill Evans",
+  "country": "US",
+  "genres": [
+   "cool jazz",
+   "jazz",
+   "modal jazz",
+   "post-bop"
+  ],
+  "activeFrom": 1956,
+  "activeTo": 1980
+ },
+ {
+  "artist": "Billie Eilish",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "alternative r&b",
+   "art pop",
+   "bedroom pop",
+   "contemporary r&b",
+   "electronic",
+   "electronica",
+   "electropop",
+   "indie pop",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Billie Holiday",
+  "country": "US",
+  "genres": [
+   "blues",
+   "jazz",
+   "swing",
+   "vocal jazz"
+  ],
+  "activeFrom": 1933,
+  "activeTo": 1959
+ },
+ {
+  "artist": "Billy Idol",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "classic rock",
+   "electronic",
+   "hard rock",
+   "new wave",
+   "pop rock",
+   "punk",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Billy Joel",
+  "country": "US",
+  "genres": [
+   "classic rock",
+   "piano rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Bizarrap",
+  "country": "AR",
+  "genres": [
+   "electronic",
+   "hip hop",
+   "latin",
+   "pop",
+   "reggaeton",
+   "trap",
+   "trap edm",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Björk",
+  "country": "IS",
+  "genres": [
+   "art pop",
+   "electronic",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Black Eyed Peas",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "Black Sabbath",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "classic rock",
+   "doom metal",
+   "hard rock",
+   "heavy metal",
+   "metal",
+   "rock",
+   "traditional doom metal"
+  ]
+ },
+ {
+  "artist": "Blanca Paloma",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Blanco",
+  "country": "IT",
+  "genres": [
+   "pop",
+   "pop rap",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Blas Cantó",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "europop",
+   "folk",
+   "funk"
+  ]
+ },
+ {
+  "artist": "Blink-182",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "pop punk",
+   "pop rock",
+   "punk",
+   "punk rock",
+   "skate punk"
+  ]
+ },
+ {
+  "artist": "Blondie",
+  "country": "US",
+  "genres": [
+   "disco",
+   "new wave",
+   "pop",
+   "pop rock",
+   "power pop",
+   "punk",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Blur",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "britpop",
+   "experimental rock",
+   "grunge",
+   "indie rock",
+   "madchester",
+   "neo-psychedelia",
+   "noise rock",
+   "post-grunge",
+   "rock",
+   "shoegaze",
+   "slacker rock"
+  ]
+ },
+ {
+  "artist": "BoA",
+  "country": "KR",
+  "genres": [
+   "dance-pop",
+   "k-pop"
+  ]
+ },
+ {
+  "artist": "Bob Dylan",
+  "country": "US",
+  "genres": [
+   "blues",
+   "blues rock",
+   "classic rock",
+   "contemporary folk",
+   "country",
+   "country rock",
+   "folk",
+   "folk rock",
+   "gospel",
+   "jazz",
+   "pop rock",
+   "rock",
+   "roots rock",
+   "singer-songwriter",
+   "traditional pop"
+  ]
+ },
+ {
+  "artist": "Bob Marley",
+  "country": "JM",
+  "genres": [
+   "dub",
+   "jamaican ska",
+   "reggae",
+   "rocksteady",
+   "roots reggae",
+   "ska"
+  ]
+ },
+ {
+  "artist": "Bob Sinclar",
+  "country": "FR",
+  "genres": [
+   "dance-pop",
+   "electro house",
+   "electronic",
+   "french house",
+   "hip house",
+   "house"
+  ]
+ },
+ {
+  "artist": "Bobby Hebb",
+  "country": "US",
+  "genres": [
+   "jazz",
+   "pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Boikot",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "pop rock",
+   "punk",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Bon Jovi",
+  "country": "US",
+  "genres": [
+   "aor",
+   "arena rock",
+   "classic rock",
+   "glam metal",
+   "hard rock",
+   "heartland rock",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Boney M.",
+  "country": "DE",
+  "genres": [
+   "dance-pop",
+   "disco",
+   "europop",
+   "pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Booker T. & the M.G.'s",
+  "country": "US",
+  "genres": [
+   "funk"
+  ]
+ },
+ {
+  "artist": "Boston Symphony Orchestra",
+  "country": "US",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1881
+ },
+ {
+  "artist": "Britney Spears",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "electro house",
+   "electropop",
+   "pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Bruce Springsteen",
+  "country": "US",
+  "genres": [
+   "americana",
+   "aor",
+   "contemporary folk",
+   "folk",
+   "heartland rock",
+   "pop rock",
+   "rock",
+   "rock and roll",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Bruno Lomas",
+  "country": "ES",
+  "genres": [
+   "rock and roll",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Bruno Mars",
+  "country": "US",
+  "genres": [
+   "funk",
+   "pop",
+   "r&b",
+   "rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Bryan Adams",
+  "country": "CA",
+  "genres": [
+   "aor",
+   "classic rock",
+   "hard rock",
+   "heartland rock",
+   "new wave",
+   "pop rock",
+   "power pop",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Buena Vista Social Club",
+  "country": "CU",
+  "genres": [
+   "bolero",
+   "son cubano"
+  ]
+ },
+ {
+  "artist": "Bunbury",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin rock",
+   "pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Burna Boy",
+  "country": "NG",
+  "genres": [
+   "afrobeats",
+   "dancehall"
+  ]
+ },
+ {
+  "artist": "Burning",
+  "country": "ES",
+  "genres": [
+   "classic rock",
+   "glam",
+   "hard rock",
+   "pop rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Bustamante",
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Buzzcocks",
+  "country": "GB",
+  "genres": [
+   "new wave",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "C. Tangana",
+  "country": "ES",
+  "genres": [
+   "boom bap",
+   "hip hop",
+   "pop rap",
+   "reggaeton",
+   "trap"
+  ]
+ },
+ {
+  "artist": "CNCO",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "latin",
+   "latin pop",
+   "pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Cabaret Pop",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Caetano Veloso",
+  "country": "BR",
+  "genres": [
+   "mpb",
+   "tropicália"
+  ]
+ },
+ {
+  "artist": "Café Quijano",
+  "country": "ES",
+  "genres": [
+   "bolero",
+   "euro house",
+   "latin",
+   "pop rock",
+   "vallenato"
+  ]
+ },
+ {
+  "artist": "Café Tacvba",
+  "country": "MX",
+  "genres": [
+   "alternative rock",
+   "latin",
+   "latin rock",
+   "rock",
+   "ska"
+  ]
+ },
+ {
+  "artist": "Caifanes",
+  "country": "MX",
+  "genres": [
+   "latin rock",
+   "post-punk"
+  ]
+ },
+ {
+  "artist": "Calle 13",
+  "country": "PR",
+  "genres": [
+   "hip hop",
+   "latin rock",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Calvin Harris",
+  "country": "GB",
+  "genres": [
+   "club",
+   "complextro",
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "disco",
+   "edm",
+   "electro house",
+   "electro-disco",
+   "electronic",
+   "electropop",
+   "festival progressive house",
+   "funktronica",
+   "hip house",
+   "house",
+   "melodic house",
+   "melodic techno",
+   "nu disco",
+   "pop",
+   "progressive house",
+   "synth-pop",
+   "uk garage"
+  ]
+ },
+ {
+  "artist": "Camarón de la Isla",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1969,
+  "activeTo": 1992
+ },
+ {
+  "artist": "Camel",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "progressive rock",
+   "symphonic prog"
+  ],
+  "activeFrom": 1971
+ },
+ {
+  "artist": "Camela",
+  "country": "ES",
+  "genres": [
+   "tecnorumba"
+  ]
+ },
+ {
+  "artist": "Camila Cabello",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "hyperpop",
+   "latin pop",
+   "pop",
+   "r&b"
+  ]
+ },
+ {
+  "artist": "Camille Saint-Saëns",
+  "country": null,
+  "genres": [
+   "classical",
+   "orchestral",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Camilo Sesto",
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin",
+   "latin ballad",
+   "pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Can",
+  "country": "DE",
+  "genres": [
+   "experimental rock",
+   "krautrock"
+  ]
+ },
+ {
+  "artist": "Cardi B",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "east coast hip hop",
+   "hardcore hip hop",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "trap",
+   "trap soul"
+  ]
+ },
+ {
+  "artist": "Carin León",
+  "country": "MX",
+  "genres": [
+   "banda sinaloense",
+   "norteño",
+   "regional mexicano"
+  ]
+ },
+ {
+  "artist": "Carl Orff",
+  "country": null,
+  "genres": [
+   "cantata",
+   "classical",
+   "modern classical"
+  ]
+ },
+ {
+  "artist": "Carlos Cano",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "nueva canción española",
+   "singer-songwriter"
+  ],
+  "activeFrom": 1975,
+  "activeTo": 2000
+ },
+ {
+  "artist": "Carlos Kleiber",
+  "country": "AT",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1954,
+  "activeTo": 2004
+ },
+ {
+  "artist": "Carlos Santana",
+  "country": "MX",
+  "genres": [
+   "afro-cuban jazz",
+   "latin rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Carlos Vives",
+  "country": "CO",
+  "genres": [
+   "cumbia",
+   "latin",
+   "latin pop",
+   "pop",
+   "reggaeton",
+   "rock",
+   "salsa",
+   "singer-songwriter",
+   "vallenato"
+  ]
+ },
+ {
+  "artist": "Carly Rae Jepsen",
+  "country": "CA",
+  "genres": [
+   "dance-pop",
+   "synth-pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Carmen Linares",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "fandango",
+   "flamenco"
+  ],
+  "activeFrom": 1970
+ },
+ {
+  "artist": "Carolina Durante",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Carpenters",
+  "country": "US",
+  "genres": [
+   "baroque pop",
+   "christmas music",
+   "country pop",
+   "easy listening",
+   "pop",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Cat Stevens",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "contemporary folk",
+   "folk",
+   "folk pop",
+   "folk rock",
+   "pop rock",
+   "rock",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Cecilia",
+  "country": "ES",
+  "genres": [
+   "folk rock",
+   "pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Cecilia Bartoli",
+  "country": "IT",
+  "genres": [
+   "baroque",
+   "classical",
+   "opera",
+   "opera buffa"
+  ],
+  "activeFrom": 1987
+ },
+ {
+  "artist": "Celia Cruz",
+  "country": "CU",
+  "genres": [
+   "salsa",
+   "son cubano"
+  ]
+ },
+ {
+  "artist": "Celine Dion",
+  "country": "CA",
+  "genres": [
+   "contemporary r&b",
+   "pop",
+   "pop soul",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Celtas Cortos",
+  "country": "ES",
+  "genres": [
+   "celtic rock"
+  ]
+ },
+ {
+  "artist": "Central Cee",
+  "country": "GB",
+  "genres": [
+   "grime",
+   "hip hop",
+   "trap",
+   "uk drill"
+  ]
+ },
+ {
+  "artist": "Chambao",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "latin"
+  ]
+ },
+ {
+  "artist": "Chanel",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Chappell Roan",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "dance-pop",
+   "electropop",
+   "indie pop",
+   "pop",
+   "pop rock",
+   "singer-songwriter",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Charles Aznavour",
+  "country": "FR",
+  "genres": [
+   "ballad",
+   "chanson à texte"
+  ]
+ },
+ {
+  "artist": "Charles Mingus",
+  "country": "US",
+  "genres": [
+   "avant-garde jazz",
+   "hard bop",
+   "jazz",
+   "post-bop"
+  ],
+  "activeFrom": 1943,
+  "activeTo": 1979
+ },
+ {
+  "artist": "Charlie Parker",
+  "country": "US",
+  "genres": [
+   "bebop",
+   "hard bop",
+   "jazz"
+  ],
+  "activeFrom": 1940,
+  "activeTo": 1955
+ },
+ {
+  "artist": "Charlie Puth",
+  "country": "US",
+  "genres": [
+   "ballad",
+   "contemporary r&b",
+   "dance-pop",
+   "neo soul",
+   "pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Charly García",
+  "country": "AR",
+  "genres": [
+   "latin rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Chayanne",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Chenoa",
+  "country": "ES",
+  "genres": [
+   "europop"
+  ]
+ },
+ {
+  "artist": "Cher",
+  "country": "US",
+  "genres": [
+   "baroque pop",
+   "dance-pop",
+   "disco",
+   "folk",
+   "folk pop",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Chet Baker",
+  "country": "US",
+  "genres": [
+   "cool jazz",
+   "jazz",
+   "vocal jazz"
+  ],
+  "activeFrom": 1952,
+  "activeTo": 1988
+ },
+ {
+  "artist": "Chic",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "dance-pop",
+   "disco",
+   "electronic",
+   "funk",
+   "r&b",
+   "synth funk"
+  ]
+ },
+ {
+  "artist": "Chicago",
+  "country": "US",
+  "genres": [
+   "aor",
+   "jazz",
+   "jazz rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Chicago Symphony Orchestra",
+  "country": "US",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1891
+ },
+ {
+  "artist": "Chico Buarque",
+  "country": "BR",
+  "genres": [
+   "mpb",
+   "samba"
+  ]
+ },
+ {
+  "artist": "Chimo Bayo",
+  "country": "ES",
+  "genres": [
+   "makina"
+  ]
+ },
+ {
+  "artist": "Chiquetete",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "latin ballad",
+   "sevillanas"
+  ]
+ },
+ {
+  "artist": "Christina Aguilera",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "dance-pop",
+   "electropop",
+   "pop",
+   "rock",
+   "soul",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Christina Rosenvinge",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "folk rock",
+   "indie pop",
+   "indie rock",
+   "pop rock",
+   "post-rock",
+   "rock and roll",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Christine and the Queens",
+  "country": "FR",
+  "genres": [
+   "art pop",
+   "electropop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Chuck Berry",
+  "country": "US",
+  "genres": [
+   "blues",
+   "blues rock",
+   "classic rock",
+   "rock",
+   "rock and roll",
+   "rockabilly",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Claude Debussy",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "impressionism",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Claude François",
+  "country": "FR",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Claudio Abbado",
+  "country": "IT",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1960,
+  "activeTo": 2014
+ },
+ {
+  "artist": "Claudio Monteverdi",
+  "country": null,
+  "genres": [
+   "baroque",
+   "classical",
+   "mass"
+  ]
+ },
+ {
+  "artist": "Cliff Richard",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "christmas music",
+   "pop",
+   "pop rock",
+   "rock",
+   "rock and roll",
+   "schlager",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Cold Chisel",
+  "country": "AU",
+  "genres": [
+   "hard rock",
+   "pub rock",
+   "rock"
+  ],
+  "activeFrom": 1973
+ },
+ {
+  "artist": "Coldplay",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "art pop",
+   "britpop",
+   "dream pop",
+   "piano rock",
+   "pop",
+   "pop rock",
+   "post-britpop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Concha Piquer",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1922,
+  "activeTo": 1958
+ },
+ {
+  "artist": "Concha Velasco",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "pop",
+   "schlager"
+  ]
+ },
+ {
+  "artist": "Coolio",
+  "country": "US",
+  "genres": [
+   "conscious hip hop",
+   "contemporary r&b",
+   "g-funk",
+   "gangsta rap",
+   "hip hop",
+   "pop rap",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "Corona",
+  "country": "IT",
+  "genres": [
+   "eurodance",
+   "italo house"
+  ]
+ },
+ {
+  "artist": "Count Basie",
+  "country": "US",
+  "genres": [
+   "big band",
+   "jazz",
+   "swing"
+  ],
+  "activeFrom": 1929,
+  "activeTo": 1984
+ },
+ {
+  "artist": "Courtney Barnett",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "garage rock",
+   "indie rock"
+  ],
+  "activeFrom": 2012
+ },
+ {
+  "artist": "Coz",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "rock",
+   "rock and roll",
+   "rock urbano"
+  ]
+ },
+ {
+  "artist": "Cream",
+  "country": "GB",
+  "genres": [
+   "acid rock",
+   "blues rock",
+   "classic rock",
+   "hard rock",
+   "jam band",
+   "pop rock",
+   "psychedelic",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Creed",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "hard rock",
+   "post-grunge",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Creedence Clearwater Revival",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "classic rock",
+   "country rock",
+   "folk rock",
+   "rock",
+   "rock and roll",
+   "rockabilly",
+   "roots rock",
+   "soft rock",
+   "southern rock",
+   "swamp rock"
+  ]
+ },
+ {
+  "artist": "Crowded House",
+  "country": "NZ",
+  "genres": [
+   "alternative rock",
+   "jangle pop",
+   "pop rock",
+   "soft rock"
+  ],
+  "activeFrom": 1985
+ },
+ {
+  "artist": "Cruz Cafuné",
+  "country": "ES",
+  "genres": [
+   "hip hop",
+   "r&b",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Culture Club",
+  "country": "GB",
+  "genres": [
+   "blue-eyed soul",
+   "dance-pop",
+   "new romantic",
+   "new wave",
+   "pop",
+   "pop soul"
+  ]
+ },
+ {
+  "artist": "Curtis Mayfield",
+  "country": "US",
+  "genres": [
+   "funk",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Cyndi Lauper",
+  "country": "US",
+  "genres": [
+   "blues",
+   "dance-pop",
+   "new wave",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Cómplices",
+  "country": "ES",
+  "genres": [
+   "europop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "DJ Kun",
+  "country": "ES",
+  "genres": [
+   "house",
+   "latin",
+   "pop rap"
+  ]
+ },
+ {
+  "artist": "Daddy Yankee",
+  "country": "PR",
+  "genres": [
+   "dance",
+   "electronic",
+   "hip hop",
+   "latin",
+   "latin pop",
+   "reggae",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Daft Punk",
+  "country": "FR",
+  "genres": [
+   "club",
+   "dance",
+   "disco",
+   "edm",
+   "electro",
+   "electro house",
+   "electroclash",
+   "electronic",
+   "electronic rock",
+   "electronica",
+   "french electro",
+   "french house",
+   "funk",
+   "house",
+   "jackin house",
+   "nu disco",
+   "organic house",
+   "pop",
+   "r&b",
+   "synth-pop",
+   "techno",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Dalida",
+  "country": "FR",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Damien Rice",
+  "country": "IE",
+  "genres": [
+   "alternative folk",
+   "alternative rock",
+   "contemporary folk",
+   "folk",
+   "folk rock",
+   "indie folk",
+   "indie rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Dani Fernández",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Dani Martín",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "ballad",
+   "europop",
+   "pop rock",
+   "rock and roll",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "Daniel Barenboim",
+  "country": "AR",
+  "genres": [
+   "classical",
+   "concerto",
+   "orchestral",
+   "sonata",
+   "symphony"
+  ],
+  "activeFrom": 1960
+ },
+ {
+  "artist": "Daniil Trifonov",
+  "country": "RU",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 2010
+ },
+ {
+  "artist": "Danza Invisible",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "new wave",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Dasoul",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "merengue",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Dave Brubeck",
+  "country": "US",
+  "genres": [
+   "cool jazz",
+   "jazz",
+   "third stream"
+  ],
+  "activeFrom": 1946,
+  "activeTo": 2012
+ },
+ {
+  "artist": "David Bisbal",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "David Bowie",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "art pop",
+   "art rock",
+   "classic rock",
+   "glam rock",
+   "new wave",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "David Bustamante",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "latin",
+   "progressive house"
+  ]
+ },
+ {
+  "artist": "David Civera",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "David DeMaría",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "David Guetta",
+  "country": "FR",
+  "genres": [
+   "club",
+   "dance",
+   "dance-pop",
+   "electro house",
+   "electroclash",
+   "electronic",
+   "electropop",
+   "festival progressive house",
+   "french house",
+   "future rave",
+   "house",
+   "pop",
+   "progressive house",
+   "tech house"
+  ]
+ },
+ {
+  "artist": "David Santisteban",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Dead or Alive",
+  "country": "GB",
+  "genres": [
+   "hi-nrg",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Deep Purple",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "classic rock",
+   "hard rock",
+   "heavy metal",
+   "progressive rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Def Con Dos",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "hip hop",
+   "nu metal",
+   "punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Def Leppard",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "aor",
+   "classic rock",
+   "glam",
+   "glam metal",
+   "glam rock",
+   "hard rock",
+   "heavy metal",
+   "nwobhm",
+   "pop rock",
+   "post-grunge",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Deluxe",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Demis Roussos",
+  "country": "GR",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Depeche Mode",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "alternative rock",
+   "dark wave",
+   "electronic",
+   "electronic rock",
+   "electronica",
+   "industrial",
+   "new romantic",
+   "new wave",
+   "post-punk",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Derribos Arias",
+  "country": "ES",
+  "genres": [
+   "post-punk"
+  ]
+ },
+ {
+  "artist": "Desmadre 75",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "pop rock",
+   "pub rock",
+   "punk"
+  ]
+ },
+ {
+  "artist": "Destiny's Child",
+  "country": "US",
+  "genres": [
+   "christmas music",
+   "contemporary r&b",
+   "dance-pop",
+   "pop",
+   "pop soul",
+   "r&b"
+  ]
+ },
+ {
+  "artist": "Dexys Midnight Runners",
+  "country": "GB",
+  "genres": [
+   "celtic rock",
+   "new wave",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Diego el Cigala",
+  "country": "ES",
+  "genres": [
+   "bolero",
+   "bulería",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1997
+ },
+ {
+  "artist": "Dietrich Fischer-Dieskau",
+  "country": "DE",
+  "genres": [
+   "classical",
+   "lied",
+   "opera",
+   "romantic classical"
+  ],
+  "activeFrom": 1947,
+  "activeTo": 1992
+ },
+ {
+  "artist": "Dinosaur Jr.",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "noise rock"
+  ],
+  "activeFrom": 1984
+ },
+ {
+  "artist": "Dire Straits",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "classic rock",
+   "pop rock",
+   "pub rock",
+   "rock",
+   "rock and roll",
+   "roots rock",
+   "soft rock",
+   "sophisti-pop"
+  ]
+ },
+ {
+  "artist": "Disclosure",
+  "country": "GB",
+  "genres": [
+   "deep house",
+   "electronic",
+   "uk garage"
+  ]
+ },
+ {
+  "artist": "Dizzee Rascal",
+  "country": "GB",
+  "genres": [
+   "grime",
+   "hip hop",
+   "uk garage"
+  ]
+ },
+ {
+  "artist": "Dizzy Gillespie",
+  "country": "US",
+  "genres": [
+   "afro-cuban jazz",
+   "bebop",
+   "big band",
+   "jazz"
+  ],
+  "activeFrom": 1937,
+  "activeTo": 1993
+ },
+ {
+  "artist": "Django Reinhardt",
+  "country": "BE",
+  "genres": [
+   "gypsy jazz",
+   "jazz",
+   "swing"
+  ],
+  "activeFrom": 1928,
+  "activeTo": 1953
+ },
+ {
+  "artist": "Dmitri Shostakovich",
+  "country": null,
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Doja Cat",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "grunge",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "post-grunge",
+   "power pop",
+   "rock",
+   "trap",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "Domenico Modugno",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "canzone napoletana",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Domenico Scarlatti",
+  "country": null,
+  "genres": [
+   "baroque",
+   "classical",
+   "sonata"
+  ]
+ },
+ {
+  "artist": "Don Omar",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Donna Summer",
+  "country": "US",
+  "genres": [
+   "dance",
+   "dance-pop",
+   "disco",
+   "electronic",
+   "hi-nrg",
+   "pop",
+   "pop soul",
+   "rock",
+   "smooth soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Donovan",
+  "country": "GB",
+  "genres": [
+   "folk rock",
+   "psychedelic rock"
+  ]
+ },
+ {
+  "artist": "Dorian",
+  "country": "ES",
+  "genres": [
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Dover",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Doves",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "post-britpop"
+  ],
+  "activeFrom": 1998
+ },
+ {
+  "artist": "Dr. Alban",
+  "country": "SE",
+  "genres": [
+   "eurodance",
+   "reggae-pop"
+  ]
+ },
+ {
+  "artist": "Dr. Dre",
+  "country": "US",
+  "genres": [
+   "g-funk",
+   "gangsta rap",
+   "hardcore hip hop",
+   "hip hop",
+   "instrumental hip hop",
+   "pop rap",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "Drake",
+  "country": "CA",
+  "genres": [
+   "alternative r&b",
+   "contemporary r&b",
+   "hardcore hip hop",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "r&b",
+   "southern hip hop",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Dua Lipa",
+  "country": "GB",
+  "genres": [
+   "alternative pop",
+   "boogie",
+   "contemporary r&b",
+   "dance-pop",
+   "dream pop",
+   "electropop",
+   "europop",
+   "funktronica",
+   "house",
+   "hypnagogic pop",
+   "indie pop",
+   "leftfield",
+   "nu disco",
+   "pop",
+   "r&b",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Duke Ellington",
+  "country": "US",
+  "genres": [
+   "big band",
+   "jazz",
+   "orchestral jazz",
+   "swing"
+  ],
+  "activeFrom": 1923,
+  "activeTo": 1974
+ },
+ {
+  "artist": "Duncan Dhu",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "indie pop",
+   "indie rock",
+   "pop rock",
+   "power pop",
+   "rock and roll",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "Duran Duran",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "dance",
+   "electro",
+   "electronic",
+   "new romantic",
+   "new wave",
+   "pop",
+   "pop rock",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Dusty Springfield",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "blue-eyed soul",
+   "philly soul",
+   "pop",
+   "pop soul",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Dvicio",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Dyango",
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Décima Víctima",
+  "country": "ES",
+  "genres": [
+   "coldwave",
+   "new wave",
+   "post-punk"
+  ]
+ },
+ {
+  "artist": "Dúo Dinámico",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop rock",
+   "rock and roll",
+   "surf",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Eagles",
+  "country": "US",
+  "genres": [
+   "classic rock",
+   "country rock",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Earth, Wind & Fire",
+  "country": "US",
+  "genres": [
+   "big band",
+   "dance",
+   "disco",
+   "funk",
+   "jazz",
+   "progressive soul",
+   "psychedelic soul",
+   "quiet storm",
+   "r&b",
+   "smooth soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Echo & the Bunnymen",
+  "country": "GB",
+  "genres": [
+   "new wave",
+   "post-punk"
+  ]
+ },
+ {
+  "artist": "Ed Sheeran",
+  "country": "GB",
+  "genres": [
+   "dance-pop",
+   "folk",
+   "folk pop",
+   "pop",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Edvard Grieg",
+  "country": null,
+  "genres": [
+   "classical",
+   "concerto",
+   "orchestral",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Edward Elgar",
+  "country": null,
+  "genres": [
+   "classical",
+   "march",
+   "romantic classical",
+   "theme and variations"
+  ]
+ },
+ {
+  "artist": "Efecto Mariposa",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Efecto Pasillo",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "funk",
+   "latin rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Eiffel 65",
+  "country": "IT",
+  "genres": [
+   "bubblegum dance",
+   "bubblegum pop",
+   "edm",
+   "euro house",
+   "eurodance",
+   "europop",
+   "italo dance",
+   "italo house",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "El Barrio",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "El Canto del Loco",
+  "country": "ES",
+  "genres": [
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "El Golpe",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "El Kanka",
+  "country": "ES",
+  "genres": [
+   "bolero",
+   "folk",
+   "pop rock",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "El Lebrijano",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1964,
+  "activeTo": 2016
+ },
+ {
+  "artist": "El Sueño de Morfeo",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "celtic",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "El canto del loco",
+  "country": "ES",
+  "genres": [
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "El Último de la Fila",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "El último de la fila",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Elbosco",
+  "country": "ES",
+  "genres": [
+   "ambient",
+   "new age"
+  ]
+ },
+ {
+  "artist": "Elbow",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "indie rock"
+  ],
+  "activeFrom": 1997
+ },
+ {
+  "artist": "Electric Light Orchestra",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "classic rock",
+   "crossover prog",
+   "pop",
+   "pop rock",
+   "progressive",
+   "progressive pop",
+   "progressive rock",
+   "rock",
+   "symphonic prog",
+   "symphonic rock"
+  ]
+ },
+ {
+  "artist": "Electric Nana",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Ella Baila Sola",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "country",
+   "folk",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Ella Fitzgerald",
+  "country": "US",
+  "genres": [
+   "bebop",
+   "jazz",
+   "swing",
+   "vocal jazz"
+  ],
+  "activeFrom": 1934,
+  "activeTo": 1993
+ },
+ {
+  "artist": "Ella baila sola",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "country",
+   "folk",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Elsa Baeza",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Elton John",
+  "country": "GB",
+  "genres": [
+   "classic rock",
+   "piano rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "rock and roll",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Elvis Crespo",
+  "country": "PR",
+  "genres": [
+   "latin pop",
+   "merengue"
+  ]
+ },
+ {
+  "artist": "Elvis Presley",
+  "country": "US",
+  "genres": [
+   "blue-eyed soul",
+   "blues",
+   "christmas music",
+   "country",
+   "country rock",
+   "gospel",
+   "pop",
+   "pop rock",
+   "r&b",
+   "rock",
+   "rock and roll",
+   "rockabilly",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Emerson String Quartet",
+  "country": "US",
+  "genres": [
+   "classical",
+   "classical period",
+   "modern classical",
+   "string quartet"
+  ],
+  "activeFrom": 1976,
+  "activeTo": 2023
+ },
+ {
+  "artist": "Emerson, Lake & Palmer",
+  "country": "GB",
+  "genres": [
+   "progressive rock"
+  ]
+ },
+ {
+  "artist": "Emilia",
+  "country": "AR",
+  "genres": [
+   "latin pop",
+   "pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Emilio José",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Eminem",
+  "country": "US",
+  "genres": [
+   "boom bap",
+   "conscious hip hop",
+   "hardcore hip hop",
+   "hip hop",
+   "horrorcore",
+   "pop rap",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Empire of the Sun",
+  "country": "AU",
+  "genres": [
+   "electropop",
+   "indie pop",
+   "synth-pop"
+  ],
+  "activeFrom": 2008
+ },
+ {
+  "artist": "Encarnita Polo",
+  "country": "ES",
+  "genres": [
+   "flamenco pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Engelbert Humperdinck",
+  "country": "GB",
+  "genres": [
+   "ballad",
+   "easy listening",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Enrique Granados",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Enrique Iglesias",
+  "country": "ES",
+  "genres": [
+   "electro house",
+   "electropop",
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Enrique Morente",
+  "country": "ES",
+  "genres": [
+   "fandango",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1967,
+  "activeTo": 2010
+ },
+ {
+  "artist": "Enrique y Ana",
+  "country": "ES",
+  "genres": [
+   "children's music",
+   "pop",
+   "schlager"
+  ]
+ },
+ {
+  "artist": "Erasure",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "dance",
+   "dance-pop",
+   "electronic",
+   "new wave",
+   "pop",
+   "pop rock",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Eric Clapton",
+  "country": "GB",
+  "genres": [
+   "blues",
+   "blues rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Erik Satie",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "impressionism"
+  ]
+ },
+ {
+  "artist": "Eros Ramazzotti",
+  "country": "IT",
+  "genres": [
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Eskorbuto",
+  "country": "ES",
+  "genres": [
+   "hardcore punk",
+   "punk",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "Estopa",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "flamenco pop",
+   "pop rock",
+   "rock",
+   "rumba flamenca"
+  ]
+ },
+ {
+  "artist": "Estrella Morente",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1996
+ },
+ {
+  "artist": "Estrellita Castro",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1930,
+  "activeTo": 1980
+ },
+ {
+  "artist": "Europe",
+  "country": "SE",
+  "genres": [
+   "aor",
+   "arena rock",
+   "glam metal",
+   "hard rock",
+   "heavy metal",
+   "pop metal",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Eurythmics",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "new wave",
+   "pop",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Evanescence",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "gothic metal",
+   "heavy metal",
+   "metal",
+   "piano rock",
+   "post-grunge",
+   "rock",
+   "symphonic metal",
+   "symphonic rock"
+  ]
+ },
+ {
+  "artist": "Extremoduro",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "progressive rock",
+   "rock",
+   "rock urbano"
+  ]
+ },
+ {
+  "artist": "Fabrizio De André",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "folk"
+  ]
+ },
+ {
+  "artist": "Faithless",
+  "country": "GB",
+  "genres": [
+   "dance",
+   "dance-pop",
+   "downtempo",
+   "electronic",
+   "house",
+   "progressive house",
+   "progressive trance",
+   "techno",
+   "trance",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Falco",
+  "country": "AT",
+  "genres": [
+   "dance-pop",
+   "neue deutsche welle",
+   "new wave",
+   "pop",
+   "pop rap",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Fangoria",
+  "country": "ES",
+  "genres": [
+   "electropop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Fania All-Stars",
+  "country": "US",
+  "genres": [
+   "salsa",
+   "son cubano"
+  ]
+ },
+ {
+  "artist": "Farruko",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Fatboy Slim",
+  "country": "GB",
+  "genres": [
+   "big beat",
+   "electronic"
+  ]
+ },
+ {
+  "artist": "Feid",
+  "country": "CO",
+  "genres": [
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Feist",
+  "country": "CA",
+  "genres": [
+   "folk pop",
+   "indie pop"
+  ]
+ },
+ {
+  "artist": "Felix Mendelssohn",
+  "country": null,
+  "genres": [
+   "classical",
+   "concerto",
+   "orchestral",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Fito & Fitipaldis",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Fleetwood Mac",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "blues",
+   "blues rock",
+   "british blues",
+   "classic rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Florence + the Machine",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "baroque pop",
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Flume",
+  "country": "AU",
+  "genres": [
+   "contemporary r&b",
+   "electronic",
+   "future bass"
+  ]
+ },
+ {
+  "artist": "Fontaines D.C.",
+  "country": "IE",
+  "genres": [
+   "gothic rock",
+   "indie rock",
+   "post-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Foo Fighters",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "hard rock",
+   "post-grunge"
+  ],
+  "activeFrom": 1994
+ },
+ {
+  "artist": "Four Tops",
+  "country": "US",
+  "genres": [
+   "funk",
+   "motown",
+   "pop soul",
+   "r&b",
+   "smooth soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Fran Perea",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "France Gall",
+  "country": "FR",
+  "genres": [
+   "chanson française",
+   "disco",
+   "french house",
+   "pop",
+   "rock",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Francisco Tárrega",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Frank Ocean",
+  "country": "US",
+  "genres": [
+   "alternative r&b",
+   "contemporary r&b",
+   "pop",
+   "r&b"
+  ]
+ },
+ {
+  "artist": "Frank Sinatra",
+  "country": "US",
+  "genres": [
+   "big band",
+   "christmas music",
+   "easy listening",
+   "jazz",
+   "lounge",
+   "pop",
+   "swing",
+   "traditional pop",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "Frankie Goes to Hollywood",
+  "country": "GB",
+  "genres": [
+   "dance-pop",
+   "hi-nrg",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Frankie Valli",
+  "country": "US",
+  "genres": [
+   "pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Franz Ferdinand",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "alternative rock",
+   "art rock",
+   "dance-punk",
+   "dance-rock",
+   "indie pop",
+   "indie rock",
+   "indietronica",
+   "new wave",
+   "pop",
+   "post-punk",
+   "post-punk revival",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Franz Liszt",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "nocturne",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Franz Schubert",
+  "country": null,
+  "genres": [
+   "classical",
+   "lied",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Fred again..",
+  "country": "GB",
+  "genres": [
+   "bass house",
+   "bassline",
+   "breakbeat",
+   "breaks",
+   "club",
+   "dance",
+   "deep house",
+   "downtempo",
+   "drum and bass",
+   "edm",
+   "electronic",
+   "electronica",
+   "future bass",
+   "future garage",
+   "grime",
+   "hip hop",
+   "house",
+   "latin",
+   "pop",
+   "stutter house",
+   "trap",
+   "uk garage"
+  ]
+ },
+ {
+  "artist": "Free",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "hard rock",
+   "rock"
+  ],
+  "activeFrom": 1968,
+  "activeTo": 1973
+ },
+ {
+  "artist": "Frédéric Chopin",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "nocturne",
+   "prelude",
+   "romantic classical",
+   "étude"
+  ]
+ },
+ {
+  "artist": "Fórmula V",
+  "country": "ES",
+  "genres": [
+   "disco",
+   "electro",
+   "funk",
+   "pop",
+   "pop rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Gabinete Caligari",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Gazebo",
+  "country": "IT",
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Gazo",
+  "country": "FR",
+  "genres": [
+   "drill",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Genesis",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "folk",
+   "pop",
+   "pop rock",
+   "progressive",
+   "progressive pop",
+   "progressive rock",
+   "rock",
+   "rock opera",
+   "soft rock",
+   "symphonic prog"
+  ]
+ },
+ {
+  "artist": "George Frideric Handel",
+  "country": null,
+  "genres": [
+   "baroque",
+   "baroque suite",
+   "classical",
+   "oratorio",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "George Gershwin",
+  "country": null,
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "George Michael",
+  "country": "GB",
+  "genres": [
+   "ballad",
+   "blue-eyed soul",
+   "contemporary r&b",
+   "dance-pop",
+   "dance-rock",
+   "jazz",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "r&b",
+   "smooth jazz",
+   "smooth soul",
+   "soft rock",
+   "sophisti-pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Georges Bizet",
+  "country": null,
+  "genres": [
+   "classical",
+   "opera",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Georgie Dann",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "beat music",
+   "pop rock",
+   "rock and roll",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Germán Coppini",
+  "country": "ES",
+  "genres": [
+   "europop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Giacomo Puccini",
+  "country": null,
+  "genres": [
+   "classical",
+   "opera",
+   "verismo"
+  ]
+ },
+ {
+  "artist": "Gigi D'Agostino",
+  "country": "IT",
+  "genres": [
+   "eurodance",
+   "italo dance"
+  ]
+ },
+ {
+  "artist": "Gigliola Cinquetti",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Gilberto Gil",
+  "country": "BR",
+  "genres": [
+   "mpb",
+   "samba",
+   "tropicália"
+  ]
+ },
+ {
+  "artist": "Gioachino Rossini",
+  "country": null,
+  "genres": [
+   "classical",
+   "opera",
+   "opera buffa",
+   "orchestral",
+   "overture"
+  ]
+ },
+ {
+  "artist": "Giorgio Moroder",
+  "country": "IT",
+  "genres": [
+   "disco",
+   "electronic",
+   "italo-disco"
+  ]
+ },
+ {
+  "artist": "Giuseppe Verdi",
+  "country": null,
+  "genres": [
+   "classical",
+   "opera",
+   "requiem",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Glass Animals",
+  "country": "GB",
+  "genres": [
+   "electronic",
+   "indie pop",
+   "indie rock",
+   "indietronica",
+   "pop",
+   "psychedelic pop",
+   "psychedelic rock"
+  ]
+ },
+ {
+  "artist": "Glenn Gould",
+  "country": "CA",
+  "genres": [
+   "baroque",
+   "classical",
+   "fugue",
+   "sonata"
+  ],
+  "activeFrom": 1955,
+  "activeTo": 1982
+ },
+ {
+  "artist": "Gloria Gaynor",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "disco",
+   "philly soul",
+   "pop soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Glutamato Ye-Yé",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Golpes Bajos",
+  "country": "ES",
+  "genres": [
+   "art rock",
+   "indie rock",
+   "new wave",
+   "pop rock",
+   "salsa",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Gorillaz",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "alternative rock",
+   "art pop",
+   "electronic",
+   "electronica",
+   "electropop",
+   "hip hop",
+   "rock",
+   "synth-pop",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Gotye",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "art pop",
+   "indie pop"
+  ]
+ },
+ {
+  "artist": "Gracia Montes",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "fandango",
+   "pasodoble"
+  ],
+  "activeFrom": 1954,
+  "activeTo": 2000
+ },
+ {
+  "artist": "Gracie Abrams",
+  "country": "US",
+  "genres": [
+   "bedroom pop",
+   "folk pop",
+   "pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Grateful Dead",
+  "country": "US",
+  "genres": [
+   "country rock",
+   "folk rock",
+   "jam band",
+   "psychedelic rock"
+  ],
+  "activeFrom": 1965,
+  "activeTo": 1995
+ },
+ {
+  "artist": "Green Day",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "pop punk",
+   "power pop",
+   "punk",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Gregorio Allegri",
+  "country": null,
+  "genres": [
+   "classical",
+   "motet",
+   "renaissance"
+  ]
+ },
+ {
+  "artist": "Grupo Frontera",
+  "country": "US",
+  "genres": [
+   "americana",
+   "cumbia norteña mexicana",
+   "latin",
+   "norteño",
+   "regional mexicano"
+  ]
+ },
+ {
+  "artist": "Guitarricadelafuente",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "indie pop"
+  ]
+ },
+ {
+  "artist": "Guns N' Roses",
+  "country": "US",
+  "genres": [
+   "aor",
+   "arena rock",
+   "art rock",
+   "glam metal",
+   "hard rock",
+   "heavy metal",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Gustav Holst",
+  "country": null,
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Gustav Mahler",
+  "country": null,
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Gustavo Dudamel",
+  "country": "VE",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 2004
+ },
+ {
+  "artist": "HIM",
+  "country": "FI",
+  "genres": [
+   "alternative rock",
+   "gothic metal",
+   "gothic rock"
+  ]
+ },
+ {
+  "artist": "Haddaway",
+  "country": "TT",
+  "genres": [
+   "eurodance",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Harry Styles",
+  "country": "GB",
+  "genres": [
+   "funk",
+   "new wave",
+   "pop",
+   "rock",
+   "soft rock",
+   "soul",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Henry Purcell",
+  "country": null,
+  "genres": [
+   "baroque",
+   "classical",
+   "opera"
+  ]
+ },
+ {
+  "artist": "Herbert von Karajan",
+  "country": "AT",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "romantic classical",
+   "symphony"
+  ],
+  "activeFrom": 1938,
+  "activeTo": 1989
+ },
+ {
+  "artist": "Herbie Hancock",
+  "country": "US",
+  "genres": [
+   "jazz",
+   "jazz fusion",
+   "jazz-funk",
+   "post-bop"
+  ],
+  "activeFrom": 1961
+ },
+ {
+  "artist": "Hilary Hahn",
+  "country": "US",
+  "genres": [
+   "baroque",
+   "classical",
+   "concerto"
+  ],
+  "activeFrom": 1996
+ },
+ {
+  "artist": "Hombres G",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Hozier",
+  "country": "IE",
+  "genres": [
+   "blues",
+   "blues rock",
+   "chamber pop",
+   "folk rock",
+   "indie rock",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "r&b",
+   "rock",
+   "singer-songwriter",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Héroes del Silencio",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "hard rock",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "INXS",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "new wave",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Ian Dury and the Blockheads",
+  "country": "GB",
+  "genres": [
+   "funk",
+   "new wave",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "Icona Pop",
+  "country": "SE",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Iggy Pop",
+  "country": "US",
+  "genres": [
+   "classic rock",
+   "garage rock",
+   "hard rock",
+   "proto-punk",
+   "punk",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Iggy and the Stooges",
+  "country": "US",
+  "genres": [
+   "garage rock",
+   "hard rock",
+   "proto-punk",
+   "punk rock"
+  ],
+  "activeFrom": 1967
+ },
+ {
+  "artist": "Igor Stravinsky",
+  "country": null,
+  "genres": [
+   "ballet",
+   "classical",
+   "modern classical"
+  ]
+ },
+ {
+  "artist": "Ike & Tina Turner",
+  "country": "US",
+  "genres": [
+   "blues",
+   "funk",
+   "pop soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Il Giardino Armonico",
+  "country": "IT",
+  "genres": [
+   "baroque",
+   "classical",
+   "concerto",
+   "concerto grosso"
+  ],
+  "activeFrom": 1985
+ },
+ {
+  "artist": "Ilegales",
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Imagine Dragons",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "alternative rock",
+   "electropop",
+   "indie pop",
+   "indietronica",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Imperio Argentina",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1927,
+  "activeTo": 1990
+ },
+ {
+  "artist": "Indochine",
+  "country": "FR",
+  "genres": [
+   "new wave",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Iron Maiden",
+  "country": "GB",
+  "genres": [
+   "heavy metal",
+   "metal",
+   "nwobhm"
+  ]
+ },
+ {
+  "artist": "Isaac Albéniz",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Isabel Pantoja",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "flamenco",
+   "latin",
+   "latin ballad",
+   "sevillanas"
+  ]
+ },
+ {
+  "artist": "Israel Fernández",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 2017
+ },
+ {
+  "artist": "Itzhak Perlman",
+  "country": "IL",
+  "genres": [
+   "cinematic classical",
+   "classical",
+   "concerto",
+   "romantic classical"
+  ],
+  "activeFrom": 1963
+ },
+ {
+  "artist": "Iván Ferreiro",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "experimental",
+   "pop rock",
+   "post-rock"
+  ]
+ },
+ {
+  "artist": "Izal",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "indie rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "J Balvin",
+  "country": "CO",
+  "genres": [
+   "hip hop",
+   "latin",
+   "latin pop",
+   "pop",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Jack Johnson",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "folk",
+   "folk rock",
+   "indie pop",
+   "pop",
+   "rock",
+   "singer-songwriter",
+   "soft rock",
+   "surf"
+  ]
+ },
+ {
+  "artist": "Jacqueline du Pré",
+  "country": "GB",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical"
+  ],
+  "activeFrom": 1961,
+  "activeTo": 1973
+ },
+ {
+  "artist": "Jacques Brel",
+  "country": "BE",
+  "genres": [
+   "ballad",
+   "chanson à texte"
+  ]
+ },
+ {
+  "artist": "James Blunt",
+  "country": "GB",
+  "genres": [
+   "acoustic rock",
+   "folk rock",
+   "piano rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "James Brown",
+  "country": "US",
+  "genres": [
+   "blues",
+   "christmas music",
+   "disco",
+   "funk",
+   "soul"
+  ]
+ },
+ {
+  "artist": "James Galway",
+  "country": "GB",
+  "genres": [
+   "baroque",
+   "classical",
+   "concerto",
+   "orchestral"
+  ],
+  "activeFrom": 1969
+ },
+ {
+  "artist": "Janis Joplin",
+  "country": "US",
+  "genres": [
+   "acid rock",
+   "acoustic blues",
+   "blues",
+   "blues rock",
+   "folk",
+   "gospel",
+   "psychedelic rock",
+   "rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Jarabe de Palo",
+  "country": "ES",
+  "genres": [
+   "latin rock",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Jarabe de palo",
+  "country": "ES",
+  "genres": [
+   "latin rock",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Jarcha",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "copla",
+   "flamenco",
+   "folk",
+   "poetry"
+  ]
+ },
+ {
+  "artist": "Jascha Heifetz",
+  "country": "LT",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical"
+  ],
+  "activeFrom": 1917,
+  "activeTo": 1972
+ },
+ {
+  "artist": "Jason Mraz",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Javier Ojeda",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Javier Álvarez",
+  "country": "ES",
+  "genres": [
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Jay-Z",
+  "country": "US",
+  "genres": [
+   "boom bap",
+   "chipmunk soul",
+   "east coast hip hop",
+   "hardcore hip hop",
+   "hip hop",
+   "pop",
+   "pop rap"
+  ]
+ },
+ {
+  "artist": "Jean Sibelius",
+  "country": null,
+  "genres": [
+   "classical",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Jean-Michel Jarre",
+  "country": "FR",
+  "genres": [
+   "ambient",
+   "berlin school",
+   "electronic"
+  ]
+ },
+ {
+  "artist": "Jeanette",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin ballad",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Jefferson Airplane",
+  "country": "US",
+  "genres": [
+   "acid rock",
+   "folk rock",
+   "garage rock",
+   "pop rock",
+   "psychedelic",
+   "psychedelic folk",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Jessie J",
+  "country": "GB",
+  "genres": [
+   "contemporary r&b",
+   "hip hop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Jet",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "garage rock revival",
+   "hard rock"
+  ],
+  "activeFrom": 2001,
+  "activeTo": 2012
+ },
+ {
+  "artist": "Jethro Tull",
+  "country": "GB",
+  "genres": [
+   "folk rock",
+   "hard rock",
+   "progressive rock"
+  ]
+ },
+ {
+  "artist": "Jhay Cortez",
+  "country": "PR",
+  "genres": [
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Jimi Hendrix",
+  "country": "US",
+  "genres": [
+   "acid rock",
+   "blues rock",
+   "classic rock",
+   "hard rock",
+   "jam band",
+   "psychedelic rock",
+   "psychedelic soul",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Jimmy Cliff",
+  "country": "JM",
+  "genres": [
+   "jamaican ska",
+   "reggae",
+   "reggae-pop",
+   "rocksteady",
+   "roots reggae",
+   "ska",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Joan Baez",
+  "country": "US",
+  "genres": [
+   "americana",
+   "country",
+   "folk",
+   "gospel",
+   "pop",
+   "rock",
+   "roots rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Joan Baptista Humet",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "folk",
+   "jazz-funk",
+   "poetry"
+  ]
+ },
+ {
+  "artist": "Joan Manuel Serrat",
+  "country": "ES",
+  "genres": [
+   "contemporary folk",
+   "nova cançó",
+   "nueva canción",
+   "nueva canción española",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Joan Sutherland",
+  "country": "AU",
+  "genres": [
+   "classical",
+   "opera",
+   "opera seria"
+  ],
+  "activeFrom": 1952,
+  "activeTo": 1990
+ },
+ {
+  "artist": "Joaquín Rodrigo",
+  "country": null,
+  "genres": [
+   "classical",
+   "concerto",
+   "modern classical"
+  ]
+ },
+ {
+  "artist": "Joaquín Sabina",
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "pop",
+   "pop rock",
+   "rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Johann Pachelbel",
+  "country": null,
+  "genres": [
+   "baroque",
+   "canzona",
+   "classical"
+  ]
+ },
+ {
+  "artist": "Johann Sebastian Bach",
+  "country": null,
+  "genres": [
+   "baroque",
+   "baroque suite",
+   "classical",
+   "concerto grosso",
+   "fugue",
+   "mass",
+   "orchestral",
+   "prelude",
+   "toccata"
+  ]
+ },
+ {
+  "artist": "Johann Strauss II",
+  "country": null,
+  "genres": [
+   "classical",
+   "march",
+   "orchestral",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Johannes Brahms",
+  "country": null,
+  "genres": [
+   "classical",
+   "lied",
+   "orchestral",
+   "romantic classical",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "John Coltrane",
+  "country": "US",
+  "genres": [
+   "avant-garde jazz",
+   "free jazz",
+   "hard bop",
+   "jazz",
+   "modal jazz"
+  ],
+  "activeFrom": 1945,
+  "activeTo": 1967
+ },
+ {
+  "artist": "John Eliot Gardiner",
+  "country": "GB",
+  "genres": [
+   "baroque",
+   "classical",
+   "mass",
+   "oratorio",
+   "orchestral"
+  ],
+  "activeFrom": 1964
+ },
+ {
+  "artist": "Johnny Cash",
+  "country": "US",
+  "genres": [
+   "americana",
+   "blues",
+   "classic country",
+   "country",
+   "country gospel",
+   "folk",
+   "gospel",
+   "outlaw country",
+   "rock and roll",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "Johnny Hallyday",
+  "country": "FR",
+  "genres": [
+   "pop",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Jonas Kaufmann",
+  "country": "DE",
+  "genres": [
+   "classical",
+   "lied",
+   "opera",
+   "verismo"
+  ],
+  "activeFrom": 1994
+ },
+ {
+  "artist": "Joni Mitchell",
+  "country": "CA",
+  "genres": [
+   "folk",
+   "folk rock",
+   "jazz",
+   "singer-songwriter"
+  ],
+  "activeFrom": 1964
+ },
+ {
+  "artist": "Joseph Haydn",
+  "country": null,
+  "genres": [
+   "classical",
+   "classical period",
+   "string quartet",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "José Carreras",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "opera",
+   "verismo",
+   "zarzuela"
+  ],
+  "activeFrom": 1970
+ },
+ {
+  "artist": "José José",
+  "country": "MX",
+  "genres": [
+   "ballad",
+   "bolero"
+  ]
+ },
+ {
+  "artist": "José Luis Perales",
+  "country": "ES",
+  "genres": [
+   "jazz",
+   "latin ballad",
+   "latin pop",
+   "trova"
+  ]
+ },
+ {
+  "artist": "José Mercé",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1968
+ },
+ {
+  "artist": "José de Rico",
+  "country": "ES",
+  "genres": [
+   "latin"
+  ]
+ },
+ {
+  "artist": "Journey",
+  "country": "US",
+  "genres": [
+   "aor",
+   "arena rock",
+   "classic rock",
+   "hard rock",
+   "pop rock",
+   "progressive rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Joy Division",
+  "country": "GB",
+  "genres": [
+   "gothic rock",
+   "new wave",
+   "post-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "João Gilberto",
+  "country": "BR",
+  "genres": [
+   "bossa nova"
+  ]
+ },
+ {
+  "artist": "Juan Bau",
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Juan Camacho",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "europop",
+   "schlager",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Juan Luis Guerra",
+  "country": "DO",
+  "genres": [
+   "bachata",
+   "latin pop",
+   "merengue"
+  ]
+ },
+ {
+  "artist": "Juan Magán",
+  "country": "ES",
+  "genres": [
+   "dance",
+   "electro latino",
+   "electronic",
+   "latin",
+   "merengue",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Juan Pardo",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Juan Perro",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Juan y Junior",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Juanes",
+  "country": "CO",
+  "genres": [
+   "latin",
+   "latin pop",
+   "latin rock",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Juanita Reina",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1938,
+  "activeTo": 1990
+ },
+ {
+  "artist": "Juanito Valderrama",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "fandango",
+   "flamenco",
+   "pasodoble"
+  ],
+  "activeFrom": 1935,
+  "activeTo": 2002
+ },
+ {
+  "artist": "Judas Priest",
+  "country": "GB",
+  "genres": [
+   "hard rock",
+   "heavy metal"
+  ]
+ },
+ {
+  "artist": "Judeline",
+  "country": "ES",
+  "genres": [
+   "downtempo",
+   "flamenco",
+   "hip hop",
+   "indie pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Julian Bream",
+  "country": "GB",
+  "genres": [
+   "baroque",
+   "character piece",
+   "classical",
+   "renaissance"
+  ],
+  "activeFrom": 1950,
+  "activeTo": 2002
+ },
+ {
+  "artist": "Julieta Venegas",
+  "country": "MX",
+  "genres": [
+   "folk rock",
+   "indie pop",
+   "latin",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Julio Iglesias",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "canción melódica",
+   "latin",
+   "latin ballad",
+   "pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Jung Kook",
+  "country": "KR",
+  "genres": [
+   "k-pop",
+   "pop",
+   "uk garage"
+  ]
+ },
+ {
+  "artist": "Junior Míguez",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Justice",
+  "country": "FR",
+  "genres": [
+   "electro house",
+   "french house",
+   "nu disco"
+  ]
+ },
+ {
+  "artist": "Justin Bieber",
+  "country": "CA",
+  "genres": [
+   "contemporary country",
+   "dance-pop",
+   "pop",
+   "pop rap",
+   "r&b",
+   "reggaeton",
+   "teen pop",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Justin Timberlake",
+  "country": "US",
+  "genres": [
+   "boogie",
+   "contemporary r&b",
+   "dance-pop",
+   "disco",
+   "electropop",
+   "neo soul",
+   "pop",
+   "r&b",
+   "synth funk"
+  ]
+ },
+ {
+  "artist": "KC and the Sunshine Band",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "disco",
+   "funk",
+   "pop",
+   "pop soul"
+  ]
+ },
+ {
+  "artist": "Kaiser Chiefs",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "dance-pop",
+   "indie rock",
+   "pop rock",
+   "post-punk revival",
+   "power pop",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Kaka de Luxe",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "punk",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "Kanye West",
+  "country": "US",
+  "genres": [
+   "hip hop",
+   "pop rap"
+  ]
+ },
+ {
+  "artist": "Karina",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "pop rock",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Karol G",
+  "country": "CO",
+  "genres": [
+   "latin",
+   "r&b",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Kase.O",
+  "country": "ES",
+  "genres": [
+   "hardcore hip hop"
+  ]
+ },
+ {
+  "artist": "Katy Perry",
+  "country": "US",
+  "genres": [
+   "bubblegum pop",
+   "dance-pop",
+   "disco",
+   "electropop",
+   "pop",
+   "pop rock",
+   "synth-pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Keane",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "piano rock",
+   "pop rock",
+   "post-britpop",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Keith Jarrett",
+  "country": "US",
+  "genres": [
+   "free jazz",
+   "jazz",
+   "modal jazz",
+   "post-bop"
+  ],
+  "activeFrom": 1965,
+  "activeTo": 2018
+ },
+ {
+  "artist": "Kendrick Lamar",
+  "country": "US",
+  "genres": [
+   "alternative hip hop",
+   "conscious hip hop",
+   "dance",
+   "disco",
+   "future bass",
+   "gangsta rap",
+   "hardcore hip hop",
+   "hip hop",
+   "house",
+   "jazz",
+   "jazz rap",
+   "pop",
+   "pop rap",
+   "r&b",
+   "trap",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "Ketama",
+  "country": "ES",
+  "genres": [
+   "alternative folk",
+   "flamenco",
+   "flamenco pop",
+   "nuevo flamenco",
+   "rumba"
+  ],
+  "activeFrom": 1984,
+  "activeTo": 2005
+ },
+ {
+  "artist": "Khatia Buniatishvili",
+  "country": "GE",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 2008
+ },
+ {
+  "artist": "Kiko Veneno",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "pop rock",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Kim Wilde",
+  "country": "GB",
+  "genres": [
+   "dance-pop",
+   "hi-nrg",
+   "new wave",
+   "pop",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "King Crimson",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "progressive rock"
+  ]
+ },
+ {
+  "artist": "King Gizzard & the Lizard Wizard",
+  "country": "AU",
+  "genres": [
+   "garage rock",
+   "progressive rock",
+   "psychedelic rock",
+   "stoner rock"
+  ],
+  "activeFrom": 2010
+ },
+ {
+  "artist": "Kings of Leon",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "garage rock",
+   "garage rock revival",
+   "indie rock",
+   "pop rock",
+   "rock",
+   "southern rock"
+  ]
+ },
+ {
+  "artist": "Kiss",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "aor",
+   "arena rock",
+   "classic rock",
+   "disco",
+   "glam",
+   "glam metal",
+   "glam rock",
+   "grunge",
+   "hard rock",
+   "heavy metal",
+   "metal",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Kool & The Gang",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "disco",
+   "electronic",
+   "funk",
+   "jazz",
+   "jazz-funk",
+   "pop soul",
+   "soul",
+   "synth funk"
+  ]
+ },
+ {
+  "artist": "Kortatu",
+  "country": "ES",
+  "genres": [
+   "punk rock",
+   "ska",
+   "ska punk"
+  ]
+ },
+ {
+  "artist": "Kraftwerk",
+  "country": "DE",
+  "genres": [
+   "electro",
+   "electronic",
+   "krautrock",
+   "progressive electronic",
+   "synth-pop",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Kronos Quartet",
+  "country": "US",
+  "genres": [
+   "classical",
+   "contemporary classical",
+   "minimalism",
+   "string quartet"
+  ],
+  "activeFrom": 1973
+ },
+ {
+  "artist": "Kygo",
+  "country": "NO",
+  "genres": [
+   "club",
+   "dance",
+   "deep house",
+   "downtempo",
+   "edm",
+   "electronic",
+   "electronica",
+   "house",
+   "pop",
+   "progressive house",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Kylie Minogue",
+  "country": "AU",
+  "genres": [
+   "dance-pop",
+   "hi-nrg",
+   "pop",
+   "synth-pop"
+  ],
+  "activeFrom": 1987
+ },
+ {
+  "artist": "La Banda Trapera del Río",
+  "country": "ES",
+  "genres": [
+   "garage rock",
+   "hard rock",
+   "punk",
+   "punk rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "La Cabra Mecánica",
+  "country": "ES",
+  "genres": [
+   "cumbia",
+   "pop rock",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "La Década Prodigiosa",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "La Frontera",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "country rock",
+   "pop rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "La Guardia",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "La La Love You",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "pop punk",
+   "pop rock",
+   "power pop"
+  ]
+ },
+ {
+  "artist": "La Mode",
+  "country": "ES",
+  "genres": [
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "La Niña de los Peines",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "fandango",
+   "flamenco"
+  ],
+  "activeFrom": 1910,
+  "activeTo": 1949
+ },
+ {
+  "artist": "La Oreja de Van Gogh",
+  "country": "ES",
+  "genres": [
+   "donosti sound",
+   "electropop",
+   "latin",
+   "pop",
+   "pop rock",
+   "power pop"
+  ]
+ },
+ {
+  "artist": "La Pegatina",
+  "country": "ES",
+  "genres": [
+   "rumba catalana"
+  ]
+ },
+ {
+  "artist": "La Polla Records",
+  "country": "ES",
+  "genres": [
+   "hardcore punk",
+   "punk",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "La Quinta Estación",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin ballad",
+   "latin pop",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "La Trinca",
+  "country": "ES",
+  "genres": [
+   "comedy"
+  ]
+ },
+ {
+  "artist": "La Unión",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "La rabia del milenio",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Lady Gaga",
+  "country": "US",
+  "genres": [
+   "americana",
+   "art pop",
+   "dance",
+   "dance-pop",
+   "edm",
+   "electro house",
+   "electronic",
+   "electropop",
+   "jazz",
+   "pop",
+   "pop rock",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Lana Del Rey",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "art pop",
+   "ballad",
+   "chamber pop",
+   "dream pop",
+   "electronic",
+   "indie pop",
+   "neo-psychedelia",
+   "pop",
+   "singer-songwriter",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Lang Lang",
+  "country": "CN",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 1999
+ },
+ {
+  "artist": "Las Grecas",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "funk",
+   "glam",
+   "pop rock",
+   "psychedelic rock",
+   "rock",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Las Ketchup",
+  "country": "ES",
+  "genres": [
+   "europop",
+   "flamenco pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Las Niñas",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "hip hop",
+   "house"
+  ]
+ },
+ {
+  "artist": "Laura Branigan",
+  "country": "US",
+  "genres": [
+   "ballad",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Laura Pausini",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Lauryn Hill",
+  "country": "US",
+  "genres": [
+   "alternative hip hop",
+   "contemporary r&b",
+   "hip hop",
+   "neo soul"
+  ]
+ },
+ {
+  "artist": "Led Zeppelin",
+  "country": "GB",
+  "genres": [
+   "arena rock",
+   "blues rock",
+   "classic rock",
+   "folk rock",
+   "hard rock",
+   "heavy metal",
+   "progressive rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Leiva",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "pop rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Leonard Bernstein",
+  "country": "US",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral",
+   "romantic classical",
+   "symphony"
+  ],
+  "activeFrom": 1943,
+  "activeTo": 1990
+ },
+ {
+  "artist": "Leonard Cohen",
+  "country": "CA",
+  "genres": [
+   "art pop",
+   "folk",
+   "folk rock",
+   "singer-songwriter"
+  ],
+  "activeFrom": 1956,
+  "activeTo": 2016
+ },
+ {
+  "artist": "Lewis Capaldi",
+  "country": "GB",
+  "genres": [
+   "ballad",
+   "blue-eyed soul",
+   "pop",
+   "singer-songwriter",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Leño",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "rock",
+   "rock urbano"
+  ]
+ },
+ {
+  "artist": "Lil Nas X",
+  "country": "US",
+  "genres": [
+   "country",
+   "country rap",
+   "hip hop",
+   "pop rap",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Limp Bizkit",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "hip hop",
+   "metal",
+   "nu metal",
+   "pop rock",
+   "rap metal",
+   "rap rock",
+   "rapcore",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Linkin Park",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "metal",
+   "nu metal",
+   "rap metal",
+   "rap rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Lionel Richie",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "country pop",
+   "disco",
+   "pop",
+   "pop soul",
+   "r&b",
+   "smooth soul",
+   "soft rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Lluís Llach",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "folk",
+   "nueva canción"
+  ]
+ },
+ {
+  "artist": "Loco Mía",
+  "country": "ES",
+  "genres": [
+   "disco",
+   "electro",
+   "euro house",
+   "europop",
+   "house",
+   "italo-disco",
+   "new beat",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Lola Flores",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "latin",
+   "sevillanas"
+  ]
+ },
+ {
+  "artist": "Lola Índigo",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "latin pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Lole y Manuel",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco",
+   "rumba"
+  ],
+  "activeFrom": 1972,
+  "activeTo": 1994
+ },
+ {
+  "artist": "London Philharmonic Orchestra",
+  "country": "GB",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1932
+ },
+ {
+  "artist": "London Symphony Orchestra",
+  "country": "GB",
+  "genres": [
+   "cinematic classical",
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1904
+ },
+ {
+  "artist": "Lone Star",
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Loquillo",
+  "country": "ES",
+  "genres": [
+   "folk rock",
+   "rock",
+   "rock and roll",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "Lorde",
+  "country": "NZ",
+  "genres": [
+   "alternative pop",
+   "alternative rock",
+   "art pop",
+   "dance-pop",
+   "folk pop",
+   "indie pop",
+   "indietronica",
+   "pop",
+   "singer-songwriter",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Lorenzo Santamaría",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Lori Meyers",
+  "country": "ES",
+  "genres": [
+   "indie pop"
+  ]
+ },
+ {
+  "artist": "Los Bravos",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Los Brincos",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Los Canarios",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "garage rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Los Chichos",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Los Cucas",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Los Delinqüentes",
+  "country": "ES",
+  "genres": [
+   "blues rock",
+   "flamenco",
+   "folk rock",
+   "pachanga",
+   "pop rock",
+   "punk",
+   "reggae",
+   "rumba",
+   "southern rock"
+  ]
+ },
+ {
+  "artist": "Los Diablos",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Los Elegantes",
+  "country": "ES",
+  "genres": [
+   "mod",
+   "pop rock",
+   "power pop"
+  ]
+ },
+ {
+  "artist": "Los Enemigos",
+  "country": "ES",
+  "genres": [
+   "blues rock",
+   "classic rock",
+   "garage rock",
+   "hard rock",
+   "pop rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Fabulosos Cadillacs",
+  "country": "AR",
+  "genres": [
+   "latin rock",
+   "ska"
+  ]
+ },
+ {
+  "artist": "Los Inhumanos",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Los Lobos",
+  "country": "US",
+  "genres": [
+   "latin rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Manolos",
+  "country": "ES",
+  "genres": [
+   "europop",
+   "flamenco",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Los Mustang",
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Módulos",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "progressive rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Los Nikis",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop punk",
+   "pop rock",
+   "punk",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Payos",
+  "country": "ES",
+  "genres": [
+   "calypso",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Los Pecos",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Los Pekenikes",
+  "country": "ES",
+  "genres": [
+   "baroque pop",
+   "instrumental",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Los Planetas",
+  "country": "ES",
+  "genres": [
+   "indie rock",
+   "shoegaze"
+  ]
+ },
+ {
+  "artist": "Los Prisioneros",
+  "country": "CL",
+  "genres": [
+   "latin rock",
+   "new wave"
+  ]
+ },
+ {
+  "artist": "Los Puntos",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop rock",
+   "psychedelic rock"
+  ]
+ },
+ {
+  "artist": "Los Rebeldes",
+  "country": "ES",
+  "genres": [
+   "garage rock",
+   "rock and roll",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "Los Relámpagos",
+  "country": "ES",
+  "genres": [
+   "instrumental rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Rodríguez",
+  "country": "ES",
+  "genres": [
+   "classic rock",
+   "pop rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Ronaldos",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Los Salvajes",
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Secretos",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Los Sirex",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Los Stop",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Los Suaves",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Los Toreros Muertos",
+  "country": "ES",
+  "genres": [
+   "disco",
+   "funk",
+   "pop rock",
+   "punk",
+   "ska"
+  ]
+ },
+ {
+  "artist": "Los Zombies",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "garage rock",
+   "rock and roll",
+   "surf"
+  ]
+ },
+ {
+  "artist": "Los del Río",
+  "country": "ES",
+  "genres": [
+   "flamenco pop",
+   "latin",
+   "rumba flamenca",
+   "sevillanas"
+  ]
+ },
+ {
+  "artist": "Los Ángeles",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "merseybeat"
+  ]
+ },
+ {
+  "artist": "Los Ángeles Negros",
+  "country": "CL",
+  "genres": [
+   "ballad",
+   "bolero"
+  ]
+ },
+ {
+  "artist": "Lou Reed",
+  "country": "US",
+  "genres": [
+   "art rock",
+   "glam rock",
+   "hard rock",
+   "noise",
+   "pop rock",
+   "rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Louis Armstrong",
+  "country": "US",
+  "genres": [
+   "dixieland",
+   "jazz",
+   "swing",
+   "vocal jazz"
+  ],
+  "activeFrom": 1922,
+  "activeTo": 1971
+ },
+ {
+  "artist": "Love of Lesbian",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Luciano Pavarotti",
+  "country": "IT",
+  "genres": [
+   "classical",
+   "opera",
+   "romantic classical",
+   "verismo"
+  ],
+  "activeFrom": 1961,
+  "activeTo": 2007
+ },
+ {
+  "artist": "Lucio Battisti",
+  "country": "IT",
+  "genres": [
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Lucio Dalla",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Ludwig van Beethoven",
+  "country": null,
+  "genres": [
+   "character piece",
+   "choral symphony",
+   "classical",
+   "classical period",
+   "concerto",
+   "orchestral",
+   "sonata",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Luis Aguilé",
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Luis Cobos",
+  "country": "ES",
+  "genres": [
+   "easy listening",
+   "europop",
+   "folk",
+   "ska",
+   "zarzuela"
+  ]
+ },
+ {
+  "artist": "Luis Eduardo Aute",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "folk"
+  ]
+ },
+ {
+  "artist": "Luis Fonsi",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Luis Miguel",
+  "country": "MX",
+  "genres": [
+   "ballad",
+   "bolero",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Lulu",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "blue-eyed soul",
+   "pop",
+   "pop rock",
+   "pop soul"
+  ]
+ },
+ {
+  "artist": "Luz Casal",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Lykke Li",
+  "country": "SE",
+  "genres": [
+   "dream pop",
+   "electropop",
+   "indie pop"
+  ]
+ },
+ {
+  "artist": "Lynyrd Skynyrd",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "blues rock",
+   "boogie rock",
+   "classic rock",
+   "hard rock",
+   "rock",
+   "southern rock"
+  ]
+ },
+ {
+  "artist": "M-Clan",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "rock",
+   "rock and roll",
+   "southern rock"
+  ]
+ },
+ {
+  "artist": "MC5",
+  "country": "US",
+  "genres": [
+   "garage rock",
+   "hard rock",
+   "proto-punk"
+  ],
+  "activeFrom": 1964,
+  "activeTo": 1972
+ },
+ {
+  "artist": "Macaco",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "hip hop",
+   "nuevo flamenco",
+   "reggae"
+  ]
+ },
+ {
+  "artist": "Macklemore & Ryan Lewis",
+  "country": "US",
+  "genres": [
+   "hip hop",
+   "pop rap"
+  ]
+ },
+ {
+  "artist": "Madonna",
+  "country": "US",
+  "genres": [
+   "art pop",
+   "bubblegum pop",
+   "club",
+   "contemporary r&b",
+   "country pop",
+   "dance-pop",
+   "easy listening",
+   "edm",
+   "electronic",
+   "electronica",
+   "electropop",
+   "jazz",
+   "new wave",
+   "pop",
+   "pop rock",
+   "synth-pop",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Mago de Oz",
+  "country": "ES",
+  "genres": [
+   "celtic",
+   "celtic metal",
+   "folk metal",
+   "hard rock",
+   "heavy metal",
+   "metal",
+   "power metal",
+   "rock urbano"
+  ]
+ },
+ {
+  "artist": "Major Lazer",
+  "country": "US",
+  "genres": [
+   "art pop",
+   "dance-pop",
+   "dancehall",
+   "edm",
+   "electronic",
+   "electropop",
+   "jungle terror",
+   "moombahton"
+  ]
+ },
+ {
+  "artist": "Mala Rodríguez",
+  "country": "ES",
+  "genres": [
+   "hardcore hip hop",
+   "hip hop",
+   "instrumental"
+  ]
+ },
+ {
+  "artist": "Maldita Nerea",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Maluma",
+  "country": "CO",
+  "genres": [
+   "latin",
+   "latin pop",
+   "pop rock",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Malú",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Manfred Mann",
+  "country": "GB",
+  "genres": [
+   "beat music",
+   "pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Manic Street Preachers",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "punk rock"
+  ],
+  "activeFrom": 1986
+ },
+ {
+  "artist": "Manolo Caracol",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "copla",
+   "flamenco"
+  ],
+  "activeFrom": 1929,
+  "activeTo": 1973
+ },
+ {
+  "artist": "Manolo Escobar",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "flamenco",
+   "latin",
+   "sevillanas"
+  ]
+ },
+ {
+  "artist": "Manolo García",
+  "country": "ES",
+  "genres": [
+   "folk rock",
+   "pop rock",
+   "post-rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Manolo Otero",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Manolo Sanlúcar",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Manolo Tena",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Manu Chao",
+  "country": "FR",
+  "genres": [
+   "country",
+   "electronic",
+   "folk",
+   "latin",
+   "latin rock",
+   "pop",
+   "punk",
+   "reggae",
+   "rock",
+   "ska",
+   "worldbeat"
+  ]
+ },
+ {
+  "artist": "Manuel Carrasco",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Manuel Turizo",
+  "country": "CO",
+  "genres": [
+   "latin",
+   "latin pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Manuel de Falla",
+  "country": null,
+  "genres": [
+   "ballet",
+   "classical",
+   "impressionism",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Manzanita",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Maná",
+  "country": "MX",
+  "genres": [
+   "latin",
+   "latin pop",
+   "latin rock",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Marc Anthony",
+  "country": "US",
+  "genres": [
+   "latin pop",
+   "salsa"
+  ]
+ },
+ {
+  "artist": "Marea",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "hard rock",
+   "indie rock",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Mari Trini",
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin ballad",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Maria Callas",
+  "country": "US",
+  "genres": [
+   "classical",
+   "opera",
+   "opera seria",
+   "verismo"
+  ],
+  "activeFrom": 1941,
+  "activeTo": 1974
+ },
+ {
+  "artist": "Maria del Mar Bonet",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "folk",
+   "nueva canción",
+   "psychedelic rock"
+  ]
+ },
+ {
+  "artist": "Mariah Carey",
+  "country": "US",
+  "genres": [
+   "christmas music",
+   "contemporary r&b",
+   "dance-pop",
+   "easy listening",
+   "hip hop",
+   "pop",
+   "pop soul",
+   "quiet storm",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Marianne Faithfull",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "folk",
+   "folk rock",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Marifé de Triana",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Marisol",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "copla",
+   "flamenco",
+   "pop",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Maroon 5",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "dance",
+   "dance-pop",
+   "electropop",
+   "funk rock",
+   "grunge",
+   "indie rock",
+   "neo-psychedelia",
+   "pop",
+   "pop punk",
+   "pop rock",
+   "power pop",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Marta Sánchez",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Martha Argerich",
+  "country": "AR",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 1957
+ },
+ {
+  "artist": "Martha and the Vandellas",
+  "country": "US",
+  "genres": [
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Martin Garrix",
+  "country": "NL",
+  "genres": [
+   "big room house",
+   "dance-pop",
+   "edm",
+   "electro house",
+   "festival progressive house",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Marvin Gaye",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "funk",
+   "motown",
+   "pop soul",
+   "progressive soul",
+   "smooth soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "María Becerra",
+  "country": "AR",
+  "genres": [
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "María Jiménez",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "latin",
+   "rumba flamenca"
+  ]
+ },
+ {
+  "artist": "María José Llergo",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "downtempo",
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "María Ostiz",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Massiel",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "beat music"
+  ]
+ },
+ {
+  "artist": "Massive Attack",
+  "country": "GB",
+  "genres": [
+   "downtempo",
+   "electronic",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Maurice Ravel",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "impressionism",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Mecano",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Meghan Trainor",
+  "country": "US",
+  "genres": [
+   "blue-eyed soul",
+   "bubblegum pop",
+   "dance-pop",
+   "doo-wop",
+   "pop",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Melendi",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "pop",
+   "pop rock",
+   "rock",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Men at Work",
+  "country": "AU",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "reggae rock"
+  ],
+  "activeFrom": 1979,
+  "activeTo": 1986
+ },
+ {
+  "artist": "Mercedes Ferrer",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Mercedes Sosa",
+  "country": "AR",
+  "genres": [
+   "folk",
+   "nueva canción"
+  ]
+ },
+ {
+  "artist": "Merche",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "latin",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Metallica",
+  "country": "US",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "metal",
+   "rock",
+   "thrash metal"
+  ]
+ },
+ {
+  "artist": "Michael Bublé",
+  "country": "CA",
+  "genres": [
+   "big band",
+   "jazz",
+   "jazz pop",
+   "pop",
+   "swing"
+  ]
+ },
+ {
+  "artist": "Michael Jackson",
+  "country": "US",
+  "genres": [
+   "boogie",
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "disco",
+   "hip hop",
+   "new jack swing",
+   "pop",
+   "pop rap",
+   "pop rock",
+   "pop soul",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Michel Camilo",
+  "country": "DO",
+  "genres": [
+   "afro-cuban jazz",
+   "jazz",
+   "latin jazz"
+  ],
+  "activeFrom": 1979
+ },
+ {
+  "artist": "Michel Sardou",
+  "country": "FR",
+  "genres": [
+   "chanson à texte",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Micky",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Micky y Los Tonys",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "surf"
+  ]
+ },
+ {
+  "artist": "Midnight Oil",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "hard rock",
+   "post-punk",
+   "rock"
+  ],
+  "activeFrom": 1976
+ },
+ {
+  "artist": "Miguel Bosé",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "latin",
+   "latin ballad",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Miguel Gallardo",
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Miguel Poveda",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "copla",
+   "flamenco",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1993
+ },
+ {
+  "artist": "Miguel Ríos",
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop rock",
+   "rock",
+   "rock and roll",
+   "rockabilly",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Miguel de Molina",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1932,
+  "activeTo": 1970
+ },
+ {
+  "artist": "Mikel Erentxun",
+  "country": "ES",
+  "genres": [
+   "jangle pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Miles Davis",
+  "country": "US",
+  "genres": [
+   "cool jazz",
+   "hard bop",
+   "jazz",
+   "jazz fusion",
+   "modal jazz"
+  ],
+  "activeFrom": 1944,
+  "activeTo": 1991
+ },
+ {
+  "artist": "Miley Cyrus",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "country",
+   "country pop",
+   "dance-pop",
+   "electropop",
+   "hip hop",
+   "pop",
+   "pop rock",
+   "power pop",
+   "rock",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Milky Chance",
+  "country": "DE",
+  "genres": [
+   "folktronica",
+   "indie folk",
+   "reggae-pop"
+  ]
+ },
+ {
+  "artist": "Mina",
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Miranda Warning",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "indie rock",
+   "punk"
+  ]
+ },
+ {
+  "artist": "Miss Caffeina",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock",
+   "pop rock",
+   "rock and roll",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Moby",
+  "country": "US",
+  "genres": [
+   "ambient",
+   "ambient techno",
+   "downtempo",
+   "electronic",
+   "electronica",
+   "house",
+   "pop",
+   "pop rock",
+   "rock",
+   "techno",
+   "trance",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Mocedades",
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "folk",
+   "folk pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Modern Talking",
+  "country": "DE",
+  "genres": [
+   "electro-disco",
+   "electronic",
+   "euro-disco",
+   "eurodance",
+   "europop",
+   "hi-nrg",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Modest Mussorgsky",
+  "country": null,
+  "genres": [
+   "classical",
+   "orchestral",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Modestia Aparte",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Montserrat Caballé",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "opera",
+   "romantic classical",
+   "verismo"
+  ],
+  "activeFrom": 1956,
+  "activeTo": 2018
+ },
+ {
+  "artist": "Morad",
+  "country": "ES",
+  "genres": [
+   "afro trap",
+   "dancehall",
+   "pop rap",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Motörhead",
+  "country": "GB",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "Mstislav Rostropovich",
+  "country": "RU",
+  "genres": [
+   "classical",
+   "concerto",
+   "orchestral"
+  ],
+  "activeFrom": 1945,
+  "activeTo": 2007
+ },
+ {
+  "artist": "Muchachito Bombo Infierno",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "funk",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Mumford & Sons",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "americana",
+   "folk pop",
+   "folk rock",
+   "indie folk",
+   "pop rock",
+   "rock",
+   "stomp and holler"
+  ]
+ },
+ {
+  "artist": "Muse",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "alternative metal",
+   "alternative rock",
+   "art rock",
+   "neo-progressive rock",
+   "pop rock",
+   "post-grunge",
+   "progressive rock",
+   "rock",
+   "space rock",
+   "symphonic rock"
+  ]
+ },
+ {
+  "artist": "Myke Towers",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Mägo de Oz",
+  "country": "ES",
+  "genres": [
+   "celtic",
+   "celtic metal",
+   "folk metal",
+   "hard rock",
+   "heavy metal",
+   "metal",
+   "power metal",
+   "rock urbano"
+  ]
+ },
+ {
+  "artist": "Måneskin",
+  "country": "IT",
+  "genres": [
+   "alternative rock",
+   "funk rock",
+   "glam rock",
+   "hard rock",
+   "pop rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Mónica Naranjo",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Nach",
+  "country": "ES",
+  "genres": [
+   "conscious hip hop",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Nacha Pop",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Nancy Ames",
+  "country": "US",
+  "genres": [
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Nancy Sinatra",
+  "country": "US",
+  "genres": [
+   "classic rock",
+   "pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Narciso Yepes",
+  "country": "ES",
+  "genres": [
+   "character piece",
+   "classical",
+   "concerto"
+  ],
+  "activeFrom": 1947,
+  "activeTo": 1997
+ },
+ {
+  "artist": "Nat King Cole",
+  "country": "US",
+  "genres": [
+   "jazz",
+   "swing",
+   "traditional pop",
+   "vocal jazz"
+  ],
+  "activeFrom": 1937,
+  "activeTo": 1965
+ },
+ {
+  "artist": "Natalia Jiménez",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin pop",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Natalia Lafourcade",
+  "country": "MX",
+  "genres": [
+   "indie pop",
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "Natanael Cano",
+  "country": "MX",
+  "genres": [
+   "corrido",
+   "regional mexicano",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Natos y Waor",
+  "country": "ES",
+  "genres": [
+   "boom bap",
+   "gangsta rap",
+   "hardcore hip hop"
+  ]
+ },
+ {
+  "artist": "Natti Natasha",
+  "country": "DO",
+  "genres": [
+   "latin pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Navajita Plateá",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Naím Thomas",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "europop"
+  ]
+ },
+ {
+  "artist": "Nebulossa",
+  "country": "ES",
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Neil Young",
+  "country": "CA",
+  "genres": [
+   "classic rock",
+   "contemporary folk",
+   "country",
+   "country rock",
+   "folk",
+   "folk rock",
+   "hard rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Nelly",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "hip hop",
+   "hip hop soul",
+   "pop",
+   "pop rap",
+   "pop soul",
+   "r&b",
+   "southern hip hop",
+   "southern soul",
+   "trap soul",
+   "underground hip hop"
+  ]
+ },
+ {
+  "artist": "Nelly Furtado",
+  "country": "CA",
+  "genres": [
+   "alternative rock",
+   "dance-pop",
+   "electropop",
+   "eurodance",
+   "folk",
+   "hip hop",
+   "indie rock",
+   "pop",
+   "singer-songwriter",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Nena",
+  "country": "DE",
+  "genres": [
+   "neue deutsche welle",
+   "new wave",
+   "pop",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Nena Daconte",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "indie pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "New Order",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "alternative rock",
+   "dance",
+   "dance-rock",
+   "electronic",
+   "house",
+   "new wave",
+   "pop",
+   "post-punk",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "New York Philharmonic",
+  "country": "US",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1842
+ },
+ {
+  "artist": "NewJeans",
+  "country": "KR",
+  "genres": [
+   "dance-pop",
+   "jersey club",
+   "k-pop"
+  ]
+ },
+ {
+  "artist": "Nick Cave and the Bad Seeds",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "gothic rock",
+   "post-punk"
+  ],
+  "activeFrom": 1983
+ },
+ {
+  "artist": "Nickelback",
+  "country": "CA",
+  "genres": [
+   "alternative rock",
+   "death metal",
+   "electropop",
+   "funk rock",
+   "hard rock",
+   "pop rock",
+   "post-grunge",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Nicki Minaj",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "east coast hip hop",
+   "electronic",
+   "hardcore hip hop",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "r&b"
+  ]
+ },
+ {
+  "artist": "Nicki Nicole",
+  "country": "AR",
+  "genres": [
+   "alternative r&b",
+   "hip hop",
+   "latin pop",
+   "pop rap",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Nicky Jam",
+  "country": "US",
+  "genres": [
+   "latin",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Nightwish",
+  "country": "FI",
+  "genres": [
+   "gothic metal",
+   "power metal",
+   "symphonic metal"
+  ]
+ },
+ {
+  "artist": "Nikolai Rimsky-Korsakov",
+  "country": null,
+  "genres": [
+   "classical",
+   "orchestral",
+   "romantic classical",
+   "symphonic poem"
+  ]
+ },
+ {
+  "artist": "Nikolaus Harnoncourt",
+  "country": "AT",
+  "genres": [
+   "baroque",
+   "cantata",
+   "classical",
+   "orchestral"
+  ],
+  "activeFrom": 1953,
+  "activeTo": 2016
+ },
+ {
+  "artist": "Nil Moliner",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Nina Simone",
+  "country": "US",
+  "genres": [
+   "blues",
+   "classical",
+   "folk",
+   "jazz",
+   "pop soul",
+   "r&b",
+   "soul",
+   "soul jazz",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "Nine Inch Nails",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "dance",
+   "dark ambient",
+   "electro-industrial",
+   "electronic",
+   "electronic rock",
+   "hip hop",
+   "industrial",
+   "industrial metal",
+   "industrial rock",
+   "nu metal",
+   "pop",
+   "post-industrial",
+   "rock",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Nino Bravo",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Nirvana",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "alternative metal",
+   "alternative rock",
+   "grunge",
+   "noise rock",
+   "pigfuck",
+   "post-hardcore",
+   "punk",
+   "punk rock",
+   "rock",
+   "sludge metal"
+  ]
+ },
+ {
+  "artist": "Niña Pastori",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "flamenco pop",
+   "folk",
+   "nuevo flamenco"
+  ],
+  "activeFrom": 1996
+ },
+ {
+  "artist": "No Doubt",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "pop",
+   "pop rock",
+   "power pop",
+   "rock",
+   "ska",
+   "ska punk",
+   "third wave ska"
+  ]
+ },
+ {
+  "artist": "No me pises que llevo chanclas",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Noah Kahan",
+  "country": "US",
+  "genres": [
+   "folk",
+   "folk pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Norah Jones",
+  "country": "US",
+  "genres": [
+   "blues",
+   "christmas music",
+   "country",
+   "folk",
+   "indie pop",
+   "jazz",
+   "jazz pop",
+   "pop",
+   "pop soul",
+   "singer-songwriter",
+   "traditional pop",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "OBK",
+  "country": "ES",
+  "genres": [
+   "house",
+   "synth-pop",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Oasis",
+  "country": "GB",
+  "genres": [
+   "acoustic rock",
+   "alternative rock",
+   "britpop",
+   "hard rock",
+   "indie rock",
+   "madchester",
+   "neo-psychedelia",
+   "noise pop",
+   "pop rock",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Objetivo Birmania",
+  "country": "ES",
+  "genres": [
+   "funk",
+   "latin",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Obús",
+  "country": "ES",
+  "genres": [
+   "heavy metal"
+  ]
+ },
+ {
+  "artist": "Of Monsters and Men",
+  "country": "IS",
+  "genres": [
+   "folk",
+   "folk pop",
+   "indie folk",
+   "indie pop",
+   "indie rock",
+   "pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Ojos de Brujo",
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ]
+ },
+ {
+  "artist": "Olivia Rodrigo",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "folk pop",
+   "musical",
+   "pop",
+   "pop punk",
+   "pop rock",
+   "power pop",
+   "rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Olé Olé",
+  "country": "ES",
+  "genres": [
+   "disco",
+   "europop",
+   "latin",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "One Direction",
+  "country": "GB",
+  "genres": [
+   "dance-pop",
+   "folk pop",
+   "pop",
+   "pop rock",
+   "power pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "OneRepublic",
+  "country": "US",
+  "genres": [
+   "folk pop",
+   "pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Opus",
+  "country": "AT",
+  "genres": [
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Orchestre de Paris",
+  "country": "FR",
+  "genres": [
+   "classical",
+   "impressionism",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1967
+ },
+ {
+  "artist": "Orquesta Mondragón",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "post-punk",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Orquesta Nacional de España",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1937
+ },
+ {
+  "artist": "Oscar Peterson",
+  "country": "CA",
+  "genres": [
+   "bebop",
+   "cool jazz",
+   "jazz",
+   "swing"
+  ],
+  "activeFrom": 1945,
+  "activeTo": 2007
+ },
+ {
+  "artist": "Otis Redding",
+  "country": "US",
+  "genres": [
+   "blues",
+   "blues rock",
+   "deep soul",
+   "psychedelic rock",
+   "r&b",
+   "soul",
+   "southern soul"
+  ]
+ },
+ {
+  "artist": "OutKast",
+  "country": "US",
+  "genres": [
+   "conscious hip hop",
+   "contemporary r&b",
+   "dirty south",
+   "funk",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "southern hip hop"
+  ]
+ },
+ {
+  "artist": "Ozuna",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "PSY",
+  "country": "KR",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "k-pop"
+  ]
+ },
+ {
+  "artist": "Pablo Abraira",
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Pablo Alborán",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin pop",
+   "pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Pablo Guerrero",
+  "country": "ES",
+  "genres": [
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Paco Pil",
+  "country": "ES",
+  "genres": [
+   "makina"
+  ]
+ },
+ {
+  "artist": "Paco de Lucía",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "flamenco jazz",
+   "jazz",
+   "latin jazz",
+   "modern classical",
+   "nuevo flamenco",
+   "rumba"
+  ],
+  "activeFrom": 1964,
+  "activeTo": 2014
+ },
+ {
+  "artist": "Paloma San Basilio",
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin ballad",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Papa Roach",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "hard rock",
+   "heavy metal",
+   "nu metal",
+   "pop rock",
+   "rap rock"
+  ]
+ },
+ {
+  "artist": "Paquito D'Rivera",
+  "country": "CU",
+  "genres": [
+   "afro-cuban jazz",
+   "bebop",
+   "jazz",
+   "latin jazz"
+  ],
+  "activeFrom": 1965
+ },
+ {
+  "artist": "Parliament",
+  "country": "US",
+  "genres": [
+   "funk",
+   "p-funk",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Parálisis Permanente",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "new wave",
+   "punk"
+  ]
+ },
+ {
+  "artist": "Pat Metheny",
+  "country": "US",
+  "genres": [
+   "jazz",
+   "jazz fusion",
+   "post-bop",
+   "smooth jazz"
+  ],
+  "activeFrom": 1974
+ },
+ {
+  "artist": "Pata Negra",
+  "country": "ES",
+  "genres": [
+   "blues rock",
+   "flamenco",
+   "nuevo flamenco",
+   "rumba"
+  ],
+  "activeFrom": 1981,
+  "activeTo": 1995
+ },
+ {
+  "artist": "Patti Smith",
+  "country": "US",
+  "genres": [
+   "art rock",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Patxi Andión",
+  "country": "ES",
+  "genres": [
+   "folk",
+   "nueva canción"
+  ]
+ },
+ {
+  "artist": "Pearl Jam",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "alternative rock",
+   "art rock",
+   "classic rock",
+   "experimental rock",
+   "funk rock",
+   "grunge",
+   "hard rock",
+   "indie rock",
+   "pop rock",
+   "post-grunge",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Pecos",
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ]
+ },
+ {
+  "artist": "Pedro Marín",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "disco",
+   "europop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Peggy Gou",
+  "country": "KR",
+  "genres": [
+   "dance",
+   "edm",
+   "electronic",
+   "house",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Pepe Blanco",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1940,
+  "activeTo": 1980
+ },
+ {
+  "artist": "Percy Sledge",
+  "country": "US",
+  "genres": [
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Peret",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Pereza",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Peso Pluma",
+  "country": "MX",
+  "genres": [
+   "corrido tumbado",
+   "regional mexicano"
+  ]
+ },
+ {
+  "artist": "Pet Shop Boys",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "dance-pop",
+   "disco",
+   "electronic",
+   "electropop",
+   "house",
+   "new wave",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Peter Tosh",
+  "country": "JM",
+  "genres": [
+   "jamaican ska",
+   "reggae",
+   "rocksteady",
+   "roots reggae"
+  ]
+ },
+ {
+  "artist": "Peter, Paul and Mary",
+  "country": "US",
+  "genres": [
+   "contemporary folk",
+   "folk",
+   "folk rock"
+  ]
+ },
+ {
+  "artist": "Petula Clark",
+  "country": "GB",
+  "genres": [
+   "dance-pop",
+   "pop",
+   "sunshine pop",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "Pharrell Williams",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "pop soul",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Phil Collins",
+  "country": "GB",
+  "genres": [
+   "aor",
+   "art pop",
+   "easy listening",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "progressive pop",
+   "progressive rock",
+   "rock",
+   "soft rock",
+   "sophisti-pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Philip Glass",
+  "country": null,
+  "genres": [
+   "classical",
+   "contemporary classical",
+   "minimalism"
+  ]
+ },
+ {
+  "artist": "Pic-Nic",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "baroque pop",
+   "folk",
+   "folk rock",
+   "pop rock",
+   "sunshine pop"
+  ]
+ },
+ {
+  "artist": "Pignoise",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "pop punk",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Pink",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Pink Floyd",
+  "country": "GB",
+  "genres": [
+   "acid rock",
+   "art rock",
+   "blues rock",
+   "classic rock",
+   "experimental rock",
+   "progressive",
+   "progressive rock",
+   "psychedelic",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock",
+   "rock opera",
+   "space rock",
+   "symphonic rock"
+  ]
+ },
+ {
+  "artist": "Pistones",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "power pop"
+  ]
+ },
+ {
+  "artist": "Pixies",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "noise rock"
+  ],
+  "activeFrom": 1986
+ },
+ {
+  "artist": "Placebo",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "post-punk"
+  ],
+  "activeFrom": 1994
+ },
+ {
+  "artist": "Platero y Tú",
+  "country": "ES",
+  "genres": [
+   "classic rock",
+   "punk",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Plácido Domingo",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "opera",
+   "verismo",
+   "zarzuela"
+  ],
+  "activeFrom": 1959
+ },
+ {
+  "artist": "Portishead",
+  "country": "GB",
+  "genres": [
+   "downtempo",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Post Malone",
+  "country": "US",
+  "genres": [
+   "alternative r&b",
+   "cloud rap",
+   "contemporary r&b",
+   "country",
+   "hip hop",
+   "pop rap",
+   "pop rock",
+   "psychedelic pop",
+   "r&b",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Presuntos Implicados",
+  "country": "ES",
+  "genres": [
+   "blues",
+   "folk",
+   "funk",
+   "jazz",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Prince",
+  "country": "US",
+  "genres": [
+   "afro house",
+   "club",
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "dance-rock",
+   "deep house",
+   "disco",
+   "funk",
+   "funk rock",
+   "future bass",
+   "house",
+   "jazz",
+   "minneapolis sound",
+   "neo-psychedelia",
+   "organic house",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "psychedelic pop",
+   "psychedelic soul",
+   "r&b",
+   "rock",
+   "soul",
+   "synth funk",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Prince Royce",
+  "country": "US",
+  "genres": [
+   "bachata",
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Procol Harum",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "crossover prog",
+   "progressive rock",
+   "psychedelic pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Ptazeta",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin pop",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Public Enemy",
+  "country": "US",
+  "genres": [
+   "conscious hip hop",
+   "east coast hip hop",
+   "hardcore hip hop",
+   "hip hop",
+   "political hip hop"
+  ]
+ },
+ {
+  "artist": "Pulp",
+  "country": "GB",
+  "genres": [
+   "alternative pop",
+   "alternative rock",
+   "art rock",
+   "britpop",
+   "chamber pop",
+   "glam rock",
+   "indie pop",
+   "indie rock",
+   "madchester",
+   "pop",
+   "post-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Pyotr Ilyich Tchaikovsky",
+  "country": null,
+  "genres": [
+   "ballet",
+   "classical",
+   "concerto",
+   "orchestral",
+   "overture",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Queen",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "baroque pop",
+   "classic rock",
+   "disco",
+   "glam rock",
+   "hard rock",
+   "pop rock",
+   "progressive rock",
+   "rock",
+   "symphonic rock"
+  ]
+ },
+ {
+  "artist": "Queens of the Stone Age",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "desert rock",
+   "hard rock",
+   "stoner rock"
+  ],
+  "activeFrom": 1996
+ },
+ {
+  "artist": "Quevedo",
+  "country": "ES",
+  "genres": [
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "R.E.M.",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "alternative country",
+   "alternative rock",
+   "chamber pop",
+   "electronic rock",
+   "folk rock",
+   "glam rock",
+   "grunge",
+   "indie rock",
+   "jangle pop",
+   "neo-psychedelia",
+   "pop rock",
+   "power pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Radio Futura",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "new wave",
+   "pop rock",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Radiohead",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "ambient pop",
+   "art pop",
+   "art rock",
+   "britpop",
+   "chamber pop",
+   "crossover prog",
+   "electronic",
+   "electronic rock",
+   "electronica",
+   "experimental",
+   "experimental rock",
+   "idm",
+   "indie rock",
+   "indietronica",
+   "post-britpop",
+   "post-grunge",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Rafael Frühbeck de Burgos",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1958,
+  "activeTo": 2014
+ },
+ {
+  "artist": "Raffaella Carrà",
+  "country": "IT",
+  "genres": [
+   "disco",
+   "italo-disco",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Rage Against the Machine",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "funk metal",
+   "heavy metal",
+   "metal",
+   "nu metal",
+   "rap metal",
+   "rap rock"
+  ]
+ },
+ {
+  "artist": "Raimon",
+  "country": "ES",
+  "genres": [
+   "nova cançó"
+  ]
+ },
+ {
+  "artist": "Rainbow",
+  "country": "GB",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "neoclassical metal"
+  ],
+  "activeFrom": 1975,
+  "activeTo": 1997
+ },
+ {
+  "artist": "Ralph Vaughan Williams",
+  "country": null,
+  "genres": [
+   "classical",
+   "english pastoral school",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Ralphie Choo",
+  "country": "ES",
+  "genres": [
+   "jungle",
+   "reggaeton",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Rammstein",
+  "country": "DE",
+  "genres": [
+   "heavy metal",
+   "industrial metal",
+   "neue deutsche härte"
+  ]
+ },
+ {
+  "artist": "Ramoncín",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "punk"
+  ]
+ },
+ {
+  "artist": "Ramones",
+  "country": "US",
+  "genres": [
+   "pop punk",
+   "power pop",
+   "punk",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "Raphael",
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Rauw Alejandro",
+  "country": "PR",
+  "genres": [
+   "hip hop",
+   "latin",
+   "reggaeton",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Ray Charles",
+  "country": "US",
+  "genres": [
+   "blues",
+   "jazz",
+   "jazz blues",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Rayden",
+  "country": "ES",
+  "genres": [
+   "conscious hip hop",
+   "hip hop",
+   "pop rap"
+  ]
+ },
+ {
+  "artist": "Raye",
+  "country": "GB",
+  "genres": [
+   "contemporary r&b",
+   "house",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Rebeca",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "euro house",
+   "eurodance",
+   "europop"
+  ]
+ },
+ {
+  "artist": "Red Hot Chili Peppers",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "funk",
+   "funk metal",
+   "funk rock",
+   "pop rock",
+   "rap rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Reincidentes",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Rels B",
+  "country": "ES",
+  "genres": [
+   "reggaeton",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Rema",
+  "country": "NG",
+  "genres": [
+   "afrobeats"
+  ]
+ },
+ {
+  "artist": "Renée Fleming",
+  "country": "US",
+  "genres": [
+   "classical",
+   "opera",
+   "romantic classical"
+  ],
+  "activeFrom": 1988
+ },
+ {
+  "artist": "Revólver",
+  "country": "ES",
+  "genres": [
+   "classic rock",
+   "pop rock",
+   "rock and roll",
+   "space rock"
+  ]
+ },
+ {
+  "artist": "Rey Lui",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "Riccardo Muti",
+  "country": "IT",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1968
+ },
+ {
+  "artist": "Richard Wagner",
+  "country": null,
+  "genres": [
+   "classical",
+   "opera",
+   "prelude",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Rick Astley",
+  "country": "GB",
+  "genres": [
+   "blue-eyed soul",
+   "dance-pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Ricky Martin",
+  "country": "PR",
+  "genres": [
+   "ballad",
+   "dance-pop",
+   "electro latino",
+   "electropop",
+   "latin",
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Righeira",
+  "country": "IT",
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Rigoberta Bandini",
+  "country": "ES",
+  "genres": [
+   "dance-pop",
+   "eurodance",
+   "europop",
+   "indie pop"
+  ]
+ },
+ {
+  "artist": "Rihanna",
+  "country": "BB",
+  "genres": [
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "dancehall",
+   "edm",
+   "electro house",
+   "electropop",
+   "hip hop",
+   "pop",
+   "pop soul",
+   "r&b",
+   "reggae"
+  ]
+ },
+ {
+  "artist": "Rita Pavone",
+  "country": "IT",
+  "genres": [
+   "pop",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Robbie Williams",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "dance-pop",
+   "pop",
+   "pop rock",
+   "rock",
+   "singer-songwriter",
+   "swing"
+  ]
+ },
+ {
+  "artist": "Robert Miles",
+  "country": "IT",
+  "genres": [
+   "ambient",
+   "ambient house",
+   "club",
+   "dance",
+   "disco",
+   "downtempo",
+   "dream trance",
+   "edm",
+   "electronic",
+   "electronica",
+   "eurodance",
+   "house",
+   "melodic house",
+   "melodic techno",
+   "nu jazz",
+   "pop",
+   "progressive house",
+   "psychedelic rock",
+   "psytrance",
+   "techno",
+   "trance",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Robert Schumann",
+  "country": null,
+  "genres": [
+   "character piece",
+   "classical",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Roberto Carlos",
+  "country": "BR",
+  "genres": [
+   "ballad",
+   "bolero",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Robin Schulz",
+  "country": "DE",
+  "genres": [
+   "dance-pop",
+   "deep house",
+   "edm",
+   "electronic",
+   "house",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Rocío Dúrcal",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "canción melódica",
+   "copla",
+   "latin",
+   "latin ballad",
+   "pop",
+   "ranchera"
+  ],
+  "activeFrom": 1961,
+  "activeTo": 2006
+ },
+ {
+  "artist": "Rocío Jurado",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "flamenco",
+   "latin",
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Rod Stewart",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "roots rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Romeo Santos",
+  "country": "US",
+  "genres": [
+   "bachata",
+   "latin"
+  ]
+ },
+ {
+  "artist": "Rosa López",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "euro-disco",
+   "europop",
+   "gospel",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Rosalía",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "flamenco pop",
+   "hip hop",
+   "latin",
+   "latin pop",
+   "nuevo flamenco",
+   "pop",
+   "reggaeton",
+   "singer-songwriter",
+   "trap latino"
+  ],
+  "activeFrom": 2017
+ },
+ {
+  "artist": "Rosana",
+  "country": "ES",
+  "genres": [
+   "latin pop",
+   "pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Rosario",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "latin pop",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Rosario Flores",
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "pop rock",
+   "rumba"
+  ]
+ },
+ {
+  "artist": "Rosendo",
+  "country": "ES",
+  "genres": [
+   "blues rock",
+   "hard rock",
+   "rock",
+   "rock and roll",
+   "rock urbano"
+  ]
+ },
+ {
+  "artist": "Roxette",
+  "country": "SE",
+  "genres": [
+   "dance-pop",
+   "europop",
+   "pop",
+   "pop rock",
+   "power pop",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Roxy Music",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "glam rock"
+  ]
+ },
+ {
+  "artist": "Roy Orbison",
+  "country": "US",
+  "genres": [
+   "blue-eyed soul",
+   "classic rock",
+   "country",
+   "country pop",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "rock and roll",
+   "rockabilly",
+   "singer-songwriter",
+   "traditional pop"
+  ]
+ },
+ {
+  "artist": "Royal Concertgebouw Orchestra",
+  "country": "NL",
+  "genres": [
+   "classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1888
+ },
+ {
+  "artist": "Rozalén",
+  "country": "ES",
+  "genres": [
+   "folk pop",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Rubén Blades",
+  "country": "PA",
+  "genres": [
+   "salsa",
+   "son cubano"
+  ]
+ },
+ {
+  "artist": "Rudimental",
+  "country": "GB",
+  "genres": [
+   "drum and bass",
+   "electronic",
+   "liquid funk"
+  ]
+ },
+ {
+  "artist": "Rulo y la Contrabanda",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "pop rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Run-D.M.C.",
+  "country": "US",
+  "genres": [
+   "east coast hip hop",
+   "hardcore hip hop",
+   "hip hop",
+   "new jack swing",
+   "old school hip hop",
+   "rap rock"
+  ]
+ },
+ {
+  "artist": "Rush",
+  "country": "CA",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "progressive rock"
+  ],
+  "activeFrom": 1968,
+  "activeTo": 2018
+ },
+ {
+  "artist": "Ryuichi Sakamoto",
+  "country": "JP",
+  "genres": [
+   "electronic",
+   "minimalism",
+   "new age"
+  ]
+ },
+ {
+  "artist": "Röyksopp",
+  "country": "NO",
+  "genres": [
+   "downtempo",
+   "electronic",
+   "nu disco"
+  ]
+ },
+ {
+  "artist": "SZA",
+  "country": "US",
+  "genres": [
+   "alternative r&b",
+   "contemporary r&b",
+   "electronic",
+   "hip hop soul",
+   "neo soul",
+   "pop",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Sabrina Carpenter",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Sade",
+  "country": "GB",
+  "genres": [
+   "contemporary r&b",
+   "downtempo",
+   "jazz",
+   "jazz pop",
+   "pop",
+   "quiet storm",
+   "smooth jazz",
+   "smooth soul",
+   "sophisti-pop",
+   "soul",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Saiko",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "reggaeton",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Salomé",
+  "country": "ES",
+  "genres": [
+   "copla",
+   "pop",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Sam & Dave",
+  "country": "US",
+  "genres": [
+   "funk",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Sam Cooke",
+  "country": "US",
+  "genres": [
+   "gospel",
+   "pop soul",
+   "r&b",
+   "soul",
+   "southern soul",
+   "traditional pop",
+   "vocal jazz"
+  ]
+ },
+ {
+  "artist": "Sam Fender",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "heartland rock",
+   "indie rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Sam Smith",
+  "country": "GB",
+  "genres": [
+   "alternative r&b",
+   "blue-eyed soul",
+   "contemporary r&b",
+   "pop",
+   "pop soul",
+   "r&b",
+   "soul",
+   "synth funk"
+  ]
+ },
+ {
+  "artist": "Samuel Barber",
+  "country": null,
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Sander van Doorn",
+  "country": "NL",
+  "genres": [
+   "tech trance",
+   "trance"
+  ]
+ },
+ {
+  "artist": "Sandie Shaw",
+  "country": "GB",
+  "genres": [
+   "beat music",
+   "pop",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Sandra",
+  "country": "DE",
+  "genres": [
+   "euro-disco",
+   "eurodance",
+   "europop",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Sandro",
+  "country": "AR",
+  "genres": [
+   "ballad",
+   "pop",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "Sangre Azul",
+  "country": "ES",
+  "genres": [
+   "classic rock",
+   "glam",
+   "hard rock",
+   "heavy metal"
+  ]
+ },
+ {
+  "artist": "Santabárbara",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Sara Montiel",
+  "country": "ES",
+  "genres": [
+   "bolero español",
+   "copla",
+   "pasodoble"
+  ],
+  "activeFrom": 1944,
+  "activeTo": 2012
+ },
+ {
+  "artist": "Sarah Vaughan",
+  "country": "US",
+  "genres": [
+   "bebop",
+   "jazz",
+   "swing",
+   "vocal jazz"
+  ],
+  "activeFrom": 1942,
+  "activeTo": 1990
+ },
+ {
+  "artist": "Savage Garden",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "dance-pop",
+   "pop",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Scatman John",
+  "country": "US",
+  "genres": [
+   "eurodance",
+   "jazz"
+  ]
+ },
+ {
+  "artist": "Scooter",
+  "country": "DE",
+  "genres": [
+   "eurodance",
+   "happy hardcore",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Seal",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "dance-pop",
+   "downtempo",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Sean Paul",
+  "country": "JM",
+  "genres": [
+   "dance-pop",
+   "dancehall",
+   "electropop",
+   "hip hop",
+   "pop",
+   "ragga",
+   "reggae"
+  ]
+ },
+ {
+  "artist": "Sebastián Yatra",
+  "country": "CO",
+  "genres": [
+   "edm",
+   "latin",
+   "latin ballad",
+   "latin pop",
+   "pop",
+   "r&b",
+   "reggaeton",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Sech",
+  "country": "PA",
+  "genres": [
+   "latin",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Second",
+  "country": "ES",
+  "genres": [
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Seguridad Social",
+  "country": "ES",
+  "genres": [
+   "latin pop",
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "Seguridad social",
+  "country": "ES",
+  "genres": [
+   "latin pop",
+   "latin rock"
+  ]
+ },
+ {
+  "artist": "Selena Gomez",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "alternative r&b",
+   "art pop",
+   "brostep",
+   "club",
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "electro house",
+   "electro-disco",
+   "electropop",
+   "hip hop",
+   "latin",
+   "latin pop",
+   "pop",
+   "pop rock",
+   "rock",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Semen Up",
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Sen Senra",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "chicago blues",
+   "cloud rap",
+   "contemporary r&b",
+   "garage rock",
+   "indie pop",
+   "indie rock",
+   "lo-fi",
+   "pop rock",
+   "soul",
+   "trip hop"
+  ]
+ },
+ {
+  "artist": "Serge Gainsbourg",
+  "country": "FR",
+  "genres": [
+   "chanson à texte",
+   "pop",
+   "yé-yé"
+  ]
+ },
+ {
+  "artist": "Sergei Prokofiev",
+  "country": null,
+  "genres": [
+   "ballet",
+   "classical",
+   "modern classical",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Sergei Rachmaninoff",
+  "country": null,
+  "genres": [
+   "classical",
+   "concerto",
+   "prelude",
+   "romantic classical"
+  ]
+ },
+ {
+  "artist": "Sergio Dalma",
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Sergio y Estíbaliz",
+  "country": "ES",
+  "genres": [
+   "folk pop",
+   "latin ballad"
+  ]
+ },
+ {
+  "artist": "Sex Pistols",
+  "country": "GB",
+  "genres": [
+   "garage rock",
+   "punk",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "Shaggy",
+  "country": "JM",
+  "genres": [
+   "dance-pop",
+   "dancehall",
+   "r&b",
+   "ragga",
+   "reggae",
+   "reggae-pop"
+  ]
+ },
+ {
+  "artist": "Shakira",
+  "country": "CO",
+  "genres": [
+   "dance-pop",
+   "dembow",
+   "latin",
+   "latin pop",
+   "pop",
+   "pop rock",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Shania Twain",
+  "country": "CA",
+  "genres": [
+   "country",
+   "country pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Shawn Mendes",
+  "country": "CA",
+  "genres": [
+   "folk pop",
+   "piano rock",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Shinova",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Sia",
+  "country": "AU",
+  "genres": [
+   "alternative pop",
+   "art pop",
+   "dance-pop",
+   "electropop",
+   "indie pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Sidecars",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "pop rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Sidonie",
+  "country": "ES",
+  "genres": [
+   "acid rock",
+   "alternative rock",
+   "art rock",
+   "indie rock",
+   "pop rock",
+   "psychedelic rock"
+  ]
+ },
+ {
+  "artist": "Sigur Rós",
+  "country": "IS",
+  "genres": [
+   "ambient",
+   "dream pop",
+   "post-rock"
+  ]
+ },
+ {
+  "artist": "Siloé",
+  "country": "ES",
+  "genres": [
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Silverchair",
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "grunge",
+   "post-grunge"
+  ],
+  "activeFrom": 1992,
+  "activeTo": 2011
+ },
+ {
+  "artist": "Simon & Garfunkel",
+  "country": "US",
+  "genres": [
+   "contemporary folk",
+   "folk",
+   "folk pop",
+   "folk rock",
+   "pop",
+   "rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Simon Rattle",
+  "country": "GB",
+  "genres": [
+   "classical",
+   "modern classical",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1980
+ },
+ {
+  "artist": "Simple Minds",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "electronic",
+   "glam rock",
+   "new wave",
+   "pop",
+   "pop rock",
+   "post-punk",
+   "rock",
+   "soft rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Simply Red",
+  "country": "GB",
+  "genres": [
+   "blue-eyed soul",
+   "dance-pop",
+   "pop",
+   "pop soul",
+   "r&b",
+   "soft rock",
+   "sophisti-pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Siniestro Total",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "new wave",
+   "pop rock",
+   "punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Sinéad O'Connor",
+  "country": "IE",
+  "genres": [
+   "alternative rock",
+   "celtic",
+   "folk",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Siouxsie and the Banshees",
+  "country": "GB",
+  "genres": [
+   "gothic rock",
+   "new wave",
+   "post-punk"
+  ]
+ },
+ {
+  "artist": "Sir Georg Solti",
+  "country": "HU",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1946,
+  "activeTo": 1997
+ },
+ {
+  "artist": "Sister Sledge",
+  "country": "US",
+  "genres": [
+   "boogie",
+   "dance-pop",
+   "disco",
+   "funk",
+   "pop soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Ska-P",
+  "country": "ES",
+  "genres": [
+   "ska",
+   "ska punk"
+  ]
+ },
+ {
+  "artist": "Slade",
+  "country": "GB",
+  "genres": [
+   "glam rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Slipknot",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "heavy metal",
+   "metal",
+   "nu metal"
+  ]
+ },
+ {
+  "artist": "Small Faces",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "british rhythm & blues",
+   "mod",
+   "pop rock",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Snap!",
+  "country": "DE",
+  "genres": [
+   "dance-pop",
+   "electronic",
+   "euro house",
+   "eurodance",
+   "hip house",
+   "house"
+  ]
+ },
+ {
+  "artist": "Snoop Dogg",
+  "country": "US",
+  "genres": [
+   "christian hip hop",
+   "g-funk",
+   "gangsta rap",
+   "hip hop",
+   "west coast hip hop"
+  ]
+ },
+ {
+  "artist": "Snow Patrol",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "noise pop",
+   "pop rock",
+   "post-britpop",
+   "power pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Soda Stereo",
+  "country": "AR",
+  "genres": [
+   "latin rock",
+   "new wave",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Sofiane Pamart",
+  "country": "FR",
+  "genres": [
+   "contemporary classical",
+   "neoclassicism"
+  ]
+ },
+ {
+  "artist": "Soft Cell",
+  "country": "GB",
+  "genres": [
+   "electronic",
+   "minimal synth",
+   "new wave",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Sonic Youth",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "experimental rock",
+   "noise rock",
+   "post-punk"
+  ],
+  "activeFrom": 1981,
+  "activeTo": 2011
+ },
+ {
+  "artist": "Soundgarden",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "grunge",
+   "hard rock",
+   "psychedelic rock",
+   "sludge metal"
+  ]
+ },
+ {
+  "artist": "Spandau Ballet",
+  "country": "GB",
+  "genres": [
+   "new romantic",
+   "pop",
+   "sophisti-pop"
+  ]
+ },
+ {
+  "artist": "Spice Girls",
+  "country": "GB",
+  "genres": [
+   "contemporary r&b",
+   "dance-pop",
+   "pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Split Enz",
+  "country": "NZ",
+  "genres": [
+   "art rock",
+   "new wave",
+   "pop rock"
+  ],
+  "activeFrom": 1972,
+  "activeTo": 1984
+ },
+ {
+  "artist": "Stan Getz",
+  "country": "US",
+  "genres": [
+   "bossa nova",
+   "cool jazz",
+   "jazz"
+  ],
+  "activeFrom": 1943,
+  "activeTo": 1991
+ },
+ {
+  "artist": "Status Quo",
+  "country": "GB",
+  "genres": [
+   "boogie rock",
+   "hard rock",
+   "rock"
+  ],
+  "activeFrom": 1962
+ },
+ {
+  "artist": "Steely Dan",
+  "country": "US",
+  "genres": [
+   "jazz rock",
+   "soft rock",
+   "yacht rock"
+  ]
+ },
+ {
+  "artist": "Steppenwolf",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "hard rock",
+   "psychedelic rock"
+  ],
+  "activeFrom": 1967
+ },
+ {
+  "artist": "Stereophonics",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "hard rock"
+  ],
+  "activeFrom": 1992
+ },
+ {
+  "artist": "Stevie Wonder",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "funk",
+   "pop",
+   "pop soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Stone Temple Pilots",
+  "country": "US",
+  "genres": [
+   "acoustic rock",
+   "alternative metal",
+   "alternative rock",
+   "grunge",
+   "hard rock",
+   "neo-psychedelia",
+   "post-grunge",
+   "power pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Stormzy",
+  "country": "GB",
+  "genres": [
+   "grime",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Stray Kids",
+  "country": "KR",
+  "genres": [
+   "electropop",
+   "hip hop",
+   "k-pop"
+  ]
+ },
+ {
+  "artist": "Stromae",
+  "country": "BE",
+  "genres": [
+   "electropop",
+   "hip hop",
+   "house"
+  ]
+ },
+ {
+  "artist": "Suede",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "britpop",
+   "glam rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Supersubmarina",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Supertramp",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "art rock",
+   "classic rock",
+   "crossover prog",
+   "pop rock",
+   "progressive pop",
+   "progressive rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Survivor",
+  "country": "US",
+  "genres": [
+   "aor",
+   "hard rock",
+   "pop rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Swedish House Mafia",
+  "country": "SE",
+  "genres": [
+   "dance",
+   "dance-pop",
+   "edm",
+   "electro house",
+   "electronic",
+   "electropop",
+   "festival progressive house",
+   "house",
+   "progressive house"
+  ]
+ },
+ {
+  "artist": "Sweet",
+  "country": "GB",
+  "genres": [
+   "glam rock",
+   "hard rock"
+  ]
+ },
+ {
+  "artist": "System of a Down",
+  "country": "US",
+  "genres": [
+   "alternative metal",
+   "alternative rock",
+   "hard rock",
+   "heavy metal",
+   "nu metal"
+  ]
+ },
+ {
+  "artist": "Sôber",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "hard rock",
+   "metal",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "T. Rex",
+  "country": "GB",
+  "genres": [
+   "folk rock",
+   "glam rock",
+   "pop rock",
+   "psychedelic folk",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "TLC",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "crunk",
+   "hip hop soul",
+   "new jack swing",
+   "pop",
+   "pop rap",
+   "r&b"
+  ]
+ },
+ {
+  "artist": "Taburete",
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Take That",
+  "country": "GB",
+  "genres": [
+   "dance-pop",
+   "electropop",
+   "europop",
+   "pop",
+   "soft rock",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Talking Heads",
+  "country": "US",
+  "genres": [
+   "art pop",
+   "art punk",
+   "art rock",
+   "funk rock",
+   "new wave",
+   "pop rock",
+   "post-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Tam Tam Go!",
+  "country": "ES",
+  "genres": [
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Tame Impala",
+  "country": "AU",
+  "genres": [
+   "indie rock",
+   "neo-psychedelia",
+   "psychedelic pop"
+  ]
+ },
+ {
+  "artist": "Tangerine Dream",
+  "country": "DE",
+  "genres": [
+   "ambient",
+   "berlin school",
+   "electronic"
+  ]
+ },
+ {
+  "artist": "Tate McRae",
+  "country": "CA",
+  "genres": [
+   "contemporary r&b",
+   "dance-pop",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Taylor Swift",
+  "country": "US",
+  "genres": [
+   "alternative pop",
+   "americana",
+   "chamber pop",
+   "contemporary country",
+   "country",
+   "country pop",
+   "dance-pop",
+   "electropop",
+   "folk pop",
+   "indie folk",
+   "indie pop",
+   "pop",
+   "pop rock",
+   "singer-songwriter",
+   "synth-pop",
+   "teen pop"
+  ]
+ },
+ {
+  "artist": "Tears for Fears",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "new wave",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "sophisti-pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Teddy Swims",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "country",
+   "pop",
+   "pop soul",
+   "rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Tego Calderón",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Telephone",
+  "country": "FR",
+  "genres": [
+   "new wave",
+   "punk rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Television",
+  "country": "US",
+  "genres": [
+   "art rock",
+   "post-punk",
+   "punk rock"
+  ],
+  "activeFrom": 1973,
+  "activeTo": 1978
+ },
+ {
+  "artist": "Tems",
+  "country": "NG",
+  "genres": [
+   "afrobeats",
+   "alternative r&b",
+   "neo soul"
+  ]
+ },
+ {
+  "artist": "Tequila",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Teresa Berganza",
+  "country": "ES",
+  "genres": [
+   "classical",
+   "opera",
+   "opera buffa",
+   "zarzuela"
+  ],
+  "activeFrom": 1955,
+  "activeTo": 2008
+ },
+ {
+  "artist": "Tete Montoliu",
+  "country": "ES",
+  "genres": [
+   "bebop",
+   "hard bop",
+   "jazz",
+   "post-bop"
+  ],
+  "activeFrom": 1955,
+  "activeTo": 1997
+ },
+ {
+  "artist": "The Animals",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "british blues",
+   "british rhythm & blues",
+   "mod",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Band",
+  "country": "CA",
+  "genres": [
+   "americana",
+   "country rock",
+   "folk rock",
+   "roots rock"
+  ],
+  "activeFrom": 1967,
+  "activeTo": 1999
+ },
+ {
+  "artist": "The Bangles",
+  "country": "US",
+  "genres": [
+   "jangle pop",
+   "new wave",
+   "paisley underground",
+   "pop",
+   "pop rock",
+   "power pop",
+   "punk"
+  ]
+ },
+ {
+  "artist": "The Beach Boys",
+  "country": "US",
+  "genres": [
+   "baroque pop",
+   "classic rock",
+   "pop",
+   "pop rock",
+   "progressive pop",
+   "psychedelic pop",
+   "rock",
+   "sunshine pop",
+   "surf rock",
+   "vocal surf"
+  ]
+ },
+ {
+  "artist": "The Beatles",
+  "country": "GB",
+  "genres": [
+   "britpop",
+   "classic rock",
+   "mainstream rock",
+   "merseybeat",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "psychedelic rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "The Byrds",
+  "country": "US",
+  "genres": [
+   "classic rock",
+   "country",
+   "country rock",
+   "folk",
+   "folk rock",
+   "jangle pop",
+   "pop",
+   "pop rock",
+   "psychedelic",
+   "psychedelic pop",
+   "psychedelic rock",
+   "raga rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "The Cardigans",
+  "country": "SE",
+  "genres": [
+   "indie pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "The Chainsmokers",
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "edm",
+   "electro house",
+   "electronic",
+   "electropop",
+   "future bass"
+  ]
+ },
+ {
+  "artist": "The Chemical Brothers",
+  "country": "GB",
+  "genres": [
+   "big beat",
+   "breakbeat",
+   "electronic",
+   "neo-psychedelia",
+   "progressive house",
+   "techno"
+  ]
+ },
+ {
+  "artist": "The Church",
+  "country": "AU",
+  "genres": [
+   "dream pop",
+   "jangle pop",
+   "post-punk",
+   "psychedelic rock"
+  ],
+  "activeFrom": 1980
+ },
+ {
+  "artist": "The Clash",
+  "country": "GB",
+  "genres": [
+   "dance-punk",
+   "funk",
+   "new wave",
+   "post-punk",
+   "punk",
+   "punk rock",
+   "reggae rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Corrs",
+  "country": "IE",
+  "genres": [
+   "celtic rock",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "The Cranberries",
+  "country": "IE",
+  "genres": [
+   "acoustic rock",
+   "alternative rock",
+   "celtic rock",
+   "chamber pop",
+   "dream pop",
+   "ethereal wave",
+   "jangle pop",
+   "pop rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "The Cure",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "dance-rock",
+   "gothic",
+   "gothic rock",
+   "indie rock",
+   "jangle pop",
+   "new wave",
+   "pop",
+   "pop rock",
+   "post-punk",
+   "punk",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "The Doobie Brothers",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "rock",
+   "soft rock",
+   "yacht rock"
+  ],
+  "activeFrom": 1970
+ },
+ {
+  "artist": "The Doors",
+  "country": "US",
+  "genres": [
+   "acid rock",
+   "art rock",
+   "blues rock",
+   "classic rock",
+   "gothic",
+   "gothic rock",
+   "hard rock",
+   "pop",
+   "proto-punk",
+   "psychedelic",
+   "psychedelic rock",
+   "rock",
+   "rock and roll"
+  ],
+  "activeFrom": 1965,
+  "activeTo": 1973
+ },
+ {
+  "artist": "The Eagles",
+  "country": "US",
+  "genres": [
+   "country rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "The Easybeats",
+  "country": "AU",
+  "genres": [
+   "beat music",
+   "garage rock",
+   "pop rock"
+  ],
+  "activeFrom": 1964,
+  "activeTo": 1969
+ },
+ {
+  "artist": "The English Concert",
+  "country": "GB",
+  "genres": [
+   "baroque",
+   "classical",
+   "concerto grosso",
+   "oratorio"
+  ],
+  "activeFrom": 1973
+ },
+ {
+  "artist": "The Everly Brothers",
+  "country": "US",
+  "genres": [
+   "close harmony",
+   "country pop",
+   "pop",
+   "pop rock",
+   "rock and roll",
+   "rockabilly"
+  ]
+ },
+ {
+  "artist": "The Fray",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Hollies",
+  "country": "GB",
+  "genres": [
+   "baroque pop",
+   "beat music",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "rock",
+   "soft rock",
+   "sunshine pop"
+  ]
+ },
+ {
+  "artist": "The Housemartins",
+  "country": "GB",
+  "genres": [
+   "indie pop",
+   "jangle pop"
+  ]
+ },
+ {
+  "artist": "The Human League",
+  "country": "GB",
+  "genres": [
+   "electronic",
+   "minimal synth",
+   "new romantic",
+   "new wave",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "The Jam",
+  "country": "GB",
+  "genres": [
+   "mod revival",
+   "new wave",
+   "punk rock"
+  ]
+ },
+ {
+  "artist": "The Killers",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "christmas music",
+   "heartland rock",
+   "indie rock",
+   "new wave",
+   "pop rock",
+   "post-punk revival",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Kinks",
+  "country": "GB",
+  "genres": [
+   "beat music",
+   "classic rock",
+   "garage rock",
+   "mod",
+   "pop",
+   "pop rock",
+   "proto-punk",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "The Lumineers",
+  "country": "US",
+  "genres": [
+   "alternative country",
+   "americana",
+   "country folk",
+   "folk",
+   "folk pop",
+   "folk rock",
+   "indie folk",
+   "indie pop",
+   "piano rock",
+   "stomp and holler"
+  ]
+ },
+ {
+  "artist": "The Mamas & The Papas",
+  "country": "US",
+  "genres": [
+   "folk pop",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "psychedelic folk",
+   "psychedelic pop",
+   "rock",
+   "sunshine pop"
+  ]
+ },
+ {
+  "artist": "The Monkees",
+  "country": "US",
+  "genres": [
+   "country pop",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "rock",
+   "sunshine pop"
+  ]
+ },
+ {
+  "artist": "The Moody Blues",
+  "country": "GB",
+  "genres": [
+   "progressive rock",
+   "psychedelic rock"
+  ]
+ },
+ {
+  "artist": "The National",
+  "country": "US",
+  "genres": [
+   "art rock",
+   "indie rock",
+   "post-punk"
+  ],
+  "activeFrom": 1999
+ },
+ {
+  "artist": "The Notorious B.I.G.",
+  "country": "US",
+  "genres": [
+   "boom bap",
+   "east coast hip hop",
+   "gangsta rap",
+   "hardcore hip hop",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "The Offspring",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "comedy rock",
+   "grunge",
+   "melodic hardcore",
+   "pop punk",
+   "punk",
+   "punk rock",
+   "rock",
+   "ska punk",
+   "skate punk"
+  ]
+ },
+ {
+  "artist": "The Police",
+  "country": "GB",
+  "genres": [
+   "indie rock",
+   "new wave",
+   "pop rock",
+   "post-punk",
+   "punk",
+   "reggae rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Pretenders",
+  "country": "GB",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "post-punk",
+   "rock"
+  ],
+  "activeFrom": 1978
+ },
+ {
+  "artist": "The Prodigy",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "big beat",
+   "breakbeat",
+   "breakbeat hardcore",
+   "dance",
+   "electronic",
+   "electronic rock",
+   "electronica",
+   "hardcore breaks",
+   "rave",
+   "techno"
+  ]
+ },
+ {
+  "artist": "The Rasmus",
+  "country": "FI",
+  "genres": [
+   "alternative rock",
+   "gothic rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "The Refrescos",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "ska"
+  ]
+ },
+ {
+  "artist": "The Replacements",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "power pop",
+   "punk rock"
+  ],
+  "activeFrom": 1979,
+  "activeTo": 1991
+ },
+ {
+  "artist": "The Righteous Brothers",
+  "country": "US",
+  "genres": [
+   "blue-eyed soul",
+   "brill building",
+   "pop",
+   "r&b"
+  ]
+ },
+ {
+  "artist": "The Rolling Stones",
+  "country": "GB",
+  "genres": [
+   "blues",
+   "blues rock",
+   "british rhythm & blues",
+   "classic rock",
+   "pop rock",
+   "psychedelic rock",
+   "rock",
+   "rock and roll"
+  ]
+ },
+ {
+  "artist": "The Ronettes",
+  "country": "US",
+  "genres": [
+   "doo-wop",
+   "pop",
+   "soul"
+  ]
+ },
+ {
+  "artist": "The Shadows",
+  "country": "GB",
+  "genres": [
+   "beat music",
+   "pop",
+   "pop rock",
+   "rock",
+   "surf rock"
+  ]
+ },
+ {
+  "artist": "The Smiths",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "indie pop",
+   "indie rock",
+   "jangle pop",
+   "new wave",
+   "pop",
+   "post-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Spencer Davis Group",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "The Streets",
+  "country": "GB",
+  "genres": [
+   "alternative hip hop",
+   "uk garage"
+  ]
+ },
+ {
+  "artist": "The Strokes",
+  "country": "US",
+  "genres": [
+   "garage rock",
+   "garage rock revival",
+   "indie rock",
+   "new wave",
+   "post-punk revival",
+   "rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "The Supremes",
+  "country": "US",
+  "genres": [
+   "disco",
+   "motown",
+   "pop",
+   "pop soul",
+   "psychedelic soul",
+   "r&b",
+   "soul"
+  ]
+ },
+ {
+  "artist": "The Temptations",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "funk",
+   "motown",
+   "pop",
+   "pop soul",
+   "psychedelic soul",
+   "r&b",
+   "smooth soul",
+   "soul"
+  ]
+ },
+ {
+  "artist": "The Troggs",
+  "country": "GB",
+  "genres": [
+   "freakbeat",
+   "garage rock",
+   "pop rock",
+   "proto-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Velvet Underground",
+  "country": "US",
+  "genres": [
+   "art rock",
+   "experimental rock",
+   "garage rock",
+   "noise rock",
+   "pop rock",
+   "proto-punk",
+   "psychedelic rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Verve",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "neo-psychedelia",
+   "post-britpop",
+   "rock",
+   "shoegaze",
+   "space rock revival"
+  ]
+ },
+ {
+  "artist": "The Weeknd",
+  "country": "CA",
+  "genres": [
+   "alternative r&b",
+   "contemporary r&b",
+   "dance-pop",
+   "hypnagogic pop",
+   "pop",
+   "r&b",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "The White Stripes",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "blues rock",
+   "garage punk",
+   "garage rock",
+   "garage rock revival",
+   "indie rock",
+   "pop",
+   "post-punk revival",
+   "punk blues",
+   "rock"
+  ]
+ },
+ {
+  "artist": "The Who",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "british rhythm & blues",
+   "classic rock",
+   "freakbeat",
+   "hard rock",
+   "mod",
+   "pop rock",
+   "rock",
+   "rock opera"
+  ]
+ },
+ {
+  "artist": "The Yardbirds",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "british blues",
+   "british rhythm & blues",
+   "freakbeat",
+   "garage rock",
+   "mod",
+   "psychedelic rock",
+   "rock"
+  ],
+  "activeFrom": 1963,
+  "activeTo": 1968
+ },
+ {
+  "artist": "The Zombies",
+  "country": "GB",
+  "genres": [
+   "art pop",
+   "baroque pop",
+   "beat music",
+   "british rhythm & blues",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Thelonious Monk",
+  "country": "US",
+  "genres": [
+   "avant-garde jazz",
+   "bebop",
+   "hard bop",
+   "jazz"
+  ],
+  "activeFrom": 1944,
+  "activeTo": 1982
+ },
+ {
+  "artist": "Them",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "garage rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Thin Lizzy",
+  "country": "IE",
+  "genres": [
+   "hard rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Thomas Tallis",
+  "country": null,
+  "genres": [
+   "classical",
+   "motet",
+   "renaissance"
+  ]
+ },
+ {
+  "artist": "Tina Turner",
+  "country": "US",
+  "genres": [
+   "pop",
+   "pop rock",
+   "pop soul",
+   "rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Tini",
+  "country": "AR",
+  "genres": [
+   "latin",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Tino Casal",
+  "country": "ES",
+  "genres": [
+   "singer-songwriter",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Tiziano Ferro",
+  "country": "IT",
+  "genres": [
+   "contemporary r&b",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Tiësto",
+  "country": "NL",
+  "genres": [
+   "dance",
+   "dance-pop",
+   "edm",
+   "electro house",
+   "electronic",
+   "house",
+   "progressive house",
+   "progressive trance",
+   "tech trance",
+   "trance"
+  ]
+ },
+ {
+  "artist": "Tokio Hotel",
+  "country": "DE",
+  "genres": [
+   "alternative rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Tom Jones",
+  "country": "GB",
+  "genres": [
+   "ballad",
+   "blue-eyed soul",
+   "pop",
+   "pop soul",
+   "traditional pop"
+  ]
+ },
+ {
+  "artist": "Tom Petty",
+  "country": "US",
+  "genres": [
+   "folk rock",
+   "heartland rock",
+   "rock"
+  ],
+  "activeFrom": 1976,
+  "activeTo": 2017
+ },
+ {
+  "artist": "Tomaso Albinoni",
+  "country": null,
+  "genres": [
+   "baroque",
+   "classical"
+  ]
+ },
+ {
+  "artist": "Tomatito",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco",
+   "rumba"
+  ],
+  "activeFrom": 1980
+ },
+ {
+  "artist": "Toots and the Maytals",
+  "country": "JM",
+  "genres": [
+   "reggae",
+   "rocksteady",
+   "ska"
+  ]
+ },
+ {
+  "artist": "Tote King",
+  "country": "ES",
+  "genres": [
+   "boom bap",
+   "hardcore hip hop",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Toto",
+  "country": "US",
+  "genres": [
+   "aor",
+   "hard rock",
+   "jazz fusion",
+   "neo-progressive rock",
+   "pagan black metal",
+   "pop rock",
+   "progressive rock",
+   "rock",
+   "soft rock",
+   "yacht rock"
+  ]
+ },
+ {
+  "artist": "Tove Lo",
+  "country": "SE",
+  "genres": [
+   "electropop",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Travis",
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "indie pop",
+   "indie rock",
+   "jangle pop",
+   "pop rock",
+   "post-britpop",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Triana",
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "progressive rock"
+  ]
+ },
+ {
+  "artist": "Trueno",
+  "country": "AR",
+  "genres": [
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Trupita",
+  "country": "ES",
+  "genres": [
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Trébol",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "beat music",
+   "pop rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Twenty One Pilots",
+  "country": "US",
+  "genres": [
+   "alternative hip hop",
+   "alternative pop",
+   "alternative rock",
+   "electropop",
+   "hip hop",
+   "indie pop",
+   "indietronica",
+   "piano rock",
+   "pop rap",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Tyla",
+  "country": "ZA",
+  "genres": [
+   "afrobeats",
+   "amapiano",
+   "contemporary r&b"
+  ]
+ },
+ {
+  "artist": "U2",
+  "country": "IE",
+  "genres": [
+   "alternative dance",
+   "alternative pop",
+   "alternative rock",
+   "arena rock",
+   "dance-rock",
+   "electronic",
+   "indie rock",
+   "new wave",
+   "pop rock",
+   "post-punk",
+   "rock"
+  ]
+ },
+ {
+  "artist": "UB40",
+  "country": "GB",
+  "genres": [
+   "dub",
+   "pop",
+   "reggae",
+   "reggae-pop",
+   "roots reggae"
+  ]
+ },
+ {
+  "artist": "UPA Dance",
+  "country": "ES",
+  "genres": [
+   "eurodance",
+   "europop",
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "Ultravox",
+  "country": "GB",
+  "genres": [
+   "new romantic",
+   "new wave",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Underworld",
+  "country": "GB",
+  "genres": [
+   "alternative dance",
+   "ambient",
+   "downtempo",
+   "electronic",
+   "electronica",
+   "experimental",
+   "house",
+   "new wave",
+   "progressive house",
+   "psychedelic",
+   "synth-pop",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Uriah Heep",
+  "country": "GB",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "progressive rock"
+  ],
+  "activeFrom": 1969
+ },
+ {
+  "artist": "Usher",
+  "country": "US",
+  "genres": [
+   "club",
+   "contemporary r&b",
+   "crunk",
+   "dance-pop",
+   "hip hop",
+   "pop",
+   "pop rap",
+   "r&b",
+   "soul",
+   "trap"
+  ]
+ },
+ {
+  "artist": "Utada Hikaru",
+  "country": "JP",
+  "genres": [
+   "ballad",
+   "contemporary r&b",
+   "j-pop"
+  ]
+ },
+ {
+  "artist": "Valentina Lisitsa",
+  "country": "UA",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 2007
+ },
+ {
+  "artist": "Valery Gergiev",
+  "country": "RU",
+  "genres": [
+   "ballet",
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1978
+ },
+ {
+  "artist": "Vampire Weekend",
+  "country": "US",
+  "genres": [
+   "afrobeats",
+   "indie pop",
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Van Halen",
+  "country": "US",
+  "genres": [
+   "glam metal",
+   "hard rock",
+   "rock"
+  ]
+ },
+ {
+  "artist": "Van der Graaf Generator",
+  "country": "GB",
+  "genres": [
+   "art rock",
+   "progressive rock"
+  ],
+  "activeFrom": 1967
+ },
+ {
+  "artist": "Vanesa Martín",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "indie pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Vangelis",
+  "country": "GR",
+  "genres": [
+   "electronic",
+   "new age",
+   "orchestral"
+  ]
+ },
+ {
+  "artist": "Vetusta Morla",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Vicco",
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "dance-pop",
+   "pop rock",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Vicente Amigo",
+  "country": "ES",
+  "genres": [
+   "bulería",
+   "flamenco",
+   "nuevo flamenco",
+   "rumba"
+  ],
+  "activeFrom": 1988
+ },
+ {
+  "artist": "Viceversa",
+  "country": "ES",
+  "genres": [
+   "euro house",
+   "italo house",
+   "psychedelic",
+   "techno"
+  ]
+ },
+ {
+  "artist": "Village People",
+  "country": "US",
+  "genres": [
+   "disco",
+   "electronic"
+  ]
+ },
+ {
+  "artist": "Violadores del Verso",
+  "country": "ES",
+  "genres": [
+   "hardcore hip hop",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Violeta Parra",
+  "country": "CL",
+  "genres": [
+   "folk",
+   "nueva canción"
+  ]
+ },
+ {
+  "artist": "Viva Suecia",
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Vladimir Horowitz",
+  "country": "UA",
+  "genres": [
+   "classical",
+   "concerto",
+   "romantic classical",
+   "sonata"
+  ],
+  "activeFrom": 1928,
+  "activeTo": 1989
+ },
+ {
+  "artist": "Víctor Manuel",
+  "country": "ES",
+  "genres": [
+   "contemporary folk",
+   "latin ballad",
+   "singer-songwriter"
+  ]
+ },
+ {
+  "artist": "Weather Report",
+  "country": "US",
+  "genres": [
+   "jazz",
+   "jazz fusion",
+   "jazz-funk"
+  ],
+  "activeFrom": 1970,
+  "activeTo": 1986
+ },
+ {
+  "artist": "Weezer",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "power pop"
+  ]
+ },
+ {
+  "artist": "Wes Montgomery",
+  "country": "US",
+  "genres": [
+   "hard bop",
+   "jazz",
+   "jazz-funk",
+   "soul jazz"
+  ],
+  "activeFrom": 1948,
+  "activeTo": 1968
+ },
+ {
+  "artist": "Wet Leg",
+  "country": "GB",
+  "genres": [
+   "indie pop",
+   "indie rock",
+   "post-punk",
+   "post-punk revival"
+  ]
+ },
+ {
+  "artist": "Wham!",
+  "country": "GB",
+  "genres": [
+   "christmas music",
+   "dance-pop",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Whitesnake",
+  "country": "GB",
+  "genres": [
+   "blues rock",
+   "glam metal",
+   "hard rock"
+  ],
+  "activeFrom": 1978
+ },
+ {
+  "artist": "Whitney Houston",
+  "country": "US",
+  "genres": [
+   "contemporary r&b",
+   "dance",
+   "dance-pop",
+   "disco",
+   "easy listening",
+   "pop",
+   "pop soul",
+   "quiet storm",
+   "r&b",
+   "soul",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Wiener Philharmoniker",
+  "country": "AT",
+  "genres": [
+   "classical",
+   "orchestral",
+   "romantic classical",
+   "symphony"
+  ],
+  "activeFrom": 1842
+ },
+ {
+  "artist": "Wilco",
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "americana",
+   "country rock",
+   "indie rock"
+  ],
+  "activeFrom": 1994
+ },
+ {
+  "artist": "Wilfrido Vargas",
+  "country": "DO",
+  "genres": [
+   "merengue"
+  ]
+ },
+ {
+  "artist": "Wilhelm Furtwängler",
+  "country": "DE",
+  "genres": [
+   "classical",
+   "orchestral",
+   "romantic classical",
+   "symphony"
+  ],
+  "activeFrom": 1922,
+  "activeTo": 1954
+ },
+ {
+  "artist": "Willie Colón",
+  "country": "US",
+  "genres": [
+   "salsa"
+  ]
+ },
+ {
+  "artist": "Wilson Pickett",
+  "country": "US",
+  "genres": [
+   "soul"
+  ]
+ },
+ {
+  "artist": "Wings",
+  "country": "GB",
+  "genres": [
+   "pop rock",
+   "rock",
+   "soft rock"
+  ]
+ },
+ {
+  "artist": "Wisin & Yandel",
+  "country": "PR",
+  "genres": [
+   "latin",
+   "reggaeton"
+  ]
+ },
+ {
+  "artist": "Wizkid",
+  "country": "NG",
+  "genres": [
+   "afrobeats"
+  ]
+ },
+ {
+  "artist": "Wolfgang Amadeus Mozart",
+  "country": null,
+  "genres": [
+   "classical",
+   "classical period",
+   "mass",
+   "opera",
+   "orchestral",
+   "requiem",
+   "serenade",
+   "sonata",
+   "symphony"
+  ]
+ },
+ {
+  "artist": "Wolfmother",
+  "country": "AU",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "psychedelic rock",
+   "stoner rock"
+  ],
+  "activeFrom": 2004
+ },
+ {
+  "artist": "Wu-Tang Clan",
+  "country": "US",
+  "genres": [
+   "boom bap",
+   "east coast hip hop",
+   "hardcore hip hop",
+   "hip hop"
+  ]
+ },
+ {
+  "artist": "Xoel López",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "indie rock"
+  ]
+ },
+ {
+  "artist": "Yazoo",
+  "country": "GB",
+  "genres": [
+   "new wave",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Yellow Magic Orchestra",
+  "country": "JP",
+  "genres": [
+   "electronic",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Yes",
+  "country": "GB",
+  "genres": [
+   "aor",
+   "art rock",
+   "classic rock",
+   "disco",
+   "electronic",
+   "garage rock",
+   "hard rock",
+   "pop rock",
+   "progressive",
+   "progressive pop",
+   "progressive rock",
+   "psychedelic rock",
+   "rock",
+   "symphonic prog",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Yo-Yo Ma",
+  "country": "US",
+  "genres": [
+   "baroque",
+   "classical",
+   "concerto",
+   "string quartet"
+  ],
+  "activeFrom": 1976
+ },
+ {
+  "artist": "Young Miko",
+  "country": "PR",
+  "genres": [
+   "hip hop",
+   "latin",
+   "reggaeton",
+   "trap",
+   "trap latino"
+  ]
+ },
+ {
+  "artist": "Yuja Wang",
+  "country": "CN",
+  "genres": [
+   "classical",
+   "concerto",
+   "sonata"
+  ],
+  "activeFrom": 2007
+ },
+ {
+  "artist": "ZZ Top",
+  "country": "US",
+  "genres": [
+   "blues rock",
+   "boogie rock",
+   "hard rock"
+  ],
+  "activeFrom": 1969
+ },
+ {
+  "artist": "Zach Bryan",
+  "country": "US",
+  "genres": [
+   "americana",
+   "country",
+   "folk"
+  ]
+ },
+ {
+  "artist": "Zahara",
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "singer-songwriter",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Zaho de Sagazan",
+  "country": "FR",
+  "genres": [
+   "electropop",
+   "pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Zara Larsson",
+  "country": "SE",
+  "genres": [
+   "dance-pop",
+   "pop",
+   "tropical house"
+  ]
+ },
+ {
+  "artist": "Zubin Mehta",
+  "country": "IN",
+  "genres": [
+   "classical",
+   "opera",
+   "orchestral",
+   "symphony"
+  ],
+  "activeFrom": 1961
+ },
+ {
+  "artist": "Zucchero",
+  "country": "IT",
+  "genres": [
+   "blues rock",
+   "pop rock",
+   "soul"
+  ]
+ },
+ {
+  "artist": "Zzoilo",
+  "country": "ES",
+  "genres": [
+   "latin pop"
+  ]
+ },
+ {
+  "artist": "a-ha",
+  "country": "NO",
+  "genres": [
+   "dance-pop",
+   "new wave",
+   "pop",
+   "sophisti-pop",
+   "synth-pop"
+  ]
+ },
+ {
+  "artist": "Álex Ubago",
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin ballad",
+   "latin pop",
+   "pop",
+   "pop rock"
+  ]
+ },
+ {
+  "artist": "Álvaro Soler",
+  "country": "ES",
+  "genres": [
+   "latin pop",
+   "pop"
+  ]
+ },
+ {
+  "artist": "Ángeles del Infierno",
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "heavy metal",
+   "metal"
+  ]
+ },
+ {
+  "artist": "Édith Piaf",
+  "country": "FR",
+  "genres": [
+   "ballad",
+   "chanson réaliste"
+  ]
+ },
+ {
+  "artist": "Ñu",
+  "country": "ES",
+  "genres": [
+   "celtic rock",
+   "folk rock",
+   "hard rock",
+   "heavy metal",
+   "metal",
+   "progressive folk",
+   "progressive rock",
+   "rock",
+   "rock urbano"
+  ]
+ }
+]

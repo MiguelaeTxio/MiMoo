@@ -147,6 +147,11 @@ class RadioRepository @Inject constructor(
     private val genreTree: GenreTree,
     @ApplicationContext private val appContext: Context,
     private val storageManager: StorageManager,
+    // S025 -- diccionario del ancla persistido en la tarjeta. Se
+    // consulta ANTES que la red y se alimenta con todo lo que la red
+    // resuelva, de modo que cada sesión depende menos de MusicBrainz
+    // que la anterior. Ver AnchorDictionary.
+    private val anchorDictionary: AnchorDictionary,
 ) {
     /**
      * Perfil de un artista para la fuente de "disco" (10% de la
@@ -211,6 +216,190 @@ class RadioRepository @Inject constructor(
         lastFailureWasTransient = false
     }
 
+    /**
+     * S025 -- ANCLAJE DESDE EL DICCIONARIO, EN EL ORDEN DICTADO POR
+     * MIGUEL ÁNGEL.
+     *
+     * Sus palabras, que son la especificación entera:
+     *
+     *   *"Se determina el nombre del artista, se determina el nombre de
+     *   la canción. Se mira el artista de dónde es: origen. Se mira el
+     *   género. ¿Es clásica? Sí: ya da igual el origen, anclamos con
+     *   género, y ya da igual la década. Que no es clásica: anclamos
+     *   con origen y género del artista. Y ahora la década, la del tema
+     *   original, no la del remaster."*
+     *
+     * Devuelve `null` solo si el artista no está en el diccionario, que
+     * es la señal para que `resolveAnchor()` siga con la red.
+     */
+    private suspend fun anchorFromDictionary(
+        sourceArtist: String,
+        sourceTrackTitle: String?,
+    ): RadioAnchor? {
+        val facts = anchorDictionary.artist(sourceArtist) ?: return null
+        val genres = facts.genres.map { it.lowercase().trim() }
+            .filter { it.isNotBlank() }
+            .toSet()
+        if (genres.isEmpty()) return null
+
+        val isClassical = genres.any {
+            it == "classical" || genreTree.isDescendantOf(it, "classical")
+        }
+        // El género que manda es el más CONCRETO, no el primero de la
+        // lista: `hard rock` describe una radio, `rock` no describe
+        // nada. Desempate alfabético para que el mismo artista ancle
+        // siempre igual (regla determinista de S020).
+        val chosenGenre = genres.filter { genreTree.isSpecific(it) }
+            .minOrNull() ?: genres.min()
+
+        // PASO 3 -- CLÁSICA: se acabó. Ni origen ni década.
+        // *"Si el género es clásica, anclamos por clásica, da igual, y
+        // buscamos artistas de clásica. Se acabó."*
+        //
+        // Esto es además lo que arregla el caso del log: en clásica el
+        // vídeo se titula con el INTÉRPRETE, no con el compositor
+        // ('Valentina Lisitsa' tocando a Beethoven). Por eso el índice
+        // incluye directores, orquestas, solistas y voces, no solo
+        // compositores: preguntando por el intérprete se llega igual a
+        // `classical` y la Radio arranca.
+        if (isClassical) {
+            log(
+                "resolveAnchor('$sourceArtist') -> ancla del DICCIONARIO (sin red): " +
+                    "CLÁSICA -- género='$chosenGenre', sin origen y sin década, " +
+                    "géneros=[${genres.joinToString()}]"
+            )
+            return RadioAnchor(
+                genre = chosenGenre,
+                genres = genres,
+                country = null,
+                decadeBegin = null,
+                isSpanishOrigin = false,
+                isClassical = true,
+            )
+        }
+
+        // PASO 4 -- no es clásica: ancla = ORIGEN + GÉNERO del artista.
+        val country = facts.country?.trim()?.ifBlank { null }
+        val isSpanishOrigin = country == "ES" ||
+            knownHitsRepository.isKnownSpanishArtist(sourceArtist)
+
+        // PASO 5 -- la década, del TEMA ORIGINAL.
+        val decadeBegin = resolveOriginalDecade(sourceArtist, sourceTrackTitle, facts)
+
+        log(
+            "resolveAnchor('$sourceArtist') -> ancla del DICCIONARIO (sin red): " +
+                "género='$chosenGenre', país=${country ?: "?"}, década=${decadeBegin ?: "?"}, " +
+                "géneros=[${genres.joinToString()}]"
+        )
+        return RadioAnchor(
+            genre = chosenGenre,
+            genres = genres,
+            country = country,
+            decadeBegin = decadeBegin,
+            isSpanishOrigin = isSpanishOrigin,
+            isClassical = false,
+        )
+    }
+
+    /**
+     * S025 -- DÉCADA DEL TEMA ORIGINAL, NO DEL REMASTER.
+     *
+     * Orden de Miguel Ángel: *"la década del tema original, no del
+     * remaster. Si hay que usar Wikipedia, usamos Wikipedia. Lo que
+     * tengamos que usar."*
+     *
+     * El fallo que lo motiva, de su log:
+     *
+     *   resolveTrackDecade('Led Zeppelin' -- 'Black Dog')
+     *     -> década 1980 (primera publicación 1983), de MusicBrainz
+     *
+     * "Black Dog" es de noviembre de 1971. El 1983 salía de preguntar a
+     * nivel de GRABACIÓN, donde una remasterización o un directo valen
+     * tanto como el original.
+     *
+     * Cascada: diccionario en tarjeta -> diccionario de éxitos ->
+     * MusicBrainz. Y sobre lo que salga, la REGLA DE COHERENCIA: un
+     * tema no puede ser anterior a que el artista empezara ni posterior
+     * a que se disolviera. Led Zeppelin se separó en 1980, así que 1983
+     * es imposible y se descarta en vez de anclar la sesión entera mal.
+     * Cuando no hay red y no se sabe, se apunta en la cola de
+     * pendientes para resolverlo cuando la haya.
+     */
+    private suspend fun resolveOriginalDecade(
+        artist: String,
+        trackTitle: String?,
+        facts: AnchorDictionary.ArtistFacts,
+    ): Int? {
+        val cleanTitle = trackTitle?.let { stripTitleNoise(it) }
+
+        anchorDictionary.trackYear(artist, cleanTitle)?.let { year ->
+            log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, del diccionario en tarjeta")
+            return (year / 10) * 10
+        }
+        knownHitsRepository.decadeOfTrack(artist, cleanTitle)?.let { decade ->
+            log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> década $decade, del diccionario de éxitos")
+            return decade
+        }
+        if (cleanTitle.isNullOrBlank()) return null
+
+        val year = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
+        if (year == null) {
+            // Sin red o sin dato: se apunta para resolverlo más tarde y
+            // se sigue. Sin año se ancla igual por origen y género --
+            // "no lo sé" no es "no hay", y no puede parar la Radio.
+            anchorDictionary.rememberPending(artist, cleanTitle)
+            log(
+                "resolveOriginalDecade('$artist' -- '$cleanTitle') -- sin año; " +
+                    "apuntado en pendientes para cuando haya red. Se ancla por origen y género"
+            )
+            return null
+        }
+        if (!isYearCoherent(year, facts)) {
+            log(
+                "resolveOriginalDecade('$artist' -- '$cleanTitle') -- año $year DESCARTADO por incoherente: " +
+                    "el artista está activo ${facts.activeFrom ?: "?"}-${facts.activeTo ?: "hoy"}. " +
+                    "Se ancla por origen y género, sin década"
+            )
+            return null
+        }
+        anchorDictionary.learnTrackYear(artist, cleanTitle, year, "musicbrainz")
+        log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, de MusicBrainz; aprendido en la tarjeta")
+        return (year / 10) * 10
+    }
+
+    /**
+     * S025 -- regla de coherencia. Un margen de dos años a cada lado
+     * absorbe las fechas de publicación que se adelantan o retrasan
+     * respecto a la actividad registrada del artista.
+     */
+    private fun isYearCoherent(year: Int, facts: AnchorDictionary.ArtistFacts): Boolean {
+        if (year < 1850 || year > 2100) return false
+        facts.activeFrom?.let { if (year < it - 2) return false }
+        facts.activeTo?.let { if (year > it + 2) return false }
+        return true
+    }
+
+    /**
+     * S025 -- año de la PRIMERA edición de la obra. Se pregunta por
+     * release-group además de por grabación, y se toma el más antiguo
+     * de todo lo que venga: la primera edición del tema, no la
+     * recopilación que se esté escuchando.
+     */
+    private suspend fun firstReleaseYearFromMusicBrainz(artist: String, title: String): Int? = try {
+        val query = "recording:\"${title.replace("\"", "")}\" " +
+            "AND artist:\"${artist.replace("\"", "")}\""
+        val wantedTitle = SearchNormalizer.normalize(title)
+        val years = musicBrainzApiService.searchRecordings(query = query)
+            .recordings
+            .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+            .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+        noteSuccess()
+        years.minOrNull()
+    } catch (e: Exception) {
+        noteFailure(e)
+        null
+    }
+
     suspend fun resolveAnchor(
         sourceArtist: String,
         sourceTrackTitle: String? = null,
@@ -219,6 +408,30 @@ class RadioRepository @Inject constructor(
             log("resolveAnchor('$sourceArtist') -- origen vacío o placeholder, se descarta sin buscar")
             return null
         }
+
+        // S025 -- PASO 1: EL DICCIONARIO ANTES QUE LA RED.
+        //
+        // Orden de Miguel Ángel: *"que pongamos los Beatles, que
+        // pongamos Led Zeppelin, o que pongamos Beethoven, y no
+        // tengamos ni idea de lo que poner después, es para nota. Lo
+        // que hay que tener es un buen diccionario para todos los
+        // grandes artistas más conocidos. Y luego ya, la morralla con
+        // la red."*
+        //
+        // Hasta S025 el orden era el contrario: se preguntaba SIEMPRE a
+        // MusicBrainz y el diccionario solo entraba de rescate. Con
+        // MusicBrainz caído -- trece llamadas seguidas fallidas en su
+        // log -- eso dejaba sin ancla a Led Zeppelin y a Beethoven, que
+        // son justo los que nunca deberían fallar.
+        //
+        // Ahora, si el artista está en el diccionario (semilla de 1.161
+        // más todo lo aprendido en la tarjeta), el ancla se fija SIN
+        // TOCAR LA RED. La red queda para lo que no está.
+        // ---
+        // S025 -- dictionary first, network second. If the artist is
+        // known, the anchor is fixed with no network call at all.
+        anchorFromDictionary(sourceArtist, sourceTrackTitle)?.let { return it }
+
         return try {
             // S023 -- antes esto era `.artists.firstOrNull()?.id`: se
             // aceptaba el PRIMER resultado sin comprobar que el nombre
@@ -346,13 +559,44 @@ class RadioRepository @Inject constructor(
                 fromDict
             }
             val sourceCountry = sourceDetail.country?.trim()?.ifBlank { null }
-            val decadeBegin = resolveTrackDecade(sourceArtist, sourceTrackTitle)
+            // S025 -- misma resolución de década que el camino del
+            // diccionario, con la regla de coherencia incluida. Antes
+            // llamaba a `resolveTrackDecade()`, que aceptaba sin
+            // comprobar el primer año que devolviera MusicBrainz y por
+            // eso fechó "Black Dog" en 1983.
+            val decadeBegin = resolveOriginalDecade(
+                sourceArtist,
+                sourceTrackTitle,
+                AnchorDictionary.ArtistFacts(
+                    artist = sourceArtist,
+                    country = sourceCountry,
+                    genres = (fromMusicBrainz + fromDictionary).sorted(),
+                    activeFrom = sourceDetail.lifeSpan?.begin?.take(4)?.toIntOrNull(),
+                    activeTo = sourceDetail.lifeSpan?.end?.take(4)?.toIntOrNull(),
+                    source = "musicbrainz",
+                ),
+            )
             // S013/S014, punto 4 -- "grupo español" se decide primero
             // por el diccionario de éxitos (barato, sin ambigüedad de
             // MusicBrainz) y, si el artista no está en él, por el
             // campo country=ES de MusicBrainz como respaldo.
             val isSpanishOrigin = knownHitsRepository.isKnownSpanishArtist(sourceArtist) ||
                 sourceCountry == "ES"
+            // S025 -- lo que acaba de costar una llamada de red se
+            // guarda en la tarjeta, para que la próxima vez salga del
+            // diccionario y no haga falta preguntar. Es el mecanismo
+            // por el que "la morralla" se va aprendiendo, en palabras
+            // de Miguel Ángel.
+            anchorDictionary.learnArtist(
+                AnchorDictionary.ArtistFacts(
+                    artist = sourceArtist,
+                    country = sourceCountry,
+                    genres = (fromMusicBrainz + fromDictionary).sorted(),
+                    activeFrom = sourceDetail.lifeSpan?.begin?.take(4)?.toIntOrNull(),
+                    activeTo = sourceDetail.lifeSpan?.end?.take(4)?.toIntOrNull(),
+                    source = "musicbrainz",
+                ),
+            )
             val allGenres = fromMusicBrainz + fromDictionary
             if (fromDictionary.isNotEmpty() && fromMusicBrainz.isNotEmpty()) {
                 log(
@@ -602,103 +846,6 @@ class RadioRepository @Inject constructor(
             if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
         }
         return query
-    }
-
-    /**
-     * Década del TEMA que arranca la sesión (S023).
-     *
-     * **Qué sustituye y por qué.** Hasta S023 esto era
-     * `parseDecadeBegin(sourceDetail.lifeSpan?.begin)`: la década salía
-     * del `life-span` del ARTISTA. Para un grupo eso es el año de
-     * formación y colaba; para un solista es su fecha de NACIMIENTO, y
-     * mentía siempre. Verificado en log real: P!nk, nacida en 1979,
-     * anclaba una sesión en la década de 1970 y la Radio devolvía Cat
-     * Stevens, Lynyrd Skynyrd, ELO y Supertramp -- todos correctos
-     * para ese ancla, que era el problema. El motor obedecía; el dato
-     * era falso.
-     *
-     * Miguel Ángel cerró la regla al ver el diagnóstico, y va más allá
-     * de los solistas: **la década la marca el tema, nunca el
-     * artista.** Yes se formó en 1968; "Roundabout" es de 1971 y
-     * "Owner of a Lonely Heart" de 1983. No es lo mismo escuchar una
-     * que otra, y fechar por el grupo no acierta con ninguna. Ese caso
-     * exacto estaba en el log desde antes: una radio anclada en Led
-     * Zeppelin (formados en 1968) trayendo "Owner of a Lonely Heart".
-     *
-     * **Cascada, en orden de fiabilidad:**
-     *
-     * 1. El diccionario local, si conoce ese artista Y ese tema. Es
-     *    gratis, no gasta petición y no depende de que MusicBrainz
-     *    esté en pie.
-     * 2. `first-release-date` de la grabación en MusicBrainz. Una
-     *    petición más por sesión, solo al arrancar.
-     * 3. Nada. Se deja la década SIN FIJAR antes que inventarla. Sin
-     *    década la Radio filtra por género y origen: menos preciso,
-     *    pero no falso. `pool()` ya contempla `decadeBegin == null`.
-     *
-     * El año del tema local no entra en la cascada porque no existe:
-     * `SearchResultTrack` no guarda fecha. Si algún día la guarda,
-     * este es el sitio donde entraría, por delante de todo lo demás.
-     */
-    /**
-     * Década a partir del `life-span.begin` de un ARTISTA.
-     *
-     * S023 -- ya NO se usa para el ancla; ahí se fecha el tema (ver
-     * `resolveTrackDecade()`). Sobrevive solo para
-     * `lookupArtistProfile()`, que perfila artistas CANDIDATOS de la
-     * biblioteca local.
-     *
-     * ATENCIÓN: arrastra el mismo defecto de fondo. Para un solista
-     * esto es su fecha de nacimiento, y para un grupo el año de
-     * formación, que tampoco es la década de sus temas. Aquí hace
-     * menos daño que en el ancla -- filtra un candidato suelto, no
-     * condiciona la sesión entera -- pero sigue estando mal.
-     * Pendiente, anotado en ANNEX_H08.md.
-     */
-    private fun parseDecadeBegin(begin: String?): Int? {
-        val year = begin?.take(4)?.toIntOrNull() ?: return null
-        return (year / 10) * 10
-    }
-
-    private suspend fun resolveTrackDecade(artist: String, trackTitle: String?): Int? {
-        val cleanTitle = trackTitle?.let { stripTitleNoise(it) }
-
-        knownHitsRepository.decadeOfTrack(artist, cleanTitle)?.let { decade ->
-            log("resolveTrackDecade('$artist' -- '$cleanTitle') -> década $decade, del diccionario local")
-            return decade
-        }
-
-        if (cleanTitle.isNullOrBlank()) {
-            log("resolveTrackDecade('$artist') -- sin título de tema utilizable, década SIN FIJAR")
-            return null
-        }
-
-        return try {
-            val query = "recording:\"${cleanTitle.replace("\"", "")}\" " +
-                "AND artist:\"${artist.replace("\"", "")}\""
-            val wantedTitle = SearchNormalizer.normalize(cleanTitle)
-            val dated = musicBrainzApiService.searchRecordings(query = query)
-                .recordings
-                .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
-                .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
-            // La MÁS ANTIGUA: la primera publicación del tema, no la
-            // recopilación o reedición que se esté escuchando.
-            val year = dated.minOrNull()
-            if (year == null) {
-                log("resolveTrackDecade('$artist' -- '$cleanTitle') -- MusicBrainz no da fecha para el tema, década SIN FIJAR")
-                null
-            } else {
-                val decade = (year / 10) * 10
-                log("resolveTrackDecade('$artist' -- '$cleanTitle') -> década $decade (primera publicación $year), de MusicBrainz")
-                decade
-            }
-        } catch (e: Exception) {
-            // Un fallo aquí NO invalida el ancla: se pierde la década,
-            // no la sesión. Tampoco cuenta como fallo de servicio: el
-            // ancla en sí ya se resolvió bien justo antes.
-            log("resolveTrackDecade('$artist' -- '$cleanTitle') -- ${e::class.java.simpleName}, década SIN FIJAR")
-            null
-        }
     }
 
     /**
