@@ -1938,3 +1938,170 @@ ampliaría la cosecha, aunque el objetivo ya está cumplido sin ellas.
   logs.
 
 ---
+
+## S025 (2026-07-29) — REDISEÑO DE LA CAPA DE ANCLAJE
+## Diseño cerrado, dictado por Miguel Ángel. SIN CONSTRUIR.
+
+### Por qué se abre este rediseño
+
+Miguel Ángel, al final de S025, tras la séptima tanda de parches sobre
+el ancla: *"Hemos tocado fondo. Peor ya no lo podemos hacer. No es que
+lo estemos haciendo mal, es que no tenemos ni idea de cómo hacerlo. Lo
+que no puede ser es que ponga Led Zeppelin y salga detrás Alaska.
+Porque estamos fallando en décadas, porque estamos fallando en género y
+porque estamos fallando en país."*
+
+La evidencia que cierra la discusión, de su propio log
+(`radio_relacionados_debug__7_.txt`, 05:33:56):
+
+    resolveTrackDecade('Led Zeppelin' -- 'Black Dog')
+      -> década 1980 (primera publicación 1983), de MusicBrainz
+
+"Black Dog" es de *Led Zeppelin IV*, noviembre de 1971. El sistema la
+fechó en 1983, ancló la sesión entera en los 80 y no dudó ni avisó.
+Led Zeppelin se disolvió en 1980: el dato era imposible y nadie lo
+comprobó.
+
+Y en el mismo log, 18:16 y otra vez 18:31:
+
+    resolveAnchor('Beethoven', mbid=a44b4408-...) -- sin géneros ni en
+      MusicBrainz ni en el diccionario local -- no se puede fijar ancla
+    topUpRadioQueueIfNeeded() -- parado del todo -- backlog final: 0
+
+### Diagnóstico: cinco defectos de arquitectura, no cinco bugs
+
+**1. Cada valor del ancla lo resuelve una sola vía, sin plan B.**
+Género y país salen de MusicBrainz del artista; la década, de una
+búsqueda de grabaciones. Si esa vía falla, el valor se queda nulo o
+sale mal. El diccionario se añadió después como parche, y solo para el
+género.
+
+**2. Dos de los tres valores se preguntan al ARTISTA, no al TEMA.**
+Por eso Led Zeppelin ancla en `hard rock` aunque suene una folk suya.
+El año es del tema. El género es del tema. Solo el país es del artista.
+
+**3. La década se pregunta a nivel de GRABACIÓN.** Una remasterización,
+un directo o un recopilatorio son grabaciones tan válidas como la
+original, y `searchRecordings` las devuelve mezcladas. De ahí 1983.
+El nivel correcto es el *release-group* de la obra, o la ficha de
+Discogs, que da el año de edición original.
+
+**4. Un valor ausente se trata como catástrofe o se ignora.** Sin
+género no hay ancla y la Radio no arranca. Sin década el filtro
+desaparece sin más. Ninguna de las dos salidas es aceptable.
+
+**5. Un valor equivocado no se distingue de uno correcto.** No hay
+procedencia, ni confianza, ni comprobación de coherencia.
+
+### Especificación cerrada
+
+#### 1. El ancla son TRES valores, y siempre se responden
+
+Orden de Miguel Ángel: *"cuando yo ponga El Loco de la Colina, me tiene
+que decir de dónde es el tío, qué género toca, y de qué año es el tema
+que está sonando."*
+
+- **País** — del ARTISTA.
+- **Género** — del TEMA, con los del artista como respaldo.
+- **Año** — del TEMA. Nunca del artista, nunca de una grabación
+  cualquiera: primera edición de la obra.
+
+#### 2. Cascada de fuentes por valor, se para en la primera que conteste
+
+|   | país | género | año del tema |
+|---|------|--------|--------------|
+| 1 | caché en tarjeta | caché en tarjeta | caché en tarjeta |
+| 2 | diccionario semilla | diccionario semilla | diccionario semilla |
+| 3 | MusicBrainz (artista) | MusicBrainz (tema, luego artista) | MusicBrainz por **release-group** |
+| 4 | Discogs | Discogs (`styles`) | Discogs (año de edición original) |
+
+Discogs entra porque su ficha da las tres cosas juntas y bien, que es
+justo el hueco de MusicBrainz. Requiere token propio y respeta su
+propio límite de peticiones.
+
+Orden de Miguel Ángel sobre las fuentes: *"me da igual que sea
+MusicBrainz, me da igual que sea Discogs, me da igual tener que tener
+un diccionario con dos millones de entradas."* La cascada es un
+detalle de implementación; el contrato es que los tres valores salgan.
+
+#### 3. Todo lo resuelto se GUARDA, y se guarda EN LA TARJETA
+
+Orden explícita de Miguel Ángel: *"si vamos a tener de forma dinámica
+en el teléfono toda la información, esa información debe quedar
+guardada en la carpeta donde se guarda todo. Normalmente se va a elegir
+la tarjeta SD externa para grabar las descargas. Ahí mismo es donde
+tenemos que grabar el diccionario, y todo lo referente al ancla."*
+
+No en Room, no en `SharedPreferences`, no en el almacenamiento interno
+de la app: bajo la raíz SAF que el usuario eligió, la misma donde van
+las descargas. `RadioDebugLogger` y `NotificationDebugLogger` ya
+escriben ahí, así que el mecanismo existe y está probado.
+
+Consecuencias buscadas, y son las tres razones de la orden:
+
+- **Sobrevive a la reinstalación.** Borrar datos de la app no borra lo
+  aprendido.
+- **Viaja con la tarjeta.** Si la tarjeta cambia de teléfono, el
+  diccionario va con ella.
+- **Entra solo en la sincronización de H07**, que ya sincroniza esa
+  carpeta contra Google Drive. Lo que aprende el teléfono de Miguel
+  Ángel lo hereda el de Silvia sin trabajo extra.
+
+Estructura propuesta, bajo la raíz SAF:
+
+    MiMoo/
+      diccionario/
+        artistas.json      artista -> { país, géneros[], activo_desde,
+                                        activo_hasta, fuente, fecha }
+        temas.json         artista|tema -> { año, géneros[], fuente, fecha }
+
+JSON y no SQLite: legible, editable a mano por Miguel Ángel, y
+sincronizable como un fichero cualquiera. Escritura por lotes, no una
+por resolución, para no castigar la tarjeta.
+
+El diccionario actual (1.682 entradas con país y género, más las 104
+clásicas) deja de ser un techo y pasa a ser la **semilla** de este.
+Nace lleno y crece solo con el uso.
+
+#### 4. Tres reglas que hoy no existen
+
+**Procedencia.** Cada valor lleva de dónde salió y cuándo. Va al log,
+para que Miguel Ángel pueda juzgar el dato y no solo el resultado.
+
+**Coherencia.** Un valor solo se acepta si no se contradice con lo que
+ya se sabe. Un tema no puede ser anterior a la formación del grupo ni
+posterior a su disolución. *Black Dog* fechada en 1983 con Led Zeppelin
+disueltos en 1980 se habría caído sola. Si un valor no supera la
+comprobación se descarta y se baja al siguiente peldaño de la cascada.
+
+**"No lo sé" es distinto de "no hay".** Sin año se ancla por país y
+género y se sigue; ni se para la Radio ni se abre el filtro. La Radio
+solo deja de arrancar si faltan los tres.
+
+#### 5. La búsqueda de relacionadas recibe el mismo trato
+
+Hoy depende de MusicBrainz a pelo, y una caída de treinta segundos
+mataba la porción para toda la sesión (corregido en S025, commit
+0f86093, pero la dependencia sigue). Con el diccionario en tarjeta
+creciendo solo, el orden se invierte: primero lo que ya está en la
+tarjeta —instantáneo y sin red—, y la red solo para ensanchar.
+
+Orden de Miguel Ángel: *"para buscar las relacionadas, si me falla
+MusicBrainz, si me falla esto y lo otro, me suda la polla. Pongo un
+diccionario y volvemos a lo mismo."*
+
+### Criterio de aceptación
+
+El que dio Miguel Ángel, literal: **poner Led Zeppelin y que no salga
+Alaska detrás.** En concreto, sobre "Black Dog": país GB, género hard
+rock, año 1971 — y una cadena británica de rock duro de los 70.
+
+### Fuera de alcance de la sesión que construya esto
+
+- Ampliar el diccionario semilla a mano. Deja de hacer falta: crece
+  solo.
+- Tocar el reparto de porciones (80/10/10) ni la escalera de
+  degradación de S020.
+- Tocar H09 (Radio Online).
+
+---
