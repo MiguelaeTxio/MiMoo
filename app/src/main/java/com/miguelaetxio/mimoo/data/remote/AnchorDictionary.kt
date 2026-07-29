@@ -624,10 +624,33 @@ class AnchorDictionary @Inject constructor(
             ?: base.createDirectory(DIR_DICT)
     }
 
+    /**
+     * S025 -- busca el fichero tolerando que el proveedor SAF le haya
+     * cambiado el nombre.
+     *
+     * Este es el fallo que hacía que NO PERSISTIERA NADA. Los ficheros
+     * se creaban con MIME `application/json`, y los proveedores SAF de
+     * tarjeta externa añaden extensión según el MIME: `artistas.json`
+     * acababa en disco como `artistas.json.json`. Al volver,
+     * `findFile("artistas.json")` no encontraba nada, así que cada
+     * escritura creaba un fichero nuevo y cada lectura devolvía vacío.
+     *
+     * Miguel Ángel lo vio en pantalla: guardaba 1.534 artistas y al
+     * volver a entrar en Ajustes ponía "Ya guardados: 0", y el
+     * recorrido empezaba otra vez por el género 0.
+     *
+     * Se crean ahora como `text/plain`, que no toca el nombre, y esta
+     * búsqueda acepta además cualquier variante que empiece por el
+     * nombre pedido, para recuperar lo que ya se escribió mal.
+     */
+    private fun findDoc(dir: DocumentFile, name: String): DocumentFile? =
+        dir.findFile(name)
+            ?: dir.listFiles().firstOrNull { it.name?.startsWith(name) == true }
+
     private fun readText(name: String): String? = try {
         val dir = dictionaryDir()
         if (dir != null) {
-            dir.findFile(name)?.let { doc ->
+            findDoc(dir, name)?.let { doc ->
                 context.contentResolver.openInputStream(doc.uri)
                     ?.bufferedReader()?.use { it.readText() }
             }
@@ -642,7 +665,10 @@ class AnchorDictionary @Inject constructor(
         return try {
             val dir = dictionaryDir()
             if (dir != null) {
-                val doc = dir.findFile(name) ?: dir.createFile("application/json", name)
+                // `text/plain` a propósito: con `application/json` el
+                // proveedor SAF renombraba el fichero y se perdía todo.
+                // Ver findDoc().
+                val doc = findDoc(dir, name) ?: dir.createFile("text/plain", name)
                     ?: return false
                 context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
                     out.write(content.toByteArray())
@@ -650,6 +676,17 @@ class AnchorDictionary @Inject constructor(
             } else {
                 File(context.filesDir, name).writeText(content)
                 true
+            }.also { ok ->
+                // S025 -- rastro en el log de la Radio. Cuando esto
+                // fallaba en silencio, la unica pista era que el
+                // contador volvia a cero, y hubo que adivinar. Ya no.
+                RadioDebugLogger.log(
+                    context,
+                    storageManager,
+                    "AnchorDictionary.writeText('$name') -> ${if (ok) "OK" else "FALLO"}, " +
+                        "${content.length} caracteres, " +
+                        "destino=${if (dictionaryDir() != null) "tarjeta" else "interno"}",
+                )
             }
         } catch (e: Exception) {
             // Nunca romper la Radio por no poder escribir el
@@ -657,6 +694,12 @@ class AnchorDictionary @Inject constructor(
             // sesión y se reintentará al siguiente aprendizaje. Pero se
             // informa del fallo: `flush()` necesita saberlo para no dar
             // por guardado lo que no lo está.
+            RadioDebugLogger.log(
+                context,
+                storageManager,
+                "AnchorDictionary.writeText('$name') -> EXCEPCIÓN: " +
+                    "${e::class.java.simpleName}: ${e.message}",
+            )
             false
         }
     }
