@@ -322,6 +322,89 @@ class RadioRepository @Inject constructor(
      * igual por origen y género: no saber el año no puede parar la
      * Radio.
      */
+    /**
+     * S026 -- ¿ES ESTE VÍDEO DE VERDAD UN TEMA DE ESTE ARTISTA?
+     *
+     * Orden de Miguel Ángel, literal, tras ver un corto de animación de
+     * Sony colarse en una radio de Led Zeppelin buscando solo el
+     * nombre del artista ('Free'): *"el título del vídeo tiene que ser
+     * de un artista y de un tema de ese artista... si no coincide con
+     * ningún título de ese artista, se desecha. Y si no hay red no hay
+     * radio... antes parar que meter un vídeo que no viene a cuento."*
+     * También, explícito: *"me da igual validar contra MusicBrainz,
+     * Discogs, local, Wikidata o la fuente que sea."*
+     *
+     * Solo hace falta para las búsquedas "solo artista" (sin canción
+     * conocida, ver `resolveYoutubeCandidate()` en `PlayerManager`):
+     * cuando SÍ hay canción conocida, viene del diccionario propio, ya
+     * es un dato curado y real por construcción, verificarlo sería
+     * redundante.
+     *
+     * Reutiliza exactamente la misma cascada que ya usa
+     * `resolveOriginalDecade()` (diccionario en tarjeta -> diccionario
+     * de éxitos -> MusicBrainz -> Discogs -> Wikidata) pero con un
+     * matiz importante: aquí SÍ importa distinguir "comprobado, no
+     * existe" de "no se ha podido comprobar por falta de red" --
+     * `resolveOriginalDecade()` trata ambos casos igual (no para la
+     * Radio), pero aquí el segundo caso debe PARARLA, según pide Miguel
+     * Ángel. La distinción se apoya en `lastFailureWasTransient`, que
+     * ya usa el resto de la clase para lo mismo (ver `reconcilePending()`).
+     */
+    sealed class TrackExistence {
+        data class Confirmed(val decadeBegin: Int?) : TrackExistence()
+        object NotFound : TrackExistence()
+        object NetworkUnavailable : TrackExistence()
+    }
+
+    suspend fun verifyTrackExists(artist: String, rawVideoTitle: String): TrackExistence {
+        val cleanTitle = stripTitleNoise(rawVideoTitle)
+        if (cleanTitle.isBlank()) return TrackExistence.NotFound
+
+        anchorDictionary.trackYear(artist, cleanTitle)?.let { year ->
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, del diccionario en tarjeta")
+            return TrackExistence.Confirmed((year / 10) * 10)
+        }
+        knownHitsRepository.decadeOfTrack(artist, cleanTitle)?.let { decade ->
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, del diccionario de éxitos")
+            return TrackExistence.Confirmed(decade)
+        }
+
+        val mbYear = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
+        if (mbYear != null) {
+            anchorDictionary.learnTrackYear(artist, cleanTitle, mbYear, "musicbrainz")
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de MusicBrainz ($mbYear)")
+            return TrackExistence.Confirmed((mbYear / 10) * 10)
+        }
+        if (lastFailureWasTransient) {
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde)")
+            return TrackExistence.NetworkUnavailable
+        }
+
+        val discogsYear = firstReleaseYearFromDiscogs(artist, cleanTitle)
+        if (discogsYear != null) {
+            anchorDictionary.learnTrackYear(artist, cleanTitle, discogsYear, "discogs")
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Discogs ($discogsYear)")
+            return TrackExistence.Confirmed((discogsYear / 10) * 10)
+        }
+        if (lastFailureWasTransient) {
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde)")
+            return TrackExistence.NetworkUnavailable
+        }
+
+        val wikidataYear = firstReleaseYearFromWikidata(artist, cleanTitle)
+        if (wikidataYear != null) {
+            anchorDictionary.learnTrackYear(artist, cleanTitle, wikidataYear, "wikidata")
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Wikidata ($wikidataYear)")
+            return TrackExistence.Confirmed((wikidataYear / 10) * 10)
+        }
+
+        log(
+            "verifyTrackExists('$artist' -- '$cleanTitle') -- NO ENCONTRADO en ninguna fuente " +
+                "(diccionarios, MusicBrainz, Discogs, Wikidata) -- se descarta el vídeo",
+        )
+        return TrackExistence.NotFound
+    }
+
     private suspend fun resolveOriginalDecade(
         artist: String,
         trackTitle: String?,

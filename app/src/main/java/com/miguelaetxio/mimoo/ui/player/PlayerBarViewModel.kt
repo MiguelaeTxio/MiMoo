@@ -311,6 +311,9 @@ class PlayerBarViewModel @Inject constructor(
     /** H07 PARTE 3. */
     fun toggleShuffle() = playerManager.toggleShuffleMode()
 
+    /** S026 -- botón "Reintentar" del aviso de Radio detenida por falta de red. */
+    fun dismissRadioNetworkLost() = playerManager.dismissRadioNetworkLost()
+
     /** H08 -- arrastrar la barra de progreso. */
     fun seekTo(positionMs: Long) {
         playerManager.seekTo(positionMs)

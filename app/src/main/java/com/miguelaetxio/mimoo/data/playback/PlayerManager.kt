@@ -152,6 +152,16 @@ data class PlaybackState(
     val repeatModeEnabled: Boolean = false,
     /** H07 PARTE 3 -- true si el orden de reproducción es aleatorio. */
     val shuffleModeEnabled: Boolean = false,
+    /**
+     * S026 -- true cuando la Radio se ha detenido porque no pudo
+     * verificar contra ninguna fuente (diccionarios/MusicBrainz/
+     * Discogs/Wikidata) que un vídeo candidato fuera de verdad un tema
+     * del artista sugerido, por falta de red. Orden explícita de
+     * Miguel Ángel: mejor parar del todo y avisar que meter un vídeo
+     * sin verificar. La UI debe mostrar un aviso y ofrecer reintentar
+     * -- ver `PlayerManager.dismissRadioNetworkLost()`.
+     */
+    val radioNetworkLost: Boolean = false,
 )
 
 /**
@@ -756,6 +766,15 @@ class PlayerManager @Inject constructor(
     private var radioAnchor: RadioAnchor? = null
 
     /**
+     * S026 -- true tras un `TrackExistence.NetworkUnavailable` tratando
+     * de verificar un candidato de la Radio. Gatea `topUpRadioQueueIfNeeded()`
+     * (ver ahí) hasta que el usuario pulse "reintentar" -- ver
+     * `dismissRadioNetworkLost()`.
+     */
+    @Volatile
+    private var radioNetworkLost = false
+
+    /**
      * S020 -- las TRES porciones de la Radio, tal como las cerró
      * Miguel Ángel (ver `DOCS/ANNEX_H08.md`, "Las TRES porciones y el
      * reparto dinámico"):
@@ -883,6 +902,12 @@ class PlayerManager @Inject constructor(
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
         if (currentRadioBacklog() >= RADIO_QUEUE_SIZE) return
+        // S026 -- si la última vuelta se detuvo por falta de red para
+        // verificar un candidato, no se reintenta sola: espera a que
+        // el usuario pulse "reintentar" en el aviso (o vuelva a poner
+        // un tema propio, que reinicia el ancla). Ver
+        // dismissRadioNetworkLost().
+        if (radioNetworkLost) return
 
         isRadioTopUpRunning = true
         managerScope.launch {
@@ -2216,17 +2241,61 @@ class PlayerManager @Inject constructor(
         } else {
             RADIO_MAX_TRACK_SECONDS
         }
-        val track = searchResult.tracks.firstOrNull { candidate ->
+        val filtered = searchResult.tracks.filter { candidate ->
             candidate.durationSeconds in 1..maxSeconds &&
                 !looksLikeNonSong(candidate.title) &&
                 matchesArtist(artist, candidate.title, candidate.channelTitle, strict = songTitle == null)
         }
+
+        // S026 -- SIN CANCIÓN CONOCIDA (Exploración, o "artista
+        // conocido, tema no catalogado"): el filtro de canal ya
+        // descarta vídeos que ni siquiera dicen ser del artista, pero
+        // no basta -- hace falta comprobar que el TEMA existe de
+        // verdad. Orden explícita de Miguel Ángel: *"el título del
+        // vídeo tiene que ser de un artista y de un tema de ese
+        // artista... si no coincide con ningún título de ese artista,
+        // se desecha. Y si no hay red no hay radio."* Con canción
+        // conocida (viene del diccionario, ya es un dato curado) no
+        // hace falta -- ver la rama `else`.
+        val track = if (songTitle == null) {
+            var confirmed: com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack? = null
+            var networkLost = false
+            for (candidate in filtered) {
+                when (val existence = radioRepository.verifyTrackExists(artist, candidate.title)) {
+                    is RadioRepository.TrackExistence.Confirmed -> {
+                        confirmed = candidate
+                        break
+                    }
+                    RadioRepository.TrackExistence.NotFound -> continue
+                    RadioRepository.TrackExistence.NetworkUnavailable -> {
+                        networkLost = true
+                        break
+                    }
+                }
+            }
+            if (networkLost) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
+                        "RADIO DETENIDA: sin red para verificar si el candidato es un tema real de '$artist'",
+                )
+                radioNetworkLost = true
+                withContext(Dispatchers.Main) {
+                    _state.value = _state.value.copy(radioNetworkLost = true)
+                }
+                return null
+            }
+            confirmed
+        } else {
+            filtered.firstOrNull()
+        }
+
         if (track == null) {
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- 0 de " +
-                    "${searchResult.tracks.size} resultados pasaron el filtro de duración " +
-                    "(tope ${maxSeconds / 60} min)/compilación",
+                    "${searchResult.tracks.size} resultados pasaron el filtro" +
+                    (if (songTitle == null) " (duración/compilación/canal/existencia real)" else " de duración/compilación"),
             )
             null
         } else {
@@ -2686,6 +2755,18 @@ class PlayerManager @Inject constructor(
         } else {
             Player.REPEAT_MODE_ALL
         }
+    }
+
+    /**
+     * S026 -- botón "Reintentar" del aviso de "Radio detenida, sin
+     * conexión" (ver `radioNetworkLost` y `PlaybackState.radioNetworkLost`).
+     * Limpia el flag y relanza el reparto de la cola -- si sigue sin
+     * haber red, la próxima verificación volverá a marcarlo.
+     */
+    fun dismissRadioNetworkLost() {
+        radioNetworkLost = false
+        _state.value = _state.value.copy(radioNetworkLost = false)
+        topUpRadioQueueIfNeeded()
     }
 
     /**

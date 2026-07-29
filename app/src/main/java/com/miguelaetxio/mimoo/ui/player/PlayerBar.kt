@@ -101,6 +101,28 @@ fun PlayerBar(
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
     var isExpanded by remember { mutableStateOf(true) }
 
+    // S026 -- orden explícita de Miguel Ángel: mejor parar la Radio del
+    // todo que meter un vídeo sin verificar. Ver
+    // PlayerManager.resolveYoutubeCandidate()/dismissRadioNetworkLost().
+    if (state.radioNetworkLost) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Radio detenida") },
+            text = {
+                Text(
+                    "Se ha perdido la conexión y no se ha podido comprobar que el " +
+                        "siguiente tema sea de verdad del artista sugerido. La Radio se " +
+                        "ha detenido para no añadir un vídeo equivocado.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissRadioNetworkLost) {
+                    Text("Reintentar")
+                }
+            },
+        )
+    }
+
     Surface(tonalElevation = 4.dp) {
         if (!isExpanded) {
             PlayerBarCollapsed(
