@@ -117,7 +117,18 @@ class SettingsViewModel @Inject constructor(
     private var dictionaryJob: kotlinx.coroutines.Job? = null
 
     fun refreshDictionaryCounts() {
-        viewModelScope.launch {
+        // S025 -- Dispatchers.IO, no el hilo principal.
+        //
+        // Fallo reportado por Miguel Ángel: *"cuando entro a ajustes
+        // tarda muchísimo y termina crasheando, está lento el menú de
+        // la sidebar."* La causa era esto: `viewModelScope.launch` sin
+        // dispatcher corre en Main, y aquí dentro se lee la tarjeta por
+        // SAF y se parsean las 1.161 entradas de la semilla. Con eso el
+        // hilo de interfaz se queda bloqueado el tiempo que tarde la
+        // tarjeta en responder, y Android acaba matando la app por ANR
+        // -- que además no deja log de excepción, justo lo que él
+        // describía.
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             if (_dictionaryState.value is DictionaryState.Running) return@launch
             // S025 -- la base de datos que construyo la primera version
             // del boton estaba contaminada con nombres de canal. No se
@@ -135,7 +146,9 @@ class SettingsViewModel @Inject constructor(
 
     fun startBuildingDictionary() {
         if (dictionaryJob?.isActive == true) return
-        dictionaryJob = viewModelScope.launch {
+        // S025 -- el recorrido es media hora de red y escritura en
+        // tarjeta: jamás en el hilo principal.
+        dictionaryJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             val result = anchorDictionaryBuilder.build { p ->
                 _dictionaryState.value = DictionaryState.Running(
                     done = p.done,

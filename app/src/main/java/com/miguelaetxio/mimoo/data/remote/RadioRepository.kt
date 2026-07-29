@@ -1432,8 +1432,15 @@ class RadioRepository @Inject constructor(
          * este ritmo el cajón se drena solo mientras se escucha música,
          * que es exactamente lo que pidió Miguel Ángel: aprovechar que
          * ya hay red por otra búsqueda.
+         *
+         * Bajado de 3 a 1 tras el reporte de lentitud: eran hasta SEIS
+         * peticiones extra por tema -- tres artistas y tres temas --, y
+         * a una por segundo eso son seis segundos añadidos a cada
+         * reposición de la cola. Con el botón de Ajustes construyendo
+         * ya la base de datos en masa, el goteo de la Radio no tiene
+         * que ir deprisa.
          */
-        const val RECONCILE_PER_ROUND = 3
+        const val RECONCILE_PER_ROUND = 1
 
         /**
          * Candidatos que se piden al buscar el artista del ancla.
