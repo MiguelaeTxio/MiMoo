@@ -148,8 +148,8 @@ class SettingsViewModel @Inject constructor(
             _dictionaryState.value = DictionaryState.Done(
                 when (result) {
                     is com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder.Result.Finished ->
-                        "Terminado. ${result.resolved} artista(s) añadidos al diccionario, " +
-                            "${result.notFound} sin ficha, ${result.skipped} ya estaban." +
+                        "Terminado. ${result.resolved} artista(s) en el diccionario, " +
+                            "${result.notFound} descartados por parecer canales." +
                             if (result.renamedFolders > 0) {
                                 " ${result.renamedFolders} carpeta(s) renombradas al nombre del artista."
                             } else {

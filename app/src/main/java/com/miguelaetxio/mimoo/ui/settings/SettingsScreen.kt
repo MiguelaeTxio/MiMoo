@@ -357,10 +357,11 @@ fun SettingsScreen(
             ) {
                 Text(
                     "La Radio necesita saber de dónde es cada artista y qué " +
-                        "género toca. Lo que se averigua se guarda en la tarjeta, " +
-                        "así que la próxima vez no hace falta conexión. Este " +
-                        "recorrido lo hace de golpe en vez de ir aprendiendo " +
-                        "poco a poco mientras escuchas.",
+                        "género toca. Este recorrido pregunta a MusicBrainz género " +
+                        "a género y guarda en la tarjeta todo lo que encuentra, sin " +
+                        "depender de lo que tengas descargado. Tarda alrededor de " +
+                        "media hora y se puede parar: al volver a pulsar sigue donde " +
+                        "lo dejó.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -370,7 +371,7 @@ fun SettingsScreen(
                     is SettingsViewModel.DictionaryState.Idle -> {
                         Text(
                             "Ya guardados: ${st.learned} artista(s). " +
-                                "Por averiguar: ${st.queued}." +
+                                "Géneros por recorrer: ${st.queued}." +
                                 if (st.pending > 0) " Pendientes por falta de red: ${st.pending}." else "",
                             style = MaterialTheme.typography.bodySmall,
                         )
@@ -386,7 +387,7 @@ fun SettingsScreen(
                         }
                         if (st.queued == 0) {
                             Text(
-                                "No hay nada por averiguar ahora mismo.",
+                                "Todos los géneros están recorridos.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -402,8 +403,8 @@ fun SettingsScreen(
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "${st.done} de ${st.total} — ${st.resolved} guardados, " +
-                                "${st.notFound} sin ficha",
+                            "Género ${st.done} de ${st.total} — ${st.resolved} artistas " +
+                                "guardados, ${st.notFound} descartados",
                             style = MaterialTheme.typography.bodySmall,
                         )
                         if (st.currentArtist.isNotBlank()) {

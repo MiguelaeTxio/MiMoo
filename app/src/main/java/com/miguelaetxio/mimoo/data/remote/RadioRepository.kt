@@ -366,6 +366,27 @@ class RadioRepository @Inject constructor(
 
 
     /**
+     * S025 -- artistas de un género, de cien en cien, para el recorrido
+     * masivo del botón de Ajustes.
+     *
+     * Cada resultado trae ya nombre y país, y el género lo da la propia
+     * consulta, así que una sola petición deja hasta cien artistas
+     * completos para el ancla. Es lo que convierte el botón en una
+     * base de datos de verdad en vez de un repaso de lo que hay en la
+     * tarjeta.
+     */
+    suspend fun browseArtistsByGenre(
+        genre: String,
+        offset: Int,
+    ): List<MusicBrainzArtistSummary> {
+        val safe = genre.replace("\"", "")
+        return musicBrainzApiService
+            .searchArtists(query = "tag:\"$safe\"", limit = 100, offset = offset)
+            .artists
+            .also { noteSuccess() }
+    }
+
+    /**
      * S025 -- resuelve UN artista y lo guarda en el diccionario de la
      * tarjeta. Es lo que usa `AnchorDictionaryBuilder` desde el botón
      * de Ajustes, y distingue los tres desenlaces que le importan al

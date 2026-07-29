@@ -323,6 +323,86 @@ class AnchorDictionary @Inject constructor(
     }
 
     /**
+     * S025 -- todos los géneros que aparecen en la semilla, ordenados.
+     *
+     * Son el universo que recorre el constructor: los géneros que de
+     * verdad anclan sesiones. Recorrer las 2.176 etiquetas del árbol
+     * completo traería ópera china y gamelán balinés, que no le sirven
+     * de nada a esta biblioteca.
+     */
+    fun seedGenres(): List<String> {
+        ensureLoaded()
+        return seed.values
+            .flatMap { it.genres }
+            .map { it.lowercase().trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+    }
+
+    /**
+     * S025 -- guarda un artista del recorrido masivo SUMANDO géneros.
+     *
+     * El recorrido pregunta género a género, así que el mismo artista
+     * aparece en varios. `learnArtist()` reemplazaría y cada pasada
+     * borraría la anterior; aquí se acumulan, que es lo que hace útil
+     * al ancla: cuantos más géneros tenga un artista, mejor cruza.
+     */
+    fun learnArtistFromCrawl(name: String, country: String?, genre: String) {
+        if (name.isBlank()) return
+        ensureLoaded()
+        val k = key(name)
+        if (k.isBlank()) return
+        val previous = learnedArtists[k]
+        val genres = (previous?.genres.orEmpty() + genre)
+            .map { it.lowercase().trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
+        val merged = ArtistFacts(
+            artist = previous?.artist ?: name,
+            country = country ?: previous?.country,
+            genres = genres,
+            source = "musicbrainz",
+        )
+        if (merged == previous) return
+        learnedArtists[k] = merged
+        dirtyArtists = true
+    }
+
+    /**
+     * S025 -- el recorrido masivo escribe miles de entradas; guardar en
+     * cada una castigaría la tarjeta sin motivo. Se acumula en memoria
+     * y se vuelca por lotes con `flush()`.
+     */
+    @Volatile
+    private var dirtyArtists = false
+
+    fun flush() {
+        if (!dirtyArtists) return
+        ensureLoaded()
+        writeArtists()
+        dirtyArtists = false
+    }
+
+    /** Géneros ya recorridos, para poder reanudar donde se dejó. */
+    fun doneGenres(): Set<String> {
+        ensureLoaded()
+        return readText(FILE_DONE_GENRES)
+            ?.lines()
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            ?.toSet()
+            .orEmpty()
+    }
+
+    fun markGenreDone(genre: String) {
+        ensureLoaded()
+        val all = doneGenres() + genre
+        writeText(FILE_DONE_GENRES, all.joinToString("\n"))
+    }
+
+    /**
      * S025 -- BORRA TODO LO APRENDIDO.
      *
      * La primera versión del constructor sembró el diccionario con los
@@ -351,6 +431,7 @@ class AnchorDictionary @Inject constructor(
         writeTracks()
         writePending()
         writePendingArtists()
+        writeText(FILE_DONE_GENRES, "")
         writeText(FILE_WIPED, "S025")
     }
 
@@ -577,6 +658,7 @@ class AnchorDictionary @Inject constructor(
         const val FILE_PENDING = "pendientes.json"
         const val FILE_PENDING_ARTISTS = "pendientes_artistas.json"
         const val FILE_WIPED = "borrado_s025.txt"
+        const val FILE_DONE_GENRES = "generos_recorridos.txt"
 
         /**
          * S025 -- palabras que delatan un canal de YouTube y no un

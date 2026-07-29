@@ -1,7 +1,5 @@
 package com.miguelaetxio.mimoo.data.remote
 
-import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
-import com.miguelaetxio.mimoo.util.SearchNormalizer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -50,9 +48,20 @@ import kotlinx.coroutines.isActive
 class AnchorDictionaryBuilder @Inject constructor(
     private val anchorDictionary: AnchorDictionary,
     private val radioRepository: RadioRepository,
-    private val trackDao: SearchResultTrackDao,
     private val folderReconciler: LibraryFolderReconciler,
 ) {
+
+    private companion object {
+        /** Artistas por petición. MusicBrainz admite hasta 100. */
+        const val PAGE_SIZE = 100
+
+        /**
+         * Páginas por género. Cinco son quinientos artistas por
+         * género, de sobra para cubrir lo que la Radio va a pedir, y
+         * mantiene el recorrido completo en torno a la media hora.
+         */
+        const val MAX_PAGES_PER_GENRE = 5
+    }
 
     /** Avance del recorrido, para pintarlo en Ajustes. */
     data class Progress(
@@ -80,92 +89,89 @@ class AnchorDictionaryBuilder @Inject constructor(
      * corrutina la para en el siguiente artista, y lo ya resuelto está
      * escrito en la tarjeta desde el momento en que se resolvió.
      */
+    /**
+     * S025 -- RECORRIDO POR GÉNEROS CONTRA MUSICBRAINZ.
+     *
+     * Miguel Ángel, tras ver que la primera versión solo sacaba 280
+     * artistas: *"eso sale de mi disco"*. Tenía razón. Un botón que
+     * completa lo que ya tienes bajado no construye una base de datos;
+     * si en disco hay un disco de Joselito, esa es la base de datos.
+     *
+     * Ahora la fuente no es la tarjeta: es MusicBrainz. Se recorren los
+     * géneros que de verdad anclan sesiones -- los que aparecen en la
+     * semilla -- y de cada uno se piden artistas de cien en cien. Cada
+     * resultado trae ya nombre y país, y el género lo da la propia
+     * consulta, así que una sola petición deja hasta cien artistas
+     * completos para el ancla.
+     *
+     * Con unos trescientos géneros y cinco páginas por género salen
+     * unas mil quinientas peticiones: media hora larga a una por
+     * segundo, y decenas de miles de artistas. Eso ya es una base de
+     * datos.
+     *
+     * **Reanudable.** Cada género terminado se anota en la tarjeta, así
+     * que parar y volver a pulsar sigue donde se dejó en vez de empezar
+     * de cero.
+     */
     suspend fun build(onProgress: (Progress) -> Unit): Result {
-        val queue = buildQueue()
+        val done = anchorDictionary.doneGenres()
+        val genres = anchorDictionary.seedGenres().filterNot { it in done }
         var resolved = 0
         var notFound = 0
-        var skipped = 0
 
-        for ((index, name) in queue.withIndex()) {
+        for ((index, genre) in genres.withIndex()) {
             if (!currentCoroutineContext().isActive) {
+                anchorDictionary.flush()
                 return Result.Stopped(resolved, notFound)
             }
-            onProgress(Progress(index, queue.size, resolved, notFound, name))
+            onProgress(Progress(index, genres.size, resolved, notFound, genre))
 
-            if (anchorDictionary.artist(name) != null) {
-                skipped++
-                continue
-            }
-            val outcome = try {
-                radioRepository.resolveArtistFactsForDictionary(name)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                return Result.NetworkDown(resolved, notFound)
-            }
-            when (outcome) {
-                RadioRepository.DictionaryOutcome.RESOLVED -> resolved++
-                RadioRepository.DictionaryOutcome.NOT_FOUND -> notFound++
-                RadioRepository.DictionaryOutcome.NETWORK_DOWN ->
+            var pagesWithResults = 0
+            for (page in 0 until MAX_PAGES_PER_GENRE) {
+                if (!currentCoroutineContext().isActive) {
+                    anchorDictionary.flush()
+                    return Result.Stopped(resolved, notFound)
+                }
+                val artists = try {
+                    radioRepository.browseArtistsByGenre(genre, offset = page * PAGE_SIZE)
+                } catch (e: CancellationException) {
+                    anchorDictionary.flush()
+                    throw e
+                } catch (e: Exception) {
+                    anchorDictionary.flush()
                     return Result.NetworkDown(resolved, notFound)
+                }
+                if (artists.isEmpty()) break
+                pagesWithResults++
+                for (a in artists) {
+                    if (anchorDictionary.looksLikeChannelName(a.name)) {
+                        notFound++
+                        continue
+                    }
+                    anchorDictionary.learnArtistFromCrawl(a.name, a.country, genre)
+                    resolved++
+                }
+                onProgress(Progress(index, genres.size, resolved, notFound, genre))
             }
+            if (pagesWithResults > 0) anchorDictionary.flush()
+            anchorDictionary.markGenreDone(genre)
         }
-        // S025 -- SEGUNDA FASE: arreglar el directorio en disco.
-        //
-        // Orden de Miguel Ángel: *"en el botón de generar la base de
-        // datos, cuando se pulse, debes incluir reconciliar los nombres
-        // de las carpetas y poner los nombres de los artistas y no los
-        // nombres de canales, que es un asco el directorio ahora
-        // mismo."*
-        //
-        // Las carpetas se crearon con lo que hubiera en
-        // `SearchResultTrack.artist`, que podía ser el canal. Esta fase
-        // recorre la raíz, detecta las que llevan nombre de canal y las
-        // renombra al artista real cuando se puede deducir.
-        onProgress(Progress(queue.size, queue.size, resolved, notFound, "Ordenando carpetas..."))
+
+        anchorDictionary.flush()
+
+        // Segunda fase: arreglar el directorio en disco. Orden de
+        // Miguel Ángel: *"en el botón de generar la base de datos debes
+        // incluir reconciliar los nombres de las carpetas y poner los
+        // nombres de los artistas y no los nombres de canales."*
+        onProgress(Progress(genres.size, genres.size, resolved, notFound, "Ordenando carpetas..."))
         val renamed = folderReconciler.reconcile()
-        onProgress(Progress(queue.size, queue.size, resolved, notFound, ""))
-        return Result.Finished(resolved, notFound, skipped, renamed)
+        onProgress(Progress(genres.size, genres.size, resolved, notFound, ""))
+        return Result.Finished(resolved, notFound, 0, renamed)
     }
 
-    /**
-     * Cuántos artistas quedarían por recorrer ahora mismo. Se muestra
-     * en Ajustes antes de arrancar, para que el botón no sea un salto
-     * al vacío.
-     */
-    suspend fun pendingWork(): Int = buildQueue().size
-
-    private suspend fun buildQueue(): List<String> {
-        val seen = mutableSetOf<String>()
-        val queue = mutableListOf<String>()
-
-        fun add(name: String?) {
-            val clean = name?.trim().orEmpty()
-            if (clean.isBlank()) return
-            if (anchorDictionary.looksLikeChannelName(clean)) return
-            val k = SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(clean))
-            if (k.isBlank() || !seen.add(k)) return
-            if (anchorDictionary.artist(clean) != null) return
-            queue += clean
-        }
-
-        // 1. El cajón de sin red, que es lo que ya se sabe que falta.
-        anchorDictionary.takePendingArtists(Int.MAX_VALUE).forEach { add(it) }
-
-        // 2. La biblioteca local, PERO filtrando lo que huele a canal.
-        //
-        //    La primera versión de esto metía `SearchResultTrack.artist`
-        //    tal cual, y ese campo podía traer el nombre del canal de
-        //    YouTube. Así entraron cosas como "Deep Purple Official" en
-        //    el diccionario. Ahora se descarta todo lo que
-        //    `looksLikeChannelName()` marque, y lo que quede se contrasta
-        //    además con la semilla: si el nombre no está en el índice de
-        //    artistas conocidos y encima huele a canal, fuera.
-        trackDao.getAllOnce()
-            .mapNotNull { it.artist }
-            .filterNot { anchorDictionary.looksLikeChannelName(it) }
-            .forEach { add(it) }
-
-        return queue
+    suspend fun pendingWork(): Int {
+        val done = anchorDictionary.doneGenres()
+        return anchorDictionary.seedGenres().count { it !in done }
     }
+
 }
