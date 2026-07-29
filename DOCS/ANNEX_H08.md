@@ -2396,3 +2396,56 @@ nunca ha llamado a MusicBrainz bajo ninguna circunstancia: es
 enteramente local, `KnownHitsRepository` es un asset empaquetado.
 
 **Sin verificar en dispositivo real todavía.**
+
+---
+
+## CORRECCIÓN SOBRE EL FIX ANTERIOR — "2+ géneros" no bastaba (captura real)
+
+Miguel Ángel probó el build del fix anterior en dispositivo real e
+instaló el APK nuevo. Captura de pantalla de la cola de Radio,
+21:48: tras Led Zeppelin - Black Dog, el segundo tema es **Supertramp
+- The Logical Song**, seguido de Black Sabbath, ELO y Deep Purple.
+
+**Esto SÍ es una regresión real del fix de "2+ géneros específicos",
+no una confusión de logs viejos** (a diferencia del episodio anterior
+de este mismo hilo). Verificado contra los datos reales del propio
+repositorio: Supertramp comparte con Led Zeppelin no una, sino **dos**
+etiquetas -- `classic rock` Y `progressive rock` -- y ambas pasan
+`GenreTree.isSpecific()` (0 y 6 descendientes). El umbral de "2+" que
+se acababa de construir se cumplía con dos etiquetas que no dicen nada
+real, exactamente el mismo mecanismo que ya había colado a Elton John
+antes, solo que esta vez con dos etiquetas de formato en vez de una.
+
+Palabras de Miguel Ángel sobre el resultado, que resumen el problema
+mejor que cualquier métrica: *"si tenemos que podemos relacionar a
+Supertramp con Led Zeppelin... el único que se parece es que son
+personas que forman un grupo y que hacen música... la música que
+hacen no se parece absolutamente en nada."*
+
+### Fix (commit `3439312`, compilado en verde)
+
+`GenreMatchQuality` gana una lista corta y razonada de etiquetas de
+FORMATO/ÉPOCA que nunca cuentan, ni fuerte ni débil, en ningún
+peldaño: `classic rock` (categoría de emisora de radio en EE.UU.),
+`rock and roll` (descriptor de década que se cuelga retroactivamente
+de casi cualquier cosa), `mainstream rock` (categoría de lista de
+éxitos Billboard). **`progressive rock` NO entra en la lista** -- es
+un género real y específico (Yes, King Crimson, Genesis); el problema
+no es la etiqueta, es que la propia semilla de Led Zeppelin la incluye
+de forma cuestionable entre sus ocho géneros.
+
+Resultado simulado contra los datos reales del propio repositorio,
+antes de compilar:
+- **Elton John** deja de tener NINGÚN género específico en común con
+  Led Zeppelin tras quitar `classic rock` -- queda excluido del todo,
+  no solo degradado.
+- **Supertramp** y **Emerson, Lake & Palmer** comparten únicamente
+  `progressive rock` -- un solo género específico -- y caen a nivel
+  DÉBIL/último recurso.
+- **Black Sabbath** y **Deep Purple** siguen en nivel FUERTE:
+  comparten de verdad `hard rock` + `heavy metal` + `blues rock` con
+  Led Zeppelin.
+
+**Sin verificar en dispositivo real todavía** -- pendiente que Miguel
+Ángel instale este build y confirme si la cola deja de mezclar
+Supertramp/ELP/Elton John con Led Zeppelin.
