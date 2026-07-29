@@ -850,6 +850,29 @@ class RadioRepository @Inject constructor(
     }
 
     /**
+     * S025 -- restaurada. Se perdió al retirar `resolveTrackDecade()`
+     * en este mismo hito: las dos vivían pegadas y el borrado se llevó
+     * la de al lado. `lookupArtistProfile()` la sigue necesitando.
+     *
+     * Deriva la década del `life-span.begin` del ARTISTA, que es el año
+     * de formación de un grupo o el de NACIMIENTO de un solista. Para
+     * el ancla eso está mal y por eso el ancla ya no la usa -- usa
+     * `resolveOriginalDecade()`, que fecha el TEMA. Aquí sobrevive
+     * porque la porción de disco solo necesita situar a grandes rasgos
+     * a un artista de la biblioteca local, no anclar una sesión.
+     * ---
+     * S025 -- restored; it was collateral damage from removing
+     * `resolveTrackDecade()`. Derives a decade from the ARTIST's
+     * life-span, which is wrong for anchoring (hence
+     * `resolveOriginalDecade()`) but adequate for roughly placing a
+     * local-library artist in the disco quota.
+     */
+    private fun parseDecadeBegin(begin: String?): Int? {
+        val year = begin?.take(4)?.toIntOrNull() ?: return null
+        return (year / 10) * 10
+    }
+
+    /**
      * Quita del título el ruido que trae YouTube y que impediría casar
      * el tema con MusicBrainz o con el diccionario: "(Official Video)",
      * "[Lyric Video]", "(Remastered 2011)" y compañía. También corta un
