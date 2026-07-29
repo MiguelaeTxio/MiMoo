@@ -2094,12 +2094,43 @@ class PlayerManager @Inject constructor(
      * descartaría vídeos legítimos subidos por sellos o recopilatorios
      * de canal.
      */
-    private fun matchesArtist(artist: String, title: String, channelTitle: String?): Boolean {
+    /**
+     * S026 -- MODO ESTRICTO para búsquedas "solo artista" (sin canción
+     * conocida, `songTitle == null` en `resolveYoutubeCandidate()`).
+     *
+     * Caso real que lo motiva: la Exploración sugirió 'Free' (grupo
+     * real de blues rock británico de los 70) y YouTube devolvió
+     * `"Free" | Official Lyric Video | Sony Animation` -- un
+     * cortometraje sin relación, cuyo título contiene literalmente la
+     * palabra "Free" porque así se llama el corto, no porque hable del
+     * grupo. Ni comparar por subcadena ni por PALABRA COMPLETA lo
+     * habría descartado: la palabra "Free" está de verdad, entera, en
+     * ese título.
+     *
+     * Lo que sí distingue el vídeo real del falso es el CANAL: un
+     * corto de animación de Sony no se sube desde ningún canal que
+     * mencione al grupo. Cuando no hay canción conocida que ancle la
+     * búsqueda -- justo el caso donde el nombre del artista puede ser
+     * una palabra corriente ('Free', 'Yes', 'Kiss', 'Air', 'Chicago',
+     * 'America'...) y el título por sí solo no basta -- se exige que
+     * el CANAL, no el título, contenga el nombre como palabra completa.
+     * Cuando sí hay canción conocida (`strict = false`, viene del
+     * diccionario, ya es una búsqueda "artista + canción" mucho más
+     * específica) se mantiene el criterio de siempre: título O canal.
+     */
+    private fun matchesArtist(artist: String, title: String, channelTitle: String?, strict: Boolean = false): Boolean {
         val needle = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(artist)
         if (needle.isBlank()) return true
-        val haystack = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(title) + " " +
-            com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(channelTitle.orEmpty())
-        return haystack.contains(needle)
+        val wordBoundary = Regex("(^|\\s)" + Regex.escape(needle) + "($|\\s)")
+        return if (strict) {
+            val channelHaystack = com.miguelaetxio.mimoo.util.SearchNormalizer
+                .normalizeArtistName(channelTitle.orEmpty())
+            wordBoundary.containsMatchIn(channelHaystack)
+        } else {
+            val haystack = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(title) + " " +
+                com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(channelTitle.orEmpty())
+            haystack.contains(needle)
+        }
     }
 
     /**
@@ -2188,7 +2219,7 @@ class PlayerManager @Inject constructor(
         val track = searchResult.tracks.firstOrNull { candidate ->
             candidate.durationSeconds in 1..maxSeconds &&
                 !looksLikeNonSong(candidate.title) &&
-                matchesArtist(artist, candidate.title, candidate.channelTitle)
+                matchesArtist(artist, candidate.title, candidate.channelTitle, strict = songTitle == null)
         }
         if (track == null) {
             RadioDebugLogger.log(
