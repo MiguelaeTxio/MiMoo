@@ -2107,3 +2107,152 @@ rock, año 1971 — y una cadena británica de rock duro de los 70.
 - Tocar H09 (Radio Online).
 
 ---
+
+### COMPLETADAS EN S025 (continuación — construcción sobre el diseño de más arriba)
+
+Sesión larga y con muchas idas y vueltas; se documenta con honestidad,
+incluidos los propios fallos del modelo, porque varios de ellos
+volvieron a intervenir en el resultado final.
+
+**País del ancla, clave de no-repetición, botón de descargar (primera
+mitad de la sesión, antes del rediseño):**
+- El nombre del canal de YouTube dejó de poder llegar al ancla por
+  ninguna vía (semilla, fallback, porción de disco).
+- `resolveAnchor()` consulta el diccionario de éxitos ANTES de
+  abandonar el ancla por falta de géneros en MusicBrainz (caso
+  Pistones).
+- La clave de no-repetición de una canción (`songKey()`) pasó de
+  comparar cadenas crudas a comparar título+artista normalizados
+  (`songTitleKey()`), resolviendo repeticiones reales del log ("Lobo
+  Hombre en París", "Todo a pulmón").
+- El origen del ancla pasó de ser un booleano `isSpanishOrigin` a ser
+  el país real (`RadioAnchor.country`), aplicado también en la porción
+  de disco.
+- Botón de descargar del reproductor: no escribía nada en Room cuando
+  la pista no tenía fila previa (Radio, MusicBrainz). Arreglado con
+  `markQueuedEnsuringRow()`.
+- Diccionario de éxitos ampliado con campo `country` en las 1.682
+  entradas y bloque nuevo de repertorio clásico (104 obras, 55
+  compositores). Corregido un fallo de coherencia de géneros
+  introducido en la propia ampliación.
+- Un fallo de red ya no agota permanentemente la porción de
+  exploración ni la de disco (`lastFailureWasTransient`).
+
+**Rediseño de la capa de anclaje (según el diseño cerrado más arriba):**
+- El ancla se resuelve en el orden dictado por Miguel Ángel: artista →
+  ¿compositor o intérprete de clásica? (ancla solo por género, sin
+  origen ni década) → si no, origen y género del artista → década de
+  la EDICIÓN ORIGINAL del tema (nunca del artista, nunca de una
+  grabación cualquiera).
+- **Incidencia real de proceso:** en un punto intermedio de la sesión
+  se introdujo una regla de "coherencia" que descartaba fechas
+  posteriores a la disolución del artista. Miguel Ángel no la pidió en
+  ningún momento — fue una decisión unilateral del modelo, señalada
+  por él como tal y retirada por completo (código, comentarios y
+  campo `end` del DTO de MusicBrainz) en el mismo turno en que se
+  detectó. Queda anotado como ejemplo de lo que NO debe volver a
+  ocurrir: no ampliar el alcance de una orden sin que la orden lo diga.
+- `AnchorDictionary`: diccionario del ancla persistido en la tarjeta
+  SD elegida por el usuario (`MiMoo/diccionario/`), no en Room ni en
+  almacenamiento interno — orden explícita de Miguel Ángel, mismo
+  sitio que las descargas. Cuatro ficheros: artistas, temas, y dos
+  colas de pendientes (temas sin año, artistas sin resolver).
+- Semilla inicial de 1.161 artistas (país + géneros), escrita a mano
+  por el modelo a partir del diccionario de éxitos, el repertorio
+  clásico (compositores **e intérpretes** — orden explícita de Miguel
+  Ángel tras señalar que directores, orquestas y solistas también
+  cuentan) y una tanda de grandes artistas por categoría (jazz,
+  flamenco, copla, rock australiano/neozelandés, huecos del rock
+  anglosajón). **Sin verificar contra ninguna fuente externa** — puede
+  contener errores de país o género.
+- Cascada de la fecha de primera edición: tarjeta → diccionario de
+  éxitos → MusicBrainz por release-group → MusicBrainz por grabación →
+  Discogs → Wikidata (SPARQL, propiedad P577). Discogs requiere el
+  secreto de repositorio `DISCOGS_TOKEN`, ya existente y cableado vía
+  `BuildConfig`. Wikidata no necesita credenciales. Ninguna de las dos
+  fuentes nuevas se ha podido probar contra la red real durante la
+  sesión.
+- Cajón de "sin red": artistas y temas que no se pudieron resolver por
+  falta de conexión se apuntan y se reconcilian solos, unos pocos por
+  vuelta, aprovechando que la Radio ya tiene red por otra búsqueda
+  (`RadioRepository.reconcilePending()`).
+- El diccionario aprendido persiste en la copia de Google Drive (H07),
+  fusionando en vez de reemplazar, y respetando el ámbito de cuenta
+  (dispositivos de la misma cuenta se reconcilian; cuentas distintas
+  construyen su propio diccionario).
+- Botón "Crear base de datos" en Ajustes: recorre los géneros de la
+  semilla contra MusicBrainz (no contra la biblioteca local — primera
+  versión incorrecta, corregida tras que Miguel Ángel señalara que la
+  fuente no podía ser el disco del usuario), guarda con reintentos y
+  tolerancia a fallos de red por página/género, y al terminar
+  reconcilia los nombres de carpeta de la biblioteca que quedaron con
+  nombre de canal de YouTube en vez de nombre de artista.
+- `suggestRelatedArtist()` consulta primero la base de datos de la
+  tarjeta (instantáneo, sin red) y solo cae a MusicBrainz en vivo si
+  no hay cobertura — este punto de conexión faltaba y fue el motivo
+  central de la frustración de Miguel Ángel en la segunda mitad de la
+  sesión: se había construido una base de datos que no se estaba
+  usando para lo que importaba.
+- La porción de exploración (UNKNOWN) dejó de poder agotarse: es la
+  cuota diseñada para ser inagotable (paginación sobre el catálogo de
+  MusicBrainz), y estaba siendo marcada como agotada tras la primera
+  página vacía. El fallback final ya no repite temas ya sonados bajo
+  ninguna circunstancia — se eliminó el único camino de código que lo
+  hacía a propósito — y en su lugar tira de la porción de exploración.
+- Red de seguridad adicional de no-repetición por TÍTULO puro
+  (`radioUsedTitles`), independiente de la clave artista+canción, para
+  cubrir casos donde el mismo artista llega escrito de formas
+  distintas.
+
+**Incidencias reales de la sesión, para que no se repitan:**
+- Varios fallos de compilación por adivinar el error en vez de leerlo
+  (el zip de logs de Actions no es accesible por red desde el entorno
+  de trabajo). Se corrigió añadiendo un paso al workflow
+  (`build-and-deploy.yml`) que publica los errores de Kotlin como
+  anotaciones del check, legibles por API — esto debe seguir
+  funcionando en sesiones futuras y ahorra rondas de adivinanza.
+- Un fallo de tipo MIME (`application/json` en vez de `text/plain`) en
+  la escritura SAF hizo que el proveedor de almacenamiento renombrara
+  los ficheros del diccionario, y por tanto que NADA persistiera entre
+  aperturas de Ajustes durante varias iteraciones — el contador volvía
+  a cero cada vez. Corregido, con limpieza automática de los ficheros
+  duplicados que dejó el fallo (`cleanupStrayFiles()`).
+- Un borrado automático de la base de datos, escrito para limpiarla de
+  una contaminación real (nombres de canal colados como artistas),
+  quedó mal secuenciado (borraba antes de confirmar que podía marcar
+  el borrado como hecho) y se ejecutó en bucle en cada apertura de
+  Ajustes, destruyendo trabajo repetidamente. Corregido y el borrado
+  automático retirado por completo una vez cumplida su función.
+- Lentitud severa de toda la aplicación (no solo Ajustes) causada por
+  resolver la carpeta SAF del diccionario en cada lectura/escritura en
+  vez de cachearla — cada resolución lista la raíz completa de la
+  tarjeta. Corregido con caché de sesión.
+- El botón "Parar" del constructor de base de datos no respondía
+  porque el estado final se fijaba dentro de la propia corrutina
+  cancelada. Corregido.
+
+### Hoja de ruta para la siguiente sesión
+
+1. **Verificación en dispositivo real**, pendiente en toda la sesión.
+   En concreto: que el ancla de Led Zeppelin no derive a géneros no
+   relacionados, que no se repita ningún tema, que el botón "Crear
+   base de datos" complete un recorrido sin colgar la aplicación, y
+   que `suggestRelatedArtist()` esté sirviendo candidatos de la base
+   de datos local (verificable en el log: línea "DE LA BASE DE DATOS,
+   sin red").
+2. **Ampliar/verificar la semilla de 1.161 artistas.** Se escribió a
+   mano y sin contraste con ninguna fuente externa; puede tener país o
+   género incorrectos para artistas concretos.
+3. **Probar Discogs y Wikidata contra la red real** — no se pudo hacer
+   en esta sesión por falta de acceso de red al entorno de trabajo.
+4. Sigue abierta la verificación física de dos dispositivos (H07,
+   PASO 5) y el resto de la hoja de ruta original de H13 (auditoría de
+   botones de `PlayerBar.kt`, aspecto de "algunos ítems").
+5. **Incidencia de proceso sin resolver:** `ANNEX_ROUTER.md` sigue
+   marcando H13 como el hito activo desde el cierre de S024, pero la
+   práctica totalidad del trabajo de esta sesión se hizo sobre H08 sin
+   que se ejecutara un PCH formal — la propia decisión de "seguir con
+   Radio" surgió de la dinámica de la conversación, no de una orden
+   explícita de cambio de hito. Miguel Ángel debe decidir al inicio de
+   la siguiente sesión si formaliza el PCH a H08 (que reflejaría mejor
+   dónde se ha trabajado de verdad) o retoma H13 tal cual estaba.

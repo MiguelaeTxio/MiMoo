@@ -1,114 +1,71 @@
 # PUNTO DE REANUDACIÓN — MiMoo
 
-**Última sesión cerrada:** S024 (2026-07-28)
-**Hito EN PROGRESO:** H13 — UX del Reproductor (`DOCS/ANNEX_H13.md`)
+**Última sesión cerrada:** S025 (2026-07-29)
+**Hito con la hoja de ruta activa:** ver `DOCS/ANNEX_ROUTER.md`
 
 > El estado de los hitos vive **exclusivamente** en
 > `DOCS/ANNEX_ROUTER.md`. Este archivo no lo declara ni lo duplica.
 
 ---
 
+## Decisión pendiente al abrir la siguiente sesión
+
+`ANNEX_ROUTER.md` sigue marcando H13 como el hito activo desde el
+cierre de S024, pero prácticamente todo el trabajo de S025 se hizo
+sobre H08 sin que se ejecutara un PCH formal — la sesión derivó hacia
+Radio por la propia conversación, no por una orden explícita de
+cambio de hito. Miguel Ángel debe decidir cómo se resuelve esto: PCH
+formal a H08, o retomar H13 tal cual estaba.
+
 ## Qué hacer en la siguiente sesión
 
-La hoja de ruta completa está en `DOCS/ANNEX_H13.md`. En una línea:
-**repaso sistemático de la UX del reproductor**, por encargo de Miguel
-Ángel al cerrar S024.
+La hoja de ruta técnica completa está en `DOCS/ANNEX_H08.md`, sección
+"Hoja de ruta para la siguiente sesión" al final del archivo. En una
+línea: **verificar en dispositivo real todo lo construido en S025**
+antes de dar nada por bueno.
 
-Tres cosas, en este orden:
+En orden de prioridad:
 
-1. **Descargar no funciona** — único bug con reporte explícito. Miguel
-   Ángel lo sitúa "en el ExoPlayer", que en la práctica es la barra de
-   reproducción. Reproducirlo antes de tocar nada, y comprobar primero
-   si es una regresión del bug de descargas de S019 (yt-dlp,
-   restricción por edad) o un fallo distinto.
-2. **Repasar TODOS los botones** de `PlayerBar.kt`, mirando el código y
-   no solo el comportamiento visible: qué estado lee cada uno, qué
-   dispara, y si puede quedar sin efecto en algún estado (cola vacía,
-   local frente a streaming, Radio activa). **Anotar todos los fallos
-   antes de arreglar ninguno** y presentarle la lista para que
-   priorice.
-3. **Aspecto de "algunos ítems"** — mencionado sin concretar.
-   Preguntarle cuáles; no asumir que son las chapitas de S018, que ya
-   están hechas y verificadas.
+1. **Verificación en dispositivo real**, ninguna parte de S025 se ha
+   probado contra el teléfono de Miguel Ángel. En concreto:
+   - Que el ancla de un artista de rock (p. ej. Led Zeppelin) no derive
+     hacia géneros sin relación.
+   - Que ningún tema se repita en una sesión de Radio, bajo ninguna
+     circunstancia.
+   - Que el botón "Crear base de datos" de Ajustes complete un
+     recorrido sin colgar la aplicación ni ralentizar el resto de la
+     interfaz.
+   - Que `suggestRelatedArtist()` esté sirviendo candidatos de la base
+     de datos local antes que de MusicBrainz en vivo — verificable en
+     el log de Radio por la línea "DE LA BASE DE DATOS, sin red".
 
----
+2. **La semilla de 1.161 artistas** (`anchor_artists.json`) se escribió
+   a mano, sin contraste con ninguna fuente externa. Puede tener país o
+   género equivocado en artistas concretos — revisar si aparecen
+   anclajes raros.
 
-## Dónde se quedó S024 (H08 — Radio)
+3. **Discogs y Wikidata no se han podido probar contra la red real**
+   durante S025 por falta de acceso de red al entorno de trabajo del
+   modelo. Confirmar en dispositivo que ambas fuentes responden.
 
-**El objetivo que abrió S023 y S024 está cumplido y medido.** Que la
-Radio no se agote. Recorrido de la mediana de candidatos del bloque
-español a lo largo de la sesión:
+4. Pendiente de sesiones anteriores, sin tocar en S025:
+   - Verificación física de sincronización entre dos dispositivos (H07,
+     PASO 5).
+   - Resto de la hoja de ruta original de H13: auditoría completa de
+     los botones de `PlayerBar.kt`, y cierre del alcance de "aspecto de
+     algunos ítems".
 
-    partida                                 7    (18% con <5 candidatos)
-    relleno con Discogs                    10    (11%)
-    anclas que solo tenían carpetas raíz   12     (9%)
-    ampliación con listas de Los 40        44     (5%)
+## Incidencias de proceso a tener en cuenta
 
-    objetivo fijado al cerrar S023:  mediana ~15, menos del 5%
-
-Verificado además en dispositivo: una sesión anclada en Radio Futura
-sirvió catorce temas seguidos de la movida madrileña con **cero
-repeticiones, cero violaciones de la ventana de diez artistas y cero
-porciones agotadas**.
-
-Lo que cambió el rumbo de la sesión fue una observación de Miguel
-Ángel a mitad de camino: *"esta forma de probar, caso no contemplado,
-implementar caso, probar, caso no contemplado, implementar caso,
-conlleva a una implementación eterna"*. Medirlo le dio la razón — el
-cuello de botella no era la calidad del filtro sino el volumen del
-diccionario, que pasó de 352 a 1027 entradas españolas con los números
-uno de Los 40 entre 1966 y 2025.
-
-El detalle completo, con las doce áreas trabajadas y las cuatro
-pasadas que costó el sondeo de fuentes, está en `COMPLETADAS EN S024`
-dentro de `DOCS/ANNEX_H08.md`.
-
----
-
-## Decisión pendiente de Miguel Ángel
-
-**No tomarla por él.** `resolveFinalFallback()` todavía puede repetir
-un tema cuando las tres porciones fallan en la misma vuelta. Se dejó
-repitiendo *el más antiguo* en vez de al azar, y en la última prueba no
-llegó a dispararse ni una vez — pero repite.
-
-Miguel Ángel dijo que un tema no se repite NUNCA. Eso obliga a decidir
-qué hace la Radio cuando de verdad no queda nada: **pararse o
-repetir**. Está anotado como punto 1 de la hoja de ruta de
-`ANNEX_H08.md`.
-
----
-
-## Cabos sueltos de H08, ninguno bloqueante
-
-- **Bloque internacional sin ampliar** — mediana 26 frente a 44 del
-  español. Las 1338 canciones no españolas de la cosecha están ya
-  descargadas y enriquecidas en `tools/chart_los40_raw.json` y
-  `tools/chart_los40_enriched.json`; la fusión sería ejecutar
-  `merge_charts_into_dictionary.py` con el criterio de país invertido.
-  Miguel Ángel lo descartó para S024 por no aportar donde ya sobra.
-- **Repertorio clásico sin volver a probar** — el país sin filtrar y el
-  tope de 45 minutos entraron después de la última prueba de clásica.
-- **766 filas de Wikipedia sin interpretar** por el parseo de
-  `harvest_los40_charts.py`.
-- Tres pendientes menores heredados de S023, detallados al final de la
-  hoja de ruta de `ANNEX_H08.md`.
-
----
-
-## Herramientas nuevas disponibles
-
-Todas se ejecutan desde GitHub Actions con disparo manual, porque la
-red del entorno del modelo va por lista blanca y Wikidata, Discogs y
-MusicBrainz están bloqueadas.
-
-| herramienta | workflow | qué hace |
-|---|---|---|
-| `probe_genre_sources.py` | `probe-genre-sources.yml` | compara cobertura de género de Discogs, Wikipedia y Wikidata |
-| `harvest_los40_charts.py` | `harvest-los40.yml` | cosecha los números uno de Los 40, 1966–2025 |
-| `enrich_chart_artists.py` | `enrich-chart-artists.yml` | país y género de los artistas cosechados |
-| `fill_spanish_genres.py` | — (local) | rellena géneros del bloque español |
-| `merge_charts_into_dictionary.py` | — (local) | fusiona la cosecha en el diccionario |
-
-`enrich-chart-artists.yml` y `probe-genre-sources.yml` necesitan el
-secret `DISCOGS_TOKEN`, ya dado de alta en el repositorio.
+- El zip de logs de GitHub Actions no es accesible por red desde el
+  entorno de trabajo del modelo. Se añadió un paso al workflow
+  (`build-and-deploy.yml`) que publica los errores de compilación como
+  anotaciones del check, legibles por API — mantenerlo.
+- S025 tuvo varias iteraciones de fallos reales del propio modelo
+  (documentados con detalle en `ANNEX_H08.md`): una regla de negocio
+  inventada sin que Miguel Ángel la pidiera, un fallo de MIME en SAF
+  que impidió que nada persistiera durante varias vueltas, un borrado
+  automático que se ejecutó en bucle, y lentitud general de la app por
+  no cachear una resolución de carpeta. Todo corregido dentro de la
+  propia sesión, pero conviene leer esa sección antes de tocar
+  `AnchorDictionary.kt` de nuevo.
