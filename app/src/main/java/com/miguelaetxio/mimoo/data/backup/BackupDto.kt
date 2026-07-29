@@ -50,11 +50,61 @@ data class BackupBundle(
     val radioStations: List<FavoriteRadioStationBackupDto>,
     val channelSubscriptions: List<ChannelSubscriptionBackupDto>,
     val uiSettings: UiSettingsBackupDto,
+    /**
+     * S025 -- diccionario del ancla APRENDIDO en este dispositivo
+     * (H08). Solo lo aprendido: la semilla va dentro del APK y es
+     * idéntica en los dos teléfonos.
+     *
+     * Orden de Miguel Ángel: *"debe guardarse en Drive cuando se haga
+     * la copia para persistir esa base de datos entre dispositivos. Lo
+     * mismo que persistimos las grabaciones, los links, los
+     * favoritos."*
+     *
+     * Con valor por defecto para que una copia de versión 2 siga
+     * importándose sin tocarla: simplemente no trae diccionario.
+     */
+    val anchorArtists: List<AnchorArtistBackupDto> = emptyList(),
+    val anchorTracks: List<AnchorTrackBackupDto> = emptyList(),
 ) {
     companion object {
-        const val CURRENT_VERSION = 2
+        const val CURRENT_VERSION = 3
+
+        /**
+         * S025 -- versión mínima legible.
+         *
+         * Hasta aquí la comprobación era `version != CURRENT_VERSION`,
+         * igualdad estricta. Al subir a la 3 para llevar el diccionario
+         * del ancla, eso habría dejado ilegibles de golpe todas las
+         * copias que ya existen en Drive -- las de Miguel Ángel y la
+         * del dispositivo de Silvia -- sin ningún motivo: una copia de
+         * versión 2 se lee entera, simplemente no trae diccionario y
+         * los dos campos nuevos llegan vacíos por defecto.
+         *
+         * Solo hay que subir este número si alguna vez se cambia un
+         * campo YA existente de forma incompatible.
+         */
+        const val MIN_READABLE_VERSION = 2
+
+        fun canRead(version: Int): Boolean =
+            version in MIN_READABLE_VERSION..CURRENT_VERSION
     }
 }
+
+/** S025 -- un artista aprendido: país y géneros. */
+data class AnchorArtistBackupDto(
+    val artist: String,
+    val country: String? = null,
+    val genres: List<String> = emptyList(),
+    val source: String = "",
+)
+
+/** S025 -- un tema aprendido: año de su primera edición. */
+data class AnchorTrackBackupDto(
+    val artist: String,
+    val title: String,
+    val year: Int,
+    val source: String = "",
+)
 
 /**
  * Una pista exportable. Deliberadamente SIN filePath/downloadStatus/

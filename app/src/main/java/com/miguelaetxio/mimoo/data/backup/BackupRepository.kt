@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.backup
 
 import com.google.gson.Gson
+import com.miguelaetxio.mimoo.data.remote.AnchorDictionary
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.access.UiPreferencesManager
@@ -44,6 +45,9 @@ class BackupRepository @Inject constructor(
     private val favoriteRadioStationDao: FavoriteRadioStationDao,
     private val channelSubscriptionDao: ChannelSubscriptionDao,
     private val uiPreferencesManager: UiPreferencesManager,
+    // S025 -- el diccionario del ancla (H08) viaja en la copia, igual
+    // que las descargas, los favoritos y las listas.
+    private val anchorDictionary: AnchorDictionary,
 ) {
     private val gson: Gson = GsonBuilder().create()
 
@@ -120,6 +124,22 @@ class BackupRepository @Inject constructor(
             radioStations = favoriteRadioStationDao.getAllOnce().map { it.toBackupDto() },
             channelSubscriptions = channelSubscriptionDao.getAllOnce().map { it.toBackupDto() },
             uiSettings = UiSettingsBackupDto(glassBorderEnabled = uiPreferencesManager.glassBorderEnabled.value),
+            anchorArtists = anchorDictionary.learnedArtistsSnapshot().map {
+                AnchorArtistBackupDto(
+                    artist = it.artist,
+                    country = it.country,
+                    genres = it.genres,
+                    source = it.source,
+                )
+            },
+            anchorTracks = anchorDictionary.learnedTracksSnapshot().map {
+                AnchorTrackBackupDto(
+                    artist = it.artist,
+                    title = it.title,
+                    year = it.year,
+                    source = it.source,
+                )
+            },
         )
     }
 
@@ -190,10 +210,10 @@ class BackupRepository @Inject constructor(
             )
         }
 
-        if (envelope.bundle.version != BackupBundle.CURRENT_VERSION) {
+        if (!BackupBundle.canRead(envelope.bundle.version)) {
             throw BackupParseException(
                 "Esta copia de respaldo automática es de la versión ${envelope.bundle.version}, " +
-                    "pero esta versión de MiMoo solo sabe leer la versión " +
+                    "pero esta versión de MiMoo sabe leer hasta la " +
                     "${BackupBundle.CURRENT_VERSION}."
             )
         }
@@ -216,8 +236,15 @@ class BackupRepository @Inject constructor(
 
     /**
      * Deserializa un JSON de backup, rechazando explícitamente
-     * cualquier `version` distinta de la reconocida en vez de
-     * intentar leerla a ciegas (ver comentario de BackupBundle).
+     * cualquier `version` que no sepa leer, en vez de intentarlo a
+     * ciegas (ver comentario de BackupBundle).
+     *
+     * S025 -- deja de ser igualdad estricta. Al subir el bundle a la
+     * versión 3 para llevar el diccionario del ancla, una comprobación
+     * `!=` habría dejado ilegibles de golpe TODAS las copias que ya hay
+     * en Drive, incluida la del dispositivo de Silvia. Una copia de
+     * versión 2 se lee perfectamente: los dos campos nuevos tienen
+     * valor por defecto y llegan vacíos.
      * ---
      * Deserializes a backup JSON, explicitly rejecting any `version`
      * other than the recognized one instead of trying to read it
@@ -230,10 +257,10 @@ class BackupRepository @Inject constructor(
             throw BackupParseException("El archivo no es un backup de MiMoo válido (JSON malformado).", e)
         } ?: throw BackupParseException("El archivo está vacío o no tiene el formato esperado.")
 
-        if (bundle.version != BackupBundle.CURRENT_VERSION) {
+        if (!BackupBundle.canRead(bundle.version)) {
             throw BackupParseException(
                 "Este backup es de la versión ${bundle.version}, pero esta versión de " +
-                    "MiMoo solo sabe leer la versión ${BackupBundle.CURRENT_VERSION}."
+                    "MiMoo sabe leer hasta la ${BackupBundle.CURRENT_VERSION}."
             )
         }
         return bundle

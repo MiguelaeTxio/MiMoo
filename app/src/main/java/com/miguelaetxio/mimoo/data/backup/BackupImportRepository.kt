@@ -7,6 +7,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.room.withTransaction
 import com.miguelaetxio.mimoo.data.access.UiPreferencesManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.remote.AnchorDictionary
 import com.miguelaetxio.mimoo.data.local.AppDatabase
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
@@ -91,6 +92,9 @@ class BackupImportRepository @Inject constructor(
     private val channelSubscriptionDao: ChannelSubscriptionDao,
     private val uiPreferencesManager: UiPreferencesManager,
     private val storageManager: StorageManager,
+    // S025 -- el diccionario del ancla (H08) entra en la importación
+    // FUSIONANDO, nunca reemplazando. Ver AnchorDictionary.mergeFromBackup().
+    private val anchorDictionary: AnchorDictionary,
 ) {
     /**
      * 1) Borra los archivos de audio físicos existentes en la raíz
@@ -176,6 +180,11 @@ class BackupImportRepository @Inject constructor(
             // Los ajustes de UI viven fuera de Room (SharedPreferences) -- se aplican
             // fuera de la transacción, como el propio UiPreferencesManager los expone.
             uiPreferencesManager.setGlassBorderEnabled(bundle.uiSettings.glassBorderEnabled)
+            // S025 -- el diccionario del ancla se FUSIONA: lo que este
+            // dispositivo ya sabía se conserva, y se suma lo que traiga
+            // la copia. Una copia de versión 2 no trae nada y estas dos
+            // listas llegan vacías, así que no hay nada que migrar.
+            mergeAnchorDictionary(bundle)
             result
         }
 
@@ -284,6 +293,11 @@ class BackupImportRepository @Inject constructor(
             // Ajustes de UI (SharedPreferences, fuera de Room) -- la nube gana, igual
             // que el resto del bundle en esta ruta.
             uiPreferencesManager.setGlassBorderEnabled(bundle.uiSettings.glassBorderEnabled)
+            // S025 -- el diccionario del ancla se FUSIONA: lo que este
+            // dispositivo ya sabía se conserva, y se suma lo que traiga
+            // la copia. Una copia de versión 2 no trae nada y estas dos
+            // listas llegan vacías, así que no hay nada que migrar.
+            mergeAnchorDictionary(bundle)
 
             val stepDone2 = "applyCloudWinsTargeted() -- ${bundle.radioStations.size} emisora(s), " +
                 "${bundle.channelSubscriptions.size} canal(es), cristal=${bundle.uiSettings.glassBorderEnabled}"
@@ -352,6 +366,34 @@ class BackupImportRepository @Inject constructor(
      * share code from someone else is the opposite -- an addition,
      * never a replacement of what the receiver already has.
      */
+    /**
+     * S025 -- vuelca el diccionario del ancla que trae la copia sobre
+     * el de este dispositivo, sumando. Ver
+     * `AnchorDictionary.mergeFromBackup()` para por qué es fusión y no
+     * reemplazo, y para el ámbito de misma cuenta.
+     */
+    private fun mergeAnchorDictionary(bundle: BackupBundle) {
+        if (bundle.anchorArtists.isEmpty() && bundle.anchorTracks.isEmpty()) return
+        anchorDictionary.mergeFromBackup(
+            artists = bundle.anchorArtists.map {
+                AnchorDictionary.ArtistFacts(
+                    artist = it.artist,
+                    country = it.country,
+                    genres = it.genres,
+                    source = it.source.ifBlank { "copia" },
+                )
+            },
+            tracks = bundle.anchorTracks.map {
+                AnchorDictionary.TrackFacts(
+                    artist = it.artist,
+                    title = it.title,
+                    year = it.year,
+                    source = it.source.ifBlank { "copia" },
+                )
+            },
+        )
+    }
+
     suspend fun importSharedBundle(bundle: BackupBundle): BackupImportResult =
         withContext(Dispatchers.IO) {
             val toEnqueue = mutableListOf<SearchResultTrack>()

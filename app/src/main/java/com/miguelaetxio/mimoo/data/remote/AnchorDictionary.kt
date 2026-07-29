@@ -322,6 +322,80 @@ class AnchorDictionary @Inject constructor(
         return pending.size
     }
 
+    // ---------------------------------------------------------------
+    // Copia entre dispositivos de la MISMA cuenta (H07)
+    // ---------------------------------------------------------------
+
+    /**
+     * S025 -- lo APRENDIDO, para que viaje en la copia de Drive.
+     *
+     * Orden de Miguel Ángel: *"debe guardarse en Drive cuando se haga
+     * la copia para persistir esa base de datos entre dispositivos. Lo
+     * mismo que persistimos las grabaciones, los links, los favoritos."*
+     *
+     * Solo lo aprendido, nunca la semilla: la semilla va dentro del APK
+     * y es idéntica en los dos teléfonos, así que meterla en la copia
+     * sería duplicar por nada varios cientos de kB en cada respaldo.
+     */
+    fun learnedArtistsSnapshot(): List<ArtistFacts> {
+        ensureLoaded()
+        return learnedArtists.values.toList()
+    }
+
+    fun learnedTracksSnapshot(): List<TrackFacts> {
+        ensureLoaded()
+        return learnedTracks.values.toList()
+    }
+
+    /**
+     * S025 -- FUSIÓN, no reemplazo.
+     *
+     * La copia entra sumando: si este dispositivo ya sabía algo que la
+     * copia no trae, se queda. Lo contrario sería perder lo que el otro
+     * teléfono no llegó a aprender, y el diccionario existe justamente
+     * para acumular.
+     *
+     * Ante el mismo artista o el mismo tema en ambos lados manda lo que
+     * ya hay en este dispositivo: es al menos tan reciente como la
+     * copia y puede venir de una fuente mejor.
+     *
+     * Ámbito, decidido por Miguel Ángel: esto solo ocurre entre
+     * dispositivos de la MISMA cuenta -- *"ya cuando es la cuenta del
+     * móvil de mi mujer, ya ella tiene que hacer la búsqueda"*. No hace
+     * falta código para eso: la copia vive en la carpeta de Drive de
+     * cada cuenta, así que el ámbito lo da el propio mecanismo de H07.
+     */
+    fun mergeFromBackup(artists: List<ArtistFacts>, tracks: List<TrackFacts>) {
+        ensureLoaded()
+        var changedArtists = false
+        for (facts in artists) {
+            if (facts.artist.isBlank()) continue
+            if (facts.country == null && facts.genres.isEmpty()) continue
+            val k = key(facts.artist)
+            if (k.isBlank() || learnedArtists.containsKey(k)) continue
+            learnedArtists[k] = facts
+            changedArtists = true
+            if (pendingArtists.remove(k)) pendingArtistItems.remove(k)
+        }
+        var changedTracks = false
+        for (t in tracks) {
+            if (t.artist.isBlank() || t.title.isBlank() || t.year <= 0) continue
+            val k = trackKey(t.artist, t.title)
+            if (learnedTracks.containsKey(k)) continue
+            learnedTracks[k] = t.copy(key = k)
+            changedTracks = true
+            if (pending.remove(k)) pendingItems.remove(k)
+        }
+        if (changedArtists) {
+            writeArtists()
+            writePendingArtists()
+        }
+        if (changedTracks) {
+            writeTracks()
+            writePending()
+        }
+    }
+
     fun learnedArtistCount(): Int {
         ensureLoaded()
         return learnedArtists.size
