@@ -502,8 +502,14 @@ class AnchorDictionary @Inject constructor(
      * instantáneo -- sin red, sin límite de una petición por segundo --
      * y es justo lo que media hora de recorrido debería servir para
      * evitar.
+     *
+     * S026 -- devuelve también los géneros de cada candidato (antes
+     * solo el nombre), para que el llamante pueda puntuar la calidad
+     * de la coincidencia con `GenreMatchQuality` y preferir a quien
+     * comparte dos o más géneros específicos sobre quien comparte
+     * solo uno -- ver `RadioRepository.suggestRelatedArtist()`.
      */
-    fun artistsMatching(genres: Set<String>, country: String?): List<String> {
+    fun artistsMatching(genres: Set<String>, country: String?): List<Pair<String, Set<String>>> {
         ensureLoaded()
         val wanted = genres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
         if (wanted.isEmpty()) return emptyList()
@@ -511,8 +517,8 @@ class AnchorDictionary @Inject constructor(
         return pool
             .filter { country == null || it.country == country }
             .filter { it.genres.any { g -> g in wanted } }
-            .map { it.artist }
-            .distinct()
+            .distinctBy { it.artist.lowercase().trim() }
+            .map { it.artist to it.genres.toSet() }
             .toList()
     }
 

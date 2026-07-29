@@ -438,7 +438,18 @@ class KnownHitsRepository @Inject constructor(
         if (relaxGenre) return pick(pool(decadeBegin, origin, country))
         if (genre == null) return null
         val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
-        return pick(pool(decadeBegin, origin, country).filter { matchesGenre(it.genreSet, anchorSet) })
+        // S026 -- primero los candidatos con 2+ géneros ESPECÍFICOS
+        // compartidos con el ancla (ver GenreMatchQuality); solo si
+        // eso no da nada usable se cae a los que comparten uno solo
+        // -- último recurso, no primera opción.
+        val candidates = pool(decadeBegin, origin, country)
+        val strong = candidates.filter { GenreMatchQuality.of(it.genreSet, anchorSet, genreTree).isStrong }
+        pick(strong)?.let { return it }
+        val weak = candidates.filter {
+            val quality = GenreMatchQuality.of(it.genreSet, anchorSet, genreTree)
+            quality.matches && !quality.isStrong
+        }
+        return pick(weak)
     }
 
     /**
@@ -496,11 +507,23 @@ class KnownHitsRepository @Inject constructor(
             artistsOf(pool(decadeBegin, origin, country))
         } else {
             if (genre == null) return emptyList()
-            artistsOf(
-                pool(decadeBegin, origin, country).filter {
-                    matchesGenre(it.genreSet, anchorGenres.ifEmpty { setOf(genre) })
-                },
+            val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
+            // S026 -- misma preferencia que randomHit(): 2+ géneros
+            // específicos compartidos antes que uno solo.
+            val candidates = pool(decadeBegin, origin, country)
+            val strongArtists = artistsOf(
+                candidates.filter { GenreMatchQuality.of(it.genreSet, anchorSet, genreTree).isStrong },
             )
+            if (strongArtists.isNotEmpty()) {
+                strongArtists
+            } else {
+                artistsOf(
+                    candidates.filter {
+                        val quality = GenreMatchQuality.of(it.genreSet, anchorSet, genreTree)
+                        quality.matches && !quality.isStrong
+                    },
+                )
+            }
         }
         val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
         return fresh.shuffled() + repeated.shuffled()

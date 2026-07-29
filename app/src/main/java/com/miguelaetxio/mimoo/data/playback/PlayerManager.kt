@@ -1996,7 +1996,12 @@ class PlayerManager @Inject constructor(
         // se cruzan los dos conjuntos completos: si Dead Can Dance
         // tiene `post-punk` entre los suyos y Joy Division también,
         // encajan -- y Pet Shop Boys, que no comparte ninguno, no.
-        fun genreOk(p: ProfiledArtist) = anchor.sharesGenreWith(p.profile.genres)
+        //
+        // S026 -- la intersección ya no es un booleano plano: se
+        // puntúa con GenreMatchQuality (2+ géneros específicos =
+        // FUERTE, exactamente 1 = DÉBIL/último recurso), mismo
+        // criterio que Conocidos y Exploración.
+        fun genreQuality(p: ProfiledArtist) = radioRepository.genreMatchQuality(anchor, p.profile.genres)
         fun decadeOk(p: ProfiledArtist) = anchor.decadeBegin == null || p.profile.decadeBegin == anchor.decadeBegin
 
         /** S016, segundo bloque -- entre los que cumplen `condition`, prefiere los no evitados; si eso vacía la lista, ignora la preferencia. */
@@ -2025,7 +2030,16 @@ class PlayerManager @Inject constructor(
         // S021 -- neither the genre nor the decade is ever abandoned.
         // Single pass: the anchor's genre AND decade, or this quota
         // reports itself exhausted.
-        val chosenArtist = pickPreferred { genreOk(it) && decadeOk(it) }
+        //
+        // S026 -- dentro de esa vuelta única, dos niveles: primero
+        // quien comparte 2+ géneros específicos (FUERTE), y solo si
+        // nadie los tiene, quien comparte exactamente 1 (DÉBIL). La
+        // década nunca se suelta en ninguno de los dos niveles.
+        val chosenArtist = pickPreferred { genreQuality(it).isStrong && decadeOk(it) }
+            ?: pickPreferred {
+                val quality = genreQuality(it)
+                quality.matches && !quality.isStrong && decadeOk(it)
+            }
             ?: return null
 
         // S020 -- dentro del artista elegido, primero los temas que no

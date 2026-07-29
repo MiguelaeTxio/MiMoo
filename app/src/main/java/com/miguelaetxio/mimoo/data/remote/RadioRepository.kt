@@ -97,14 +97,7 @@ data class RadioAnchor(
      * nunca tuvo sentido.
      */
     val isClassical: Boolean = false,
-) {
-    /** ¿Comparte este candidato algún género con el ancla? */
-    fun sharesGenreWith(candidateGenres: Set<String>): Boolean {
-        if (candidateGenres.isEmpty()) return false
-        val mine = genres.map { it.lowercase().trim() }.toSet()
-        return candidateGenres.any { it.lowercase().trim() in mine }
-    }
-}
+)
 
 /**
  * H08 PARTE 2 -- "Radio": dado el artista que estaba sonando, sugiere
@@ -903,13 +896,30 @@ class RadioRepository @Inject constructor(
         val localGenres = (listOf(anchor.genre) + anchor.genres).toSet()
         val fromDictionary = anchorDictionary
             .artistsMatching(localGenres, anchor.country)
-            .filter { it.lowercase() !in excludeLower }
+            .filter { (name, _) -> name.lowercase() !in excludeLower }
+        // S026 -- entre los candidatos de la base de datos, preferir a
+        // quien comparte DOS O MÁS géneros específicos con el ancla
+        // (ver GenreMatchQuality) sobre quien comparte solo uno.
+        // Motivo real, con log delante: el ancla de Led Zeppelin trae
+        // ocho géneros, y Emerson, Lake & Palmer solo comparte
+        // 'progressive rock' -- uno solo, y de los menos representativos
+        // de Led Zeppelin. Preferir intersecciones más ricas (p.ej. un
+        // candidato con 'hard rock' + 'heavy metal') deja a ELP como
+        // último recurso, no como primera opción.
         if (fromDictionary.isNotEmpty()) {
-            val preferredLocal = fromDictionary.filter { it.lowercase() !in avoidLower }
-            val chosenLocal = preferredLocal.ifEmpty { fromDictionary }.random()
+            val scored = fromDictionary.map { (name, genres) ->
+                Triple(name, genres, GenreMatchQuality.of(genres, anchor.genres, genreTree))
+            }
+            val strong = scored.filter { it.third.isStrong }
+            val weak = scored.filter { it.third.matches && !it.third.isStrong }
+            val tier = strong.ifEmpty { weak }
+            val names = tier.map { it.first }
+            val preferredLocal = names.filter { it.lowercase() !in avoidLower }
+            val chosenLocal = preferredLocal.ifEmpty { names }.random()
             log(
                 "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}) -> " +
-                    "'$chosenLocal' (${fromDictionary.size} candidatos DE LA BASE DE DATOS, sin red)"
+                    "'$chosenLocal' (${names.size}/${fromDictionary.size} candidatos DE LA BASE DE DATOS, " +
+                    "sin red, nivel=${if (strong.isNotEmpty()) "FUERTE (2+ géneros)" else "DÉBIL (1 género, último recurso)"})"
             )
             return chosenLocal
         }
@@ -971,6 +981,16 @@ class RadioRepository @Inject constructor(
         }
         return chosen
     }
+
+    /**
+     * S026 -- expone `GenreMatchQuality` a `PlayerManager` (porción
+     * DISCO), que no tiene acceso directo a `GenreTree`. Misma
+     * preferencia que en Conocidos y Exploración: 2+ géneros
+     * específicos compartidos es FUERTE, exactamente 1 es DÉBIL
+     * (último recurso).
+     */
+    fun genreMatchQuality(anchor: RadioAnchor, candidateGenres: Set<String>): GenreMatchQuality.Result =
+        GenreMatchQuality.of(candidateGenres, anchor.genres, genreTree)
 
     /**
      * S013/S014, punto 8 -- fuente de "disco" (10%, biblioteca local
