@@ -65,6 +65,7 @@ jobs:
         run: |
           echo "GOOGLE_OAUTH_ANDROID_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_ANDROID_CLIENT_ID }}" \
             >> local.properties
+          echo "DISCOGS_TOKEN=${{ secrets.DISCOGS_TOKEN }}" >> local.properties
 
       - name: Restaurar keystore de debug fija
         run: |

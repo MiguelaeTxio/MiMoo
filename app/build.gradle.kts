@@ -57,6 +57,18 @@ android {
             "\"${localProperties.getProperty("GOOGLE_OAUTH_ANDROID_CLIENT_ID") ?: ""}\""
         )
 
+        // S025 -- token personal de Discogs (H08), peldano de la
+        // cascada que fecha la primera edicion de un tema. A diferencia
+        // del Client ID de arriba, este SI es secreto: va en el secreto
+        // de repositorio DISCOGS_TOKEN y llega por local.properties.
+        // Si llega vacio la cascada simplemente se salta ese peldano,
+        // asi que una compilacion local sin token sigue funcionando.
+        buildConfigField(
+            "String",
+            "DISCOGS_TOKEN",
+            "\"${localProperties.getProperty("DISCOGS_TOKEN") ?: ""}\""
+        )
+
         ndk {
             // Chaquopy requiere abiFilters explicito. Solo arm64-v8a:
             // unico target real de dispositivo (ver decision tecnica

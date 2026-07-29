@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.di
 
 import com.miguelaetxio.mimoo.data.remote.AppUpdateApiService
+import com.miguelaetxio.mimoo.data.remote.DiscogsApiService
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.ItunesApiService
@@ -169,6 +170,48 @@ object NetworkModule {
             return chain.proceed(request)
         }
     }
+
+    // S025 -- Discogs. Con token limita a 60 peticiones por minuto, asi
+    // que un segundo entre peticiones va sobrado y de paso empareja el
+    // ritmo con el de MusicBrainz. Exige User-Agent identificable.
+    private class DiscogsInterceptor : Interceptor {
+        private val lock = Any()
+        private var lastRequestAtMillis = 0L
+        private val minIntervalMillis = 1100L
+
+        override fun intercept(chain: Interceptor.Chain): Response {
+            synchronized(lock) {
+                val waitMillis =
+                    minIntervalMillis - (System.currentTimeMillis() - lastRequestAtMillis)
+                if (waitMillis > 0) Thread.sleep(waitMillis)
+                lastRequestAtMillis = System.currentTimeMillis()
+            }
+            val request = chain.request().newBuilder()
+                .header("User-Agent", MUSICBRAINZ_USER_AGENT)
+                .build()
+            return chain.proceed(request)
+        }
+    }
+
+    @Provides
+    @Singleton
+    @Named("discogsRetrofit")
+    fun provideDiscogsRetrofit(): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://api.discogs.com/")
+            .client(
+                OkHttpClient.Builder()
+                    .addInterceptor(DiscogsInterceptor())
+                    .build()
+            )
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideDiscogsApiService(
+        @Named("discogsRetrofit") retrofit: Retrofit,
+    ): DiscogsApiService = retrofit.create(DiscogsApiService::class.java)
 
     @Provides
     @Singleton

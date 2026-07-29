@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.remote
 
 import android.content.Context
+import com.miguelaetxio.mimoo.BuildConfig
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
@@ -155,6 +156,7 @@ class RadioRepository @Inject constructor(
     // S025 -- último peldaño de la fecha de primera edición. Ver
     // firstReleaseYearFromWikidata().
     private val wikidataApiService: WikidataApiService,
+    private val discogsApiService: DiscogsApiService,
 ) {
     /**
      * Perfil de un artista para la fuente de "disco" (10% de la
@@ -344,6 +346,7 @@ class RadioRepository @Inject constructor(
         if (cleanTitle.isNullOrBlank()) return null
 
         val year = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
+            ?: firstReleaseYearFromDiscogs(artist, cleanTitle)
             ?: firstReleaseYearFromWikidata(artist, cleanTitle)
         if (year == null) {
             // Sin red o sin dato: se apunta para resolverlo más tarde y
@@ -524,6 +527,40 @@ class RadioRepository @Inject constructor(
     } catch (e: Exception) {
         noteFailure(e)
         null
+    }
+
+    /**
+     * S025 -- DISCOGS, peldaño intermedio de la fecha.
+     *
+     * Discogs cataloga EDICIONES FÍSICAS, no obras abstractas, y eso es
+     * justo lo que hace falta: cada ficha lleva su año, así que pidiendo
+     * las de un tema y quedándose con la más antigua sale la primera vez
+     * que se publicó. Cubre bien lo que a MusicBrainz se le escapa,
+     * sobre todo en repertorio español antiguo.
+     *
+     * El token viaja como secreto de repositorio `DISCOGS_TOKEN` y llega
+     * al APK por `BuildConfig`. Si está vacío -- compilación local sin
+     * secreto -- este peldaño se salta sin romper la cascada.
+     */
+    private suspend fun firstReleaseYearFromDiscogs(artist: String, title: String): Int? {
+        val token = BuildConfig.DISCOGS_TOKEN
+        if (token.isBlank()) return null
+        return try {
+            val years = discogsApiService
+                .search(track = title, artist = artist, token = token)
+                .results
+                .mapNotNull { it.year?.take(4)?.toIntOrNull() }
+                .filter { it in 1850..2100 }
+            val year = years.minOrNull()
+            if (year != null) {
+                log("firstReleaseYearFromDiscogs('$artist' -- '$title') -> $year")
+            }
+            year
+        } catch (e: Exception) {
+            // Discogs no es MusicBrainz: que falle no debe marcar el
+            // servicio como degradado ni afectar a las porciones.
+            null
+        }
     }
 
     /**
