@@ -167,6 +167,28 @@ interface MusicBrainzApiService {
      * count tracks would fire a YouTube search per track per album, a
      * cost this count doesn't need.
      */
+    /**
+     * S025 -- búsqueda de release-groups por consulta libre.
+     *
+     * El release-group es la OBRA, no una grabación suelta: su
+     * `first-release-date` es la fecha de la primera edición y no
+     * cambia porque salga una remasterización. Es exactamente el nivel
+     * que hacía falta y que faltaba -- preguntando por grabación,
+     * "Black Dog" de Led Zeppelin (1971) se fechaba en 1983, porque una
+     * reedición de ese año es una grabación tan válida como la
+     * original.
+     * ---
+     * S025 -- free-text release-group search. A release-group is the
+     * WORK, so its `first-release-date` is the original edition's date
+     * and doesn't move when a remaster comes out.
+     */
+    @GET("release-group/")
+    suspend fun searchReleaseGroups(
+        @Query("query") query: String,
+        @Query("limit") limit: Int = 25,
+        @Query("fmt") format: String = "json",
+    ): MusicBrainzReleaseGroupSearchResponse
+
     @GET("release/")
     suspend fun browseReleasesByReleaseGroup(
         @Query("release-group") releaseGroupMbid: String,

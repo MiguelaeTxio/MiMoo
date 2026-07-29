@@ -6,6 +6,7 @@ import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.ItunesApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
 import com.miguelaetxio.mimoo.data.remote.RadioBrowserApiService
+import com.miguelaetxio.mimoo.data.remote.WikidataApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -145,6 +146,49 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+
+    // S025 -- Wikidata. Sin credenciales, pero con User-Agent
+    // identificable y un ritmo contenido: es un servicio publico y
+    // gratuito y no hay que castigarlo. Ver WikidataApiService.
+    private class WikidataInterceptor : Interceptor {
+        private val lock = Any()
+        private var lastRequestAtMillis = 0L
+        private val minIntervalMillis = 1100L
+
+        override fun intercept(chain: Interceptor.Chain): Response {
+            synchronized(lock) {
+                val waitMillis =
+                    minIntervalMillis - (System.currentTimeMillis() - lastRequestAtMillis)
+                if (waitMillis > 0) Thread.sleep(waitMillis)
+                lastRequestAtMillis = System.currentTimeMillis()
+            }
+            val request = chain.request().newBuilder()
+                .header("User-Agent", MUSICBRAINZ_USER_AGENT)
+                .header("Accept", "application/sparql-results+json")
+                .build()
+            return chain.proceed(request)
+        }
+    }
+
+    @Provides
+    @Singleton
+    @Named("wikidataRetrofit")
+    fun provideWikidataRetrofit(): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://query.wikidata.org/")
+            .client(
+                OkHttpClient.Builder()
+                    .addInterceptor(WikidataInterceptor())
+                    .build()
+            )
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideWikidataApiService(
+        @Named("wikidataRetrofit") retrofit: Retrofit,
+    ): WikidataApiService = retrofit.create(WikidataApiService::class.java)
 
     @Provides
     @Singleton

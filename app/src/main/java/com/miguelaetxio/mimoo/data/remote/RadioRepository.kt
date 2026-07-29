@@ -152,6 +152,9 @@ class RadioRepository @Inject constructor(
     // resuelva, de modo que cada sesión depende menos de MusicBrainz
     // que la anterior. Ver AnchorDictionary.
     private val anchorDictionary: AnchorDictionary,
+    // S025 -- último peldaño de la fecha de primera edición. Ver
+    // firstReleaseYearFromWikidata().
+    private val wikidataApiService: WikidataApiService,
 ) {
     /**
      * Perfil de un artista para la fuente de "disco" (10% de la
@@ -341,6 +344,7 @@ class RadioRepository @Inject constructor(
         if (cleanTitle.isNullOrBlank()) return null
 
         val year = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
+            ?: firstReleaseYearFromWikidata(artist, cleanTitle)
         if (year == null) {
             // Sin red o sin dato: se apunta para resolverlo más tarde y
             // se sigue. Sin año se ancla igual por origen y género --
@@ -491,17 +495,79 @@ class RadioRepository @Inject constructor(
      * recopilación que se esté escuchando.
      */
     private suspend fun firstReleaseYearFromMusicBrainz(artist: String, title: String): Int? = try {
-        val query = "recording:\"${title.replace("\"", "")}\" " +
-            "AND artist:\"${artist.replace("\"", "")}\""
+        val safeTitle = title.replace("\"", "")
+        val safeArtist = artist.replace("\"", "")
         val wantedTitle = SearchNormalizer.normalize(title)
-        val years = musicBrainzApiService.searchRecordings(query = query)
+        val years = mutableListOf<Int>()
+
+        // S025 -- PRIMERO POR RELEASE-GROUP, que es la OBRA. Su
+        // `first-release-date` es la fecha de la primera edición y no se
+        // mueve porque salga una remasterización. Preguntar por
+        // grabación, que era lo único que se hacía, fechó "Black Dog" de
+        // Led Zeppelin en 1983.
+        years += musicBrainzApiService
+            .searchReleaseGroups(query = "releasegroup:\"$safeTitle\" AND artist:\"$safeArtist\"")
+            .releaseGroups
+            .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+            .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+
+        // Y después por grabación, que sigue valiendo para los temas que
+        // nunca dieron nombre a un disco -- la mayoría de las caras B.
+        years += musicBrainzApiService
+            .searchRecordings(query = "recording:\"$safeTitle\" AND artist:\"$safeArtist\"")
             .recordings
             .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
             .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+
         noteSuccess()
-        years.minOrNull()
+        years.filter { it in 1850..2100 }.minOrNull()
     } catch (e: Exception) {
         noteFailure(e)
+        null
+    }
+
+    /**
+     * S025 -- WIKIDATA, último peldaño de la fecha.
+     *
+     * Orden de Miguel Ángel: *"si hay que ir a Wikipedia, se va."*
+     *
+     * Wikidata y no Wikipedia a secas porque es la parte estructurada
+     * del mismo proyecto: la fecha de publicación es la propiedad
+     * `P577` sobre la entidad de la OBRA, con identificador fijo, así
+     * que no hay que interpretar prosa. Se pide el año más antiguo, que
+     * es el de la edición original.
+     *
+     * La consulta cruza título del tema con nombre del artista por
+     * cualquiera de las dos vías que usa Wikidata para relacionarlos:
+     * intérprete (`P175`) o autor/compositor (`P86`). Con eso entra
+     * tanto un tema de un grupo como una obra clásica.
+     */
+    private suspend fun firstReleaseYearFromWikidata(artist: String, title: String): Int? = try {
+        val safeTitle = title.replace("\"", "").replace("\\", "")
+        val safeArtist = artist.replace("\"", "").replace("\\", "")
+        val sparql = """
+            SELECT ?date WHERE {
+              ?work rdfs:label ?label .
+              FILTER(LCASE(STR(?label)) = LCASE("$safeTitle"))
+              { ?work wdt:P175 ?who } UNION { ?work wdt:P86 ?who }
+              ?who rdfs:label ?whoLabel .
+              FILTER(LCASE(STR(?whoLabel)) = LCASE("$safeArtist"))
+              ?work wdt:P577 ?date .
+            } LIMIT 20
+        """.trimIndent()
+        val years = wikidataApiService.query(sparql)
+            .results
+            .bindings
+            .mapNotNull { it["date"]?.value?.take(4)?.toIntOrNull() }
+            .filter { it in 1850..2100 }
+        val year = years.minOrNull()
+        if (year != null) {
+            log("firstReleaseYearFromWikidata('$artist' -- '$title') -> $year")
+        }
+        year
+    } catch (e: Exception) {
+        // Wikidata es el último recurso: si falla, no hay año y ya
+        // está. No cuenta como fallo de servicio de MusicBrainz.
         null
     }
 
