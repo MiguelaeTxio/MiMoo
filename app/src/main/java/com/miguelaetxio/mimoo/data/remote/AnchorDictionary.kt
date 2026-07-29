@@ -151,6 +151,10 @@ class AnchorDictionary @Inject constructor(
     private fun ensureLoaded() {
         if (loaded) return
         loaded = true
+        // S025 -- antes de leer nada, barrer los duplicados que dejó el
+        // fallo del MIME. Si no, `findDoc()` seguiría eligiendo entre
+        // cientos de ficheros en cada lectura.
+        runCatching { dictionaryDir()?.let { cleanupStrayFiles(it) } }
         readArtists()?.let { list -> list.forEach { learnedArtists[key(it.artist)] = it } }
         readTracks()?.let { list -> list.forEach { learnedTracks[it.key] = it } }
         readPending()?.let { list ->
@@ -645,7 +649,71 @@ class AnchorDictionary @Inject constructor(
      */
     private fun findDoc(dir: DocumentFile, name: String): DocumentFile? =
         dir.findFile(name)
-            ?: dir.listFiles().firstOrNull { it.name?.startsWith(name) == true }
+            // De los renombrados, el MÁS GRANDE: cada escritura creaba
+            // uno nuevo, así que hay varias generaciones y la buena es
+            // la que más entradas tiene. Coger el primero que apareciera
+            // podía resucitar un fichero viejo o vacío.
+            ?: dir.listFiles()
+                .filter { it.isFile && it.name?.startsWith(name) == true }
+                .maxByOrNull { it.length() }
+
+    /**
+     * S025 -- LIMPIEZA DE LOS FICHEROS QUE DEJÓ EL FALLO DEL MIME.
+     *
+     * Mientras los ficheros se creaban con `application/json`, el
+     * proveedor SAF les cambiaba el nombre y `findFile` no los volvía a
+     * encontrar, así que CADA escritura creaba uno nuevo. Durante un
+     * recorrido completo eso son cientos de duplicados
+     * -- `artistas.json.json`, `artistas.json (1).json`... -- ocupando
+     * sitio en la tarjeta y sin servir para nada.
+     *
+     * Pregunta de Miguel Ángel: *"¿y lo que se ha grabado con
+     * .json.json? ¿lo dejamos para la posteridad?"*. No.
+     *
+     * De cada grupo se conserva el más grande, que es el que más
+     * entradas tiene; su contenido se reescribe bajo el nombre
+     * correcto y todos los demás se borran. Se ejecuta una sola vez,
+     * al cargar.
+     */
+    private fun cleanupStrayFiles(dir: DocumentFile) {
+        for (name in ALL_FILES) {
+            val matches = dir.listFiles()
+                .filter { it.isFile && it.name?.startsWith(name) == true }
+            if (matches.size <= 1 && matches.firstOrNull()?.name == name) continue
+
+            val best = matches.maxByOrNull { it.length() }
+            val content = best?.let { doc ->
+                runCatching {
+                    context.contentResolver.openInputStream(doc.uri)
+                        ?.bufferedReader()?.use { it.readText() }
+                }.getOrNull()
+            }
+
+            var deleted = 0
+            for (doc in matches) {
+                if (doc.name == name && doc.length() == (best?.length() ?: -1L)) continue
+                if (runCatching { doc.delete() }.getOrDefault(false)) deleted++
+            }
+            if (!content.isNullOrBlank() && dir.findFile(name) == null) {
+                dir.createFile("text/plain", name)?.let { doc ->
+                    runCatching {
+                        context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
+                            out.write(content.toByteArray())
+                        }
+                    }
+                }
+            }
+            if (deleted > 0) {
+                RadioDebugLogger.log(
+                    context,
+                    storageManager,
+                    "AnchorDictionary.cleanupStrayFiles('$name') -- $deleted duplicado(s) " +
+                        "del fallo del MIME borrados; conservado el mayor " +
+                        "(${content?.length ?: 0} caracteres)",
+                )
+            }
+        }
+    }
 
     private fun readText(name: String): String? = try {
         val dir = dictionaryDir()
@@ -722,6 +790,15 @@ class AnchorDictionary @Inject constructor(
         const val FILE_PENDING_ARTISTS = "pendientes_artistas.json"
         const val FILE_WIPED = "borrado_s025.txt"
         const val FILE_DONE_GENRES = "generos_recorridos.txt"
+
+        /** Todos los ficheros del diccionario, para la limpieza. */
+        val ALL_FILES = listOf(
+            "artistas.json",
+            "temas.json",
+            "pendientes.json",
+            "pendientes_artistas.json",
+            "generos_recorridos.txt",
+        )
 
         /**
          * S025 -- palabras que delatan un canal de YouTube y no un
