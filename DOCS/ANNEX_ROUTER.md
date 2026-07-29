@@ -34,17 +34,34 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
+| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
-| H13 | `DOCS/ANNEX_H13.md` | ← **EN PROGRESO** |
+| H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-07-29** — PCH formal explícito de Miguel Ángel al arranque de
+  S026, resolviendo la incidencia de proceso dejada abierta en
+  `RESUMPTION_POINT.md` al cierre de S025 (sesión extenuada por
+  tokens, cerrada sin PCH formal pese a que casi todo el trabajo real
+  fue sobre H08): **H13 pasa a PAUSADO, H08 pasa a EN PROGRESO**. Sin
+  incidencia nueva en H13 (su hoja de ruta queda intacta, sin tocar).
+  Miguel Ángel señala además que el cierre de S025 no es fiable al
+  cien por cien por el mismo motivo (extenuación de tokens) y pide
+  verificar contra el código real, no contra las notas de cierre, el
+  punto central que quedó documentado como resuelto en
+  `DOCS/ANNEX_H08.md` (S025): que `suggestRelatedArtist()` consulte la
+  base de datos local de anclaje antes que MusicBrainz en vivo. Según
+  Miguel Ángel, en la práctica la Radio sigue consultando MusicBrainz
+  para todo (ejemplo dado: un tema de Led Zeppelin deriva a rock
+  sinfónico en vez de hard rock/rock arena) — la sesión arranca
+  verificando esto sobre el código antes de dar nada por bueno.
 
 - **2026-07-28** — PCH explícito de Miguel Ángel al cierre de S024:
   H08 pasa a PAUSADO, H13 pasa a EN PROGRESO. No hay incidencia: el
