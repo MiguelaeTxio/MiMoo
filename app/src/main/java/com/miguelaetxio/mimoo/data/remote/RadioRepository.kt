@@ -249,8 +249,9 @@ class RadioRepository @Inject constructor(
         // lista: `hard rock` describe una radio, `rock` no describe
         // nada. Desempate alfabético para que el mismo artista ancle
         // siempre igual (regla determinista de S020).
-        val chosenGenre = genres.filter { genreTree.isSpecific(it) }
-            .minOrNull() ?: genres.min()
+        val chosenGenre = genres.filter { genreTree.isSpecific(it) }.minOrNull()
+            ?: genres.minOrNull()
+            ?: return null
 
         // PASO 3 -- CLÁSICA: se acabó. Ni origen ni década.
         // *"Si el género es clásica, anclamos por clásica, da igual, y
