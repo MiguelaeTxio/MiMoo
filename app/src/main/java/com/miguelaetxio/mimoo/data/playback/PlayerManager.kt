@@ -14,6 +14,7 @@ import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import com.miguelaetxio.mimoo.data.remote.RadioAnchor
 import com.miguelaetxio.mimoo.data.remote.RadioDebugLogger
 import com.miguelaetxio.mimoo.data.remote.RadioRepository
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -516,6 +517,8 @@ class PlayerManager @Inject constructor(
                     radioPortionUsed.clear()
                     radioPortionExhausted.clear()
                     radioUsedSongs.clear()
+        radioUsedTitles.clear()
+                    radioUsedTitles.clear()
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
                     radioLibraryArtistProfileCache.clear()
@@ -788,6 +791,26 @@ class PlayerManager @Inject constructor(
     private val radioPortionExhausted = mutableSetOf<RadioPortion>()
     private val radioUsedArtists = mutableSetOf<String>()
     private val radioUsedSongs = mutableSetOf<String>()
+
+    /**
+     * S025 -- TÍTULOS ya sonados, sin mirar el artista.
+     *
+     * Red de seguridad última y deliberadamente tonta. La clave
+     * `artista|canción` de `radioUsedSongs` falla en cuanto el artista
+     * llega escrito de dos formas distintas -- 'Wings' y
+     * 'Paul McCartney & Wings' son el mismo 'Band on the Run' --, y
+     * entonces el tema vuelve a sonar.
+     *
+     * Miguel Ángel, sobre esto: *"lo único es que el título no se
+     * repita. No se puede repetir el puto título."* Así que aquí no se
+     * mira nada más: título normalizado, y si ya sonó, fuera. Que dos
+     * canciones distintas compartan título exacto y una se pierda es un
+     * precio ridículo comparado con volver a oír la misma doce veces.
+     */
+    private val radioUsedTitles = mutableSetOf<String>()
+
+    private fun titleKey(title: String?): String =
+        SearchNormalizer.tight(SearchNormalizer.songTitleKey(title.orEmpty()))
 
     /**
      * Peldaño interno agotado dentro de una porción que sigue viva:
@@ -1263,7 +1286,9 @@ class PlayerManager @Inject constructor(
                 // mismo tema es un rollazo (...) y sobre todo cuando
                 // por desgracia acaba de ponerla, pum, y lo repite otra
                 // vez."* Sin excepción y venga de la porción que venga.
-                if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs) {
+                if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
+                    titleKey(item.title) in radioUsedTitles
+                ) {
                     RadioDebugLogger.log(
                         appContext, storageManager,
                         "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA " +
@@ -1418,6 +1443,7 @@ class PlayerManager @Inject constructor(
         radioPortionUsed[portion] = (radioPortionUsed[portion] ?: 0) + 1
         registerUsedArtist(item.artist)
         radioUsedSongs.add(knownHitsRepository.songKey(item.artist, item.title))
+        titleKey(item.title).takeIf { it.isNotBlank() }?.let { radioUsedTitles.add(it) }
         // S022 -- alimenta la ventana deslizante de artistas recientes.
         item.artist?.lowercase()?.let { name ->
             radioRecentArtists.addLast(name)
@@ -1506,6 +1532,7 @@ class PlayerManager @Inject constructor(
         for (artist in artists) {
             val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null) ?: continue
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs) continue
+            if (titleKey(item.title) in radioUsedTitles) continue
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "fetchFromKnown(ancla='$anchorArtistName') -> artista conocido, tema no catalogado: " +
@@ -1638,7 +1665,10 @@ class PlayerManager @Inject constructor(
             suggestedAny = true
             triedNames += artist
             val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null)
-            if (item != null && knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs) {
+            if (item != null &&
+                knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
+                titleKey(item.title) !in radioUsedTitles
+            ) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "fetchFromUnknown(ancla='$anchorArtistName') -> desconocido: '$artist'" +
@@ -1769,18 +1799,16 @@ class PlayerManager @Inject constructor(
             anchorGenres = anchor.genres,
             country = anchor.country, classical = anchor.isClassical,
         )
-        // Y si de verdad hay que repetir, se repite EL MÁS ANTIGUO, no
-        // uno al azar. Con diez temas disponibles el azar daba
-        // 'Cadillac Solitario' siete veces mientras otros no salían
-        // ninguna -- verificado en log real. Por antigüedad suenan los
-        // diez antes de volver a ninguno.
-        val hit = fresh ?: knownHitsRepository.randomHit(
-            anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
-            excludeSongKeys = emptySet(), avoidArtists = avoidNames,
-            anchorGenres = anchor.genres,
-            playOrder = radioUsedSongs.toList(),
-            country = anchor.country, classical = anchor.isClassical,
-        )
+        // S025 -- NO SE REPITE. PUNTO.
+        //
+        // Aquí había un segundo intento con `excludeSongKeys =
+        // emptySet()` que repetía a propósito cuando no quedaba nada
+        // sin estrenar, ordenando por antigüedad. Era la última pieza
+        // que incumplía la regla que Miguel Ángel lleva repitiendo toda
+        // la semana: *"no se pueden repetir los temas, es lo más
+        // básico"*. Tenía razón, y la excusa de "es que si no, la Radio
+        // se para" no vale: que se pare.
+        val hit = fresh
         if (hit != null) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null) {
@@ -1957,7 +1985,8 @@ class PlayerManager @Inject constructor(
         // usados.
         val artistTracks = downloadedTracks.filter { it.artist.equals(chosenArtist, ignoreCase = true) }
         val unheard = artistTracks.filter {
-            knownHitsRepository.songKey(it.artist, it.title) !in radioUsedSongs
+            knownHitsRepository.songKey(it.artist, it.title) !in radioUsedSongs &&
+                titleKey(it.title) !in radioUsedTitles
         }
         val track = unheard.randomOrNull() ?: artistTracks.randomOrNull() ?: return null
         return QueueItem(
@@ -2525,6 +2554,7 @@ class PlayerManager @Inject constructor(
         radioPortionUsed.clear()
         radioPortionExhausted.clear()
         radioUsedSongs.clear()
+        radioUsedTitles.clear()
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
         radioLibraryArtistProfileCache.clear()

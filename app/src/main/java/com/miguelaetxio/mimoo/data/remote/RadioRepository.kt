@@ -896,8 +896,24 @@ class RadioRepository @Inject constructor(
         // respetar). Mismo cambio y misma razón que en
         // KnownHitsRepository.randomHit() y en
         // PlayerManager.pickDiscoCandidate().
-        val candidates = findCandidates(
-            anchor.genre,
+        // S025 -- se pregunta por TODOS los géneros del ancla, no por
+        // uno suelto.
+        //
+        // Miguel Ángel: *"me he hinchado a escuchar rock sinfónico
+        // después de poner un tema de Led Zeppelin, que no me apetecía
+        // en absoluto."* En su log el ancla salió `arena rock`, que es
+        // el primero por orden alfabético entre los géneros concretos
+        // de Led Zeppelin -- un desempate arbitrario mío. Preguntar por
+        // `arena rock` en Reino Unido en los 70 devolvía UN candidato,
+        // 34 rondas seguidas, así que la Radio tiraba de lo poco que
+        // encontrase, y ahí entraban Yes, ELO y Pink Floyd.
+        //
+        // Con el conjunto completo -- hard rock, blues rock, heavy
+        // metal, classic rock... -- la consulta trae decenas de
+        // británicos de los 70 y deja de depender de una etiqueta
+        // suelta elegida por azar alfabético.
+        val candidates = findCandidatesForGenres(
+            listOf(anchor.genre) + anchor.genres.filter { it != anchor.genre },
             anchor.isSpanishOrigin,
             anchor.country,
             anchor.decadeBegin,
@@ -957,6 +973,27 @@ class RadioRepository @Inject constructor(
             log("lookupArtistProfile('$artistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             null
         }
+    }
+
+    /**
+     * S025 -- une los candidatos de TODOS los géneros del ancla,
+     * parando en cuanto hay material de sobra. Ver el comentario de
+     * `suggestRelatedArtist()` para por qué un solo género no basta.
+     */
+    private suspend fun findCandidatesForGenres(
+        genres: List<String>,
+        isSpanishOrigin: Boolean,
+        country: String?,
+        decadeBegin: Int?,
+        excludeLower: Set<String>,
+        isClassical: Boolean,
+    ): List<String> {
+        val all = linkedSetOf<String>()
+        for (genre in genres) {
+            all += findCandidates(genre, isSpanishOrigin, country, decadeBegin, excludeLower, isClassical)
+            if (all.size >= ENOUGH_CANDIDATES) break
+        }
+        return all.toList()
     }
 
     private suspend fun findCandidates(
@@ -1441,6 +1478,14 @@ class RadioRepository @Inject constructor(
          * que ir deprisa.
          */
         const val RECONCILE_PER_ROUND = 1
+
+        /**
+         * S025 -- con estos candidatos ya no hace falta seguir
+         * preguntando por más géneros del ancla. Suficiente para que la
+         * Radio no se repita y para no gastar una petición por género
+         * en cada ronda.
+         */
+        const val ENOUGH_CANDIDATES = 40
 
         /**
          * Candidatos que se piden al buscar el artista del ancla.
