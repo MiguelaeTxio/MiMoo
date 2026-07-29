@@ -517,8 +517,8 @@ class PlayerManager @Inject constructor(
                     radioPortionUsed.clear()
                     radioPortionExhausted.clear()
                     radioUsedSongs.clear()
-        radioUsedTitles.clear()
                     radioUsedTitles.clear()
+                    radioUnknownOffset = 0
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
                     radioLibraryArtistProfileCache.clear()
@@ -808,6 +808,19 @@ class PlayerManager @Inject constructor(
      * precio ridículo comparado con volver a oír la misma doce veces.
      */
     private val radioUsedTitles = mutableSetOf<String>()
+
+    /**
+     * S025 -- por dónde va la exploración en el catálogo de MusicBrainz.
+     *
+     * La porción de desconocidos no se agota: cuando una página no da
+     * nada nuevo se pasa a la siguiente, indefinidamente. Es la cuota
+     * que sostiene la Radio cuando el diccionario se queda sin temas
+     * sin estrenar, tal y como lo diseñó Miguel Ángel.
+     */
+    private var radioUnknownOffset = 0
+
+    /** Cuánto avanza la exploración cuando una página no da nada. */
+    private val UNKNOWN_PAGE_SIZE = 25
 
     private fun titleKey(title: String?): String =
         SearchNormalizer.tight(SearchNormalizer.songTitleKey(title.orEmpty()))
@@ -1740,14 +1753,29 @@ class PlayerManager @Inject constructor(
             return null
         }
 
-        exhaustPortion(
-            RadioPortion.UNKNOWN, anchorArtistName,
-            if (!suggestedAny) {
-                "MusicBrainz no devuelve artistas nuevos para el ancla"
-            } else {
-                "los $UNKNOWN_CANDIDATE_ATTEMPTS candidatos probados no resolvieron en YouTube " +
-                    "(${triedNames.joinToString()})"
-            },
+        // S025 -- LA EXPLORACIÓN NO SE AGOTA NUNCA.
+        //
+        // Orden de Miguel Ángel, y es su diseño desde el principio:
+        // *"tenemos la cuota de disco, la de desconocidos y la de
+        // conocidos. Cuando la de conocidos se acaba, nos queda la de
+        // desconocidos, QUE NO SE ACABA EN LA PUTA VIDA."*
+        //
+        // Aquí se llamaba a `exhaustPortion(UNKNOWN, ...)`, y agotada
+        // lo está para el resto de la sesión. Eso es lo que dejaba a la
+        // Radio sin nada que servir y lo que empujó a que el fallback
+        // repitiera temas. Las dos cosas eran consecuencia del mismo
+        // error: dar por agotado lo que es inagotable.
+        //
+        // MusicBrainz tiene dos millones de artistas. Si una vuelta no
+        // trae nada, es que se ha llegado al final de ESTA página, no
+        // al final del catálogo: se avanza de página y se sigue. La
+        // porción se queda viva siempre.
+        radioUnknownOffset += UNKNOWN_PAGE_SIZE
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "fetchFromUnknown(ancla='$anchorArtistName') -- sin resultado en esta página; " +
+                "se avanza a offset $radioUnknownOffset. La exploración NO se agota: " +
+                "es la porción que sostiene la Radio cuando el diccionario se acaba",
         )
         return null
     }
@@ -1821,6 +1849,23 @@ class PlayerManager @Inject constructor(
                 acceptRadioItem(RadioPortion.KNOWN, item)
                 return item
             }
+        }
+
+        // S025 -- si el diccionario no tiene nada sin estrenar, se tira
+        // de la EXPLORACIÓN, que es inagotable. Antes se repetía un
+        // tema ya sonado; ahora se busca uno nuevo en MusicBrainz, que
+        // es lo que Miguel Ángel lleva pidiendo desde el principio:
+        // *"cuando la cuota de conocidos se acaba, nos queda la de
+        // desconocidos, que no se acaba en la puta vida."*
+        val unknownItem = fetchFromUnknown(anchor, anchorArtistName, avoidNames)
+        if (unknownItem != null) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "resolveFinalFallback(ancla='$anchorArtistName') -> el diccionario no tiene nada " +
+                    "sin estrenar; se sirve de EXPLORACIÓN: '${unknownItem.artist}' - " +
+                    "'${unknownItem.title}'",
+            )
+            return unknownItem
         }
 
         val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames)
@@ -2555,6 +2600,7 @@ class PlayerManager @Inject constructor(
         radioPortionExhausted.clear()
         radioUsedSongs.clear()
         radioUsedTitles.clear()
+        radioUnknownOffset = 0
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
         radioLibraryArtistProfileCache.clear()

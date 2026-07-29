@@ -876,6 +876,12 @@ class RadioRepository @Inject constructor(
         anchor: RadioAnchor,
         excludeArtists: Set<String>,
         avoidArtists: Set<String> = emptySet(),
+        /**
+         * S025 -- desplazamiento dentro del catálogo. La exploración no
+         * se agota: cuando una página no da nada nuevo, la Radio avanza
+         * y sigue pidiendo. MusicBrainz tiene dos millones de artistas.
+         */
+        offset: Int = 0,
     ): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
@@ -919,6 +925,7 @@ class RadioRepository @Inject constructor(
             anchor.decadeBegin,
             excludeLower,
             anchor.isClassical,
+            offset,
         )
         val preferred = candidates.filter { it.lowercase() !in avoidLower }
         val chosen = preferred.ifEmpty { candidates }.randomOrNull()
@@ -987,10 +994,11 @@ class RadioRepository @Inject constructor(
         decadeBegin: Int?,
         excludeLower: Set<String>,
         isClassical: Boolean,
+        offset: Int = 0,
     ): List<String> {
         val all = linkedSetOf<String>()
         for (genre in genres) {
-            all += findCandidates(genre, isSpanishOrigin, country, decadeBegin, excludeLower, isClassical)
+            all += findCandidates(genre, isSpanishOrigin, country, decadeBegin, excludeLower, isClassical, offset)
             if (all.size >= ENOUGH_CANDIDATES) break
         }
         return all.toList()
@@ -1003,15 +1011,22 @@ class RadioRepository @Inject constructor(
         decadeBegin: Int?,
         excludeLower: Set<String>,
         isClassical: Boolean,
+        offset: Int = 0,
     ): List<String> = try {
         val query = buildGenreQuery(genre, isSpanishOrigin, country, decadeBegin, isClassical)
         // S010 -- offset aleatorio, no siempre 0, para variar entre
-        // sesiones de Radio con el mismo ancla (ver historial de esta
-        // función en versiones anteriores del archivo).
-        val randomOffset = (0..90 step 10).toList().random()
+        // sesiones de Radio con el mismo ancla.
+        //
+        // S025 -- y sumándole el AVANCE de la exploración, que crece
+        // cada vez que una página no da nada nuevo. Así la porción de
+        // desconocidos recorre el catálogo entero en vez de dar vueltas
+        // sobre los mismos cien primeros. Es lo que la hace inagotable,
+        // que es su papel: sostener la Radio cuando el diccionario ya
+        // no tiene temas sin estrenar.
+        val randomOffset = offset + (0..90 step 10).toList().random()
 
         suspend fun fetch(offset: Int) = musicBrainzApiService
-            .searchArtists(query = query, limit = 10, offset = offset)
+            .searchArtists(query = query, limit = 25, offset = offset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
