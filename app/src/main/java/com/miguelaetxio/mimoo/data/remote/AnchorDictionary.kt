@@ -618,7 +618,38 @@ class AnchorDictionary @Inject constructor(
      * perder lo aprendido, y en cuanto elija tarjeta se empieza a
      * escribir ahí.
      */
+    /**
+     * S025 -- la carpeta y los ficheros se resuelven UNA VEZ.
+     *
+     * Fallo reportado por Miguel Ángel: *"de nuevo se pega dos horas
+     * para entrar en la sidebar"*. La causa era esto: `dictionaryDir()`
+     * se llamaba en cada lectura, en cada escritura y otra vez en la
+     * línea de log, y CADA llamada hace `root.findFile("MiMoo")`, que
+     * lista la raíz entera de la tarjeta -- todas las carpetas de
+     * artista, una por una. Con una biblioteca grande eso son segundos
+     * por operación, y el diccionario hace decenas.
+     *
+     * Ahora la carpeta se resuelve una vez por sesión y cada fichero
+     * también, así que a partir de la primera vez todo va directo al
+     * `Uri` que ya se conoce.
+     */
+    @Volatile
+    private var cachedDir: DocumentFile? = null
+
+    @Volatile
+    private var dirResolved = false
+
+    private val docCache = mutableMapOf<String, DocumentFile>()
+
     private fun dictionaryDir(): DocumentFile? {
+        if (dirResolved) return cachedDir
+        val resolved = resolveDictionaryDir()
+        cachedDir = resolved
+        dirResolved = true
+        return resolved
+    }
+
+    private fun resolveDictionaryDir(): DocumentFile? {
         val rootUri = storageManager.getRootUri() ?: return null
         val root = DocumentFile.fromTreeUri(context, rootUri) ?: return null
         val base = root.findFile(DIR_BASE)?.takeIf { it.isDirectory }
@@ -648,7 +679,8 @@ class AnchorDictionary @Inject constructor(
      * nombre pedido, para recuperar lo que ya se escribió mal.
      */
     private fun findDoc(dir: DocumentFile, name: String): DocumentFile? =
-        dir.findFile(name)
+        docCache[name]
+            ?: dir.findFile(name)
             // De los renombrados, el MÁS GRANDE: cada escritura creaba
             // uno nuevo, así que hay varias generaciones y la buena es
             // la que más entradas tiene. Coger el primero que apareciera
@@ -656,6 +688,7 @@ class AnchorDictionary @Inject constructor(
             ?: dir.listFiles()
                 .filter { it.isFile && it.name?.startsWith(name) == true }
                 .maxByOrNull { it.length() }
+                    .also { found -> if (found != null) docCache[name] = found }
 
     /**
      * S025 -- LIMPIEZA DE LOS FICHEROS QUE DEJÓ EL FALLO DEL MIME.
@@ -689,19 +722,31 @@ class AnchorDictionary @Inject constructor(
                 }.getOrNull()
             }
 
+            // S025 -- PRIMERO SE ASEGURA EL BUENO, DESPUÉS SE BORRA.
+            //
+            // Al revés era destructivo: si la lectura del mejor fallaba
+            // o la reescritura no salía, se habían borrado ya todos y
+            // el trabajo desaparecía. Miguel Ángel lo sufrió: *"marcaba
+            // que había trabajo hecho y al darle mandó a tomar por culo
+            // todo lo hecho"*. Si no se puede garantizar el fichero
+            // bueno, no se borra nada.
+            if (content.isNullOrBlank()) continue
+
+            val canonical = dir.findFile(name)
+                ?: dir.createFile("text/plain", name)
+                ?: continue
+            val written = runCatching {
+                context.contentResolver.openOutputStream(canonical.uri, "wt")?.use { out ->
+                    out.write(content.toByteArray())
+                } != null
+            }.getOrDefault(false)
+            if (!written) continue
+            docCache[name] = canonical
+
             var deleted = 0
             for (doc in matches) {
-                if (doc.name == name && doc.length() == (best?.length() ?: -1L)) continue
+                if (doc.uri == canonical.uri) continue
                 if (runCatching { doc.delete() }.getOrDefault(false)) deleted++
-            }
-            if (!content.isNullOrBlank() && dir.findFile(name) == null) {
-                dir.createFile("text/plain", name)?.let { doc ->
-                    runCatching {
-                        context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
-                            out.write(content.toByteArray())
-                        }
-                    }
-                }
             }
             if (deleted > 0) {
                 RadioDebugLogger.log(
@@ -736,7 +781,8 @@ class AnchorDictionary @Inject constructor(
                 // `text/plain` a propósito: con `application/json` el
                 // proveedor SAF renombraba el fichero y se perdía todo.
                 // Ver findDoc().
-                val doc = findDoc(dir, name) ?: dir.createFile("text/plain", name)
+                val doc = findDoc(dir, name)
+                    ?: dir.createFile("text/plain", name)?.also { docCache[name] = it }
                     ?: return false
                 context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
                     out.write(content.toByteArray())
@@ -753,7 +799,7 @@ class AnchorDictionary @Inject constructor(
                     storageManager,
                     "AnchorDictionary.writeText('$name') -> ${if (ok) "OK" else "FALLO"}, " +
                         "${content.length} caracteres, " +
-                        "destino=${if (dictionaryDir() != null) "tarjeta" else "interno"}",
+                        "destino=${if (cachedDir != null) "tarjeta" else "interno"}",
                 )
             }
         } catch (e: Exception) {

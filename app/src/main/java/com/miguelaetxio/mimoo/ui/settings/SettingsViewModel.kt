@@ -144,7 +144,8 @@ class SettingsViewModel @Inject constructor(
         // S025 -- el recorrido es media hora de red y escritura en
         // tarjeta: jamás en el hilo principal.
         dictionaryJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val result = anchorDictionaryBuilder.build { p ->
+            val result = try {
+                anchorDictionaryBuilder.build { p ->
                 _dictionaryState.value = DictionaryState.Running(
                     done = p.done,
                     total = p.total,
@@ -152,6 +153,12 @@ class SettingsViewModel @Inject constructor(
                     notFound = p.notFound,
                     currentArtist = p.currentArtist,
                 )
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelado desde el botón Parar: el estado ya lo ha
+                // puesto `stopBuildingDictionary()`. Lo guardado hasta
+                // aquí está escrito en la tarjeta.
+                throw e
             }
             _dictionaryState.value = DictionaryState.Done(
                 when (result) {
@@ -174,9 +181,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * S025 -- parar de verdad.
+     *
+     * Fallo reportado por Miguel Ángel: *"el botón parar tampoco sirve
+     * para nada"*. Y no servía: `cancel()` mataba la corrutina, pero la
+     * línea que pone el estado final estaba DENTRO de esa misma
+     * corrutina, así que nunca llegaba a ejecutarse. La pantalla se
+     * quedaba congelada mostrando el progreso y el botón Parar para
+     * siempre, aunque por debajo ya no hubiera nada corriendo.
+     *
+     * Ahora el estado se pone aquí, fuera de la corrutina cancelada, y
+     * el aviso es inmediato.
+     */
     fun stopBuildingDictionary() {
-        dictionaryJob?.cancel()
+        val job = dictionaryJob
         dictionaryJob = null
+        job?.cancel()
+        val current = _dictionaryState.value
+        val saved = (current as? DictionaryState.Running)?.resolved ?: 0
+        _dictionaryState.value = DictionaryState.Done(
+            "Parado. $saved artista(s) guardados antes de parar; " +
+                "al volver a pulsar sigue donde lo dejó.",
+        )
     }
 
     fun dismissDictionaryState() {
