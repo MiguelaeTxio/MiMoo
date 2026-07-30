@@ -2814,3 +2814,44 @@ mueven al conjunto de países de **Europea**.
 
 **Sin verificar en dispositivo real todavía** -- pendiente confirmar
 que una radio anclada en un artista español ya no trae portugueses.
+
+---
+
+## SALVAGUARDA "CONOCIDO EN ESPAÑA" PARA EXPLORACIÓN DENTRO DE HISPANOAMÉRICA
+
+Miguel Ángel afinó su propia corrección: el riesgo no es el país de
+origen del artista -- Shakira es colombiana y tiene que sonar igual
+que un éxito español si es número 1 aquí -- sino si el tema **se
+conoce en España**. Cita textual: *"si en España Shakira es número
+1... Shakira debe ser preferente junto a los demás éxitos en
+español... y que no me salga Karumanta, que es un éxito en Perú"*
+(ejemplo ficticio).
+
+**Verificado antes de tocar código:** el diccionario de éxitos
+(`known_hit_artists.json`) YA resuelve esto para Conocidos (80% del
+cupo) -- el bloque `intl` está curado para "conocido en España" (85
+entradas hispanoamericanas: Luis Miguel, Shakira, Bad Bunny, Karol
+G... exactamente los que Miguel Ángel dijo que "tienen que estar"),
+no es "cualquier artista hispanohablante". El riesgo real está en
+**Exploración** (10%): la semilla de 1.161 artistas no tiene esa
+curación de fama, es solo género+país de MusicBrainz -- **69
+artistas de Hispanoamérica sin España**, sin ningún filtro de "esto
+suena aquí".
+
+### Fix (commit `ae7df7f`, compilado en verde)
+
+- `KnownHitsRepository.isKnownArtistAnywhere()` (nueva): comprueba si
+  un artista está en el diccionario de éxitos, en cualquier década y
+  bloque, sin más filtro -- reutiliza la curación ya hecha en vez de
+  inventar una nueva.
+- `AnchorDictionary.artistsMatching()` devuelve ahora también el país
+  exacto de cada candidato.
+- `RadioRepository.suggestRelatedArtist()`: con ancla española dentro
+  de Hispanoamérica, un candidato hispanoamericano que NO sea de
+  España tiene que estar además en el diccionario de éxitos -- si no,
+  se descarta antes de puntuar por género. No aplica a candidatos
+  españoles (siempre admitidos) ni a otros grupos (Anglosajona no
+  tiene esta curación por país, y Miguel Ángel pidió explícitamente
+  que ahí el país no pesara nada).
+
+**Sin verificar en dispositivo real todavía.**
