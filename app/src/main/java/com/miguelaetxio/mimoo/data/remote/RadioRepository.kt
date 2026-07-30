@@ -485,7 +485,7 @@ class RadioRepository @Inject constructor(
 
     suspend fun resolveArtistFactsForDictionary(name: String): DictionaryOutcome {
         val mbid = try {
-            findAnchorArtistMbid(name)
+            findAnchorArtistMbid(name)?.mbid
         } catch (e: Exception) {
             noteFailure(e)
             return DictionaryOutcome.NETWORK_DOWN
@@ -545,7 +545,7 @@ class RadioRepository @Inject constructor(
         val artists = anchorDictionary.takePendingArtists(RECONCILE_PER_ROUND)
         for (name in artists) {
             val mbid = try {
-                findAnchorArtistMbid(name)
+                findAnchorArtistMbid(name)?.mbid
             } catch (e: Exception) {
                 noteFailure(e)
                 return
@@ -1198,7 +1198,7 @@ class RadioRepository @Inject constructor(
                         limit = ANCHOR_SEARCH_LIMIT,
                     )
                     .artists,
-            ) ?: return null
+            )?.mbid ?: return null
             val detail = musicBrainzApiService.lookupArtist(mbid)
             noteSuccess()
             val genres = detail.genres.map { it.name }.filter { it.isNotBlank() }.toSet()
