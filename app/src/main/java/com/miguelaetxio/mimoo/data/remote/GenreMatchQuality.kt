@@ -4,59 +4,61 @@ package com.miguelaetxio.mimoo.data.remote
  * S026 -- CALIDAD DE LA COINCIDENCIA DE GÉNERO, compartida por las
  * tres porciones de la Radio (Conocidos, Disco y Exploración).
  *
- * Orden de Miguel Ángel tras revisar un log real donde Elton John y
- * Emerson, Lake & Palmer aparecían en una radio de Led Zeppelin: *"si
- * tenemos artistas que coinciden con dos o tres géneros, son
- * preferibles... si Led Zeppelin tiene 'rock progresivo' entre siete
- * géneros más, y encontramos uno que ÚNICAMENTE tiene rock progresivo,
- * ese no lo ponemos. Ponemos el que tenga rock progresivo, rock,
- * classic rock... y que tenga tres o cuatro géneros que coincidan."*
+ * HISTORIA DEL DISEÑO, con motivo real en cada paso:
  *
- * **Primer intento (este mismo commit, corregido más abajo): exigir
- * 2+ géneros ESPECÍFICOS compartidos, sin lista negra.** Falló contra
- * un caso real, verificado con captura de pantalla de dispositivo:
- * Supertramp entró en la radio de Led Zeppelin porque comparten DOS
- * etiquetas -- `classic rock` Y `progressive rock` -- que
- * `GenreTree.isSpecific()` trata como carpetas concretas (0 y 6
- * descendientes respectivamente) pero que en la práctica son
- * etiquetas de FORMATO/ÉPOCA de MusicBrainz, no de sonido: se cuelgan
- * de casi cualquier artista de rock de los 60-80 con tal de que suene
- * "clásico" o "elaborado". Dos etiquetas de formato compartidas siguen
- * siendo cero información real, así que el conteo por sí solo no
- * basta -- exactamente lo que Miguel Ángel describió: *"el único que
- * se parece es que son personas que forman un grupo y que hacen
- * música... la música que hacen no se parece absolutamente en
- * nada."*
+ * 1. Primer intento: exigir 2+ géneros ESPECÍFICOS compartidos.
+ *    Falló contra un caso real (captura de dispositivo): Supertramp
+ *    entró en la radio de Led Zeppelin compartiendo DOS etiquetas de
+ *    FORMATO (`classic rock`, `progressive rock`), no de sonido.
+ * 2. Corrección: lista corta de etiquetas de formato/época que nunca
+ *    cuentan (`classic rock`, `rock and roll`, `mainstream rock`).
+ *    Arregló Supertramp, pero el corte "2+/1" seguía dejando pasar
+ *    como último recurso a artistas con MUCHOS géneros catalogados
+ *    (Pink Floyd: 13, Fleetwood Mac: 8) de los que solo UNO --
+ *    `blues rock`, una etiqueta ancha -- coincidía con Led Zeppelin.
+ *    Petición de Miguel Ángel con log real: *"Pink Floyd... hay un
+ *    mundo enorme... Fleetwood Mac más en una lista con Neil Young,
+ *    Creedence Clearwater Revival."*
+ * 3. **Diseño actual: PORCENTAJE, no conteo.** Miguel Ángel, textual:
+ *    *"si tiene diez géneros, y el otro tiene diez géneros, y tienen
+ *    ocho que son iguales, coincide... un 30% o un 40%... configurable
+ *    en ajustes, con escalones de diez."* Verificado contra los datos
+ *    reales antes de implementar (intersección/unión de géneros
+ *    ESPECÍFICOS, formato ya descartado):
  *
- * **Corrección: lista corta de etiquetas de FORMATO/ÉPOCA que nunca
- * cuentan**, ni para FUERTE ni para DÉBIL -- se descartan antes de
- * cualquier conteo. No es una lista de "géneros que no me gustan": son
- * las etiquetas que la propia documentación de MusicBrainz describe
- * como agrupación de época o de emisora de radio, no de sonido
- * (`classic rock`, `rock and roll`, `mainstream rock`). `progressive
- * rock` NO entra en esta lista -- es un género real y específico
- * (Yes, King Crimson, Genesis); el problema no es la etiqueta en sí,
- * es que la propia semilla de Led Zeppelin la incluye entre sus ocho
- * géneros de forma cuestionable. Quitando `classic rock` de la cuenta,
- * Supertramp y Led Zeppelin comparten solo `progressive rock` -- un
- * género específico, uno solo -- así que Supertramp cae a DÉBIL/
- * último recurso en vez de FUERTE, que es justo donde debía estar.
+ *      Pink Floyd      1/17 =  6%   Fleetwood Mac   1/10 = 10%
+ *      Queen           1/12 =  8%   Jethro Tull     2/6  = 33%
+ *      Motörhead       2/5  = 40%   Black Sabbath   3/7  = 43%
+ *      Deep Purple     3/6  = 50%
  *
- * Con la etiqueta de formato descartada, la regla de fondo que pidió
- * Miguel Ángel sigue intacta: DOS O MÁS géneros específicos REALES
- * compartidos es la categoría preferente; exactamente uno es último
- * recurso, admitido solo cuando no queda nadie con dos o más: *"que lo
- * admita... porque no haya una definición, pero que luego, en
- * general, compare dos o más géneros."*
+ *    Con el 40% por defecto, la línea separa exactamente donde Miguel
+ *    Ángel la puso a ojo -- Jethro Tull queda justo fuera (33%), como
+ *    él mismo dijo que "en un momento dado podría pasar" pero sin
+ *    insistir en que tuviera que hacerlo.
+ *
+ * El umbral es el porcentaje MÍNIMO de intersección/unión para admitir
+ * un candidato -- configurable en Ajustes
+ * (`UiPreferencesManager.radioGenreMatchThresholdPercent`, escalones
+ * de 10, por defecto 40). Sustituye por completo el sistema previo de
+ * dos niveles (FUERTE/DÉBIL): ya no hay "último recurso" aparte --
+ * un candidato o llega al porcentaje, o no entra esa vuelta, igual que
+ * pasaba antes cuando ninguno llegaba al conteo mínimo.
+ *
+ * Los peldaños de descenso/hermanos/ancla-genérica del diseño anterior
+ * (S022-S023) se retiran con este cambio: eran parte del sistema
+ * booleano "¿coincide o no?", y no tienen un equivalente limpio en un
+ * modelo de porcentaje sin inventar una equivalencia arbitraria. La
+ * intersección directa de géneros específicos ya cubre bien la
+ * inmensa mayoría de los casos reales vistos hasta ahora.
  */
 object GenreMatchQuality {
     /**
      * Etiquetas de FORMATO o ÉPOCA de MusicBrainz que nunca cuentan
-     * como género para la coincidencia, en ningún peldaño: no
-     * describen un sonido, describen una emisora de radio o una
-     * década. Lista corta y con motivo escrito para cada una --
-     * ampliable si aparece un caso real nuevo, nunca a base de
-     * intuición sin verificar en un log o una captura real.
+     * como género para la coincidencia: no describen un sonido,
+     * describen una emisora de radio o una década. Lista corta y con
+     * motivo escrito para cada una -- ampliable si aparece un caso
+     * real nuevo, nunca a base de intuición sin verificar en un log o
+     * una captura real.
      */
     private val FORMAT_TAGS = setOf(
         // Categoría de emisora de radio en EE.UU. ("clásicos del
@@ -72,61 +74,35 @@ object GenreMatchQuality {
         "mainstream rock",
     )
 
-    private fun stripFormatTags(genres: Set<String>): Set<String> = genres - FORMAT_TAGS
+    private fun specificGenres(genres: Set<String>, genreTree: GenreTree): Set<String> {
+        val clean = genres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet() - FORMAT_TAGS
+        return clean.filter { genreTree.isSpecific(it) }.toSet()
+    }
 
     /**
-     * Calcula la calidad de la coincidencia entre los géneros de un
-     * candidato y los del ancla. Reutiliza exactamente los mismos
-     * peldaños que ya validó `KnownHitsRepository.matchesGenre()`
-     * (intersección específica -> descenso -> hermanos -> ancla
-     * genérica de rescate), añadiendo el conteo que decide FUERTE vs
-     * DÉBIL en el primer peldaño, sobre géneros ya limpios de
-     * etiquetas de formato.
+     * @param thresholdPercent mínimo de intersección/unión (0-100)
+     * para admitir el candidato -- viene de
+     * `UiPreferencesManager.radioGenreMatchThresholdPercent`.
      */
-    fun of(candidateGenres: Set<String>, anchorGenres: Set<String>, genreTree: GenreTree): Result {
-        val candidates = stripFormatTags(
-            candidateGenres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet(),
+    fun of(
+        candidateGenres: Set<String>,
+        anchorGenres: Set<String>,
+        genreTree: GenreTree,
+        thresholdPercent: Int,
+    ): Result {
+        val candidates = specificGenres(candidateGenres, genreTree)
+        val anchors = specificGenres(anchorGenres, genreTree)
+        val union = candidates + anchors
+        if (union.isEmpty()) return Result(matches = false, overlapPercent = 0, sharedGenres = emptySet())
+
+        val shared = candidates intersect anchors
+        val percent = (shared.size * 100) / union.size
+        return Result(
+            matches = percent >= thresholdPercent,
+            overlapPercent = percent,
+            sharedGenres = shared,
         )
-        val anchors = stripFormatTags(
-            anchorGenres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet(),
-        )
-        if (candidates.isEmpty() || anchors.isEmpty()) return Result(Level.NONE, emptySet())
-
-        // 1 -- intersección directa de géneros ESPECÍFICOS (no carpetas
-        // raíz). El conteo de esta intersección es lo que decide FUERTE
-        // (2+) vs DÉBIL (exactamente 1).
-        val specificShared = candidates.filter { it in anchors && genreTree.isSpecific(it) }.toSet()
-        if (specificShared.size >= 2) return Result(Level.STRONG, specificShared)
-        if (specificShared.size == 1) return Result(Level.WEAK, specificShared)
-
-        // 2 -- descenso desde el ancla, nunca ascenso. Señal más débil
-        // que una intersección directa -- nunca FUERTE aunque coincidan
-        // varias ramas, porque no son el mismo género, solo parentesco.
-        val descendable = anchors.filter { genreTree.isSpecificEnoughToDescend(it) }
-        if (descendable.any { anchor -> candidates.any { genreTree.isDescendantOf(it, anchor) } }) {
-            return Result(Level.WEAK, emptySet())
-        }
-
-        // 3 -- hermanos, último peldaño de parentesco real.
-        if (anchors.any { anchor -> candidates.any { genreTree.shareImmediateParent(it, anchor) } }) {
-            return Result(Level.WEAK, emptySet())
-        }
-
-        // 4 -- ancla enteramente genérica (sin ninguna carpeta
-        // concreta): lo ancho es lo único que hay y tiene que contar,
-        // igual que en `matchesGenre()` original (S023, caso Radio
-        // Futura).
-        if (anchors.none { genreTree.isSpecific(it) } && candidates.any { it in anchors }) {
-            return Result(Level.WEAK, emptySet())
-        }
-
-        return Result(Level.NONE, emptySet())
     }
 
-    enum class Level { NONE, WEAK, STRONG }
-
-    data class Result(val level: Level, val specificSharedGenres: Set<String>) {
-        val matches: Boolean get() = level != Level.NONE
-        val isStrong: Boolean get() = level == Level.STRONG
-    }
+    data class Result(val matches: Boolean, val overlapPercent: Int, val sharedGenres: Set<String>)
 }

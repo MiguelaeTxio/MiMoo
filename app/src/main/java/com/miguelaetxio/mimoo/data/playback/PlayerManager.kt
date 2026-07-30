@@ -1538,6 +1538,7 @@ class PlayerManager @Inject constructor(
                 country = anchor.country, classical = anchor.isClassical,
                 relaxGenre = degraded,
                 anchorGenres = anchor.genres,
+                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
             )
             if (hit != null) {
                 val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
@@ -1566,6 +1567,7 @@ class PlayerManager @Inject constructor(
             country = anchor.country, classical = anchor.isClassical,
             relaxGenre = degraded,
             anchorGenres = anchor.genres,
+            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )
         for (artist in artists) {
             val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null) ?: continue
@@ -1699,6 +1701,7 @@ class PlayerManager @Inject constructor(
                 anchor,
                 anchorExclusion + triedNames,
                 avoidNames,
+                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
             ) ?: return@repeat
             suggestedAny = true
             triedNames += artist
@@ -1851,6 +1854,7 @@ class PlayerManager @Inject constructor(
             excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames,
             anchorGenres = anchor.genres,
             country = anchor.country, classical = anchor.isClassical,
+            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )
         // S025 -- NO SE REPITE. PUNTO.
         //
@@ -2022,11 +2026,13 @@ class PlayerManager @Inject constructor(
         // tiene `post-punk` entre los suyos y Joy Division también,
         // encajan -- y Pet Shop Boys, que no comparte ninguno, no.
         //
-        // S026 -- la intersección ya no es un booleano plano: se
-        // puntúa con GenreMatchQuality (2+ géneros específicos =
-        // FUERTE, exactamente 1 = DÉBIL/último recurso), mismo
+        // S026 -- la intersección se puntúa por PORCENTAJE de
+        // intersección/unión de géneros específicos (ver
+        // GenreMatchQuality), configurable en Ajustes -- mismo
         // criterio que Conocidos y Exploración.
-        fun genreQuality(p: ProfiledArtist) = radioRepository.genreMatchQuality(anchor, p.profile.genres)
+        val genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value
+        fun genreQuality(p: ProfiledArtist) =
+            radioRepository.genreMatchQuality(anchor, p.profile.genres, genreMatchThresholdPercent)
         fun decadeOk(p: ProfiledArtist) = anchor.decadeBegin == null || p.profile.decadeBegin == anchor.decadeBegin
 
         /** S016, segundo bloque -- entre los que cumplen `condition`, prefiere los no evitados; si eso vacía la lista, ignora la preferencia. */
@@ -2056,15 +2062,11 @@ class PlayerManager @Inject constructor(
         // Single pass: the anchor's genre AND decade, or this quota
         // reports itself exhausted.
         //
-        // S026 -- dentro de esa vuelta única, dos niveles: primero
-        // quien comparte 2+ géneros específicos (FUERTE), y solo si
-        // nadie los tiene, quien comparte exactamente 1 (DÉBIL). La
-        // década nunca se suelta en ninguno de los dos niveles.
-        val chosenArtist = pickPreferred { genreQuality(it).isStrong && decadeOk(it) }
-            ?: pickPreferred {
-                val quality = genreQuality(it)
-                quality.matches && !quality.isStrong && decadeOk(it)
-            }
+        // S026 -- vuelta ÚNICA por porcentaje: género (con el umbral
+        // configurado) Y década del ancla, o esta porción se declara
+        // agotada. Ya no hay una segunda vuelta de "último recurso" --
+        // el umbral decide solo.
+        val chosenArtist = pickPreferred { genreQuality(it).matches && decadeOk(it) }
             ?: return null
 
         // S020 -- dentro del artista elegido, primero los temas que no

@@ -375,6 +375,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * S026 -- umbral de coincidencia de género de la Radio (%
+     * mínimo de intersección/unión de géneros específicos, ver
+     * `GenreMatchQuality`). Petición explícita de Miguel Ángel:
+     * configurable en Ajustes, en escalones de 10.
+     */
+    val radioGenreMatchThresholdPercent: StateFlow<Int> = uiPreferencesManager.radioGenreMatchThresholdPercent
+
+    fun setRadioGenreMatchThresholdPercent(percent: Int) {
+        uiPreferencesManager.setRadioGenreMatchThresholdPercent(percent)
+    }
+
+    /**
      * Fix real (2026-07-24, `debug_error.txt` de Miguel Ángel):
      * cookies de YouTube para que yt-dlp pueda descargar vídeos
      * restringidos por edad ("Sign in to confirm your age") -- ver

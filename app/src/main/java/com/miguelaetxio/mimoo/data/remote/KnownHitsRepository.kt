@@ -391,6 +391,12 @@ class KnownHitsRepository @Inject constructor(
         country: String? = null,
         /** S025 -- ancla de repertorio clásico: sin década ni país. */
         classical: Boolean = false,
+        /**
+         * S026 -- umbral de `GenreMatchQuality` (% mínimo de
+         * intersección/unión de géneros específicos), configurable en
+         * Ajustes -- ver `UiPreferencesManager.radioGenreMatchThresholdPercent`.
+         */
+        genreMatchThresholdPercent: Int = 40,
     ): KnownHit? {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun pick(candidates: List<KnownHit>): KnownHit? {
@@ -438,18 +444,13 @@ class KnownHitsRepository @Inject constructor(
         if (relaxGenre) return pick(pool(decadeBegin, origin, country))
         if (genre == null) return null
         val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
-        // S026 -- primero los candidatos con 2+ géneros ESPECÍFICOS
-        // compartidos con el ancla (ver GenreMatchQuality); solo si
-        // eso no da nada usable se cae a los que comparten uno solo
-        // -- último recurso, no primera opción.
+        // S026 -- un único filtro por PORCENTAJE (ver GenreMatchQuality)
+        // en vez del sistema anterior de dos niveles fuerte/débil.
         val candidates = pool(decadeBegin, origin, country)
-        val strong = candidates.filter { GenreMatchQuality.of(it.genreSet, anchorSet, genreTree).isStrong }
-        pick(strong)?.let { return it }
-        val weak = candidates.filter {
-            val quality = GenreMatchQuality.of(it.genreSet, anchorSet, genreTree)
-            quality.matches && !quality.isStrong
+        val matching = candidates.filter {
+            GenreMatchQuality.of(it.genreSet, anchorSet, genreTree, genreMatchThresholdPercent).matches
         }
-        return pick(weak)
+        return pick(matching)
     }
 
     /**
@@ -478,6 +479,8 @@ class KnownHitsRepository @Inject constructor(
         country: String? = null,
         /** S025 -- ancla de repertorio clásico: sin década ni país. */
         classical: Boolean = false,
+        /** S026 -- ver randomHit(). */
+        genreMatchThresholdPercent: Int = 40,
     ): List<String> {
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
         fun artistsOf(candidates: List<KnownHit>): List<String> =
@@ -508,22 +511,13 @@ class KnownHitsRepository @Inject constructor(
         } else {
             if (genre == null) return emptyList()
             val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
-            // S026 -- misma preferencia que randomHit(): 2+ géneros
-            // específicos compartidos antes que uno solo.
+            // S026 -- un único filtro por porcentaje, ver randomHit().
             val candidates = pool(decadeBegin, origin, country)
-            val strongArtists = artistsOf(
-                candidates.filter { GenreMatchQuality.of(it.genreSet, anchorSet, genreTree).isStrong },
+            artistsOf(
+                candidates.filter {
+                    GenreMatchQuality.of(it.genreSet, anchorSet, genreTree, genreMatchThresholdPercent).matches
+                },
             )
-            if (strongArtists.isNotEmpty()) {
-                strongArtists
-            } else {
-                artistsOf(
-                    candidates.filter {
-                        val quality = GenreMatchQuality.of(it.genreSet, anchorSet, genreTree)
-                        quality.matches && !quality.isStrong
-                    },
-                )
-            }
         }
         val (repeated, fresh) = all.partition { it.lowercase() in avoidLower }
         return fresh.shuffled() + repeated.shuffled()

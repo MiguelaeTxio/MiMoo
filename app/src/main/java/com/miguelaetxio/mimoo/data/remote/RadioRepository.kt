@@ -958,6 +958,8 @@ class RadioRepository @Inject constructor(
          * y sigue pidiendo. MusicBrainz tiene dos millones de artistas.
          */
         offset: Int = 0,
+        /** S026 -- ver KnownHitsRepository.randomHit(). */
+        genreMatchThresholdPercent: Int = 40,
     ): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
@@ -980,31 +982,34 @@ class RadioRepository @Inject constructor(
         val fromDictionary = anchorDictionary
             .artistsMatching(localGenres, anchor.country)
             .filter { (name, _) -> name.lowercase() !in excludeLower }
-        // S026 -- entre los candidatos de la base de datos, preferir a
-        // quien comparte DOS O MÁS géneros específicos con el ancla
-        // (ver GenreMatchQuality) sobre quien comparte solo uno.
+        // S026 -- entre los candidatos de la base de datos, filtro
+        // único por PORCENTAJE de intersección/unión de géneros
+        // específicos (ver GenreMatchQuality), configurable en Ajustes.
         // Motivo real, con log delante: el ancla de Led Zeppelin trae
-        // ocho géneros, y Emerson, Lake & Palmer solo comparte
-        // 'progressive rock' -- uno solo, y de los menos representativos
-        // de Led Zeppelin. Preferir intersecciones más ricas (p.ej. un
-        // candidato con 'hard rock' + 'heavy metal') deja a ELP como
-        // último recurso, no como primera opción.
+        // varios géneros, y Emerson, Lake & Palmer solo comparte
+        // 'progressive rock' -- una intersección demasiado pequeña
+        // frente al total de géneros de ambos.
         if (fromDictionary.isNotEmpty()) {
             val scored = fromDictionary.map { (name, genres) ->
-                Triple(name, genres, GenreMatchQuality.of(genres, anchor.genres, genreTree))
+                Triple(name, genres, GenreMatchQuality.of(genres, anchor.genres, genreTree, genreMatchThresholdPercent))
             }
-            val strong = scored.filter { it.third.isStrong }
-            val weak = scored.filter { it.third.matches && !it.third.isStrong }
-            val tier = strong.ifEmpty { weak }
-            val names = tier.map { it.first }
-            val preferredLocal = names.filter { it.lowercase() !in avoidLower }
-            val chosenLocal = preferredLocal.ifEmpty { names }.random()
+            val matching = scored.filter { it.third.matches }
+            val names = matching.map { it.first }
+            if (names.isNotEmpty()) {
+                val preferredLocal = names.filter { it.lowercase() !in avoidLower }
+                val chosenLocal = preferredLocal.ifEmpty { names }.random()
+                log(
+                    "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}) -> " +
+                        "'$chosenLocal' (${names.size}/${fromDictionary.size} candidatos DE LA BASE DE DATOS, " +
+                        "sin red, umbral=$genreMatchThresholdPercent%)"
+                )
+                return chosenLocal
+            }
             log(
-                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}) -> " +
-                    "'$chosenLocal' (${names.size}/${fromDictionary.size} candidatos DE LA BASE DE DATOS, " +
-                    "sin red, nivel=${if (strong.isNotEmpty()) "FUERTE (2+ géneros)" else "DÉBIL (1 género, último recurso)"})"
+                "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}) -- " +
+                    "${fromDictionary.size} candidatos de la base de datos, ninguno llega al " +
+                    "$genreMatchThresholdPercent% de coincidencia -- se cae a la búsqueda en vivo"
             )
-            return chosenLocal
         }
 
         // S020 -- cascada de DOS peldaños, nunca tres. El tercero
@@ -1067,13 +1072,16 @@ class RadioRepository @Inject constructor(
 
     /**
      * S026 -- expone `GenreMatchQuality` a `PlayerManager` (porción
-     * DISCO), que no tiene acceso directo a `GenreTree`. Misma
-     * preferencia que en Conocidos y Exploración: 2+ géneros
-     * específicos compartidos es FUERTE, exactamente 1 es DÉBIL
-     * (último recurso).
+     * DISCO), que no tiene acceso directo a `GenreTree`. Mismo umbral
+     * por porcentaje que en Conocidos y Exploración -- ver
+     * `GenreMatchQuality`.
      */
-    fun genreMatchQuality(anchor: RadioAnchor, candidateGenres: Set<String>): GenreMatchQuality.Result =
-        GenreMatchQuality.of(candidateGenres, anchor.genres, genreTree)
+    fun genreMatchQuality(
+        anchor: RadioAnchor,
+        candidateGenres: Set<String>,
+        thresholdPercent: Int = 40,
+    ): GenreMatchQuality.Result =
+        GenreMatchQuality.of(candidateGenres, anchor.genres, genreTree, thresholdPercent)
 
     /**
      * S013/S014, punto 8 -- fuente de "disco" (10%, biblioteca local

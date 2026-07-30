@@ -811,6 +811,25 @@ fun SettingsScreen(
                         valueRange = 0f..100f,
                         steps = 99,
                     )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // S026 -- umbral de GenreMatchQuality, petición
+                    // explícita de Miguel Ángel: "configurable en
+                    // ajustes, con escalones de diez". Por defecto
+                    // 40% -- ver GenreMatchQuality.kt para el porqué,
+                    // verificado contra datos reales antes de fijarlo.
+                    val genreMatchThresholdPercent by viewModel.radioGenreMatchThresholdPercent.collectAsState()
+                    Text(
+                        "Cuánto tiene que parecerse un artista, por géneros, para entrar en la " +
+                            "Radio: $genreMatchThresholdPercent%",
+                    )
+                    Slider(
+                        value = genreMatchThresholdPercent.toFloat(),
+                        onValueChange = { viewModel.setRadioGenreMatchThresholdPercent(it.toInt()) },
+                        valueRange = 0f..100f,
+                        steps = 9,
+                    )
                 }
             }
 

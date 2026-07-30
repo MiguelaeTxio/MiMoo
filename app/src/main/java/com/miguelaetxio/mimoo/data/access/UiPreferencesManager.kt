@@ -51,6 +51,15 @@ class UiPreferencesManager @Inject constructor(
         const val KEY_RADIO_DISCO_PERCENT = "radio_disco_percent"
         const val DEFAULT_RADIO_EXPLORE_PERCENT = 10
         const val DEFAULT_RADIO_DISCO_PERCENT = 10
+
+        // S026 -- umbral de GenreMatchQuality (intersección/unión de
+        // géneros específicos, ver esa clase). Petición explícita de
+        // Miguel Ángel: "un 30% o un 40%... configurable en ajustes,
+        // con escalones de diez". 40% por defecto -- ver
+        // GenreMatchQuality.kt para el porqué de ese número, verificado
+        // contra datos reales antes de fijarlo.
+        const val KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT = "radio_genre_match_threshold_percent"
+        const val DEFAULT_RADIO_GENRE_MATCH_THRESHOLD_PERCENT = 40
     }
 
     private val prefs by lazy {
@@ -108,5 +117,24 @@ class UiPreferencesManager @Inject constructor(
         val clamped = percent.coerceIn(0, 100 - _radioExplorePercent.value)
         prefs.edit { putInt(KEY_RADIO_DISCO_PERCENT, clamped) }
         _radioDiscoPercent.value = clamped
+    }
+
+    private val _radioGenreMatchThresholdPercent = MutableStateFlow(
+        prefs.getInt(KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT, DEFAULT_RADIO_GENRE_MATCH_THRESHOLD_PERCENT)
+    )
+
+    /**
+     * S026 -- % mínimo de intersección/unión de géneros específicos
+     * (ver `GenreMatchQuality`) para que un candidato entre en la
+     * Radio. Ajustable en escalones de 10 (0, 10, 20... 100).
+     */
+    val radioGenreMatchThresholdPercent: StateFlow<Int> = _radioGenreMatchThresholdPercent.asStateFlow()
+
+    /** S026 -- redondea al escalón de 10 más cercano y recorta a 0..100. */
+    fun setRadioGenreMatchThresholdPercent(percent: Int) {
+        val stepped = ((percent + 5) / 10) * 10
+        val clamped = stepped.coerceIn(0, 100)
+        prefs.edit { putInt(KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT, clamped) }
+        _radioGenreMatchThresholdPercent.value = clamped
     }
 }
