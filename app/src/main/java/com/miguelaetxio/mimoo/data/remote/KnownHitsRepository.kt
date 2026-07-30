@@ -612,4 +612,26 @@ class KnownHitsRepository @Inject constructor(
             ?: return null
         return OriginGroup.of(hit.country)
     }
+
+    /**
+     * S026 -- ¿está `artist` en el diccionario de éxitos, en CUALQUIER
+     * década y bloque (`es` o `intl`)? El bloque `intl` no significa
+     * "extranjero cualquiera" -- está curado para artistas CONOCIDOS
+     * EN ESPAÑA aunque no sean españoles (Shakira, Bad Bunny, Karol
+     * G...), nunca "cualquier tema del Billboard sin más".
+     *
+     * Sirve de salvaguarda cuando el grupo de origen abre a todo
+     * Hispanoamérica (S026, ver `OriginGroup`): la semilla de
+     * Exploración (1.161 artistas) NO tiene ese filtro de "conocido en
+     * España" -- es solo género+país de MusicBrainz. Orden de Miguel
+     * Ángel, con ejemplo: *"si en España Shakira es número 1... Shakira
+     * debe ser preferente junto a los demás éxitos en español... y que
+     * no me salga Karumanta, que es un éxito en Perú."* Ver
+     * `RadioRepository.suggestRelatedArtist()`.
+     */
+    fun isKnownArtistAnywhere(artist: String): Boolean {
+        val artistLower = artist.trim().lowercase()
+        if (artistLower.isBlank()) return false
+        return byDecade.values.any { d -> (d.es + d.intl).any { it.artist.lowercase() == artistLower } }
+    }
 }

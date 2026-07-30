@@ -1021,7 +1021,33 @@ class RadioRepository @Inject constructor(
         val localGenres = (listOf(anchor.genre) + anchor.genres).toSet()
         val fromDictionary = anchorDictionary
             .artistsMatching(localGenres, anchor.originGroup)
-            .filter { (name, _) -> name.lowercase() !in excludeLower }
+            .filter { it.name.lowercase() !in excludeLower }
+            // S026 -- SALVAGUARDA "CONOCIDO EN ESPAÑA" dentro de
+            // Hispanoamérica. La semilla de Exploración no tiene
+            // curación de fama -- es solo género+país de MusicBrainz,
+            // a diferencia del diccionario de éxitos (`es`+`intl`), que
+            // SÍ está curado para "conocido en España" (ver
+            // `KnownHitsRepository.isKnownArtistAnywhere()`). Orden de
+            // Miguel Ángel, con ejemplo: *"si en España Shakira es
+            // número 1... Shakira debe ser preferente junto a los
+            // demás éxitos en español... y que no me salga Karumanta,
+            // que es un éxito en Perú."* Con ancla española, un
+            // candidato hispanoamericano que NO sea de España tiene
+            // que estar además en el diccionario de éxitos -- si no,
+            // fuera. No aplica a candidatos españoles (siempre
+            // admitidos, es su propio país) ni a otros grupos
+            // (Anglosajona no tiene esta curación de fama por país, y
+            // Miguel Ángel pidió explícitamente que ahí el país no
+            // pesara nada).
+            .filter { candidate ->
+                if (anchor.country == "ES" && anchor.originGroup == OriginGroup.HISPANOAMERICA &&
+                    candidate.country != "ES"
+                ) {
+                    knownHitsRepository.isKnownArtistAnywhere(candidate.name)
+                } else {
+                    true
+                }
+            }
         // S026 -- entre los candidatos de la base de datos, filtro
         // único por PORCENTAJE de intersección/unión de géneros
         // específicos (ver GenreMatchQuality), configurable en Ajustes.
@@ -1030,8 +1056,12 @@ class RadioRepository @Inject constructor(
         // 'progressive rock' -- una intersección demasiado pequeña
         // frente al total de géneros de ambos.
         if (fromDictionary.isNotEmpty()) {
-            val scored = fromDictionary.map { (name, genres) ->
-                Triple(name, genres, GenreMatchQuality.of(genres, anchor.genres, genreTree, genreMatchThresholdPercent))
+            val scored = fromDictionary.map { candidate ->
+                Triple(
+                    candidate.name,
+                    candidate.genres,
+                    GenreMatchQuality.of(candidate.genres, anchor.genres, genreTree, genreMatchThresholdPercent),
+                )
             }
             val matching = scored.filter { it.third.matches }
             val names = matching.map { it.first }

@@ -503,7 +503,7 @@ class AnchorDictionary @Inject constructor(
      * y es justo lo que media hora de recorrido debería servir para
      * evitar.
      *
-     * S026 -- filtra por GRUPO de origen (Iberoamericana/Anglosajona/
+     * S026 -- filtra por GRUPO de origen (Hispanoamérica/Anglosajona/
      * Europea/Mundial, ver `OriginGroup`) en vez de país exacto,
      * sustituyendo el filtro de S025. Decisión explícita de Miguel
      * Ángel: *"prefiero que Led Zeppelin me traiga a Van Halen o AC/DC
@@ -512,8 +512,16 @@ class AnchorDictionary @Inject constructor(
      * `originGroup == null` (dato desconocido) no filtra por origen en
      * absoluto -- mismo principio de degradación elegante que el resto
      * de la Radio.
+     *
+     * Devuelve también el país exacto de cada candidato (antes solo
+     * nombre+géneros), para que `RadioRepository.suggestRelatedArtist()`
+     * pueda aplicar la salvaguarda "conocido en España" a los
+     * candidatos hispanoamericanos que no son de España -- ver ese
+     * método.
      */
-    fun artistsMatching(genres: Set<String>, originGroup: OriginGroup?): List<Pair<String, Set<String>>> {
+    data class MatchedArtist(val name: String, val genres: Set<String>, val country: String?)
+
+    fun artistsMatching(genres: Set<String>, originGroup: OriginGroup?): List<MatchedArtist> {
         ensureLoaded()
         val wanted = genres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
         if (wanted.isEmpty()) return emptyList()
@@ -522,7 +530,7 @@ class AnchorDictionary @Inject constructor(
             .filter { originGroup == null || OriginGroup.of(it.country) == originGroup }
             .filter { it.genres.any { g -> g in wanted } }
             .distinctBy { it.artist.lowercase().trim() }
-            .map { it.artist to it.genres.toSet() }
+            .map { MatchedArtist(it.artist, it.genres.toSet(), it.country) }
             .toList()
     }
 
