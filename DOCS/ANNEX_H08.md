@@ -2639,3 +2639,37 @@ el valor actual en cada vuelta.
 **Sin verificar en dispositivo real todavía** -- pendiente instalar,
 probar con Led Zeppelin, y comprobar también el slider nuevo en
 Ajustes.
+
+---
+
+## FALLO ADICIONAL ENCONTRADO EN EL PROPIO LOG (sin que Miguel Ángel lo señalara)
+
+Releyendo `radio_relacionados_debug__4_.txt` a fondo (el mismo del
+episodio Pink Floyd/Fleetwood Mac), aparecía una excepción real que no
+había comentado nadie todavía:
+
+```
+AnchorDictionary.writeText('temas.json') -> EXCEPCIÓN: IllegalArgumentException:
+Failed to determine if .../temas.json is child of ...: Missing file
+```
+
+Después de varias escrituras en verde (18:56, 21:41, 22:14), empieza a
+fallar sistemáticamente a partir de las 05:03 -- salto de varias
+horas, compatible con que el proceso de la app se reiniciara de por
+medio. `docCache` (el mapa en memoria que evita repetir la búsqueda
+del fichero en cada escritura) no sobrevive a un reinicio de proceso;
+si una escritura llega con un handle de `DocumentFile` que ya no
+corresponde a un fichero real (por ejemplo, consolidado y borrado por
+`cleanupStrayFiles()` en la instancia anterior), la apertura del
+`OutputStream` falla con ese mensaje.
+
+### Fix (commit `cbeadf3`, compilado en verde)
+
+`writeText()` ahora reintenta UNA vez si el primer intento falla:
+invalida la entrada de `docCache` para ese nombre, resuelve de nuevo
+contra el disco (`dir.findFile()` o `dir.createFile()` si tampoco
+existe ya) y reintenta. Si el segundo intento también falla, se
+informa como antes -- nunca reintentos indefinidos, y lo aprendido se
+queda en memoria para el resto de la sesión sin romper la Radio.
+
+**Sin verificar en dispositivo real todavía.**
