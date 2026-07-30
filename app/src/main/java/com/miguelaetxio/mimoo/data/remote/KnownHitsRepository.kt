@@ -138,17 +138,19 @@ class KnownHitsRepository @Inject constructor(
     }
 
     /**
-     * S020, orden explícita de Miguel Ángel: **el origen separa
-     * España y extranjero en los DOS sentidos.** Ancla española ->
-     * solo artistas españoles; ancla no española -> solo artistas no
-     * españoles. No hay mezcla.
+     * S026 -- el origen separa los CUATRO GRUPOS
+     * (Iberoamericana/Anglosajona/Europea/Mundial, ver `OriginGroup`)
+     * en TODOS los sentidos, sustituyendo el binario España/extranjero
+     * de S020. Ancla de un grupo -> solo artistas del MISMO grupo.
+     * Dentro del grupo, el país exacto ya no manda nada -- decisión
+     * explícita de Miguel Ángel: *"prefiero que Led Zeppelin me traiga
+     * a Van Halen o AC/DC antes que rebuscar en GB."*
      *
-     * `ANY` no lo usa hoy ningún camino de la Radio -- se conserva
-     * porque `lookupHit()`/`isKnownHitArtist()` son consultas de
-     * "¿está este artista en el diccionario?" donde a veces interesa
-     * mirar el diccionario entero sin condicionar por origen.
+     * `originGroup == null` no filtra por origen en absoluto --
+     * se conserva para `lookupHit()`/`isKnownHitArtist()`, consultas
+     * de "¿está este artista en el diccionario?" que no alimentan la
+     * cadena de la Radio, y para clásica (`RadioAnchor.isClassical`).
      */
-    enum class Origin { ES, INTL, ANY }
 
     /**
      * Década en la que el diccionario sitúa un tema concreto (S023).
@@ -184,8 +186,8 @@ class KnownHitsRepository @Inject constructor(
     }
 
     /**
-     * Pool de un origen para una década concreta o, si `decadeBegin`
-     * es null, de TODAS las décadas conocidas.
+     * Pool de un grupo de origen para una década concreta o, si
+     * `decadeBegin` es null, de TODAS las décadas conocidas.
      *
      * **S024 -- ese "todas" ya no lo usa la Radio.** Era un resto de
      * S011 y en el log de S023 se vio lo que hacía: la copla de Carlos
@@ -197,49 +199,38 @@ class KnownHitsRepository @Inject constructor(
      * llegar aquí.
      *
      * El "todas las décadas" se conserva porque lo siguen necesitando
-     * `lookupHit()`/`isKnownHitArtist()`, que son consultas de "¿está
-     * este artista en el diccionario, en cualquier época?" y no
-     * alimentan la cadena de la Radio.
+     * `lookupHit()`/`isKnownHitArtist()`.
      *
-     * **Historial S020.** Antes recibía un `requireEs: Boolean` y
-     * servía `d.es + d.intl` cuando era `false`, lo que metía el
-     * bloque español entero en cualquier sesión anclada en un artista
-     * extranjero. Miguel Ángel cerró la regla definitiva en S020:
-     * separación dura en los dos sentidos.
+     * **S026 -- ya no hay bloque `es`/`intl` que elegir**: se combinan
+     * siempre los dos (`d.es + d.intl`) y el filtro real es
+     * `OriginGroup.of(it.country) == originGroup`, calculado del país
+     * real de cada entrada -- el bloque `es`/`intl` de los propios
+     * datos ya no se corresponde con los cuatro grupos (Brasil y
+     * Portugal, por ejemplo, viven en `intl` pero pertenecen a
+     * Iberoamericana).
      */
-    private fun pool(decadeBegin: Int?, origin: Origin, country: String? = null): List<KnownHit> {
+    private fun pool(decadeBegin: Int?, originGroup: OriginGroup?): List<KnownHit> {
         val decades = if (decadeBegin != null) listOfNotNull(byDecade[decadeBegin]) else byDecade.values.toList()
         return decades.flatMap { d ->
-            val raw = when (origin) {
-                Origin.ES -> d.es
-                Origin.INTL -> d.intl
-                Origin.ANY -> d.es + d.intl
+            val raw = d.es + d.intl
+            val filtered = if (originGroup != null) {
+                raw.filter { OriginGroup.of(it.country) == originGroup }
+            } else {
+                raw
             }
-            // S025 -- el origen es el PAÍS del ancla, no el bloque
-            // es/intl. Con ancla británica el bloque `intl` servía
-            // igualmente estadounidenses: en el log de Deep Purple
-            // (hard rock, GB, 1970) entraron Neil Young, Kiss, Alice
-            // Cooper y Lynyrd Skynyrd. Si el ancla no trae país se
-            // conserva el comportamiento por bloque, que es lo único
-            // honesto sin el dato.
-            // ---
-            // S025 -- origin is the anchor's country, not the es/intl
-            // block. Falls back to block-only when the anchor has no
-            // country.
-            val filtered = if (country != null) raw.filter { it.country == country } else raw
             filtered.map { KnownHit(it.artist, it.song, it.genre, it.genres, it.country) }
         }
     }
 
-    /** Comprueba si `artist` es un "éxito conocido" para la década+origen dados (ignora may/min). */
-    fun isKnownHitArtist(artist: String, decadeBegin: Int?, origin: Origin): Boolean =
-        lookupHit(artist, decadeBegin, origin) != null
+    /** Comprueba si `artist` es un "éxito conocido" para la década+grupo dados (ignora may/min). */
+    fun isKnownHitArtist(artist: String, decadeBegin: Int?, originGroup: OriginGroup?): Boolean =
+        lookupHit(artist, decadeBegin, originGroup) != null
 
-    /** Devuelve el par artista+canción exacto si `artist` está en el diccionario para esa década/origen. */
-    fun lookupHit(artist: String, decadeBegin: Int?, origin: Origin): KnownHit? {
+    /** Devuelve el par artista+canción exacto si `artist` está en el diccionario para esa década/grupo. */
+    fun lookupHit(artist: String, decadeBegin: Int?, originGroup: OriginGroup?): KnownHit? {
         val artistLower = artist.trim().lowercase()
         if (artistLower.isBlank()) return null
-        return pool(decadeBegin, origin).firstOrNull { it.artist.lowercase() == artistLower }
+        return pool(decadeBegin, originGroup).firstOrNull { it.artist.lowercase() == artistLower }
     }
 
     /**
@@ -366,7 +357,7 @@ class KnownHitsRepository @Inject constructor(
     fun randomHit(
         genre: String?,
         decadeBegin: Int?,
-        origin: Origin,
+        originGroup: OriginGroup?,
         excludeSongKeys: Set<String>,
         avoidArtists: Set<String> = emptySet(),
         relaxGenre: Boolean = false,
@@ -387,8 +378,6 @@ class KnownHitsRepository @Inject constructor(
          * antigüedad sale gratis sin estructura nueva.
          */
         playOrder: List<String> = emptyList(),
-        /** S025 -- país del ancla; null = no filtrar por país. */
-        country: String? = null,
         /** S025 -- ancla de repertorio clásico: sin década ni país. */
         classical: Boolean = false,
         /**
@@ -441,12 +430,12 @@ class KnownHitsRepository @Inject constructor(
         // conservan origen y década -- que es lo que se percibe -- y
         // se suelta el género. Que suene Mecano es infinitamente mejor
         // que no sonar nada o repetir.
-        if (relaxGenre) return pick(pool(decadeBegin, origin, country))
+        if (relaxGenre) return pick(pool(decadeBegin, originGroup))
         if (genre == null) return null
         val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
         // S026 -- un único filtro por PORCENTAJE (ver GenreMatchQuality)
         // en vez del sistema anterior de dos niveles fuerte/débil.
-        val candidates = pool(decadeBegin, origin, country)
+        val candidates = pool(decadeBegin, originGroup)
         val matching = candidates.filter {
             GenreMatchQuality.of(it.genreSet, anchorSet, genreTree, genreMatchThresholdPercent).matches
         }
@@ -471,12 +460,10 @@ class KnownHitsRepository @Inject constructor(
     fun knownArtists(
         genre: String?,
         decadeBegin: Int?,
-        origin: Origin,
+        originGroup: OriginGroup?,
         avoidArtists: Set<String> = emptySet(),
         relaxGenre: Boolean = false,
         anchorGenres: Set<String> = emptySet(),
-        /** S025 -- país del ancla; null = no filtrar por país. */
-        country: String? = null,
         /** S025 -- ancla de repertorio clásico: sin década ni país. */
         classical: Boolean = false,
         /** S026 -- ver randomHit(). */
@@ -507,12 +494,12 @@ class KnownHitsRepository @Inject constructor(
         // S022 -- ver el comentario de `randomHit()`: en modo degradado
         // se sueltan los géneros y se conservan origen y década.
         val all = if (relaxGenre) {
-            artistsOf(pool(decadeBegin, origin, country))
+            artistsOf(pool(decadeBegin, originGroup))
         } else {
             if (genre == null) return emptyList()
             val anchorSet = anchorGenres.ifEmpty { setOf(genre) }
             // S026 -- un único filtro por porcentaje, ver randomHit().
-            val candidates = pool(decadeBegin, origin, country)
+            val candidates = pool(decadeBegin, originGroup)
             artistsOf(
                 candidates.filter {
                     GenreMatchQuality.of(it.genreSet, anchorSet, genreTree, genreMatchThresholdPercent).matches
@@ -608,9 +595,21 @@ class KnownHitsRepository @Inject constructor(
         return found
     }
 
-    fun isKnownSpanishArtist(artist: String): Boolean {
+    /**
+     * S026 -- sustituye a `isKnownSpanishArtist()`, generalizado a los
+     * cuatro grupos. Busca al artista en TODO el diccionario (es+intl,
+     * cualquier década) y devuelve el grupo de origen de su país
+     * catalogado -- `null` si no está en el diccionario. Usado por
+     * `RadioRepository.resolveAnchor()` como respaldo barato cuando
+     * MusicBrainz no da país para el artista ancla.
+     */
+    fun originGroupOfKnownArtist(artist: String): OriginGroup? {
         val artistLower = artist.trim().lowercase()
-        if (artistLower.isBlank()) return false
-        return byDecade.values.any { d -> d.es.any { it.artist.lowercase() == artistLower } }
+        if (artistLower.isBlank()) return null
+        val hit = byDecade.values
+            .flatMap { it.es + it.intl }
+            .firstOrNull { it.artist.lowercase() == artistLower }
+            ?: return null
+        return OriginGroup.of(hit.country)
     }
 }

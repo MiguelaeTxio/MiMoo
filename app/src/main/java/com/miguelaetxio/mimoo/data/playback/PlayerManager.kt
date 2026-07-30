@@ -1492,21 +1492,13 @@ class PlayerManager @Inject constructor(
     }
 
     /**
-     * S024 -- en repertorio clásico el origen NO separa: se consulta
-     * el diccionario entero con `Origin.ANY`, sin distinguir español
-     * de extranjero. Ver `RadioAnchor.isClassical`. `ANY` ya existía
-     * en el enum desde S020 pero ningún camino de la Radio lo usaba;
-     * este es el primero.
+     * S026 -- ya no hace falta mapear a un enum aparte: `RadioAnchor`
+     * y `KnownHitsRepository` comparten el mismo `OriginGroup`. En
+     * clásica se devuelve `null` (sin filtro de origen) aunque
+     * `anchor.originGroup` trajera algo -- ver `RadioAnchor.isClassical`.
      */
-    private fun anchorOrigin(anchor: RadioAnchor) =
-        when {
-            anchor.isClassical ->
-                com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.ANY
-            anchor.isSpanishOrigin ->
-                com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.ES
-            else ->
-                com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.Origin.INTL
-        }
+    private fun anchorOrigin(anchor: RadioAnchor): com.miguelaetxio.mimoo.data.remote.OriginGroup? =
+        if (anchor.isClassical) null else anchor.originGroup
 
     /**
      * Porción CONOCIDOS, dos peldaños (S020):
@@ -1535,7 +1527,7 @@ class PlayerManager @Inject constructor(
         if (!radioKnownSongsExhausted) {
             val hit = knownHitsRepository.randomHit(
                 anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), radioUsedSongs, avoidNames,
-                country = anchor.country, classical = anchor.isClassical,
+                classical = anchor.isClassical,
                 relaxGenre = degraded,
                 anchorGenres = anchor.genres,
                 genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
@@ -1564,7 +1556,7 @@ class PlayerManager @Inject constructor(
 
         val artists = knownHitsRepository.knownArtists(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), avoidNames,
-            country = anchor.country, classical = anchor.isClassical,
+            classical = anchor.isClassical,
             relaxGenre = degraded,
             anchorGenres = anchor.genres,
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
@@ -1843,7 +1835,7 @@ class PlayerManager @Inject constructor(
             appContext, storageManager,
             "resolveFinalFallback(ancla='$anchorArtistName') -- las TRES porciones agotadas esta vuelta; " +
                 "lo que venga respetando género='${anchor.genre}', década=${anchor.decadeBegin}, " +
-                "origen_es=${anchor.isSpanishOrigin}",
+                "grupo=${anchor.originGroup ?: "?"}",
         )
 
         // S024 -- primero se intenta SIN repetir nada. Antes se pasaba
@@ -1853,7 +1845,7 @@ class PlayerManager @Inject constructor(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
             excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames,
             anchorGenres = anchor.genres,
-            country = anchor.country, classical = anchor.isClassical,
+            classical = anchor.isClassical,
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )
         // S025 -- NO SE REPITE. PUNTO.
@@ -1997,22 +1989,21 @@ class PlayerManager @Inject constructor(
             // absoluto: cualquier intérprete de la biblioteca vale,
             // sea de donde sea. Ver `RadioAnchor.isClassical`.
             //
-            // S025 -- el origen es el PAÍS del ancla, no un booleano.
-            // Misma orden y mismo cambio que en
-            // RadioRepository.buildGenreQuery(): si el ancla es Led
-            // Zeppelin (GB), esta porción tiene que traer británicos, y
-            // no "todo lo que no sea español". Cuando MusicBrainz no da
-            // país del ancla se conserva el comportamiento antiguo, que
-            // es lo único honesto sin el dato.
-            // ---
-            // S025 -- origin is the anchor's actual country, not a
-            // boolean; same change as in buildGenreQuery(). Falls back
-            // to the old behaviour when the anchor has no country.
+            // S026 -- el origen se compara por GRUPO
+            // (Iberoamericana/Anglosajona/Europea/Mundial, ver
+            // `OriginGroup`), no por país exacto ni por el binario
+            // España/resto de S025. Con ancla Led Zeppelin (GB,
+            // Anglosajona), esta porción admite a cualquiera del mismo
+            // grupo (EEUU, Australia...), no solo GB -- decisión
+            // explícita de Miguel Ángel: *"prefiero que Led Zeppelin me
+            // traiga a Van Halen o AC/DC antes que rebuscar en GB."*
+            // `originGroup == null` (dato desconocido) no filtra, mismo
+            // principio de degradación elegante que el resto de la
+            // Radio.
             val originOk = when {
                 anchor.isClassical -> true
-                anchor.country != null -> profile.country == anchor.country
-                anchor.isSpanishOrigin -> profile.country == "ES"
-                else -> profile.country != "ES"
+                anchor.originGroup == null -> true
+                else -> com.miguelaetxio.mimoo.data.remote.OriginGroup.of(profile.country) == anchor.originGroup
             }
             if (!originOk) null else ProfiledArtist(artistName, profile)
         }

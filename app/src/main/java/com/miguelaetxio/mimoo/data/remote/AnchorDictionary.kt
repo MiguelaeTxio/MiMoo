@@ -503,19 +503,23 @@ class AnchorDictionary @Inject constructor(
      * y es justo lo que media hora de recorrido debería servir para
      * evitar.
      *
-     * S026 -- devuelve también los géneros de cada candidato (antes
-     * solo el nombre), para que el llamante pueda puntuar la calidad
-     * de la coincidencia con `GenreMatchQuality` y preferir a quien
-     * comparte dos o más géneros específicos sobre quien comparte
-     * solo uno -- ver `RadioRepository.suggestRelatedArtist()`.
+     * S026 -- filtra por GRUPO de origen (Iberoamericana/Anglosajona/
+     * Europea/Mundial, ver `OriginGroup`) en vez de país exacto,
+     * sustituyendo el filtro de S025. Decisión explícita de Miguel
+     * Ángel: *"prefiero que Led Zeppelin me traiga a Van Halen o AC/DC
+     * antes que rebuscar en GB"* -- dentro del grupo, el país exacto
+     * ya no manda nada, se abre a todo el grupo desde el principio.
+     * `originGroup == null` (dato desconocido) no filtra por origen en
+     * absoluto -- mismo principio de degradación elegante que el resto
+     * de la Radio.
      */
-    fun artistsMatching(genres: Set<String>, country: String?): List<Pair<String, Set<String>>> {
+    fun artistsMatching(genres: Set<String>, originGroup: OriginGroup?): List<Pair<String, Set<String>>> {
         ensureLoaded()
         val wanted = genres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
         if (wanted.isEmpty()) return emptyList()
         val pool = seed.values.asSequence() + learnedArtists.values.asSequence()
         return pool
-            .filter { country == null || it.country == country }
+            .filter { originGroup == null || OriginGroup.of(it.country) == originGroup }
             .filter { it.genres.any { g -> g in wanted } }
             .distinctBy { it.artist.lowercase().trim() }
             .map { it.artist to it.genres.toSet() }
