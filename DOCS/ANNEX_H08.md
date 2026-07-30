@@ -2588,3 +2588,54 @@ solo añadiría llamadas de red innecesarias.
 **Sin verificar en dispositivo real todavía** -- en particular, que el
 aviso "Radio detenida" aparezca de verdad sin red, y que "Reintentar"
 relance la cola correctamente.
+
+---
+
+## UMBRAL DE COINCIDENCIA DE GÉNERO POR PORCENTAJE, CONFIGURABLE EN AJUSTES
+
+Con log real delante, Miguel Ángel confirmó que el sistema de dos
+niveles (2+ géneros específicos = fuerte, exactamente 1 = último
+recurso) seguía colando artistas que no encajaban: Pink Floyd (13
+géneros catalogados, solo 1 -- `blues rock` -- compartido con Led
+Zeppelin) y Fleetwood Mac (8 géneros, también solo 1 compartido). *"Pink
+Floyd... hay un mundo enorme... Fleetwood Mac más en una lista con
+Neil Young, Creedence Clearwater Revival."*
+
+**Rediseño, textual:** *"si tiene diez géneros, y el otro tiene diez
+géneros, y tienen ocho que son iguales, coincide... un 30% o un 40%...
+configurable en ajustes, con escalones de diez."*
+
+### Implementado (commit `3109a7b`, compilado en verde)
+
+`GenreMatchQuality` reescrita por completo: en vez de contar géneros
+específicos compartidos, calcula **intersección/unión** (índice de
+Jaccard) de los géneros específicos de cada lado, y admite el
+candidato solo si el porcentaje supera un umbral. Verificado contra
+los datos reales antes de implementar:
+
+| Artista | Compartidos/unión | % |
+|---|---|---|
+| Pink Floyd | 1/17 | 6% |
+| Fleetwood Mac | 1/10 | 10% |
+| Queen | 1/12 | 8% |
+| Jethro Tull | 2/6 | 33% |
+| Motörhead | 2/5 | 40% |
+| Black Sabbath | 3/7 | 43% |
+| Deep Purple | 3/6 | 50% |
+
+Con el **40% por defecto**, la línea separa exactamente donde Miguel
+Ángel la puso a ojo. Sustituye por completo el sistema fuerte/débil:
+ya no hay "último recurso" aparte -- el porcentaje decide solo, y si
+nadie lo alcanza esa vuelta, la porción se declara agotada igual que
+antes.
+
+**Configurable en Ajustes → Radio:** nuevo slider en escalones de 10
+(`UiPreferencesManager.radioGenreMatchThresholdPercent`, mismo patrón
+de `SharedPreferences` que el cupo 80/10/10). Se aplica de inmediato,
+sin reiniciar la Radio -- las cuatro llamadas que lo usan
+(`fetchFromKnown` ×2, `resolveFinalFallback`, `fetchFromDisco`) leen
+el valor actual en cada vuelta.
+
+**Sin verificar en dispositivo real todavía** -- pendiente instalar,
+probar con Led Zeppelin, y comprobar también el slider nuevo en
+Ajustes.
