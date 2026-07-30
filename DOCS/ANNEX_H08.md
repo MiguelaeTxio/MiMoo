@@ -2673,3 +2673,51 @@ informa como antes -- nunca reintentos indefinidos, y lo aprendido se
 queda en memoria para el resto de la sesión sin romper la Radio.
 
 **Sin verificar en dispositivo real todavía.**
+
+---
+
+## EL FALLO DE FONDO: "SOLO TEMAS CONOCIDOS", NO ARTISTAS NUEVOS DE VERDAD
+
+Miguel Ángel, tras ver que la Radio se agotaba con solo 5-6 artistas
+cíclicos, hizo la pregunta que desenmascaró el fallo real: *"¿estos
+grupos, que son los únicos que solo tienen una canción... con toda la
+discografía de esta gente, en la década de 1970, solo hicieron un
+sencillo?"* No -- el diccionario de éxitos guarda a propósito UN solo
+tema de referencia por artista (Black Sabbath, Deep Purple, Judas
+Priest, Motörhead y Led Zeppelin tienen exactamente 1 entrada cada
+uno, en TODO el diccionario, todas las décadas). Eso explicaba la
+falta de variedad en Conocidos, pero no en Exploración -- ahí no
+debería haber ese límite, porque busca en YouTube, no en un diccionario
+cerrado.
+
+**Comprobado contando el log real:** de 18 búsquedas de "Judas
+Priest" (solo el nombre, sin canción conocida -- el camino que
+debería sacar temas NUEVOS del artista), 17 devolvieron el MISMO
+vídeo ("Breaking The Law"). De 18 de "Motörhead", las 18 iguales. De
+14 de "Black Sabbath", las 14 iguales.
+
+**Causa real:** `resolveYoutubeCandidate()` buscaba solo 6 resultados
+en YouTube y se quedaba con el PRIMERO que pasara el filtro. Como la
+búsqueda de solo-artista en YouTube devuelve casi siempre el mismo
+vídeo en primer lugar (su tema más popular), la Radio nunca llegaba a
+un tema DISTINTO del mismo artista: encontraba siempre el mismo, el
+llamador lo descartaba por repetido (`radioUsedSongs`), y ese artista
+quedaba agotado para el resto de la ventana de no-repetición sin
+haber aportado ninguna variedad real. Resumen de Miguel Ángel: *"nos
+las estamos pasando por el forro y estamos poniendo solamente temas
+conocidos... la radio así no sirve."*
+
+### Fix (commit `a3206de`, compilado en verde)
+
+Dos cambios, solo para búsquedas de solo-artista:
+
+1. **Límite de búsqueda ampliado de 6 a 20** -- más margen para
+   llegar a un tema distinto del catálogo real del artista.
+2. **Los temas ya sonados esta sesión se excluyen ANTES de verificar
+   la existencia, no después** -- así la búsqueda ancha sirve para
+   algo: se avanza al segundo o tercer resultado real en vez de
+   pararse siempre en el primero (que casi siempre es el mismo).
+
+**Sin verificar en dispositivo real todavía** -- en particular, que
+Judas Priest/Motörhead/Black Sabbath empiecen a dar temas distintos en
+vueltas sucesivas, no solo el de siempre.
