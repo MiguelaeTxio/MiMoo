@@ -811,6 +811,18 @@ class AnchorDictionary @Inject constructor(
         null
     }
 
+    /**
+     * S026 -- aparte para que el reintento de `writeText()` pueda
+     * atrapar el fallo sin que se escape como excepción -- si dejara
+     * subir la excepción, el `try` de `writeText()` la atraparía
+     * primero y nunca llegaría a intentar la resolución fresca.
+     */
+    private fun writeToDoc(doc: DocumentFile, content: String): Boolean = runCatching {
+        context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
+            out.write(content.toByteArray())
+        } != null
+    }.getOrDefault(false)
+
     private fun writeText(name: String, content: String): Boolean {
         return try {
             val dir = dictionaryDir()
@@ -831,9 +843,28 @@ class AnchorDictionary @Inject constructor(
                 val doc = findDoc(dir, name)
                     ?: dir.createFile(WRITE_MIME_TYPE, name)?.also { docCache[name] = it }
                     ?: return false
-                context.contentResolver.openOutputStream(doc.uri, "wt")?.use { out ->
-                    out.write(content.toByteArray())
-                } != null
+                writeToDoc(doc, content) || run {
+                    // S026 -- TERCERA VUELTA: `docCache` cacheado apuntando
+                    // a un `DocumentFile` que ya no existe de verdad --
+                    // visto en log real ("Failed to determine if ... is
+                    // child of ...: Missing file"), horas después de que
+                    // `cleanupStrayFiles()` hubiera consolidado y borrado
+                    // el fichero renombrado de la vuelta anterior en OTRA
+                    // instancia de esta clase (la app se reinició de por
+                    // medio -- el `docCache` es solo de memoria, no
+                    // sobrevive a un reinicio de proceso, y una escritura
+                    // que llega antes de que `ensureLoaded()` vuelva a
+                    // resolverlo puede quedarse con un handle obsoleto).
+                    // Se invalida la caché para este nombre y se reintenta
+                    // UNA vez con una resolución fresca -- si el fichero
+                    // canónico tampoco existe ya, se crea de cero.
+                    docCache.remove(name)
+                    val freshDoc = dir.findFile(name)
+                        ?: dir.createFile(WRITE_MIME_TYPE, name)
+                        ?: return false
+                    docCache[name] = freshDoc
+                    writeToDoc(freshDoc, content)
+                }
             } else {
                 File(context.filesDir, name).writeText(content)
                 true
