@@ -537,11 +537,24 @@ class PlayerManager @Inject constructor(
                     // ninguna: cada vez que una pista propia nueva podría
                     // arrancar Radio es el punto natural para marcar el
                     // corte -- se sepa todavía si va a haber ancla o no.
-                    RadioDebugLogger.log(
-                        appContext, storageManager,
-                        "=== NUEVA SESIÓN DE RADIO -- pista propia: " +
-                            "'${currentItem?.title}' ===",
-                    )
+                    //
+                    // CORRECCIÓN EN LA MISMA SESIÓN: `onMediaItemTransition`
+                    // es un callback SÍNCRONO de ExoPlayer.Listener, corre
+                    // en el hilo principal -- no una suspend function. La
+                    // primera versión de este log llamaba directamente
+                    // a `RadioDebugLogger.log()`, que hace lectura+escritura
+                    // de fichero bloqueante (SAF), en el hilo principal.
+                    // Miguel Ángel reportó justo después "ya no loguea" --
+                    // se lanza ahora en `managerScope` (Dispatchers.IO),
+                    // igual que el resto de llamadas a este mismo log en
+                    // toda la clase.
+                    val sessionTrackTitle = currentItem?.title
+                    managerScope.launch {
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "=== NUEVA SESIÓN DE RADIO -- pista propia: '$sessionTrackTitle' ===",
+                        )
+                    }
                     radioAnchorArtist = currentItem?.artist?.takeIf { it.isNotBlank() }
                         ?: parseArtistFromTitle(currentItem?.title)
                     // S025 -- el artista estructurado de H05 es el
