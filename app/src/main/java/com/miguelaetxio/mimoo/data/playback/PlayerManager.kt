@@ -174,6 +174,15 @@ data class PlaybackState(
      * `PlayerManager.submitRadioArtist()`/`dismissRadioArtistPrompt()`.
      */
     val radioArtistPromptTrackTitle: String? = null,
+    /**
+     * S027 -- no nulo cuando `play()` ha interceptado el arranque de
+     * un streaming (vídeo sin descargar) porque no traía artista.
+     * Contiene el título del vídeo tal cual, solo de contexto. La UI
+     * debe pedir Artista y Título de la canción -- ver
+     * `PlayerManager.submitStreamArtist()`/`dismissStreamArtistPrompt()`.
+     * El nombre del canal de YouTube no interviene en este flujo.
+     */
+    val streamArtistPromptVideoTitle: String? = null,
 )
 
 /**
@@ -805,6 +814,14 @@ class PlayerManager @Inject constructor(
      */
     @Volatile
     private var radioArtistPromptPending = false
+
+    /**
+     * S027 -- pista de streaming en espera de que el usuario responda
+     * al modal "¿Quién es el artista?" disparado por `play()`. Nunca
+     * lleva `channelTitle` -- el canal no interviene en este flujo.
+     */
+    @Volatile
+    private var pendingStreamPlayback: QueueItem? = null
 
     /**
      * S020 -- las TRES porciones de la Radio, tal como las cerró
@@ -2450,10 +2467,26 @@ class PlayerManager @Inject constructor(
      * playQueue() (ver comentario de clase), con una lista de un solo
      * elemento. Usado por el botón de reproducción individual de
      * SearchScreen/Biblioteca.
+     *
+     * S027 -- corrección tras primer intento equivocado: la pregunta
+     * de "¿Quién es el artista?" NO espera a que la Radio necesite un
+     * ancla al final de la cola -- se hace AQUÍ, al arrancar el
+     * streaming, si el vídeo no trae artista. Orden textual de Miguel
+     * Ángel: "cuando se pone una canción en streaming se pregunta el
+     * título y el artista si no lo tiene, para que la radio empiece a
+     * funcionar". El nombre del canal de YouTube nunca entra en esto,
+     * ni se lee ni se guarda -- ver `submitStreamArtist()`.
      * ---
      * Plays a single ad-hoc track -- same insertion semantics as
      * playQueue() (see class comment), with a one-item list. Used by
      * the individual play button in SearchScreen/Biblioteca.
+     *
+     * S027 -- fix after a first wrong attempt: the "Who is the
+     * artist?" question does NOT wait for Radio to need an anchor at
+     * the end of the queue -- it happens HERE, when the stream
+     * starts, if the video has no artist. YouTube's channel name is
+     * never involved, neither read nor stored -- see
+     * `submitStreamArtist()`.
      */
     fun play(
         streamUrl: String,
@@ -2464,6 +2497,18 @@ class PlayerManager @Inject constructor(
         channelTitle: String? = null,
         artworkUri: String? = null,
     ) {
+        if (!isLocal && artist.isNullOrBlank()) {
+            pendingStreamPlayback = QueueItem(
+                uri = streamUrl,
+                title = title,
+                isLocal = false,
+                artist = null,
+                youtubeId = youtubeId,
+                artworkUri = artworkUri,
+            )
+            _state.value = _state.value.copy(streamArtistPromptVideoTitle = title)
+            return
+        }
         playQueue(
             listOf(
                 QueueItem(
@@ -2478,6 +2523,36 @@ class PlayerManager @Inject constructor(
             ),
             startIndex = 0,
         )
+    }
+
+    /**
+     * S027 -- respuesta del modal "¿Quién es el artista?" disparado
+     * por `play()` al arrancar un streaming sin artista. Arranca la
+     * reproducción ya con Artista y Título de la canción confirmados
+     * -- son los dos únicos datos que se usan, el canal no interviene
+     * en ningún punto.
+     */
+    fun submitStreamArtist(artistName: String, songTitle: String) {
+        val trimmedArtist = artistName.trim()
+        val trimmedTitle = songTitle.trim()
+        val pending = pendingStreamPlayback
+        if (trimmedArtist.isEmpty() || trimmedTitle.isEmpty() || pending == null) return
+        pendingStreamPlayback = null
+        _state.value = _state.value.copy(streamArtistPromptVideoTitle = null)
+        playQueue(
+            listOf(pending.copy(title = trimmedTitle, artist = trimmedArtist)),
+            startIndex = 0,
+        )
+    }
+
+    /**
+     * S027 -- se cancela el modal: no arranca ningún streaming. Ni
+     * streaming, ni nada de nada -- mismo principio ya aplicado a la
+     * falta de red en Radio.
+     */
+    fun dismissStreamArtistPrompt() {
+        pendingStreamPlayback = null
+        _state.value = _state.value.copy(streamArtistPromptVideoTitle = null)
     }
 
     /**

@@ -97,9 +97,13 @@ fun PlayerBar(
     val downloadStatus by viewModel.downloadStatus.collectAsState()
     val menuArtist by viewModel.menuArtist.collectAsState()
     val menuAlbum by viewModel.menuAlbum.collectAsState()
-    val title = state.currentTitle ?: return
-    val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
-    var isExpanded by remember { mutableStateOf(true) }
+
+    // S027 -- estos tres diálogos van ANTES del `return` de más abajo
+    // por falta de pista actual: el modal de streaming en concreto
+    // puede dispararse precisamente cuando TODAVÍA no hay nada sonando
+    // (primera reproducción de la sesión) -- si se colocan después del
+    // `return`, no se llegan a mostrar nunca en ese caso. Bug real de
+    // un primer intento de esta misma sesión.
 
     // S026 -- orden explícita de Miguel Ángel: mejor parar la Radio del
     // todo que meter un vídeo sin verificar. Ver
@@ -123,12 +127,10 @@ fun PlayerBar(
         )
     }
 
-    // S027 -- orden explícita de Miguel Ángel: si la Radio no puede
-    // identificar el artista de la última pista propia (ni por
-    // metadatos estructurados ni por el propio título), se pregunta
-    // Artista y Título de la canción -- nunca el nombre del canal de
-    // YouTube. Ver PlayerManager.submitRadioArtist()/
-    // dismissRadioArtistPrompt().
+    // S027 -- red de seguridad: si la Radio llega al final de la cola
+    // sin ancla (caso residual, p.ej. pista local sin artista), se
+    // pregunta igual. El disparo normal es el de más abajo, al
+    // arrancar el streaming.
     val radioArtistPromptTitle = state.radioArtistPromptTrackTitle
     if (radioArtistPromptTitle != null) {
         var artistInput by remember(radioArtistPromptTitle) { mutableStateOf("") }
@@ -175,6 +177,63 @@ fun PlayerBar(
             },
         )
     }
+
+    // S027 -- disparo real: al arrancar CUALQUIER streaming (vídeo sin
+    // descargar) que no trae artista. Orden textual de Miguel Ángel:
+    // "cuando se pone una canción en streaming se pregunta el título y
+    // el artista si no lo tiene, para que la radio empiece a
+    // funcionar". El nombre del canal de YouTube no aparece en ningún
+    // sitio de este modal.
+    val streamArtistPromptTitle = state.streamArtistPromptVideoTitle
+    if (streamArtistPromptTitle != null) {
+        var streamArtistInput by remember(streamArtistPromptTitle) { mutableStateOf("") }
+        var streamSongInput by remember(streamArtistPromptTitle) { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = viewModel::dismissStreamArtistPrompt,
+            title = { Text("¿Quién es el artista?") },
+            text = {
+                Column {
+                    Text(
+                        "\"$streamArtistPromptTitle\" no trae artista. Sin esa información " +
+                            "no se puede reproducir en streaming.",
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = streamArtistInput,
+                        onValueChange = { streamArtistInput = it },
+                        label = { Text("Artista") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = streamSongInput,
+                        onValueChange = { streamSongInput = it },
+                        label = { Text("Título de la canción") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.submitStreamArtist(streamArtistInput, streamSongInput) },
+                    enabled = streamArtistInput.isNotBlank() && streamSongInput.isNotBlank(),
+                ) {
+                    Text("Reproducir")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissStreamArtistPrompt) {
+                    Text("Cancelar")
+                }
+            },
+        )
+    }
+
+    val title = state.currentTitle ?: return
+    val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
+    var isExpanded by remember { mutableStateOf(true) }
 
     Surface(tonalElevation = 4.dp) {
         if (!isExpanded) {

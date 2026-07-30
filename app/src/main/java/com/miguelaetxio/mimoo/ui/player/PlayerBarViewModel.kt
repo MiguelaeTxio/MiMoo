@@ -321,6 +321,13 @@ class PlayerBarViewModel @Inject constructor(
     /** S027 -- cancelar el modal "¿Quién es el artista?" de Radio. */
     fun dismissRadioArtistPrompt() = playerManager.dismissRadioArtistPrompt()
 
+    /** S027 -- respuesta del modal "¿Quién es el artista?" al arrancar un streaming. */
+    fun submitStreamArtist(artist: String, songTitle: String) =
+        playerManager.submitStreamArtist(artist, songTitle)
+
+    /** S027 -- cancelar el modal "¿Quién es el artista?" al arrancar un streaming. */
+    fun dismissStreamArtistPrompt() = playerManager.dismissStreamArtistPrompt()
+
     /** H08 -- arrastrar la barra de progreso. */
     fun seekTo(positionMs: Long) {
         playerManager.seekTo(positionMs)
