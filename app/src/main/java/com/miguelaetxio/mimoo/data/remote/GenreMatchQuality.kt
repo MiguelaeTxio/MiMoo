@@ -79,6 +79,9 @@ object GenreMatchQuality {
         return clean.filter { genreTree.isSpecific(it) }.toSet()
     }
 
+    private fun rawGenres(genres: Set<String>): Set<String> =
+        genres.map { it.lowercase().trim() }.filter { it.isNotBlank() }.toSet()
+
     /**
      * @param thresholdPercent mínimo de intersección/unión (0-100)
      * para admitir el candidato -- viene de
@@ -90,8 +93,43 @@ object GenreMatchQuality {
         genreTree: GenreTree,
         thresholdPercent: Int,
     ): Result {
-        val candidates = specificGenres(candidateGenres, genreTree)
-        val anchors = specificGenres(anchorGenres, genreTree)
+        // S027 -- caso real reportado por Miguel Ángel: el ancla de
+        // 'Ilegales' (España, rock and roll de los 80) se elige
+        // PRECISAMENTE sobre 'rock and roll' -- es el único género
+        // "específico" que tiene el artista según
+        // `genreTree.isSpecific()`, y así lo fija
+        // `AnchorDictionary.anchorFromDictionary()`. Pero 'rock and
+        // roll' está TAMBIÉN en `FORMAT_TAGS` de esta misma clase
+        // (arreglo de S026 contra el caso Supertramp). El único otro
+        // género de Ilegales es 'rock', genérico, tampoco específico.
+        // `specificGenres()` sobre el ancla da el conjunto VACÍO -- y
+        // con el ancla vacía, la intersección con CUALQUIER candidato
+        // es vacía siempre, el porcentaje 0% siempre: ni Conocidos ni
+        // Disco pueden servir NUNCA un candidato, no por falta de
+        // artistas conocidos de rock and roll español (hay decenas:
+        // Miguel Ríos, Loquillo, Barricada...), sino porque la
+        // comparación es matemáticamente imposible.
+        //
+        // El filtro de FORMAT_TAGS tiene sentido cuando hay ALGO mejor
+        // a lo que recurrir (Supertramp: Led Zeppelin sí tenía géneros
+        // específicos de sobra para comparar). Cuando el ancla NO
+        // tiene NINGÚN género específico, no hay ese riesgo de falso
+        // positivo del que protegerse -- es lo único que describe al
+        // artista. Se degrada entonces al conjunto CRUDO, en AMBOS
+        // lados (ancla y candidato) para que la comparación sea
+        // simétrica -- 'rock and roll' tiene que poder contar en los
+        // dos si va a contar en uno. Probado con datos reales: Ilegales
+        // {rock, rock and roll} vs Miguel Ríos {rock, rock and roll,
+        // pop rock, rockabilly, beat music, soft rock} -> intersección
+        // {rock, rock and roll} = 2, unión = 6, 33% -- pasa el umbral
+        // de 30% configurado. Con el filtro estricto de siempre daba
+        // 0% sin remedio.
+        val anchorSpecific = specificGenres(anchorGenres, genreTree)
+        val (candidates, anchors) = if (anchorSpecific.isNotEmpty()) {
+            specificGenres(candidateGenres, genreTree) to anchorSpecific
+        } else {
+            rawGenres(candidateGenres) to rawGenres(anchorGenres)
+        }
         val union = candidates + anchors
         if (union.isEmpty()) return Result(matches = false, overlapPercent = 0, sharedGenres = emptySet())
 
