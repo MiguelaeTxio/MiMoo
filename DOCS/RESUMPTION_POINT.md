@@ -1,6 +1,6 @@
 # PUNTO DE REANUDACIÓN — MiMoo
 
-**Última sesión cerrada:** S025 (2026-07-29)
+**Última sesión cerrada:** S026 (2026-07-30)
 **Hito con la hoja de ruta activa:** ver `DOCS/ANNEX_ROUTER.md`
 
 > El estado de los hitos vive **exclusivamente** en
@@ -8,64 +8,60 @@
 
 ---
 
-## Decisión pendiente al abrir la siguiente sesión
-
-`ANNEX_ROUTER.md` sigue marcando H13 como el hito activo desde el
-cierre de S024, pero prácticamente todo el trabajo de S025 se hizo
-sobre H08 sin que se ejecutara un PCH formal — la sesión derivó hacia
-Radio por la propia conversación, no por una orden explícita de
-cambio de hito. Miguel Ángel debe decidir cómo se resuelve esto: PCH
-formal a H08, o retomar H13 tal cual estaba.
-
 ## Qué hacer en la siguiente sesión
 
 La hoja de ruta técnica completa está en `DOCS/ANNEX_H08.md`, sección
-"Hoja de ruta para la siguiente sesión" al final del archivo. En una
-línea: **verificar en dispositivo real todo lo construido en S025**
-antes de dar nada por bueno.
+"Hoja de Ruta para la Siguiente Sesión que retome H08" al final del
+archivo. En orden de prioridad:
 
-En orden de prioridad:
+1. **Modal "¿Quién es el artista?"** -- diseño CERRADO con Miguel
+   Ángel en S026, sin construir todavía. Empezar la sesión leyendo ese
+   diseño completo en el anexo (disparadores, qué pasa si no se
+   responde, persistencia, "si no hay artista no hay ancla") y
+   preguntando la única decisión que quedó sin cerrar: si la sección
+   de Canales se mantiene o se retira también. Después, barrido de
+   los 16 ficheros que hoy usan `track.artist ?: track.channelTitle`
+   (lista completa en el anexo).
 
-1. **Verificación en dispositivo real**, ninguna parte de S025 se ha
-   probado contra el teléfono de Miguel Ángel. En concreto:
-   - Que el ancla de un artista de rock (p. ej. Led Zeppelin) no derive
-     hacia géneros sin relación.
-   - Que ningún tema se repita en una sesión de Radio, bajo ninguna
-     circunstancia.
-   - Que el botón "Crear base de datos" de Ajustes complete un
-     recorrido sin colgar la aplicación ni ralentizar el resto de la
-     interfaz.
-   - Que `suggestRelatedArtist()` esté sirviendo candidatos de la base
-     de datos local antes que de MusicBrainz en vivo — verificable en
-     el log de Radio por la línea "DE LA BASE DE DATOS, sin red".
+2. **Verificación en dispositivo real del tramo final de S026**: los
+   cuatro grupos de origen (`OriginGroup`,
+   Hispanoamérica/Anglosajona/Europea/Mundial) y la salvaguarda
+   "conocido en España" para Exploración. Todo lo anterior de S026 sí
+   se probó en dispositivo real durante la propia sesión (así se
+   encontraron Supertramp, Queen/Pink Floyd, "Free" con Nacho, el
+   fichero mal nombrado, el fallo de Discogs, y Portugal metiéndose
+   donde no debía) -- solo falta confirmar este último tramo.
 
-2. **La semilla de 1.161 artistas** (`anchor_artists.json`) se escribió
-   a mano, sin contraste con ninguna fuente externa. Puede tener país o
-   género equivocado en artistas concretos — revisar si aparecen
-   anclajes raros.
+3. **La semilla de 1.161 artistas** (`anchor_artists.json`) se escribió
+   a mano, sin contraste con ninguna fuente externa. S026 encontró y
+   corrigió un caso real (`progressive rock` en Led Zeppelin, causa de
+   tres colados falsos seguidos) -- sigue pendiente auditar el resto.
+   No se puede verificar contra MusicBrainz en vivo desde este entorno
+   de trabajo (sin acceso de red a `musicbrainz.org`).
 
-3. **Discogs y Wikidata no se han podido probar contra la red real**
-   durante S025 por falta de acceso de red al entorno de trabajo del
-   modelo. Confirmar en dispositivo que ambas fuentes responden.
-
-4. Pendiente de sesiones anteriores, sin tocar en S025:
+4. Pendiente de sesiones anteriores, sin tocar en S026:
    - Verificación física de sincronización entre dos dispositivos (H07,
      PASO 5).
-   - Resto de la hoja de ruta original de H13: auditoría completa de
-     los botones de `PlayerBar.kt`, y cierre del alcance de "aspecto de
-     algunos ítems".
+   - Resto de la hoja de ruta original de H13 (PAUSADO): auditoría
+     completa de los botones de `PlayerBar.kt`, y cierre del alcance
+     de "aspecto de algunos ítems".
 
 ## Incidencias de proceso a tener en cuenta
 
 - El zip de logs de GitHub Actions no es accesible por red desde el
-  entorno de trabajo del modelo. Se añadió un paso al workflow
-  (`build-and-deploy.yml`) que publica los errores de compilación como
-  anotaciones del check, legibles por API — mantenerlo.
-- S025 tuvo varias iteraciones de fallos reales del propio modelo
-  (documentados con detalle en `ANNEX_H08.md`): una regla de negocio
-  inventada sin que Miguel Ángel la pidiera, un fallo de MIME en SAF
-  que impidió que nada persistiera durante varias vueltas, un borrado
-  automático que se ejecutó en bucle, y lentitud general de la app por
-  no cachear una resolución de carpeta. Todo corregido dentro de la
-  propia sesión, pero conviene leer esa sección antes de tocar
-  `AnchorDictionary.kt` de nuevo.
+  entorno de trabajo del modelo. El paso del workflow que publica los
+  errores de compilación como anotaciones del check (legibles por
+  API) sigue siendo el método fiable -- mantenerlo.
+- S026 tuvo un fallo de compilación real y corregido en la propia
+  sesión (commit `76aec87` roto, corregido en `3d3a199`): una
+  referencia a un parámetro (`country`) que se había retirado de una
+  función, pero un `log()` dentro de un `catch` seguía usándolo.
+  Revisar siempre con `grep` los nombres de parámetros retirados antes
+  de dar un cambio de firma por completo, no solo los sitios donde se
+  llama a la función.
+- S026 corrigió dos veces el mismo diseño de origen (grupos, luego
+  Portugal/Brasil) tras probarlo en dispositivo real. Patrón sano:
+  cerrar el diseño con Miguel Ángel, implementarlo, y estar preparado
+  para que el propio dispositivo real lo corrija -- no es un fallo de
+  diseño previo, es cómo se afina algo que no se puede predecir del
+  todo sin escucharlo.

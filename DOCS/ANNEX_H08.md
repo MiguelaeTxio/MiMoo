@@ -2855,3 +2855,177 @@ suena aquí".
   que ahí el país no pesara nada).
 
 **Sin verificar en dispositivo real todavía.**
+
+---
+
+## COMPLETADAS EN S026
+
+Sesión larga, con 27 commits, casi entera en torno a la Radio anclada
+en Led Zeppelin (más el cierre con un ancla española, Ilegales). Se
+documenta con honestidad: varios fixes fallaron a la primera y hubo
+que corregirlos con el siguiente log real, no porque el diagnóstico
+fuera descuidado, sino porque cada corrección abría el siguiente
+problema real.
+
+**PCH formal** (`a7c768c`): H13 → PAUSADO, H08 → EN PROGRESO,
+resolviendo la incidencia de proceso que había dejado abierta el
+cierre de S025.
+
+**Auditoría de código** (`b5d401a`, `2923d28`, `403a2ea`): verificado
+que la base de datos SÍ se consulta antes que MusicBrainz en vivo
+(confirmado con log real, corrigiendo una hipótesis inicial
+equivocada sobre "APK desactualizado"). Primer intento de arreglo del
+matching de género (2+ genéricos compartidos) -- insuficiente, ver
+más abajo.
+
+**Etiquetas de formato que nunca cuentan** (`3439312`): `classic
+rock`/`rock and roll`/`mainstream rock` no son géneros musicales,
+son categorías de emisora/época -- arreglado tras ver a Supertramp
+colarse en la radio de Led Zeppelin compartiendo dos de esas
+etiquetas con Led Zeppelin.
+
+**Dato de la semilla corregido** (`d2a8845`): quitado `progressive
+rock` de la entrada de Led Zeppelin -- causa real de que Queen y Pink
+Floyd se colaran (con log y captura reales).
+
+**MIME de los ficheros del diccionario** (`1b0e5b8`): `application/octet-stream`
+en vez de `text/plain` -- el proveedor SAF de la tarjeta de Miguel
+Ángel también renombraba con esa extensión, segunda vuelta del mismo
+fallo de S025.
+
+**Coincidencia estricta por canal en búsquedas solo-artista**
+(`f2ff856`): un corto de Sony Animation se coló en la radio buscando
+solo "Free" (el grupo). Ahora se exige que sea el CANAL, no el
+título, quien confirme al artista cuando no hay canción conocida.
+
+**Verificación real de existencia, o parar la Radio sin red**
+(`4ddfecd`): nuevo `RadioRepository.verifyTrackExists()` -- un vídeo
+de solo-artista tiene que confirmarse contra diccionario/MusicBrainz/
+Discogs/Wikidata antes de aceptarse; sin red para comprobarlo, la
+Radio se detiene con aviso en pantalla ("Radio detenida") y botón de
+reintentar, en vez de arriesgar.
+
+**Umbral de coincidencia de género por PORCENTAJE, configurable**
+(`3109a7b`): sustituye el sistema de dos niveles (2+ fuerte / 1
+débil), que seguía colando a Pink Floyd y Fleetwood Mac (muchos
+géneros catalogados, solo uno ancho compartido). Ahora es
+intersección/unión de géneros específicos, 40% por defecto,
+ajustable en Ajustes → Radio en escalones de 10.
+
+**Reintento defensivo de `DocumentFile` obsoleto** (`cbeadf3`):
+encontrado en el propio log sin que Miguel Ángel lo señalara --
+`writeText()` reintenta una vez con resolución fresca si el handle
+cacheado ya no existe (típico tras un reinicio de proceso).
+
+**Buscar más ancho y excluir ya usados ANTES de elegir** (`a3206de`):
+el fallo de fondo que hacía que "artista conocido, tema no
+catalogado" y Exploración nunca dieran temas nuevos de verdad --
+la búsqueda de solo-artista en YouTube devuelve casi siempre el mismo
+vídeo, y el código se quedaba con el primero. Ahora se piden 20
+resultados y se excluyen los ya sonados antes de elegir, no después.
+
+**Discogs debe confirmar el resultado** (`2f03599`): "Free" + "Nacho"
+(cover de un tema de Nacho, artista dominicano) se confirmó desde
+Discogs sin comprobar que el resultado tuviera algo que ver -- a
+diferencia de MusicBrainz, Discogs no exige igualdad exacta de
+título. Corregido exigiendo que el título devuelto contenga artista Y
+tema.
+
+**Cuatro grupos de origen, sustituyendo España/resto** (`76aec87`,
+`3d3a199`, `6c79fbb`, `ae7df7f`): `OriginGroup`
+(Hispanoamérica/Anglosajona/Europea/Mundial), pared total entre
+grupos, país exacto sin peso dentro del grupo (salvo salvaguarda
+"conocido en España" para Exploración dentro de Hispanoamérica).
+Corregido dos veces tras probarlo en dispositivo real: Portugal y
+Brasil pasaron de Iberoamericana a Europea (metían demasiado
+desconocido en una radio española), y se añadió la salvaguarda de
+"conocido en España" para que Exploración no traiga artistas
+hispanoamericanos sin verificar que suenan aquí.
+
+**Sin cerrar, diseño para la próxima sesión:** modal "¿quién es el
+artista?" cuando no se puede identificar (caso real: "Für Elise"
+subida por un canal genérico, sin ninguna pista de Beethoven en el
+título) -- diseño completo cerrado con Miguel Ángel, ver la hoja de
+ruta.
+
+---
+
+## Hoja de Ruta para la Siguiente Sesión que retome H08
+
+### 1. Modal "¿Quién es el artista?" -- diseño CERRADO, sin construir
+
+Motivado por un caso real: "Für Elise" de Beethoven, subida por un
+canal de YouTube genérico (`maestromilochomil117`), sin ninguna
+mención a Beethoven en el título ni en el canal. El sistema actual no
+tiene con qué fijar el ancla y, correctamente, se niega a arrancar --
+pero eso deja al usuario sin saber por qué. Además, Miguel Ángel
+recordó (con razón, y muchas veces ya dicho) que **el nombre del
+canal de YouTube nunca debe usarse como sustituto del artista en
+ningún sitio de la app** -- comprobado que el patrón `track.artist ?:
+track.channelTitle` está repetido en **16 ficheros distintos**
+(`LibraryMigrator.kt`, `AlbumViewModel.kt`, `ArtistViewModel.kt`,
+`ChannelsViewModel.kt`, `DownloadsScreen.kt`, `DownloadsViewModel.kt`,
+`ExplorerViewModel.kt`, `ImportLinkViewModel.kt`, `LibraryScreen.kt`,
+`LibraryViewModel.kt`, `PlaylistDetailScreen.kt`,
+`PlaylistDetailViewModel.kt`, `SettingsViewModel.kt`,
+`ShareImportViewModel.kt`, `SongViewModel.kt`, `AutoSyncViewModel.kt`).
+
+**Diseño cerrado, decisión por decisión:**
+
+1. **Un único modal**, reutilizado en los dos disparadores:
+   - Al descargar un vídeo sin artista reconocible.
+   - Al reproducir en streaming algo sin artista reconocible --
+     incluido cuando ese tema es el que arrancaría una sesión de
+     Radio.
+2. **Si el usuario no responde: la operación se cancela**, con un
+   aviso explícito de que falta esa información. No hay streaming, no
+   hay descarga, no hay ancla de Radio. Nunca se sigue adelante a
+   ciegas -- cita textual: *"si no se responde se informa de que la
+   operación se cancela por falta de información y punto. Ni
+   streaming, ni nada de nada."*
+3. **Respondido una vez, se guarda para siempre** -- tag del fichero
+   si está descargado, diccionario de la Radio si es streaming -- no
+   se vuelve a preguntar por ese mismo vídeo.
+4. **Para la Radio en concreto: "si no hay artista no hay ancla"**,
+   mismo principio ya aplicado con la falta de red (`radioNetworkLost`)
+   -- si el primer tema no tiene artista identificable y el usuario no
+   lo rellena, la sesión de Radio ni arranca.
+5. **Barrido de los 16 ficheros** listados arriba: sustituir
+   `track.artist ?: track.channelTitle` por el disparo del modal (o,
+   una vez respondido y guardado, por el valor ya guardado) -- nunca
+   mostrar el nombre del canal en su lugar, en ningún sitio.
+6. **Pendiente de decidir en la próxima sesión, sin cerrar todavía**:
+   si la sección de Canales (agrupa descargas por canal de subida,
+   para gestionarlas) se mantiene tal cual -- su propósito explícito
+   es mostrar el canal como canal, no como artista, así que en
+   principio no es lo mismo que el problema de fondo -- o si Miguel
+   Ángel prefiere retirarla también. Empezar la sesión preguntando
+   esto antes de tocar los 16 ficheros.
+
+Como con H08 y H12: sesión de diseño cerrada antes de escribir código
+-- este punto YA tiene el diseño cerrado, así que la próxima sesión
+puede ir directa a construir.
+
+### 2. Verificación en dispositivo real, pendiente desde los cuatro grupos de origen en adelante
+
+Todo lo de esta sesión se ha ido probando en dispositivo real y
+corrigiendo sobre la marcha (Supertramp, Queen/Pink Floyd, "Free" con
+Nacho, `temas.json.txt`, Discogs, Portugal) -- ese patrón ha
+funcionado bien y hay que seguir con él. Lo único que queda
+específicamente sin confirmar con log o captura real es el tramo
+final: los cuatro grupos de origen (`76aec87` en adelante) y la
+salvaguarda "conocido en España" (`ae7df7f`). Probar con Led Zeppelin
+(¿aparecen ya Van Halen/AC-DC sin romper la pared con otros grupos?)
+y con un ancla española como Ilegales (¿se queda centrado en España e
+Hispanoamérica conocida, sin Portugal ni sorpresas hispanoamericanas
+desconocidas?).
+
+### 3. Auditoría pendiente de la semilla completa
+
+Ya anotado en sesiones anteriores y confirmado como riesgo real esta
+sesión (el caso de `progressive rock` en Led Zeppelin): sigue
+pendiente revisar el resto de los 1.161 artistas de la semilla por si
+tienen géneros mal puestos que puedan seguir generando puentes
+falsos con otros anclajes. No se puede verificar contra MusicBrainz
+en vivo desde este entorno de trabajo (sin acceso de red a
+`musicbrainz.org`).
