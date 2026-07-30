@@ -531,6 +531,17 @@ class PlayerManager @Inject constructor(
                     // structured artist, else the artist parsed from the
                     // title. Neither means no anchor, and Radio simply
                     // doesn't start on this track.
+                    // S027 -- MARCADOR DE SESIÓN. Orden de Miguel Ángel
+                    // al ver el log mezclar tres anclas seguidas
+                    // (Led Zeppelin, Beethoven, Ilegales) sin separación
+                    // ninguna: cada vez que una pista propia nueva podría
+                    // arrancar Radio es el punto natural para marcar el
+                    // corte -- se sepa todavía si va a haber ancla o no.
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "=== NUEVA SESIÓN DE RADIO -- pista propia: " +
+                            "'${currentItem?.title}' ===",
+                    )
                     radioAnchorArtist = currentItem?.artist?.takeIf { it.isNotBlank() }
                         ?: parseArtistFromTitle(currentItem?.title)
                     // S025 -- el artista estructurado de H05 es el

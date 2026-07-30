@@ -795,8 +795,8 @@ class RadioRepository @Inject constructor(
             // S024 -- la búsqueda ya no es un único intento con el
             // nombre entero: si ese falla, se prueba palabra por
             // palabra (ver `findAnchorArtistMbid()`).
-            val sourceMbid = findAnchorArtistMbid(sourceArtist)
-            if (sourceMbid == null) {
+            val sourcePick = findAnchorArtistMbid(sourceArtist)
+            if (sourcePick == null) {
                 // S024 -- la red FUNCIONÓ; lo que no hay es coincidencia.
                 // Hay que dejarlo dicho, porque la cascada de
                 // `resolveAnchorWithFallbacks()` decide si baja de
@@ -806,6 +806,7 @@ class RadioRepository @Inject constructor(
                 noteSuccess()
                 return null
             }
+            val sourceMbid = sourcePick.mbid
 
             val sourceDetail = musicBrainzApiService.lookupArtist(sourceMbid)
             noteSuccess()
@@ -920,14 +921,37 @@ class RadioRepository @Inject constructor(
             // diccionario y no haga falta preguntar. Es el mecanismo
             // por el que "la morralla" se va aprendiendo, en palabras
             // de Miguel Ángel.
-            anchorDictionary.learnArtist(
-                AnchorDictionary.ArtistFacts(
-                    artist = sourceArtist,
-                    country = sourceCountry,
-                    genres = (fromMusicBrainz + fromDictionary).sorted(),
-                    source = "musicbrainz",
-                ),
-            )
+            //
+            // S027 -- SALVO si `sourcePick.isNameOverride` es true: el
+            // MBID no vino del resultado más relevante de MusicBrainz,
+            // sino de forzar una coincidencia exacta de nombre contra
+            // uno peor situado -- necesario para casos como "Pink"
+            // (S023), pero de menor confianza. Caso real que motiva
+            // esto: 'Fritz' resolvió a 'Fritz Kalkbrenner' (Alemania)
+            // por esta vía, y al aprenderse quedó fijado para siempre
+            // en el diccionario con país alemán bajo la clave corta
+            // 'fritz' -- coló un artista alemán en TODAS las sesiones
+            // futuras ancladas en España/Hispanoamérica, rompiendo la
+            // pared de origen. Sin aprender aquí, la próxima vez que
+            // aparezca 'Fritz' se vuelve a preguntar a la red en vez
+            // de arrastrar un acierto de una sola vez como si fuera
+            // dato fijo.
+            if (!sourcePick.isNameOverride) {
+                anchorDictionary.learnArtist(
+                    AnchorDictionary.ArtistFacts(
+                        artist = sourceArtist,
+                        country = sourceCountry,
+                        genres = (fromMusicBrainz + fromDictionary).sorted(),
+                        source = "musicbrainz",
+                    ),
+                )
+            } else {
+                log(
+                    "resolveAnchor('$sourceArtist') -- NO se aprende en el diccionario: el mbid vino " +
+                        "de una coincidencia de nombre forzada, no del resultado más relevante " +
+                        "(riesgo de homónimo, caso real: 'Fritz' -> 'Fritz Kalkbrenner')"
+                )
+            }
             val allGenres = fromMusicBrainz + fromDictionary
             if (fromDictionary.isNotEmpty() && fromMusicBrainz.isNotEmpty()) {
                 log(
@@ -1518,6 +1542,21 @@ class RadioRepository @Inject constructor(
     }
 
     /**
+     * S027 -- resultado de [pickAnchorArtist]: el MBID elegido, y si
+     * hubo que DESCARTAR el resultado más relevante de MusicBrainz
+     * para forzar una coincidencia exacta de nombre. Ese descarte es
+     * necesario para casos como "Pink" (S023, no aceptar por defecto
+     * "Pink Floyd" solo por ser más conocido), pero es también la
+     * misma vía por la que se coló 'Fritz' -> 'Fritz Kalkbrenner'
+     * (Alemania) en una sesión anclada en España/Hispanoamérica: el
+     * nombre corto encontró coincidencia exacta con un artista que NO
+     * era el más relevante, y punto de menor confianza. Ver el uso en
+     * `resolveAnchor()`: cuando `isNameOverride` es true no se aprende
+     * en el diccionario -- se usa solo para esta resolución.
+     */
+    private data class AnchorArtistPick(val mbid: String, val isNameOverride: Boolean)
+
+    /**
      * Elige el artista del que se va a fijar el ancla, en vez de
      * aceptar el primer resultado (S023).
      *
@@ -1535,12 +1574,12 @@ class RadioRepository @Inject constructor(
         sourceArtist: String,
         candidates: List<MusicBrainzArtistSummary>,
         quiet: Boolean = false,
-    ): String? {
+    ): AnchorArtistPick? {
         val wanted = SearchNormalizer.normalizeArtistName(sourceArtist)
 
         disambiguation.forced[wanted]?.let { mbid ->
             log("resolveAnchor('$sourceArtist') -- MBID fijado a mano ($mbid), no se usa la búsqueda")
-            return mbid
+            return AnchorArtistPick(mbid, isNameOverride = false)
         }
         if (wanted in disambiguation.blocked) {
             log("resolveAnchor('$sourceArtist') -- artista marcado como no resoluble en MusicBrainz, no se fija ancla")
@@ -1579,10 +1618,20 @@ class RadioRepository @Inject constructor(
             }
             return null
         }
-        if (match !== candidates.first()) {
+        // S027 -- cuando el elegido NO es el primero (el más relevante
+        // para MusicBrainz), es una coincidencia de nombre forzada:
+        // necesaria para casos como "Pink" (S023), pero de MENOR
+        // confianza -- puede ser un artista homónimo sin relación real
+        // con lo que se buscaba (caso real: 'Fritz' -> 'Fritz
+        // Kalkbrenner', Alemania, colado en una sesión de España). El
+        // llamante decide con `isNameOverride` si esto es lo bastante
+        // fiable para APRENDERSE en el diccionario o solo vale para
+        // esta resolución puntual.
+        val isNameOverride = match !== candidates.first()
+        if (isNameOverride) {
             log("resolveAnchor('$sourceArtist') -- se descarta '${candidates.first().name}' y se toma '${match.name}' por coincidencia de nombre")
         }
-        return match.id
+        return AnchorArtistPick(match.id, isNameOverride)
     }
 
     /**
@@ -1640,7 +1689,7 @@ class RadioRepository @Inject constructor(
      * palabras es el del nombre original, y se acepta. Buscando `van`
      * llegarían cien artistas y ninguno pasaría el filtro.
      */
-    private suspend fun findAnchorArtistMbid(sourceArtist: String): String? {
+    private suspend fun findAnchorArtistMbid(sourceArtist: String): AnchorArtistPick? {
         // S025 -- MusicBrainz guarda a las personas al derecho ('Ludwig
         // van Beethoven'), y el catálogo de H05 al revés ('Beethoven,
         // Ludwig van'). Preguntar tal cual devolvía vacío siempre: en
@@ -1674,9 +1723,9 @@ class RadioRepository @Inject constructor(
                     limit = ANCHOR_SEARCH_LIMIT,
                 )
                 .artists
-            pickAnchorArtist(sourceArtist, hits, quiet = true)?.let { mbid ->
+            pickAnchorArtist(sourceArtist, hits, quiet = true)?.let { pick ->
                 log("resolveAnchor('$sourceArtist') -- no aparecía con el nombre entero; resuelto buscando por la palabra '$word'")
-                return mbid
+                return pick
             }
         }
         log("resolveAnchor('$sourceArtist') -- tampoco aparece buscando palabra por palabra (${words.joinToString()}). No se fija ancla.")
