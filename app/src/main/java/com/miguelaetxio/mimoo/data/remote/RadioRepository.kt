@@ -1230,7 +1230,7 @@ class RadioRepository @Inject constructor(
         found
     } catch (e: Exception) {
         noteFailure(e)
-        log("findCandidates(género='$genre', país=${country ?: "?"}, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+        log("findCandidates(género='$genre', grupo=${originGroup ?: "?"}, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
         emptyList()
     }
 
