@@ -189,15 +189,21 @@ class PlaylistDetailViewModel @Inject constructor(
                 } else {
                     try {
                         val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                        QueueItem(
-                            uri = streamUrl,
-                            title = track.title,
-                            isLocal = false,
-                            artist = track.artist ?: track.channelTitle,
+                        // S027 -- nunca el canal como artista;
+                        // resolución verificada (artista estructurado
+                        // o identifyFromTitleWords contra MusicBrainz)
+                        // -- si no identifica nada, se excluye del
+                        // lote, igual que un fallo de red.
+                        playerManager.resolveStreamItem(
+                            streamUrl = streamUrl,
+                            videoTitle = track.title,
+                            structuredArtist = track.artist,
                             youtubeId = track.youtubeId,
-                            channelTitle = track.channelTitle,
                             artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                        )
+                        ) ?: run {
+                            resolutionFailures++
+                            null
+                        }
                     } catch (e: Exception) {
                         resolutionFailures++
                         null

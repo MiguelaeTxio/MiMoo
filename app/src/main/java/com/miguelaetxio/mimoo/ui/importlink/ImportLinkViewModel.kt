@@ -7,7 +7,6 @@ import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
-import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
@@ -339,22 +338,36 @@ class ImportLinkViewModel @Inject constructor(
                 errorMessage = null,
             )
             try {
-                val items = selected.map { track ->
+                val items = selected.mapNotNull { track ->
                     val streamUrl = streamResolver.resolveAudioStreamUrl(
                         "https://youtu.be/${track.youtubeId}",
                     )
-                    QueueItem(
-                        uri = streamUrl,
-                        title = track.title,
-                        isLocal = false,
-                        artist = track.channelTitle,
+                    // S027 -- antes era `artist = track.channelTitle`
+                    // directo, sin condición ninguna -- el canal se
+                    // reproducía tal cual como si fuera el artista.
+                    // Ahora resolución verificada (artista
+                    // estructurado si lo hay, si no
+                    // identifyFromTitleWords contra MusicBrainz); si
+                    // no identifica nada, la pista se excluye del
+                    // streaming en vez de inventar un artista.
+                    playerManager.resolveStreamItem(
+                        streamUrl = streamUrl,
+                        videoTitle = track.title,
+                        structuredArtist = track.artist,
                         youtubeId = track.youtubeId,
-                        channelTitle = track.channelTitle,
                         artworkUri = track.thumbnailUrl,
                     )
                 }
                 playerManager.playQueue(items)
-                _uiState.value = _uiState.value.copy(isResolvingQueue = false)
+                _uiState.value = _uiState.value.copy(
+                    isResolvingQueue = false,
+                    errorMessage = if (items.size < selected.size) {
+                        "No se pudo identificar el artista de " +
+                            "${selected.size - items.size} pista(s); se reproduce el resto."
+                    } else {
+                        null
+                    },
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isResolvingQueue = false,

@@ -2468,25 +2468,40 @@ class PlayerManager @Inject constructor(
      * elemento. Usado por el botón de reproducción individual de
      * SearchScreen/Biblioteca.
      *
-     * S027 -- corrección tras primer intento equivocado: la pregunta
-     * de "¿Quién es el artista?" NO espera a que la Radio necesite un
-     * ancla al final de la cola -- se hace AQUÍ, al arrancar el
-     * streaming, si el vídeo no trae artista. Orden textual de Miguel
-     * Ángel: "cuando se pone una canción en streaming se pregunta el
-     * título y el artista si no lo tiene, para que la radio empiece a
-     * funcionar". El nombre del canal de YouTube nunca entra en esto,
-     * ni se lee ni se guarda -- ver `submitStreamArtist()`.
+     * S027 -- segunda corrección: la primera versión solo comprobaba
+     * `artist.isNullOrBlank()`, pero los llamantes seguían resolviendo
+     * `track.artist ?: track.channelTitle` ANTES de llamar aquí, así
+     * que `artist` nunca llegaba vacío -- el canal se colaba disfrazado
+     * de artista y la comprobación no hacía nada ("se lo traga con
+     * papas"). Orden explícita de Miguel Ángel: primero hay que
+     * PARSEAR el artista y comprobar que existe en MusicBrainz, no
+     * limitarse a mirar si el campo está vacío. Ahora, si no llega un
+     * artista estructurado ya resuelto, se intenta
+     * `RadioRepository.identifyFromTitleWords(title)` -- parsea
+     * candidatos del propio título del vídeo y los VERIFICA contra
+     * MusicBrainz antes de aceptarlos, no es un parseo a ciegas. Solo
+     * si eso tampoco encuentra nada se pregunta. El nombre del canal
+     * de YouTube no entra en esta función en ningún punto -- ni como
+     * fuente de identidad, ni leído, ni guardado.
      * ---
      * Plays a single ad-hoc track -- same insertion semantics as
      * playQueue() (see class comment), with a one-item list. Used by
      * the individual play button in SearchScreen/Biblioteca.
      *
-     * S027 -- fix after a first wrong attempt: the "Who is the
-     * artist?" question does NOT wait for Radio to need an anchor at
-     * the end of the queue -- it happens HERE, when the stream
-     * starts, if the video has no artist. YouTube's channel name is
-     * never involved, neither read nor stored -- see
-     * `submitStreamArtist()`.
+     * S027 -- second fix: the first version only checked
+     * `artist.isNullOrBlank()`, but callers were still resolving
+     * `track.artist ?: track.channelTitle` BEFORE calling here, so
+     * `artist` was never actually blank -- the channel name slipped in
+     * disguised as the artist and the check did nothing. Explicit
+     * order from Miguel Ángel: PARSE the artist first and verify it
+     * exists in MusicBrainz, don't just check if the field is empty.
+     * Now, if no already-resolved structured artist arrives, it tries
+     * `RadioRepository.identifyFromTitleWords(title)` -- parses
+     * candidates from the video's own title and VERIFIES them against
+     * MusicBrainz before accepting, not a blind parse. Only if that
+     * also finds nothing does it ask. YouTube's channel name never
+     * enters this function, not as an identity source, not read, not
+     * stored.
      */
     fun play(
         streamUrl: String,
@@ -2497,32 +2512,74 @@ class PlayerManager @Inject constructor(
         channelTitle: String? = null,
         artworkUri: String? = null,
     ) {
-        if (!isLocal && artist.isNullOrBlank()) {
-            pendingStreamPlayback = QueueItem(
-                uri = streamUrl,
-                title = title,
-                isLocal = false,
-                artist = null,
-                youtubeId = youtubeId,
-                artworkUri = artworkUri,
+        if (isLocal) {
+            playQueue(
+                listOf(
+                    QueueItem(
+                        streamUrl,
+                        title,
+                        true,
+                        artist,
+                        youtubeId = youtubeId,
+                        channelTitle = channelTitle,
+                        artworkUri = artworkUri,
+                    )
+                ),
+                startIndex = 0,
             )
-            _state.value = _state.value.copy(streamArtistPromptVideoTitle = title)
             return
         }
-        playQueue(
-            listOf(
-                QueueItem(
-                    streamUrl,
-                    title,
-                    isLocal,
-                    artist,
-                    youtubeId = youtubeId,
-                    channelTitle = channelTitle,
-                    artworkUri = artworkUri,
-                )
-            ),
-            startIndex = 0,
-        )
+        val structuredArtist = artist?.takeIf { it.isNotBlank() }
+        if (structuredArtist != null) {
+            playQueue(
+                listOf(
+                    QueueItem(
+                        streamUrl,
+                        title,
+                        false,
+                        structuredArtist,
+                        youtubeId = youtubeId,
+                        artworkUri = artworkUri,
+                    )
+                ),
+                startIndex = 0,
+            )
+            return
+        }
+        managerScope.launch {
+            val identified = try {
+                radioRepository.identifyFromTitleWords(title)
+            } catch (e: Exception) {
+                null
+            }
+            withContext(Dispatchers.Main) {
+                if (identified != null) {
+                    playQueue(
+                        listOf(
+                            QueueItem(
+                                streamUrl,
+                                identified.song ?: title,
+                                false,
+                                identified.artist,
+                                youtubeId = youtubeId,
+                                artworkUri = artworkUri,
+                            )
+                        ),
+                        startIndex = 0,
+                    )
+                } else {
+                    pendingStreamPlayback = QueueItem(
+                        uri = streamUrl,
+                        title = title,
+                        isLocal = false,
+                        artist = null,
+                        youtubeId = youtubeId,
+                        artworkUri = artworkUri,
+                    )
+                    _state.value = _state.value.copy(streamArtistPromptVideoTitle = title)
+                }
+            }
+        }
     }
 
     /**
@@ -2583,6 +2640,58 @@ class PlayerManager @Inject constructor(
      * the playback queue. When that album ends, it'll continue with
      * what was left of the previous album".
      */
+    /**
+     * S027 -- resuelve (verificado, nunca desde el canal de YouTube)
+     * un candidato de streaming a un QueueItem reproducible, o null si
+     * no se pudo identificar el artista de ninguna manera. No
+     * reproduce nada por sí misma -- pensada para encajar en el mismo
+     * `mapNotNull` que ya usan PlaylistDetailViewModel.playAll(),
+     * LibraryViewModel.playResolvedFavorites() e
+     * ImportLinkViewModel.playSelected() para tratar los fallos de
+     * red de streamResolver, tratando "sin artista identificable"
+     * como el mismo tipo de fallo -- la pista se excluye del lote, no
+     * se inventa nada.
+     *
+     * Cascada: artista estructurado si viene ya resuelto (no
+     * nulo/blanco) -- si no, `RadioRepository.identifyFromTitleWords()`,
+     * que parsea candidatos del propio título del vídeo y los VERIFICA
+     * contra MusicBrainz antes de aceptarlos.
+     */
+    suspend fun resolveStreamItem(
+        streamUrl: String,
+        videoTitle: String,
+        structuredArtist: String?,
+        youtubeId: String?,
+        artworkUri: String?,
+    ): QueueItem? {
+        val structured = structuredArtist?.takeIf { it.isNotBlank() }
+        if (structured != null) {
+            return QueueItem(
+                streamUrl,
+                videoTitle,
+                false,
+                structured,
+                youtubeId = youtubeId,
+                artworkUri = artworkUri,
+            )
+        }
+        val identified = try {
+            radioRepository.identifyFromTitleWords(videoTitle)
+        } catch (e: Exception) {
+            null
+        }
+        return identified?.let {
+            QueueItem(
+                streamUrl,
+                it.song ?: videoTitle,
+                false,
+                it.artist,
+                youtubeId = youtubeId,
+                artworkUri = artworkUri,
+            )
+        }
+    }
+
     fun playQueue(items: List<QueueItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
         val insertAt = if (queueItems.isEmpty()) {

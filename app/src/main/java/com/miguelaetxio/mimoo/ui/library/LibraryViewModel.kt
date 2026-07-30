@@ -1245,13 +1245,16 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
+                // S027 -- nunca el canal como artista en streaming;
+                // play() verifica (artista estructurado o
+                // identifyFromTitleWords contra MusicBrainz) o
+                // pregunta.
                 playerManager.play(
                     streamUrl,
                     track.title,
                     isLocal = false,
-                    artist = track.artist ?: track.channelTitle,
+                    artist = track.artist,
                     youtubeId = track.youtubeId,
-                    channelTitle = track.channelTitle,
                     artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
                 )
             } catch (e: Exception) {
@@ -1484,15 +1487,19 @@ class LibraryViewModel @Inject constructor(
                 } else {
                     try {
                         val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                        QueueItem(
-                            uri = streamUrl,
-                            title = track.title,
-                            isLocal = false,
-                            artist = track.artist ?: track.channelTitle,
+                        // S027 -- nunca el canal como artista;
+                        // resolución verificada, si no identifica
+                        // nada se excluye del lote.
+                        playerManager.resolveStreamItem(
+                            streamUrl = streamUrl,
+                            videoTitle = track.title,
+                            structuredArtist = track.artist,
                             youtubeId = track.youtubeId,
-                            channelTitle = track.channelTitle,
                             artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                        )
+                        ) ?: run {
+                            resolutionFailures++
+                            null
+                        }
                     } catch (e: Exception) {
                         resolutionFailures++
                         null
