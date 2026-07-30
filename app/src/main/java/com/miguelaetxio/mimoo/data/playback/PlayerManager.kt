@@ -175,14 +175,26 @@ data class PlaybackState(
      */
     val radioArtistPromptTrackTitle: String? = null,
     /**
-     * S027 -- no nulo cuando `play()` ha interceptado el arranque de
-     * un streaming (vídeo sin descargar) porque no traía artista.
-     * Contiene el título del vídeo tal cual, solo de contexto. La UI
-     * debe pedir Artista y Título de la canción -- ver
-     * `PlayerManager.submitStreamArtist()`/`dismissStreamArtistPrompt()`.
-     * El nombre del canal de YouTube no interviene en este flujo.
+     * S027 -- TERCERA corrección: orden explícita de Miguel Ángel,
+     * "tanto si hay título y artista, como si no, debe,
+     * obligatoriamente saltar el modal, bien para preguntar o bien
+     * para informar de título y artista". Ya NO es condicional a que
+     * falte el artista -- `play()` lo dispara SIEMPRE que el vídeo es
+     * streaming (no local), precargado con lo que se haya podido
+     * resolver (artista estructurado o `identifyFromTitleWords()`) o
+     * vacío si no se resolvió nada. No nulo mientras el modal está
+     * pendiente de respuesta. Contiene el título del vídeo tal cual,
+     * solo de contexto -- ver `streamArtistPromptPrefilledArtist`/
+     * `streamArtistPromptPrefilledTitle` para los valores precargados
+     * de los campos, y `PlayerManager.submitStreamArtist()`/
+     * `dismissStreamArtistPrompt()`. El nombre del canal de YouTube no
+     * interviene en este flujo.
      */
     val streamArtistPromptVideoTitle: String? = null,
+    /** S027 -- valor precargado del campo Artista del modal (vacío si no se resolvió ninguno). */
+    val streamArtistPromptPrefilledArtist: String? = null,
+    /** S027 -- valor precargado del campo Título del modal (el título del vídeo si no hay uno mejor). */
+    val streamArtistPromptPrefilledTitle: String? = null,
 )
 
 /**
@@ -2531,18 +2543,18 @@ class PlayerManager @Inject constructor(
         }
         val structuredArtist = artist?.takeIf { it.isNotBlank() }
         if (structuredArtist != null) {
-            playQueue(
-                listOf(
-                    QueueItem(
-                        streamUrl,
-                        title,
-                        false,
-                        structuredArtist,
-                        youtubeId = youtubeId,
-                        artworkUri = artworkUri,
-                    )
-                ),
-                startIndex = 0,
+            pendingStreamPlayback = QueueItem(
+                streamUrl,
+                title,
+                false,
+                structuredArtist,
+                youtubeId = youtubeId,
+                artworkUri = artworkUri,
+            )
+            _state.value = _state.value.copy(
+                streamArtistPromptVideoTitle = title,
+                streamArtistPromptPrefilledArtist = structuredArtist,
+                streamArtistPromptPrefilledTitle = title,
             )
             return
         }
@@ -2553,41 +2565,31 @@ class PlayerManager @Inject constructor(
                 null
             }
             withContext(Dispatchers.Main) {
-                if (identified != null) {
-                    playQueue(
-                        listOf(
-                            QueueItem(
-                                streamUrl,
-                                identified.song ?: title,
-                                false,
-                                identified.artist,
-                                youtubeId = youtubeId,
-                                artworkUri = artworkUri,
-                            )
-                        ),
-                        startIndex = 0,
-                    )
-                } else {
-                    pendingStreamPlayback = QueueItem(
-                        uri = streamUrl,
-                        title = title,
-                        isLocal = false,
-                        artist = null,
-                        youtubeId = youtubeId,
-                        artworkUri = artworkUri,
-                    )
-                    _state.value = _state.value.copy(streamArtistPromptVideoTitle = title)
-                }
+                pendingStreamPlayback = QueueItem(
+                    uri = streamUrl,
+                    title = identified?.song ?: title,
+                    isLocal = false,
+                    artist = identified?.artist,
+                    youtubeId = youtubeId,
+                    artworkUri = artworkUri,
+                )
+                _state.value = _state.value.copy(
+                    streamArtistPromptVideoTitle = title,
+                    streamArtistPromptPrefilledArtist = identified?.artist,
+                    streamArtistPromptPrefilledTitle = identified?.song ?: title,
+                )
             }
         }
     }
 
     /**
-     * S027 -- respuesta del modal "¿Quién es el artista?" disparado
-     * por `play()` al arrancar un streaming sin artista. Arranca la
-     * reproducción ya con Artista y Título de la canción confirmados
-     * -- son los dos únicos datos que se usan, el canal no interviene
-     * en ningún punto.
+     * S027 -- respuesta del modal "¿Quién es el artista?" (siempre
+     * disparado por `play()` en streaming, ver
+     * `PlaybackState.streamArtistPromptVideoTitle`). Arranca la
+     * reproducción con Artista y Título de la canción confirmados --
+     * sean los precargados aceptados tal cual, o corregidos a mano.
+     * Son los dos únicos datos que se usan, el canal no interviene en
+     * ningún punto.
      */
     fun submitStreamArtist(artistName: String, songTitle: String) {
         val trimmedArtist = artistName.trim()
@@ -2595,7 +2597,11 @@ class PlayerManager @Inject constructor(
         val pending = pendingStreamPlayback
         if (trimmedArtist.isEmpty() || trimmedTitle.isEmpty() || pending == null) return
         pendingStreamPlayback = null
-        _state.value = _state.value.copy(streamArtistPromptVideoTitle = null)
+        _state.value = _state.value.copy(
+            streamArtistPromptVideoTitle = null,
+            streamArtistPromptPrefilledArtist = null,
+            streamArtistPromptPrefilledTitle = null,
+        )
         playQueue(
             listOf(pending.copy(title = trimmedTitle, artist = trimmedArtist)),
             startIndex = 0,
@@ -2609,7 +2615,11 @@ class PlayerManager @Inject constructor(
      */
     fun dismissStreamArtistPrompt() {
         pendingStreamPlayback = null
-        _state.value = _state.value.copy(streamArtistPromptVideoTitle = null)
+        _state.value = _state.value.copy(
+            streamArtistPromptVideoTitle = null,
+            streamArtistPromptPrefilledArtist = null,
+            streamArtistPromptPrefilledTitle = null,
+        )
     }
 
     /**

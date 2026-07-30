@@ -178,24 +178,36 @@ fun PlayerBar(
         )
     }
 
-    // S027 -- disparo real: al arrancar CUALQUIER streaming (vídeo sin
-    // descargar) que no trae artista. Orden textual de Miguel Ángel:
-    // "cuando se pone una canción en streaming se pregunta el título y
-    // el artista si no lo tiene, para que la radio empiece a
-    // funcionar". El nombre del canal de YouTube no aparece en ningún
-    // sitio de este modal.
+    // S027 -- TERCERA corrección: orden explícita de Miguel Ángel,
+    // "tanto si hay título y artista, como si no, debe,
+    // obligatoriamente saltar el modal, bien para preguntar o bien
+    // para informar de título y artista". Ya no es condicional a que
+    // falte el dato -- play() lo dispara SIEMPRE en streaming,
+    // precargado con lo que se haya resuelto. El nombre del canal de
+    // YouTube no aparece en ningún sitio de este modal.
     val streamArtistPromptTitle = state.streamArtistPromptVideoTitle
     if (streamArtistPromptTitle != null) {
-        var streamArtistInput by remember(streamArtistPromptTitle) { mutableStateOf("") }
-        var streamSongInput by remember(streamArtistPromptTitle) { mutableStateOf("") }
+        val prefilledArtist = state.streamArtistPromptPrefilledArtist
+        val prefilledTitle = state.streamArtistPromptPrefilledTitle
+        var streamArtistInput by remember(streamArtistPromptTitle) {
+            mutableStateOf(prefilledArtist.orEmpty())
+        }
+        var streamSongInput by remember(streamArtistPromptTitle) {
+            mutableStateOf(prefilledTitle ?: streamArtistPromptTitle)
+        }
+        val isInforming = !prefilledArtist.isNullOrBlank()
         AlertDialog(
             onDismissRequest = viewModel::dismissStreamArtistPrompt,
             title = { Text("¿Quién es el artista?") },
             text = {
                 Column {
                     Text(
-                        "\"$streamArtistPromptTitle\" no trae artista. Sin esa información " +
-                            "no se puede reproducir en streaming.",
+                        if (isInforming) {
+                            "Antes de reproducir en streaming, confirma que esto es correcto."
+                        } else {
+                            "\"$streamArtistPromptTitle\" no trae artista. Sin esa información " +
+                                "no se puede reproducir en streaming."
+                        },
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
