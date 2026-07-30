@@ -2721,3 +2721,73 @@ Dos cambios, solo para búsquedas de solo-artista:
 **Sin verificar en dispositivo real todavía** -- en particular, que
 Judas Priest/Motörhead/Black Sabbath empiecen a dar temas distintos en
 vueltas sucesivas, no solo el de siempre.
+
+---
+
+## CUATRO GRUPOS DE ORIGEN (Iberoamericana/Anglosajona/Europea/Mundial), sustituyendo el binario España/resto
+
+A raíz de que "Free" (banda GB) resolviera correctamente pero abriera
+la pregunta de fondo, Miguel Ángel pidió sustituir el binario
+España/resto (cerrado en S020) por cuatro grupos grandes, con la
+misma pared absoluta de siempre. Decisión completa, cerrada a lo largo
+de varios mensajes:
+
+- **Los cuatro grupos**: Iberoamericana, Anglosajona, Europea,
+  Mundial (cajón de lo que no encaja en los otros tres).
+- **Pared TOTAL entre grupos** -- *"el origen en estos grupos grandes
+  es una pared."* Cero mezcla entre grupos vecinos.
+- **Dentro de un grupo, el país exacto no manda nada** -- *"prefiero
+  que Led Zeppelin me traiga a Van Halen o AC/DC antes que rebuscar
+  en GB."* Con Led Zeppelin (GB, Anglosajona) se abre igual a US, AU,
+  IE, NZ, CA desde el principio, sin preferencia por el país exacto.
+- **Puerto Rico → Iberoamericana**, no Anglosajona -- verificado con
+  datos reales de la propia semilla que MusicBrainz ya distingue PR
+  de US con su propio código de país, así que no hay riesgo de que
+  Bad Bunny se cuele en una radio anglosajona.
+- **Brasil y Portugal → Iberoamericana** por decisión explícita
+  ("Portugal va con nosotros siempre"), pese a que Portugal es
+  geográficamente Europa.
+- **Canadá → Anglosajona** por decisión explícita.
+- Se planteó también si hacía falta una capa aparte para distinguir
+  "movida madrileña" de "copla" dentro de lo español -- **comprobado
+  con datos reales que NO hace falta**: Mecano/Radio Futura comparten
+  0% de género con Rocío Jurado/Concha Piquer/Manolo Escobar (géneros
+  completamente distintos: `pop`/`synth-pop`/`new wave` vs.
+  `copla`/`flamenco`/`bolero español`), así que `GenreMatchQuality`
+  ya los separa sin ningún mecanismo nuevo.
+
+### Implementado (commits `76aec87` + `3d3a199` -- el segundo corrige
+un fallo de compilación del primero, un log que aún usaba el
+parámetro `country` retirado de `findCandidates()` -- compila en
+verde)
+
+- **`OriginGroup.kt`** (nuevo): enum de 4 valores +
+  `OriginGroup.of(país): OriginGroup?` -- `null` solo cuando el país
+  es desconocido (nunca confundido con Mundial, que es un grupo real).
+- **`RadioAnchor.isSpanishOrigin` (Boolean) → `originGroup`
+  (OriginGroup?)**.
+- **`RadioRepository.resolveAnchor()`** (las dos rutas, diccionario y
+  MusicBrainz en vivo): calcula el grupo en vez del booleano.
+- **`RadioRepository.buildGenreQuery()`**: la búsqueda en vivo de
+  MusicBrainz construye ahora una cláusula OR de todos los países del
+  grupo (`country:GB OR country:US OR ...`), en vez de país exacto o
+  el binario `country:ES`/`NOT country:ES`. Mundial, sin lista
+  cerrada, se construye por exclusión de los otros tres grupos.
+- **`AnchorDictionary.artistsMatching()`**: filtra por grupo en vez
+  de país exacto.
+- **`KnownHitsRepository`**: `pool()`/`randomHit()`/`knownArtists()`/
+  `isKnownHitArtist()`/`lookupHit()` usan `OriginGroup?` en vez del
+  enum `Origin` (ES/INTL/ANY, retirado). El bloque `es`/`intl` de los
+  propios datos ya NO se usa para filtrar -- se combinan siempre y el
+  filtro real es `OriginGroup.of(país real de cada entrada) == grupo
+  del ancla`, porque Brasil y Portugal viven en el bloque `intl` pero
+  pertenecen a Iberoamericana. `isKnownSpanishArtist()` sustituida por
+  `originGroupOfKnownArtist()`, generalizada a los cuatro grupos.
+- **`PlayerManager.fetchFromDisco()`**: compara por grupo en vez de
+  país exacto/binario.
+
+**Sin verificar en dispositivo real todavía** -- cambio de fondo que
+toca toda la cadena de la Radio (ancla, las tres porciones, y el
+fallback final). Pendiente sobre todo: confirmar que un ancla GB
+(Anglosajona) empieza a traer también artistas de EEUU/Australia sin
+romper la pared con Iberoamericana/Europea/Mundial.
