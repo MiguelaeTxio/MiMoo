@@ -2229,7 +2229,21 @@ class PlayerManager @Inject constructor(
         songTitle: String?,
     ): QueueItem? = try {
         val query = if (songTitle != null) "$artist $songTitle" else artist
-        val searchResult = externalLinkResolver.searchYoutube(query, limit = 6)
+        // S026 -- LÍMITE MÁS ANCHO para "solo artista" (Exploración, o
+        // "artista conocido, tema no catalogado"). Causa real,
+        // confirmada contando el propio log de Miguel Ángel: buscar
+        // solo el nombre del artista en YouTube devuelve casi siempre
+        // el MISMO vídeo en primer lugar (17 de 18 búsquedas de 'Judas
+        // Priest' trajeron 'Breaking The Law'; 18 de 18 de 'Motörhead'
+        // trajeron 'Ace Of Spades'). Con solo 6 resultados y quedándose
+        // con el primero que pasara el filtro, la Radio nunca llegaba a
+        // un tema DISTINTO del mismo artista -- encontraba siempre el
+        // mismo, lo descartaba por repetido (`radioUsedSongs`), y ahí
+        // se acababa ese artista para el resto de la ventana de
+        // no-repetición. Con canción conocida (`songTitle != null`) no
+        // hace falta -- ya se busca una canción concreta.
+        val searchLimit = if (songTitle == null) 20 else 6
+        val searchResult = externalLinkResolver.searchYoutube(query, limit = searchLimit)
         // S024 -- el tope de 15 minutos deja fuera el repertorio
         // clásico entero. Miguel Ángel puso la 9ª de Beethoven, que
         // dura 18:34: el ancla NO pasaba su propio filtro, y por eso
@@ -2246,7 +2260,14 @@ class PlayerManager @Inject constructor(
         val filtered = searchResult.tracks.filter { candidate ->
             candidate.durationSeconds in 1..maxSeconds &&
                 !looksLikeNonSong(candidate.title) &&
-                matchesArtist(artist, candidate.title, candidate.channelTitle, strict = songTitle == null)
+                matchesArtist(artist, candidate.title, candidate.channelTitle, strict = songTitle == null) &&
+                // S026 -- fuera los que ya sonaron esta sesión, para que
+                // la búsqueda ancha de más arriba sirva de algo: sin
+                // esto, la vuelta se paraba en el primer resultado (casi
+                // siempre el mismo, ver más arriba) y nunca probaba con
+                // el segundo o el tercero de la lista.
+                knownHitsRepository.songKey(artist, candidate.title) !in radioUsedSongs &&
+                titleKey(candidate.title) !in radioUsedTitles
         }
 
         // S026 -- SIN CANCIÓN CONOCIDA (Exploración, o "artista
