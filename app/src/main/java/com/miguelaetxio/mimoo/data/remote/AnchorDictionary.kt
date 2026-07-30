@@ -189,8 +189,53 @@ class AnchorDictionary @Inject constructor(
         ensureLoaded()
         val k = key(name)
         if (k.isBlank()) return null
-        return learnedArtists[k] ?: seed[k]
+        learnedArtists[k]?.let { return it }
+        seed[k]?.let { return it }
+        // S027 -- fallback por palabras. Caso real reportado por
+        // Miguel Ángel: el título de un vídeo trae "Beethoven" a
+        // secas, pero la semilla guarda "Ludwig van Beethoven" -- la
+        // clave exacta normalizada nunca coincide, así que un artista
+        // que SÍ está en el diccionario (con géneros reales:
+        // classical, symphony...) se daba por no encontrado y la
+        // resolución caía a la red, donde "Beethoven" suelto
+        // coincidía por nombre exacto con una entidad de MusicBrainz
+        // totalmente distinta, sin géneros -- y sin ancla.
+        //
+        // Solo se acepta si el candidato es ÚNICO en todo el
+        // diccionario (semilla + aprendido): mismo principio que el
+        // resto del sistema -- mejor sin ancla que con una mala.
+        return artistByWordSubset(name)
     }
+
+    /**
+     * S027 -- busca por conjunto de palabras contenido (en cualquier
+     * dirección) entre el nombre buscado y el nombre de cada entrada
+     * del diccionario. "beethoven" está contenido en
+     * "ludwig van beethoven"; "bach" en "johann sebastian bach".
+     * Comparación sobre `SearchNormalizer.normalizeArtistName()`
+     * (conserva espacios) -- NO sobre `key()`, que los quita y
+     * convertiría "ludwig van beethoven" en un único token pegado
+     * imposible de partir en palabras. Solo se devuelve si hay
+     * EXACTAMENTE UN candidato -- con más de uno es ambiguo y no se
+     * adivina.
+     */
+    private fun artistByWordSubset(name: String): ArtistFacts? {
+        val wantedWords = wordsOf(SearchNormalizer.normalizeArtistName(name))
+        if (wantedWords.isEmpty()) return null
+        val allFacts = seed.values.asSequence() + learnedArtists.values.asSequence()
+        val matches = allFacts
+            .filter { facts ->
+                val candidateWords = wordsOf(SearchNormalizer.normalizeArtistName(facts.artist))
+                candidateWords.isNotEmpty() &&
+                    (wantedWords.all { it in candidateWords } || candidateWords.all { it in wantedWords })
+            }
+            .distinct()
+            .toList()
+        return matches.singleOrNull()
+    }
+
+    private fun wordsOf(normalizedName: String): Set<String> =
+        normalizedName.split(" ").filter { it.isNotBlank() }.toSet()
 
     /** Año de edición original del tema, si ya se sabe. */
     fun trackYear(artist: String?, title: String?): Int? {
