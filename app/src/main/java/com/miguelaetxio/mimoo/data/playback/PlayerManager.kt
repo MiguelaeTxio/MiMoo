@@ -1666,7 +1666,10 @@ class PlayerManager @Inject constructor(
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )
         for (artist in artists) {
-            val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null) ?: continue
+            val item = resolveYoutubeCandidate(
+                anchorArtistName, artist, songTitle = null,
+                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+            ) ?: continue
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs) continue
             if (titleKey(item.title) in radioUsedTitles) continue
             RadioDebugLogger.log(
@@ -1801,7 +1804,10 @@ class PlayerManager @Inject constructor(
             ) ?: return@repeat
             suggestedAny = true
             triedNames += artist
-            val item = resolveYoutubeCandidate(anchorArtistName, artist, songTitle = null)
+            val item = resolveYoutubeCandidate(
+                anchorArtistName, artist, songTitle = null,
+                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+            )
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
                 titleKey(item.title) !in radioUsedTitles
@@ -2322,6 +2328,26 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         artist: String,
         songTitle: String?,
+        /**
+         * S027 -- bug real reportado por Miguel Ángel con captura de
+         * pantalla: una sesión anclada en 'Ilegales' (España, década
+         * 1980) sirvió "Si yo tuviera una escoba" de Los Sirex (1960s)
+         * y varios temas de artistas contemporáneos (Manuel Carrasco,
+         * Leiva). `verifyTrackExists()` YA calculaba la década real
+         * del vídeo encontrado (`Confirmed(decade)`), pero este
+         * método la ignoraba por completo: aceptaba el primer
+         * resultado `Confirmed`, sin comparar esa década contra la
+         * del ancla. El dato existía, se calculaba, y no se usaba
+         * nunca para filtrar -- exactamente el mismo patrón de bug
+         * que "género no se abandona nunca": aquí la década SÍ se
+         * abandonaba, en silencio.
+         *
+         * `null` desactiva la comprobación -- usado para clásica (sin
+         * década por diseño) y para el peldaño de canción YA CONOCIDA
+         * (`songTitle != null`, dato curado del diccionario, no pasa
+         * por `verifyTrackExists()` en este método).
+         */
+        expectedDecadeBegin: Int? = null,
     ): QueueItem? = try {
         val query = if (songTitle != null) "$artist $songTitle" else artist
         // S026 -- LÍMITE MÁS ANCHO para "solo artista" (Exploración, o
@@ -2381,6 +2407,25 @@ class PlayerManager @Inject constructor(
             for (candidate in filtered) {
                 when (val existence = radioRepository.verifyTrackExists(artist, candidate.title)) {
                     is RadioRepository.TrackExistence.Confirmed -> {
+                        // S027 -- ver el kdoc de `expectedDecadeBegin`
+                        // más arriba: antes se aceptaba aquí sin mirar
+                        // `existence.decadeBegin`. Ahora, si hay una
+                        // década esperada y no coincide, se descarta
+                        // este candidato concreto y se sigue probando
+                        // con el siguiente -- el género y el artista
+                        // pueden ser correctos y aun así ser la década
+                        // equivocada del mismo artista (una versión
+                        // remasterizada, un tema posterior de su
+                        // carrera...).
+                        if (expectedDecadeBegin != null && existence.decadeBegin != expectedDecadeBegin) {
+                            RadioDebugLogger.log(
+                                appContext, storageManager,
+                                "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
+                                    "'${candidate.title}' confirmado pero de década ${existence.decadeBegin}, " +
+                                    "no ${expectedDecadeBegin}: descartado, se sigue probando",
+                            )
+                            continue
+                        }
                         confirmed = candidate
                         break
                     }
