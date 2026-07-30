@@ -123,6 +123,59 @@ fun PlayerBar(
         )
     }
 
+    // S027 -- orden explícita de Miguel Ángel: si la Radio no puede
+    // identificar el artista de la última pista propia (ni por
+    // metadatos estructurados ni por el propio título), se pregunta
+    // Artista y Título de la canción -- nunca el nombre del canal de
+    // YouTube. Ver PlayerManager.submitRadioArtist()/
+    // dismissRadioArtistPrompt().
+    val radioArtistPromptTitle = state.radioArtistPromptTrackTitle
+    if (radioArtistPromptTitle != null) {
+        var artistInput by remember(radioArtistPromptTitle) { mutableStateOf("") }
+        var songInput by remember(radioArtistPromptTitle) { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = viewModel::dismissRadioArtistPrompt,
+            title = { Text("¿Quién es el artista?") },
+            text = {
+                Column {
+                    Text(
+                        "No se ha podido identificar el artista de \"$radioArtistPromptTitle\". " +
+                            "Sin esa información la Radio no puede arrancar.",
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = artistInput,
+                        onValueChange = { artistInput = it },
+                        label = { Text("Artista") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = songInput,
+                        onValueChange = { songInput = it },
+                        label = { Text("Título de la canción") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.submitRadioArtist(artistInput, songInput) },
+                    enabled = artistInput.isNotBlank() && songInput.isNotBlank(),
+                ) {
+                    Text("Empezar Radio")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissRadioArtistPrompt) {
+                    Text("Cancelar")
+                }
+            },
+        )
+    }
+
     Surface(tonalElevation = 4.dp) {
         if (!isExpanded) {
             PlayerBarCollapsed(

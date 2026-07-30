@@ -314,6 +314,13 @@ class PlayerBarViewModel @Inject constructor(
     /** S026 -- botón "Reintentar" del aviso de Radio detenida por falta de red. */
     fun dismissRadioNetworkLost() = playerManager.dismissRadioNetworkLost()
 
+    /** S027 -- respuesta del modal "¿Quién es el artista?" de Radio. */
+    fun submitRadioArtist(artist: String, songTitle: String) =
+        playerManager.submitRadioArtist(artist, songTitle)
+
+    /** S027 -- cancelar el modal "¿Quién es el artista?" de Radio. */
+    fun dismissRadioArtistPrompt() = playerManager.dismissRadioArtistPrompt()
+
     /** H08 -- arrastrar la barra de progreso. */
     fun seekTo(positionMs: Long) {
         playerManager.seekTo(positionMs)

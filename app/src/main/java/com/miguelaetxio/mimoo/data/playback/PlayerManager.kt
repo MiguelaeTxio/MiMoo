@@ -162,6 +162,18 @@ data class PlaybackState(
      * -- ver `PlayerManager.dismissRadioNetworkLost()`.
      */
     val radioNetworkLost: Boolean = false,
+    /**
+     * S027 -- no nulo cuando la última pista propia del usuario (la
+     * que arrancaría la Radio) no tiene artista identificable, ni por
+     * el artista estructurado de H05 ni por el propio título
+     * ("Artista - Canción"). Orden explícita de Miguel Ángel: el
+     * nombre del canal de YouTube NUNCA se usa como sustituto, bajo
+     * ningún concepto -- si no hay artista, se pregunta. Contiene el
+     * título del vídeo tal cual, solo para dar contexto en el modal;
+     * la UI debe pedir Artista y Título de la canción -- ver
+     * `PlayerManager.submitRadioArtist()`/`dismissRadioArtistPrompt()`.
+     */
+    val radioArtistPromptTrackTitle: String? = null,
 )
 
 /**
@@ -532,6 +544,14 @@ class PlayerManager @Inject constructor(
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
                     radioLibraryArtistProfileCache.clear()
+                    // S027 -- nueva pista propia: cualquier aviso de
+                    // "¿quién es el artista?" pendiente de una pista
+                    // anterior queda obsoleto, se limpia. Si esta
+                    // pista tampoco tiene ancla, topUpRadioQueueIfNeeded()
+                    // (llamado justo abajo) lo volverá a mostrar con el
+                    // título correcto.
+                    radioArtistPromptPending = false
+                    _state.value = _state.value.copy(radioArtistPromptTrackTitle = null)
                 }
                 if (currentItem?.isFromRadio == true || isLastItem) {
                     topUpRadioQueueIfNeeded()
@@ -775,6 +795,18 @@ class PlayerManager @Inject constructor(
     private var radioNetworkLost = false
 
     /**
+     * S027 -- true cuando `topUpRadioQueueIfNeeded()` se ha detenido
+     * porque la pista propia que arrancaría la Radio no tiene ancla
+     * (ni artista estructurado ni "Artista - Canción" en el título) y
+     * está esperando la respuesta del modal "¿Quién es el artista?".
+     * Gatea `topUpRadioQueueIfNeeded()` igual que `radioNetworkLost`,
+     * hasta que el usuario responda -- ver `submitRadioArtist()` -- o
+     * cancele -- ver `dismissRadioArtistPrompt()`.
+     */
+    @Volatile
+    private var radioArtistPromptPending = false
+
+    /**
      * S020 -- las TRES porciones de la Radio, tal como las cerró
      * Miguel Ángel (ver `DOCS/ANNEX_H08.md`, "Las TRES porciones y el
      * reparto dinámico"):
@@ -908,6 +940,12 @@ class PlayerManager @Inject constructor(
         // un tema propio, que reinicia el ancla). Ver
         // dismissRadioNetworkLost().
         if (radioNetworkLost) return
+        // S027 -- si ya se está esperando la respuesta del modal
+        // "¿Quién es el artista?", no se reintenta solo: espera a
+        // submitRadioArtist() (o a dismissRadioArtistPrompt(), que
+        // simplemente lo deja sin arrancar) o a que una pista propia
+        // nueva reinicie el ancla.
+        if (radioArtistPromptPending) return
 
         isRadioTopUpRunning = true
         managerScope.launch {
@@ -929,11 +967,24 @@ class PlayerManager @Inject constructor(
                     }
                     val anchorArtistName = radioAnchorArtist
                     if (anchorArtistName == null) {
+                        // S027 -- antes se rendía en silencio. Orden
+                        // explícita de Miguel Ángel: si no hay artista,
+                        // se pregunta -- nunca el nombre del canal como
+                        // sustituto. Publica el aviso para que la UI
+                        // muestre el modal "¿Quién es el artista?" con
+                        // el título del vídeo como contexto; queda
+                        // esperando a submitRadioArtist().
                         RadioDebugLogger.log(
                             appContext, storageManager,
                             "topUpRadioQueueIfNeeded() -- parado: no hay artista ancla (la última " +
-                                "pista propia del usuario no tiene 'artist'), no hay sesión de Radio que anclar",
+                                "pista propia del usuario no tiene 'artist'), se pregunta al usuario",
                         )
+                        radioArtistPromptPending = true
+                        withContext(Dispatchers.Main) {
+                            _state.value = _state.value.copy(
+                                radioArtistPromptTrackTitle = radioAnchorTrackTitle,
+                            )
+                        }
                         break
                     }
 
@@ -2781,6 +2832,36 @@ class PlayerManager @Inject constructor(
         radioNetworkLost = false
         _state.value = _state.value.copy(radioNetworkLost = false)
         topUpRadioQueueIfNeeded()
+    }
+
+    /**
+     * S027 -- respuesta del modal "¿Quién es el artista?" (ver
+     * `PlaybackState.radioArtistPromptTrackTitle`). Solo dos datos
+     * entran en juego: artista y título de la canción. El nombre del
+     * canal de YouTube no se usa ni se guarda en ningún punto de este
+     * flujo -- orden explícita de Miguel Ángel, sin matices. Fija el
+     * ancla con lo respondido y relanza el reparto de la cola.
+     */
+    fun submitRadioArtist(artist: String, songTitle: String) {
+        val trimmedArtist = artist.trim()
+        val trimmedTitle = songTitle.trim()
+        if (trimmedArtist.isEmpty() || trimmedTitle.isEmpty()) return
+        radioAnchorArtist = trimmedArtist
+        radioAnchorArtistFallback = trimmedArtist
+        radioAnchorTrackTitle = trimmedTitle
+        radioArtistPromptPending = false
+        _state.value = _state.value.copy(radioArtistPromptTrackTitle = null)
+        topUpRadioQueueIfNeeded()
+    }
+
+    /**
+     * S027 -- el usuario cancela el modal sin responder: la Radio no
+     * arranca sobre esta pista, mismo principio ya establecido para
+     * la falta de red ("si no hay artista no hay ancla").
+     */
+    fun dismissRadioArtistPrompt() {
+        radioArtistPromptPending = false
+        _state.value = _state.value.copy(radioArtistPromptTrackTitle = null)
     }
 
     /**
