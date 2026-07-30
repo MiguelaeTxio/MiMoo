@@ -643,9 +643,35 @@ class RadioRepository @Inject constructor(
         val token = BuildConfig.DISCOGS_TOKEN
         if (token.isBlank()) return null
         return try {
+            // S026 -- FALLO REAL, con captura de pantalla de Miguel
+            // Ángel delante: `verifyTrackExists('Free', 'Nacho')`
+            // devolvió CONFIRMADO desde este peldaño, y lo que sonó fue
+            // '[Free Cover] Nacho (Número Uno)' -- un cover de un tema
+            // de Nacho (artista dominicano), nada que ver con el grupo
+            // británico Free. La API de Discogs es una búsqueda de
+            // texto libre, no una coincidencia exacta como
+            // MusicBrainz -- devolvía CUALQUIER resultado "relevante"
+            // para "Free"+"Nacho" y se aceptaba el año sin comprobar
+            // que el resultado tuviera algo que ver con lo pedido.
+            //
+            // El campo `title` que da Discogs para resultados de tipo
+            // "release" viene como "Artista - Edición" -- se exige que,
+            // normalizado, contenga de verdad tanto el artista como el
+            // tema buscados antes de aceptar su año. Más flojo que la
+            // igualdad exacta de MusicBrainz (Discogs no da por
+            // separado el título del tema dentro de una edición sin
+            // otra llamada), pero muy por encima de "cualquier cosa
+            // relevante", que es lo que colaba antes.
+            val wantedArtist = SearchNormalizer.normalize(artist)
+            val wantedTitle = SearchNormalizer.normalize(title)
             val years = discogsApiService
                 .search(track = title, artist = artist, token = token)
                 .results
+                .filter { result ->
+                    val resultTitle = SearchNormalizer.normalize(result.title)
+                    wantedArtist.isNotBlank() && wantedTitle.isNotBlank() &&
+                        resultTitle.contains(wantedArtist) && resultTitle.contains(wantedTitle)
+                }
                 .mapNotNull { it.year?.take(4)?.toIntOrNull() }
                 .filter { it in 1850..2100 }
             val year = years.minOrNull()
