@@ -353,7 +353,12 @@ class ImportLinkViewModel @Inject constructor(
                     playerManager.resolveStreamItem(
                         streamUrl = streamUrl,
                         videoTitle = track.title,
-                        structuredArtist = track.artist,
+                        // ExternalLinkTrack no tiene artista
+                        // estructurado (es el resultado crudo de
+                        // resolver el enlace, antes de cualquier
+                        // emparejamiento) -- resolveStreamItem cae
+                        // directo a identifyFromTitleWords().
+                        structuredArtist = null,
                         youtubeId = track.youtubeId,
                         artworkUri = track.thumbnailUrl,
                     )
