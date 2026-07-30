@@ -2791,3 +2791,26 @@ toca toda la cadena de la Radio (ancla, las tres porciones, y el
 fallback final). Pendiente sobre todo: confirmar que un ancla GB
 (Anglosajona) empieza a traer también artistas de EEUU/Australia sin
 romper la pared con Iberoamericana/Europea/Mundial.
+
+---
+
+## CORRECCIÓN CON DISPOSITIVO REAL: BRASIL Y PORTUGAL A EUROPEA, "IBEROAMERICANA" -> "HISPANOAMÉRICA"
+
+Miguel Ángel probó el sistema de cuatro grupos con un ancla real
+(Ilegales, rock and roll/ES) y encontró que Iberoamericana, tal como
+se había diseñado, metía demasiados artistas portugueses (Mão Morta,
+Heróis do Mar, GNR, Salvador Sobral...) desconocidos en España, dando
+una experiencia de escucha desagradable. Cita textual: *"me he
+equivocado totalmente... no es una radio agradable... dejamos Portugal
+y Brasil, lo englobamos en Europa."*
+
+### Fix (commit `6c79fbb`, compilado en verde)
+
+`OriginGroup.IBEROAMERICANA` renombrado a **`HISPANOAMERICA`**: se
+queda con España + todo el mundo hispanohablante (México, Argentina,
+Colombia, Puerto Rico, República Dominicana, etc. -- *"Luis Miguel, el
+mismo Bad Bunny, etcétera, tienen que estar"*). Portugal y Brasil se
+mueven al conjunto de países de **Europea**.
+
+**Sin verificar en dispositivo real todavía** -- pendiente confirmar
+que una radio anclada en un artista español ya no trae portugueses.
