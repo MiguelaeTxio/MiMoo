@@ -585,6 +585,27 @@ class PlayerManager @Inject constructor(
                     radioPortionExhausted.clear()
                     radioUsedSongs.clear()
                     radioUsedTitles.clear()
+                    // S027 -- bug real reportado por Miguel Ángel: "The
+                    // Logical Song" de Supertramp, la propia pista que
+                    // arranca la sesión de Radio, volvía a sonar más
+                    // tarde en la misma sesión. `fetchFromKnown()`
+                    // empieza agotando los TEMAS CATALOGADOS del propio
+                    // ancla -- si esta pista está en el diccionario de
+                    // éxitos de Supertramp (lo normal, es su tema más
+                    // conocido), podía volver a salir como si fuera
+                    // nueva porque nunca se había añadido a
+                    // `radioUsedSongs`/`radioUsedTitles`: esos
+                    // conjuntos solo se rellenaban con lo que la
+                    // propia Radio iba sirviendo, nunca con la pista de
+                    // origen. Se añade aquí, justo tras limpiarlos, para
+                    // que la pista ancla cuente como "ya sonada" desde
+                    // el primer momento.
+                    currentItem?.title?.let { title ->
+                        titleKey(title).takeIf { it.isNotBlank() }?.let { radioUsedTitles.add(it) }
+                        radioAnchorArtist?.takeIf { it.isNotBlank() }?.let { anchorArtist ->
+                            radioUsedSongs.add(knownHitsRepository.songKey(anchorArtist, title))
+                        }
+                    }
                     radioUnknownOffset = 0
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
@@ -2404,26 +2425,21 @@ class PlayerManager @Inject constructor(
         val track = if (songTitle == null) {
             var confirmed: com.miguelaetxio.mimoo.data.remote.dto.ExternalLinkTrack? = null
             var networkLost = false
+            // S027 -- CORRECCIÓN EN LA MISMA SESIÓN: la primera versión
+            // de la comprobación de década logueaba una línea POR CADA
+            // candidato descartado. Con MAX_LINES=300 y sesiones como
+            // la de 'Squeeze' generando 113 rechazos en una sola
+            // ronda, eso vaciaba el log de eventos reales anteriores
+            // (una adición real de 'Siouxsie and the Banshees' quedó
+            // rotada fuera, Miguel Ángel no pudo verla). Se cuenta en
+            // vez de loguear cada uno, y se resume en una sola línea
+            // al final de la búsqueda.
+            var decadeRejectedCount = 0
             for (candidate in filtered) {
                 when (val existence = radioRepository.verifyTrackExists(artist, candidate.title)) {
                     is RadioRepository.TrackExistence.Confirmed -> {
-                        // S027 -- ver el kdoc de `expectedDecadeBegin`
-                        // más arriba: antes se aceptaba aquí sin mirar
-                        // `existence.decadeBegin`. Ahora, si hay una
-                        // década esperada y no coincide, se descarta
-                        // este candidato concreto y se sigue probando
-                        // con el siguiente -- el género y el artista
-                        // pueden ser correctos y aun así ser la década
-                        // equivocada del mismo artista (una versión
-                        // remasterizada, un tema posterior de su
-                        // carrera...).
                         if (expectedDecadeBegin != null && existence.decadeBegin != expectedDecadeBegin) {
-                            RadioDebugLogger.log(
-                                appContext, storageManager,
-                                "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
-                                    "'${candidate.title}' confirmado pero de década ${existence.decadeBegin}, " +
-                                    "no ${expectedDecadeBegin}: descartado, se sigue probando",
-                            )
+                            decadeRejectedCount++
                             continue
                         }
                         confirmed = candidate
@@ -2447,6 +2463,13 @@ class PlayerManager @Inject constructor(
                     _state.value = _state.value.copy(radioNetworkLost = true)
                 }
                 return null
+            }
+            if (confirmed == null && decadeRejectedCount > 0) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
+                        "$decadeRejectedCount confirmados pero de década distinta de $expectedDecadeBegin: descartados",
+                )
             }
             confirmed
         } else {

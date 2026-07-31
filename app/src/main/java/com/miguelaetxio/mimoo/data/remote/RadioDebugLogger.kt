@@ -36,7 +36,12 @@ import java.util.Locale
  */
 object RadioDebugLogger {
     private const val FILE_NAME = "radio_relacionados_debug.txt"
-    private const val MAX_LINES = 300
+    // S027 -- 300 se quedaba corto incluso después de reducir el ruido
+    // por candidato individual: una sola ronda de topUpRadioQueueIfNeeded()
+    // agotando las tres porciones puede generar bastantes más de 300
+    // líneas solo con lo esencial. Ampliado para que una sesión
+    // completa quepa sin rotar los eventos importantes del principio.
+    private const val MAX_LINES = 1500
     private const val LOGCAT_TAG = "MiMoo-Radio-Relacionados"
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
