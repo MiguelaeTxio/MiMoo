@@ -1360,7 +1360,26 @@ class RadioRepository @Inject constructor(
                     " AND (" + countries.joinToString(" OR ") { "country:$it" } + ")"
                 }
             }
-            if (decadeBegin != null) query += " AND begin:[$decadeBegin TO ${decadeBegin + 9}]"
+            if (decadeBegin != null) {
+                // S027 -- QUITADO. Esta cláusula filtraba por
+                // `begin:[decadeBegin TO decadeBegin+9]`, el campo de
+                // MusicBrainz para el ARTISTA: fecha de nacimiento si
+                // es solista, de formación si es grupo. Exactamente
+                // el mismo fallo que P!nk/life-span, ya identificado y
+                // ya arreglado para `resolveAnchor()` (la década del
+                // propio ancla) -- pero nunca se tocó aquí, en la
+                // búsqueda de candidatos en vivo. Caso real: Namika,
+                // nacida en 1991, entraba como candidata para una
+                // sesión de "boom bap 1990" por su fecha de
+                // nacimiento, no porque hiciera nada en los 90 --
+                // empezó a publicar en 2015. La directriz de Miguel
+                // Ángel es una sola, sin excepciones: la década sale
+                // SIEMPRE del tema, nunca del nacimiento o formación
+                // del artista. `verifyTrackExists()` /
+                // `resolveOriginalDecade()` ya fechan el TEMA concreto
+                // más abajo, en `resolveYoutubeCandidate()` -- ahí es
+                // donde debe decidirse la década, y solo ahí.
+            }
         }
         return query
     }
