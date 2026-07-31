@@ -374,6 +374,13 @@ class SettingsViewModel @Inject constructor(
         uiPreferencesManager.setRadioDiscoQuotaPerTen(quota)
     }
 
+    /** S027 -- ver el kdoc de UiPreferencesManager.KEY_RADIO_YEAR_WINDOW. */
+    val radioYearWindow: StateFlow<Int> = uiPreferencesManager.radioYearWindow
+
+    fun setRadioYearWindow(years: Int) {
+        uiPreferencesManager.setRadioYearWindow(years)
+    }
+
     /**
      * S026 -- umbral de coincidencia de género de la Radio (%
      * mínimo de intersección/unión de géneros específicos, ver

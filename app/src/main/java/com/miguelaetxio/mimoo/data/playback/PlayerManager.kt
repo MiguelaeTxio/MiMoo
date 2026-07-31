@@ -1804,8 +1804,8 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         anchorExclusion: Set<String>,
         avoidNames: Set<String>,
-        /** S027 -- ver el kdoc de `resolveYoutubeCandidate()`. `resolveFinalFallback()` amplía esto a `RADIO_YEAR_WINDOW_WIDE`. */
-        yearWindow: Int = RADIO_YEAR_WINDOW,
+        /** S027 -- ver el kdoc de `resolveYoutubeCandidate()`. `resolveFinalFallback()` lo duplica. */
+        yearWindow: Int = uiPreferencesManager.radioYearWindow.value,
     ): QueueItem? {
         // S024 -- antes esto pedía UN artista, intentaba UNA resolución
         // en YouTube, y si esa fallaba daba la porción entera por
@@ -2056,7 +2056,7 @@ class PlayerManager @Inject constructor(
             anchorArtistName,
             anchorExclusion = setOf(anchorArtistName.lowercase()) + radioRoundArtists,
             avoidNames = avoidNames,
-            yearWindow = RADIO_YEAR_WINDOW_WIDE,
+            yearWindow = uiPreferencesManager.radioYearWindow.value * 2,
         )
         if (unknownItem != null && unknownItem.artist?.lowercase() !in radioRoundArtists) {
             RadioDebugLogger.log(
@@ -2437,7 +2437,7 @@ class PlayerManager @Inject constructor(
          * antes -- `expectedDecadeBegin` sigue existiendo para eso.
          */
         expectedYear: Int? = null,
-        yearWindow: Int = RADIO_YEAR_WINDOW,
+        yearWindow: Int = uiPreferencesManager.radioYearWindow.value,
     ): QueueItem? = try {
         val query = if (songTitle != null) "$artist $songTitle" else artist
         // S026 -- LÍMITE MÁS ANCHO para "solo artista" (Exploración, o
@@ -3314,14 +3314,17 @@ class PlayerManager @Inject constructor(
          * S027 -- ver el kdoc de `resolveYoutubeCandidate()`. Ventana
          * de años, no década fija: caso real, ancla New Wave de 1979 --
          * comparar por década ("1970") dejaba fuera casi todo, porque
-         * el New Wave es un movimiento fundamentalmente de los 80.
-         * Orden textual de Miguel Ángel: *"cinco años atrás, cinco
-         * años adelante"*, ampliable a `RADIO_YEAR_WINDOW_WIDE` en el
-         * último recurso (`resolveFinalFallback()`) si aun así es
-         * corto: *"diez años hacia adelante, diez años hacia atrás"*.
+         * el New Wave es un movimiento fundamentalmente de los 80. El
+         * valor en sí ya NO es constante -- QUITADAS `RADIO_YEAR_WINDOW`/
+         * `RADIO_YEAR_WINDOW_WIDE`, sustituidas por
+         * `UiPreferencesManager.radioYearWindow` (configurable en
+         * Ajustes, 5 o 10, por defecto 10). Caso real que motivó subir
+         * el valor por defecto de 5 a 10: PISTONES (España, new wave,
+         * 1984) tardaba más de un minuto por canción porque con ±5 casi
+         * todo lo que YouTube devolvía de cada candidato quedaba fuera
+         * de la ventana. `resolveFinalFallback()` la duplica sobre lo
+         * que esté configurado en vez de usar un valor fijo aparte.
          */
-        private const val RADIO_YEAR_WINDOW = 5
-        private const val RADIO_YEAR_WINDOW_WIDE = 10
 
         /**
          * S027 -- tamaño del bloque de reparto del rediseño de cuota

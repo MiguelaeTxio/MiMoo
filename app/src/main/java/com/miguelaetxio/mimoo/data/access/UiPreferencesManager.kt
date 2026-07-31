@@ -61,6 +61,17 @@ class UiPreferencesManager @Inject constructor(
         const val KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT = "radio_genre_match_threshold_percent"
         const val DEFAULT_RADIO_GENRE_MATCH_THRESHOLD_PERCENT = 40
 
+        // S027 -- ventana de años del ancla (ver
+        // PlayerManager.resolveYoutubeCandidate()). Por defecto 10 --
+        // orden textual de Miguel Ángel tras el caso PISTONES (España,
+        // new wave, 1984): con ±5 casi todo lo que YouTube devuelve de
+        // cada artista queda fuera, porque no siempre es justo de esa
+        // época. Configurable a 5 en Ajustes para cuando el ancla es
+        // extranjera y hay mucho más donde elegir (más precisión sin
+        // quedarse corto de candidatos).
+        const val KEY_RADIO_YEAR_WINDOW = "radio_year_window"
+        const val DEFAULT_RADIO_YEAR_WINDOW = 10
+
         // S027 -- rediseño completo del cupo de Radio, orden textual de
         // Miguel Ángel tras el desastre de AC/DC (Thin Lizzy/Them/
         // Spencer Davis Group repetidos 42 de ~45 veces): ya no es un
@@ -105,6 +116,18 @@ class UiPreferencesManager @Inject constructor(
         val clamped = stepped.coerceIn(0, 100)
         prefs.edit { putInt(KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT, clamped) }
         _radioGenreMatchThresholdPercent.value = clamped
+    }
+
+    /** S027 -- ver el kdoc de KEY_RADIO_YEAR_WINDOW. Solo 5 o 10 -- se recorta a lo más cercano de los dos. */
+    private val _radioYearWindow = MutableStateFlow(
+        prefs.getInt(KEY_RADIO_YEAR_WINDOW, DEFAULT_RADIO_YEAR_WINDOW)
+    )
+    val radioYearWindow: StateFlow<Int> = _radioYearWindow.asStateFlow()
+
+    fun setRadioYearWindow(years: Int) {
+        val clamped = if (years <= 7) 5 else 10
+        prefs.edit { putInt(KEY_RADIO_YEAR_WINDOW, clamped) }
+        _radioYearWindow.value = clamped
     }
 
     private val _radioKnownQuotaPerTen = MutableStateFlow(
