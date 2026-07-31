@@ -585,6 +585,7 @@ class PlayerManager @Inject constructor(
                     radioPortionExhausted.clear()
                     radioUsedSongs.clear()
                     radioUsedTitles.clear()
+                    radioDecadeRejectedArtists.clear()
                     // S027 -- bug real reportado por Miguel Ángel: "The
                     // Logical Song" de Supertramp, la propia pista que
                     // arranca la sesión de Radio, volvía a sonar más
@@ -916,6 +917,27 @@ class PlayerManager @Inject constructor(
     private val radioPortionExhausted = mutableSetOf<RadioPortion>()
     private val radioUsedArtists = mutableSetOf<String>()
     private val radioUsedSongs = mutableSetOf<String>()
+
+    /**
+     * S027 -- artistas cuyos temas encontrados ya se comprobaron
+     * TODOS de década distinta a la del ancla, esta sesión. Caso real
+     * reportado por Miguel Ángel con log: sesión anclada en AC/DC
+     * (1990), 'Thin Lizzy' propuesto 11 veces, 'Them' 11 veces, 'The
+     * Spencer Davis Group' 10 veces, 'Status Quo' 10 veces -- 42 de
+     * ~45 sugerencias de la sesión fueron repetir los mismos cuatro
+     * artistas ya fallidos, porque `triedNames` en `fetchFromUnknown()`
+     * es una variable LOCAL que se reinicia en cada ronda, sin memoria
+     * de una ronda a la siguiente. El diccionario local no guarda
+     * década por artista (solo género y país), así que
+     * `suggestRelatedArtist()` no puede saber de antemano que un
+     * artista no encaja en década -- pero una vez que
+     * `resolveYoutubeCandidate()` lo comprueba y falla, no hay motivo
+     * para volver a proponerlo en la misma sesión: su catálogo no
+     * cambia entre una ronda y la siguiente. Se rellena en
+     * `resolveYoutubeCandidate()`, se limpia junto con
+     * `radioUsedSongs`/`radioUsedTitles` al arrancar sesión.
+     */
+    private val radioDecadeRejectedArtists = mutableSetOf<String>()
 
     /**
      * S025 -- TÍTULOS ya sonados, sin mirar el artista.
@@ -1687,6 +1709,7 @@ class PlayerManager @Inject constructor(
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )
         for (artist in artists) {
+            if (artist.lowercase() in radioDecadeRejectedArtists) continue
             val item = resolveYoutubeCandidate(
                 anchorArtistName, artist, songTitle = null,
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
@@ -1819,7 +1842,7 @@ class PlayerManager @Inject constructor(
         repeat(UNKNOWN_CANDIDATE_ATTEMPTS) {
             val artist = radioRepository.suggestRelatedArtist(
                 anchor,
-                anchorExclusion + triedNames,
+                anchorExclusion + triedNames + radioDecadeRejectedArtists,
                 avoidNames,
                 genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
             ) ?: return@repeat
@@ -2470,6 +2493,12 @@ class PlayerManager @Inject constructor(
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
                         "$decadeRejectedCount confirmados pero de década distinta de $expectedDecadeBegin: descartados",
                 )
+                // S027 -- ver el kdoc de `radioDecadeRejectedArtists`:
+                // este artista tiene temas reales, pero NINGUNO de la
+                // década del ancla. Su catálogo no va a cambiar en la
+                // siguiente ronda -- se registra para no volver a
+                // proponerlo esta sesión.
+                radioDecadeRejectedArtists.add(artist.lowercase())
             }
             confirmed
         } else {
@@ -3070,6 +3099,7 @@ class PlayerManager @Inject constructor(
         radioPortionExhausted.clear()
         radioUsedSongs.clear()
         radioUsedTitles.clear()
+        radioDecadeRejectedArtists.clear()
         radioUnknownOffset = 0
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
