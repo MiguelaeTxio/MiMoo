@@ -1943,6 +1943,28 @@ class PlayerManager @Inject constructor(
      * vez de rellenar con música sin relación. Miguel Ángel avisó de
      * que llegar aquí es *"prácticamente imposible"*.
      */
+    /**
+     * S027 -- CORRECCIÓN: bug real reportado por Miguel Ángel con
+     * captura de pantalla -- 'Bon Jovi' sonando dos veces SEGUIDAS
+     * (posiciones 5 y 6 de la cola). Rastreado en log: las dos
+     * entradas vinieron de AQUÍ, de `resolveFinalFallback()`, que no
+     * se tocó al construir el cupo fijo por ronda de 10 (ver kdoc de
+     * `radioRoundKnownCount`) -- seguía usando solo `avoidNames`
+     * (preferencia BLANDA de sesiones recientes) y nunca miraba
+     * `radioRoundArtists` (la exclusión DURA de "no repetir artista
+     * en esta ronda de 10"), ni actualizaba los contadores de cupo al
+     * aceptar. En cuanto la búsqueda principal de
+     * `fetchRoundCandidate()` agotaba sus intentos sin encontrar nada
+     * NUEVO, caía aquí dos veces seguidas y podía repetir el mismo
+     * artista sin ningún control.
+     *
+     * Ahora cada candidato que sale de aquí se descarta si su artista
+     * ya sonó esta ronda -- la misma regla dura que en el flujo
+     * principal, sin excepción incluso en el último recurso -- y, si
+     * se acepta, se registra en `radioRoundArtists` y suma en el
+     * contador de cupo que le corresponda, para que la ronda siga
+     * siendo coherente de cara a la siguiente llamada.
+     */
     private suspend fun resolveFinalFallback(
         anchor: RadioAnchor,
         anchorArtistName: String,
@@ -1960,7 +1982,7 @@ class PlayerManager @Inject constructor(
         // repetía aunque hubiera material sin estrenar.
         val fresh = knownHitsRepository.randomHit(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
-            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames,
+            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames + radioRoundArtists,
             anchorGenres = anchor.genres,
             classical = anchor.isClassical,
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
@@ -1975,7 +1997,7 @@ class PlayerManager @Inject constructor(
         // básico"*. Tenía razón, y la excusa de "es que si no, la Radio
         // se para" no vale: que se pare.
         val hit = fresh
-        if (hit != null) {
+        if (hit != null && hit.artist.lowercase() !in radioRoundArtists) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null) {
                 RadioDebugLogger.log(
@@ -1984,6 +2006,8 @@ class PlayerManager @Inject constructor(
                         (if (fresh != null) "tema sin estrenar: " else "repitiendo el más antiguo: ") +
                         "'${hit.artist}' - '${hit.song}'",
                 )
+                radioRoundKnownCount++
+                registerRoundArtist(item.artist)
                 acceptRadioItem(RadioPortion.KNOWN, item)
                 return item
             }
@@ -1998,21 +2022,25 @@ class PlayerManager @Inject constructor(
         val unknownItem = fetchFromUnknown(
             anchor,
             anchorArtistName,
-            anchorExclusion = setOf(anchorArtistName.lowercase()),
+            anchorExclusion = setOf(anchorArtistName.lowercase()) + radioRoundArtists,
             avoidNames = avoidNames,
         )
-        if (unknownItem != null) {
+        if (unknownItem != null && unknownItem.artist?.lowercase() !in radioRoundArtists) {
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "resolveFinalFallback(ancla='$anchorArtistName') -> el diccionario no tiene nada " +
                     "sin estrenar; se sirve de EXPLORACIÓN: '${unknownItem.artist}' - " +
                     "'${unknownItem.title}'",
             )
+            radioRoundUnknownCount++
+            registerRoundArtist(unknownItem.artist)
             return unknownItem
         }
 
-        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames)
-        if (discoItem != null) {
+        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames + radioRoundArtists)
+        if (discoItem != null && discoItem.artist?.lowercase() !in radioRoundArtists) {
+            radioRoundDiscoCount++
+            registerRoundArtist(discoItem.artist)
             acceptRadioItem(RadioPortion.DISCO, discoItem)
             return discoItem
         }
