@@ -1561,6 +1561,7 @@ class PlayerManager @Inject constructor(
             val item = resolveYoutubeCandidate(
                 anchorArtistName, artist, songTitle = null,
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+                expectedYear = if (anchor.isClassical) null else anchor.anchorYear,
             ) ?: return@repeat
 
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
@@ -1679,6 +1680,24 @@ class PlayerManager @Inject constructor(
         radioRoundDiscoCount = 0
         radioRoundUnknownCount = 0
         radioRoundArtists.clear()
+        // S027 -- CAUSA REAL del corte a los 14 temas / 11 artistas
+        // distintos, con un género (Big Beat) que tiene más de diez
+        // representantes reales. `radioDecadeRejectedArtists` (S027,
+        // pensado para no reintentar en la MISMA ronda un artista que
+        // ya se demostró sin canciones de la década del ancla) nunca
+        // se reiniciaba -- ni siquiera al empezar una ronda nueva,
+        // solo al empezar SESIÓN. Un artista que falla la década UNA
+        // vez (por los 20 resultados concretos que trajo esa búsqueda
+        // de YouTube -- no exhaustiva, no es su discografía entera)
+        // quedaba descartado para SIEMPRE, aunque tenga temas de la
+        // década correcta que una búsqueda distinta sí habría
+        // encontrado. Con cada ronda el conjunto disponible se iba
+        // reduciendo permanentemente, hasta quedarse corto de verdad
+        // aunque el género tuviera artistas de sobra. Se reinicia
+        // aquí: una ronda nueva es una oportunidad nueva de búsqueda
+        // para ese mismo artista, no una condena perpetua por un
+        // muestreo incompleto.
+        radioDecadeRejectedArtists.clear()
     }
 
     /** S027 -- "ojo con repetir artista en cada ronda de 10": registra el artista para que no se repita hasta la ronda siguiente. */
@@ -1785,6 +1804,8 @@ class PlayerManager @Inject constructor(
         anchorArtistName: String,
         anchorExclusion: Set<String>,
         avoidNames: Set<String>,
+        /** S027 -- ver el kdoc de `resolveYoutubeCandidate()`. `resolveFinalFallback()` amplía esto a `RADIO_YEAR_WINDOW_WIDE`. */
+        yearWindow: Int = RADIO_YEAR_WINDOW,
     ): QueueItem? {
         // S024 -- antes esto pedía UN artista, intentaba UNA resolución
         // en YouTube, y si esa fallaba daba la porción entera por
@@ -1814,6 +1835,8 @@ class PlayerManager @Inject constructor(
             val item = resolveYoutubeCandidate(
                 anchorArtistName, artist, songTitle = null,
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+                expectedYear = if (anchor.isClassical) null else anchor.anchorYear,
+                yearWindow = yearWindow,
             )
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
@@ -1965,26 +1988,6 @@ class PlayerManager @Inject constructor(
      * contador de cupo que le corresponda, para que la ronda siga
      * siendo coherente de cara a la siguiente llamada.
      */
-    /**
-     * S027 -- ver el kdoc de `radioRoundKnownCount`: cuando el género
-     * tiene pocos representantes de verdad (caso real: "Big Beat" --
-     * Chemical Brothers, Fatboy Slim, Crystal Method, Groove Armada,
-     * Apollo 440... apenas una decena en total), exigir "no repetir
-     * artista en 10" agota la Radio aunque SÍ haya artistas de sobra
-     * para sostenerla si se permite repetir. Orden textual de Miguel
-     * Ángel: *"la solución consiste en... repetir artistas. No temas,
-     * artistas... si no hay, por lo que sea, no hay, se repite
-     * artista cada menos de diez. Lo reducimos a cinco."*
-     *
-     * Devuelve los últimos `size` artistas realmente sonados (nunca
-     * los de la ronda entera) -- se usa SOLO en `resolveFinalFallback()`,
-     * el último recurso, para relajar la ventana de 10 a 5 en vez de
-     * parar la Radio. El tema nunca se repite, eso no cambia: la
-     * exclusión dura de `radioUsedSongs` sigue aplicando siempre.
-     */
-    private fun recentArtistsWindow(size: Int): Set<String> =
-        radioRecentArtists.toList().takeLast(size).toSet()
-
     private suspend fun resolveFinalFallback(
         anchor: RadioAnchor,
         anchorArtistName: String,
@@ -1997,24 +2000,21 @@ class PlayerManager @Inject constructor(
                 "grupo=${anchor.originGroup ?: "?"}",
         )
 
-        // S027 -- CORRECCIÓN EN LA MISMA SESIÓN: la ventana dura de 10
-        // (`radioRoundArtists`) que se añadió para el bug de Bon Jovi
-        // era correcta para el flujo NORMAL, pero aquí, en el último
-        // recurso, hacía justo lo que Miguel Ángel llevaba pidiendo
-        // evitar: parar la Radio en géneros con pocos representantes
-        // (Big Beat: apenas una decena de artistas reales) en vez de
-        // repetirlos. Se relaja a una ventana de 5 -- ver kdoc de
-        // `recentArtistsWindow()` -- solo aquí, solo cuando todo lo
-        // demás ya ha fallado. El tema nunca se repite (eso sigue
-        // siendo `radioUsedSongs`, sin excepción).
-        val fallbackWindow = recentArtistsWindow(RADIO_FALLBACK_ARTIST_WINDOW)
+        // S027 -- REVERTIDO en la misma sesión. Orden textual de
+        // Miguel Ángel: *"revierte lo de los diez. No tiene por qué
+        // haber menos de diez... lo que está fallando es el algoritmo
+        // y no el número de candidatos."* Tenía razón -- con 14 temas
+        // puestos y solo 11 artistas distintos, un género con más de
+        // diez representantes reales no debería agotarse por ventana.
+        // El fallo estaba en otro sitio (ver `radioDecadeRejectedArtists`
+        // más abajo, en `rollRadioRoundIfComplete()`), no aquí.
 
         // S024 -- primero se intenta SIN repetir nada. Antes se pasaba
         // `excludeSongKeys = emptySet()` directamente, o sea que se
         // repetía aunque hubiera material sin estrenar.
         val fresh = knownHitsRepository.randomHit(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
-            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames + fallbackWindow,
+            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames + radioRoundArtists,
             anchorGenres = anchor.genres,
             classical = anchor.isClassical,
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
@@ -2028,11 +2028,8 @@ class PlayerManager @Inject constructor(
         // la semana: *"no se pueden repetir los temas, es lo más
         // básico"*. Tenía razón, y la excusa de "es que si no, la Radio
         // se para" no vale: que se pare.
-        //
-        // El TEMA no se repite -- eso no cambia. El ARTISTA sí puede,
-        // fuera de la ventana reducida de `fallbackWindow`.
         val hit = fresh
-        if (hit != null && hit.artist.lowercase() !in fallbackWindow) {
+        if (hit != null && hit.artist.lowercase() !in radioRoundArtists) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null) {
                 RadioDebugLogger.log(
@@ -2057,10 +2054,11 @@ class PlayerManager @Inject constructor(
         val unknownItem = fetchFromUnknown(
             anchor,
             anchorArtistName,
-            anchorExclusion = setOf(anchorArtistName.lowercase()) + fallbackWindow,
+            anchorExclusion = setOf(anchorArtistName.lowercase()) + radioRoundArtists,
             avoidNames = avoidNames,
+            yearWindow = RADIO_YEAR_WINDOW_WIDE,
         )
-        if (unknownItem != null && unknownItem.artist?.lowercase() !in fallbackWindow) {
+        if (unknownItem != null && unknownItem.artist?.lowercase() !in radioRoundArtists) {
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "resolveFinalFallback(ancla='$anchorArtistName') -> el diccionario no tiene nada " +
@@ -2072,8 +2070,8 @@ class PlayerManager @Inject constructor(
             return unknownItem
         }
 
-        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames + fallbackWindow)
-        if (discoItem != null && discoItem.artist?.lowercase() !in fallbackWindow) {
+        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames + radioRoundArtists)
+        if (discoItem != null && discoItem.artist?.lowercase() !in radioRoundArtists) {
             radioRoundDiscoCount++
             registerRoundArtist(discoItem.artist)
             acceptRadioItem(RadioPortion.DISCO, discoItem)
@@ -2082,9 +2080,8 @@ class PlayerManager @Inject constructor(
 
         RadioDebugLogger.log(
             appContext, storageManager,
-            "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera repitiendo dentro de los " +
-                "últimos $RADIO_FALLBACK_ARTIST_WINDOW hay candidatos -- la Radio se para en vez de " +
-                "rellenar con música sin relación",
+            "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera repitiendo hay candidatos -- " +
+                "la Radio se para en vez de rellenar con música sin relación",
         )
         return null
     }
@@ -2419,6 +2416,28 @@ class PlayerManager @Inject constructor(
          * por `verifyTrackExists()` en este método).
          */
         expectedDecadeBegin: Int? = null,
+        /**
+         * S027 -- CORRECCIÓN EN LA MISMA SESIÓN: comparar por década
+         * fija (bloque de 10 años) crea una frontera artificial. Caso
+         * real: ancla New Wave de 1979 -- una canción de 1980 queda a
+         * UN AÑO de distancia, pero en década "1980" contra el ancla
+         * "1970", y se descartaba igual que si fuera de otra era por
+         * completo. El New Wave es fundamentalmente un movimiento de
+         * los 80, así que anclar por década literal dejaba casi sin
+         * candidatos algo que en realidad tenía de sobra a un año de
+         * distancia. Orden textual de Miguel Ángel: *"cinco años
+         * atrás, cinco años adelante... si vemos que es corto, no pasa
+         * nada, diez años hacia adelante, diez años hacia atrás"*.
+         *
+         * Con año exacto del ancla disponible (`expectedYear`, ver
+         * `RadioAnchor.anchorYear`), se compara por ventana en vez de
+         * por década: `|año_candidato - año_ancla| <= yearWindow`. Sin
+         * año exacto (algunos temas solo tienen década, ver
+         * `TrackDecade`), se cae a comparar por década fija como
+         * antes -- `expectedDecadeBegin` sigue existiendo para eso.
+         */
+        expectedYear: Int? = null,
+        yearWindow: Int = RADIO_YEAR_WINDOW,
     ): QueueItem? = try {
         val query = if (songTitle != null) "$artist $songTitle" else artist
         // S026 -- LÍMITE MÁS ANCHO para "solo artista" (Exploración, o
@@ -2488,7 +2507,16 @@ class PlayerManager @Inject constructor(
             for (candidate in filtered) {
                 when (val existence = radioRepository.verifyTrackExists(artist, candidate.title)) {
                     is RadioRepository.TrackExistence.Confirmed -> {
-                        if (expectedDecadeBegin != null && existence.decadeBegin != expectedDecadeBegin) {
+                        // S027 -- ventana de años cuando hay año exacto
+                        // del ancla Y del candidato; si falta cualquiera
+                        // de los dos, se cae a comparar por década fija
+                        // (comportamiento anterior).
+                        val rejected = if (expectedYear != null && existence.exactYear != null) {
+                            kotlin.math.abs(existence.exactYear - expectedYear) > yearWindow
+                        } else {
+                            expectedDecadeBegin != null && existence.decadeBegin != expectedDecadeBegin
+                        }
+                        if (rejected) {
                             decadeRejectedCount++
                             continue
                         }
@@ -2515,10 +2543,15 @@ class PlayerManager @Inject constructor(
                 return null
             }
             if (confirmed == null && decadeRejectedCount > 0) {
+                val criterio = if (expectedYear != null) {
+                    "fuera de la ventana de ±$yearWindow años sobre $expectedYear"
+                } else {
+                    "de década distinta de $expectedDecadeBegin"
+                }
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
-                        "$decadeRejectedCount confirmados pero de década distinta de $expectedDecadeBegin: descartados",
+                        "$decadeRejectedCount confirmados pero $criterio: descartados",
                 )
                 // S027 -- ver el kdoc de `radioDecadeRejectedArtists`:
                 // este artista tiene temas reales, pero NINGUNO de la
@@ -3259,14 +3292,17 @@ class PlayerManager @Inject constructor(
         private const val RADIO_ARTIST_WINDOW = 10
 
         /**
-         * S027 -- ventana reducida para `resolveFinalFallback()` (ver
-         * su kdoc y el de `recentArtistsWindow()`). Cuando ni siquiera
-         * repitiendo dentro de esta ventana hay candidatos, la Radio
-         * se para de verdad -- pero con 5 hace falta un género
-         * genuinamente agotado (menos de 5 artistas reales en total),
-         * no simplemente "menos de 10 conocidos en España".
+         * S027 -- ver el kdoc de `resolveYoutubeCandidate()`. Ventana
+         * de años, no década fija: caso real, ancla New Wave de 1979 --
+         * comparar por década ("1970") dejaba fuera casi todo, porque
+         * el New Wave es un movimiento fundamentalmente de los 80.
+         * Orden textual de Miguel Ángel: *"cinco años atrás, cinco
+         * años adelante"*, ampliable a `RADIO_YEAR_WINDOW_WIDE` en el
+         * último recurso (`resolveFinalFallback()`) si aun así es
+         * corto: *"diez años hacia adelante, diez años hacia atrás"*.
          */
-        private const val RADIO_FALLBACK_ARTIST_WINDOW = 5
+        private const val RADIO_YEAR_WINDOW = 5
+        private const val RADIO_YEAR_WINDOW_WIDE = 10
 
         /**
          * S027 -- tamaño del bloque de reparto del rediseño de cuota

@@ -71,6 +71,16 @@ data class RadioAnchor(
     val country: String?,
     val decadeBegin: Int? = null,
     /**
+     * S027 -- año EXACTO del tema ancla, cuando se conoce (no todos
+     * los caminos lo dan -- ver `resolveOriginalDecade()`/
+     * `TrackDecade`). Sustituye la comparación por década fija (bloque
+     * de 10 años) en `resolveYoutubeCandidate()` por una ventana de
+     * años alrededor de este valor -- ver su parámetro `yearWindow`.
+     * `null` hace que se use `decadeBegin` como antes (frontera de
+     * década fija), para los pocos casos sin año exacto disponible.
+     */
+    val anchorYear: Int? = null,
+    /**
      * S026 -- `null` cuando MusicBrainz no da país para el artista
      * ancla y tampoco está en el diccionario de éxitos (dato
      * desconocido, no un grupo real) -- ver `OriginGroup.of()`. El
@@ -296,18 +306,20 @@ class RadioRepository @Inject constructor(
             ?: knownHitsRepository.originGroupOfKnownArtist(sourceArtist)
 
         // PASO 5 -- la década, del TEMA ORIGINAL.
-        val decadeBegin = resolveOriginalDecade(sourceArtist, sourceTrackTitle)
+        val trackDecade = resolveOriginalDecade(sourceArtist, sourceTrackTitle)
+        val decadeBegin = trackDecade.decadeBegin
 
         log(
             "resolveAnchor('$sourceArtist') -> ancla del DICCIONARIO (sin red): " +
                 "género='$chosenGenre', país=${country ?: "?"}, grupo=${originGroup ?: "?"}, " +
-                "década=${decadeBegin ?: "?"}, géneros=[${genres.joinToString()}]"
+                "década=${decadeBegin ?: "?"}, año=${trackDecade.exactYear ?: "?"}, géneros=[${genres.joinToString()}]"
         )
         return RadioAnchor(
             genre = chosenGenre,
             genres = genres,
             country = country,
             decadeBegin = decadeBegin,
+            anchorYear = trackDecade.exactYear,
             originGroup = originGroup,
             isClassical = false,
         )
@@ -364,7 +376,14 @@ class RadioRepository @Inject constructor(
      * ya usa el resto de la clase para lo mismo (ver `reconcilePending()`).
      */
     sealed class TrackExistence {
-        data class Confirmed(val decadeBegin: Int?) : TrackExistence()
+        /**
+         * S027 -- `exactYear` es el año real del tema encontrado,
+         * cuando se conoce -- permite comparar por VENTANA en
+         * `resolveYoutubeCandidate()` en vez de por década fija. `null`
+         * solo en el camino del diccionario de éxitos (catálogo
+         * organizado por década, sin año exacto por canción).
+         */
+        data class Confirmed(val decadeBegin: Int?, val exactYear: Int? = null) : TrackExistence()
         object NotFound : TrackExistence()
         object NetworkUnavailable : TrackExistence()
     }
@@ -375,18 +394,18 @@ class RadioRepository @Inject constructor(
 
         anchorDictionary.trackYear(artist, cleanTitle)?.let { year ->
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, del diccionario en tarjeta")
-            return TrackExistence.Confirmed((year / 10) * 10)
+            return TrackExistence.Confirmed((year / 10) * 10, year)
         }
         knownHitsRepository.decadeOfTrack(artist, cleanTitle)?.let { decade ->
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, del diccionario de éxitos")
-            return TrackExistence.Confirmed(decade)
+            return TrackExistence.Confirmed(decade, null)
         }
 
         val mbYear = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
         if (mbYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, mbYear, "musicbrainz")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de MusicBrainz ($mbYear)")
-            return TrackExistence.Confirmed((mbYear / 10) * 10)
+            return TrackExistence.Confirmed((mbYear / 10) * 10, mbYear)
         }
         if (lastFailureWasTransient) {
             log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde)")
@@ -397,7 +416,7 @@ class RadioRepository @Inject constructor(
         if (discogsYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, discogsYear, "discogs")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Discogs ($discogsYear)")
-            return TrackExistence.Confirmed((discogsYear / 10) * 10)
+            return TrackExistence.Confirmed((discogsYear / 10) * 10, discogsYear)
         }
         if (lastFailureWasTransient) {
             log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde)")
@@ -408,7 +427,7 @@ class RadioRepository @Inject constructor(
         if (wikidataYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, wikidataYear, "wikidata")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Wikidata ($wikidataYear)")
-            return TrackExistence.Confirmed((wikidataYear / 10) * 10)
+            return TrackExistence.Confirmed((wikidataYear / 10) * 10, wikidataYear)
         }
 
         log(
@@ -418,21 +437,42 @@ class RadioRepository @Inject constructor(
         return TrackExistence.NotFound
     }
 
+    /**
+     * S027 -- año exacto y década (año/10*10) del tema original.
+     * Antes solo se devolvía la década, lo que creaba una frontera
+     * artificial: una canción de 1979 y una de 1980 quedan a un año de
+     * distancia mundo real, pero en décadas distintas -- exactamente
+     * el caso real que motivó esto (ancla New Wave de 1979, década
+     * "1970", con casi ningún tema porque el New Wave es
+     * fundamentalmente un movimiento de los 80). Orden textual de
+     * Miguel Ángel: *"cinco años atrás, cinco años adelante... si
+     * vemos que es corto, no pasa nada, diez años hacia adelante, diez
+     * años hacia atrás"*. Con el año exacto disponible,
+     * `resolveYoutubeCandidate()` compara por VENTANA en vez de por
+     * década fija -- ver su parámetro `yearWindow`.
+     */
+    data class TrackDecade(val decadeBegin: Int?, val exactYear: Int?)
+
     private suspend fun resolveOriginalDecade(
         artist: String,
         trackTitle: String?,
-    ): Int? {
+    ): TrackDecade {
         val cleanTitle = trackTitle?.let { stripTitleNoise(it) }
 
         anchorDictionary.trackYear(artist, cleanTitle)?.let { year ->
             log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, del diccionario en tarjeta")
-            return (year / 10) * 10
+            return TrackDecade((year / 10) * 10, year)
         }
         knownHitsRepository.decadeOfTrack(artist, cleanTitle)?.let { decade ->
             log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> década $decade, del diccionario de éxitos")
-            return decade
+            // S027 -- el diccionario de éxitos solo guarda década (es
+            // un catálogo organizado por década, no por año), sin año
+            // exacto disponible. `exactYear = null` hace que
+            // `resolveYoutubeCandidate()` caiga a comparar por década
+            // como antes, solo para este camino concreto.
+            return TrackDecade(decade, null)
         }
-        if (cleanTitle.isNullOrBlank()) return null
+        if (cleanTitle.isNullOrBlank()) return TrackDecade(null, null)
 
         val year = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
             ?: firstReleaseYearFromDiscogs(artist, cleanTitle)
@@ -446,11 +486,11 @@ class RadioRepository @Inject constructor(
                 "resolveOriginalDecade('$artist' -- '$cleanTitle') -- sin año; " +
                     "apuntado en pendientes para cuando haya red. Se ancla por origen y género"
             )
-            return null
+            return TrackDecade(null, null)
         }
         anchorDictionary.learnTrackYear(artist, cleanTitle, year, "musicbrainz")
         log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, de MusicBrainz; aprendido en la tarjeta")
-        return (year / 10) * 10
+        return TrackDecade((year / 10) * 10, year)
     }
 
 
@@ -909,7 +949,8 @@ class RadioRepository @Inject constructor(
             // llamaba a `resolveTrackDecade()`, que aceptaba sin
             // comprobar el primer año que devolviera MusicBrainz y por
             // eso fechó "Black Dog" en 1983.
-            val decadeBegin = resolveOriginalDecade(sourceArtist, sourceTrackTitle)
+            val trackDecade = resolveOriginalDecade(sourceArtist, sourceTrackTitle)
+            val decadeBegin = trackDecade.decadeBegin
             // S013/S014, punto 4, generalizado en S026 a los cuatro
             // grupos: el grupo se decide primero por el diccionario de
             // éxitos (barato, sin ambigüedad de MusicBrainz) y, si el
@@ -974,10 +1015,11 @@ class RadioRepository @Inject constructor(
             // genre. S024 removed the country; the decade was still
             // filtering and shouldn't.
             val effectiveDecade = if (isClassical) null else decadeBegin
+            val effectiveYear = if (isClassical) null else trackDecade.exactYear
             log(
                 "resolveAnchor('$sourceArtist') -> ancla fijada para toda la sesión: " +
                     "género='$chosenGenre', país=$sourceCountry, grupo=${originGroup ?: "?"}, " +
-                    "década=$effectiveDecade, clásica=$isClassical" +
+                    "década=$effectiveDecade, año=${effectiveYear ?: "?"}, clásica=$isClassical" +
                     (if (isClassical) " (ni el origen ni la década filtran)" else "") +
                     ", géneros=[${allGenres.joinToString()}]"
             )
@@ -986,6 +1028,7 @@ class RadioRepository @Inject constructor(
                 genres = allGenres.ifEmpty { setOf(chosenGenre.lowercase()) },
                 country = sourceCountry,
                 decadeBegin = effectiveDecade,
+                anchorYear = effectiveYear,
                 originGroup = originGroup,
                 isClassical = isClassical,
             )
