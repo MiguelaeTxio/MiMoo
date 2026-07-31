@@ -763,15 +763,18 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // S016 -- cupo 80/10/10 de Radio (H08) hecho configurable
-            // en Ajustes, a petición explícita de Miguel Ángel (ver
-            // ANNEX_H08.md punto 6). Dos sliders (exploración, disco)
-            // más un texto derivado para diccionario -- nunca un
-            // tercer slider para diccionario, así se evita que la
-            // suma pueda dejar de ser 100 desde la propia UI.
-            val radioExplorePercent by viewModel.radioExplorePercent.collectAsState()
-            val radioDiscoPercent by viewModel.radioDiscoPercent.collectAsState()
-            val radioDictPercent = 100 - radioExplorePercent - radioDiscoPercent
+            // S027 -- REDISEÑO COMPLETO, orden textual de Miguel Ángel
+            // tras el desastre de AC/DC: ya no es un % que se reparte
+            // cuando una porción se agota -- es un recuento FIJO por
+            // cada bloque de 10 canciones (ver el kdoc de
+            // `radioRoundKnownCount` en PlayerManager.kt). Dos
+            // steppers (conocidos, disco) más un texto derivado para
+            // desconocidos -- mismo principio que antes: nunca un
+            // tercer control para desconocidos, así la suma nunca
+            // puede superar 10 desde la propia UI.
+            val radioKnownQuota by viewModel.radioKnownQuotaPerTen.collectAsState()
+            val radioDiscoQuota by viewModel.radioDiscoQuotaPerTen.collectAsState()
+            val radioUnknownQuota = 10 - radioKnownQuota - radioDiscoQuota
             SettingsAccordionSection(
                 title = "Radio",
                 expanded = expandedSection == "radio",
@@ -786,30 +789,31 @@ fun SettingsScreen(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 ) {
                     Text(
-                        "Reparto de pistas cuando la Radio (música relacionada) va sola: " +
-                            "diccionario $radioDictPercent% · exploración $radioExplorePercent% · disco $radioDiscoPercent%",
+                        "De cada 10 canciones de Radio (música relacionada): " +
+                            "$radioKnownQuota conocidas en España · $radioDiscoQuota de tu biblioteca · " +
+                            "$radioUnknownQuota desconocidas",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     Spacer(Modifier.height(12.dp))
 
-                    Text("Exploración (artistas nuevos vía MusicBrainz): $radioExplorePercent%")
+                    Text("Conocidas en España (de cada 10): $radioKnownQuota")
                     Slider(
-                        value = radioExplorePercent.toFloat(),
-                        onValueChange = { viewModel.setRadioExplorePercent(it.toInt()) },
-                        valueRange = 0f..100f,
-                        steps = 99,
+                        value = radioKnownQuota.toFloat(),
+                        onValueChange = { viewModel.setRadioKnownQuotaPerTen(it.toInt()) },
+                        valueRange = 0f..10f,
+                        steps = 9,
                     )
 
                     Spacer(Modifier.height(8.dp))
 
-                    Text("Disco (ya descargado en este dispositivo): $radioDiscoPercent%")
+                    Text("De tu biblioteca ya descargada (de cada 10): $radioDiscoQuota")
                     Slider(
-                        value = radioDiscoPercent.toFloat(),
-                        onValueChange = { viewModel.setRadioDiscoPercent(it.toInt()) },
-                        valueRange = 0f..100f,
-                        steps = 99,
+                        value = radioDiscoQuota.toFloat(),
+                        onValueChange = { viewModel.setRadioDiscoQuotaPerTen(it.toInt()) },
+                        valueRange = 0f..10f,
+                        steps = 9,
                     )
 
                     Spacer(Modifier.height(12.dp))

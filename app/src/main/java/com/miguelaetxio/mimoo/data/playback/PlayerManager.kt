@@ -586,6 +586,13 @@ class PlayerManager @Inject constructor(
                     radioUsedSongs.clear()
                     radioUsedTitles.clear()
                     radioDecadeRejectedArtists.clear()
+                    radioRoundKnownCount = 0
+                    radioRoundDiscoCount = 0
+                    radioRoundUnknownCount = 0
+                    radioRoundArtists.clear()
+                    radioPendingKnown.clear()
+                    radioPendingDisco.clear()
+                    radioPendingUnknown.clear()
                     // S027 -- bug real reportado por Miguel Ángel: "The
                     // Logical Song" de Supertramp, la propia pista que
                     // arranca la sesión de Radio, volvía a sonar más
@@ -940,6 +947,47 @@ class PlayerManager @Inject constructor(
     private val radioDecadeRejectedArtists = mutableSetOf<String>()
 
     /**
+     * S027 -- REDISEÑO COMPLETO del reparto de Radio, orden textual de
+     * Miguel Ángel tras el desastre de AC/DC. Sustituye por completo
+     * al sistema de porcentajes con reparto al agotarse (`basePercent`/
+     * `effectiveQuotaPercent`/`portionsDueThisRound`/`exhaustPortion`
+     * para KNOWN/DISCO -- UNKNOWN sigue sin agotarse jamás, eso no
+     * cambia).
+     *
+     * Ya NO hay tres búsquedas separadas (Conocidos/Disco/Desconocidos)
+     * intentadas una tras otra. Hay UN solo flujo: se pide a
+     * MusicBrainz un candidato que cumpla género, origen y década del
+     * ancla, y SOLO DESPUÉS de comprobar eso se decide en qué cuota
+     * cuenta -- conocido en España, en la biblioteca local, o ninguna
+     * de las dos.
+     *
+     * Cuota FIJA por cada bloque de 10 canciones (no ya un % que se
+     * reparte cuando algo se agota): `radioKnownQuotaPerTen`/
+     * `radioDiscoQuotaPerTen` en Ajustes, desconocidos el resto.
+     * `radioRoundKnownCount`/`radioRoundDiscoCount`/
+     * `radioRoundUnknownCount` cuentan lo aceptado en la ronda de 10
+     * actual; al llegar a 10 se reinician los tres Y
+     * `radioRoundArtists` (para que un artista pueda repetirse en la
+     * ronda siguiente, nunca dentro de la misma) -- las colas
+     * pendientes NO se reinician, cruzan de una ronda a la siguiente.
+     *
+     * `radioPendingKnown`/`radioPendingDisco`/`radioPendingUnknown` --
+     * un candidato que cumple todo pero cuya cuota ya está cubierta
+     * ESTA ronda no se descarta: se guarda aquí (FIFO, el más antiguo
+     * sale primero) para cubrir esa misma cuota en cuanto haya hueco,
+     * sin volver a preguntar a MusicBrainz. Orden textual: *"tenemos
+     * candidatos guardados para cuota de ronda? no entonces
+     * preguntamos a MusicBrainz."*
+     */
+    private var radioRoundKnownCount = 0
+    private var radioRoundDiscoCount = 0
+    private var radioRoundUnknownCount = 0
+    private val radioRoundArtists = mutableSetOf<String>()
+    private val radioPendingKnown = ArrayDeque<QueueItem>()
+    private val radioPendingDisco = ArrayDeque<QueueItem>()
+    private val radioPendingUnknown = ArrayDeque<QueueItem>()
+
+    /**
      * S025 -- TÍTULOS ya sonados, sin mirar el artista.
      *
      * Red de seguridad última y deliberadamente tonta. La clave
@@ -992,17 +1040,6 @@ class PlayerManager @Inject constructor(
      * preferencia suave.
      */
     private val radioRecentArtists = ArrayDeque<String>()
-
-    /**
-     * ¿Ha sonado este artista dentro de las últimas
-     * `RADIO_ARTIST_WINDOW` canciones? Criterio de Miguel Ángel
-     * (S022): a veinte canciones de distancia repetir no molesta; dos
-     * veces en diez, sí.
-     */
-    private fun isArtistTooRecent(artist: String?): Boolean {
-        val name = artist?.lowercase() ?: return false
-        return radioRecentArtists.any { it == name }
-    }
 
     /**
      * S013/S014, punto 8.2 -- caché en memoria de género/país/década
@@ -1446,141 +1483,257 @@ class PlayerManager @Inject constructor(
      * cascada de fallback final (punto 7) si los tres fallan en la
      * misma vuelta. Nunca lanza.
      */
+    /**
+     * S027 -- REDISEÑO COMPLETO, ver el kdoc de `radioRoundKnownCount`
+     * más arriba para el porqué. Un único flujo de candidatos en vez
+     * de tres búsquedas por porción:
+     *
+     * 1. Si al bloque de 10 actual le queda hueco de conocidos o
+     *    disco y hay algo guardado en la cola pendiente
+     *    correspondiente, se usa eso -- sin preguntar a MusicBrainz.
+     * 2. Si no, se pide a MusicBrainz (dictamen local primero, red
+     *    después -- eso ya lo hace `suggestRelatedArtist()`) UN
+     *    candidato que cumpla género y origen del ancla.
+     * 3. Se busca un tema real de ese candidato y se comprueba su
+     *    década contra la del ancla -- si no coincide, se descarta el
+     *    CANDIDATO entero (no se prueba otro tema suyo) y se pide otro
+     *    distinto a todos los ya probados.
+     * 4. Con género+origen+década ya comprobados, se mira si el
+     *    artista es conocido en España. Si lo es y el cupo de
+     *    conocidos de esta ronda tiene hueco, se pone. Si el cupo ya
+     *    está cubierto, se guarda para conocidos de la ronda
+     *    siguiente, Y ADEMÁS se comprueba si está en la biblioteca
+     *    local: si lo está y el cupo de disco tiene hueco, se pone
+     *    como disco; si también está cubierto, se guarda para disco.
+     * 5. Si no es conocido: se pone YA como desconocido solo si
+     *    conocidos Y disco ya están cubiertos esta ronda; si no, se
+     *    guarda en la cola de desconocidos (FIFO) para cuando de
+     *    verdad no quede nada más.
+     */
     private suspend fun fetchRoundCandidate(anchor: RadioAnchor, anchorArtistName: String): QueueItem? {
-        // S020 -- el artista ya no se excluye de forma dura. El ancla
-        // sí se sigue evitando (no tiene sentido que la Radio te
-        // devuelva el tema que la arrancó), y el resto es preferencia
-        // suave: primero los no usados esta sesión, luego los no
-        // usados en sesiones recientes.
+        rollRadioRoundIfComplete()
+
         val avoidNames = radioUsedArtists.map { it.lowercase() }.toSet() +
             radioSessionHistoryManager.recentlyUsedLower()
-        // S024 -- ya no hay lista negra de artistas: la ventana de
-        // `RADIO_ARTIST_WINDOW` descarta por vuelta, no para siempre.
-        // Solo se excluye el ancla, que no tiene sentido devolver.
         val anchorExclusion = setOf(anchorArtistName.lowercase())
+        val knownQuota = uiPreferencesManager.radioKnownQuotaPerTen.value
+        val discoQuota = uiPreferencesManager.radioDiscoQuotaPerTen.value
 
-        for (portion in portionsDueThisRound()) {
-            val item = when (portion) {
-                RadioPortion.DISCO -> fetchFromDisco(anchor, anchorArtistName, anchorExclusion, avoidNames)
-                RadioPortion.UNKNOWN -> fetchFromUnknown(anchor, anchorArtistName, anchorExclusion, avoidNames)
-                RadioPortion.KNOWN -> fetchFromKnown(anchor, anchorArtistName, avoidNames)
+        // Paso 1 -- colas pendientes de rondas anteriores, sin preguntar a MusicBrainz.
+        takeFromPendingIfRoomThisRound(radioPendingKnown, radioRoundKnownCount, knownQuota)?.let { item ->
+            radioRoundKnownCount++
+            registerRoundArtist(item.artist)
+            acceptRadioItem(RadioPortion.KNOWN, item)
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate(ancla='$anchorArtistName') -> conocidos (de la cola pendiente): " +
+                    "'${item.artist}' ('${item.title}') [$radioRoundKnownCount/$knownQuota esta ronda]",
+            )
+            return item
+        }
+        takeFromPendingIfRoomThisRound(radioPendingDisco, radioRoundDiscoCount, discoQuota)?.let { item ->
+            radioRoundDiscoCount++
+            registerRoundArtist(item.artist)
+            acceptRadioItem(RadioPortion.DISCO, item)
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate(ancla='$anchorArtistName') -> disco (de la cola pendiente): " +
+                    "'${item.artist}' ('${item.title}') [$radioRoundDiscoCount/$discoQuota esta ronda]",
+            )
+            return item
+        }
+
+        // Paso 2-5 -- pedir candidatos nuevos a MusicBrainz.
+        repeat(RADIO_ROUND_MAX_ATTEMPTS) {
+            val artist = radioRepository.suggestRelatedArtist(
+                anchor,
+                anchorExclusion + radioRoundArtists + radioDecadeRejectedArtists,
+                avoidNames,
+                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+            ) ?: return@repeat
+
+            // resolveYoutubeCandidate() ya comprueba género (vía la
+            // llamada previa de suggestRelatedArtist), existencia real
+            // del tema, y década -- descarta el candidato ENTERO si
+            // ninguno de sus temas encontrados es de la década del
+            // ancla (registrándolo en `radioDecadeRejectedArtists`, ver
+            // su kdoc), nunca prueba con otra década del mismo artista.
+            val item = resolveYoutubeCandidate(
+                anchorArtistName, artist, songTitle = null,
+                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+            ) ?: return@repeat
+
+            if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
+                titleKey(item.title) in radioUsedTitles
+            ) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA ya sonado " +
+                        "esta sesión: '${item.artist}' ('${item.title}')",
+                )
+                return@repeat
             }
-            if (item != null) {
-                // ─── REGLA DURA 1, S022 ───────────────────────────────
-                // *"El mismo tema no se debe repetir nunca. Repetir el
-                // mismo tema es un rollazo (...) y sobre todo cuando
-                // por desgracia acaba de ponerla, pum, y lo repite otra
-                // vez."* Sin excepción y venga de la porción que venga.
-                if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
-                    titleKey(item.title) in radioUsedTitles
-                ) {
+
+            // S027 -- orden textual: "conocido en españa cumpliendo con
+            // la cuota de conocidos que se fija en settings". El
+            // diccionario de éxitos de España deja de ser "de dónde
+            // saco la siguiente canción" -- pasa a ser "¿este artista
+            // cuenta como conocido?", sin mirar década (eso ya se
+            // comprobó arriba sobre el TEMA concreto).
+            val isKnownInSpain = knownHitsRepository.isKnownArtistAnywhere(item.artist ?: artist)
+            if (isKnownInSpain) {
+                if (radioRoundKnownCount < knownQuota) {
+                    radioRoundKnownCount++
+                    registerRoundArtist(item.artist)
+                    acceptRadioItem(RadioPortion.KNOWN, item)
                     RadioDebugLogger.log(
                         appContext, storageManager,
-                        "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA " +
-                            "ya sonado esta sesión: '${item.artist}' ('${item.title}')",
+                        "fetchRoundCandidate(ancla='$anchorArtistName') -> conocidos: '${item.artist}' " +
+                            "('${item.title}') [$radioRoundKnownCount/$knownQuota esta ronda]",
                     )
-                    continue
+                    return item
                 }
-
-                // ─── REGLA DURA 2, S022 ───────────────────────────────
-                // *"No se deben repetir el mismo artista en cuatro o
-                // cinco canciones (...) si ponemos un artista, 20
-                // canciones, ponemos otra vez, no pasa nada, pero dos
-                // veces cada diez, ya estamos incurriendo en
-                // repetición."*
-                //
-                // S024 -- se RETIRA el veto permanente. Reincidir
-                // dentro de la ventana descarta el candidato de esta
-                // vuelta y nada más: el artista sigue disponible en
-                // cuanto salga de las últimas diez canciones. Es lo que
-                // dijo Miguel Ángel al precisar la regla: *"de cada
-                // diez canciones no se puede repetir el artista;
-                // cuando pasen las diez, se puede volver a poner una
-                // del mismo artista"*.
-                //
-                // Vetar al artista para toda la sesión convertía una
-                // ventana deslizante en una lista negra que solo
-                // crecía, y en un pool pequeño la dejaba seca en pocas
-                // vueltas. Es una de las causas de que la sesión
-                // acabara viviendo del fallback que repite.
-                if (isArtistTooRecent(item.artist)) {
+                radioPendingKnown.addLast(item)
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- cupo de conocidos ya cubierto " +
+                        "esta ronda ($radioRoundKnownCount/$knownQuota): '${item.artist}' guardado " +
+                        "para la ronda siguiente",
+                )
+                if (isArtistInLocalLibrary(item.artist)) {
+                    if (radioRoundDiscoCount < discoQuota) {
+                        radioRoundDiscoCount++
+                        registerRoundArtist(item.artist)
+                        acceptRadioItem(RadioPortion.DISCO, item)
+                        RadioDebugLogger.log(
+                            appContext, storageManager,
+                            "fetchRoundCandidate(ancla='$anchorArtistName') -> disco (conocido con cupo " +
+                                "lleno, pero está en la biblioteca): '${item.artist}' ('${item.title}') " +
+                                "[$radioRoundDiscoCount/$discoQuota esta ronda]",
+                        )
+                        return item
+                    }
+                    radioPendingDisco.addLast(item)
                     RadioDebugLogger.log(
                         appContext, storageManager,
-                        "fetchRoundCandidate(ancla='$anchorArtistName') -- '${item.artist}' repetiría " +
-                            "dentro de las últimas $RADIO_ARTIST_WINDOW canciones: descartado esta " +
-                            "vuelta, vuelve a estar disponible al salir de la ventana",
+                        "fetchRoundCandidate(ancla='$anchorArtistName') -- también está en la " +
+                            "biblioteca, pero el cupo de disco también está cubierto " +
+                            "($radioRoundDiscoCount/$discoQuota): guardado igualmente",
                     )
-                    continue
                 }
+                return@repeat
+            }
 
-                acceptRadioItem(portion, item)
+            // No es conocido en España.
+            if (radioRoundKnownCount >= knownQuota && radioRoundDiscoCount >= discoQuota) {
+                radioRoundUnknownCount++
+                registerRoundArtist(item.artist)
+                acceptRadioItem(RadioPortion.UNKNOWN, item)
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -> desconocidos: '${item.artist}' " +
+                        "('${item.title}') [$radioRoundUnknownCount esta ronda]",
+                )
                 return item
             }
+            radioPendingUnknown.addLast(item)
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate(ancla='$anchorArtistName') -- desconocido con cupos de " +
+                    "conocidos/disco todavía sin cubrir: '${item.artist}' guardado en la cola de " +
+                    "desconocidos (${radioPendingUnknown.size} en espera)",
+            )
+        }
+
+        // S027 -- último recurso: si tras agotar los intentos de esta
+        // vuelta no se ha aceptado nada nuevo, se tira de la cola de
+        // desconocidos (la única realmente inagotable, orden textual:
+        // "desconocidos no se agotará nunca"), el más antiguo primero.
+        while (radioPendingUnknown.isNotEmpty()) {
+            val item = radioPendingUnknown.removeFirst()
+            if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
+                titleKey(item.title) in radioUsedTitles ||
+                item.artist?.lowercase() in radioRoundArtists
+            ) {
+                continue
+            }
+            radioRoundUnknownCount++
+            registerRoundArtist(item.artist)
+            acceptRadioItem(RadioPortion.UNKNOWN, item)
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate(ancla='$anchorArtistName') -> desconocidos (de la cola de " +
+                    "espera): '${item.artist}' ('${item.title}')",
+            )
+            return item
         }
 
         return resolveFinalFallback(anchor, anchorArtistName, avoidNames)
     }
 
-    /**
-     * S020 -- orden de porciones a intentar en esta vuelta. Primero la
-     * que tenga cupo pendiente según su porcentaje EFECTIVO; si
-     * ninguna lo tiene (reparto ya cumplido), se intentan todas de
-     * todos modos en orden fijo, para que la vuelta nunca se quede sin
-     * candidato por un redondeo del cupo.
-     */
-    private fun portionsDueThisRound(): List<RadioPortion> {
-        val alive = RadioPortion.values().filter { it !in radioPortionExhausted }
-        val due = alive.filter { dueForPortion(it) }
-        return due + alive.filterNot { it in due }
+    /** S027 -- ver el kdoc de `radioRoundKnownCount`: ronda de 10 completa, se reinician contadores y artistas de la ronda, no las colas pendientes. */
+    private fun rollRadioRoundIfComplete() {
+        val total = radioRoundKnownCount + radioRoundDiscoCount + radioRoundUnknownCount
+        if (total < RADIO_ROUND_SIZE) return
+        radioRoundKnownCount = 0
+        radioRoundDiscoCount = 0
+        radioRoundUnknownCount = 0
+        radioRoundArtists.clear()
+    }
+
+    /** S027 -- "ojo con repetir artista en cada ronda de 10": registra el artista para que no se repita hasta la ronda siguiente. */
+    private fun registerRoundArtist(artist: String?) {
+        artist?.lowercase()?.takeIf { it.isNotBlank() }?.let { radioRoundArtists.add(it) }
     }
 
     /**
-     * S020 -- porcentaje EFECTIVO de una porción. Las porciones
-     * agotadas reparten su base a partes iguales entre las vivas:
-     *
-     *     efectivo(i) = base(i) + (suma de bases agotadas) / (nº vivas)
-     *
-     * Ejemplo textual de Miguel Ángel desde 80/10/10: si Conocidos
-     * (80) se agota, "un 40 por cien para cada una de las otras dos"
-     * -> Disco 50, Desconocidos 50. Encadenado, cuando cae la segunda
-     * la superviviente se queda con el 100%.
-     *
-     * Hasta S020 el porcentaje liberado simplemente se perdía:
-     * `radioDiscoExhausted` apagaba el cupo de disco y nadie recogía
-     * ese 10%.
+     * S027 -- primer candidato de la cola pendiente que no repite
+     * artista dentro de esta ronda ni tema en toda la sesión, si hay
+     * hueco de cupo. `null` si no hay hueco, la cola está vacía, o
+     * todo lo que hay guardado repetiría algo.
      */
-    private fun basePercent(portion: RadioPortion): Int {
-        val disco = uiPreferencesManager.radioDiscoPercent.value
-        val unknown = uiPreferencesManager.radioExplorePercent.value
-        return when (portion) {
-            RadioPortion.DISCO -> disco
-            RadioPortion.UNKNOWN -> unknown
-            RadioPortion.KNOWN -> (100 - disco - unknown).coerceAtLeast(0)
+    private fun takeFromPendingIfRoomThisRound(
+        pending: ArrayDeque<QueueItem>,
+        roundCount: Int,
+        quota: Int,
+    ): QueueItem? {
+        if (roundCount >= quota) return null
+        val iterator = pending.iterator()
+        while (iterator.hasNext()) {
+            val item = iterator.next()
+            if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
+                titleKey(item.title) in radioUsedTitles
+            ) {
+                iterator.remove()
+                continue
+            }
+            if (item.artist?.lowercase() in radioRoundArtists) continue
+            iterator.remove()
+            return item
+        }
+        return null
+    }
+
+    /** S027 -- ¿tiene el usuario algo descargado de este artista? Mismo criterio que `pickDiscoCandidate()`. */
+    private suspend fun isArtistInLocalLibrary(artist: String?): Boolean {
+        if (artist.isNullOrBlank()) return false
+        val artistLower = artist.lowercase()
+        return searchResultTrackRepository.getAllOnce().any {
+            it.downloadStatus == com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE &&
+                it.filePath != null &&
+                it.artist?.lowercase() == artistLower
         }
     }
 
-    private fun effectiveQuotaPercent(portion: RadioPortion): Int {
-        if (portion in radioPortionExhausted) return 0
-        val alive = RadioPortion.values().filter { it !in radioPortionExhausted }
-        if (alive.isEmpty()) return 0
-        val freed = RadioPortion.values()
-            .filter { it in radioPortionExhausted }
-            .sumOf { basePercent(it) }
-        return basePercent(portion) + freed / alive.size
-    }
-
     /**
-     * Misma desigualdad sin división que S016 (`used * 100 <
-     * (accepted + 1) * percent`), ahora contra el porcentaje efectivo
-     * en vez del de Ajustes.
+     * S027 -- solo queda la rama DESCONOCIDOS: KNOWN/DISCO usaban esto
+     * para marcarse agotadas y repartir su % a las porciones vivas, un
+     * mecanismo que el rediseño de cuota fija por ronda de 10 sustituye
+     * por completo (ver el kdoc de `radioRoundKnownCount`). Se
+     * simplifica en vez de dejar código muerto -- `portionsDueThisRound()`/
+     * `basePercent()`/`effectiveQuotaPercent()`/`dueForPortion()`
+     * quitadas, ya sin ninguna llamada.
      */
-    private fun dueForPortion(portion: RadioPortion): Boolean {
-        val percent = effectiveQuotaPercent(portion)
-        val used = radioPortionUsed[portion] ?: 0
-        return percent > 0 && used * 100 < (radioTracksAccepted + 1) * percent
-    }
-
-    /** Marca una porción como agotada y registra el reparto resultante. */
     private fun exhaustPortion(portion: RadioPortion, anchorArtistName: String, reason: String) {
         // S024 -- DESCONOCIDOS NO SE AGOTA JAMÁS.
         //
@@ -1592,33 +1745,10 @@ class PlayerManager @Inject constructor(
         // repetir temas, se siguen poniendo de artistas
         // desconocidos"*. Es el peldaño FINAL, el que sostiene la
         // Radio cuando todo lo demás se ha acabado.
-        //
-        // El código lo marcaba agotado permanentemente en cuanto una
-        // tanda de búsquedas fallaba, y eso es lo que empujaba la
-        // sesión entera a `resolveFinalFallback()`, que repite a
-        // propósito. De ahí "Cadillac Solitario" siete veces en un
-        // solo log.
-        //
-        // Disco y Conocidos SÍ pueden agotarse: son conjuntos finitos
-        // -- la biblioteca local y el diccionario. MusicBrainz no lo
-        // es. Que una vuelta no dé resultado no significa que no vaya
-        // a darlo la siguiente.
-        if (portion == RadioPortion.UNKNOWN) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchFromUnknown(ancla='$anchorArtistName') -- sin resultado esta vuelta " +
-                    "($reason). La porción DESCONOCIDOS sigue viva: no se agota nunca.",
-            )
-            return
-        }
-        if (!radioPortionExhausted.add(portion)) return
-        val reparto = RadioPortion.values()
-            .filter { it !in radioPortionExhausted }
-            .joinToString(", ") { "$it=${effectiveQuotaPercent(it)}%" }
         RadioDebugLogger.log(
             appContext, storageManager,
-            "exhaustPortion(ancla='$anchorArtistName') -- porción $portion AGOTADA ($reason). " +
-                "Su porcentaje se reparte -> ${reparto.ifBlank { "no queda ninguna viva" }}",
+            "fetchFromUnknown(ancla='$anchorArtistName') -- sin resultado esta vuelta " +
+                "($reason). La porción DESCONOCIDOS sigue viva: no se agota nunca.",
         )
     }
 
@@ -1647,174 +1777,7 @@ class PlayerManager @Inject constructor(
     private fun anchorOrigin(anchor: RadioAnchor): com.miguelaetxio.mimoo.data.remote.OriginGroup? =
         if (anchor.isClassical) null else anchor.originGroup
 
-    /**
-     * Porción CONOCIDOS, dos peldaños (S020):
-     *   1. tema catalogado que no haya sonado.
-     *   2. artista con algún éxito que cumpla el ancla, con un tema
-     *      NO catalogado buscado en YouTube.
-     * La porción solo se agota si fallan LOS DOS.
-     */
-    private suspend fun fetchFromKnown(
-        anchor: RadioAnchor,
-        anchorArtistName: String,
-        avoidNames: Set<String>,
-    ): QueueItem? {
-        // S022 -- con MusicBrainz caído, el diccionario es lo único que
-        // sostiene la Radio, así que se suelta el género y se conservan
-        // origen y década (decisión de Miguel Ángel). Con el servicio
-        // sano, el género se respeta como siempre.
-        val degraded = radioRepository.isServiceDegraded
-        if (degraded) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchFromKnown(ancla='$anchorArtistName') -- MODO DEGRADADO (MusicBrainz no " +
-                    "responde): se suelta el género, se mantienen origen y década",
-            )
-        }
-        if (!radioKnownSongsExhausted) {
-            val hit = knownHitsRepository.randomHit(
-                anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), radioUsedSongs, avoidNames,
-                classical = anchor.isClassical,
-                relaxGenre = degraded,
-                anchorGenres = anchor.genres,
-                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
-            )
-            if (hit != null) {
-                val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
-                if (item != null) {
-                    RadioDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchFromKnown(ancla='$anchorArtistName') -> tema conocido: '${hit.artist}' - " +
-                            "'${hit.song}' (género='${hit.genre}', país='${hit.country ?: "-"}', " +
-                            "ancla=género:'${anchor.genre}'/país:${anchor.country ?: "-"}/" +
-                            "década:${anchor.decadeBegin})",
-                    )
-                    return item
-                }
-            } else {
-                radioKnownSongsExhausted = true
-                RadioDebugLogger.log(
-                    appContext, storageManager,
-                    "fetchFromKnown(ancla='$anchorArtistName') -- agotados los TEMAS catalogados del ancla; " +
-                        "la porción sigue viva con artistas conocidos y temas no catalogados",
-                )
-            }
-        }
 
-        val artists = knownHitsRepository.knownArtists(
-            anchor.genre, anchor.decadeBegin, anchorOrigin(anchor), avoidNames,
-            classical = anchor.isClassical,
-            relaxGenre = degraded,
-            anchorGenres = anchor.genres,
-            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
-        )
-        for (artist in artists) {
-            if (artist.lowercase() in radioDecadeRejectedArtists) continue
-            val item = resolveYoutubeCandidate(
-                anchorArtistName, artist, songTitle = null,
-                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
-            ) ?: continue
-            if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs) continue
-            if (titleKey(item.title) in radioUsedTitles) continue
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchFromKnown(ancla='$anchorArtistName') -> artista conocido, tema no catalogado: " +
-                    "'$artist' ('${item.title}')",
-            )
-            return item
-        }
-
-        // S022 -- si MusicBrainz está caído, NO se agota la porción:
-        // agotar es irreversible, y lo que ha pasado es que no se ha
-        // podido preguntar, no que no quede música. Queda viva para la
-        // ronda siguiente, que es la mitad de la propuesta de Miguel
-        // Ángel: "esperar a que esos timeouts dejen de serlo".
-        if (radioRepository.isServiceDegraded) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchFromKnown(ancla='$anchorArtistName') -- sin candidatos, pero MusicBrainz " +
-                    "está caído: la porción NO se agota, se reintentará en la siguiente ronda",
-            )
-            return null
-        }
-        exhaustPortion(RadioPortion.KNOWN, anchorArtistName, "ni temas catalogados ni artistas conocidos libres")
-        return null
-    }
-
-    /**
-     * Porción DISCO, dos peldaños (S020): primero artistas de la
-     * biblioteca local todavía no usados, después más temas de esos
-     * mismos artistas. No degrada JAMÁS fuera del ancla -- *"si se
-     * pone rock de los setenta y no hay rock de los setenta en el
-     * disco, no se pone disco"*.
-     */
-    private suspend fun fetchFromDisco(
-        anchor: RadioAnchor,
-        anchorArtistName: String,
-        anchorExclusion: Set<String>,
-        avoidNames: Set<String>,
-    ): QueueItem? {
-        val item = pickDiscoCandidate(anchor, anchorExclusion, avoidNames)
-        if (item != null) {
-            // S022, orden explícita de Miguel Ángel tras las doce
-            // Fangorias seguidas: *"agotamos el disco y pasamos la
-            // cuota de disco a las otras dos (...) cuando ocurre eso,
-            // no podemos llegar y seguir poniendo el mismo artista
-            // solamente"*.
-            //
-            // Hasta aquí, quedarse sin artistas NUEVOS solo encendía
-            // `radioDiscoArtistsExhausted` y la porción "seguía viva
-            // sacando más temas de los ya usados" -- que es
-            // literalmente cómo una sesión anclada en Fangoria acabó
-            // sirviendo doce temas de Fangoria del tirón. Sin artistas
-            // nuevos la porción está agotada, punto: cede su cuota a
-            // diccionario y exploración, que es donde queda música que
-            // el usuario no tiene.
-            if (item.artist?.lowercase() in radioUsedArtists.map { it.lowercase() }) {
-                exhaustPortion(
-                    RadioPortion.DISCO, anchorArtistName,
-                    "agotados los ARTISTAS nuevos de la biblioteca local para el ancla",
-                )
-                return null
-            }
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchFromDisco(ancla='$anchorArtistName') -> disco: '${item.artist}' ('${item.title}')",
-            )
-            return item
-        }
-        // S023 -- la porción DISCO no puede agotarse por no haber
-        // podido preguntar. La guarda equivalente existía en
-        // fetchFromKnown() desde S022 y aquí faltaba.
-        //
-        // Visto en log real: diez consultas seguidas de
-        // lookupArtistProfile() devolvieron HTTP 503 -- ZAZ, Future
-        // Sound of London, Héroes del Silencio, Air, Iron Maiden,
-        // Fatboy Slim, Chumbawamba, Pistones, Pixies, Transglobal
-        // Underground -- y de ahí se concluyó "la biblioteca local no
-        // tiene nada de género='pop' década=2000". Falso: la
-        // biblioteca puede estar llena, lo que pasó es que MusicBrainz
-        // no contestó. `lookupArtistProfile()` devuelve null tanto
-        // cuando el artista no existe como cuando falla la red, y
-        // pickDiscoCandidate() los descartaba igual.
-        //
-        // Agotar es IRREVERSIBLE para el resto de la vuelta y reparte
-        // la cuota a las otras porciones, así que el precio de
-        // equivocarse aquí es alto y el de esperar una ronda es nulo.
-        if (radioDiscoLookupFailedTransiently || radioRepository.isServiceDegraded) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
-                "fetchFromDisco(ancla='$anchorArtistName') -- sin candidatos, pero MusicBrainz " +
-                    "no está respondiendo: la porción NO se agota, se reintentará en la siguiente ronda",
-            )
-            return null
-        }
-        exhaustPortion(
-            RadioPortion.DISCO, anchorArtistName,
-            "la biblioteca local no tiene nada de género='${anchor.genre}' década=${anchor.decadeBegin}",
-        )
-        return null
-    }
 
     /** Porción DESCONOCIDOS -- artistas sin éxito catalogado, vía MusicBrainz. */
     private suspend fun fetchFromUnknown(
@@ -3100,6 +3063,13 @@ class PlayerManager @Inject constructor(
         radioUsedSongs.clear()
         radioUsedTitles.clear()
         radioDecadeRejectedArtists.clear()
+        radioRoundKnownCount = 0
+        radioRoundDiscoCount = 0
+        radioRoundUnknownCount = 0
+        radioRoundArtists.clear()
+        radioPendingKnown.clear()
+        radioPendingDisco.clear()
+        radioPendingUnknown.clear()
         radioUnknownOffset = 0
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
@@ -3223,6 +3193,26 @@ class PlayerManager @Inject constructor(
          * candidato: agota a ese artista para el resto de la sesión.
          */
         private const val RADIO_ARTIST_WINDOW = 10
+
+        /**
+         * S027 -- tamaño del bloque de reparto del rediseño de cuota
+         * fija (ver kdoc de `radioRoundKnownCount`). Fijo a 10, "de
+         * cada 10 canciones" en palabras textuales de Miguel Ángel --
+         * lo configurable son los repartos DENTRO de esas 10
+         * (`radioKnownQuotaPerTen`/`radioDiscoQuotaPerTen` en Ajustes),
+         * no el tamaño del bloque en sí.
+         */
+        private const val RADIO_ROUND_SIZE = 10
+
+        /**
+         * S027 -- tope de candidatos nuevos a pedir a MusicBrainz en
+         * una sola llamada a `fetchRoundCandidate()` antes de rendirse
+         * y caer a la cola de desconocidos pendiente o al fallback
+         * final. Evita un bucle sin fin si el ancla es genuinamente
+         * imposible de servir (género+origen+década sin ningún
+         * candidato real).
+         */
+        private const val RADIO_ROUND_MAX_ATTEMPTS = 15
 
         /**
          * H08 PARTE 2 (S009) -- cuántas pistas de Radio se mantienen

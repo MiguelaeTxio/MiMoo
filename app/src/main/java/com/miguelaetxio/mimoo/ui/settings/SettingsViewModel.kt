@@ -355,23 +355,23 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * S016 -- cupo 80/10/10 de Radio (H08) configurable en Ajustes,
-     * ver `ANNEX_H08.md` punto 6. `radioExplorePercent`/
-     * `radioDiscoPercent` son los dos que se guardan de verdad
-     * (`UiPreferencesManager`); `radioDictPercent` se recalcula en
-     * cada lectura (100 - los otros dos), nunca puede desincronizarse.
+     * S027 -- REDISEÑO COMPLETO del cupo de Radio (H08), sustituye por
+     * completo al reparto por porcentajes de S016. Ver el kdoc de
+     * `PlayerManager.radioRoundKnownCount` para el porqué.
+     * `radioKnownQuotaPerTen`/`radioDiscoQuotaPerTen` son los dos que
+     * se guardan de verdad (`UiPreferencesManager`); desconocidos se
+     * deriva siempre en la propia UI (10 - los otros dos), nunca puede
+     * desincronizarse.
      */
-    val radioExplorePercent: StateFlow<Int> = uiPreferencesManager.radioExplorePercent
-    val radioDiscoPercent: StateFlow<Int> = uiPreferencesManager.radioDiscoPercent
-    val radioDictPercent: Int
-        get() = uiPreferencesManager.radioDictPercent
+    val radioKnownQuotaPerTen: StateFlow<Int> = uiPreferencesManager.radioKnownQuotaPerTen
+    val radioDiscoQuotaPerTen: StateFlow<Int> = uiPreferencesManager.radioDiscoQuotaPerTen
 
-    fun setRadioExplorePercent(percent: Int) {
-        uiPreferencesManager.setRadioExplorePercent(percent)
+    fun setRadioKnownQuotaPerTen(quota: Int) {
+        uiPreferencesManager.setRadioKnownQuotaPerTen(quota)
     }
 
-    fun setRadioDiscoPercent(percent: Int) {
-        uiPreferencesManager.setRadioDiscoPercent(percent)
+    fun setRadioDiscoQuotaPerTen(quota: Int) {
+        uiPreferencesManager.setRadioDiscoQuotaPerTen(quota)
     }
 
     /**

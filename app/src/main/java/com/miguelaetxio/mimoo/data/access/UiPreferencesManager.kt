@@ -43,14 +43,14 @@ class UiPreferencesManager @Inject constructor(
         const val PREFS_NAME = "mimoo_ui_prefs"
         const val KEY_GLASS_BORDER_ENABLED = "glass_border_enabled"
 
-        // S016 -- cupo 80/10/10 de Radio (H08). Solo se guardan
-        // exploración y disco; el de diccionario se deriva siempre
-        // como 100 - exploración - disco (ver getters más abajo), así
-        // que nunca puede desincronizarse de los otros dos.
-        const val KEY_RADIO_EXPLORE_PERCENT = "radio_explore_percent"
-        const val KEY_RADIO_DISCO_PERCENT = "radio_disco_percent"
-        const val DEFAULT_RADIO_EXPLORE_PERCENT = 10
-        const val DEFAULT_RADIO_DISCO_PERCENT = 10
+        // S016 -- cupo 80/10/10 de Radio (H08). QUITADO en S027 --
+        // sustituido por completo por el recuento fijo por bloque de
+        // 10 de más abajo. Se deja sin usar `KEY_RADIO_EXPLORE_PERCENT`/
+        // `KEY_RADIO_DISCO_PERCENT` como claves de SharedPreferences
+        // muertas (no se leen ni escriben en ningún sitio) en vez de
+        // reutilizarlas para otra cosa, para no arrastrar valores
+        // viejos con un significado distinto si alguien reinstala
+        // sobre una versión anterior.
 
         // S026 -- umbral de GenreMatchQuality (intersección/unión de
         // géneros específicos, ver esa clase). Petición explícita de
@@ -60,6 +60,19 @@ class UiPreferencesManager @Inject constructor(
         // contra datos reales antes de fijarlo.
         const val KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT = "radio_genre_match_threshold_percent"
         const val DEFAULT_RADIO_GENRE_MATCH_THRESHOLD_PERCENT = 40
+
+        // S027 -- rediseño completo del cupo de Radio, orden textual de
+        // Miguel Ángel tras el desastre de AC/DC (Thin Lizzy/Them/
+        // Spencer Davis Group repetidos 42 de ~45 veces): ya no es un
+        // % que se reparte al agotarse una porción -- es un recuento
+        // FIJO por cada bloque de 10 canciones. Solo se guardan
+        // conocidos y disco; desconocidos se deriva siempre como
+        // 10 - conocidos - disco, igual que el diccionario se derivaba
+        // de 100 - exploración - disco en el sistema viejo.
+        const val KEY_RADIO_KNOWN_QUOTA_PER_TEN = "radio_known_quota_per_ten"
+        const val KEY_RADIO_DISCO_QUOTA_PER_TEN = "radio_disco_quota_per_ten"
+        const val DEFAULT_RADIO_KNOWN_QUOTA_PER_TEN = 6
+        const val DEFAULT_RADIO_DISCO_QUOTA_PER_TEN = 2
     }
 
     private val prefs by lazy {
@@ -73,50 +86,6 @@ class UiPreferencesManager @Inject constructor(
     fun setGlassBorderEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_GLASS_BORDER_ENABLED, enabled) }
         _glassBorderEnabled.value = enabled
-    }
-
-    private val _radioExplorePercent = MutableStateFlow(
-        prefs.getInt(KEY_RADIO_EXPLORE_PERCENT, DEFAULT_RADIO_EXPLORE_PERCENT)
-    )
-    /** S016 -- % del cupo de Radio que va a "exploración" (MusicBrainz, artistas no necesariamente conocidos). */
-    val radioExplorePercent: StateFlow<Int> = _radioExplorePercent.asStateFlow()
-
-    private val _radioDiscoPercent = MutableStateFlow(
-        prefs.getInt(KEY_RADIO_DISCO_PERCENT, DEFAULT_RADIO_DISCO_PERCENT)
-    )
-    /** S016 -- % del cupo de Radio que va a "disco" (biblioteca local ya descargada). */
-    val radioDiscoPercent: StateFlow<Int> = _radioDiscoPercent.asStateFlow()
-
-    /**
-     * S016 -- % del cupo de Radio que va a "diccionario" (éxitos
-     * conocidos por década/origen, el 80% original). Nunca se guarda
-     * en `SharedPreferences` ni se expone como `StateFlow` propio:
-     * siempre es el resto tras exploración y disco, así que basta con
-     * derivarlo bajo demanda para que la suma de los tres dé 100
-     * siempre, sin excepción.
-     */
-    val radioDictPercent: Int
-        get() = 100 - _radioExplorePercent.value - _radioDiscoPercent.value
-
-    /**
-     * S016 -- fija el % de exploración. Se recorta a 0..100 y, si
-     * junto al disco actual superara 100, se recorta más para dejar
-     * sitio: el diccionario nunca puede quedar en negativo.
-     */
-    fun setRadioExplorePercent(percent: Int) {
-        val clamped = percent.coerceIn(0, 100 - _radioDiscoPercent.value)
-        prefs.edit { putInt(KEY_RADIO_EXPLORE_PERCENT, clamped) }
-        _radioExplorePercent.value = clamped
-    }
-
-    /**
-     * S016 -- fija el % de disco. Mismo recorte que
-     * `setRadioExplorePercent()`, en el sentido contrario.
-     */
-    fun setRadioDiscoPercent(percent: Int) {
-        val clamped = percent.coerceIn(0, 100 - _radioExplorePercent.value)
-        prefs.edit { putInt(KEY_RADIO_DISCO_PERCENT, clamped) }
-        _radioDiscoPercent.value = clamped
     }
 
     private val _radioGenreMatchThresholdPercent = MutableStateFlow(
@@ -136,5 +105,41 @@ class UiPreferencesManager @Inject constructor(
         val clamped = stepped.coerceIn(0, 100)
         prefs.edit { putInt(KEY_RADIO_GENRE_MATCH_THRESHOLD_PERCENT, clamped) }
         _radioGenreMatchThresholdPercent.value = clamped
+    }
+
+    private val _radioKnownQuotaPerTen = MutableStateFlow(
+        prefs.getInt(KEY_RADIO_KNOWN_QUOTA_PER_TEN, DEFAULT_RADIO_KNOWN_QUOTA_PER_TEN)
+    )
+    /** S027 -- de cada 10 canciones de Radio, cuántas deben ser de artistas conocidos en España. */
+    val radioKnownQuotaPerTen: StateFlow<Int> = _radioKnownQuotaPerTen.asStateFlow()
+
+    private val _radioDiscoQuotaPerTen = MutableStateFlow(
+        prefs.getInt(KEY_RADIO_DISCO_QUOTA_PER_TEN, DEFAULT_RADIO_DISCO_QUOTA_PER_TEN)
+    )
+    /** S027 -- de cada 10 canciones de Radio, cuántas deben ser de la biblioteca local del usuario. */
+    val radioDiscoQuotaPerTen: StateFlow<Int> = _radioDiscoQuotaPerTen.asStateFlow()
+
+    /**
+     * S027 -- de cada 10 canciones de Radio, cuántas pueden ser de
+     * artistas sin éxito catalogado en España. Nunca se guarda ni se
+     * expone como `StateFlow` propio: siempre es el resto tras
+     * conocidos y disco, igual que el diccionario se derivaba de
+     * 100 - exploración - disco en el sistema de porcentajes.
+     */
+    val radioUnknownQuotaPerTen: Int
+        get() = (10 - _radioKnownQuotaPerTen.value - _radioDiscoQuotaPerTen.value).coerceAtLeast(0)
+
+    /** S027 -- fija la cuota de conocidos, recortando para dejar sitio a disco (suma máxima 10). */
+    fun setRadioKnownQuotaPerTen(quota: Int) {
+        val clamped = quota.coerceIn(0, 10 - _radioDiscoQuotaPerTen.value)
+        prefs.edit { putInt(KEY_RADIO_KNOWN_QUOTA_PER_TEN, clamped) }
+        _radioKnownQuotaPerTen.value = clamped
+    }
+
+    /** S027 -- fija la cuota de disco, recortando para dejar sitio a conocidos (suma máxima 10). */
+    fun setRadioDiscoQuotaPerTen(quota: Int) {
+        val clamped = quota.coerceIn(0, 10 - _radioKnownQuotaPerTen.value)
+        prefs.edit { putInt(KEY_RADIO_DISCO_QUOTA_PER_TEN, clamped) }
+        _radioDiscoQuotaPerTen.value = clamped
     }
 }
