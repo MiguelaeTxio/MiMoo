@@ -1965,6 +1965,26 @@ class PlayerManager @Inject constructor(
      * contador de cupo que le corresponda, para que la ronda siga
      * siendo coherente de cara a la siguiente llamada.
      */
+    /**
+     * S027 -- ver el kdoc de `radioRoundKnownCount`: cuando el género
+     * tiene pocos representantes de verdad (caso real: "Big Beat" --
+     * Chemical Brothers, Fatboy Slim, Crystal Method, Groove Armada,
+     * Apollo 440... apenas una decena en total), exigir "no repetir
+     * artista en 10" agota la Radio aunque SÍ haya artistas de sobra
+     * para sostenerla si se permite repetir. Orden textual de Miguel
+     * Ángel: *"la solución consiste en... repetir artistas. No temas,
+     * artistas... si no hay, por lo que sea, no hay, se repite
+     * artista cada menos de diez. Lo reducimos a cinco."*
+     *
+     * Devuelve los últimos `size` artistas realmente sonados (nunca
+     * los de la ronda entera) -- se usa SOLO en `resolveFinalFallback()`,
+     * el último recurso, para relajar la ventana de 10 a 5 en vez de
+     * parar la Radio. El tema nunca se repite, eso no cambia: la
+     * exclusión dura de `radioUsedSongs` sigue aplicando siempre.
+     */
+    private fun recentArtistsWindow(size: Int): Set<String> =
+        radioRecentArtists.toList().takeLast(size).toSet()
+
     private suspend fun resolveFinalFallback(
         anchor: RadioAnchor,
         anchorArtistName: String,
@@ -1977,12 +1997,24 @@ class PlayerManager @Inject constructor(
                 "grupo=${anchor.originGroup ?: "?"}",
         )
 
+        // S027 -- CORRECCIÓN EN LA MISMA SESIÓN: la ventana dura de 10
+        // (`radioRoundArtists`) que se añadió para el bug de Bon Jovi
+        // era correcta para el flujo NORMAL, pero aquí, en el último
+        // recurso, hacía justo lo que Miguel Ángel llevaba pidiendo
+        // evitar: parar la Radio en géneros con pocos representantes
+        // (Big Beat: apenas una decena de artistas reales) en vez de
+        // repetirlos. Se relaja a una ventana de 5 -- ver kdoc de
+        // `recentArtistsWindow()` -- solo aquí, solo cuando todo lo
+        // demás ya ha fallado. El tema nunca se repite (eso sigue
+        // siendo `radioUsedSongs`, sin excepción).
+        val fallbackWindow = recentArtistsWindow(RADIO_FALLBACK_ARTIST_WINDOW)
+
         // S024 -- primero se intenta SIN repetir nada. Antes se pasaba
         // `excludeSongKeys = emptySet()` directamente, o sea que se
         // repetía aunque hubiera material sin estrenar.
         val fresh = knownHitsRepository.randomHit(
             anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
-            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames + radioRoundArtists,
+            excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames + fallbackWindow,
             anchorGenres = anchor.genres,
             classical = anchor.isClassical,
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
@@ -1996,8 +2028,11 @@ class PlayerManager @Inject constructor(
         // la semana: *"no se pueden repetir los temas, es lo más
         // básico"*. Tenía razón, y la excusa de "es que si no, la Radio
         // se para" no vale: que se pare.
+        //
+        // El TEMA no se repite -- eso no cambia. El ARTISTA sí puede,
+        // fuera de la ventana reducida de `fallbackWindow`.
         val hit = fresh
-        if (hit != null && hit.artist.lowercase() !in radioRoundArtists) {
+        if (hit != null && hit.artist.lowercase() !in fallbackWindow) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null) {
                 RadioDebugLogger.log(
@@ -2022,10 +2057,10 @@ class PlayerManager @Inject constructor(
         val unknownItem = fetchFromUnknown(
             anchor,
             anchorArtistName,
-            anchorExclusion = setOf(anchorArtistName.lowercase()) + radioRoundArtists,
+            anchorExclusion = setOf(anchorArtistName.lowercase()) + fallbackWindow,
             avoidNames = avoidNames,
         )
-        if (unknownItem != null && unknownItem.artist?.lowercase() !in radioRoundArtists) {
+        if (unknownItem != null && unknownItem.artist?.lowercase() !in fallbackWindow) {
             RadioDebugLogger.log(
                 appContext, storageManager,
                 "resolveFinalFallback(ancla='$anchorArtistName') -> el diccionario no tiene nada " +
@@ -2037,8 +2072,8 @@ class PlayerManager @Inject constructor(
             return unknownItem
         }
 
-        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames + radioRoundArtists)
-        if (discoItem != null && discoItem.artist?.lowercase() !in radioRoundArtists) {
+        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames + fallbackWindow)
+        if (discoItem != null && discoItem.artist?.lowercase() !in fallbackWindow) {
             radioRoundDiscoCount++
             registerRoundArtist(discoItem.artist)
             acceptRadioItem(RadioPortion.DISCO, discoItem)
@@ -2047,8 +2082,9 @@ class PlayerManager @Inject constructor(
 
         RadioDebugLogger.log(
             appContext, storageManager,
-            "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera repitiendo hay candidatos -- " +
-                "la Radio se para en vez de rellenar con música sin relación",
+            "resolveFinalFallback(ancla='$anchorArtistName') -- ni siquiera repitiendo dentro de los " +
+                "últimos $RADIO_FALLBACK_ARTIST_WINDOW hay candidatos -- la Radio se para en vez de " +
+                "rellenar con música sin relación",
         )
         return null
     }
@@ -3221,6 +3257,16 @@ class PlayerManager @Inject constructor(
          * candidato: agota a ese artista para el resto de la sesión.
          */
         private const val RADIO_ARTIST_WINDOW = 10
+
+        /**
+         * S027 -- ventana reducida para `resolveFinalFallback()` (ver
+         * su kdoc y el de `recentArtistsWindow()`). Cuando ni siquiera
+         * repitiendo dentro de esta ventana hay candidatos, la Radio
+         * se para de verdad -- pero con 5 hace falta un género
+         * genuinamente agotado (menos de 5 artistas reales en total),
+         * no simplemente "menos de 10 conocidos en España".
+         */
+        private const val RADIO_FALLBACK_ARTIST_WINDOW = 5
 
         /**
          * S027 -- tamaño del bloque de reparto del rediseño de cuota
