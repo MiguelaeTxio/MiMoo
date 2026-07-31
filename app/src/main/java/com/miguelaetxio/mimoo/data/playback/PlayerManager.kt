@@ -585,7 +585,7 @@ class PlayerManager @Inject constructor(
                     radioPortionExhausted.clear()
                     radioUsedSongs.clear()
                     radioUsedTitles.clear()
-                    radioDecadeRejectedArtists.clear()
+                    radioUnusableArtistsThisRound.clear()
                     radioRoundKnownCount = 0
                     radioRoundDiscoCount = 0
                     radioRoundUnknownCount = 0
@@ -944,7 +944,7 @@ class PlayerManager @Inject constructor(
      * `resolveYoutubeCandidate()`, se limpia junto con
      * `radioUsedSongs`/`radioUsedTitles` al arrancar sesión.
      */
-    private val radioDecadeRejectedArtists = mutableSetOf<String>()
+    private val radioUnusableArtistsThisRound = mutableSetOf<String>()
 
     /**
      * S027 -- REDISEÑO COMPLETO del reparto de Radio, orden textual de
@@ -1547,7 +1547,7 @@ class PlayerManager @Inject constructor(
         repeat(RADIO_ROUND_MAX_ATTEMPTS) {
             val artist = radioRepository.suggestRelatedArtist(
                 anchor,
-                anchorExclusion + radioRoundArtists + radioDecadeRejectedArtists,
+                anchorExclusion + radioRoundArtists + radioUnusableArtistsThisRound,
                 avoidNames,
                 genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
             ) ?: return@repeat
@@ -1556,7 +1556,7 @@ class PlayerManager @Inject constructor(
             // llamada previa de suggestRelatedArtist), existencia real
             // del tema, y década -- descarta el candidato ENTERO si
             // ninguno de sus temas encontrados es de la década del
-            // ancla (registrándolo en `radioDecadeRejectedArtists`, ver
+            // ancla (registrándolo en `radioUnusableArtistsThisRound`, ver
             // su kdoc), nunca prueba con otra década del mismo artista.
             val item = resolveYoutubeCandidate(
                 anchorArtistName, artist, songTitle = null,
@@ -1682,7 +1682,7 @@ class PlayerManager @Inject constructor(
         radioRoundArtists.clear()
         // S027 -- CAUSA REAL del corte a los 14 temas / 11 artistas
         // distintos, con un género (Big Beat) que tiene más de diez
-        // representantes reales. `radioDecadeRejectedArtists` (S027,
+        // representantes reales. `radioUnusableArtistsThisRound` (S027,
         // pensado para no reintentar en la MISMA ronda un artista que
         // ya se demostró sin canciones de la década del ancla) nunca
         // se reiniciaba -- ni siquiera al empezar una ronda nueva,
@@ -1697,7 +1697,7 @@ class PlayerManager @Inject constructor(
         // aquí: una ronda nueva es una oportunidad nueva de búsqueda
         // para ese mismo artista, no una condena perpetua por un
         // muestreo incompleto.
-        radioDecadeRejectedArtists.clear()
+        radioUnusableArtistsThisRound.clear()
     }
 
     /** S027 -- "ojo con repetir artista en cada ronda de 10": registra el artista para que no se repita hasta la ronda siguiente. */
@@ -1826,7 +1826,7 @@ class PlayerManager @Inject constructor(
         repeat(UNKNOWN_CANDIDATE_ATTEMPTS) {
             val artist = radioRepository.suggestRelatedArtist(
                 anchor,
-                anchorExclusion + triedNames + radioDecadeRejectedArtists,
+                anchorExclusion + triedNames + radioUnusableArtistsThisRound,
                 avoidNames,
                 genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
             ) ?: return@repeat
@@ -2006,7 +2006,7 @@ class PlayerManager @Inject constructor(
         // y no el número de candidatos."* Tenía razón -- con 14 temas
         // puestos y solo 11 artistas distintos, un género con más de
         // diez representantes reales no debería agotarse por ventana.
-        // El fallo estaba en otro sitio (ver `radioDecadeRejectedArtists`
+        // El fallo estaba en otro sitio (ver `radioUnusableArtistsThisRound`
         // más abajo, en `rollRadioRoundIfComplete()`), no aquí.
 
         // S024 -- primero se intenta SIN repetir nada. Antes se pasaba
@@ -2553,16 +2553,35 @@ class PlayerManager @Inject constructor(
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
                         "$decadeRejectedCount confirmados pero $criterio: descartados",
                 )
-                // S027 -- ver el kdoc de `radioDecadeRejectedArtists`:
+                // S027 -- ver el kdoc de `radioUnusableArtistsThisRound`:
                 // este artista tiene temas reales, pero NINGUNO de la
                 // década del ancla. Su catálogo no va a cambiar en la
                 // siguiente ronda -- se registra para no volver a
                 // proponerlo esta sesión.
-                radioDecadeRejectedArtists.add(artist.lowercase())
+                radioUnusableArtistsThisRound.add(artist.lowercase())
             }
             confirmed
         } else {
             filtered.firstOrNull()
+        }
+
+        // S027 -- CORRECCIÓN EN LA MISMA SESIÓN, bug real reportado por
+        // Miguel Ángel ("ya no funciona con nada, más de 3 temas no es
+        // capaz de poner"): `radioUnusableArtistsThisRound` solo se
+        // rellenaba cuando el artista SÍ tenía temas reales pero de
+        // década equivocada (`decadeRejectedCount > 0`). Un artista
+        // que falla por CUALQUIER OTRO motivo -- ninguno de sus vídeos
+        // pasa el filtro de duración/canal/existencia real, como
+        // 'Pignoise' y 'Cabaret Pop' en el log -- nunca se registraba,
+        // así que `suggestRelatedArtist()` lo seguía proponiendo una y
+        // otra vez sin límite, monopolizando toda la ronda mientras el
+        // resto de artistas del género ni se llegaban a probar.
+        // Se registra ahora ante CUALQUIER fallo con `songTitle ==
+        // null` (Desconocidos / "artista conocido, tema no
+        // catalogado"), sea cual sea el motivo -- su resultado no va a
+        // cambiar en lo que dure esta ronda.
+        if (track == null && songTitle == null) {
+            radioUnusableArtistsThisRound.add(artist.lowercase())
         }
 
         if (track == null) {
@@ -3159,7 +3178,7 @@ class PlayerManager @Inject constructor(
         radioPortionExhausted.clear()
         radioUsedSongs.clear()
         radioUsedTitles.clear()
-        radioDecadeRejectedArtists.clear()
+        radioUnusableArtistsThisRound.clear()
         radioRoundKnownCount = 0
         radioRoundDiscoCount = 0
         radioRoundUnknownCount = 0
