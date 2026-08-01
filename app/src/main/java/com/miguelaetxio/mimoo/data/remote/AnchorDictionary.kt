@@ -237,11 +237,44 @@ class AnchorDictionary @Inject constructor(
     private fun wordsOf(normalizedName: String): Set<String> =
         normalizedName.split(" ").filter { it.isNotBlank() }.toSet()
 
-    /** Año de edición original del tema, si ya se sabe. */
+    /**
+     * Año de edición original del tema, si ya se sabe.
+     *
+     * S027 -- pregunta de seguimiento de Miguel Ángel tras construir
+     * la caché de discografía completa (`ensureDiscographyCached()`):
+     * de poco sirve tener la discografía entera guardada si la
+     * búsqueda LOCAL sigue exigiendo coincidencia EXACTA de título. Un
+     * vídeo de YouTube con ruido ("PIGNOISE 'Te entiendo' Videoclip
+     * oficial") no coincide carácter a carácter con el título limpio
+     * que guarda MusicBrainz ("Te Entiendo"), y el acierto local se
+     * perdía -- se seguía cayendo a preguntar por red para un tema que
+     * ya estaba guardado. Mismo mecanismo ya usado para nombres de
+     * artista cortos (Beethoven) y títulos de canción con ruido
+     * (`firstReleaseYearFromMusicBrainz` en RadioRepository): si la
+     * clave exacta falla, se compara por conjunto de palabras contra
+     * los temas YA guardados de ESE MISMO artista -- solo se acepta si
+     * es el ÚNICO que coincide, para no adivinar con ambigüedad.
+     */
     fun trackYear(artist: String?, title: String?): Int? {
         if (artist.isNullOrBlank() || title.isNullOrBlank()) return null
         ensureLoaded()
-        return learnedTracks[trackKey(artist, title)]?.year
+        learnedTracks[trackKey(artist, title)]?.year?.let { return it }
+
+        val artistKey = key(artist)
+        val wantedWords = wordsOf(SearchNormalizer.normalize(title))
+        if (wantedWords.isEmpty()) return null
+        val matches = learnedTracks.values
+            .asSequence()
+            .filter { key(it.artist) == artistKey }
+            .filter { fact ->
+                val gotWords = wordsOf(SearchNormalizer.normalize(fact.title))
+                gotWords.isNotEmpty() &&
+                    (wantedWords.all { it in gotWords } || gotWords.all { it in wantedWords })
+            }
+            .map { it.year }
+            .distinct()
+            .toList()
+        return matches.singleOrNull()
     }
 
     // ---------------------------------------------------------------
