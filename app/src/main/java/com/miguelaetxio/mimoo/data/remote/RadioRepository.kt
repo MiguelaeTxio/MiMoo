@@ -418,6 +418,80 @@ class RadioRepository @Inject constructor(
         return fetch()
     }
 
+    /**
+     * S027 -- artistas cuya discografía completa ya se ha pedido esta
+     * sesión (con éxito o sin él), para no repetir el browse una y
+     * otra vez sobre el mismo artista.
+     */
+    private val discographyCachedArtists = mutableSetOf<String>()
+
+    /**
+     * S027 -- pregunta de Miguel Ángel: *"¿se puede recibir todo el
+     * paquete de búsquedas en una sola llamada?"* Sí -- MusicBrainz
+     * tiene BROWSE, no solo búsqueda: la discografía entera de un
+     * artista (por MBID) en una o dos llamadas paginadas, en vez de
+     * preguntar título por título "¿existe esto?" una y otra vez cada
+     * vez que sale como candidato. Orden textual: *"exprimir al
+     * máximo, creando listas válidas de temas por artista para ir
+     * sirviendo temas de dicho artista cuando acabe su restricción de
+     * diez temas"*.
+     *
+     * Se llama UNA vez por artista y sesión, la primera vez que sale
+     * como candidato real (ver `PlayerManager.fetchRoundCandidate()`).
+     * Guarda título+año de cada obra en el diccionario en tarjeta
+     * (`AnchorDictionary.learnTrackYearsBulk()`, una sola escritura) --
+     * a partir de ahí, CUALQUIER canción de ese artista que
+     * `verifyTrackExists()`/`resolveOriginalDecade()` necesite fechar
+     * es una consulta local instantánea, sin gastar ni una llamada de
+     * red más para ese artista en el resto de la sesión.
+     *
+     * Tope de 2 páginas (200 obras) por artista -- de sobra para casi
+     * cualquier discografía real, y acota el coste para las pocas que
+     * no lo son.
+     */
+    suspend fun ensureDiscographyCached(artist: String) {
+        val key = SearchNormalizer.normalizeArtistName(artist)
+        if (key.isBlank() || key in discographyCachedArtists) return
+        discographyCachedArtists.add(key)
+
+        val pick = try {
+            findAnchorArtistMbid(artist)
+        } catch (e: Exception) {
+            noteFailure(e)
+            null
+        } ?: run {
+            log("ensureDiscographyCached('$artist') -- no se pudo resolver MBID, se sigue con búsqueda tema a tema")
+            return
+        }
+
+        val entries = mutableListOf<Pair<String, Int>>()
+        var offset = 0
+        val pageSize = 100
+        var page = 0
+        while (page < 2) {
+            page++
+            val response = try {
+                musicBrainzApiService.browseReleaseGroupsByArtist(pick.mbid, limit = pageSize, offset = offset)
+            } catch (e: Exception) {
+                noteFailure(e)
+                break
+            }
+            noteSuccess()
+            if (response.releaseGroups.isEmpty()) break
+            for (rg in response.releaseGroups) {
+                val year = rg.firstReleaseDate?.take(4)?.toIntOrNull() ?: continue
+                if (year in 1850..2100) entries += rg.title to year
+            }
+            if (response.releaseGroups.size < pageSize) break
+            offset += pageSize
+        }
+
+        if (entries.isNotEmpty()) {
+            anchorDictionary.learnTrackYearsBulk(artist, entries, "musicbrainz-browse")
+            log("ensureDiscographyCached('$artist') -> ${entries.size} temas guardados de golpe (discografía completa)")
+        }
+    }
+
     suspend fun verifyTrackExists(artist: String, rawVideoTitle: String): TrackExistence {
         val cleanTitle = stripTitleNoise(rawVideoTitle)
         if (cleanTitle.isBlank()) return TrackExistence.NotFound

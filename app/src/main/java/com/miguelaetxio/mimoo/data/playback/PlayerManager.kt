@@ -1617,6 +1617,16 @@ class PlayerManager @Inject constructor(
         // artistas ya usados, respetando aún la regla dura de no
         // repetir dentro de esta ronda de 10.
         suspend fun tryCandidate(artist: String): QueueItem? {
+            // S027 -- pregunta de Miguel Ángel: "¿se puede recibir todo
+            // el paquete de búsquedas en una sola llamada?" -- sí. Antes
+            // de buscar tema a tema, se pide (o ya está en la tarjeta de
+            // una vez anterior) la discografía COMPLETA de este
+            // candidato: a partir de aquí, cualquier título que
+            // resolveYoutubeCandidate() encuentre en YouTube se compara
+            // en LOCAL contra esa lista, sin gastar una llamada de red
+            // por título. Ver RadioRepository.ensureDiscographyCached().
+            radioRepository.ensureDiscographyCached(artist)
+
             // resolveYoutubeCandidate() ya comprueba género (vía la
             // llamada previa de suggestRelatedArtist), existencia real
             // del tema, y década -- descarta el candidato ENTERO si

@@ -285,6 +285,33 @@ class AnchorDictionary @Inject constructor(
         }
     }
 
+    /**
+     * S027 -- variante en bloque de [learnTrackYear] para cuando se
+     * aprende la discografía ENTERA de un artista de golpe (ver
+     * `RadioRepository.ensureDiscographyCached()`). `learnTrackYear()`
+     * reescribe el fichero completo en CADA llamada -- para una
+     * discografía de 60-100 temas eso son 60-100 reescrituras del
+     * mismo fichero seguidas. Aquí se añaden todas las entradas al
+     * mapa primero y se escribe UNA sola vez al final.
+     */
+    fun learnTrackYearsBulk(artist: String, entries: List<Pair<String, Int>>, source: String) {
+        if (artist.isBlank() || entries.isEmpty()) return
+        ensureLoaded()
+        var changed = false
+        for ((title, year) in entries) {
+            if (title.isBlank() || year <= 0) continue
+            val k = trackKey(artist, title)
+            if (learnedTracks[k]?.year == year) continue
+            learnedTracks[k] = TrackFacts(k, artist, title, year, source)
+            changed = true
+            if (pending.remove(k)) pendingItems.remove(k)
+        }
+        if (changed) {
+            writeTracks()
+            writePending()
+        }
+    }
+
     // ---------------------------------------------------------------
     // Cola de pendientes por falta de red
     // ---------------------------------------------------------------

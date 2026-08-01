@@ -189,6 +189,28 @@ interface MusicBrainzApiService {
         @Query("fmt") format: String = "json",
     ): MusicBrainzReleaseGroupSearchResponse
 
+    /**
+     * S027 -- BROWSE, no búsqueda: la discografía ENTERA de un
+     * artista (por MBID) en una sola llamada por página, en vez de
+     * preguntar título por título "¿existe esto?" una y otra vez.
+     * Pregunta de Miguel Ángel: *"¿se puede recibir todo el paquete de
+     * búsquedas en una sola llamada?"* -- sí, y de paso sirve para
+     * *"exprimir al máximo, creando listas válidas de temas por
+     * artista para ir sirviendo temas de dicho artista"*.
+     *
+     * Mismo DTO que `searchReleaseGroups()`: MusicBrainz usa la misma
+     * clave JSON `release-groups` tanto en búsqueda como en browse.
+     * `first-release-date` sigue siendo la fecha de la OBRA, no de una
+     * reedición -- mismo criterio que en `searchReleaseGroups()`.
+     */
+    @GET("release-group/")
+    suspend fun browseReleaseGroupsByArtist(
+        @Query("artist") artistMbid: String,
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
+        @Query("fmt") format: String = "json",
+    ): MusicBrainzReleaseGroupSearchResponse
+
     @GET("release/")
     suspend fun browseReleasesByReleaseGroup(
         @Query("release-group") releaseGroupMbid: String,
