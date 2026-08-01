@@ -7,6 +7,7 @@ import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -398,6 +399,25 @@ class RadioRepository @Inject constructor(
         object NetworkUnavailable : TrackExistence()
     }
 
+    /**
+     * S027 -- reintento de UNA sola vez ante un fallo transitorio.
+     * Bug real reportado por Miguel Ángel: "Radio detenida" saltando
+     * varias veces en 24 minutos con wifi estable en casa. Causa: un
+     * único 503/429/timeout puntual de MusicBrainz -- un servicio
+     * pequeño y comunitario, le pasa de vez en cuando aunque la
+     * conexión del usuario esté perfecta -- paraba la Radio entera de
+     * inmediato, sin intentarlo una segunda vez. Se reintenta UNA vez
+     * tras una espera breve; si el segundo intento también falla por
+     * red, entonces sí se da por auténtico y se avisa al usuario.
+     */
+    private suspend fun <T> retryOnceIfTransient(fetch: suspend () -> T?): T? {
+        val first = fetch()
+        if (first != null || !lastFailureWasTransient) return first
+        log("retryOnceIfTransient() -- fallo transitorio, se reintenta una vez tras una breve espera")
+        delay(1500)
+        return fetch()
+    }
+
     suspend fun verifyTrackExists(artist: String, rawVideoTitle: String): TrackExistence {
         val cleanTitle = stripTitleNoise(rawVideoTitle)
         if (cleanTitle.isBlank()) return TrackExistence.NotFound
@@ -411,29 +431,29 @@ class RadioRepository @Inject constructor(
             return TrackExistence.Confirmed(decade, null)
         }
 
-        val mbYear = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
+        val mbYear = retryOnceIfTransient { firstReleaseYearFromMusicBrainz(artist, cleanTitle) }
         if (mbYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, mbYear, "musicbrainz")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de MusicBrainz ($mbYear)")
             return TrackExistence.Confirmed((mbYear / 10) * 10, mbYear)
         }
         if (lastFailureWasTransient) {
-            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde)")
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde, ni siquiera al reintentar)")
             return TrackExistence.NetworkUnavailable
         }
 
-        val discogsYear = firstReleaseYearFromDiscogs(artist, cleanTitle)
+        val discogsYear = retryOnceIfTransient { firstReleaseYearFromDiscogs(artist, cleanTitle) }
         if (discogsYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, discogsYear, "discogs")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Discogs ($discogsYear)")
             return TrackExistence.Confirmed((discogsYear / 10) * 10, discogsYear)
         }
         if (lastFailureWasTransient) {
-            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde)")
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde, ni siquiera al reintentar)")
             return TrackExistence.NetworkUnavailable
         }
 
-        val wikidataYear = firstReleaseYearFromWikidata(artist, cleanTitle)
+        val wikidataYear = retryOnceIfTransient { firstReleaseYearFromWikidata(artist, cleanTitle) }
         if (wikidataYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, wikidataYear, "wikidata")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Wikidata ($wikidataYear)")
