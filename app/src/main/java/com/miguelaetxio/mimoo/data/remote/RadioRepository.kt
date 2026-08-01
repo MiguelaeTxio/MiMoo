@@ -683,26 +683,62 @@ class RadioRepository @Inject constructor(
         val safeTitle = title.replace("\"", "")
         val safeArtist = artist.replace("\"", "")
         val wantedTitle = SearchNormalizer.normalize(title)
+        val wantedWords = wordsOf(wantedTitle)
         val years = mutableListOf<Int>()
+
+        // S027 -- FALLBACK POR PALABRAS cuando la igualdad exacta no
+        // encuentra nada. Caso real reportado por Miguel Ángel: el
+        // vídeo traía "Divina estás" (el primer verso de la letra,
+        // puesto por quien subió el vídeo a YouTube), pero la canción
+        // real de Radio Futura se titula "Divina" a secas -- "estás"
+        // nunca va a coincidir con el título real por muy exacta que
+        // sea la comparación, aunque la canción esté perfectamente
+        // documentada (álbum "Música Moderna", 1980, versión de
+        // "Ballrooms of Mars" de T. Rex). Mismo mecanismo ya usado
+        // para nombres de artista cortos (Beethoven -> Ludwig van
+        // Beethoven): si el título real está CONTENIDO en el título
+        // buscado (o al revés), se acepta -- solo si es el ÚNICO
+        // candidato que cumple eso entre lo que ha devuelto
+        // MusicBrainz para ese artista+consulta, para no adivinar con
+        // ambigüedad.
+        fun titleMatches(candidateTitle: String): Boolean {
+            val got = SearchNormalizer.normalize(candidateTitle)
+            if (got == wantedTitle) return true
+            val gotWords = wordsOf(got)
+            if (gotWords.isEmpty() || wantedWords.isEmpty()) return false
+            return wantedWords.all { it in gotWords } || gotWords.all { it in wantedWords }
+        }
 
         // S025 -- PRIMERO POR RELEASE-GROUP, que es la OBRA. Su
         // `first-release-date` es la fecha de la primera edición y no se
         // mueve porque salga una remasterización. Preguntar por
         // grabación, que era lo único que se hacía, fechó "Black Dog" de
         // Led Zeppelin en 1983.
-        years += musicBrainzApiService
+        val releaseGroupMatches = musicBrainzApiService
             .searchReleaseGroups(query = "releasegroup:\"$safeTitle\" AND artist:\"$safeArtist\"")
             .releaseGroups
-            .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
-            .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+            .filter { titleMatches(it.title) }
+        years += if (releaseGroupMatches.any { SearchNormalizer.normalize(it.title) == wantedTitle }) {
+            releaseGroupMatches.filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+        } else if (releaseGroupMatches.size == 1) {
+            releaseGroupMatches
+        } else {
+            emptyList()
+        }.mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
 
         // Y después por grabación, que sigue valiendo para los temas que
         // nunca dieron nombre a un disco -- la mayoría de las caras B.
-        years += musicBrainzApiService
+        val recordingMatches = musicBrainzApiService
             .searchRecordings(query = "recording:\"$safeTitle\" AND artist:\"$safeArtist\"")
             .recordings
-            .filter { SearchNormalizer.normalize(it.title) == wantedTitle }
-            .mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+            .filter { titleMatches(it.title) }
+        years += if (recordingMatches.any { SearchNormalizer.normalize(it.title) == wantedTitle }) {
+            recordingMatches.filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+        } else if (recordingMatches.size == 1) {
+            recordingMatches
+        } else {
+            emptyList()
+        }.mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
 
         noteSuccess()
         years.filter { it in 1850..2100 }.minOrNull()
