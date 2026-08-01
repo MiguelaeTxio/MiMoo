@@ -1451,10 +1451,39 @@ class PlayerManager @Inject constructor(
      */
     private suspend fun fetchOneRadioTrack(anchorArtistName: String): QueueItem? =
         try {
-            val anchor = radioAnchor ?: resolveAnchorWithFallbacks(anchorArtistName)?.also {
-                radioAnchor = it
+            val resolvedAnchor = radioAnchor ?: resolveAnchorWithFallbacks(anchorArtistName)
+            val anchor = if (resolvedAnchor != null && !resolvedAnchor.decadeUnknownDueToNetwork) {
+                radioAnchor = resolvedAnchor
+                resolvedAnchor
+            } else {
+                resolvedAnchor
             }
             if (anchor == null) {
+                null
+            } else if (anchor.decadeUnknownDueToNetwork && !anchor.isClassical) {
+                // S027 -- bug real reportado por Miguel Ángel con
+                // captura: sesión anclada en 'Radio Futura' (España,
+                // años 80) sirvió Dani Martín, Sôber, Arde Bogotá,
+                // Mónica Naranjo -- todo de 2000-2020, ni un tema de
+                // los 80. Causa: no había red al fijar el ancla,
+                // `resolveOriginalDecade()` devolvió año y década
+                // nulos, y la sesión entera quedó SIN NINGÚN FILTRO
+                // TEMPORAL. Orden textual: *"cuando falta conectividad
+                // pones un cartel de sin conexión cuando finalice la
+                // cola de reproducción. Nunca antes."* -- exactamente
+                // el mecanismo que ya existe para `radioNetworkLost`
+                // (deja sonar lo que hay en cola, solo avisa cuando se
+                // acaba). No se pide NINGÚN candidato nuevo con un
+                // ancla que no sabe distinguir una época de otra.
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchOneRadioTrack(ancla='$anchorArtistName') -- RADIO DETENIDA: sin red al fijar " +
+                        "la década del ancla, no se arranca una sesión sin control temporal",
+                )
+                radioNetworkLost = true
+                withContext(Dispatchers.Main) {
+                    _state.value = _state.value.copy(radioNetworkLost = true)
+                }
                 null
             } else {
                 // S025 -- aprovechando que estamos con red por otra

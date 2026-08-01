@@ -81,6 +81,15 @@ data class RadioAnchor(
      */
     val anchorYear: Int? = null,
     /**
+     * S027 -- ver el kdoc de `RadioRepository.TrackDecade.networkFailure`.
+     * `true` cuando la década/año del ancla no se pudo determinar por
+     * falta de red en ese momento exacto (no porque el tema
+     * genuinamente no tenga año encontrable). `PlayerManager` lo trata
+     * como el aviso de "sin conexión" ya existente para la Radio, en
+     * vez de arrancar una sesión sin ningún filtro temporal.
+     */
+    val decadeUnknownDueToNetwork: Boolean = false,
+    /**
      * S026 -- `null` cuando MusicBrainz no da país para el artista
      * ancla y tampoco está en el diccionario de éxitos (dato
      * desconocido, no un grupo real) -- ver `OriginGroup.of()`. El
@@ -320,6 +329,7 @@ class RadioRepository @Inject constructor(
             country = country,
             decadeBegin = decadeBegin,
             anchorYear = trackDecade.exactYear,
+            decadeUnknownDueToNetwork = trackDecade.networkFailure,
             originGroup = originGroup,
             isClassical = false,
         )
@@ -450,8 +460,23 @@ class RadioRepository @Inject constructor(
      * años hacia atrás"*. Con el año exacto disponible,
      * `resolveYoutubeCandidate()` compara por VENTANA en vez de por
      * década fija -- ver su parámetro `yearWindow`.
+     *
+     * `networkFailure` -- bug real reportado por Miguel Ángel con
+     * captura de pantalla: sesión anclada en 'Radio Futura' (España,
+     * años 80) sirvió a Dani Martín, Sôber, Arde Bogotá, Mónica
+     * Naranjo... TODOS artistas de 2000-2020, ni uno solo de los años
+     * 80. Causa: en el momento exacto de fijar el ancla no había red,
+     * `resolveOriginalDecade()` devolvía año Y década nulos, y el
+     * ancla quedaba SIN NINGÚN FILTRO TEMPORAL para el resto de la
+     * sesión entera -- "se ancla por origen y género" trataba igual
+     * "no hay dato" que "no se pudo preguntar ahora mismo", cuando son
+     * cosas completamente distintas. Con `networkFailure=true` el
+     * llamante (`PlayerManager.fetchOneRadioTrack()`) trata esto como
+     * el aviso de "sin conexión" que ya existe para la Radio -- deja
+     * sonar lo que hay en cola, nunca interrumpe antes de tiempo --
+     * en vez de arrancar una sesión sin ningún control de época.
      */
-    data class TrackDecade(val decadeBegin: Int?, val exactYear: Int?)
+    data class TrackDecade(val decadeBegin: Int?, val exactYear: Int?, val networkFailure: Boolean = false)
 
     private suspend fun resolveOriginalDecade(
         artist: String,
@@ -482,11 +507,18 @@ class RadioRepository @Inject constructor(
             // se sigue. Sin año se ancla igual por origen y género --
             // "no lo sé" no es "no hay", y no puede parar la Radio.
             anchorDictionary.rememberPending(artist, cleanTitle)
+            // S027 -- ver el kdoc de `networkFailure` más arriba: si el
+            // último intento falló por RED (no porque el tema
+            // genuinamente no tenga año encontrable en ninguna fuente),
+            // se marca para que el llamante NO ancle sin control
+            // temporal -- trata esto como "sin conexión", no como
+            // "sin dato".
             log(
                 "resolveOriginalDecade('$artist' -- '$cleanTitle') -- sin año; " +
-                    "apuntado en pendientes para cuando haya red. Se ancla por origen y género"
+                    (if (lastFailureWasTransient) "SIN RED (no se pudo preguntar)" else "apuntado en pendientes para cuando haya red") +
+                    ". Se ancla por origen y género"
             )
-            return TrackDecade(null, null)
+            return TrackDecade(null, null, networkFailure = lastFailureWasTransient)
         }
         anchorDictionary.learnTrackYear(artist, cleanTitle, year, "musicbrainz")
         log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, de MusicBrainz; aprendido en la tarjeta")
@@ -1029,6 +1061,7 @@ class RadioRepository @Inject constructor(
                 country = sourceCountry,
                 decadeBegin = effectiveDecade,
                 anchorYear = effectiveYear,
+                decadeUnknownDueToNetwork = trackDecade.networkFailure,
                 originGroup = originGroup,
                 isClassical = isClassical,
             )
