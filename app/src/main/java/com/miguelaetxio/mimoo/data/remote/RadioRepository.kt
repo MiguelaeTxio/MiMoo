@@ -718,13 +718,12 @@ class RadioRepository @Inject constructor(
             .searchReleaseGroups(query = "releasegroup:\"$safeTitle\" AND artist:\"$safeArtist\"")
             .releaseGroups
             .filter { titleMatches(it.title) }
-        years += if (releaseGroupMatches.any { SearchNormalizer.normalize(it.title) == wantedTitle }) {
-            releaseGroupMatches.filter { SearchNormalizer.normalize(it.title) == wantedTitle }
-        } else if (releaseGroupMatches.size == 1) {
-            releaseGroupMatches
-        } else {
-            emptyList()
-        }.mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+        val releaseGroupExact = releaseGroupMatches.filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+        val releaseGroupChosen: List<com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroup> =
+            if (releaseGroupExact.isNotEmpty()) releaseGroupExact
+            else if (releaseGroupMatches.size == 1) releaseGroupMatches
+            else emptyList()
+        years += releaseGroupChosen.mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
 
         // Y después por grabación, que sigue valiendo para los temas que
         // nunca dieron nombre a un disco -- la mayoría de las caras B.
@@ -732,13 +731,12 @@ class RadioRepository @Inject constructor(
             .searchRecordings(query = "recording:\"$safeTitle\" AND artist:\"$safeArtist\"")
             .recordings
             .filter { titleMatches(it.title) }
-        years += if (recordingMatches.any { SearchNormalizer.normalize(it.title) == wantedTitle }) {
-            recordingMatches.filter { SearchNormalizer.normalize(it.title) == wantedTitle }
-        } else if (recordingMatches.size == 1) {
-            recordingMatches
-        } else {
-            emptyList()
-        }.mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
+        val recordingExact = recordingMatches.filter { SearchNormalizer.normalize(it.title) == wantedTitle }
+        val recordingChosen: List<com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzRecording> =
+            if (recordingExact.isNotEmpty()) recordingExact
+            else if (recordingMatches.size == 1) recordingMatches
+            else emptyList()
+        years += recordingChosen.mapNotNull { it.firstReleaseDate?.take(4)?.toIntOrNull() }
 
         noteSuccess()
         years.filter { it in 1850..2100 }.minOrNull()
