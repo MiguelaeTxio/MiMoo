@@ -2420,11 +2420,23 @@ class PlayerManager @Inject constructor(
     private fun matchesArtist(artist: String, title: String, channelTitle: String?, strict: Boolean = false): Boolean {
         val needle = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(artist)
         if (needle.isBlank()) return true
-        val wordBoundary = Regex("(^|\\s)" + Regex.escape(needle) + "($|\\s)")
         return if (strict) {
+            // S027 -- bug real reportado por Miguel Ángel: buscando
+            // 'Heroica' (un artista de electropop real, distinto),
+            // esto aceptaba un vídeo del canal 'Saga Heroica' -- una
+            // banda de heavy/power metal sin ninguna relación --
+            // porque 'heroica' aparece como palabra suelta DENTRO del
+            // nombre del canal, en cualquier posición. El límite de
+            // palabra por sí solo no basta para dos artistas reales
+            // que comparten una palabra: hace falta que sea el
+            // PRINCIPIO del nombre del canal, no que aparezca en
+            // cualquier sitio -- 'Fangoria Oficial' sigue casando con
+            // 'Fangoria' (empieza por ahí), 'Saga Heroica' ya no casa
+            // con 'Heroica' (no empieza por ahí).
             val channelHaystack = com.miguelaetxio.mimoo.util.SearchNormalizer
                 .normalizeArtistName(channelTitle.orEmpty())
-            wordBoundary.containsMatchIn(channelHaystack)
+            val wordBoundaryAtStart = Regex("^" + Regex.escape(needle) + "($|\\s)")
+            wordBoundaryAtStart.containsMatchIn(channelHaystack)
         } else {
             val haystack = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(title) + " " +
                 com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(channelTitle.orEmpty())
