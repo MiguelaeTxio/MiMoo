@@ -1571,7 +1571,23 @@ class RadioRepository @Inject constructor(
             .replace(Regex("\\([^)]*\\)"), " ")
             .replace(Regex("\\[[^]]*]"), " ")
         val withoutArtistPrefix = withoutBrackets.substringAfter(" - ", withoutBrackets)
-        return withoutArtistPrefix.replace(Regex("\\s+"), " ").trim()
+        // S027 -- bug real reportado por Miguel Ángel: "Divina estás."
+        // (con punto final, tal cual venía del título del vídeo) nunca
+        // encontraba año en ninguna fuente, mientras que la misma
+        // canción sin el punto sí debería. La comparación de Wikidata
+        // es una igualdad EXACTA de SPARQL
+        // (`FILTER(LCASE(STR(?label)) = LCASE("..."))`) -- un punto,
+        // coma o puntos suspensivos sueltos al final, que son
+        // normalísimos en títulos de vídeo pero casi nunca forman
+        // parte del título real de la obra, bastan para que esa
+        // igualdad falle siempre, aunque el tema exista y esté bien
+        // documentado. Se quita aquí, en el punto único donde se
+        // limpia el título antes de cualquier búsqueda.
+        return withoutArtistPrefix
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .trimEnd('.', ',', ';', ':', '!', '¡', '?', '¿', '…', '-')
+            .trim()
     }
 
     private fun log(line: String) = RadioDebugLogger.log(appContext, storageManager, line)
