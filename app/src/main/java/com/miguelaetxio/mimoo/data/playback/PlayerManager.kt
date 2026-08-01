@@ -612,6 +612,22 @@ class PlayerManager @Inject constructor(
                         titleKey(title).takeIf { it.isNotBlank() }?.let { radioUsedTitles.add(it) }
                         radioAnchorArtist?.takeIf { it.isNotBlank() }?.let { anchorArtist ->
                             radioUsedSongs.add(knownHitsRepository.songKey(anchorArtist, title))
+                            // S027 -- bug real reportado por Miguel
+                            // Ángel: la propia semilla (Radio Futura)
+                            // no volvía a sonar en TODA la sesión,
+                            // mientras Soda Stereo se repetía sin
+                            // límite -- porque `anchorExclusion` en
+                            // `fetchRoundCandidate()` excluía al ancla
+                            // PARA SIEMPRE de ser candidato, en vez de
+                            // solo dentro de la ronda como cualquier
+                            // otro artista. Orden textual: *"antes de
+                            // repetir Soda Stereo, repite Radio
+                            // Futura, que ha sido la semilla"*. Se
+                            // registra aquí en `radioRoundArtists`
+                            // -- la misma exclusión de ronda que
+                            // todos, ni más ni menos -- y se quita la
+                            // exclusión permanente de más abajo.
+                            radioRoundArtists.add(anchorArtist.lowercase())
                         }
                     }
                     radioUnknownOffset = 0
@@ -1542,9 +1558,7 @@ class PlayerManager @Inject constructor(
     private suspend fun fetchRoundCandidate(anchor: RadioAnchor, anchorArtistName: String): QueueItem? {
         rollRadioRoundIfComplete()
 
-        val avoidNames = radioUsedArtists.map { it.lowercase() }.toSet() +
-            radioSessionHistoryManager.recentlyUsedLower()
-        val anchorExclusion = setOf(anchorArtistName.lowercase())
+        val avoidNames = radioSessionHistoryManager.recentlyUsedLower()
         val knownQuota = uiPreferencesManager.radioKnownQuotaPerTen.value
         val discoQuota = uiPreferencesManager.radioDiscoQuotaPerTen.value
 
@@ -1572,26 +1586,49 @@ class PlayerManager @Inject constructor(
             return item
         }
 
-        // Paso 2-5 -- pedir candidatos nuevos a MusicBrainz.
-        repeat(RADIO_ROUND_MAX_ATTEMPTS) {
-            val artist = radioRepository.suggestRelatedArtist(
-                anchor,
-                anchorExclusion + radioRoundArtists + radioUnusableArtistsThisRound,
-                avoidNames,
-                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
-            ) ?: return@repeat
-
+        // S027 -- CORRECCIÓN EN LA MISMA SESIÓN: bug real reportado por
+        // Miguel Ángel -- Soda Stereo repetido cada diez canciones
+        // durante media sesión entera, mientras Radio Futura (la
+        // propia semilla) o grupos como La Unión apenas sonaban.
+        // Orden textual: *"hasta que no encontremos que no tenemos
+        // candidato, no se repite... se repite artista cuando ya no
+        // quedan ninguna opción... no es obligado repetir, lo
+        // obligado es tratar de no repetir el máximo tiempo
+        // posible"*.
+        //
+        // Antes, `radioUsedArtists` (todo lo ya sonado en la sesión,
+        // no solo en esta ronda) era solo una preferencia BLANDA
+        // (`avoidNames`), aplicada DESPUÉS del filtro de género --
+        // con 30-170 candidatos por ancla, en teoría casi nunca se
+        // vaciaba... pero cada vuelta descarta muchos candidatos por
+        // década/existencia real (registrados en
+        // `radioUnusableArtistsThisRound`, que si se reinicia cada
+        // ronda), y el resultado observado es que unos pocos artistas
+        // con discografía grande y bien documentada (que casi
+        // siempre tienen ALGÚN tema dentro de la ventana) acaban
+        // llevándose la mayoría de las rondas mientras artistas más
+        // pequeños fallan una y otra vez y nunca llegan a sonar.
+        //
+        // Ahora hay dos fases: primero se busca EXCLUYENDO también a
+        // `radioUsedArtists` (duro, toda la sesión) -- solo si esa
+        // búsqueda se agota del todo (`suggestRelatedArtist()`
+        // devuelve null: ya no queda NINGÚN candidato nuevo que
+        // cumpla género+origen) se repite la búsqueda permitiendo
+        // artistas ya usados, respetando aún la regla dura de no
+        // repetir dentro de esta ronda de 10.
+        suspend fun tryCandidate(artist: String): QueueItem? {
             // resolveYoutubeCandidate() ya comprueba género (vía la
             // llamada previa de suggestRelatedArtist), existencia real
             // del tema, y década -- descarta el candidato ENTERO si
             // ninguno de sus temas encontrados es de la década del
-            // ancla (registrándolo en `radioUnusableArtistsThisRound`, ver
-            // su kdoc), nunca prueba con otra década del mismo artista.
+            // ancla (registrándolo en `radioUnusableArtistsThisRound`,
+            // ver su kdoc), nunca prueba con otra década del mismo
+            // artista.
             val item = resolveYoutubeCandidate(
                 anchorArtistName, artist, songTitle = null,
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
                 expectedYear = if (anchor.isClassical) null else anchor.anchorYear,
-            ) ?: return@repeat
+            ) ?: return null
 
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
                 titleKey(item.title) in radioUsedTitles
@@ -1601,7 +1638,7 @@ class PlayerManager @Inject constructor(
                     "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA ya sonado " +
                         "esta sesión: '${item.artist}' ('${item.title}')",
                 )
-                return@repeat
+                return null
             }
 
             // S027 -- orden textual: "conocido en españa cumpliendo con
@@ -1651,7 +1688,7 @@ class PlayerManager @Inject constructor(
                             "($radioRoundDiscoCount/$discoQuota): guardado igualmente",
                     )
                 }
-                return@repeat
+                return null
             }
 
             // No es conocido en España.
@@ -1673,7 +1710,44 @@ class PlayerManager @Inject constructor(
                     "conocidos/disco todavía sin cubrir: '${item.artist}' guardado en la cola de " +
                     "desconocidos (${radioPendingUnknown.size} en espera)",
             )
+            return null
         }
+
+        suspend fun searchPhase(exclude: Set<String>, phaseName: String): QueueItem? {
+            var attempts = 0
+            while (attempts < RADIO_ROUND_MAX_ATTEMPTS) {
+                attempts++
+                val artist = radioRepository.suggestRelatedArtist(
+                    anchor, exclude, avoidNames,
+                    genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+                ) ?: run {
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchRoundCandidate(ancla='$anchorArtistName') -- fase '$phaseName' agotada: " +
+                            "ya no queda ningún candidato nuevo que cumpla género+origen",
+                    )
+                    return null
+                }
+                tryCandidate(artist)?.let { return it }
+            }
+            return null
+        }
+
+        // S027 -- orden textual de Miguel Ángel: "que si está puesto,
+        // que el ancla, el artista del ancla, no se puede repetir, que
+        // lo quites". El ancla ya se registra en `radioRoundArtists`
+        // al arrancar la sesión (ver ese bloque) -- se trata como
+        // cualquier otro artista, ni más vetado ni menos.
+        val fullExclusion = radioRoundArtists + radioUnusableArtistsThisRound +
+            radioUsedArtists.map { it.lowercase() }
+        searchPhase(fullExclusion, "sin repetir artista de la sesión")?.let { return it }
+
+        // S027 -- fase 2, SOLO si la 1 se agotó de verdad: se permite
+        // repetir un artista ya usado en la sesión, pero la regla de
+        // no repetir DENTRO de esta ronda de 10 sigue siendo dura --
+        // `radioRoundArtists` se mantiene en la exclusión.
+        val relaxedExclusion = radioRoundArtists + radioUnusableArtistsThisRound
+        searchPhase(relaxedExclusion, "repitiendo artista ya usado esta sesión")?.let { return it }
 
         // S027 -- último recurso: si tras agotar los intentos de esta
         // vuelta no se ha aceptado nada nuevo, se tira de la cola de
@@ -1698,7 +1772,7 @@ class PlayerManager @Inject constructor(
             return item
         }
 
-        return resolveFinalFallback(anchor, anchorArtistName, avoidNames)
+        return resolveFinalFallback(anchor, anchorArtistName, radioUsedArtists.map { it.lowercase() }.toSet() + avoidNames)
     }
 
     /** S027 -- ver el kdoc de `radioRoundKnownCount`: ronda de 10 completa, se reinician contadores y artistas de la ronda, no las colas pendientes. */
