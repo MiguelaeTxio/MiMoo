@@ -1605,6 +1605,16 @@ class RadioRepository @Inject constructor(
             .replace(Regex("\\([^)]*\\)"), " ")
             .replace(Regex("\\[[^]]*]"), " ")
         val withoutArtistPrefix = withoutBrackets.substringAfter(" - ", withoutBrackets)
+        // S027 -- orden textual de Miguel Ángel: "no me vale Remaster
+        // 1970, no me vale Remaster 2025... es el título de la canción
+        // y el nombre del grupo". Ya se quitaba "(2015 Remastered
+        // Version)" por ir entre paréntesis -- esto cubre la misma
+        // coletilla SIN paréntesis, al final del título ("Nombre del
+        // tema Remaster 1970", "... Remasterizado 2025"), que no es
+        // parte del título real de la obra y solo ensucia la búsqueda
+        // de fecha y la comparación exacta.
+        val withoutRemaster = withoutArtistPrefix
+            .replace(Regex("(?i)\\s+remaster(ed|izado)?\\s*\\d{0,4}\\s*$"), "")
         // S027 -- bug real reportado por Miguel Ángel: "Divina estás."
         // (con punto final, tal cual venía del título del vídeo) nunca
         // encontraba año en ninguna fuente, mientras que la misma
@@ -1617,7 +1627,7 @@ class RadioRepository @Inject constructor(
         // igualdad falle siempre, aunque el tema exista y esté bien
         // documentado. Se quita aquí, en el punto único donde se
         // limpia el título antes de cualquier búsqueda.
-        return withoutArtistPrefix
+        return withoutRemaster
             .replace(Regex("\\s+"), " ")
             .trim()
             .trimEnd('.', ',', ';', ':', '!', '¡', '?', '¿', '…', '-')

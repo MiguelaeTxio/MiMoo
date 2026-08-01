@@ -2417,31 +2417,32 @@ class PlayerManager @Inject constructor(
      * diccionario, ya es una búsqueda "artista + canción" mucho más
      * específica) se mantiene el criterio de siempre: título O canal.
      */
-    private fun matchesArtist(artist: String, title: String, channelTitle: String?, strict: Boolean = false): Boolean {
+    /**
+     * S027 -- CANAL FUERA, DEL TODO. Orden textual de Miguel Ángel,
+     * repetida muchas veces a lo largo de esta sesión y aquí de forma
+     * definitiva: *"no quiero nada de nombres de canales... el ancla
+     * es artista, la canción es título, y ya está... que cuando nos
+     * dé el canal MusicBrainz, YouTube, quien sea, lo elimines,
+     * automáticamente, ponga lo que ponga."* Motivo real, con caso en
+     * log: 'Heroica' (electropop real) se confundió con el canal
+     * 'Saga Heroica' (heavy/power metal, artista distinto) porque el
+     * nombre coincidía dentro del canal -- por muy ajustada que se
+     * haga esa comparación (límite de palabra, principio del
+     * nombre...), seguir mirando el canal para verificar quién es el
+     * artista arrastra este mismo riesgo una y otra vez.
+     *
+     * Ya no se mira `channelTitle` en ningún punto de esta función.
+     * Solo el TÍTULO del vídeo, y solo como filtro previo barato antes
+     * de la comprobación de verdad -- `verifyTrackExists()`, que
+     * consulta bases de datos reales (diccionarios, MusicBrainz,
+     * Discogs, Wikidata) por artista y título, y es quien de verdad
+     * decide si el tema existe.
+     */
+    private fun matchesArtist(artist: String, title: String): Boolean {
         val needle = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(artist)
         if (needle.isBlank()) return true
-        return if (strict) {
-            // S027 -- bug real reportado por Miguel Ángel: buscando
-            // 'Heroica' (un artista de electropop real, distinto),
-            // esto aceptaba un vídeo del canal 'Saga Heroica' -- una
-            // banda de heavy/power metal sin ninguna relación --
-            // porque 'heroica' aparece como palabra suelta DENTRO del
-            // nombre del canal, en cualquier posición. El límite de
-            // palabra por sí solo no basta para dos artistas reales
-            // que comparten una palabra: hace falta que sea el
-            // PRINCIPIO del nombre del canal, no que aparezca en
-            // cualquier sitio -- 'Fangoria Oficial' sigue casando con
-            // 'Fangoria' (empieza por ahí), 'Saga Heroica' ya no casa
-            // con 'Heroica' (no empieza por ahí).
-            val channelHaystack = com.miguelaetxio.mimoo.util.SearchNormalizer
-                .normalizeArtistName(channelTitle.orEmpty())
-            val wordBoundaryAtStart = Regex("^" + Regex.escape(needle) + "($|\\s)")
-            wordBoundaryAtStart.containsMatchIn(channelHaystack)
-        } else {
-            val haystack = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(title) + " " +
-                com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(channelTitle.orEmpty())
-            haystack.contains(needle)
-        }
+        val haystack = com.miguelaetxio.mimoo.util.SearchNormalizer.normalizeArtistName(title)
+        return haystack.contains(needle)
     }
 
     /**
@@ -2586,7 +2587,7 @@ class PlayerManager @Inject constructor(
         val filtered = searchResult.tracks.filter { candidate ->
             candidate.durationSeconds in 1..maxSeconds &&
                 !looksLikeNonSong(candidate.title) &&
-                matchesArtist(artist, candidate.title, candidate.channelTitle, strict = songTitle == null) &&
+                matchesArtist(artist, candidate.title) &&
                 // S026 -- fuera los que ya sonaron esta sesión, para que
                 // la búsqueda ancha de más arriba sirva de algo: sin
                 // esto, la vuelta se paraba en el primer resultado (casi
