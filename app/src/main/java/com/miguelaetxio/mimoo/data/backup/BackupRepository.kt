@@ -7,7 +7,10 @@ import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.access.UiPreferencesManager
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
@@ -41,6 +44,9 @@ import javax.inject.Singleton
 class BackupRepository @Inject constructor(
     private val trackDao: SearchResultTrackDao,
     private val favoriteAlbumDao: FavoriteAlbumDao,
+    private val favoriteArtistDao: FavoriteArtistDao,
+    private val favoriteTrackDao: FavoriteTrackDao,
+    private val favoritePlaylistDao: FavoritePlaylistDao,
     private val playlistDao: PlaylistDao,
     private val favoriteRadioStationDao: FavoriteRadioStationDao,
     private val channelSubscriptionDao: ChannelSubscriptionDao,
@@ -102,7 +108,8 @@ class BackupRepository @Inject constructor(
 
         val favoriteAlbums = favoriteAlbumDao.getAllOnce()
 
-        val playlists = playlistDao.getAllPlaylistsOnce().map { playlist ->
+        val allPlaylists = playlistDao.getAllPlaylistsOnce()
+        val playlists = allPlaylists.map { playlist ->
             val trackIdsInOrder = playlistDao
                 .getTracksForPlaylistOnce(playlist.id)
                 .map { it.youtubeId }
@@ -116,6 +123,14 @@ class BackupRepository @Inject constructor(
             )
         }
 
+        // Bug real (2026-08-02, ver comentario de BackupBundle.favoriteArtists):
+        // favorite_artists nunca viajaba en el bundle. favoritePlaylists se
+        // exporta por NOMBRE (playlistId no sirve en destino, se remapea
+        // siempre en la importación -- mismo criterio que PlaylistBackupDto).
+        val playlistNamesById = allPlaylists.associate { it.id to it.name }
+        val favoritePlaylistNames = favoritePlaylistDao.getAllOnce()
+            .mapNotNull { fav -> playlistNamesById[fav.playlistId] }
+
         return BackupBundle(
             exportedAt = System.currentTimeMillis(),
             tracks = exportableTracks.map { it.toBackupDto() },
@@ -124,6 +139,9 @@ class BackupRepository @Inject constructor(
             radioStations = favoriteRadioStationDao.getAllOnce().map { it.toBackupDto() },
             channelSubscriptions = channelSubscriptionDao.getAllOnce().map { it.toBackupDto() },
             uiSettings = UiSettingsBackupDto(glassBorderEnabled = uiPreferencesManager.glassBorderEnabled.value),
+            favoriteArtists = favoriteArtistDao.getAllOnce().map { it.toBackupDto() },
+            favoriteTracks = favoriteTrackDao.getAllOnce().map { it.toBackupDto() },
+            favoritePlaylists = favoritePlaylistNames.map { FavoritePlaylistBackupDto(playlistName = it) },
             anchorArtists = anchorDictionary.learnedArtistsSnapshot().map {
                 AnchorArtistBackupDto(
                     artist = it.artist,

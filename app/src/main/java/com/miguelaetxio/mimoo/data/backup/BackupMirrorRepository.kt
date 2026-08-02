@@ -52,6 +52,19 @@ data class BundleComparison(
     val remoteRadioCount: Int,
     val localChannelCount: Int,
     val remoteChannelCount: Int,
+    // Bug real (2026-08-02, ver comentario de BackupBundle.favoriteArtists):
+    // favorite_artists nunca entraba en esta comparación, así que dos
+    // dispositivos que solo divergieran en artistas favoritos quedaban
+    // marcados `identical = true` y la sincronización nunca se disparaba --
+    // exactamente el síntoma que reportó Miguel Ángel. Se suman aquí los
+    // tres favoritos de la sesión de diseño de Favoritos (artista, sencillo
+    // en streaming, playlist), mismo criterio que el resto.
+    val localFavoriteArtistCount: Int,
+    val remoteFavoriteArtistCount: Int,
+    val localFavoriteTrackCount: Int,
+    val remoteFavoriteTrackCount: Int,
+    val localFavoritePlaylistCount: Int,
+    val remoteFavoritePlaylistCount: Int,
 ) {
     /** Diferencia absoluta total, para el aviso ("X pistas/álbumes/listas/emisoras/canales de diferencia"). */
     val totalDifference: Int
@@ -59,7 +72,10 @@ data class BundleComparison(
             kotlin.math.abs(localFavoriteCount - remoteFavoriteCount) +
             kotlin.math.abs(localPlaylistCount - remotePlaylistCount) +
             kotlin.math.abs(localRadioCount - remoteRadioCount) +
-            kotlin.math.abs(localChannelCount - remoteChannelCount)
+            kotlin.math.abs(localChannelCount - remoteChannelCount) +
+            kotlin.math.abs(localFavoriteArtistCount - remoteFavoriteArtistCount) +
+            kotlin.math.abs(localFavoriteTrackCount - remoteFavoriteTrackCount) +
+            kotlin.math.abs(localFavoritePlaylistCount - remoteFavoritePlaylistCount)
 }
 
 @Singleton
@@ -82,12 +98,22 @@ class BackupMirrorRepository @Inject constructor() {
         val remoteChannelKeys = remote.channelSubscriptions.map { it.channelId }.toSet()
         val settingsIdentical = local.uiSettings == remote.uiSettings
 
+        val localFavoriteArtistKeys = local.favoriteArtists.map { it.artist }.toSet()
+        val remoteFavoriteArtistKeys = remote.favoriteArtists.map { it.artist }.toSet()
+        val localFavoriteTrackKeys = local.favoriteTracks.map { it.youtubeId }.toSet()
+        val remoteFavoriteTrackKeys = remote.favoriteTracks.map { it.youtubeId }.toSet()
+        val localFavoritePlaylistKeys = local.favoritePlaylists.map { it.playlistName }.toSet()
+        val remoteFavoritePlaylistKeys = remote.favoritePlaylists.map { it.playlistName }.toSet()
+
         val identical = localTrackIds == remoteTrackIds &&
             localFavoriteKeys == remoteFavoriteKeys &&
             localPlaylistNames == remotePlaylistNames &&
             localRadioKeys == remoteRadioKeys &&
             localChannelKeys == remoteChannelKeys &&
-            settingsIdentical
+            settingsIdentical &&
+            localFavoriteArtistKeys == remoteFavoriteArtistKeys &&
+            localFavoriteTrackKeys == remoteFavoriteTrackKeys &&
+            localFavoritePlaylistKeys == remoteFavoritePlaylistKeys
 
         return BundleComparison(
             identical = identical,
@@ -101,6 +127,12 @@ class BackupMirrorRepository @Inject constructor() {
             remoteRadioCount = remote.radioStations.size,
             localChannelCount = local.channelSubscriptions.size,
             remoteChannelCount = remote.channelSubscriptions.size,
+            localFavoriteArtistCount = local.favoriteArtists.size,
+            remoteFavoriteArtistCount = remote.favoriteArtists.size,
+            localFavoriteTrackCount = local.favoriteTracks.size,
+            remoteFavoriteTrackCount = remote.favoriteTracks.size,
+            localFavoritePlaylistCount = local.favoritePlaylists.size,
+            remoteFavoritePlaylistCount = remote.favoritePlaylists.size,
         )
     }
 }

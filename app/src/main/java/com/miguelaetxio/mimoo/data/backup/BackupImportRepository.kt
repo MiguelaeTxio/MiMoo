@@ -11,11 +11,16 @@ import com.miguelaetxio.mimoo.data.remote.AnchorDictionary
 import com.miguelaetxio.mimoo.data.local.AppDatabase
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.SearchResultTrackDao
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
+import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -87,6 +92,9 @@ class BackupImportRepository @Inject constructor(
     private val database: AppDatabase,
     private val trackDao: SearchResultTrackDao,
     private val favoriteAlbumDao: FavoriteAlbumDao,
+    private val favoriteArtistDao: FavoriteArtistDao,
+    private val favoriteTrackDao: FavoriteTrackDao,
+    private val favoritePlaylistDao: FavoritePlaylistDao,
     private val playlistDao: PlaylistDao,
     private val favoriteRadioStationDao: FavoriteRadioStationDao,
     private val channelSubscriptionDao: ChannelSubscriptionDao,
@@ -134,10 +142,13 @@ class BackupImportRepository @Inject constructor(
                 playlistDao.deleteAllCrossRefs()
                 playlistDao.deleteAllPlaylists()
                 favoriteAlbumDao.deleteAll()
+                favoriteArtistDao.deleteAll()
+                favoriteTrackDao.deleteAll()
+                favoritePlaylistDao.deleteAll()
                 trackDao.deleteAll()
                 favoriteRadioStationDao.deleteAll()
                 channelSubscriptionDao.deleteAll()
-                val stepTables = "importDestructively() -- 6 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
+                val stepTables = "importDestructively() -- 9 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
                 Log.d(TAG, stepTables)
                 BackupDebugLogger.log(context, storageManager, stepTables)
 
@@ -147,11 +158,17 @@ class BackupImportRepository @Inject constructor(
                 bundle.favoriteAlbums.forEach { dto ->
                     favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
                 }
+                bundle.favoriteArtists.forEach { dto ->
+                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
+                }
+                bundle.favoriteTracks.forEach { dto -> favoriteTrackDao.insert(dto.toEntity()) }
 
+                val newPlaylistIdsByName = mutableMapOf<String, Long>()
                 bundle.playlists.forEach { playlistDto ->
                     val newPlaylistId = playlistDao.insertPlaylist(
                         Playlist(name = playlistDto.name, createdAt = playlistDto.createdAt)
                     )
+                    newPlaylistIdsByName[playlistDto.name] = newPlaylistId
                     playlistDto.trackYoutubeIdsInOrder.forEachIndexed { index, youtubeId ->
                         playlistDao.addTrackToPlaylist(
                             PlaylistTrackCrossRef(
@@ -161,6 +178,10 @@ class BackupImportRepository @Inject constructor(
                             )
                         )
                     }
+                }
+                bundle.favoritePlaylists.forEach { dto ->
+                    val newPlaylistId = newPlaylistIdsByName[dto.playlistName] ?: return@forEach
+                    favoritePlaylistDao.insert(FavoritePlaylist(playlistId = newPlaylistId))
                 }
 
                 bundle.radioStations.forEach { dto -> favoriteRadioStationDao.insert(dto.toEntity()) }
@@ -172,8 +193,10 @@ class BackupImportRepository @Inject constructor(
                     playlistCount = bundle.playlists.size,
                 )
                 val stepDone = "importDestructively() -- transacción completa: ${newTracks.size} pistas, " +
-                    "${bundle.favoriteAlbums.size} favoritos, ${bundle.playlists.size} playlists, " +
-                    "${bundle.radioStations.size} emisoras, ${bundle.channelSubscriptions.size} canales"
+                    "${bundle.favoriteAlbums.size} favoritos de álbum, ${bundle.favoriteArtists.size} de artista, " +
+                    "${bundle.favoriteTracks.size} de sencillo en streaming, ${bundle.playlists.size} playlists " +
+                    "(${bundle.favoritePlaylists.size} favoritas), ${bundle.radioStations.size} emisoras, " +
+                    "${bundle.channelSubscriptions.size} canales"
                 Log.d(TAG, stepDone)
                 BackupDebugLogger.log(context, storageManager, stepDone)
             }
@@ -262,13 +285,23 @@ class BackupImportRepository @Inject constructor(
                 playlistDao.deleteAllCrossRefs()
                 playlistDao.deleteAllPlaylists()
                 favoriteAlbumDao.deleteAll()
+                favoriteArtistDao.deleteAll()
+                favoriteTrackDao.deleteAll()
+                favoritePlaylistDao.deleteAll()
                 bundle.favoriteAlbums.forEach { dto ->
                     favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
                 }
+                bundle.favoriteArtists.forEach { dto ->
+                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
+                }
+                bundle.favoriteTracks.forEach { dto -> favoriteTrackDao.insert(dto.toEntity()) }
+
+                val newPlaylistIdsByName = mutableMapOf<String, Long>()
                 bundle.playlists.forEach { playlistDto ->
                     val newPlaylistId = playlistDao.insertPlaylist(
                         Playlist(name = playlistDto.name, createdAt = playlistDto.createdAt)
                     )
+                    newPlaylistIdsByName[playlistDto.name] = newPlaylistId
                     playlistDto.trackYoutubeIdsInOrder.forEachIndexed { index, youtubeId ->
                         playlistDao.addTrackToPlaylist(
                             PlaylistTrackCrossRef(
@@ -278,6 +311,10 @@ class BackupImportRepository @Inject constructor(
                             )
                         )
                     }
+                }
+                bundle.favoritePlaylists.forEach { dto ->
+                    val newPlaylistId = newPlaylistIdsByName[dto.playlistName] ?: return@forEach
+                    favoritePlaylistDao.insert(FavoritePlaylist(playlistId = newPlaylistId))
                 }
 
                 // Favoritos de radio (H09) y suscripciones de canal (H11) -- H07
@@ -429,6 +466,9 @@ class BackupImportRepository @Inject constructor(
 
                 bundle.favoriteAlbums.forEach { dto ->
                     favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
+                }
+                bundle.favoriteArtists.forEach { dto ->
+                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
                 }
 
                 val existingPlaylistNames = playlistDao.getAllPlaylistsOnce().map { it.name }.toSet()
