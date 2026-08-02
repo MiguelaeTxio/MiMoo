@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.remote
 
 import android.content.Context
 import com.miguelaetxio.mimoo.BuildConfig
+import com.miguelaetxio.mimoo.data.backup.NetworkConnectivityChecker
 import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
@@ -179,6 +180,14 @@ class RadioRepository @Inject constructor(
     // firstReleaseYearFromWikidata().
     private val wikidataApiService: WikidataApiService,
     private val discogsApiService: DiscogsApiService,
+    // Bug real reportado por Miguel Ángel (2026-08-02), con captura y
+    // log de depuración: el cartel "Radio detenida: se ha perdido la
+    // conexión" salía con Wi-Fi perfectamente conectado -- porque
+    // "SIN RED" solo comprobaba si MusicBrainz/Discogs habían fallado
+    // (isTransient(), timeouts/503/429 incluidos), NUNCA si el
+    // teléfono tenía conexión real. Ver verifyTrackExists() y
+    // resolveOriginalDecade() más abajo.
+    private val networkConnectivityChecker: NetworkConnectivityChecker,
 ) {
     /**
      * Perfil de un artista para la fuente de "disco" (10% de la
@@ -511,8 +520,8 @@ class RadioRepository @Inject constructor(
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de MusicBrainz ($mbYear)")
             return TrackExistence.Confirmed((mbYear / 10) * 10, mbYear)
         }
-        if (lastFailureWasTransient) {
-            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde, ni siquiera al reintentar)")
+        if (lastFailureWasTransient && !networkConnectivityChecker.isConnected()) {
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde, ni siquiera al reintentar, y el teléfono no tiene conexión)")
             return TrackExistence.NetworkUnavailable
         }
 
@@ -522,8 +531,8 @@ class RadioRepository @Inject constructor(
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Discogs ($discogsYear)")
             return TrackExistence.Confirmed((discogsYear / 10) * 10, discogsYear)
         }
-        if (lastFailureWasTransient) {
-            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde, ni siquiera al reintentar)")
+        if (lastFailureWasTransient && !networkConnectivityChecker.isConnected()) {
+            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde, ni siquiera al reintentar, y el teléfono no tiene conexión)")
             return TrackExistence.NetworkUnavailable
         }
 
@@ -569,6 +578,20 @@ class RadioRepository @Inject constructor(
      * el aviso de "sin conexión" que ya existe para la Radio -- deja
      * sonar lo que hay en cola, nunca interrumpe antes de tiempo --
      * en vez de arrancar una sesión sin ningún control de época.
+     *
+     * SEGUNDO bug real, mismo campo (2026-08-02): el cartel de "sin
+     * conexión" salía con Wi-Fi perfectamente conectado -- porque
+     * `networkFailure` se ponía a `true` solo con que MusicBrainz/
+     * Discogs/Wikidata hubieran fallado (`isTransient()`: timeouts,
+     * 503, 429...), sin comprobar NUNCA si el teléfono tenía conexión
+     * real. "Eso no es no hay red. No hay red es cuando no hay red"
+     * -- orden textual de Miguel Ángel. Ahora `networkFailure` exige
+     * ADEMÁS `!networkConnectivityChecker.isConnected()`: si el
+     * teléfono tiene conexión real pero los tres servicios están
+     * fallando (MusicBrainz es "gratuito y notoriamente inestable",
+     * ver `consecutiveTransientFailures` más abajo), esto se trata
+     * como "sin dato" -- no ancla sin filtro temporal por eso, pero
+     * tampoco enseña al usuario un aviso que dice algo falso.
      */
     data class TrackDecade(val decadeBegin: Int?, val exactYear: Int?, val networkFailure: Boolean = false)
 
@@ -601,18 +624,29 @@ class RadioRepository @Inject constructor(
             // se sigue. Sin año se ancla igual por origen y género --
             // "no lo sé" no es "no hay", y no puede parar la Radio.
             anchorDictionary.rememberPending(artist, cleanTitle)
-            // S027 -- ver el kdoc de `networkFailure` más arriba: si el
-            // último intento falló por RED (no porque el tema
-            // genuinamente no tenga año encontrable en ninguna fuente),
-            // se marca para que el llamante NO ancle sin control
-            // temporal -- trata esto como "sin conexión", no como
-            // "sin dato".
+            // Bug real reportado por Miguel Ángel (2026-08-02): el
+            // cartel de "sin conexión" salía con Wi-Fi conectado,
+            // porque esto solo miraba si MusicBrainz/Discogs/Wikidata
+            // habían fallado (isTransient()), nunca si el teléfono
+            // tenía conexión real -- ver el comentario del parámetro
+            // networkConnectivityChecker del constructor.
+            // `reallyNoNetwork` exige AMBAS cosas: que el último fallo
+            // fuera de red Y que el teléfono esté realmente
+            // desconectado. Si hay conexión real, esto se trata como
+            // "sin dato" (no ancla sin filtro temporal por eso, pero
+            // tampoco detiene la Radio con un aviso engañoso) en vez
+            // de "sin conexión".
+            val reallyNoNetwork = lastFailureWasTransient && !networkConnectivityChecker.isConnected()
             log(
                 "resolveOriginalDecade('$artist' -- '$cleanTitle') -- sin año; " +
-                    (if (lastFailureWasTransient) "SIN RED (no se pudo preguntar)" else "apuntado en pendientes para cuando haya red") +
+                    when {
+                        reallyNoNetwork -> "SIN RED (no se pudo preguntar)"
+                        lastFailureWasTransient -> "servicios de música con problemas ahora mismo, pero el teléfono SÍ tiene conexión -- se trata como sin dato"
+                        else -> "apuntado en pendientes para cuando haya red"
+                    } +
                     ". Se ancla por origen y género"
             )
-            return TrackDecade(null, null, networkFailure = lastFailureWasTransient)
+            return TrackDecade(null, null, networkFailure = reallyNoNetwork)
         }
         anchorDictionary.learnTrackYear(artist, cleanTitle, year, "musicbrainz")
         log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, de MusicBrainz; aprendido en la tarjeta")
