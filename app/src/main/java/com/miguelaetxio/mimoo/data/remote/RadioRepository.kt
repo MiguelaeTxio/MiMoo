@@ -593,9 +593,9 @@ class RadioRepository @Inject constructor(
         }
         if (cleanTitle.isNullOrBlank()) return TrackDecade(null, null)
 
-        val year = firstReleaseYearFromMusicBrainz(artist, cleanTitle)
-            ?: firstReleaseYearFromDiscogs(artist, cleanTitle)
-            ?: firstReleaseYearFromWikidata(artist, cleanTitle)
+        val year = retryOnceIfTransient { firstReleaseYearFromMusicBrainz(artist, cleanTitle) }
+            ?: retryOnceIfTransient { firstReleaseYearFromDiscogs(artist, cleanTitle) }
+            ?: retryOnceIfTransient { firstReleaseYearFromWikidata(artist, cleanTitle) }
         if (year == null) {
             // Sin red o sin dato: se apunta para resolverlo más tarde y
             // se sigue. Sin año se ancla igual por origen y género --
