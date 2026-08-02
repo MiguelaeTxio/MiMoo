@@ -2,6 +2,9 @@ package com.miguelaetxio.mimoo.ui.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
+import com.miguelaetxio.mimoo.data.contacts.ContactRingtoneRepository
+import com.miguelaetxio.mimoo.data.contacts.SetContactRingtoneResult
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlaybackState
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
@@ -28,6 +31,7 @@ class PlayerBarViewModel @Inject constructor(
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val coverArtRepository: CoverArtRepository,
     private val downloadQueueManager: com.miguelaetxio.mimoo.data.download.DownloadQueueManager,
+    private val contactRingtoneRepository: ContactRingtoneRepository,
 ) : ViewModel() {
 
     val state: StateFlow<PlaybackState> = playerManager.state
@@ -106,6 +110,17 @@ class PlayerBarViewModel @Inject constructor(
         MutableStateFlow<com.miguelaetxio.mimoo.data.local.entity.DownloadStatus?>(null)
     val downloadStatus: StateFlow<com.miguelaetxio.mimoo.data.local.entity.DownloadStatus?> =
         _downloadStatus.asStateFlow()
+
+    /**
+     * "Elegir como tono para un contacto" (2026-08-02) -- URI SAF real
+     * del archivo descargado de la pista actual, `null` si no está
+     * descargada. El menú de tres puntos solo ofrece la opción cuando
+     * esto no es null (ver PlayerBar.kt), ya que hace falta poder leer
+     * los bytes del archivo para instalarlo como tono
+     * (ContactRingtoneRepository).
+     */
+    private val _localFilePath = MutableStateFlow<String?>(null)
+    val localFilePath: StateFlow<String?> = _localFilePath.asStateFlow()
 
     /**
      * H12 (S018) -- artista/álbum resueltos para el menú de tres
@@ -234,6 +249,7 @@ class PlayerBarViewModel @Inject constructor(
                     _isCurrentFavorite.value = track?.isFavorite == true
                     _coverArtUrl.value = track?.coverArtUrl
                     _downloadStatus.value = track?.downloadStatus
+                    _localFilePath.value = track?.filePath
                     _menuArtist.value = resolveMenuArtist(track)
                     _menuAlbum.value = track?.album
                     if (track != null && track.coverArtUrl == null) {
@@ -248,6 +264,7 @@ class PlayerBarViewModel @Inject constructor(
         _isCurrentFavorite.value = track?.isFavorite == true
         _coverArtUrl.value = track?.coverArtUrl
         _downloadStatus.value = track?.downloadStatus
+        _localFilePath.value = track?.filePath
         _menuArtist.value = resolveMenuArtist(track)
         _menuAlbum.value = track?.album
         if (track != null && track.coverArtUrl == null) {
@@ -320,6 +337,50 @@ class PlayerBarViewModel @Inject constructor(
 
     /** S027 -- cancelar el modal "¿Quién es el artista?" de Radio. */
     fun dismissRadioArtistPrompt() = playerManager.dismissRadioArtistPrompt()
+
+    /**
+     * "Elegir como tono para un contacto" (2026-08-02) -- aviso final
+     * (éxito o fallo) para el Snackbar de PlayerBar. `null` = nada
+     * pendiente de mostrar.
+     */
+    private val _ringtoneMessage = MutableStateFlow<String?>(null)
+    val ringtoneMessage: StateFlow<String?> = _ringtoneMessage.asStateFlow()
+
+    fun dismissRingtoneMessage() {
+        _ringtoneMessage.value = null
+    }
+
+    /**
+     * Orquesta los dos pasos de ContactRingtoneRepository con la pista
+     * que suena ahora mismo. `contactPickedUri` es el resultado de
+     * `ActivityResultContracts.PickContact()` en PlayerBar -- el
+     * permiso WRITE_CONTACTS ya se ha solicitado y concedido antes de
+     * llegar aquí (ver PlayerBar.kt).
+     * ---
+     * Orchestrates ContactRingtoneRepository's two steps with the
+     * currently playing track. `contactPickedUri` is the result of
+     * `ActivityResultContracts.PickContact()` in PlayerBar -- the
+     * WRITE_CONTACTS permission has already been requested and
+     * granted before reaching here (see PlayerBar.kt).
+     */
+    fun setAsRingtoneForContact(contactPickedUri: Uri) {
+        val filePath = _localFilePath.value ?: return
+        val title = state.value.currentTitle ?: "MiMoo"
+        viewModelScope.launch {
+            val result = contactRingtoneRepository.setAsRingtoneForContact(
+                sourceUri = Uri.parse(filePath),
+                displayName = title,
+                contactPickedUri = contactPickedUri,
+            )
+            _ringtoneMessage.value = when (result) {
+                is SetContactRingtoneResult.Success -> "Tono asignado."
+                is SetContactRingtoneResult.UnsupportedAndroidVersion ->
+                    "Esta opción necesita Android 10 o superior."
+                is SetContactRingtoneResult.ContactNotFound -> "No se ha encontrado el contacto."
+                is SetContactRingtoneResult.Failed -> result.message
+            }
+        }
+    }
 
     /** S027 -- respuesta del modal "¿Quién es el artista?" al arrancar un streaming. */
     fun submitStreamArtist(artist: String, songTitle: String) =

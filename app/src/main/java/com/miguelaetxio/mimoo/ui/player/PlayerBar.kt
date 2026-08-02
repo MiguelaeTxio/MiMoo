@@ -97,6 +97,35 @@ fun PlayerBar(
     val downloadStatus by viewModel.downloadStatus.collectAsState()
     val menuArtist by viewModel.menuArtist.collectAsState()
     val menuAlbum by viewModel.menuAlbum.collectAsState()
+    val localFilePath by viewModel.localFilePath.collectAsState()
+    val ringtoneMessage by viewModel.ringtoneMessage.collectAsState()
+
+    // "Elegir como tono para un contacto" (2026-08-02) -- aviso final vía Toast,
+    // PlayerBar no tiene Scaffold/SnackbarHost propio.
+    val toastContext = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(ringtoneMessage) {
+        ringtoneMessage?.let { message ->
+            android.widget.Toast.makeText(toastContext, message, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.dismissRingtoneMessage()
+        }
+    }
+
+    // "Elegir como tono para un contacto" (2026-08-02): selector de
+    // contacto del sistema, se lanza tras conceder WRITE_CONTACTS. El
+    // resultado (Uri del contacto elegido, null si canceló) se pasa
+    // directamente al ViewModel.
+    val pickContactLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.PickContact(),
+    ) { contactUri ->
+        if (contactUri != null) viewModel.setAsRingtoneForContact(contactUri)
+    }
+    // Permiso runtime peligroso, se solicita justo antes de abrir el
+    // selector de contacto -- solo si se concede se lanza el picker.
+    val requestContactsPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) pickContactLauncher.launch(null)
+    }
 
     // S027 -- estos tres diálogos van ANTES del `return` de más abajo
     // por falta de pista actual: el modal de streaming en concreto
@@ -450,6 +479,23 @@ fun PlayerBar(
                                     onOpenArtist(menuArtist!!)
                                 },
                             )
+                            // "Elegir como tono para un contacto"
+                            // (2026-08-02) -- solo si la pista actual
+                            // está descargada (localFilePath != null):
+                            // hace falta poder leer sus bytes para
+                            // instalarla como tono, ver
+                            // ContactRingtoneRepository.
+                            if (localFilePath != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Elegir como tono para un contacto") },
+                                    onClick = {
+                                        showMenu = false
+                                        requestContactsPermissionLauncher.launch(
+                                            android.Manifest.permission.WRITE_CONTACTS,
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }

@@ -79,6 +79,25 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
+    <!--
+        "Elegir como tono para un contacto" (menú de tres puntos del
+        reproductor, 2026-08-02) -- permiso runtime, peligroso, se
+        solicita justo antes de abrir el selector de contacto (ver
+        PlayerBar.kt). Sin este permiso, ContentResolver.update() sobre
+        ContactsContract.Contacts falla en silencio (0 filas
+        actualizadas) en vez de lanzar una excepción -- ver
+        ContactRingtoneRepository.assignToContact().
+        ---
+        "Set as ringtone for a contact" (player's three-dot menu,
+        2026-08-02) -- runtime, dangerous permission, requested right
+        before opening the contact picker (see PlayerBar.kt). Without
+        this permission, ContentResolver.update() on
+        ContactsContract.Contacts silently fails (0 rows updated)
+        instead of throwing -- see
+        ContactRingtoneRepository.assignToContact().
+    -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
     <!-- DESACTIVADO (S007, 2026-07-09): con allowBackup="true" el
          Auto Backup de Android restauraba SharedPreferences tras
          reinstalar (incluida saf_root_uri de StorageManager.kt),
