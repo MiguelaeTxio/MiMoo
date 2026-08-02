@@ -2950,82 +2950,291 @@ ruta.
 
 ---
 
+## COMPLETADAS EN S027
+
+Sesión larga (32 commits reales), con una constante: cada arreglo se
+verificó contra log o captura real antes de darlo por bueno, y varias
+veces el propio arreglo resultó incompleto y hubo que corregirlo en
+la misma sesión al ver la siguiente prueba. Se documenta también lo
+que salió mal, no solo lo que quedó bien, siguiendo la exigencia
+explícita de Miguel Ángel de hacer autocrítica real.
+
+**1. Modal "¿Quién es el artista?" -- construido (diseño ya cerrado en S026).**
+Decisión de arranque: la sección de Canales queda FUERA del alcance
+de esta sesión -- es un uso legítimo de "canal como canal"
+(suscripción), sin relación con el problema de fondo. El barrido de
+los 16 ficheros con `track.artist ?: track.channelTitle` se abandonó
+a medio camino cuando Miguel Ángel, tras ver que el modal se disparaba
+en el sitio equivocado, ordenó explícitamente **borrar toda mención al
+canal de la lógica de Radio**, no solo sustituir el patrón en esos 16
+ficheros -- ver punto 6 más abajo, es la decisión que se acabó
+imponiendo sobre todo lo demás.
+
+El modal en sí pasó por tres versiones en la misma sesión:
+- 1ª: disparado al final de la cola (cuando `topUpRadioQueueIfNeeded()`
+  buscaba ancla) -- **equivocado**, Miguel Ángel lo corrigió: debía
+  saltar al ARRANCAR el streaming, no al terminar la cola.
+- 2ª: movido a `PlayerManager.play()`, pero solo cuando no había
+  artista -- aún incompleto.
+- 3ª y definitiva: **obligatorio siempre** en streaming, precargado
+  con lo que se haya podido resolver (artista estructurado o
+  `identifyFromTitleWords()`), para confirmar o para preguntar -- cita
+  textual: *"tanto si hay título y artista, como si no, debe,
+  obligatoriamente saltar el modal, bien para preguntar o bien para
+  informar"*.
+
+**2. Cadena de fallos de identidad por nombre corto/ambiguo -- mismo
+patrón, tres sitios distintos, arreglados uno a uno.**
+- `AnchorDictionary.artist()`: "Beethoven" no encontraba a "Ludwig van
+  Beethoven" en la semilla (clave exacta normalizada, sin margen).
+  Fallback por conjunto de palabras, solo si el candidato es ÚNICO en
+  toda la semilla+aprendido.
+- `firstReleaseYearFromMusicBrainz()`: mismo problema con TÍTULOS de
+  canción -- "Divina estás" (primer verso de la letra, puesto como
+  título del vídeo) nunca encontraba a "Divina" (título real, Radio
+  Futura, álbum "Música Moderna" 1980). Mismo mecanismo de coincidencia
+  por palabras, único candidato.
+- `pickAnchorArtist()`: cuando tiene que descartar el resultado MÁS
+  RELEVANTE de MusicBrainz para forzar una coincidencia EXACTA de
+  nombre (necesario para casos como "Pink", S023), el resultado es de
+  MENOR confianza -- caso real: "Fritz" resolvió a "Fritz Kalkbrenner"
+  (Alemania) por esta vía y se aprendió PARA SIEMPRE en el diccionario
+  con país alemán, colando un artista alemán en sesiones ancladas en
+  España/Hispanoamérica. Ahora `anchorDictionary.learnArtist()` NO se
+  ejecuta cuando el mbid vino de esta coincidencia forzada -- se usa
+  para esa resolución puntual, no se graba.
+- `matchesArtist()` (verificación de vídeos de YouTube): "Heroica"
+  (electropop real) se confundió con el canal "Saga Heroica"
+  (heavy/power metal, artista distinto) porque el nombre coincidía
+  como palabra suelta en cualquier posición del canal. Se intentó
+  apretar a "debe ser el PRINCIPIO del canal" -- insuficiente. Miguel
+  Ángel cortó por lo sano: **el canal no se mira NUNCA MÁS**, en
+  ningún modo, para verificar identidad de Radio. `matchesArtist()`
+  reducida a `(artist, title)`, solo mira el título del vídeo;
+  `verifyTrackExists()` (bases de datos reales) es la única autoridad
+  de verdad.
+
+**3. `GenreMatchQuality` daba 0% siempre cuando el ancla solo tenía
+géneros de formato/genéricos.** Caso real: Ilegales, género elegido
+"rock and roll" -- está TAMBIÉN en `FORMAT_TAGS` (arreglo de S026
+contra el caso Supertramp), y su único otro género, "rock", es
+genérico (129 descendientes). El ancla se quedaba sin ningún género
+"específico" tras el filtro, y con el ancla vacía la intersección con
+cualquier candidato era vacía siempre. Se degrada al conjunto CRUDO en
+ambos lados cuando el ancla no tiene ningún género específico -- ya no
+hay riesgo de falso positivo del que protegerse, porque no hay otro
+dato que pudiera colarse por error.
+
+**4. `buildGenreQuery()` seguía filtrando candidatos por
+nacimiento/formación del artista.** El mismo fallo del life-span (caso
+P!nk, ya documentado y arreglado para `resolveAnchor()`) sobrevivía
+sin tocar en la búsqueda EN VIVO de candidatos: `begin:[decadeBegin TO
+decadeBegin+9]` en la consulta a MusicBrainz. Caso real: Namika (nacida
+1991, activa desde 2015) entraba como candidata de "boom bap 1990" por
+su fecha de nacimiento. Quitada la cláusula por completo -- la década
+de los candidatos la decide solo la verificación del TEMA concreto,
+nunca el artista.
+
+**5. Década por ventana de años, no por bloque fijo de 10.** Otro
+fallo del mismo estilo: comparar por década fija creaba una frontera
+artificial (ancla New Wave de 1979 -> década "1970", casi sin
+candidatos porque el New Wave es un movimiento de los 80). Ahora
+`RadioAnchor` guarda también el AÑO EXACTO del tema ancla
+(`resolveOriginalDecade()` devuelve `TrackDecade(decadeBegin,
+exactYear)` en vez de solo la década), y `resolveYoutubeCandidate()`
+compara `|año_candidato - año_ancla| <= ventana` (±5 por defecto,
+configurable en Ajustes a ±10, ampliado también en
+`resolveFinalFallback()`). Sin año exacto en cualquiera de los dos
+lados, cae a comparar por década como antes.
+
+**6. CANAL ELIMINADO POR COMPLETO de la lógica de Radio -- decisión
+que cierra el punto 6 pendiente de S026.** Orden textual, repetida
+muchas veces: *"no quiero nada de nombres de canales... el ancla es
+artista, la canción es título, y ya está... que cuando nos dé el
+canal MusicBrainz, YouTube, quien sea, lo elimines, automáticamente,
+ponga lo que ponga"*. La sección de Canales (suscripción, "canal como
+canal") NO se ha tocado -- queda fuera del alcance según lo acordado al
+principio de la sesión. Lo que se ha eliminado es el USO del nombre
+del canal como sustituto/verificación del artista en toda la
+maquinaria de Radio.
+
+**7. Rediseño completo del cupo de Radio -- cuota fija por ronda de
+10, sustituye al reparto por porcentajes de S016.** Ya no hay tres
+búsquedas separadas (Conocidos/Disco/Desconocidos); un único flujo de
+candidato: género+origen+década se comprueban primero sobre el tema
+concreto, y solo entonces se decide en qué cupo cuenta -- "conocido en
+España" (`KnownHitsRepository.isKnownArtistAnywhere()`, sin mirar
+década) deja de ser "de dónde saco la canción" y pasa a ser una
+propiedad del artista para efectos de cupo. Cupo configurable en
+Ajustes: conocidos y disco por cada 10 canciones, desconocidos el
+resto. Cola pendiente FIFO por cupo cuando ya está cubierto en esta
+ronda.
+
+**8. Diversidad de artistas -- dos correcciones sobre el diseño del
+punto 7.**
+- El artista ANCLA quedaba excluido PARA SIEMPRE de ser candidato de
+  nuevo (`anchorExclusion` fijo) -- orden textual: *"que si está
+  puesto, que el ancla... no se puede repetir, que lo quites"*. Ahora
+  se registra en `radioRoundArtists` como cualquier otro, sujeto solo
+  a la regla de no repetir en la ronda de 10.
+- `radioUsedArtists` (todo lo sonado en la sesión) era solo
+  preferencia BLANDA -- con pool grande no debería vaciarse casi
+  nunca, pero en la práctica unos pocos artistas con discografía
+  grande y bien documentada se llevaban la mayoría de las rondas
+  mientras artistas más pequeños fallaban una y otra vez sin sonar
+  nunca (caso real AC/DC: Thin Lizzy/Them/Spencer Davis Group/Status
+  Quo, 42 de ~45 sugerencias repitiendo los mismos 4 fracasos; caso
+  real Radio Futura: Soda Stereo cada 10 canciones durante media
+  sesión). Ahora `fetchRoundCandidate()` tiene DOS FASES explícitas:
+  primero excluye también `radioUsedArtists` (duro, sesión completa);
+  solo si esa búsqueda se agota de verdad (no queda NINGÚN candidato
+  nuevo que cumpla género+origen) se pasa a permitir repetir,
+  respetando aún la ronda de 10. Cita textual sobre el motivo: *"un
+  artista, además de tener su sello, tiene una marca de identidad...
+  repitiendo constantemente esa marca de identidad se hace eternamente
+  aburrido"*.
+- Un intento intermedio de resolver el mismo síntoma reduciendo la
+  ventana de no-repetir a 5 en el último recurso se **revirtió en la
+  misma sesión** -- Miguel Ángel: *"revierte lo de los diez... lo que
+  está fallando es el algoritmo y no el número de candidatos"*. Tenía
+  razón: la causa real era `radioDecadeRejectedArtists` (ahora
+  `radioUnusableArtistsThisRound`) sin reiniciarse por ronda, no el
+  tamaño de la ventana -- ver punto 9.
+
+**9. `radioUnusableArtistsThisRound` pasa a reiniciarse por RONDA, no
+por sesión.** Un artista que fallaba década/existencia UNA vez (por
+los resultados concretos que trajo esa búsqueda de YouTube, no su
+discografía entera) quedaba descartado para SIEMPRE en la sesión. Con
+cada ronda el conjunto disponible se iba reduciendo permanentemente
+hasta agotar géneros que en realidad tenían artistas de sobra (caso
+real: Big Beat, más de una decena de representantes reales --
+Chemical Brothers, Fatboy Slim, Crystal Method, Groove Armada, Apollo
+440...). Se reinicia ahora en `rollRadioRoundIfComplete()`.
+
+**10. "Radio detenida" saltaba con un solo fallo transitorio, sin
+reintentar.** `isTransient()` trata un HTTP 429/5xx puntual (le pasa a
+MusicBrainz, servicio pequeño y comunitario, aunque la conexión del
+usuario esté perfecta) igual que "no hay red de verdad" -- y paraba la
+Radio entera a la primera. Nuevo `retryOnceIfTransient()`: reintenta
+UNA vez tras 1.5s antes de darlo por fallo real. Aplicado en
+`verifyTrackExists()` Y en `resolveOriginalDecade()` (se detectó que
+esta segunda se había quedado sin el mismo reintento, en una vuelta
+posterior de la misma sesión).
+
+**11. Discografía completa por artista en una sola llamada (browse),
+no ya tema a tema.** Pregunta de Miguel Ángel: *"¿se puede recibir
+todo el paquete de búsquedas en una sola llamada?"* -- sí, MusicBrainz
+tiene BROWSE además de búsqueda. `ensureDiscographyCached()`: resuelve
+el MBID, pide hasta 200 obras via `browseReleaseGroupsByArtist()`
+(mismo DTO que la búsqueda), guarda todo de golpe con
+`learnTrackYearsBulk()` (una sola escritura, no una por tema). A
+partir de ahí, cualquier canción de ese artista se fecha en LOCAL para
+el resto de la sesión, y queda persistido para sesiones futuras. Se
+llama una vez por artista antes de que `resolveYoutubeCandidate()`
+empiece a buscar tema a tema.
+Seguimiento inmediato: `AnchorDictionary.trackYear()` exigía clave
+EXACTA -- un título de YouTube con ruido no coincidía con el título
+limpio guardado por el browse, perdiendo buena parte del ahorro. Se
+añadió el mismo fallback por conjunto de palabras del punto 2, esta
+vez escrito para reutilizar `wordsOf()`/`key()` ya existentes.
+
+**12. Ruido en el log de depuración y tamaño del fichero -- dos
+vueltas.** El arreglo de década (punto 5, primera versión) empezó
+logueando una línea POR CADA candidato rechazado -- con
+`MAX_LINES=300` una sola ronda podía generar más de 100 líneas de
+ruido y expulsar del fichero eventos reales anteriores (una adición
+real de "Siouxsie and the Banshees" quedó rotada fuera antes de que
+Miguel Ángel pudiera verla). Resumido a una línea por búsqueda,
+`MAX_LINES` subido a 1500 y luego bajado a 400 (petición directa:
+*"cuando llegue a cierto tamaño, hay que reiniciarlo... no se puede
+mantener un archivo tal como está ahora"*). Además, se añadió un
+marcador `=== NUEVA SESIÓN DE RADIO ===` por pista propia -- pero la
+primera versión llamaba al log SÍNCRONAMENTE desde
+`onMediaItemTransition()` (callback de ExoPlayer en el hilo principal,
+no una corrutina), bloqueando la escritura del fichero entero -- "ya
+no loguea" fue el síntoma real reportado. Movido a `managerScope`
+(Dispatchers.IO), igual que el resto de llamadas al mismo log.
+
+**13. "Sign in to confirm you're not a bot" al reproducir en streaming.**
+`resolver.py` (resuelve la URL de streaming) no llevaba cabecera
+User-Agent de navegador real ni soporte de cookies, a diferencia de
+`downloader.py` (las descargas), que las tiene desde el 2026-07-24
+para exactamente este tipo de bloqueo de YouTube. Igualado:
+`resolve_audio_stream_url()` acepta ahora `cookies_path`, añade el
+mismo User-Agent, y `StreamResolver.kt` inyecta `CookiesManager` (ya
+existente) para pasarlo.
+
+**Errores de compilación reales durante la sesión, corregidos en el
+propio commit siguiente:** cambio de tipo de retorno de
+`findAnchorArtistMbid()`/`pickAnchorArtist()` dejó dos usos antiguos
+sin actualizar (`501df04`); inferencia de tipos ambigua en un
+`if/else` con `emptyList()` seguido de `.mapNotNull{}` (`4c342df`).
+
+**Incidencia de proceso sin resolver esta sesión:** el token de GitHub
+caducó dos veces durante la sesión (una vez con más de un commit local
+sin subir a la vez) -- no es un fallo de código, pero interrumpió el
+flujo de trabajo repetidamente. La vida corta del token de sesión
+puede necesitar revisarse si vuelve a pasar.
+
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
-### 1. Modal "¿Quién es el artista?" -- diseño CERRADO, sin construir
+### 1. Favoritos -- funcionalidad dispersa, sin estructurar. Orden textual de Miguel Ángel para empezar la próxima sesión
 
-Motivado por un caso real: "Für Elise" de Beethoven, subida por un
-canal de YouTube genérico (`maestromilochomil117`), sin ninguna
-mención a Beethoven en el título ni en el canal. El sistema actual no
-tiene con qué fijar el ancla y, correctamente, se niega a arrancar --
-pero eso deja al usuario sin saber por qué. Además, Miguel Ángel
-recordó (con razón, y muchas veces ya dicho) que **el nombre del
-canal de YouTube nunca debe usarse como sustituto del artista en
-ningún sitio de la app** -- comprobado que el patrón `track.artist ?:
-track.channelTitle` está repetido en **16 ficheros distintos**
-(`LibraryMigrator.kt`, `AlbumViewModel.kt`, `ArtistViewModel.kt`,
-`ChannelsViewModel.kt`, `DownloadsScreen.kt`, `DownloadsViewModel.kt`,
-`ExplorerViewModel.kt`, `ImportLinkViewModel.kt`, `LibraryScreen.kt`,
-`LibraryViewModel.kt`, `PlaylistDetailScreen.kt`,
-`PlaylistDetailViewModel.kt`, `SettingsViewModel.kt`,
-`ShareImportViewModel.kt`, `SongViewModel.kt`, `AutoSyncViewModel.kt`).
+Favoritos funciona bien para emisoras de radio online (ShoutCast).
+Para el resto -- artistas, álbumes, sencillos, listas de
+reproducción -- existe pero de forma dispersa y sin criterio uniforme
+en todos los frentes de la app. Puntos concretos a resolver:
 
-**Diseño cerrado, decisión por decisión:**
+- **Doble marcado obligatorio**: al marcar un artista (o álbum,
+  sencillo...) como favorito, debe marcarse TANTO para streaming como
+  para local -- hoy no está claro que esto se cumpla de forma
+  consistente en todos los caminos.
+- **Falta la vista de favoritos en casi todos los frentes**:
+  - Explorador: sin vista de favoritos.
+  - Biblioteca: tiene álbumes favoritos, pero NO artistas favoritos.
+  - Listas de reproducción: no hay forma de ir a la discografía de un
+    artista favorito, ni de armar una Radio a partir de los álbumes
+    favoritos.
+- **Biblioteca tiene favoritos pero sin diferenciar tipo**: no separa
+  álbumes, artistas, sencillos y listas -- todo mezclado.
 
-1. **Un único modal**, reutilizado en los dos disparadores:
-   - Al descargar un vídeo sin artista reconocible.
-   - Al reproducir en streaming algo sin artista reconocible --
-     incluido cuando ese tema es el que arrancaría una sesión de
-     Radio.
-2. **Si el usuario no responde: la operación se cancela**, con un
-   aviso explícito de que falta esa información. No hay streaming, no
-   hay descarga, no hay ancla de Radio. Nunca se sigue adelante a
-   ciegas -- cita textual: *"si no se responde se informa de que la
-   operación se cancela por falta de información y punto. Ni
-   streaming, ni nada de nada."*
-3. **Respondido una vez, se guarda para siempre** -- tag del fichero
-   si está descargado, diccionario de la Radio si es streaming -- no
-   se vuelve a preguntar por ese mismo vídeo.
-4. **Para la Radio en concreto: "si no hay artista no hay ancla"**,
-   mismo principio ya aplicado con la falta de red (`radioNetworkLost`)
-   -- si el primer tema no tiene artista identificable y el usuario no
-   lo rellena, la sesión de Radio ni arranca.
-5. **Barrido de los 16 ficheros** listados arriba: sustituir
-   `track.artist ?: track.channelTitle` por el disparo del modal (o,
-   una vez respondido y guardado, por el valor ya guardado) -- nunca
-   mostrar el nombre del canal en su lugar, en ningún sitio.
-6. **Pendiente de decidir en la próxima sesión, sin cerrar todavía**:
-   si la sección de Canales (agrupa descargas por canal de subida,
-   para gestionarlas) se mantiene tal cual -- su propósito explícito
-   es mostrar el canal como canal, no como artista, así que en
-   principio no es lo mismo que el problema de fondo -- o si Miguel
-   Ángel prefiere retirarla también. Empezar la sesión preguntando
-   esto antes de tocar los 16 ficheros.
+Es una sesión de DISEÑO primero (como se hizo con H08 y H12, antes de
+tocar código): mapear todos los frentes actuales (Biblioteca,
+Explorador, Playlist, Radio...), decidir el modelo de datos unificado
+si hace falta uno, y solo entonces construir. Empezar preguntando a
+Miguel Ángel el alcance exacto antes de escribir nada.
 
-Como con H08 y H12: sesión de diseño cerrada antes de escribir código
--- este punto YA tiene el diseño cerrado, así que la próxima sesión
-puede ir directa a construir.
+### 2. Auditoría pendiente de la semilla completa de artistas (arrastrada de sesiones anteriores, sin tocar en S027)
 
-### 2. Verificación en dispositivo real, pendiente desde los cuatro grupos de origen en adelante
+Sigue pendiente revisar el resto de los 1.161 artistas de
+`anchor_artists.json` por si tienen géneros mal puestos que puedan
+seguir generando puentes falsos con otros anclajes (caso ya conocido:
+`progressive rock` en Led Zeppelin). No se puede verificar contra
+MusicBrainz en vivo desde este entorno de trabajo (sin acceso de red
+a `musicbrainz.org`).
 
-Todo lo de esta sesión se ha ido probando en dispositivo real y
-corrigiendo sobre la marcha (Supertramp, Queen/Pink Floyd, "Free" con
-Nacho, `temas.json.txt`, Discogs, Portugal) -- ese patrón ha
-funcionado bien y hay que seguir con él. Lo único que queda
-específicamente sin confirmar con log o captura real es el tramo
-final: los cuatro grupos de origen (`76aec87` en adelante) y la
-salvaguarda "conocido en España" (`ae7df7f`). Probar con Led Zeppelin
-(¿aparecen ya Van Halen/AC-DC sin romper la pared con otros grupos?)
-y con un ancla española como Ilegales (¿se queda centrado en España e
-Hispanoamérica conocida, sin Portugal ni sorpresas hispanoamericanas
-desconocidas?).
+### 3. Fallo de streaming ajeno a la Radio, encontrado pero no resuelto en S027
 
-### 3. Auditoría pendiente de la semilla completa
+`notification_debug.txt` mostraba **50 errores**
+`ERROR_CODE_IO_BAD_HTTP_STATUS` / `ERROR_CODE_IO_NETWORK_CONNECTION_FAILED`
+repartidos en muchas sesiones distintas, no solo en Radio -- un
+problema de fiabilidad del streaming en sí, separado de todo lo
+tocado esta sesión. Se corrigió UN caso concreto de esta familia (S027
+punto 13, "Sign in to confirm you're not a bot" por falta de
+User-Agent/cookies en `resolver.py`), pero no se ha confirmado si
+cubre también el resto de los 50 casos o si hay otras causas
+distintas mezcladas en ese recuento.
 
-Ya anotado en sesiones anteriores y confirmado como riesgo real esta
-sesión (el caso de `progressive rock` en Led Zeppelin): sigue
-pendiente revisar el resto de los 1.161 artistas de la semilla por si
-tienen géneros mal puestos que puedan seguir generando puentes
-falsos con otros anclajes. No se puede verificar contra MusicBrainz
-en vivo desde este entorno de trabajo (sin acceso de red a
-`musicbrainz.org`).
+### 4. Bug sin localizar: el fichero de log compartido llegaba con contenido viejo
+
+Durante S027, varias veces el `.txt` que Miguel Ángel compartía desde
+el selector de archivos del móvil no coincidía con el estado real del
+fichero en el dispositivo (confirmado con capturas de pantalla del
+propio gestor de archivos mostrando ~1500 líneas recientes, mientras
+el `.txt` recibido tenía 299 líneas antiguas). No se identificó la
+causa raíz -- se mitigó indirectamente bajando `MAX_LINES` a 400 (más
+fácil de manejar/exportar), pero el mecanismo real de por qué el
+selector de compartir podía servir una copia vieja queda sin
+diagnosticar.
+
