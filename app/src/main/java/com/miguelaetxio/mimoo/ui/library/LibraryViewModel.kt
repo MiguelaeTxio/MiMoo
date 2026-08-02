@@ -633,10 +633,18 @@ class LibraryViewModel @Inject constructor(
         return true
     }
 
-    /** Toggles the favorite flag for a track from the library. */
-    fun toggleFavorite(track: SearchResultTrack) {
+    /**
+     * Bug real (2026-08-02, ver comentario de
+     * ArtistViewModel.toggleFavorite()): esta mutación tampoco pasaba
+     * por AutoSyncPusher -- el favorito de sencillo tocado desde
+     * Biblioteca no se subía a Drive hasta que otra mutación distinta
+     * disparara el siguiente push.
+     */
+    fun toggleFavorite(activity: Activity, track: SearchResultTrack) {
         viewModelScope.launch {
-            repository.updateFavorite(track.youtubeId, !track.isFavorite)
+            autoSyncPusher.executeIfConnected(activity) {
+                repository.updateFavorite(track.youtubeId, !track.isFavorite)
+            }
         }
     }
 

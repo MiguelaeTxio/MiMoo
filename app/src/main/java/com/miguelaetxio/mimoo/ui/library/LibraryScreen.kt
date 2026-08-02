@@ -632,7 +632,7 @@ private fun ColumnScope.AlbumsTabContent(
                     LibraryTrackRow(
                         track = track,
                         onPlay = { viewModel.playTrack(track) },
-                        onToggleFavorite = { viewModel.toggleFavorite(track) },
+                        onToggleFavorite = { viewModel.toggleFavorite(activity, track) },
                         onDelete = { onDeleteTrack(track) },
                         onEdit = { onEditTrack(track) },
                         onAddToPlaylist = { onAddToPlaylist(track) },
@@ -655,6 +655,7 @@ private fun ColumnScope.SinglesTabContent(
     onEditTrack: (SearchResultTrack) -> Unit,
     onAddToPlaylist: (SearchResultTrack) -> Unit,
 ) {
+    val activity = LocalContext.current as Activity
     when (val drill = uiState.singlesDrill) {
         is SinglesDrillLevel.Letters -> {
             if (uiState.singlesByArtist.isNotEmpty()) {
@@ -722,7 +723,7 @@ private fun ColumnScope.SinglesTabContent(
                     LibraryTrackRow(
                         track = track,
                         onPlay = { viewModel.playTrack(track) },
-                        onToggleFavorite = { viewModel.toggleFavorite(track) },
+                        onToggleFavorite = { viewModel.toggleFavorite(activity, track) },
                         onDelete = { onDeleteTrack(track) },
                         onEdit = { onEditTrack(track) },
                         onAddToPlaylist = { onAddToPlaylist(track) },

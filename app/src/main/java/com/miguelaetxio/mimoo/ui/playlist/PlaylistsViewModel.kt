@@ -71,9 +71,17 @@ class PlaylistsViewModel @Inject constructor(
         }
     }
 
-    /** Sesión de diseño de Favoritos (2026-08-02): marcar/desmarcar una playlist propia como favorita. */
-    fun toggleFavoritePlaylist(playlistId: Long) {
-        viewModelScope.launch { favoritePlaylistRepository.toggle(playlistId) }
+    /**
+     * Bug real (2026-08-02, ver comentario de
+     * ArtistViewModel.toggleFavorite()): esta mutación tampoco pasaba
+     * por AutoSyncPusher.
+     */
+    fun toggleFavoritePlaylist(activity: Activity, playlistId: Long) {
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(activity) {
+                favoritePlaylistRepository.toggle(playlistId)
+            }
+        }
     }
 
     fun createPlaylist(activity: Activity, name: String) {

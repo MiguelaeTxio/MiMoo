@@ -1,8 +1,10 @@
 package com.miguelaetxio.mimoo.ui.artist
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.repository.FavoriteArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.remote.ArtistDirectoryRepository
@@ -11,6 +13,7 @@ import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroup
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,6 +77,8 @@ class ArtistViewModel @Inject constructor(
     private val artistDirectoryRepository: ArtistDirectoryRepository,
     private val favoriteArtistRepository: FavoriteArtistRepository,
     private val searchResultTrackRepository: SearchResultTrackRepository,
+    private val autoSyncPusher: AutoSyncPusher,
+    @ApplicationContext private val appContext: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -228,10 +233,38 @@ class ArtistViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-02): un artista
+     * marcado como favorito en el móvil no aparecía en la tablet tras
+     * sincronizar, ni siquiera después de arreglar lo que viajaba en
+     * el bundle -- porque esta mutación NUNCA pasaba por
+     * AutoSyncPusher, el punto único obligatorio por el que debe
+     * pasar cualquier añadido/borrado de favorito (regla de negocio
+     * H07, ver AutoSyncPusher). Se corrige aquí -- mismo patrón que
+     * LibraryViewModel.toggleFavoriteAlbum(). Sin conexión, la
+     * mutación NO se aplica en absoluto (se descarta en silencio el
+     * toggle de UI también, revirtiendo el optimista si hiciera
+     * falta -- aquí no hace falta porque se aplica solo si hubo
+     * conexión).
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-02): an artist marked
+     * favorite on the phone didn't show up on the tablet after
+     * syncing, even after fixing what traveled in the bundle --
+     * because this mutation NEVER went through AutoSyncPusher, the
+     * mandatory single point any favorite addition/removal must pass
+     * through (H07 business rule, see AutoSyncPusher). Fixed here --
+     * same pattern as LibraryViewModel.toggleFavoriteAlbum(). Without
+     * connection, the mutation is NOT applied at all (the UI toggle
+     * is skipped too -- only applied if there was a connection).
+     */
     fun toggleFavorite() {
         viewModelScope.launch {
-            favoriteArtistRepository.toggle(artistName)
-            _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
+            val outcome = autoSyncPusher.executeIfConnected(appContext) {
+                favoriteArtistRepository.toggle(artistName)
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.Success) {
+                _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
+            }
         }
     }
 }

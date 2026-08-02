@@ -135,7 +135,7 @@ fun PlaylistsScreen(
                                 playlist = playlist,
                                 isFavorite = playlist.id in uiState.favoritePlaylistIds,
                                 onOpen = { onOpenPlaylist(playlist.id) },
-                                onToggleFavorite = { viewModel.toggleFavoritePlaylist(playlist.id) },
+                                onToggleFavorite = { viewModel.toggleFavoritePlaylist(activity, playlist.id) },
                                 onRename = { playlistPendingRename = playlist },
                                 onDelete = { playlistPendingDelete = playlist },
                             )

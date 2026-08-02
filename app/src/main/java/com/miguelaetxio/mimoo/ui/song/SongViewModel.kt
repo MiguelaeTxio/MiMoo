@@ -1,8 +1,11 @@
 package com.miguelaetxio.mimoo.ui.song
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
@@ -13,6 +16,7 @@ import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,6 +73,8 @@ class SongViewModel @Inject constructor(
     private val downloadQueueManager: DownloadQueueManager,
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
+    private val autoSyncPusher: AutoSyncPusher,
+    @ApplicationContext private val appContext: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -172,24 +178,29 @@ class SongViewModel @Inject constructor(
      * button no longer hides when the track isn't downloaded, see
      * SongScreen.
      */
+    /** Bug real (2026-08-02, ver comentario de ArtistViewModel.toggleFavorite()): pasa ahora por AutoSyncPusher. */
     fun toggleFavorite() {
         val youtubeId = _uiState.value.youtubeId ?: return
         val state = _uiState.value
         viewModelScope.launch {
-            if (state.downloadStatus != null) {
-                searchResultTrackRepository.updateFavorite(youtubeId, !state.isFavorite)
-            } else {
-                favoriteTrackRepository.toggle(
-                    FavoriteTrack(
-                        youtubeId = youtubeId,
-                        title = songTitle,
-                        artist = artistName,
-                        thumbnailUrl = state.thumbnailUrl,
-                        durationSeconds = state.durationSeconds ?: 0,
-                    ),
-                )
+            val outcome = autoSyncPusher.executeIfConnected(appContext) {
+                if (state.downloadStatus != null) {
+                    searchResultTrackRepository.updateFavorite(youtubeId, !state.isFavorite)
+                } else {
+                    favoriteTrackRepository.toggle(
+                        FavoriteTrack(
+                            youtubeId = youtubeId,
+                            title = songTitle,
+                            artist = artistName,
+                            thumbnailUrl = state.thumbnailUrl,
+                            durationSeconds = state.durationSeconds ?: 0,
+                        ),
+                    )
+                }
             }
-            _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
+            if (outcome is MutationOutcome.Success) {
+                _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
+            }
         }
     }
 

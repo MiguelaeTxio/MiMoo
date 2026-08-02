@@ -1,8 +1,11 @@
 package com.miguelaetxio.mimoo.ui.album
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
@@ -17,6 +20,7 @@ import com.miguelaetxio.mimoo.data.remote.AlbumTrackMatch
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -92,6 +96,8 @@ class AlbumViewModel @Inject constructor(
     private val downloadQueueManager: DownloadQueueManager,
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
+    private val autoSyncPusher: AutoSyncPusher,
+    @ApplicationContext private val appContext: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -193,11 +199,16 @@ class AlbumViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isFavorite = isFavorite)
     }
 
+    /** Bug real (2026-08-02, ver comentario de ArtistViewModel.toggleFavorite()): pasa ahora por AutoSyncPusher. */
     fun toggleFavorite() {
         val candidate = _uiState.value.candidate ?: return
         viewModelScope.launch {
-            favoriteAlbumRepository.toggle(candidate.artist ?: artistName, candidate.title)
-            _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
+            val outcome = autoSyncPusher.executeIfConnected(appContext) {
+                favoriteAlbumRepository.toggle(candidate.artist ?: artistName, candidate.title)
+            }
+            if (outcome is MutationOutcome.Success) {
+                _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
+            }
         }
     }
 

@@ -1,7 +1,9 @@
 package com.miguelaetxio.mimoo.ui.favorites
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.favorites.FavoritePlaylistRow
 import com.miguelaetxio.mimoo.data.favorites.FavoritesRepository
 import com.miguelaetxio.mimoo.data.favorites.FavoriteTrackRow
@@ -12,6 +14,7 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +59,8 @@ class FavoritesViewModel @Inject constructor(
     private val favoritesRepository: FavoritesRepository,
     private val popurriRepository: PopurriRepository,
     private val playerManager: PlayerManager,
+    private val autoSyncPusher: AutoSyncPusher,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
@@ -134,31 +139,42 @@ class FavoritesViewModel @Inject constructor(
     }
 
     // --- Marcar/desmarcar favorito ---
+    // Bug real (2026-08-02, ver comentario de
+    // ArtistViewModel.toggleFavorite()): estas cuatro mutaciones
+    // tampoco pasaban por AutoSyncPusher.
 
     fun removeArtistFavorite(artist: String) {
-        viewModelScope.launch { favoritesRepository.toggleArtist(artist) }
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(appContext) { favoritesRepository.toggleArtist(artist) }
+        }
     }
 
     fun removeAlbumFavorite(artist: String, album: String) {
-        viewModelScope.launch { favoritesRepository.toggleAlbum(artist, album) }
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(appContext) { favoritesRepository.toggleAlbum(artist, album) }
+        }
     }
 
     fun removeTrackFavorite(row: FavoriteTrackRow) {
         viewModelScope.launch {
-            favoritesRepository.toggleTrack(
-                FavoriteTrack(
-                    youtubeId = row.youtubeId,
-                    title = row.title,
-                    artist = row.artist,
-                    thumbnailUrl = row.thumbnailUrl,
-                    durationSeconds = 0,
-                ),
-            )
+            autoSyncPusher.executeIfConnected(appContext) {
+                favoritesRepository.toggleTrack(
+                    FavoriteTrack(
+                        youtubeId = row.youtubeId,
+                        title = row.title,
+                        artist = row.artist,
+                        thumbnailUrl = row.thumbnailUrl,
+                        durationSeconds = 0,
+                    ),
+                )
+            }
         }
     }
 
     fun removePlaylistFavorite(playlistId: Long) {
-        viewModelScope.launch { favoritesRepository.togglePlaylist(playlistId) }
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(appContext) { favoritesRepository.togglePlaylist(playlistId) }
+        }
     }
 
     // --- Generación y reproducción de popurrís ---
