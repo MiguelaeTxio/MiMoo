@@ -33,7 +33,7 @@ import java.text.Normalizer
 import java.util.Collections
 import javax.inject.Inject
 
-enum class LibraryTab { ALBUMS, SINGLES, FAVORITES }
+enum class LibraryTab { ALBUMS, SINGLES }
 
 /**
  * Displayed label for the MusicBrainz "Various Artists" credit — solo
@@ -132,35 +132,11 @@ sealed class AlbumsDrillLevel {
      * active. Nothing changes below this (Albums, Tracks).
      */
     object ArtistsFlat : AlbumsDrillLevel()
-    /**
-     * Entrada "Favoritos" -- petición explícita de Miguel Ángel
-     * (2026-07-05): lista plana (no por letra/artista, "todo
-     * exactamente igual" en orden alfabético) de álbumes marcados como
-     * favoritos, cruzando artistas. Aparece antes que las letras en la
-     * pantalla de Letters.
-     * ---
-     * "Favoritos" entry -- explicit request from Miguel Ángel
-     * (2026-07-05): a flat (not by letter/artist, "everything exactly
-     * the same" in alphabetical order) list of albums marked as
-     * favorite, across artists. Shown before the letters on the
-     * Letters screen.
-     */
-    object FavoriteAlbums : AlbumsDrillLevel()
     data class Artists(val letter: Char) : AlbumsDrillLevel()
     data class Albums(val artist: String) : AlbumsDrillLevel()
-    /**
-     * fromFavorites indica si se llegó aquí desde FavoriteAlbums (para
-     * que el botón atrás vuelva ahí en vez de a Albums(artist), que
-     * asume siempre el mismo artista).
-     * ---
-     * fromFavorites tracks whether we got here from FavoriteAlbums (so
-     * the back button returns there instead of to Albums(artist),
-     * which always assumes the same artist).
-     */
     data class Tracks(
         val artist: String,
         val album: String,
-        val fromFavorites: Boolean = false,
     ) : AlbumsDrillLevel()
 }
 
@@ -208,7 +184,6 @@ data class LibraryUiState(
     // ordenada por titulo, sin importar si son album o sencillo.
     val albumsByArtist: Map<String, Map<String, List<SearchResultTrack>>> = emptyMap(),
     val singlesByArtist: Map<String, List<SearchResultTrack>> = emptyMap(),
-    val favorites: List<SearchResultTrack> = emptyList(),
     // Letras disponibles (con al menos un artista) para la primera
     // capa de cada pestaña, ya ordenadas.
     // ---
@@ -235,20 +210,17 @@ data class LibraryUiState(
     // StartupNotices), shown exactly once as a Snackbar.
     val startupMessage: String? = null,
     // Favoritos a nivel de álbum -- petición explícita de Miguel Ángel
-    // (2026-07-05). favoriteAlbumKeys para saber si un álbum concreto
-    // está marcado (icono relleno/vacío en AlbumHeaderRow);
-    // favoriteAlbumsFlat ya filtrado a álbumes que siguen existiendo en
-    // la biblioteca y ordenado alfabéticamente por título de álbum,
-    // para la lista plana de AlbumsDrillLevel.FavoriteAlbums.
+    // (2026-07-05). Para saber si un álbum concreto está marcado
+    // (icono relleno/vacío en AlbumHeaderRow) -- el listado y la
+    // generación de popurrí a partir de álbumes favoritos viven ahora
+    // en la pantalla de Favoritos (sesión de diseño, 2026-08-02).
     // ---
     // Album-level favorites -- explicit request from Miguel Ángel
-    // (2026-07-05). favoriteAlbumKeys to know if a specific album is
-    // marked (filled/empty icon in AlbumHeaderRow); favoriteAlbumsFlat
-    // already filtered to albums that still exist in the library and
-    // sorted alphabetically by album title, for
-    // AlbumsDrillLevel.FavoriteAlbums's flat list.
+    // (2026-07-05). To know if a specific album is marked (filled/
+    // empty icon in AlbumHeaderRow) -- listing and popurrí generation
+    // from favorite albums now live in the Favorites screen (design
+    // session, 2026-08-02).
     val favoriteAlbumKeys: Set<Pair<String, String>> = emptySet(),
-    val favoriteAlbumsFlat: List<Pair<String, String>> = emptyList(),
     // H07 PARTE 1 -- aviso cuando una acción de añadir/borrar se
     // rechaza por falta de conexión (regla de negocio de Miguel
     // Ángel, S008: sin red, ni siquiera se aplica en local).
@@ -257,20 +229,6 @@ data class LibraryUiState(
     // for lack of connection (Miguel Ángel's business rule, S008: no
     // network, doesn't even apply locally).
     val syncBlockedMessage: String? = null,
-    /**
-     * S010 -- "Reproducir todo"/"Aleatorio" de Favoritos ahora resuelve
-     * en streaming las que no están descargadas antes de reproducir la
-     * cola completa (mismo patrón que PlaylistDetailViewModel). Mientras
-     * resuelve, la UI puede mostrar un indicador; si alguna falla, el
-     * aviso aparece aquí en vez de desaparecer en silencio.
-     * ---
-     * S010 -- Favorites "Play all"/"Shuffle" now resolves streaming for
-     * non-downloaded tracks before playing the full queue. While
-     * resolving, the UI can show an indicator; if any fail, the warning
-     * shows up here instead of silently vanishing.
-     */
-    val isResolvingFavorites: Boolean = false,
-    val favoritesResolveError: String? = null,
 )
 
 /**
@@ -354,7 +312,6 @@ class LibraryViewModel @Inject constructor(
     }
 
     private var allDownloaded: List<SearchResultTrack> = emptyList()
-    private var allFavorites: List<SearchResultTrack> = emptyList()
     // Set en memoria de (artist, album) marcados favoritos -- ver
     // comentario de LibraryUiState.favoriteAlbumKeys.
     // ---
@@ -378,20 +335,22 @@ class LibraryViewModel @Inject constructor(
         }
         // S010 -- independiente de allDownloaded a propósito: una
         // pista favoritada desde el reproductor/cola puede no estar
-        // descargada, y aun así debe verse (y poder reproducirse en
-        // streaming) en la sección "Favoritos" de la Biblioteca. Ver
-        // SearchResultTrackDao.getFavorites().
+        // descargada. La suscripción vivía aquí para alimentar la
+        // pestaña "Favoritos" de Biblioteca; esa pestaña se retiró en
+        // la sesión de diseño de Favoritos (2026-08-02) -- el listado
+        // y la reproducción de sencillos favoritos viven ahora en la
+        // pantalla de Favoritos (FavoritesRepository/PopurriRepository),
+        // que consulta SearchResultTrackRepository.getFavorites() por
+        // su cuenta.
         // ---
         // S010 -- deliberately independent of allDownloaded: a track
-        // favorited from the player/queue may not be downloaded, and
-        // should still show up (and be playable via streaming) in the
-        // Library's "Favorites" section.
-        viewModelScope.launch {
-            repository.getFavorites().collect { tracks ->
-                allFavorites = tracks
-                recompute()
-            }
-        }
+        // favorited from the player/queue may not be downloaded. This
+        // subscription used to feed Biblioteca's "Favoritos" tab; that
+        // tab was retired in the Favorites design session (2026-08-02)
+        // -- favorite-singles listing and playback now live on the
+        // Favorites screen (FavoritesRepository/PopurriRepository),
+        // which queries SearchResultTrackRepository.getFavorites() on
+        // its own.
         viewModelScope.launch {
             startupNotices.message.collect { message ->
                 if (message != null) {
@@ -441,10 +400,6 @@ class LibraryViewModel @Inject constructor(
     /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1). */
     fun dismissSyncBlockedMessage() {
         _uiState.value = _uiState.value.copy(syncBlockedMessage = null)
-    }
-
-    fun dismissFavoritesResolveError() {
-        _uiState.value = _uiState.value.copy(favoritesResolveError = null)
     }
 
     /** Descarta el aviso de limpieza de arranque tras mostrarlo. */
@@ -589,22 +544,15 @@ class LibraryViewModel @Inject constructor(
         )
     }
 
-    /** Entra en la lista plana de álbumes favoritos -- ver AlbumsDrillLevel.FavoriteAlbums. */
-    fun selectFavoriteAlbums() {
-        _uiState.value = _uiState.value.copy(
-            albumsDrill = AlbumsDrillLevel.FavoriteAlbums,
-        )
-    }
-
     fun selectAlbumsArtist(artist: String) {
         _uiState.value = _uiState.value.copy(
             albumsDrill = AlbumsDrillLevel.Albums(artist),
         )
     }
 
-    fun selectAlbumsAlbum(artist: String, album: String, fromFavorites: Boolean = false) {
+    fun selectAlbumsAlbum(artist: String, album: String) {
         _uiState.value = _uiState.value.copy(
-            albumsDrill = AlbumsDrillLevel.Tracks(artist, album, fromFavorites),
+            albumsDrill = AlbumsDrillLevel.Tracks(artist, album),
         )
     }
 
@@ -614,18 +562,13 @@ class LibraryViewModel @Inject constructor(
         val newLevel = when (current) {
             is AlbumsDrillLevel.Letters -> return false
             is AlbumsDrillLevel.ArtistsFlat -> return false
-            is AlbumsDrillLevel.FavoriteAlbums -> AlbumsDrillLevel.Letters
             is AlbumsDrillLevel.Artists -> AlbumsDrillLevel.Letters
             is AlbumsDrillLevel.Albums -> if (_uiState.value.albumsViewMode == AlbumsViewMode.FLAT) {
                 AlbumsDrillLevel.ArtistsFlat
             } else {
                 AlbumsDrillLevel.Artists(sortLetterFor(current.artist))
             }
-            is AlbumsDrillLevel.Tracks -> if (current.fromFavorites) {
-                AlbumsDrillLevel.FavoriteAlbums
-            } else {
-                AlbumsDrillLevel.Albums(current.artist)
-            }
+            is AlbumsDrillLevel.Tracks -> AlbumsDrillLevel.Albums(current.artist)
         }
         _uiState.value = _uiState.value.copy(albumsDrill = newLevel)
         return true
@@ -1153,28 +1096,6 @@ class LibraryViewModel @Inject constructor(
             .toSortedMap()
             .mapValues { (_, tracks) -> tracks.sortedBy { it.title } }
 
-        // S010 -- allFavorites, no "filtered" -- filtered viene de
-        // allDownloaded (solo lo descargado), y una pista favoritada
-        // desde el reproductor/cola puede no estarlo. El filtro de
-        // búsqueda (si hay texto en la barra) se aplica igual, sobre
-        // el conjunto correcto.
-        // ---
-        // S010 -- allFavorites, not "filtered" -- filtered comes from
-        // allDownloaded (downloaded-only), and a track favorited from
-        // the player/queue might not be. The search filter (if any
-        // text in the bar) still applies, just over the right set.
-        val favorites = (
-            if (query.isEmpty()) {
-                allFavorites
-            } else {
-                allFavorites.filter { track ->
-                    SearchNormalizer.normalize(track.title).contains(query) ||
-                        SearchNormalizer.normalize(track.artist ?: track.channelTitle)
-                            .contains(query)
-                }
-            }
-        ).sortedBy { it.title }
-
         val albumLetters = albumsByArtist.keys
             .map { sortLetterFor(it) }
             .toSortedSet()
@@ -1184,31 +1105,12 @@ class LibraryViewModel @Inject constructor(
             .toSortedSet()
             .toList()
 
-        // Solo álbumes marcados favoritos que SIGUEN existiendo en la
-        // biblioteca (si se borró un álbum favorito, desaparece de
-        // aquí solo -- la fila de favorite_albums queda huérfana pero
-        // inofensiva, nunca se muestra). Orden alfabético por título
-        // de álbum, cruzando artistas -- "todo exactamente igual"
-        // pedido por Miguel Ángel, pero en una lista plana.
-        // ---
-        // Only albums marked favorite that STILL exist in the library
-        // (if a favorite album gets deleted, it just disappears from
-        // here -- the favorite_albums row is left orphaned but
-        // harmless, never shown). Alphabetical order by album title,
-        // across artists -- "everything exactly the same" requested by
-        // Miguel Ángel, but in a flat list.
-        val favoriteAlbumsFlat = favoriteAlbumKeysSet
-            .filter { (artist, album) -> albumsByArtist[artist]?.containsKey(album) == true }
-            .sortedBy { (_, album) -> album }
-
         _uiState.value = _uiState.value.copy(
             albumsByArtist = albumsByArtist,
             singlesByArtist = singlesByArtist,
-            favorites = favorites,
             albumLetters = albumLetters,
             singleLetters = singleLetters,
             favoriteAlbumKeys = favoriteAlbumKeysSet,
-            favoriteAlbumsFlat = favoriteAlbumsFlat,
         )
     }
 
@@ -1356,11 +1258,10 @@ class LibraryViewModel @Inject constructor(
     /**
      * S011 -- "reproducir todo/aleatorio" fijos en cada nivel de
      * Biblioteca (petición explícita de Miguel Ángel): biblioteca
-     * completa, toda una letra, todo un artista, todos los sencillos,
-     * favoritos -- para poder encadenar la reproducción sin tener que
-     * entrar pista a pista. Artista y favoritos ya existían
-     * (playArtistAlbums.../playFavorites...); estas son las que
-     * faltaban: biblioteca completa y por letra.
+     * completa, toda una letra, todo un artista, todos los sencillos
+     * -- para poder encadenar la reproducción sin tener que entrar
+     * pista a pista. Artista ya existía (playArtistAlbums...); estas
+     * son las que faltaban: biblioteca completa y por letra.
      */
     fun playAllAlbums() {
         val allTracks = _uiState.value.albumsByArtist.values.flatMap { it.values.flatten() }
@@ -1435,93 +1336,6 @@ class LibraryViewModel @Inject constructor(
     fun playArtistSinglesShuffled(artist: String) {
         val tracks = _uiState.value.singlesByArtist[artist] ?: return
         playerManager.playQueueShuffled(tracks.toQueueItems())
-    }
-
-    /** Plays every favorite, title order, as a queue (pestaña Favoritos). */
-    /**
-     * "Reproducir todo" de la pestaña Favoritos (S010) -- ya no se
-     * salta en silencio las favoritas sin descargar. Mismo patrón
-     * exacto que PlaylistDetailViewModel.playPlaylist(): resuelve el
-     * stream de cada pista sin filePath antes de reproducir la cola
-     * completa de una vez, con aviso si alguna falla en vez de
-     * desaparecer sin más.
-     * ---
-     * "Play all" for the Favorites tab (S010) -- no longer silently
-     * skips non-downloaded favorites. Exact same pattern as
-     * PlaylistDetailViewModel.playPlaylist(): resolves each
-     * non-downloaded track's stream before playing the full queue at
-     * once, with a warning if any fail instead of just vanishing.
-     */
-    fun playFavorites() {
-        playResolvedFavorites(_uiState.value.favorites, shuffled = false)
-    }
-
-    /** Plays every favorite in random order (pestaña Favoritos). */
-    fun playFavoritesShuffled() {
-        playResolvedFavorites(_uiState.value.favorites, shuffled = true)
-    }
-
-    private fun playResolvedFavorites(tracks: List<SearchResultTrack>, shuffled: Boolean) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isResolvingFavorites = true,
-                favoritesResolveError = null,
-            )
-            var resolutionFailures = 0
-            val items = tracks.mapNotNull { track ->
-                val localPath = track.filePath
-                val remoteUrl = track.youtubeUrl
-                if (localPath != null) {
-                    QueueItem(
-                        uri = localPath,
-                        title = track.title,
-                        isLocal = true,
-                        artist = track.artist ?: track.channelTitle,
-                        youtubeId = track.youtubeId,
-                        channelTitle = track.channelTitle,
-                        artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                    )
-                } else if (remoteUrl == null) {
-                    resolutionFailures++
-                    null
-                } else {
-                    try {
-                        val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                        // S027 -- nunca el canal como artista;
-                        // resolución verificada, si no identifica
-                        // nada se excluye del lote.
-                        playerManager.resolveStreamItem(
-                            streamUrl = streamUrl,
-                            videoTitle = track.title,
-                            structuredArtist = track.artist,
-                            youtubeId = track.youtubeId,
-                            artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                        ) ?: run {
-                            resolutionFailures++
-                            null
-                        }
-                    } catch (e: Exception) {
-                        resolutionFailures++
-                        null
-                    }
-                }
-            }
-            _uiState.value = _uiState.value.copy(
-                isResolvingFavorites = false,
-                favoritesResolveError = if (resolutionFailures > 0) {
-                    "No se pudieron resolver $resolutionFailures pista(s); se reproduce el resto."
-                } else {
-                    null
-                },
-            )
-            if (items.isNotEmpty()) {
-                if (shuffled) {
-                    playerManager.playQueueShuffled(items)
-                } else {
-                    playerManager.playQueue(items)
-                }
-            }
-        }
     }
 
     private fun List<SearchResultTrack>.toQueueItems(): List<QueueItem> =

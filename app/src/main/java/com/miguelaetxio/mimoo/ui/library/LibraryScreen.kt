@@ -167,15 +167,6 @@ fun LibraryScreen(
         }
     }
 
-    // S010 -- aviso si "Reproducir todo"/"Aleatorio" de Favoritos no
-    // pudo resolver el stream de alguna pista sin descargar.
-    LaunchedEffect(uiState.favoritesResolveError) {
-        uiState.favoritesResolveError?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            viewModel.dismissFavoritesResolveError()
-        }
-    }
-
     // Nivel de profundidad actual de la pestaña activa -- 0 = Letras
     // (nivel raíz de esa pestaña, no hay nada que subir).
     // ---
@@ -186,7 +177,6 @@ fun LibraryScreen(
             uiState.albumsDrill !is AlbumsDrillLevel.ArtistsFlat
         LibraryTab.SINGLES -> uiState.singlesDrill !is SinglesDrillLevel.Letters &&
             uiState.singlesDrill !is SinglesDrillLevel.ArtistsFlat
-        LibraryTab.FAVORITES -> false
     }
 
     // El botón atrás del sistema sube un nivel en vez de salir de la
@@ -198,7 +188,6 @@ fun LibraryScreen(
         when (uiState.tab) {
             LibraryTab.ALBUMS -> viewModel.backAlbumsDrill()
             LibraryTab.SINGLES -> viewModel.backSinglesDrill()
-            LibraryTab.FAVORITES -> {}
         }
     }
 
@@ -206,7 +195,6 @@ fun LibraryScreen(
         LibraryTab.ALBUMS -> when (val drill = uiState.albumsDrill) {
             is AlbumsDrillLevel.Letters -> "Artistas por letra"
             is AlbumsDrillLevel.ArtistsFlat -> "Todos los artistas"
-            is AlbumsDrillLevel.FavoriteAlbums -> "Álbumes favoritos"
             is AlbumsDrillLevel.Artists -> "Artistas · ${drill.letter}"
             is AlbumsDrillLevel.Albums -> displayArtistName(drill.artist)
             is AlbumsDrillLevel.Tracks -> drill.album
@@ -217,7 +205,6 @@ fun LibraryScreen(
             is SinglesDrillLevel.Artists -> "Artistas · ${drill.letter}"
             is SinglesDrillLevel.Tracks -> displayArtistName(drill.artist)
         }
-        LibraryTab.FAVORITES -> "Favoritos"
     }
 
     Scaffold(
@@ -235,7 +222,6 @@ fun LibraryScreen(
                             when (uiState.tab) {
                                 LibraryTab.ALBUMS -> viewModel.backAlbumsDrill()
                                 LibraryTab.SINGLES -> viewModel.backSinglesDrill()
-                                LibraryTab.FAVORITES -> {}
                             }
                         }) {
                             Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
@@ -353,7 +339,6 @@ fun LibraryScreen(
                 LibraryTab.SINGLES -> uiState.singlesDrill is SinglesDrillLevel.Letters ||
                     uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat ||
                     uiState.singlesDrill is SinglesDrillLevel.Artists
-                LibraryTab.FAVORITES -> true
             }
             if (showFilter) {
                 OutlinedTextField(
@@ -385,12 +370,6 @@ fun LibraryScreen(
                     current = uiState.tab,
                     onSelect = viewModel::setTab,
                 )
-                LibraryTabButton(
-                    label = "Favoritos",
-                    tab = LibraryTab.FAVORITES,
-                    current = uiState.tab,
-                    onSelect = viewModel::setTab,
-                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -411,13 +390,6 @@ fun LibraryScreen(
                     uiState = uiState,
                     viewModel = viewModel,
                     onDeleteArtist = { artistPendingDelete = it },
-                    onDeleteTrack = { trackPendingDelete = it },
-                    onEditTrack = { trackPendingEdit = it },
-                    onAddToPlaylist = { tracksPendingAddToPlaylist = listOf(it) },
-                )
-                LibraryTab.FAVORITES -> FavoritesTabContent(
-                    uiState = uiState,
-                    viewModel = viewModel,
                     onDeleteTrack = { trackPendingDelete = it },
                     onEditTrack = { trackPendingEdit = it },
                     onAddToPlaylist = { tracksPendingAddToPlaylist = listOf(it) },
@@ -572,66 +544,11 @@ private fun ColumnScope.AlbumsTabContent(
                     onShuffle = viewModel::playAllAlbumsShuffled,
                 )
             }
-            // Entrada "Favoritos" antes de las letras -- petición
-            // explícita de Miguel Ángel (2026-07-05): "van a aparecer
-            // arriba, antes que la A... es la primera entrada, es
-            // favoritos". Solo se muestra si hay al menos un álbum
-            // marcado, para no ensuciar la pantalla cuando no hay
-            // ninguno todavía.
-            // ---
-            // "Favoritos" entry before the letters -- explicit request
-            // from Miguel Ángel (2026-07-05): "it'll show up at the
-            // top, before A... it's the first entry, it's favorites".
-            // Only shown if there's at least one marked album, so it
-            // doesn't clutter the screen when there isn't one yet.
-            if (uiState.favoriteAlbumsFlat.isNotEmpty()) {
-                Text(
-                    text = "★ Álbumes favoritos",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.selectFavoriteAlbums() }
-                        .padding(vertical = 12.dp),
-                )
-                HorizontalDivider()
-            }
             LetterGrid(
                 letters = uiState.albumLetters,
                 emptyMessage = "Todavía no hay álbumes descargados.",
                 onSelect = viewModel::selectAlbumsLetter,
             )
-        }
-        is AlbumsDrillLevel.FavoriteAlbums -> {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(
-                    uiState.favoriteAlbumsFlat,
-                    key = { (artist, album) -> "fav-album:$artist:$album" },
-                ) { (artist, album) ->
-                    val albumTracks = uiState.albumsByArtist[artist]?.get(album)
-                        ?: emptyList()
-                    AlbumHeaderRow(
-                        artist = artist,
-                        album = album,
-                        tracks = albumTracks,
-                        isFavorite = true,
-                        showArtistSubtitle = true,
-                        onClick = {
-                            viewModel.selectAlbumsAlbum(artist, album, fromFavorites = true)
-                        },
-                        onPlayAlbum = { viewModel.playAlbum(artist, album) },
-                        onDelete = { onDeleteAlbum(artist, album) },
-                        onEditAlbum = { onEditAlbum(artist, album) },
-                        onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
-                        onAddToQueue = { viewModel.addAlbumToQueue(artist, album) },
-                        onInsertNext = { viewModel.insertAlbumNext(artist, album) },
-                        onToggleFavorite = { viewModel.toggleFavoriteAlbum(activity, artist, album) },
-                        onRequestCoverArt = viewModel::requestCoverArtIfMissing,
-                        onRetryCoverArt = viewModel::retryCoverArt,
-                        onShareReplica = { viewModel.shareAlbumReplica(artist, album) },
-                    )
-                }
-            }
         }
         is AlbumsDrillLevel.Artists -> {
             val artists = uiState.albumsByArtist.keys
@@ -819,51 +736,6 @@ private fun ColumnScope.SinglesTabContent(
     }
 }
 
-@Composable
-private fun ColumnScope.FavoritesTabContent(
-    uiState: LibraryUiState,
-    viewModel: LibraryViewModel,
-    onDeleteTrack: (SearchResultTrack) -> Unit,
-    onEditTrack: (SearchResultTrack) -> Unit,
-    onAddToPlaylist: (SearchResultTrack) -> Unit,
-) {
-    if (uiState.favorites.isEmpty()) {
-        Text(
-            "Todavía no hay canciones favoritas.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 16.dp),
-        )
-        return
-    }
-
-    FavoritesHeaderRow(
-        count = uiState.favorites.size,
-        onPlayAll = viewModel::playFavorites,
-        onShuffle = viewModel::playFavoritesShuffled,
-    )
-
-    if (uiState.isResolvingFavorites) {
-        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-    }
-
-    LazyColumn(modifier = Modifier.weight(1f)) {
-        items(uiState.favorites, key = { "track:${it.youtubeId}" }) { track ->
-            LibraryTrackRow(
-                track = track,
-                onPlay = { viewModel.playTrack(track) },
-                onToggleFavorite = { viewModel.toggleFavorite(track) },
-                onDelete = { onDeleteTrack(track) },
-                onEdit = { onEditTrack(track) },
-                onAddToPlaylist = { onAddToPlaylist(track) },
-                onAddToQueue = { viewModel.addTrackToQueue(track) },
-                onInsertNext = { viewModel.insertTrackNext(track) },
-                onShareReplica = { viewModel.shareTrackReplica(track.youtubeId) },
-            )
-        }
-    }
-}
-
 /**
  * Primera capa de Biblioteca pedida por Miguel Ángel (2026-07-04):
  * solo letras grandes y en negrita, en orden alfabético, únicamente
@@ -1001,37 +873,6 @@ private fun LibraryTabButton(
             label,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
         )
-    }
-}
-
-@Composable
-private fun FavoritesHeaderRow(
-    count: Int,
-    onPlayAll: () -> Unit,
-    onShuffle: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "$count favoritas",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
-            IconButton(onClick = onPlayAll) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir favoritos")
-            }
-        }
-        Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
-            IconButton(onClick = onShuffle) {
-                Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
-            }
-        }
     }
 }
 
