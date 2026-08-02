@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.playback
 
 import com.chaquo.python.Python
+import com.miguelaetxio.mimoo.data.download.CookiesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -18,14 +19,24 @@ import javax.inject.Singleton
  * llamada de extracción de yt-dlp es bloqueante y depende de red.
  */
 @Singleton
-class StreamResolver @Inject constructor() {
+class StreamResolver @Inject constructor(
+    private val cookiesManager: CookiesManager,
+) {
 
+    /**
+     * S027 -- bug real reportado por Miguel Ángel con captura: "Sign
+     * in to confirm you're not a bot" al darle a Reproducir. Esta
+     * función no llevaba cabecera User-Agent ni cookies, a diferencia
+     * de la descarga (`downloader.py`), que las tiene desde el
+     * 2026-07-24 por exactamente este motivo -- mismo bloqueo de
+     * YouTube, sin el mismo arreglo aplicado en streaming.
+     */
     suspend fun resolveAudioStreamUrl(youtubeUrl: String): String =
         withContext(Dispatchers.IO) {
             val py = Python.getInstance()
             val resolverModule = py.getModule("resolver")
             resolverModule
-                .callAttr("resolve_audio_stream_url", youtubeUrl)
+                .callAttr("resolve_audio_stream_url", youtubeUrl, cookiesManager.cookiesFilePathOrNull())
                 .toString()
         }
 }
