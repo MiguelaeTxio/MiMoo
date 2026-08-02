@@ -12,6 +12,8 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoriteRadioStationDao
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.ArtistDisambiguationDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoriteTrackDao
+import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
@@ -20,6 +22,8 @@ import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.ArtistDisambiguation
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
+import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
 
 @Database(
     entities = [
@@ -31,8 +35,10 @@ import com.miguelaetxio.mimoo.data.local.entity.ArtistDisambiguation
         ChannelSubscription::class,
         FavoriteArtist::class,
         ArtistDisambiguation::class,
+        FavoriteTrack::class,
+        FavoritePlaylist::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -44,6 +50,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun channelSubscriptionDao(): ChannelSubscriptionDao
     abstract fun favoriteArtistDao(): FavoriteArtistDao
     abstract fun artistDisambiguationDao(): ArtistDisambiguationDao
+    abstract fun favoriteTrackDao(): FavoriteTrackDao
+    abstract fun favoritePlaylistDao(): FavoritePlaylistDao
 
     companion object {
         /**
@@ -364,6 +372,49 @@ abstract class AppDatabase : RoomDatabase() {
                         "`normalizedNameKey` TEXT NOT NULL, " +
                         "`chosenMbid` TEXT NOT NULL, " +
                         "PRIMARY KEY(`normalizedNameKey`))"
+                )
+            }
+        }
+
+        /**
+         * Crea favorite_tracks y favorite_playlists -- sesión de
+         * diseño de Favoritos (2026-08-02). favorite_tracks: favorito
+         * de SENCILLO en streaming, concepto nuevo y separado de
+         * isFavorite en search_result_tracks (que sigue existiendo tal
+         * cual para sencillos ya descargados) -- ver comentario de la
+         * entidad FavoriteTrack. favorite_playlists: marcador de
+         * PLAYLIST propia favorita, con clave foránea a playlists(id)
+         * y ON DELETE CASCADE -- ver comentario de la entidad
+         * FavoritePlaylist. Dos tablas nuevas, no toca ninguna tabla
+         * existente.
+         * ---
+         * Creates favorite_tracks and favorite_playlists -- Favorites
+         * design session (2026-08-02). favorite_tracks: STREAMING
+         * single-track favorite, a new concept separate from isFavorite
+         * on search_result_tracks (which keeps existing as-is for
+         * already-downloaded singles) -- see the FavoriteTrack entity's
+         * comment. favorite_playlists: favorite marker for a user's own
+         * playlist, foreign key to playlists(id) with ON DELETE CASCADE
+         * -- see the FavoritePlaylist entity's comment. Two new tables,
+         * doesn't touch any existing table.
+         */
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `favorite_tracks` (" +
+                        "`youtubeId` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`artist` TEXT NOT NULL, " +
+                        "`thumbnailUrl` TEXT, " +
+                        "`durationSeconds` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`youtubeId`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `favorite_playlists` (" +
+                        "`playlistId` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`playlistId`), " +
+                        "FOREIGN KEY(`playlistId`) REFERENCES `playlists`(`id`) " +
+                        "ON DELETE CASCADE)"
                 )
             }
         }
