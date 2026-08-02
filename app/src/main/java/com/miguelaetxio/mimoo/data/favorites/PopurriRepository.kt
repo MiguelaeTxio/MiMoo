@@ -6,6 +6,7 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
+import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.AlbumMatchRepository
@@ -13,8 +14,13 @@ import com.miguelaetxio.mimoo.data.remote.ArtistDirectoryRepository
 import com.miguelaetxio.mimoo.data.remote.ArtistResolution
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroup
 import com.miguelaetxio.mimoo.util.SearchNormalizer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -77,7 +83,35 @@ class PopurriRepository @Inject constructor(
 
         /** Resoluciones de stream en paralelo por tanda -- no lanzar las 100 a la vez contra yt-dlp. */
         private const val RESOLVE_CONCURRENCY = 6
+
+        /**
+         * Cuántas pistas se resuelven ANTES de arrancar la
+         * reproducción -- petición explícita de Miguel Ángel
+         * (2026-08-02): "tarda mucho en iniciar la reproducción
+         * cuando no están descargados". Con 1 sola pista resuelta ya
+         * se puede arrancar; el resto se resuelve en segundo plano
+         * (ver playProgressively()) mientras suena, así que 1 es
+         * suficiente sin dejar de sonar de fondo casi de inmediato.
+         */
+        private const val INITIAL_BATCH_SIZE = 1
     }
+
+    /**
+     * Ámbito propio para resolver el resto del popurrí EN SEGUNDO
+     * PLANO, una vez ya arrancada la reproducción -- no puede ser el
+     * `viewModelScope` de FavoritesViewModel: si el usuario navega
+     * fuera de la pantalla de Favoritos mientras el popurrí sigue
+     * sonando, la resolución del resto no debe cancelarse con la
+     * pantalla. Mismo criterio que AutoSyncPusher.pushScope.
+     * ---
+     * Own scope to resolve the rest of the popurrí IN THE BACKGROUND,
+     * once playback has already started -- can't be
+     * FavoritesViewModel's `viewModelScope`: if the user navigates
+     * away from the Favorites screen while the popurrí keeps playing,
+     * resolving the rest shouldn't get cancelled along with the
+     * screen. Same criterion as AutoSyncPusher.pushScope.
+     */
+    private val resolveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** Una pista ya emparejada a MusicBrainz+YouTube, todavía sin decidir local/streaming. */
     private data class PendingTrack(
@@ -166,7 +200,7 @@ class PopurriRepository @Inject constructor(
                 if (items.size >= TRACK_CAP) break
             }
         }
-        return resolveStreamUrlsConcurrently(items)
+        return items
     }
 
     /**
@@ -324,12 +358,25 @@ class PopurriRepository @Inject constructor(
             .mapValues { (_, tracks) -> tracks.associateBy { it.trackPosition!! } }
     }
 
-    private suspend fun finish(
+    /**
+     * Construye el plan de la cola (local/YouTube-sin-resolver
+     * decidido, orden final) SIN resolver ninguna URL de streaming
+     * todavía -- eso pasa a playProgressively(), petición explícita
+     * de Miguel Ángel (2026-08-02) para arrancar la reproducción sin
+     * esperar a que se resuelva el popurrí entero.
+     * ---
+     * Builds the queue plan (local/YouTube-unresolved decided, final
+     * order) WITHOUT resolving any streaming URL yet -- that now
+     * happens in playProgressively(), explicit request from Miguel
+     * Ángel (2026-08-02) to start playback without waiting for the
+     * whole popurrí to resolve.
+     */
+    private fun finish(
         pending: List<PendingTrack>,
         localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
     ): List<QueueItem> {
         if (pending.isEmpty()) return emptyList()
-        val items = pending.map { track ->
+        return pending.map { track ->
             val key = SearchNormalizer.normalizeArtistName(track.artist) to
                 SearchNormalizer.normalize(track.album)
             val local = localIndex[key]?.get(track.position)
@@ -351,7 +398,72 @@ class PopurriRepository @Inject constructor(
                 )
             }
         }
-        return resolveStreamUrlsConcurrently(items)
+    }
+
+    /**
+     * Arranca la reproducción del plan devuelto por
+     * buildFromArtists()/buildFromAlbums()/buildFromFavoriteTracks()
+     * SIN esperar a resolver todas sus pistas -- bug real reportado
+     * por Miguel Ángel (2026-08-02): "tarda mucho en iniciar la
+     * reproducción cuando no están descargados". Solo resuelve
+     * INITIAL_BATCH_SIZE pista(s) (barato: si es local no hay red de
+     * por medio) y arranca con eso; el resto se resuelve en
+     * `resolveScope`, en segundo plano, en tandas de
+     * RESOLVE_CONCURRENCY, añadiéndose a la cola ya sonando via
+     * `PlayerManager.addToQueue()` según van llegando -- nunca bloquea
+     * la reproducción esperando al resto.
+     *
+     * Devuelve `true` si arrancó a sonar algo, `false` si no se pudo
+     * resolver ni la primera pista (plan vacío o todo el lote inicial
+     * falló).
+     * ---
+     * Starts playing the plan returned by
+     * buildFromArtists()/buildFromAlbums()/buildFromFavoriteTracks()
+     * WITHOUT waiting to resolve all its tracks -- real bug reported
+     * by Miguel Ángel (2026-08-02): "takes a long time to start
+     * playback when tracks aren't downloaded". Only resolves
+     * INITIAL_BATCH_SIZE track(s) (cheap: if it's local there's no
+     * network involved) and starts with that; the rest gets resolved
+     * on `resolveScope`, in the background, in RESOLVE_CONCURRENCY
+     * batches, getting appended to the already-playing queue via
+     * `PlayerManager.addToQueue()` as they come in -- never blocks
+     * playback waiting for the rest.
+     *
+     * Returns `true` if something started playing, `false` if not
+     * even the first track could be resolved (empty plan or the whole
+     * initial batch failed).
+     */
+    suspend fun playProgressively(
+        playerManager: PlayerManager,
+        plan: List<QueueItem>,
+        shuffle: Boolean,
+    ): Boolean {
+        if (plan.isEmpty()) return false
+        val firstBatch = resolveStreamUrlsConcurrently(plan.take(INITIAL_BATCH_SIZE))
+        if (firstBatch.isEmpty()) return false
+        if (shuffle) {
+            playerManager.playQueueShuffled(firstBatch)
+        } else {
+            playerManager.playQueue(firstBatch)
+        }
+        val rest = plan.drop(INITIAL_BATCH_SIZE)
+        if (rest.isNotEmpty()) {
+            resolveScope.launch {
+                for (chunk in rest.chunked(RESOLVE_CONCURRENCY)) {
+                    val resolvedChunk = resolveStreamUrlsConcurrently(chunk)
+                    if (resolvedChunk.isNotEmpty()) {
+                        // PlayerManager envuelve ExoPlayer, que exige
+                        // que sus llamadas lleguen desde el hilo
+                        // principal -- resolveScope corre en
+                        // Dispatchers.IO.
+                        withContext(Dispatchers.Main) {
+                            playerManager.addToQueue(resolvedChunk)
+                        }
+                    }
+                }
+            }
+        }
+        return true
     }
 
     /**

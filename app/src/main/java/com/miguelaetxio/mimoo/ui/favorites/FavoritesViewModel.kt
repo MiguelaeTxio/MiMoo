@@ -210,22 +210,35 @@ class FavoritesViewModel @Inject constructor(
     private suspend fun pendingLocalFavorites() =
         favoritesRepository.getFavoriteLocalTracks().first()
 
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-02): "tarda mucho
+     * en iniciar la reproducción cuando no están descargados". Ya no
+     * espera a builder() para resolver TODAS las pistas antes de
+     * reproducir -- construye el plan (rápido, sin resolver streams
+     * de verdad) y delega en
+     * PopurriRepository.playProgressively(), que arranca con la
+     * primera pista ya sonando y resuelve el resto en segundo plano.
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-02): "takes a long
+     * time to start playback when tracks aren't downloaded". No
+     * longer waits for builder() to resolve ALL tracks before
+     * playing -- builds the plan (fast, no real stream resolution)
+     * and delegates to PopurriRepository.playProgressively(), which
+     * starts with the first track already playing and resolves the
+     * rest in the background.
+     */
     private fun generateAndPlay(shuffle: Boolean, builder: suspend () -> List<QueueItem>) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isGeneratingPopurri = true, errorMessage = null)
             try {
-                val items = builder()
-                if (items.isEmpty()) {
+                val plan = builder()
+                val started = popurriRepository.playProgressively(playerManager, plan, shuffle)
+                if (!started) {
                     _uiState.value = _uiState.value.copy(
                         isGeneratingPopurri = false,
                         errorMessage = "No se ha podido resolver ninguna pista para este popurrí.",
                     )
                     return@launch
-                }
-                if (shuffle) {
-                    playerManager.playQueueShuffled(items)
-                } else {
-                    playerManager.playQueue(items)
                 }
                 _uiState.value = _uiState.value.copy(isGeneratingPopurri = false)
             } catch (e: Exception) {
