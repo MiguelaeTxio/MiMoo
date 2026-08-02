@@ -11,6 +11,7 @@ import com.miguelaetxio.mimoo.ui.album.AlbumScreen
 import com.miguelaetxio.mimoo.ui.artist.ArtistScreen
 import com.miguelaetxio.mimoo.ui.downloads.DownloadsScreen
 import com.miguelaetxio.mimoo.ui.explorer.ExplorerScreen
+import com.miguelaetxio.mimoo.ui.favorites.FavoritesScreen
 import com.miguelaetxio.mimoo.ui.importlink.ImportLinkScreen
 import com.miguelaetxio.mimoo.ui.library.LibraryScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
@@ -25,6 +26,7 @@ sealed class Screen(val route: String) {
     object Search : Screen("search")
     object Library : Screen("library")
     object Explorer : Screen("explorer")
+    object Favorites : Screen("favorites")
     object Playlists : Screen("playlists")
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
@@ -93,6 +95,14 @@ fun MiMooNavGraph(
                 onOpenDrawer = onOpenDrawer,
                 onOpenArtist = { artistName ->
                     navController.navigate(Screen.Artist.routeFor(artistName))
+                },
+            )
+        }
+        composable(Screen.Favorites.route) {
+            FavoritesScreen(
+                onOpenDrawer = onOpenDrawer,
+                onOpenPlaylist = { playlistId ->
+                    navController.navigate(Screen.PlaylistDetail.routeFor(playlistId))
                 },
             )
         }

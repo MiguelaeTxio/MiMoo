@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
+import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.local.repository.FavoriteTrackRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
@@ -63,6 +65,7 @@ data class SongUiState(
 class SongViewModel @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val searchResultTrackRepository: SearchResultTrackRepository,
+    private val favoriteTrackRepository: FavoriteTrackRepository,
     private val downloadQueueManager: DownloadQueueManager,
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
@@ -129,24 +132,63 @@ class SongViewModel @Inject constructor(
      * false), never inventing an album or offering favorite for
      * something that doesn't exist locally yet.
      */
+    /**
+     * Cruza la pista resuelta con search_result_tracks -- si ya está
+     * descargada, expone su álbum (para el enlace "Ver álbum") y su
+     * favorito local ya existentes. Si NO está descargada, el
+     * favorito se consulta en FavoriteTrackRepository (streaming,
+     * sesión de diseño de Favoritos 2026-08-02) en vez de quedar
+     * siempre en false -- localAlbum sigue sin valor porque solo se
+     * conoce una vez descargada.
+     * ---
+     * Cross-references the resolved track with search_result_tracks --
+     * if it's already downloaded, exposes its existing album (for the
+     * "View album" link) and its existing local favorite. If it's NOT
+     * downloaded, favorite is looked up in FavoriteTrackRepository
+     * (streaming, Favorites design session 2026-08-02) instead of
+     * always staying false -- localAlbum stays unset either way since
+     * it's only known once downloaded.
+     */
     private suspend fun refreshLocalState(youtubeId: String) {
         val local = searchResultTrackRepository.getById(youtubeId)
+        val isFavorite = local?.isFavorite ?: favoriteTrackRepository.isFavorite(youtubeId)
         _uiState.value = _uiState.value.copy(
             localAlbum = local?.album,
-            isFavorite = local?.isFavorite ?: false,
+            isFavorite = isFavorite,
             downloadStatus = local?.downloadStatus,
         )
     }
 
+    /**
+     * Favorito en streaming (sesión de diseño de Favoritos,
+     * 2026-08-02): si ya hay fila local, sigue usando
+     * SearchResultTrackRepository (sin cambios); si no, alterna en
+     * FavoriteTrackRepository -- botón ya no se oculta cuando la
+     * pista no está descargada, ver SongScreen.
+     * ---
+     * Streaming favorite (Favorites design session, 2026-08-02): if a
+     * local row already exists, still uses SearchResultTrackRepository
+     * (unchanged); otherwise toggles FavoriteTrackRepository -- the
+     * button no longer hides when the track isn't downloaded, see
+     * SongScreen.
+     */
     fun toggleFavorite() {
         val youtubeId = _uiState.value.youtubeId ?: return
-        // Solo tiene sentido si ya existe fila local -- ver comentario
-        // de clase. El botón de favorito no se muestra en la UI si
-        // localAlbum/downloadStatus indican que no hay fila (ver
-        // SongScreen), pero se re-verifica aquí por robustez.
-        if (_uiState.value.downloadStatus == null) return
+        val state = _uiState.value
         viewModelScope.launch {
-            searchResultTrackRepository.updateFavorite(youtubeId, !_uiState.value.isFavorite)
+            if (state.downloadStatus != null) {
+                searchResultTrackRepository.updateFavorite(youtubeId, !state.isFavorite)
+            } else {
+                favoriteTrackRepository.toggle(
+                    FavoriteTrack(
+                        youtubeId = youtubeId,
+                        title = songTitle,
+                        artist = artistName,
+                        thumbnailUrl = state.thumbnailUrl,
+                        durationSeconds = state.durationSeconds ?: 0,
+                    ),
+                )
+            }
             _uiState.value = _uiState.value.copy(isFavorite = !_uiState.value.isFavorite)
         }
     }

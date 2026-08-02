@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
+import com.miguelaetxio.mimoo.data.local.repository.FavoritePlaylistRepository
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +32,8 @@ data class PlaylistsUiState(
     // rechaza por falta de conexión (regla de negocio de Miguel
     // Ángel, S008).
     val syncBlockedMessage: String? = null,
+    // Sesión de diseño de Favoritos (2026-08-02): playlists propias marcadas como favoritas.
+    val favoritePlaylistIds: Set<Long> = emptySet(),
 )
 
 /**
@@ -45,6 +48,7 @@ data class PlaylistsUiState(
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
     private val repository: PlaylistRepository,
+    private val favoritePlaylistRepository: FavoritePlaylistRepository,
     private val autoSyncPusher: AutoSyncPusher,
 ) : ViewModel() {
 
@@ -58,6 +62,18 @@ class PlaylistsViewModel @Inject constructor(
                 recompute()
             }
         }
+        viewModelScope.launch {
+            favoritePlaylistRepository.getAll().collect { favorites ->
+                _uiState.value = _uiState.value.copy(
+                    favoritePlaylistIds = favorites.map { it.playlistId }.toSet(),
+                )
+            }
+        }
+    }
+
+    /** Sesión de diseño de Favoritos (2026-08-02): marcar/desmarcar una playlist propia como favorita. */
+    fun toggleFavoritePlaylist(playlistId: Long) {
+        viewModelScope.launch { favoritePlaylistRepository.toggle(playlistId) }
     }
 
     fun createPlaylist(activity: Activity, name: String) {

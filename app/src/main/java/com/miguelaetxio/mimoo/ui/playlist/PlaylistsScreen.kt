@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -131,7 +133,9 @@ fun PlaylistsScreen(
                         items(uiState.filteredPlaylists, key = { it.id }) { playlist ->
                             PlaylistRow(
                                 playlist = playlist,
+                                isFavorite = playlist.id in uiState.favoritePlaylistIds,
                                 onOpen = { onOpenPlaylist(playlist.id) },
+                                onToggleFavorite = { viewModel.toggleFavoritePlaylist(playlist.id) },
                                 onRename = { playlistPendingRename = playlist },
                                 onDelete = { playlistPendingDelete = playlist },
                             )
@@ -197,7 +201,9 @@ fun PlaylistsScreen(
 @Composable
 private fun PlaylistRow(
     playlist: Playlist,
+    isFavorite: Boolean,
     onOpen: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -221,6 +227,13 @@ private fun PlaylistRow(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                contentDescription = if (isFavorite) "Quitar de favoritos" else "Marcar como favorita",
+                tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+            )
+        }
         IconButton(onClick = onRename) {
             Icon(Icons.Filled.Edit, contentDescription = "Renombrar")
         }

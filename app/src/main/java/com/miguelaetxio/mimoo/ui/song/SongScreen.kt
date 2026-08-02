@@ -43,10 +43,13 @@ fun SongScreen(
                     }
                 },
                 actions = {
-                    // El favorito de pista suelta solo tiene sentido si
-                    // ya está descargada (ver comentario de clase de
-                    // SongViewModel) -- no se muestra en otro caso.
-                    if (uiState.downloadStatus != null) {
+                    // Sesión de diseño de Favoritos (2026-08-02): el
+                    // favorito de sencillo ya funciona también en
+                    // streaming (FavoriteTrackRepository), así que el
+                    // botón ya no se oculta cuando la pista no está
+                    // descargada -- solo se oculta mientras no hay
+                    // ningún youtubeId resuelto todavía.
+                    if (uiState.youtubeId != null) {
                         IconButton(onClick = viewModel::toggleFavorite) {
                             Icon(
                                 if (uiState.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
