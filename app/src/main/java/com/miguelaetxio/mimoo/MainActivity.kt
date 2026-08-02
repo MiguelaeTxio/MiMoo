@@ -530,7 +530,9 @@ class MainActivity : ComponentActivity() {
                                     "La última copia de respaldo en Drive la hizo " +
                                         "${conflictState.envelope.deviceLabel}, y no coincide " +
                                         "con lo que tienes aquí (tú: ${c.localTrackCount} " +
-                                        "pistas / Drive: ${c.remoteTrackCount} pistas). " +
+                                        "pistas / Drive: ${c.remoteTrackCount} pistas -- " +
+                                        "favoritos, tú: ${c.localAllFavoritesCount} / " +
+                                        "Drive: ${c.remoteAllFavoritesCount}). " +
                                         "¿Se han añadido o eliminado pistas desde ese otro " +
                                         "dispositivo?"
                                 )
@@ -569,7 +571,9 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     "Este dispositivo no coincidía con su propia copia de " +
                                         "respaldo en Drive (tenías ${c.localTrackCount} pistas, " +
-                                        "la copia tenía ${c.remoteTrackCount}) -- probablemente " +
+                                        "la copia tenía ${c.remoteTrackCount} -- favoritos, " +
+                                        "tenías ${c.localAllFavoritesCount}, la copia tenía " +
+                                        "${c.remoteAllFavoritesCount}) -- probablemente " +
                                         "algo se tocó fuera de la app. Se ha restaurado desde " +
                                         "Drive."
                                 )

@@ -15,6 +15,7 @@ import com.miguelaetxio.mimoo.data.library.TrackFileRelocator
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.FavoriteAlbumRepository
+import com.miguelaetxio.mimoo.data.local.repository.FavoriteArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
@@ -221,6 +222,7 @@ data class LibraryUiState(
     // from favorite albums now live in the Favorites screen (design
     // session, 2026-08-02).
     val favoriteAlbumKeys: Set<Pair<String, String>> = emptySet(),
+    val favoriteArtistKeys: Set<String> = emptySet(),
     // H07 PARTE 1 -- aviso cuando una acción de añadir/borrar se
     // rechaza por falta de conexión (regla de negocio de Miguel
     // Ángel, S008: sin red, ni siquiera se aplica en local).
@@ -262,6 +264,7 @@ class LibraryViewModel @Inject constructor(
     private val coverArtRepository: CoverArtRepository,
     private val trackFileRelocator: TrackFileRelocator,
     private val favoriteAlbumRepository: FavoriteAlbumRepository,
+    private val favoriteArtistRepository: FavoriteArtistRepository,
     private val autoSyncPusher: AutoSyncPusher,
     private val streamResolver: StreamResolver,
     private val shareCodeRepository: com.miguelaetxio.mimoo.data.share.ShareCodeRepository,
@@ -319,6 +322,19 @@ class LibraryViewModel @Inject constructor(
     // LibraryUiState.favoriteAlbumKeys' comment.
     private var favoriteAlbumKeysSet: Set<Pair<String, String>> = emptySet()
 
+    /**
+     * Set en memoria de artistas marcados favoritos -- petición
+     * explícita de Miguel Ángel (2026-08-02): poder marcar un artista
+     * como favorito también desde Biblioteca (antes solo se podía
+     * desde ArtistScreen), mismo patrón que favoriteAlbumKeysSet.
+     * ---
+     * In-memory set of artists marked favorite -- explicit request
+     * from Miguel Ángel (2026-08-02): being able to mark an artist as
+     * favorite from Biblioteca too (previously only possible from
+     * ArtistScreen), same pattern as favoriteAlbumKeysSet.
+     */
+    private var favoriteArtistKeysSet: Set<String> = emptySet()
+
     // Tracks which artist+album pairs already have a cover art lookup
     // in flight or resolved this process run, so LibraryScreen can
     // call requestCoverArtIfMissing() on every recomposition without
@@ -364,6 +380,12 @@ class LibraryViewModel @Inject constructor(
                 recompute()
             }
         }
+        viewModelScope.launch {
+            favoriteArtistRepository.getAll().collect { favorites ->
+                favoriteArtistKeysSet = favorites.map { it.artist }.toSet()
+                recompute()
+            }
+        }
     }
 
     /**
@@ -388,6 +410,32 @@ class LibraryViewModel @Inject constructor(
             // separately like in the first design.
             val outcome = autoSyncPusher.executeIfConnected(activity) {
                 favoriteAlbumRepository.toggle(artist, album)
+            }
+            if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se puede cambiar favoritos ahora mismo."
+                )
+            }
+        }
+    }
+
+    /**
+     * Marca/desmarca un ARTISTA entero como favorito desde Biblioteca
+     * -- petición explícita de Miguel Ángel (2026-08-02): antes solo
+     * era posible desde ArtistScreen. Mismo patrón exacto que
+     * toggleFavoriteAlbum(), reutilizando FavoriteArtistRepository (ya
+     * existente desde H12).
+     * ---
+     * Marks/unmarks a whole ARTIST as favorite from Biblioteca --
+     * explicit request from Miguel Ángel (2026-08-02): previously only
+     * possible from ArtistScreen. Same exact pattern as
+     * toggleFavoriteAlbum(), reusing FavoriteArtistRepository (already
+     * existing since H12).
+     */
+    fun toggleFavoriteArtist(activity: Activity, artist: String) {
+        viewModelScope.launch {
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                favoriteArtistRepository.toggle(artist)
             }
             if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.NoConnection) {
                 _uiState.value = _uiState.value.copy(
@@ -1119,6 +1167,7 @@ class LibraryViewModel @Inject constructor(
             albumLetters = albumLetters,
             singleLetters = singleLetters,
             favoriteAlbumKeys = favoriteAlbumKeysSet,
+            favoriteArtistKeys = favoriteArtistKeysSet,
         )
     }
 

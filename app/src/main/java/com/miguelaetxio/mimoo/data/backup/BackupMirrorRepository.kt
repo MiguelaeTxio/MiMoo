@@ -76,6 +76,27 @@ data class BundleComparison(
             kotlin.math.abs(localFavoriteArtistCount - remoteFavoriteArtistCount) +
             kotlin.math.abs(localFavoriteTrackCount - remoteFavoriteTrackCount) +
             kotlin.math.abs(localFavoritePlaylistCount - remoteFavoritePlaylistCount)
+
+    /**
+     * Total de favoritos (álbum + artista + sencillo en streaming +
+     * playlist) sumados en un único número -- petición explícita de
+     * Miguel Ángel (2026-08-02): mostrar los favoritos en el diálogo
+     * de sincronización igual que ya se hace con las pistas ("tienes
+     * tantas pistas en tu dispositivo y tantas en Drive"), sin
+     * desglosar por tipo para no saturar el aviso.
+     * ---
+     * Total favorites (album + artist + streaming single + playlist)
+     * summed into a single number -- explicit request from Miguel
+     * Ángel (2026-08-02): show favorites in the sync dialog the same
+     * way tracks already are ("you have this many tracks on your
+     * device and this many on Drive"), without a per-type breakdown so
+     * the notice doesn't get cluttered.
+     */
+    val localAllFavoritesCount: Int
+        get() = localFavoriteCount + localFavoriteArtistCount + localFavoriteTrackCount + localFavoritePlaylistCount
+
+    val remoteAllFavoritesCount: Int
+        get() = remoteFavoriteCount + remoteFavoriteArtistCount + remoteFavoriteTrackCount + remoteFavoritePlaylistCount
 }
 
 @Singleton

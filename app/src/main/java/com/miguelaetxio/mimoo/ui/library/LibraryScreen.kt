@@ -563,9 +563,11 @@ private fun ColumnScope.AlbumsTabContent(
             }
             ArtistList(
                 artists = artists,
+                favoriteArtists = uiState.favoriteArtistKeys,
                 onArtistClick = viewModel::selectAlbumsArtist,
                 onPlayAll = viewModel::playArtistAlbums,
                 onShuffle = viewModel::playArtistAlbumsShuffled,
+                onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                 onDelete = onDeleteArtist,
                 onShare = { artist -> viewModel.shareArtistReplica(artist) },
             )
@@ -587,9 +589,11 @@ private fun ColumnScope.AlbumsTabContent(
                 )
                 ArtistList(
                     artists = artists,
+                    favoriteArtists = uiState.favoriteArtistKeys,
                     onArtistClick = viewModel::selectAlbumsArtist,
                     onPlayAll = viewModel::playArtistAlbums,
                     onShuffle = viewModel::playArtistAlbumsShuffled,
+                    onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                     onDelete = onDeleteArtist,
                     onShare = { artist -> viewModel.shareArtistReplica(artist) },
                 )
@@ -684,9 +688,11 @@ private fun ColumnScope.SinglesTabContent(
             }
             ArtistList(
                 artists = artists,
+                favoriteArtists = uiState.favoriteArtistKeys,
                 onArtistClick = viewModel::selectSinglesArtist,
                 onPlayAll = viewModel::playArtistSingles,
                 onShuffle = viewModel::playArtistSinglesShuffled,
+                onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                 onDelete = onDeleteArtist,
                 onShare = { artist -> viewModel.shareArtistReplica(artist) },
             )
@@ -708,9 +714,11 @@ private fun ColumnScope.SinglesTabContent(
                 )
                 ArtistList(
                     artists = artists,
+                    favoriteArtists = uiState.favoriteArtistKeys,
                     onArtistClick = viewModel::selectSinglesArtist,
                     onPlayAll = viewModel::playArtistSingles,
                     onShuffle = viewModel::playArtistSinglesShuffled,
+                    onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                     onDelete = onDeleteArtist,
                     onShare = { artist -> viewModel.shareArtistReplica(artist) },
                 )
@@ -793,14 +801,17 @@ internal fun ColumnScope.LetterGrid(
 @Composable
 private fun ColumnScope.ArtistList(
     artists: List<String>,
+    favoriteArtists: Set<String>,
     onArtistClick: (String) -> Unit,
     onPlayAll: (String) -> Unit,
     onShuffle: (String) -> Unit,
+    onToggleFavorite: (String) -> Unit,
     onDelete: (String) -> Unit,
     onShare: (String) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.weight(1f)) {
         items(artists, key = { "artist:$it" }) { artist ->
+            val isFavorite = artist in favoriteArtists
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -823,6 +834,15 @@ private fun ColumnScope.ArtistList(
                 }
                 IconButton(onClick = { onShuffle(artist) }) {
                     Icon(Icons.Filled.Shuffle, contentDescription = "Aleatorio")
+                }
+                // Petición explícita de Miguel Ángel (2026-08-02): poder
+                // marcar un artista favorito también desde Biblioteca.
+                IconButton(onClick = { onToggleFavorite(artist) }) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                        contentDescription = if (isFavorite) "Quitar de favoritos" else "Marcar como favorito",
+                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                    )
                 }
                 // H10 (S011, nivel 2) -- réplica total de todas las
                 // pistas descargadas de este artista.
