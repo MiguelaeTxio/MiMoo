@@ -164,6 +164,71 @@ class BackupRepository @Inject constructor(
     fun toJson(bundle: BackupBundle): String = gson.toJson(bundle)
 
     /**
+     * Corrige de raíz un bug real (2026-08-02, reportado por Miguel
+     * Ángel: "Parameter specified as non-null is null: ...
+     * collectionSizeOrDefault" al sincronizar con Drive) -- MISMO
+     * mecanismo que el ya conocido y parcheado para `envelope.bundle`
+     * más abajo, pero generalizado a TODOS los campos de lista de
+     * `BackupBundle` que pueden faltar en una copia de versión
+     * anterior. `BackupBundle` no tiene todos sus campos con valor por
+     * defecto (`exportedAt`, `tracks`... no lo tienen), así que Gson
+     * NUNCA llama al constructor de Kotlin para construirlo -- usa
+     * `Unsafe.allocateInstance()`, que reserva memoria a ceros y
+     * rellena campo a campo solo lo que SÍ aparece en el JSON. Un
+     * campo ausente (p.ej. `favoriteArtists` en una copia de una
+     * build anterior a hoy) queda en `null` real en tiempo de
+     * ejecución, pese a estar declarado no-nulo con
+     * `= emptyList()` -- ese valor por defecto de Kotlin JAMÁS se
+     * aplica por esta vía. El comentario anterior de `fromJson()`
+     * ("una copia de versión 2 se lee perfectamente... llegan
+     * vacíos") era incorrecto -- esto es precisamente lo que
+     * reventaba hoy.
+     *
+     * Se corrige aquí, una sola vez, para todo campo de lista que
+     * MIN_READABLE_VERSION permite que falte -- no solo los de hoy
+     * (favoriteArtists/favoriteTracks/favoritePlaylists), también los
+     * de S025 (anchorArtists/anchorTracks), que tenían exactamente el
+     * mismo fallo latente sin haberse disparado todavía.
+     * ---
+     * Fixes a real bug at the root (2026-08-02, reported by Miguel
+     * Ángel: "Parameter specified as non-null is null: ...
+     * collectionSizeOrDefault" while syncing with Drive) -- SAME
+     * mechanism as the one already known and patched for
+     * `envelope.bundle` below, but generalized to EVERY list field of
+     * `BackupBundle` that can be absent from an older copy.
+     * `BackupBundle` doesn't have every field defaulted (`exportedAt`,
+     * `tracks`... don't have one), so Gson NEVER calls Kotlin's
+     * constructor to build it -- it uses `Unsafe.allocateInstance()`,
+     * which zeroes out memory and fills in field by field only what
+     * IS present in the JSON. A missing field (e.g. `favoriteArtists`
+     * in a copy from a build older than today) ends up genuinely
+     * `null` at runtime, despite being declared non-null with
+     * `= emptyList()` -- that Kotlin default is NEVER applied through
+     * this path. `fromJson()`'s previous comment ("a version-2 copy
+     * reads perfectly fine... arrive empty") was wrong -- this is
+     * exactly what blew up today.
+     *
+     * Fixed here, once, for every list field that MIN_READABLE_VERSION
+     * allows to be missing -- not just today's
+     * (favoriteArtists/favoriteTracks/favoritePlaylists), also S025's
+     * (anchorArtists/anchorTracks), which had the exact same latent
+     * flaw without having triggered it yet.
+     */
+    @Suppress("SENSELESS_COMPARISON")
+    private fun BackupBundle.normalizeNullableLists(): BackupBundle = copy(
+        tracks = tracks ?: emptyList(),
+        favoriteAlbums = favoriteAlbums ?: emptyList(),
+        playlists = playlists ?: emptyList(),
+        radioStations = radioStations ?: emptyList(),
+        channelSubscriptions = channelSubscriptions ?: emptyList(),
+        anchorArtists = anchorArtists ?: emptyList(),
+        anchorTracks = anchorTracks ?: emptyList(),
+        favoriteArtists = favoriteArtists ?: emptyList(),
+        favoriteTracks = favoriteTracks ?: emptyList(),
+        favoritePlaylists = favoritePlaylists ?: emptyList(),
+    )
+
+    /**
      * Serializa un [SyncEnvelope] completo (bundle + quién + cuándo)
      * -- usado solo por la copia de respaldo automática (H07 PARTE 1),
      * nunca por Exportar/Importar manual (H06), que sigue usando
@@ -235,7 +300,7 @@ class BackupRepository @Inject constructor(
                     "${BackupBundle.CURRENT_VERSION}."
             )
         }
-        return envelope
+        return envelope.copy(bundle = envelope.bundle.normalizeNullableLists())
     }
 
     /**
@@ -260,13 +325,23 @@ class BackupRepository @Inject constructor(
      * S025 -- deja de ser igualdad estricta. Al subir el bundle a la
      * versión 3 para llevar el diccionario del ancla, una comprobación
      * `!=` habría dejado ilegibles de golpe TODAS las copias que ya hay
-     * en Drive, incluida la del dispositivo de Silvia. Una copia de
-     * versión 2 se lee perfectamente: los dos campos nuevos tienen
-     * valor por defecto y llegan vacíos.
+     * en Drive, incluida la del dispositivo de Silvia.
+     *
+     * 2026-08-02 -- corregido el comentario anterior, que era
+     * incorrecto ("una copia de versión 2 se lee perfectamente, los
+     * campos nuevos llegan vacíos"): sin `normalizeNullableLists()`,
+     * esos campos llegaban `null` de verdad, no vacíos -- ver el
+     * comentario de esa función para el mecanismo real.
      * ---
      * Deserializes a backup JSON, explicitly rejecting any `version`
      * other than the recognized one instead of trying to read it
      * blindly (see BackupBundle's comment).
+     *
+     * 2026-08-02 -- corrected the comment above, which was wrong ("a
+     * version-2 copy reads perfectly fine, new fields arrive empty"):
+     * without `normalizeNullableLists()`, those fields arrived
+     * genuinely `null`, not empty -- see that function's comment for
+     * the real mechanism.
      */
     fun fromJson(json: String): BackupBundle {
         val bundle = try {
@@ -281,6 +356,6 @@ class BackupRepository @Inject constructor(
                     "MiMoo sabe leer hasta la ${BackupBundle.CURRENT_VERSION}."
             )
         }
-        return bundle
+        return bundle.normalizeNullableLists()
     }
 }
