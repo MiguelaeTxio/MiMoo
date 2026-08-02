@@ -96,6 +96,7 @@ class PopurriRepository @Inject constructor(
 
     suspend fun buildFromArtists(artists: List<FavoriteArtist>): List<QueueItem> {
         if (artists.isEmpty()) return emptyList()
+        val localIndex = buildLocalIndex()
         val queues = artists.mapNotNull { fav ->
             val resolution = artistDirectoryRepository.resolveArtist(fav.artist)
             val resolved = resolution as? ArtistResolution.Resolved ?: return@mapNotNull null
@@ -106,17 +107,18 @@ class PopurriRepository @Inject constructor(
             }
             ArrayDeque(units)
         }
-        val pending = roundRobinAndCollect(queues)
-        return finish(pending)
+        val pending = roundRobinAndCollect(queues, localIndex)
+        return finish(pending, localIndex)
     }
 
     suspend fun buildFromAlbums(albums: List<FavoriteAlbum>): List<QueueItem> {
         if (albums.isEmpty()) return emptyList()
+        val localIndex = buildLocalIndex()
         val queues = albums.map { fav ->
             ArrayDeque(listOf(AlbumUnit.FavoriteAlbumUnit(fav) as AlbumUnit))
         }
-        val pending = roundRobinAndCollect(queues)
-        return finish(pending)
+        val pending = roundRobinAndCollect(queues, localIndex)
+        return finish(pending, localIndex)
     }
 
     /**
@@ -180,7 +182,10 @@ class PopurriRepository @Inject constructor(
      * artist+title), and stops once the cap is hit or every queue is
      * exhausted.
      */
-    private suspend fun roundRobinAndCollect(queues: List<ArrayDeque<AlbumUnit>>): List<PendingTrack> {
+    private suspend fun roundRobinAndCollect(
+        queues: List<ArrayDeque<AlbumUnit>>,
+        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
+    ): List<PendingTrack> {
         val collected = mutableListOf<PendingTrack>()
         val seenKeys = mutableSetOf<Pair<String, String>>()
         var anyLeft = true
@@ -191,7 +196,7 @@ class PopurriRepository @Inject constructor(
                 val unit = queue.removeFirstOrNull() ?: continue
                 anyLeft = true
                 val tracks = try {
-                    resolveUnit(unit)
+                    resolveUnit(unit, localIndex)
                 } catch (e: Exception) {
                     emptyList()
                 }
@@ -207,11 +212,58 @@ class PopurriRepository @Inject constructor(
         return collected
     }
 
-    private suspend fun resolveUnit(unit: AlbumUnit): List<PendingTrack> = when (unit) {
-        is AlbumUnit.ReleaseGroupUnit ->
-            resolveTracksForReleaseGroup(unit.releaseGroup.id, unit.artist, unit.releaseGroup.title)
-        is AlbumUnit.FavoriteAlbumUnit ->
-            resolveFavoriteAlbumTracks(unit.favorite)
+    /**
+     * Antes de tocar la red: si el álbum ya está completo en local
+     * (bug real reportado por Miguel Ángel, 2026-08-02: reproducir un
+     * popurrí de 3 álbumes ya descargados y favoritos tardaba
+     * demasiado en arrancar), sus pistas se construyen directamente
+     * desde search_result_tracks y NUNCA se llama a
+     * searchAlbumCandidates()/matchAlbumTracks() para ese álbum -- el
+     * check local anterior en finish() llegaba DESPUÉS de ya haber
+     * pagado el coste de red completo, que es justo lo que causaba el
+     * retraso. Solo se cae a resolveTracksForReleaseGroup()/
+     * resolveFavoriteAlbumTracks() cuando no hay ninguna pista local
+     * para ese álbum.
+     * ---
+     * Before touching the network: if the album is already complete
+     * locally (real bug reported by Miguel Ángel, 2026-08-02: playing
+     * a popurrí of 3 already-downloaded favorite albums took too long
+     * to start), its tracks are built directly from
+     * search_result_tracks and searchAlbumCandidates()/
+     * matchAlbumTracks() are NEVER called for that album -- the
+     * previous local check in finish() ran AFTER already paying the
+     * full network cost, which is exactly what caused the delay. Only
+     * falls back to resolveTracksForReleaseGroup()/
+     * resolveFavoriteAlbumTracks() when there's no local track at all
+     * for that album.
+     */
+    private suspend fun resolveUnit(
+        unit: AlbumUnit,
+        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
+    ): List<PendingTrack> {
+        val (artist, album) = when (unit) {
+            is AlbumUnit.ReleaseGroupUnit -> unit.artist to unit.releaseGroup.title
+            is AlbumUnit.FavoriteAlbumUnit -> unit.favorite.artist to unit.favorite.album
+        }
+        val key = SearchNormalizer.normalizeArtistName(artist) to SearchNormalizer.normalize(album)
+        val localTracks = localIndex[key]
+        if (!localTracks.isNullOrEmpty()) {
+            return localTracks.map { (position, track) ->
+                PendingTrack(
+                    artist = artist,
+                    album = album,
+                    title = track.title,
+                    youtubeId = track.youtubeId,
+                    position = position,
+                )
+            }
+        }
+        return when (unit) {
+            is AlbumUnit.ReleaseGroupUnit ->
+                resolveTracksForReleaseGroup(unit.releaseGroup.id, unit.artist, unit.releaseGroup.title)
+            is AlbumUnit.FavoriteAlbumUnit ->
+                resolveFavoriteAlbumTracks(unit.favorite)
+        }
     }
 
     private suspend fun resolveTracksForReleaseGroup(
@@ -272,9 +324,11 @@ class PopurriRepository @Inject constructor(
             .mapValues { (_, tracks) -> tracks.associateBy { it.trackPosition!! } }
     }
 
-    private suspend fun finish(pending: List<PendingTrack>): List<QueueItem> {
+    private suspend fun finish(
+        pending: List<PendingTrack>,
+        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
+    ): List<QueueItem> {
         if (pending.isEmpty()) return emptyList()
-        val localIndex = buildLocalIndex()
         val items = pending.map { track ->
             val key = SearchNormalizer.normalizeArtistName(track.artist) to
                 SearchNormalizer.normalize(track.album)
