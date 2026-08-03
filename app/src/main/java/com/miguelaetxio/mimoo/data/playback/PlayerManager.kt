@@ -593,6 +593,7 @@ class PlayerManager @Inject constructor(
                     radioPendingKnown.clear()
                     radioPendingDisco.clear()
                     radioPendingUnknown.clear()
+                    radioClassicalDiscoExhausted = false
                     // S027 -- bug real reportado por Miguel Ángel: "The
                     // Logical Song" de Supertramp, la propia pista que
                     // arranca la sesión de Radio, volvía a sonar más
@@ -1002,6 +1003,24 @@ class PlayerManager @Inject constructor(
     private val radioPendingKnown = ArrayDeque<QueueItem>()
     private val radioPendingDisco = ArrayDeque<QueueItem>()
     private val radioPendingUnknown = ArrayDeque<QueueItem>()
+
+    /**
+     * Petición explícita de Miguel Ángel (2026-08-02) -- ver el
+     * comentario en `fetchRoundCandidate()`. A diferencia de
+     * `radioRoundDiscoCount` (se reinicia CADA ronda de 10), esto es
+     * PERMANENTE para el resto de la SESIÓN: una vez que la
+     * biblioteca local se queda sin ningún tema clásico nuevo, no
+     * tiene sentido volver a intentarlo ronda tras ronda -- el
+     * catálogo local no cambia a mitad de sesión.
+     * ---
+     * Explicit request from Miguel Ángel (2026-08-02) -- see the
+     * comment in `fetchRoundCandidate()`. Unlike `radioRoundDiscoCount`
+     * (resets EVERY round of 10), this is PERMANENT for the rest of
+     * the SESSION: once the local library runs out of any new
+     * classical track, there's no point trying again round after
+     * round -- the local catalog doesn't change mid-session.
+     */
+    private var radioClassicalDiscoExhausted = false
 
     /**
      * S025 -- TÍTULOS ya sonados, sin mirar el artista.
@@ -1584,6 +1603,68 @@ class PlayerManager @Inject constructor(
                     "'${item.artist}' ('${item.title}') [$radioRoundDiscoCount/$discoQuota esta ronda]",
             )
             return item
+        }
+
+        /**
+         * Petición explícita de Miguel Ángel (2026-08-02), tras el
+         * arreglo del punto muerto en clásica: "en clásica solo
+         * debemos tener en cuenta el cupo de disco... elegimos de
+         * disco 3 de cada diez hasta que tengamos que repetir, en ese
+         * momento el cupo de disco pasa a 0". El cupo de CONOCIDOS no
+         * hace falta tratarlo aparte -- `isKnownInSpain` más abajo ya
+         * es `false` siempre para repertorio clásico sin ningún
+         * cambio, KnownHitsRepository es un diccionario de éxitos
+         * pop/rock.
+         *
+         * A diferencia del resto de anclas (donde disco SÍ puede
+         * repetir tema del mismo artista, "hasta que no quede más
+         * remedio", ver `pickDiscoCandidate()`), en clásica NUNCA se
+         * repite para mantener el cupo -- `allowRepeat = false`. En
+         * cuanto `pickDiscoCandidate()` no encuentra ni un tema nuevo,
+         * `radioClassicalDiscoExhausted` se marca a `true` de forma
+         * PERMANENTE para el resto de la sesión (no se reinicia por
+         * ronda, ver su declaración) -- de ahí en adelante el 100% de
+         * los diez huecos van a desconocidos.
+         * ---
+         * Explicit request from Miguel Ángel (2026-08-02), after the
+         * classical deadlock fix: "in classical we should only take
+         * the disco quota into account... we pick 3 out of every ten
+         * from disco until we'd have to repeat, at that point the
+         * disco quota drops to 0". No need to handle the KNOWN quota
+         * separately -- `isKnownInSpain` below is already always
+         * `false` for classical repertoire with no change needed,
+         * KnownHitsRepository is a pop/rock hits dictionary.
+         *
+         * Unlike every other anchor (where disco CAN repeat a track
+         * from the same artist, "until there's no other choice", see
+         * `pickDiscoCandidate()`), classical NEVER repeats to keep the
+         * quota going -- `allowRepeat = false`. As soon as
+         * `pickDiscoCandidate()` can't find a single new track,
+         * `radioClassicalDiscoExhausted` gets marked `true`
+         * PERMANENTLY for the rest of the session (not reset per
+         * round, see its declaration) -- from then on 100% of the ten
+         * slots go to unknown.
+         */
+        if (anchor.isClassical && !radioClassicalDiscoExhausted && radioRoundDiscoCount < discoQuota) {
+            val discoItem = pickDiscoCandidate(anchor, radioRoundArtists, avoidNames, allowRepeat = false)
+            if (discoItem != null) {
+                radioRoundDiscoCount++
+                registerRoundArtist(discoItem.artist)
+                acceptRadioItem(RadioPortion.DISCO, discoItem)
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -> disco (clásica): " +
+                        "'${discoItem.artist}' ('${discoItem.title}') [$radioRoundDiscoCount/$discoQuota esta ronda]",
+                )
+                return discoItem
+            }
+            radioClassicalDiscoExhausted = true
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate(ancla='$anchorArtistName') -- cupo de disco de clásica agotado " +
+                    "(no queda ningún tema nuevo en la biblioteca sin repetir) -- cupo pasa a 0 para " +
+                    "el resto de la sesión",
+            )
         }
 
         // S027 -- CORRECCIÓN EN LA MISMA SESIÓN: bug real reportado por
@@ -2275,6 +2356,18 @@ class PlayerManager @Inject constructor(
         anchor: RadioAnchor,
         excludeArtists: Set<String>,
         avoidArtists: Set<String>,
+        /**
+         * Petición explícita de Miguel Ángel (2026-08-02) -- ver el
+         * comentario de `radioClassicalDiscoExhausted`. `true` (todas
+         * las anclas salvo clásica) conserva el comportamiento de
+         * siempre: dentro del artista elegido, si ya sonaron todos sus
+         * temas, repite uno ("hasta que no quede más remedio"). `false`
+         * (solo clásica) nunca repite -- si no hay ningún tema nuevo
+         * del artista elegido, esta función devuelve `null` en vez de
+         * repetir, para que el llamante declare agotado el cupo de
+         * disco en lugar de reciclar un tema ya sonado.
+         */
+        allowRepeat: Boolean = true,
     ): QueueItem? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
@@ -2405,7 +2498,9 @@ class PlayerManager @Inject constructor(
             knownHitsRepository.songKey(it.artist, it.title) !in radioUsedSongs &&
                 titleKey(it.title) !in radioUsedTitles
         }
-        val track = unheard.randomOrNull() ?: artistTracks.randomOrNull() ?: return null
+        val track = unheard.randomOrNull()
+            ?: (if (allowRepeat) artistTracks.randomOrNull() else null)
+            ?: return null
         return QueueItem(
             uri = track.filePath!!,
             title = track.title,
@@ -3366,6 +3461,7 @@ class PlayerManager @Inject constructor(
         radioPendingKnown.clear()
         radioPendingDisco.clear()
         radioPendingUnknown.clear()
+        radioClassicalDiscoExhausted = false
         radioUnknownOffset = 0
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
