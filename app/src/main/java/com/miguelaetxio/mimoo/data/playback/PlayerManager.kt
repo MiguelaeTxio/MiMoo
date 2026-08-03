@@ -3113,6 +3113,54 @@ class PlayerManager @Inject constructor(
      * enters this function, not as an identity source, not read, not
      * stored.
      */
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-03), con captura de
+     * pantalla: al pulsar reproducir en la emisora ShoutCast "LOS40
+     * Classic" salía el modal "¿Quién es el artista?" -- pensado para
+     * canciones sueltas en streaming, sin sentido para una emisora de
+     * radio en directo, que POR DEFINICIÓN no tiene artista. Causa:
+     * `RadioBrowserViewModel.playStation()` llamaba a la función
+     * genérica `play()` (de una sesión anterior, no de hoy) que
+     * SIEMPRE exige artista para cualquier streaming no local -- las
+     * emisoras nunca pasaron por un camino propio.
+     *
+     * Camino dedicado para emisoras: construye la cola directamente y
+     * arranca, sin pasar en ningún momento por
+     * `streamArtistPromptVideoTitle`/`pendingStreamPlayback`. El
+     * nombre de la emisora es el título que se muestra; no hay
+     * artista que identificar, nunca lo habrá.
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-03), with a
+     * screenshot: tapping play on the ShoutCast station "LOS40
+     * Classic" brought up the "Who's the artist?" modal -- meant for
+     * individual streaming songs, nonsensical for a live radio
+     * station, which by DEFINITION has no artist. Cause:
+     * `RadioBrowserViewModel.playStation()` was calling the generic
+     * `play()` function (from an earlier session, not today's) that
+     * ALWAYS requires an artist for any non-local streaming --
+     * stations never had a path of their own.
+     *
+     * Dedicated path for stations: builds the queue directly and
+     * starts, never going through
+     * `streamArtistPromptVideoTitle`/`pendingStreamPlayback` at all.
+     * The station's name is the title shown; there's no artist to
+     * identify, there never will be.
+     */
+    fun playRadioStation(streamUrl: String, title: String, artworkUri: String? = null) {
+        playQueue(
+            listOf(
+                QueueItem(
+                    uri = streamUrl,
+                    title = title,
+                    isLocal = false,
+                    artist = null,
+                    artworkUri = artworkUri,
+                ),
+            ),
+            startIndex = 0,
+        )
+    }
+
     fun play(
         streamUrl: String,
         title: String,

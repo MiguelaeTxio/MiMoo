@@ -276,11 +276,9 @@ class RadioBrowserViewModel @Inject constructor(
     }
 
     fun playStation(station: RadioStation) {
-        playerManager.play(
+        playerManager.playRadioStation(
             streamUrl = station.urlResolved,
             title = station.name,
-            isLocal = false,
-            artist = null,
             artworkUri = station.favicon?.takeIf { it.isNotBlank() },
         )
     }
