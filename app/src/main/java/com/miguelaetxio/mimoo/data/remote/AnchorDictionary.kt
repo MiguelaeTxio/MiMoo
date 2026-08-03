@@ -254,6 +254,54 @@ class AnchorDictionary @Inject constructor(
      * clave exacta falla, se compara por conjunto de palabras contra
      * los temas YA guardados de ESE MISMO artista -- solo se acepta si
      * es el ÚNICO que coincide, para no adivinar con ambigüedad.
+     *
+     * SEGUNDA VUELTA (2026-08-03), bug real: ese mecanismo seguía sin
+     * bastar. "PIGNOISE 'Te entiendo' Videoclip oficial" (wantedWords
+     * incluye pignoise/te/entiendo/videoclip/oficial) NO encontraba
+     * "Te Entiendo" (gotWords = te/entiendo) porque el subconjunto
+     * EXIGE que TODAS las palabras de uno estén en el otro -- y aquí
+     * ninguno de los dos lo es del otro completo (sobran palabras en
+     * ambos sentidos si el título guardado trae aunque sea una palabra
+     * de más, o el del vídeo trae ruido de más). Con la discografía ya
+     * descargada de golpe (barata, local, sin red), tiene sentido ser
+     * más permisivo aquí -- probar de nuevo por SOLAPAMIENTO de
+     * palabras significativas (4+ letras, para no dejar que "de", "el"
+     * decidan un acierto) en vez de subconjunto completo, aceptando
+     * solo si el resultado sigue siendo único entre los temas
+     * guardados de ese artista -- misma norma de seguridad que antes,
+     * solo el criterio de coincidencia es más laxo.
+     * ---
+     * Original release year of the track, if already known.
+     *
+     * S027 -- Miguel Ángel's follow-up question after building the
+     * full discography cache (`ensureDiscographyCached()`): having the
+     * whole discography saved does little good if the LOCAL lookup
+     * still requires an EXACT title match. A noisy YouTube video title
+     * ("PIGNOISE 'Te entiendo' Videoclip oficial") doesn't match
+     * character-for-character against the clean title MusicBrainz
+     * stores ("Te Entiendo"), and the local hit was lost -- it still
+     * fell back to asking over the network for a track that was
+     * already saved. Same mechanism already used for short artist
+     * names (Beethoven) and noisy song titles
+     * (`firstReleaseYearFromMusicBrainz` in RadioRepository): if the
+     * exact key fails, compare by word set against the tracks ALREADY
+     * saved for THAT SAME artist -- only accepted if it's the ONLY one
+     * that matches, to avoid guessing with ambiguity.
+     *
+     * SECOND ROUND (2026-08-03), real bug: that mechanism still wasn't
+     * enough. "PIGNOISE 'Te entiendo' Videoclip oficial" (wantedWords
+     * includes pignoise/te/entiendo/videoclip/oficial) didn't find
+     * "Te Entiendo" (gotWords = te/entiendo) because the subset check
+     * REQUIRES ALL words of one to be in the other -- and neither is a
+     * full subset of the other here (extra words on either side break
+     * it if the saved title has even one extra word, or the video's
+     * has extra noise). With the discography already bulk-downloaded
+     * (cheap, local, no network), it makes sense to be more permissive
+     * here -- try again by OVERLAP of significant words (4+ letters,
+     * so "de"/"el" don't decide a match) instead of full subset,
+     * accepting only if the result is still unique among that artist's
+     * saved tracks -- same safety rule as before, just a looser match
+     * criterion.
      */
     fun trackYear(artist: String?, title: String?): Int? {
         if (artist.isNullOrBlank() || title.isNullOrBlank()) return null
@@ -263,9 +311,12 @@ class AnchorDictionary @Inject constructor(
         val artistKey = key(artist)
         val wantedWords = wordsOf(SearchNormalizer.normalize(title))
         if (wantedWords.isEmpty()) return null
-        val matches = learnedTracks.values
+        val sameArtistFacts = learnedTracks.values
             .asSequence()
             .filter { key(it.artist) == artistKey }
+            .toList()
+
+        val strictMatches = sameArtistFacts
             .filter { fact ->
                 val gotWords = wordsOf(SearchNormalizer.normalize(fact.title))
                 gotWords.isNotEmpty() &&
@@ -273,8 +324,27 @@ class AnchorDictionary @Inject constructor(
             }
             .map { it.year }
             .distinct()
-            .toList()
-        return matches.singleOrNull()
+        if (strictMatches.size == 1) return strictMatches.single()
+        // Ambiguo en la comprobación estricta (más de un año distinto
+        // encaja) -- no se cae a la comprobación laxa, sería adivinar
+        // con menos información todavía.
+        if (strictMatches.size > 1) return null
+
+        val significantWanted = wantedWords.filter { it.length >= 4 }.toSet()
+        if (significantWanted.isEmpty()) return null
+        val looseMatches = sameArtistFacts
+            .mapNotNull { fact ->
+                val gotWords = wordsOf(SearchNormalizer.normalize(fact.title))
+                    .filter { it.length >= 4 }
+                    .toSet()
+                if (gotWords.isEmpty()) return@mapNotNull null
+                val overlap = significantWanted.intersect(gotWords).size
+                if (overlap == 0) return@mapNotNull null
+                val ratio = overlap.toDouble() / minOf(significantWanted.size, gotWords.size)
+                if (ratio >= 0.6) fact.year else null
+            }
+            .distinct()
+        return looseMatches.singleOrNull()
     }
 
     // ---------------------------------------------------------------
