@@ -673,6 +673,43 @@ class RadioRepository @Inject constructor(
         if (composerFallback.isNullOrBlank() || composerFallback.equals(artist, ignoreCase = true)) {
             return direct
         }
+        // Bug real de RENDIMIENTO reportado por Miguel Ángel
+        // (2026-08-02): "va lento, la verdad" -- log delante mostrando
+        // ~13 segundos por reintento como compositor, uno detrás de
+        // otro, para candidatos como 'Siegfried Strohbach' (arreglista
+        // de canciones populares alemanas) o 'Johann Christian Bach'
+        // (otro compositor) que evidentemente NO tienen nada que ver
+        // con el compositor del ancla (Beethoven) -- el reintento
+        // entero (MusicBrainz + Discogs + Wikidata) se pagaba siempre,
+        // casi nunca para nada.
+        //
+        // Ahora solo se reintenta si el propio título del vídeo
+        // MENCIONA al compositor -- exactamente el caso real que
+        // arreglaba esto (los vídeos de Daniel Barenboim decían
+        // literalmente "Beethoven: Piano Concerto..."). Si el título
+        // no lo menciona, no hay motivo real para sospechar que sea
+        // suyo -- se descarta directo, sin pagar el reintento.
+        // ---
+        // Real PERFORMANCE bug reported by Miguel Ángel (2026-08-02):
+        // "it's slow" -- log showing ~13 seconds per composer retry,
+        // one after another, for candidates like 'Siegfried Strohbach'
+        // (a German folk song arranger) or 'Johann Christian Bach'
+        // (a different composer) who obviously have nothing to do with
+        // the anchor's composer (Beethoven) -- the whole retry
+        // (MusicBrainz + Discogs + Wikidata) got paid every time,
+        // almost never for anything.
+        //
+        // Now it only retries if the video's own title MENTIONS the
+        // composer -- exactly the real case that motivated this (the
+        // Daniel Barenboim videos literally said "Beethoven: Piano
+        // Concerto..."). If the title doesn't mention it, there's no
+        // real reason to suspect it's theirs -- discarded right away,
+        // without paying for the retry.
+        val composerMentionedInTitle = Regex("(?i)\\b" + Regex.escape(composerFallback) + "\\b")
+            .containsMatchIn(rawVideoTitle)
+        if (!composerMentionedInTitle) {
+            return direct
+        }
         log(
             "verifyTrackExists('$artist' -- '$rawVideoTitle') -- no encontrado como intérprete, " +
                 "reintentando como COMPOSITOR '$composerFallback' (ancla clásica)"
