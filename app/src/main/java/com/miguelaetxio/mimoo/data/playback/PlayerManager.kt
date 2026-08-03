@@ -1848,12 +1848,57 @@ class PlayerManager @Inject constructor(
             return null
         }
 
-        suspend fun searchPhase(exclude: Set<String>, phaseName: String): QueueItem? {
+        /**
+         * Bug real reportado por Miguel Ángel (2026-08-02), confirmado
+         * con log: bajo ancla clásica, 'Wolfgang Amadeus Mozart' se
+         * propuso una y otra vez durante más de TRES MINUTOS seguidos,
+         * siempre con el mismo vídeo ("Piano Concerto No. 21 -
+         * Andante"), siempre fallando la verificación -- pese a que
+         * `resolveYoutubeCandidate()` SÍ lo registraba en
+         * `radioUnusableArtistsThisRound` nada más fallar (ver ese
+         * bloque más abajo).
+         *
+         * Causa: `exclude` era un `Set<String>` FIJO, calculado UNA
+         * VEZ antes de entrar en el bucle de hasta
+         * `RADIO_ROUND_MAX_ATTEMPTS` (15) reintentos -- `Set + Set` en
+         * Kotlin crea una foto fija, no una vista que seguía
+         * `radioUnusableArtistsThisRound` en vivo. Aunque el artista
+         * se registrara como inservible en el intento 1, los intentos
+         * 2 al 15 de la MISMA fase seguían usando la foto de antes de
+         * empezar, así que `suggestRelatedArtist()` lo seguía
+         * proponiendo sin límite real dentro de esa fase.
+         *
+         * Ahora `exclude` es una función que se vuelve a llamar en
+         * CADA intento, así que ve al momento cualquier artista que
+         * acabe de fallar.
+         * ---
+         * Real bug reported by Miguel Ángel (2026-08-02), confirmed
+         * with a log: under a classical anchor, 'Wolfgang Amadeus
+         * Mozart' kept getting proposed over and over for more than
+         * THREE MINUTES straight, always the same video ("Piano
+         * Concerto No. 21 - Andante"), always failing verification --
+         * even though `resolveYoutubeCandidate()` DID register it in
+         * `radioUnusableArtistsThisRound` the moment it failed (see
+         * that block below).
+         *
+         * Cause: `exclude` was a FIXED `Set<String>`, computed ONCE
+         * before entering the loop of up to `RADIO_ROUND_MAX_ATTEMPTS`
+         * (15) retries -- `Set + Set` in Kotlin creates a snapshot, not
+         * a view that tracked `radioUnusableArtistsThisRound` live.
+         * Even though the artist got registered as unusable on attempt
+         * 1, attempts 2 through 15 of the SAME phase kept using the
+         * snapshot from before starting, so `suggestRelatedArtist()`
+         * kept proposing it with no real limit within that phase.
+         *
+         * Now `exclude` is a function that gets called again on EVERY
+         * attempt, so it sees any artist that just failed immediately.
+         */
+        suspend fun searchPhase(exclude: () -> Set<String>, phaseName: String): QueueItem? {
             var attempts = 0
             while (attempts < RADIO_ROUND_MAX_ATTEMPTS) {
                 attempts++
                 val artist = radioRepository.suggestRelatedArtist(
-                    anchor, exclude, avoidNames,
+                    anchor, exclude(), avoidNames,
                     genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
                 ) ?: run {
                     RadioDebugLogger.log(
@@ -1873,16 +1918,19 @@ class PlayerManager @Inject constructor(
         // lo quites". El ancla ya se registra en `radioRoundArtists`
         // al arrancar la sesión (ver ese bloque) -- se trata como
         // cualquier otro artista, ni más vetado ni menos.
-        val fullExclusion = radioRoundArtists + radioUnusableArtistsThisRound +
-            radioUsedArtists.map { it.lowercase() }
-        searchPhase(fullExclusion, "sin repetir artista de la sesión")?.let { return it }
+        searchPhase(
+            { radioRoundArtists + radioUnusableArtistsThisRound + radioUsedArtists.map { it.lowercase() } },
+            "sin repetir artista de la sesión",
+        )?.let { return it }
 
         // S027 -- fase 2, SOLO si la 1 se agotó de verdad: se permite
         // repetir un artista ya usado en la sesión, pero la regla de
         // no repetir DENTRO de esta ronda de 10 sigue siendo dura --
         // `radioRoundArtists` se mantiene en la exclusión.
-        val relaxedExclusion = radioRoundArtists + radioUnusableArtistsThisRound
-        searchPhase(relaxedExclusion, "repitiendo artista ya usado esta sesión")?.let { return it }
+        searchPhase(
+            { radioRoundArtists + radioUnusableArtistsThisRound },
+            "repitiendo artista ya usado esta sesión",
+        )?.let { return it }
 
         // S027 -- último recurso: si tras agotar los intentos de esta
         // vuelta no se ha aceptado nada nuevo, se tira de la cola de
