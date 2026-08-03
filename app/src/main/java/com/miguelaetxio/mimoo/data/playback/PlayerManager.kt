@@ -3574,6 +3574,31 @@ class PlayerManager @Inject constructor(
          * también en clásica: una entrevista o un capítulo de podcast no
          * pintan nada en ninguna radio.
          */
+        /**
+         * Bug real reportado por Miguel Ángel (2026-08-02), con log
+         * como prueba: bajo un ancla clásica (Beethoven), tras casi 20
+         * minutos rechazando cada candidato real de Daniel Barenboim
+         * (ver el comentario de `verifyTrackExists()`/`resolveYoutubeCandidate()`
+         * sobre el problema de fondo, todavía sin arreglar), acabó
+         * aceptando "5 Minutes On... Chopin - Nocturnes Op. 27 No. 2
+         * (Db major) | Daniel Barenboim [subtitulado]" -- un vídeo
+         * EXPLICATIVO/de análisis de la obra, no una interpretación.
+         * Ninguno de los patrones existentes lo detectaba. Se añaden
+         * aquí los patrones de "esto es un tutorial/análisis, no una
+         * canción" -- mismo criterio que el resto de la lista.
+         * ---
+         * Real bug reported by Miguel Ángel (2026-08-02), with a log as
+         * proof: under a classical anchor (Beethoven), after nearly 20
+         * minutes rejecting every real Daniel Barenboim candidate (see
+         * `verifyTrackExists()`/`resolveYoutubeCandidate()`'s comment
+         * about the underlying problem, still unfixed), it ended up
+         * accepting "5 Minutes On... Chopin - Nocturnes Op. 27 No. 2
+         * (Db major) | Daniel Barenboim [subtitulado]" -- an
+         * EXPLAINER/analysis video about the piece, not a performance.
+         * None of the existing patterns caught it. Adding "this is a
+         * tutorial/analysis, not a song" patterns here -- same criterion
+         * as the rest of the list.
+         */
         val NOT_MUSIC_TITLE_HINTS = listOf(
             "interview",
             "entrevista",
@@ -3588,6 +3613,23 @@ class PlayerManager @Inject constructor(
             "audiolibro",
             "full movie",
             "pelicula completa",
+            "tutorial",
+            "how to play",
+            "como tocar",
+            "cómo tocar",
+            "lesson",
+            "leccion",
+            "lección",
+            "explained",
+            "explicado",
+            "explicada",
+            "analysis",
+            "análisis",
+            "breakdown",
+            "masterclass",
+            "reaction",
+            "reacciona",
+            "minutes on",
         )
 
         /**
