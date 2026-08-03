@@ -1702,7 +1702,51 @@ class PlayerManager @Inject constructor(
             }
 
             // No es conocido en España.
-            if (radioRoundKnownCount >= knownQuota && radioRoundDiscoCount >= discoQuota) {
+            //
+            // Bug real reportado por Miguel Ángel (2026-08-02): "la
+            // radio está completamente parada, no funciona" con ancla
+            // clásica (Beethoven). Causa, confirmada con log real:
+            // esta condición exige que los cupos de CONOCIDOS y DISCO
+            // ya estén llenos esta ronda antes de aceptar un
+            // desconocido -- pero con repertorio clásico esos dos
+            // cupos NUNCA se llenan (KnownHitsRepository es un
+            // diccionario de éxitos pop/rock; Daniel Barenboim no está
+            // ahí, ni suele estar en la biblioteca local). El
+            // resultado es un punto muerto real: cada candidato
+            // clásico se encuentra, se verifica, se confirma -- y se
+            // aparca en `radioPendingUnknown` para siempre, porque la
+            // condición para aceptarlo nunca llega a cumplirse.
+            // `radioRoundUnknownCount` tampoco sube nunca, así que la
+            // ronda ni siquiera se completa para intentarlo de nuevo
+            // -- ver `rollRadioRoundIfComplete()`.
+            //
+            // En ancla clásica no tiene sentido esperar a que se
+            // llenen esos cupos -- prácticamente todo lo que sale de
+            // la Exploración en clásica es "desconocido" por
+            // definición. Se acepta directamente, sin la puerta de
+            // cupos.
+            // ---
+            // Real bug reported by Miguel Ángel (2026-08-02): "Radio
+            // is completely stopped, doesn't work" with a classical
+            // anchor (Beethoven). Cause, confirmed with a real log:
+            // this condition requires the KNOWN and DISCO quotas to
+            // already be full this round before accepting an unknown
+            // -- but with classical repertoire those two quotas NEVER
+            // fill up (KnownHitsRepository is a pop/rock hits
+            // dictionary; Daniel Barenboim isn't in it, nor usually in
+            // the local library). The result is a genuine deadlock:
+            // every classical candidate gets found, verified,
+            // confirmed -- and parked in `radioPendingUnknown`
+            // forever, because the condition to accept it never gets
+            // met. `radioRoundUnknownCount` never climbs either, so
+            // the round doesn't even complete to try again -- see
+            // `rollRadioRoundIfComplete()`.
+            //
+            // On a classical anchor there's no point waiting for those
+            // quotas to fill -- practically everything Exploration
+            // turns up in classical is "unknown" by definition.
+            // Accepted directly, no quota gate.
+            if (anchor.isClassical || (radioRoundKnownCount >= knownQuota && radioRoundDiscoCount >= discoQuota)) {
                 radioRoundUnknownCount++
                 registerRoundArtist(item.artist)
                 acceptRadioItem(RadioPortion.UNKNOWN, item)
