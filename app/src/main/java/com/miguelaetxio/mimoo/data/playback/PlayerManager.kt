@@ -1646,7 +1646,11 @@ class PlayerManager @Inject constructor(
          * slots go to unknown.
          */
         if (anchor.isClassical && !radioClassicalDiscoExhausted && radioRoundDiscoCount < discoQuota) {
-            val discoItem = pickDiscoCandidate(anchor, radioRoundArtists, avoidNames, allowRepeat = false)
+            val discoItem = pickDiscoCandidate(
+                anchor, radioRoundArtists, avoidNames,
+                allowRepeat = false,
+                maxArtistsToProfile = RADIO_CLASSICAL_DISCO_PROFILE_LIMIT,
+            )
             if (discoItem != null) {
                 radioRoundDiscoCount++
                 registerRoundArtist(discoItem.artist)
@@ -2416,6 +2420,44 @@ class PlayerManager @Inject constructor(
          * disco en lugar de reciclar un tema ya sonado.
          */
         allowRepeat: Boolean = true,
+        /**
+         * Bug real de RENDIMIENTO reportado por Miguel Ángel
+         * (2026-08-02): "lleva 3 minutos 20 segundos... y acaba de
+         * entrar la primera pista" -- log delante mostrando que 2
+         * minutos 39 segundos de esos 3:20 se iban en ESTA función:
+         * sin biblioteca con nada de clásica, perfilaba TODOS y cada
+         * uno de los artistas descargados (uno por uno, contra
+         * MusicBrainz) antes de concluir que ninguno encaja y
+         * rendirse. Con `radioClassicalDiscoExhausted` (ver su
+         * comentario) el coste solo se paga UNA vez por sesión -- pero
+         * esa única vez ya es carísima con una biblioteca grande.
+         *
+         * `null` (todas las anclas salvo clásica, comportamiento de
+         * siempre) no acota nada. Con un número, se perfilan como
+         * mucho esos artistas -- si entre ellos no hay ninguno que
+         * encaje, esta función se rinde ahí en vez de agotar la
+         * biblioteca entera. `candidateArtists` ya viene barajado
+         * (`.shuffled()`), así que acotar no favorece siempre a los
+         * mismos artistas.
+         * ---
+         * Real PERFORMANCE bug reported by Miguel Ángel (2026-08-02):
+         * "it's been 3 minutes 20 seconds... and the first track just
+         * came in" -- log showing 2 minutes 39 seconds out of that
+         * 3:20 were spent in THIS function: with no classical content
+         * in the library, it profiled EVERY SINGLE downloaded artist
+         * (one by one, against MusicBrainz) before concluding none fit
+         * and giving up. With `radioClassicalDiscoExhausted` (see its
+         * comment) the cost is only paid ONCE per session -- but that
+         * single time is already expensive with a large library.
+         *
+         * `null` (every anchor except classical, behavior as always)
+         * doesn't cap anything. With a number, at most that many
+         * artists get profiled -- if none of them fit, this function
+         * gives up right there instead of exhausting the whole
+         * library. `candidateArtists` already comes shuffled, so
+         * capping doesn't always favor the same artists.
+         */
+        maxArtistsToProfile: Int? = null,
     ): QueueItem? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
@@ -2435,6 +2477,7 @@ class PlayerManager @Inject constructor(
             .distinct()
             .filter { it.lowercase() !in excludeLower }
             .shuffled()
+            .let { if (maxArtistsToProfile != null) it.take(maxArtistsToProfile) else it }
         if (candidateArtists.isEmpty()) return null
 
         data class ProfiledArtist(
@@ -3669,6 +3712,15 @@ class PlayerManager @Inject constructor(
          * candidato real).
          */
         private const val RADIO_ROUND_MAX_ATTEMPTS = 15
+
+        /**
+         * Bug real de rendimiento (2026-08-02) -- ver el comentario de
+         * `maxArtistsToProfile` en `pickDiscoCandidate()`. Perfilar
+         * como mucho estos artistas de la biblioteca local antes de
+         * rendirse con el cupo de disco de clásica, en vez de la
+         * biblioteca entera.
+         */
+        private const val RADIO_CLASSICAL_DISCO_PROFILE_LIMIT = 25
 
         /**
          * H08 PARTE 2 (S009) -- cuántas pistas de Radio se mantienen
