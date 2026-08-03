@@ -520,7 +520,7 @@ class RadioRepository @Inject constructor(
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de MusicBrainz ($mbYear)")
             return TrackExistence.Confirmed((mbYear / 10) * 10, mbYear)
         }
-        if (lastFailureWasTransient && !networkConnectivityChecker.isConnected()) {
+        if (lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()) {
             log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde, ni siquiera al reintentar, y el teléfono no tiene conexión)")
             return TrackExistence.NetworkUnavailable
         }
@@ -531,7 +531,7 @@ class RadioRepository @Inject constructor(
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Discogs ($discogsYear)")
             return TrackExistence.Confirmed((discogsYear / 10) * 10, discogsYear)
         }
-        if (lastFailureWasTransient && !networkConnectivityChecker.isConnected()) {
+        if (lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()) {
             log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde, ni siquiera al reintentar, y el teléfono no tiene conexión)")
             return TrackExistence.NetworkUnavailable
         }
@@ -585,13 +585,29 @@ class RadioRepository @Inject constructor(
      * Discogs/Wikidata hubieran fallado (`isTransient()`: timeouts,
      * 503, 429...), sin comprobar NUNCA si el teléfono tenía conexión
      * real. "Eso no es no hay red. No hay red es cuando no hay red"
-     * -- orden textual de Miguel Ángel. Ahora `networkFailure` exige
-     * ADEMÁS `!networkConnectivityChecker.isConnected()`: si el
-     * teléfono tiene conexión real pero los tres servicios están
-     * fallando (MusicBrainz es "gratuito y notoriamente inestable",
-     * ver `consecutiveTransientFailures` más abajo), esto se trata
-     * como "sin dato" -- no ancla sin filtro temporal por eso, pero
-     * tampoco enseña al usuario un aviso que dice algo falso.
+     * -- orden textual de Miguel Ángel. Primer intento de arreglo
+     * (commit 79ac73d): exigir además
+     * `!NetworkConnectivityChecker.isConnected()`.
+     *
+     * TERCER bug real, mismo campo, mismo día: el primer intento NO
+     * bastó -- Miguel Ángel confirmó con capturas y logs en vivo de
+     * la build 505 (que ya incluía el segundo arreglo) que el cartel
+     * seguía saliendo con la cola de reproducción sonando en
+     * streaming en ese mismo instante, prueba directa de que SÍ había
+     * red real. Causa: `isConnected()` exige
+     * `NET_CAPABILITY_VALIDATED`, una bandera que Android pone a
+     * `true` solo cuando SU PROPIA sonda interna de validación ha
+     * terminado con éxito -- y que es conocida por quedarse en
+     * `false` de forma transitoria (tras salir de Doze, cambios de
+     * red, retraso de esa sonda) incluso con Internet funcionando de
+     * verdad. El "arreglo" añadió una segunda condición igual de
+     * propensa a falsos positivos que la primera.
+     *
+     * Ahora `networkFailure` exige
+     * `!NetworkConnectivityChecker.hasRealInternetAccess()` -- una
+     * sonda HTTP real y propia (ver esa función), no una bandera que
+     * Android cree tener actualizada. Solo una excepción de red real
+     * al intentar esa petición cuenta como "sin red".
      */
     data class TrackDecade(val decadeBegin: Int?, val exactYear: Int?, val networkFailure: Boolean = false)
 
@@ -636,7 +652,7 @@ class RadioRepository @Inject constructor(
             // "sin dato" (no ancla sin filtro temporal por eso, pero
             // tampoco detiene la Radio con un aviso engañoso) en vez
             // de "sin conexión".
-            val reallyNoNetwork = lastFailureWasTransient && !networkConnectivityChecker.isConnected()
+            val reallyNoNetwork = lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()
             log(
                 "resolveOriginalDecade('$artist' -- '$cleanTitle') -- sin año; " +
                     when {
