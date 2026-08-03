@@ -2631,7 +2631,17 @@ class PlayerManager @Inject constructor(
             // al final de la búsqueda.
             var decadeRejectedCount = 0
             for (candidate in filtered) {
-                when (val existence = radioRepository.verifyTrackExists(artist, candidate.title)) {
+                when (
+                    val existence = radioRepository.verifyTrackExists(
+                        artist,
+                        candidate.title,
+                        // Arreglo real pedido por Miguel Ángel (2026-08-02) --
+                        // ver el comentario de verifyTrackExists(). Solo tiene
+                        // efecto en ancla clásica; radioAnchorArtist es la
+                        // misma identidad (compositor) que fijó el ancla.
+                        composerFallback = if (isClassicalAnchor()) radioAnchorArtist else null,
+                    )
+                ) {
                     is RadioRepository.TrackExistence.Confirmed -> {
                         // S027 -- ventana de años cuando hay año exacto
                         // del ancla Y del candidato; si falta cualquiera

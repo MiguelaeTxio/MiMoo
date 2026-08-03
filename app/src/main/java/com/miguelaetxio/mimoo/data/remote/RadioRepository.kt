@@ -501,7 +501,66 @@ class RadioRepository @Inject constructor(
         }
     }
 
-    suspend fun verifyTrackExists(artist: String, rawVideoTitle: String): TrackExistence {
+    /**
+     * `composerFallback` -- arreglo real pedido por Miguel Ángel
+     * (2026-08-02), con log real como prueba: bajo ancla clásica
+     * (Beethoven), CADA candidato real de Daniel Barenboim se
+     * rechazaba como "no encontrado" -- MusicBrainz/Discogs/Wikidata
+     * catalogan la obra bajo el COMPOSITOR, no bajo el intérprete, así
+     * que buscar "Daniel Barenboim + título" nunca encuentra nada
+     * aunque el vídeo sea genuinamente esa obra. Su propia pregunta
+     * señaló la causa: la identidad del ancla YA se resolvió de forma
+     * inteligente una vez (el artista estructurado de esa pista SÍ es
+     * 'Beethoven', no el intérprete del vídeo, ver
+     * `anchorFromDictionary()`) -- pero esa resolución nunca se volvía
+     * a aplicar al verificar cada candidato nuevo.
+     *
+     * Si la comprobación normal (por intérprete) no encuentra nada,
+     * `composerFallback` -- la misma identidad que fijó el ancla,
+     * `PlayerManager.radioAnchorArtist` -- se reintenta ENTERA como si
+     * fuera el artista. Solo tiene efecto si el llamante lo pasa (solo
+     * para ancla clásica, ver `resolveYoutubeCandidate()`); `null` deja
+     * el comportamiento exactamente igual que antes.
+     * ---
+     * `composerFallback` -- real fix requested by Miguel Ángel
+     * (2026-08-02), with a real log as proof: under a classical anchor
+     * (Beethoven), EVERY real Daniel Barenboim candidate got rejected
+     * as "not found" -- MusicBrainz/Discogs/Wikidata catalog the work
+     * under the COMPOSER, not the performer, so searching "Daniel
+     * Barenboim + title" never finds anything even when the video
+     * genuinely is that work. His own question pointed at the cause:
+     * the anchor's identity was ALREADY resolved intelligently once
+     * (that track's structured artist really is 'Beethoven', not the
+     * video's performer, see `anchorFromDictionary()`) -- but that
+     * resolution never got reapplied when verifying each new
+     * candidate.
+     *
+     * If the normal (performer-based) check finds nothing,
+     * `composerFallback` -- the same identity that seeded the anchor,
+     * `PlayerManager.radioAnchorArtist` -- gets retried as if it were
+     * the artist, whole cascade included. Only has an effect if the
+     * caller passes it (only for classical anchors, see
+     * `resolveYoutubeCandidate()`); `null` leaves behavior exactly as
+     * before.
+     */
+    suspend fun verifyTrackExists(
+        artist: String,
+        rawVideoTitle: String,
+        composerFallback: String? = null,
+    ): TrackExistence {
+        val direct = verifyTrackExistsForArtist(artist, rawVideoTitle)
+        if (direct !is TrackExistence.NotFound) return direct
+        if (composerFallback.isNullOrBlank() || composerFallback.equals(artist, ignoreCase = true)) {
+            return direct
+        }
+        log(
+            "verifyTrackExists('$artist' -- '$rawVideoTitle') -- no encontrado como intérprete, " +
+                "reintentando como COMPOSITOR '$composerFallback' (ancla clásica)"
+        )
+        return verifyTrackExistsForArtist(composerFallback, rawVideoTitle)
+    }
+
+    private suspend fun verifyTrackExistsForArtist(artist: String, rawVideoTitle: String): TrackExistence {
         val cleanTitle = stripTitleNoise(rawVideoTitle)
         if (cleanTitle.isBlank()) return TrackExistence.NotFound
 
