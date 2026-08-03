@@ -25,6 +25,9 @@ import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -539,9 +542,58 @@ class LibraryViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-02): "en la vista
+     * de la biblioteca tenemos un filtro que cuando son ya muchas las
+     * descargas, enlentece una barbaridad todo". Causa: cada pulsación
+     * de tecla disparaba `recompute()` de forma SÍNCRONA en el hilo
+     * principal -- normalizar y reagrupar TODA la biblioteca
+     * descargada (potencialmente miles de pistas) en cada letra
+     * tecleada.
+     *
+     * Arreglo en dos frentes:
+     * 1. Debounce de 250ms aquí -- mientras se sigue tecleando no se
+     *    dispara ningún recompute() todavía, solo cuando hay una
+     *    pausa real.
+     * 2. `recompute()` en sí pasa a `Dispatchers.Default` (ver más
+     *    abajo), con cancelación del cálculo anterior si llega uno
+     *    nuevo antes de terminar -- nunca bloquea el hilo principal,
+     *    y nunca sobrescribe el resultado con datos ya obsoletos.
+     *
+     * No es el rediseño completo que también sugirió Miguel Ángel
+     * ("cambiarlo por un simple campo de búsqueda y resultados de la
+     * misma") -- eso es un cambio de UX más grande, deliberadamente
+     * fuera de este arreglo puntual de rendimiento.
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-02): "in the library
+     * view we have a filter that, once there are many downloads,
+     * slows everything down a lot". Cause: every keystroke triggered
+     * `recompute()` SYNCHRONOUSLY on the main thread -- normalizing
+     * and regrouping the ENTIRE downloaded library (potentially
+     * thousands of tracks) on every letter typed.
+     *
+     * Fix on two fronts:
+     * 1. 250ms debounce here -- while still typing, no recompute()
+     *    fires yet, only once there's an actual pause.
+     * 2. `recompute()` itself moves to `Dispatchers.Default` (see
+     *    below), cancelling the previous computation if a new one
+     *    arrives before it finishes -- never blocks the main thread,
+     *    and never overwrites the result with already-stale data.
+     *
+     * Not the full redesign Miguel Ángel also suggested ("replace it
+     * with a simple search field and its results") -- that's a bigger
+     * UX change, deliberately out of scope for this targeted
+     * performance fix.
+     */
+    private var filterDebounceJob: Job? = null
+
     fun onFilterQueryChange(query: String) {
         _uiState.value = _uiState.value.copy(filterQuery = query)
-        recompute()
+        filterDebounceJob?.cancel()
+        filterDebounceJob = viewModelScope.launch {
+            delay(250)
+            recompute()
+        }
     }
 
     // --- Navegación por capas, pestaña Álbumes -----------------------
@@ -1107,68 +1159,94 @@ class LibraryViewModel @Inject constructor(
      * no una decisión de diseño que mereciera conservarse solo por
      * ser anterior a esta sesión.
      */
+    /**
+     * Ver el comentario de `onFilterQueryChange()` para el bug real
+     * que motiva esto. `recomputeJob` se cancela y se reemplaza en
+     * cada llamada -- si dos recompute() se solapan (p.ej. un
+     * favorito cambia justo cuando el filtro también dispara uno),
+     * solo el más reciente llega a escribir `_uiState`.
+     * `ensureActive()` corta el trabajo si este cálculo concreto ya
+     * quedó obsoleto antes de terminar, para no gastar tiempo
+     * agrupando algo que no se va a usar.
+     * ---
+     * See `onFilterQueryChange()`'s comment for the real bug that
+     * motivates this. `recomputeJob` is cancelled and replaced on
+     * every call -- if two recompute() calls overlap (e.g. a favorite
+     * changes right when the filter also fires one), only the most
+     * recent one gets to write `_uiState`. `ensureActive()` cuts the
+     * work short if this particular computation is already stale
+     * before finishing, so it doesn't spend time grouping something
+     * that won't be used.
+     */
+    private var recomputeJob: Job? = null
+
     private fun recompute() {
-        val query = SearchNormalizer.normalize(_uiState.value.filterQuery)
+        recomputeJob?.cancel()
+        recomputeJob = viewModelScope.launch(Dispatchers.Default) {
+            val query = SearchNormalizer.normalize(_uiState.value.filterQuery)
+            val downloadedSnapshot = allDownloaded
 
-        val filtered = if (query.isEmpty()) {
-            allDownloaded
-        } else {
-            allDownloaded.filter { track ->
-                SearchNormalizer.normalize(track.title).contains(query) ||
-                    SearchNormalizer.normalize(track.artist ?: track.channelTitle)
-                        .contains(query) ||
-                    SearchNormalizer.normalize(track.album ?: "").contains(query)
+            val filtered = if (query.isEmpty()) {
+                downloadedSnapshot
+            } else {
+                downloadedSnapshot.filter { track ->
+                    SearchNormalizer.normalize(track.title).contains(query) ||
+                        SearchNormalizer.normalize(track.artist ?: track.channelTitle)
+                            .contains(query) ||
+                        SearchNormalizer.normalize(track.album ?: "").contains(query)
+                }
             }
+
+            // PASO: reorganizacion de Biblioteca -- separacion real por
+            // album != null en vez de la etiqueta sintetica UNKNOWN_ALBUM_LABEL
+            // de antes. LibraryReconciler ya mapea las carpetas "Sencillos"/
+            // legacy a album = null, asi que esta particion es identica
+            // para pistas de busqueda y pistas reconciliadas desde disco.
+            val albumsByArtist = filtered
+                .filter { it.album != null }
+                .groupBy { it.artist ?: it.channelTitle }
+                .toSortedMap()
+                .mapValues { (_, tracks) ->
+                    tracks
+                        .groupBy { it.album!! }
+                        .toSortedMap()
+                        .mapValues { (_, albumTracks) ->
+                            // trackPosition real primero (orden de disco);
+                            // las pistas sin posición conocida caen al
+                            // final, ordenadas entre ellas por título.
+                            albumTracks.sortedWith(
+                                compareBy<SearchResultTrack> {
+                                    it.trackPosition ?: Int.MAX_VALUE
+                                }.thenBy { it.title }
+                            )
+                        }
+                }
+
+            val singlesByArtist = filtered
+                .filter { it.album == null }
+                .groupBy { it.artist ?: it.channelTitle }
+                .toSortedMap()
+                .mapValues { (_, tracks) -> tracks.sortedBy { it.title } }
+
+            val albumLetters = albumsByArtist.keys
+                .map { sortLetterFor(it) }
+                .toSortedSet()
+                .toList()
+            val singleLetters = singlesByArtist.keys
+                .map { sortLetterFor(it) }
+                .toSortedSet()
+                .toList()
+
+            ensureActive()
+            _uiState.value = _uiState.value.copy(
+                albumsByArtist = albumsByArtist,
+                singlesByArtist = singlesByArtist,
+                albumLetters = albumLetters,
+                singleLetters = singleLetters,
+                favoriteAlbumKeys = favoriteAlbumKeysSet,
+                favoriteArtistKeys = favoriteArtistKeysSet,
+            )
         }
-
-        // PASO: reorganizacion de Biblioteca -- separacion real por
-        // album != null en vez de la etiqueta sintetica UNKNOWN_ALBUM_LABEL
-        // de antes. LibraryReconciler ya mapea las carpetas "Sencillos"/
-        // legacy a album = null, asi que esta particion es identica
-        // para pistas de busqueda y pistas reconciliadas desde disco.
-        val albumsByArtist = filtered
-            .filter { it.album != null }
-            .groupBy { it.artist ?: it.channelTitle }
-            .toSortedMap()
-            .mapValues { (_, tracks) ->
-                tracks
-                    .groupBy { it.album!! }
-                    .toSortedMap()
-                    .mapValues { (_, albumTracks) ->
-                        // trackPosition real primero (orden de disco);
-                        // las pistas sin posición conocida caen al
-                        // final, ordenadas entre ellas por título.
-                        albumTracks.sortedWith(
-                            compareBy<SearchResultTrack> {
-                                it.trackPosition ?: Int.MAX_VALUE
-                            }.thenBy { it.title }
-                        )
-                    }
-            }
-
-        val singlesByArtist = filtered
-            .filter { it.album == null }
-            .groupBy { it.artist ?: it.channelTitle }
-            .toSortedMap()
-            .mapValues { (_, tracks) -> tracks.sortedBy { it.title } }
-
-        val albumLetters = albumsByArtist.keys
-            .map { sortLetterFor(it) }
-            .toSortedSet()
-            .toList()
-        val singleLetters = singlesByArtist.keys
-            .map { sortLetterFor(it) }
-            .toSortedSet()
-            .toList()
-
-        _uiState.value = _uiState.value.copy(
-            albumsByArtist = albumsByArtist,
-            singlesByArtist = singlesByArtist,
-            albumLetters = albumLetters,
-            singleLetters = singleLetters,
-            favoriteAlbumKeys = favoriteAlbumKeysSet,
-            favoriteArtistKeys = favoriteArtistKeysSet,
-        )
     }
 
     /** Plays a single track from the library (always local). */

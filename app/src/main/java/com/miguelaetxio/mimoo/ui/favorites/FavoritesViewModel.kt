@@ -12,7 +12,6 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
-import com.miguelaetxio.mimoo.data.playback.QueueItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -182,22 +181,23 @@ class FavoritesViewModel @Inject constructor(
     fun playSelectedArtists(shuffle: Boolean) {
         val selected = _uiState.value.artists.filter { it.artist in _uiState.value.selectedArtists }
         if (selected.isEmpty()) return
-        generateAndPlay(shuffle) { popurriRepository.buildFromArtists(selected) }
+        generateAndPlay { popurriRepository.playArtistsProgressively(playerManager, selected, shuffle) }
     }
 
     fun playSelectedAlbums(shuffle: Boolean) {
         val keys = _uiState.value.selectedAlbums
         val selected = _uiState.value.albums.filter { AlbumKey(it.artist, it.album) in keys }
         if (selected.isEmpty()) return
-        generateAndPlay(shuffle) { popurriRepository.buildFromAlbums(selected) }
+        generateAndPlay { popurriRepository.playAlbumsProgressively(playerManager, selected, shuffle) }
     }
 
     fun playAllFavoriteTracks(shuffle: Boolean) {
-        generateAndPlay(shuffle) {
-            popurriRepository.buildFromFavoriteTracks(
+        generateAndPlay {
+            val plan = popurriRepository.buildFromFavoriteTracks(
                 favoriteTracks = pendingStreamingFavorites(),
                 favoriteLocalTracks = pendingLocalFavorites(),
             )
+            popurriRepository.playProgressively(playerManager, plan, shuffle)
         }
     }
 
@@ -212,27 +212,32 @@ class FavoritesViewModel @Inject constructor(
 
     /**
      * Bug real reportado por Miguel Ángel (2026-08-02): "tarda mucho
-     * en iniciar la reproducción cuando no están descargados". Ya no
-     * espera a builder() para resolver TODAS las pistas antes de
-     * reproducir -- construye el plan (rápido, sin resolver streams
-     * de verdad) y delega en
-     * PopurriRepository.playProgressively(), que arranca con la
-     * primera pista ya sonando y resuelve el resto en segundo plano.
+     * en iniciar la reproducción cuando no están descargados". Y
+     * segunda vuelta el mismo día: seleccionó varios artistas y no
+     * sonó nada en 8 minutos -- porque `playProgressively()` solo
+     * hacía progresiva la resolución de streaming, no la construcción
+     * del plan en sí (ver PopurriRepository.playArtistsProgressively()).
+     * Ahora `action` ya devuelve directamente si algo empezó a sonar
+     * -- toda la lógica de "arrancar rápido, seguir en segundo plano"
+     * vive en PopurriRepository, este ViewModel solo refleja el
+     * resultado en la UI.
      * ---
      * Real bug reported by Miguel Ángel (2026-08-02): "takes a long
-     * time to start playback when tracks aren't downloaded". No
-     * longer waits for builder() to resolve ALL tracks before
-     * playing -- builds the plan (fast, no real stream resolution)
-     * and delegates to PopurriRepository.playProgressively(), which
-     * starts with the first track already playing and resolves the
-     * rest in the background.
+     * time to start playback when tracks aren't downloaded". And a
+     * second round the same day: selected several artists and nothing
+     * played in 8 minutes -- because `playProgressively()` only made
+     * stream resolution progressive, not building the plan itself
+     * (see PopurriRepository.playArtistsProgressively()). Now `action`
+     * directly returns whether something started playing -- all the
+     * "start fast, continue in the background" logic lives in
+     * PopurriRepository, this ViewModel just reflects the result in
+     * the UI.
      */
-    private fun generateAndPlay(shuffle: Boolean, builder: suspend () -> List<QueueItem>) {
+    private fun generateAndPlay(action: suspend () -> Boolean) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isGeneratingPopurri = true, errorMessage = null)
             try {
-                val plan = builder()
-                val started = popurriRepository.playProgressively(playerManager, plan, shuffle)
+                val started = action()
                 if (!started) {
                     _uiState.value = _uiState.value.copy(
                         isGeneratingPopurri = false,
