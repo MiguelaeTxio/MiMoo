@@ -543,12 +543,132 @@ class RadioRepository @Inject constructor(
      * `resolveYoutubeCandidate()`); `null` leaves behavior exactly as
      * before.
      */
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-02), con log real:
+     * "Piano Concerto No. 21 - Andante" (obra genuina y muy conocida
+     * de Mozart) se rechazaba como "no encontrado" -- porque
+     * MusicBrainz cataloga la obra como "Piano Concerto No. 21 in C
+     * major, K. 467" (sin la palabra "Andante", el nombre del
+     * MOVIMIENTO, no de la obra), y la comparación de título exige que
+     * un título esté CONTENIDO en el otro. Ninguno de los dos lo está:
+     * "andante" sobra en el título del vídeo, "K. 467"/"C major"
+     * sobran en el de MusicBrainz -- rechazo, aunque sea genuinamente
+     * esa obra.
+     *
+     * Cita textual de Miguel Ángel sobre el motivo de fondo: "las
+     * coincidencias exactas son extremadamente difíciles ya que cada
+     * cuál sube los archivos con los nombres que pone de forma
+     * subjetiva, con lo cuál tenemos una selva de nombres" -- en
+     * clásica esto se agrava porque quien sube el vídeo suele poner
+     * SOLO el movimiento (Andante, Allegro...), nunca la obra
+     * completa con su numeración/tonalidad/catálogo.
+     *
+     * Se quitan aquí, ANTES de comparar, los nombres de movimiento más
+     * habituales -- palabra completa, sin tocar el resto del título.
+     * Si quitarlos deja el título vacío (el vídeo se titulaba SOLO con
+     * el movimiento), se conserva el original tal cual: no hay nada
+     * mejor que comparar.
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-02), with a real log:
+     * "Piano Concerto No. 21 - Andante" (a genuine, very well-known
+     * Mozart work) got rejected as "not found" -- because MusicBrainz
+     * catalogs the work as "Piano Concerto No. 21 in C major, K. 467"
+     * (without the word "Andante", the MOVEMENT's name, not the
+     * work's), and the title comparison requires one title to be
+     * CONTAINED in the other. Neither is: "andante" is extra in the
+     * video's title, "K. 467"/"C major" are extra in MusicBrainz's --
+     * rejected, even though it's genuinely that work.
+     *
+     * Miguel Ángel's own words on the underlying cause: "exact matches
+     * are extremely hard since everyone uploads files with whatever
+     * name they subjectively choose, so we've got a jungle of names"
+     * -- in classical this gets worse because whoever uploads the
+     * video usually only puts the movement name (Andante, Allegro...),
+     * never the full work with its numbering/key/catalog number.
+     *
+     * The most common movement names are stripped here, BEFORE
+     * comparing -- whole word only, the rest of the title untouched.
+     * If stripping them leaves the title blank (the video was titled
+     * with ONLY the movement), the original is kept as-is: there's
+     * nothing better to compare against.
+     */
+    private val CLASSICAL_MOVEMENT_WORDS = listOf(
+        "andante", "andantino", "allegro", "allegretto", "adagio", "adagietto",
+        "presto", "prestissimo", "largo", "larghetto", "lento", "grave",
+        "vivace", "vivo", "moderato", "scherzo", "rondo", "menuetto", "minuetto",
+        "minuet", "movement", "movimiento", "mvt", "preludio", "prelude",
+        "fuga", "fugue", "obertura", "overture", "finale",
+    )
+
+    private fun stripClassicalMovementNoise(title: String): String {
+        var result = title
+        for (word in CLASSICAL_MOVEMENT_WORDS) {
+            result = result.replace(
+                Regex("(?i)(^|[\\s\\-:,.])" + Regex.escape(word) + "($|[\\s\\-:,.])"),
+                " ",
+            )
+        }
+        return result.replace(Regex("\\s+"), " ").trim().ifBlank { title }
+    }
+
+    /**
+     * `composerFallback` -- arreglo real pedido por Miguel Ángel
+     * (2026-08-02), con log real como prueba: bajo ancla clásica
+     * (Beethoven), CADA candidato real de Daniel Barenboim se
+     * rechazaba como "no encontrado" -- MusicBrainz/Discogs/Wikidata
+     * catalogan la obra bajo el COMPOSITOR, no bajo el intérprete, así
+     * que buscar "Daniel Barenboim + título" nunca encuentra nada
+     * aunque el vídeo sea genuinamente esa obra. Su propia pregunta
+     * señaló la causa: la identidad del ancla YA se resolvió de forma
+     * inteligente una vez (el artista estructurado de esa pista SÍ es
+     * 'Beethoven', no el intérprete del vídeo, ver
+     * `anchorFromDictionary()`) -- pero esa resolución nunca se volvía
+     * a aplicar al verificar cada candidato nuevo.
+     *
+     * Si la comprobación normal (por intérprete) no encuentra nada,
+     * `composerFallback` -- la misma identidad que fijó el ancla,
+     * `PlayerManager.radioAnchorArtist` -- se reintenta ENTERA como si
+     * fuera el artista. Solo tiene efecto si el llamante lo pasa (solo
+     * para ancla clásica, ver `resolveYoutubeCandidate()`); `null` deja
+     * el comportamiento exactamente igual que antes. La misma señal
+     * (`composerFallback != null`) también activa
+     * `stripClassicalMovementNoise()` sobre el título -- las dos
+     * correcciones solo se aplican en ancla clásica.
+     * ---
+     * `composerFallback` -- real fix requested by Miguel Ángel
+     * (2026-08-02), with a real log as proof: under a classical anchor
+     * (Beethoven), EVERY real Daniel Barenboim candidate got rejected
+     * as "not found" -- MusicBrainz/Discogs/Wikidata catalog the work
+     * under the COMPOSER, not the performer, so searching "Daniel
+     * Barenboim + title" never finds anything even when the video
+     * genuinely is that work. His own question pointed at the cause:
+     * the anchor's identity was ALREADY resolved intelligently once
+     * (that track's structured artist really is 'Beethoven', not the
+     * video's performer, see `anchorFromDictionary()`) -- but that
+     * resolution never got reapplied when verifying each new
+     * candidate.
+     *
+     * If the normal (performer-based) check finds nothing,
+     * `composerFallback` -- the same identity that seeded the anchor,
+     * `PlayerManager.radioAnchorArtist` -- gets retried as if it were
+     * the artist, whole cascade included. Only has an effect if the
+     * caller passes it (only for classical anchors, see
+     * `resolveYoutubeCandidate()`); `null` leaves behavior exactly as
+     * before. The same signal (`composerFallback != null`) also
+     * triggers `stripClassicalMovementNoise()` on the title -- both
+     * fixes only apply on a classical anchor.
+     */
     suspend fun verifyTrackExists(
         artist: String,
         rawVideoTitle: String,
         composerFallback: String? = null,
     ): TrackExistence {
-        val direct = verifyTrackExistsForArtist(artist, rawVideoTitle)
+        val effectiveTitle = if (!composerFallback.isNullOrBlank()) {
+            stripClassicalMovementNoise(rawVideoTitle)
+        } else {
+            rawVideoTitle
+        }
+        val direct = verifyTrackExistsForArtist(artist, effectiveTitle)
         if (direct !is TrackExistence.NotFound) return direct
         if (composerFallback.isNullOrBlank() || composerFallback.equals(artist, ignoreCase = true)) {
             return direct
@@ -557,7 +677,7 @@ class RadioRepository @Inject constructor(
             "verifyTrackExists('$artist' -- '$rawVideoTitle') -- no encontrado como intérprete, " +
                 "reintentando como COMPOSITOR '$composerFallback' (ancla clásica)"
         )
-        return verifyTrackExistsForArtist(composerFallback, rawVideoTitle)
+        return verifyTrackExistsForArtist(composerFallback, effectiveTitle)
     }
 
     private suspend fun verifyTrackExistsForArtist(artist: String, rawVideoTitle: String): TrackExistence {
