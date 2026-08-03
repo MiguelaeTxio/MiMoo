@@ -75,6 +75,44 @@ data class QueueItem(
     val isLocal: Boolean,
     val artist: String? = null,
     val isFromRadio: Boolean = false,
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-03), con captura de
+     * pantalla: reproducir la emisora ShoutCast "Adroit Jazz
+     * Underground" (H09, `PlayerManager.playRadioStation()`) disparaba
+     * el modal "¿Quién es el artista?" de la Radio interna (H08) --
+     * distinto del que se arregló hacía un momento para el mismo
+     * síntoma en `play()`. Causa: `topUpRadioQueueIfNeeded()` (la
+     * lógica de "qué suena después" de la Radio, ver su kdoc) se
+     * dispara con CUALQUIER pista nueva que empieza a sonar, sin
+     * distinguir una emisora en directo -- que NUNCA termina, así que
+     * "qué suena después" no tiene ningún sentido para ella -- de una
+     * pista normal. Al no tener artista (nunca lo tendrá, es un
+     * stream, no una canción), preguntaba igual que si fuera una pista
+     * propia sin identificar.
+     *
+     * `true` marca un `QueueItem` como emisora de radio en directo --
+     * el ancla de Radio y `topUpRadioQueueIfNeeded()` lo ignoran por
+     * completo, nunca preguntan artista por su culpa. Solo lo pone
+     * `playRadioStation()`.
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-03), with a
+     * screenshot: playing the ShoutCast station "Adroit Jazz
+     * Underground" (H09, `PlayerManager.playRadioStation()`) triggered
+     * the internal Radio (H08) "Who's the artist?" modal -- different
+     * from the one just fixed for the same symptom in `play()`. Cause:
+     * `topUpRadioQueueIfNeeded()` (Radio's "what plays next" logic,
+     * see its kdoc) fires for ANY new track that starts playing,
+     * without distinguishing a live station -- which NEVER ends, so
+     * "what plays next" makes no sense for it -- from a normal track.
+     * With no artist (it never will have one, it's a stream, not a
+     * song), it asked just as if it were an unidentified own track.
+     *
+     * `true` marks a `QueueItem` as a live radio station -- Radio's
+     * anchor and `topUpRadioQueueIfNeeded()` ignore it completely,
+     * never ask for an artist because of it. Only `playRadioStation()`
+     * sets this.
+     */
+    val isRadioStation: Boolean = false,
     val youtubeId: String? = null,
     /**
      * S010 -- distinto de `artist`. `artist` es el "artista
@@ -474,7 +512,13 @@ class PlayerManager @Inject constructor(
                 val currentIndex = player.currentMediaItemIndex
                 val currentItem = queueItems.getOrNull(currentIndex)
                 val isLastItem = queueItems.isNotEmpty() && currentIndex == queueItems.lastIndex
-                if (isLastItem && currentItem?.isFromRadio != true) {
+                // Bug real reportado por Miguel Ángel (2026-08-03) --
+                // ver el comentario de QueueItem.isRadioStation. Una
+                // emisora ShoutCast en directo nunca siembra ni
+                // resetea el ancla de Radio: no tiene artista, no
+                // tiene "canción siguiente", y NUNCA termina, así que
+                // no hay ningún "después" que planificar.
+                if (isLastItem && currentItem?.isFromRadio != true && currentItem?.isRadioStation != true) {
                     // H08 (S009, corrección tras corte a los 3 temas)
                     // -- se fija el "ancla": el artista que de verdad
                     // arrancó la Radio. Si la cadena de "relacionados"
@@ -644,7 +688,11 @@ class PlayerManager @Inject constructor(
                     radioArtistPromptPending = false
                     _state.value = _state.value.copy(radioArtistPromptTrackTitle = null)
                 }
-                if (currentItem?.isFromRadio == true || isLastItem) {
+                // Mismo motivo que el bloque de arriba: una emisora en
+                // directo nunca dispara "qué suena después".
+                if (currentItem?.isRadioStation != true &&
+                    (currentItem?.isFromRadio == true || isLastItem)
+                ) {
                     topUpRadioQueueIfNeeded()
                 }
             }
@@ -1101,6 +1149,12 @@ class PlayerManager @Inject constructor(
     private fun topUpRadioQueueIfNeeded() {
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
+        // Blindaje adicional al de onMediaItemTransition() -- ver el
+        // comentario de QueueItem.isRadioStation. Si por cualquier
+        // otro camino se llegara a llamar aquí con una emisora en
+        // directo sonando, esto lo corta igual: nunca hay un
+        // "después" que planificar para un stream que no termina.
+        if (queueItems.getOrNull(player.currentMediaItemIndex)?.isRadioStation == true) return
         if (currentRadioBacklog() >= RADIO_QUEUE_SIZE) return
         // S026 -- si la última vuelta se detuvo por falta de red para
         // verificar un candidato, no se reintenta sola: espera a que
@@ -3154,6 +3208,7 @@ class PlayerManager @Inject constructor(
                     title = title,
                     isLocal = false,
                     artist = null,
+                    isRadioStation = true,
                     artworkUri = artworkUri,
                 ),
             ),
