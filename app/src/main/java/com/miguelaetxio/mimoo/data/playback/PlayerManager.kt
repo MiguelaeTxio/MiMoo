@@ -1625,6 +1625,21 @@ class PlayerManager @Inject constructor(
          * PERMANENTE para el resto de la sesión (no se reinicia por
          * ronda, ver su declaración) -- de ahí en adelante el 100% de
          * los diez huecos van a desconocidos.
+         *
+         * SEGUNDA ronda de este mismo arreglo (2026-08-02), petición
+         * explícita de Miguel Ángel: "vamos a buscar primero las 7/8/9
+         * de cada diez [desconocidos]... y luego buscamos las de disco
+         * cuando tengamos un colchón". Buscar disco tiene un coste real
+         * (`pickDiscoCandidate()` perfila artistas de la biblioteca
+         * contra MusicBrainz, aunque ya acotado a
+         * `RADIO_CLASSICAL_DISCO_PROFILE_LIMIT`) -- intentarlo ANTES
+         * que la exploración (rápida, ver más abajo) bloqueaba el
+         * arranque de la reproducción con la búsqueda más lenta de las
+         * dos. Ahora solo se intenta disco una vez esta ronda YA tiene
+         * llenos sus huecos de desconocidos (`radioRoundUnknownCount
+         * >= huecosDesconocidosPorRonda`) -- con esas pistas ya en cola
+         * sonando, el usuario nunca nota el coste de ir a buscar disco
+         * para las últimas.
          * ---
          * Explicit request from Miguel Ángel (2026-08-02), after the
          * classical deadlock fix: "in classical we should only take
@@ -1644,8 +1659,25 @@ class PlayerManager @Inject constructor(
          * PERMANENTLY for the rest of the session (not reset per
          * round, see its declaration) -- from then on 100% of the ten
          * slots go to unknown.
+         *
+         * SECOND round of this same fix (2026-08-02), explicit request
+         * from Miguel Ángel: "let's search the 7/8/9 out of ten
+         * [unknown] first... and only look for disco ones once we have
+         * a cushion". Looking for disco has a real cost
+         * (`pickDiscoCandidate()` profiles library artists against
+         * MusicBrainz, even if already capped at
+         * `RADIO_CLASSICAL_DISCO_PROFILE_LIMIT`) -- trying it BEFORE
+         * exploration (fast, see below) blocked playback from starting
+         * with the slower of the two searches. Now disco is only
+         * attempted once this round ALREADY has its unknown slots
+         * filled (`radioRoundUnknownCount >= unknownSlotsPerRound`) --
+         * with those tracks already queued and playing, the user never
+         * notices the cost of going after disco for the last few.
          */
-        if (anchor.isClassical && !radioClassicalDiscoExhausted && radioRoundDiscoCount < discoQuota) {
+        val unknownSlotsPerRound = (RADIO_ROUND_SIZE - discoQuota).coerceAtLeast(0)
+        if (anchor.isClassical && !radioClassicalDiscoExhausted && radioRoundDiscoCount < discoQuota &&
+            radioRoundUnknownCount >= unknownSlotsPerRound
+        ) {
             val discoItem = pickDiscoCandidate(
                 anchor, radioRoundArtists, avoidNames,
                 allowRepeat = false,
