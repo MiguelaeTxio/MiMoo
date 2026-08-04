@@ -271,6 +271,12 @@ class FavoritesViewModel @Inject constructor(
         // rápido puede llegar antes de que Compose repinte el botón
         // como deshabilitado. Ver el comentario de SelectionHeader().
         if (_uiState.value.isGeneratingPopurri) return
+        // Petición explícita de Miguel Ángel (2026-08-03): rellenar la
+        // espera real (~30s) con un sonido de apertura en vez de
+        // silencio -- ver el comentario de
+        // PlayerManager.playOpeningLoopIfAvailable(). No hace nada si
+        // el archivo de audio todavía no existe.
+        playerManager.playOpeningLoopIfAvailable(appContext)
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isGeneratingPopurri = true, errorMessage = null)
             try {

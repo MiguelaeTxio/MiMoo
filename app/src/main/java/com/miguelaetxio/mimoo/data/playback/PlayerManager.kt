@@ -3216,6 +3216,85 @@ class PlayerManager @Inject constructor(
         )
     }
 
+    /**
+     * Petición explícita de Miguel Ángel (2026-08-03): "podríamos
+     * poner un tema a modo de opening de mix... que se corte en
+     * cuanto se ejecute el primer tema" -- generar un popurrí de
+     * Favoritos sigue tardando ~30 segundos en arrancar de verdad
+     * (tiempo real, "no está mal" según sus propias palabras, dado lo
+     * que hace) -- esto rellena esa espera con un sonido de apertura
+     * en vez de silencio.
+     *
+     * Busca el recurso POR NOMBRE en tiempo de ejecución
+     * (`getIdentifier`), no por referencia `R.raw.popurri_opening` --
+     * así el código compila YA aunque el archivo de audio todavía no
+     * exista (no puedo generarlo ni descargarlo yo mismo, acceso de
+     * red restringido a dominios técnicos y sin capacidad de componer
+     * audio real). En cuanto Miguel Ángel añada un archivo llamado
+     * `popurri_opening.<extensión>` en `app/src/main/res/raw/`, esto
+     * se activa solo, sin tocar código de nuevo. Sin archivo, no pasa
+     * nada -- se queda en silencio como hasta ahora.
+     *
+     * Marcado `isRadioStation = true` a propósito -- mismo motivo que
+     * las emisoras ShoutCast (ver ese comentario): esto no es una
+     * pista real, no tiene artista, y va a cortarse en segundos --
+     * nunca debe sembrar ni resetear el ancla de Radio.
+     *
+     * No usa modo cíclico -- decisión deliberada para no complicar el
+     * `repeatMode` del reproductor (que además es un ajuste del
+     * usuario, no algo que este mecanismo deba tocar). El archivo que
+     * ponga Miguel Ángel simplemente debe durar más que la espera
+     * típica (deliberadamente NO son 30s. Si es más corto, sonará su
+     * silencio final -- que dure de sobra, un par de minutos, es la
+     * forma más simple de resolverlo sin lógica de bucle).
+     * ---
+     * Explicit request from Miguel Ángel (2026-08-03): "we could add a
+     * track as a mix opening... that cuts off as soon as the first
+     * track plays" -- generating a Favorites popurrí still takes ~30
+     * real seconds to actually start ("not bad" in his own words,
+     * given what it does) -- this fills that wait with an opening
+     * sound instead of silence.
+     *
+     * Looks up the resource BY NAME at runtime (`getIdentifier`), not
+     * by `R.raw.popurri_opening` reference -- so the code compiles
+     * NOW even though the audio file doesn't exist yet (I can't
+     * generate or download it myself, network access restricted to
+     * technical domains and no ability to compose real audio). As
+     * soon as Miguel Ángel adds a file named
+     * `popurri_opening.<extension>` in `app/src/main/res/raw/`, this
+     * activates on its own, no code changes needed. Without the file,
+     * nothing happens -- stays silent like before.
+     *
+     * Marked `isRadioStation = true` on purpose -- same reason as
+     * ShoutCast stations (see that comment): this isn't a real track,
+     * has no artist, and will be cut off within seconds -- it must
+     * never seed or reset Radio's anchor.
+     *
+     * Doesn't use loop/repeat mode -- deliberate choice to avoid
+     * complicating the player's `repeatMode` (which is also a user
+     * setting, not something this mechanism should touch). Whatever
+     * file Miguel Ángel adds just needs to run longer than the
+     * typical wait (deliberately not exactly 30s -- if it's shorter,
+     * its natural silence at the end will play out; making it a
+     * couple of minutes long is the simplest way to avoid needing any
+     * loop logic).
+     */
+    fun playOpeningLoopIfAvailable(context: Context) {
+        val resId = context.resources.getIdentifier("popurri_opening", "raw", context.packageName)
+        if (resId == 0) return
+        val uri = "android.resource://${context.packageName}/$resId"
+        playQueue(
+            listOf(
+                QueueItem(
+                    uri = uri,
+                    title = "Preparando tu mezcla…",
+                    isLocal = true,
+                    isRadioStation = true,
+                ),
+            ),
+        )
+    }
+
     fun play(
         streamUrl: String,
         title: String,
