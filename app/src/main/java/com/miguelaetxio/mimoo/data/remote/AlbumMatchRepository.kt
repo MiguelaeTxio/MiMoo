@@ -1,6 +1,9 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzTrack
 import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -121,6 +124,14 @@ class AlbumMatchRepository @Inject constructor(
          * tiempo real de red.
          */
         const val TRACK_SEARCH_RESULT_LIMIT = 5
+
+        /**
+         * Bug real de latencia (2026-08-03) -- ver el comentario de
+         * `matchAlbumTracks()`. Búsquedas en YouTube en paralelo por
+         * tanda al emparejar el tracklist de un álbum, en vez de una
+         * por una.
+         */
+        const val TRACK_MATCH_CONCURRENCY = 6
     }
 
     /**
@@ -167,6 +178,47 @@ class AlbumMatchRepository @Inject constructor(
      * Devuelve el tracklist del release ya elegido por el usuario
      * (PASO 6d), cada entrada emparejada contra YouTube vía búsqueda
      * libre de yt-dlp (S007 -- ver cabecera de la clase).
+     *
+     * Bug real de LATENCIA reportado por Miguel Ángel (2026-08-03):
+     * "seguimos teniendo una gran latencia al generar mix desde
+     * favoritos... debe arrancar inmediatamente". Causa: esta función
+     * buscaba en YouTube pista a pista, EN SERIE, el álbum entero (10 a
+     * 15 llamadas de red seguidas) antes de devolver nada -- y eso
+     * pasaba SIEMPRE, incluso cuando solo hacía falta identificar la
+     * PRIMERA pista para arrancar la reproducción
+     * (`PopurriRepository.playRoundRobinProgressively()`, que ya
+     * resolvía solo la primera URL de streaming, pero tenía que
+     * esperar a esta función entera primero).
+     *
+     * Ahora las búsquedas se lanzan en tandas concurrentes
+     * (`TRACK_MATCH_CONCURRENCY` a la vez) en vez de una por una --
+     * mismo patrón ya usado en `PopurriRepository.resolveStreamUrlsConcurrently()`
+     * esta misma sesión. Un álbum de 12 pistas pasa de ~12 llamadas
+     * seguidas a ~2 tandas -- varias veces más rápido para identificar
+     * la primera pista reproducible. El ORDEN final del resultado
+     * (`position` de cada pista) no cambia -- se reordena al terminar,
+     * las tandas concurrentes no garantizan terminar en orden.
+     * ---
+     * Real LATENCY bug reported by Miguel Ángel (2026-08-03): "we still
+     * have a lot of latency generating a mix from favorites... it
+     * should start immediately". Cause: this function searched YouTube
+     * track by track, IN SERIES, for the whole album (10 to 15 network
+     * calls back to back) before returning anything -- and that
+     * happened EVERY time, even when only the FIRST track needed
+     * identifying to start playback
+     * (`PopurriRepository.playRoundRobinProgressively()`, which
+     * already resolved only the first streaming URL, but had to wait
+     * for this whole function first).
+     *
+     * Searches are now launched in concurrent batches
+     * (`TRACK_MATCH_CONCURRENCY` at a time) instead of one by one --
+     * same pattern already used in
+     * `PopurriRepository.resolveStreamUrlsConcurrently()` this same
+     * session. A 12-track album goes from ~12 back-to-back calls to
+     * ~2 batches -- several times faster to identify the first
+     * playable track. The final result's ORDER (each track's
+     * `position`) doesn't change -- it's re-sorted at the end,
+     * concurrent batches don't guarantee finishing in order.
      */
     suspend fun matchAlbumTracks(
         mbid: String,
@@ -177,55 +229,67 @@ class AlbumMatchRepository @Inject constructor(
             .flatMap { it.tracks }
             .sortedBy { it.position }
 
-        return tracklist.map { mbTrack ->
-            val mbDurationSeconds = mbTrack.length?.let { it / 1000 }
-
-            val searchQuery = if (!artist.isNullOrBlank()) {
-                "$artist ${mbTrack.title}"
-            } else {
-                mbTrack.title
+        val results = mutableListOf<AlbumTrackMatch>()
+        for (chunk in tracklist.chunked(TRACK_MATCH_CONCURRENCY)) {
+            coroutineScope {
+                val deferred = chunk.map { mbTrack -> async { matchOneTrack(mbTrack, artist) } }
+                results += deferred.map { it.await() }
             }
-
-            var trackError: String? = null
-            val candidates = try {
-                externalLinkResolver
-                    .searchYoutube(searchQuery, limit = TRACK_SEARCH_RESULT_LIMIT)
-                    .tracks
-                    .map { entry ->
-                        TrackDto(
-                            youtubeId = entry.youtubeId,
-                            title = entry.title,
-                            durationSeconds = entry.durationSeconds,
-                            thumbnailUrl = entry.thumbnailUrl,
-                            channelTitle = entry.channelTitle,
-                        )
-                    }
-            } catch (e: Exception) {
-                trackError = e.message ?: "Error al buscar en YouTube"
-                emptyList()
-            }
-
-            val best = if (mbDurationSeconds != null) {
-                candidates.minByOrNull { abs(it.durationSeconds - mbDurationSeconds) }
-            } else {
-                // No reliable duration to compare against — take the
-                // first result rather than guessing, and always flag
-                // it for manual review (isAutoMatched = false).
-                candidates.firstOrNull()
-            }
-
-            val isAutoMatched = best != null && mbDurationSeconds != null &&
-                abs(best.durationSeconds - mbDurationSeconds) <= DURATION_TOLERANCE_SECONDS
-
-            AlbumTrackMatch(
-                position = mbTrack.position,
-                mbTitle = mbTrack.title,
-                mbDurationSeconds = mbDurationSeconds,
-                matchedTrack = best,
-                isAutoMatched = isAutoMatched,
-                matchError = trackError,
-            )
         }
+        return results.sortedBy { it.position }
+    }
+
+    private suspend fun matchOneTrack(
+        mbTrack: MusicBrainzTrack,
+        artist: String?,
+    ): AlbumTrackMatch {
+        val mbDurationSeconds = mbTrack.length?.let { it / 1000 }
+
+        val searchQuery = if (!artist.isNullOrBlank()) {
+            "$artist ${mbTrack.title}"
+        } else {
+            mbTrack.title
+        }
+
+        var trackError: String? = null
+        val candidates = try {
+            externalLinkResolver
+                .searchYoutube(searchQuery, limit = TRACK_SEARCH_RESULT_LIMIT)
+                .tracks
+                .map { entry ->
+                    TrackDto(
+                        youtubeId = entry.youtubeId,
+                        title = entry.title,
+                        durationSeconds = entry.durationSeconds,
+                        thumbnailUrl = entry.thumbnailUrl,
+                        channelTitle = entry.channelTitle,
+                    )
+                }
+        } catch (e: Exception) {
+            trackError = e.message ?: "Error al buscar en YouTube"
+            emptyList()
+        }
+
+        val best = if (mbDurationSeconds != null) {
+            candidates.minByOrNull { abs(it.durationSeconds - mbDurationSeconds) }
+        } else {
+            // No reliable duration to compare against — take the
+            // first result rather than guessing, and always flag
+            // it for manual review (isAutoMatched = false).
+            candidates.firstOrNull()
+        }
+
+        val isAutoMatched = best != null && mbDurationSeconds != null &&
+            abs(best.durationSeconds - mbDurationSeconds) <= DURATION_TOLERANCE_SECONDS
+
+        return AlbumTrackMatch(
+            position = mbTrack.position,
+            mbTitle = mbTrack.title,
+            mbDurationSeconds = mbDurationSeconds,
+            matchedTrack = best,
+            isAutoMatched = isAutoMatched,
+            matchError = trackError,
+        )
     }
 
     private fun escape(value: String) = value.replace("\"", "")
