@@ -122,11 +122,36 @@ private fun EmptyTabMessage(text: String) {
     }
 }
 
-/** Cabecera común a Artistas/Álbumes: "Marcar/desmarcar todos" + botones de reproducción según selección. */
+/**
+ * Cabecera común a Artistas/Álbumes: "Marcar/desmarcar todos" +
+ * botones de reproducción según selección.
+ *
+ * Bug real reportado por Miguel Ángel (2026-08-03), confirmado con
+ * log: al no ver reacción inmediata, pulsó reproducir tres veces
+ * seguidas en 6 segundos -- las tres arrancaron `playArtistsProgressively()`
+ * en paralelo, cada una resolviendo los mismos artistas por su
+ * cuenta, un desperdicio real de tiempo y red que además podía
+ * pisarse entre sí (varias llamadas a `playQueue()`/`playQueueShuffled()`
+ * compitiendo). `isGenerating` bloquea los botones mientras ya hay
+ * un popurrí en marcha.
+ * ---
+ * Header shared by Artists/Albums: "Select/deselect all" + playback
+ * buttons based on selection.
+ *
+ * Real bug reported by Miguel Ángel (2026-08-03), confirmed with a
+ * log: not seeing an immediate reaction, he tapped play three times
+ * in 6 seconds -- all three started `playArtistsProgressively()` in
+ * parallel, each independently resolving the same artists, a real
+ * waste of time and network that could also race against each other
+ * (several `playQueue()`/`playQueueShuffled()` calls competing).
+ * `isGenerating` blocks the buttons while a popurrí is already in
+ * progress.
+ */
 @Composable
 private fun SelectionHeader(
     selectedCount: Int,
     totalCount: Int,
+    isGenerating: Boolean,
     onToggleSelectAll: () -> Unit,
     onPlaySequential: () -> Unit,
     onPlayShuffled: () -> Unit,
@@ -144,10 +169,10 @@ private fun SelectionHeader(
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
         )
-        IconButton(onClick = onPlaySequential, enabled = selectedCount > 0) {
+        IconButton(onClick = onPlaySequential, enabled = selectedCount > 0 && !isGenerating) {
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir popurrí secuencial")
         }
-        IconButton(onClick = onPlayShuffled, enabled = selectedCount > 0) {
+        IconButton(onClick = onPlayShuffled, enabled = selectedCount > 0 && !isGenerating) {
             Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir popurrí aleatorio")
         }
     }
@@ -163,6 +188,7 @@ private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel)
         SelectionHeader(
             selectedCount = uiState.selectedArtists.size,
             totalCount = uiState.artists.size,
+            isGenerating = uiState.isGeneratingPopurri,
             onToggleSelectAll = viewModel::toggleSelectAllArtists,
             onPlaySequential = { viewModel.playSelectedArtists(shuffle = false) },
             onPlayShuffled = { viewModel.playSelectedArtists(shuffle = true) },
@@ -192,6 +218,7 @@ private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
         SelectionHeader(
             selectedCount = uiState.selectedAlbums.size,
             totalCount = uiState.albums.size,
+            isGenerating = uiState.isGeneratingPopurri,
             onToggleSelectAll = viewModel::toggleSelectAllAlbums,
             onPlaySequential = { viewModel.playSelectedAlbums(shuffle = false) },
             onPlayShuffled = { viewModel.playSelectedAlbums(shuffle = true) },
@@ -228,10 +255,16 @@ private fun TracksTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            IconButton(onClick = { viewModel.playAllFavoriteTracks(shuffle = false) }) {
+            IconButton(
+                onClick = { viewModel.playAllFavoriteTracks(shuffle = false) },
+                enabled = !uiState.isGeneratingPopurri,
+            ) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir todos, secuencial")
             }
-            IconButton(onClick = { viewModel.playAllFavoriteTracks(shuffle = true) }) {
+            IconButton(
+                onClick = { viewModel.playAllFavoriteTracks(shuffle = true) },
+                enabled = !uiState.isGeneratingPopurri,
+            ) {
                 Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir todos, aleatorio")
             }
         }

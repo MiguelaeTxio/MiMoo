@@ -266,6 +266,11 @@ class FavoritesViewModel @Inject constructor(
      * to the screen.
      */
     private fun generateAndPlay(action: suspend () -> Boolean) {
+        // Blindaje adicional al de FavoritesScreen (botones
+        // deshabilitados con isGeneratingPopurri) -- un toque muy
+        // rápido puede llegar antes de que Compose repinte el botón
+        // como deshabilitado. Ver el comentario de SelectionHeader().
+        if (_uiState.value.isGeneratingPopurri) return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isGeneratingPopurri = true, errorMessage = null)
             try {
