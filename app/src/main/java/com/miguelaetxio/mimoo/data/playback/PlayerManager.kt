@@ -3227,26 +3227,33 @@ class PlayerManager @Inject constructor(
      *
      * Busca el recurso POR NOMBRE en tiempo de ejecución
      * (`getIdentifier`), no por referencia `R.raw.popurri_opening` --
-     * así el código compila YA aunque el archivo de audio todavía no
-     * exista (no puedo generarlo ni descargarlo yo mismo, acceso de
-     * red restringido a dominios técnicos y sin capacidad de componer
-     * audio real). En cuanto Miguel Ángel añada un archivo llamado
-     * `popurri_opening.<extensión>` en `app/src/main/res/raw/`, esto
-     * se activa solo, sin tocar código de nuevo. Sin archivo, no pasa
-     * nada -- se queda en silencio como hasta ahora.
+     * así el código compilaba YA antes de que el archivo existiera.
+     * Ya existe (`bouncy-trap-drums-angry-hitting-beat_160bpm.wav`,
+     * copiado como `app/src/main/res/raw/popurri_opening.wav`) -- un
+     * loop de batería de ~3 segundos, NO una pista larga. Sin el
+     * archivo, sigue sin hacer nada (silencio, como antes).
      *
-     * Marcado `isRadioStation = true` a propósito -- mismo motivo que
-     * las emisoras ShoutCast (ver ese comentario): esto no es una
-     * pista real, no tiene artista, y va a cortarse en segundos --
-     * nunca debe sembrar ni resetear el ancla de Radio.
+     * SEGUNDA VUELTA sobre el diseño original: al ser un loop tan
+     * corto, si sonara una sola vez se cortaría solo mucho antes de
+     * que la resolución real termine -- hace falta repetirlo de
+     * verdad. `player.repeatMode = REPEAT_MODE_ONE` mientras suena el
+     * opening, y `stopOpeningLoopIfActive()` lo devuelve a
+     * `REPEAT_MODE_OFF` en cuanto arranca la pista real
+     * (`playQueue()`/`playQueueShuffled()` ya lo llaman solos, ver sus
+     * comentarios) -- si no se hiciera, la primera pista real del
+     * popurrí se quedaría repitiéndose para siempre en vez de avanzar
+     * a la segunda.
      *
-     * No usa modo cíclico -- decisión deliberada para no complicar el
-     * `repeatMode` del reproductor (que además es un ajuste del
-     * usuario, no algo que este mecanismo deba tocar). El archivo que
-     * ponga Miguel Ángel simplemente debe durar más que la espera
-     * típica (deliberadamente NO son 30s. Si es más corto, sonará su
-     * silencio final -- que dure de sobra, un par de minutos, es la
-     * forma más simple de resolverlo sin lógica de bucle).
+     * `openingLoopActive` es lo que distingue "el bucle está sonando,
+     * hay que restaurar el modo cíclico" de "el usuario ya tenía
+     * puesto reproducción cíclica por su cuenta, eso no se toca" --
+     * este mecanismo nunca activa ni desactiva el cíclico del usuario,
+     * solo el suyo propio.
+     *
+     * Marcado `isRadioStation = true` -- mismo motivo que las emisoras
+     * ShoutCast (ver ese comentario): esto no es una pista real, no
+     * tiene artista, y va a cortarse en segundos -- nunca debe sembrar
+     * ni resetear el ancla de Radio.
      * ---
      * Explicit request from Miguel Ángel (2026-08-03): "we could add a
      * track as a mix opening... that cuts off as soon as the first
@@ -3256,32 +3263,61 @@ class PlayerManager @Inject constructor(
      * sound instead of silence.
      *
      * Looks up the resource BY NAME at runtime (`getIdentifier`), not
-     * by `R.raw.popurri_opening` reference -- so the code compiles
-     * NOW even though the audio file doesn't exist yet (I can't
-     * generate or download it myself, network access restricted to
-     * technical domains and no ability to compose real audio). As
-     * soon as Miguel Ángel adds a file named
-     * `popurri_opening.<extension>` in `app/src/main/res/raw/`, this
-     * activates on its own, no code changes needed. Without the file,
-     * nothing happens -- stays silent like before.
+     * by `R.raw.popurri_opening` reference -- so the code already
+     * compiled before the file existed. It now exists
+     * (`bouncy-trap-drums-angry-hitting-beat_160bpm.wav`, copied as
+     * `app/src/main/res/raw/popurri_opening.wav`) -- a ~3-second drum
+     * loop, NOT a long track. Without the file, still does nothing
+     * (silence, as before).
      *
-     * Marked `isRadioStation = true` on purpose -- same reason as
-     * ShoutCast stations (see that comment): this isn't a real track,
-     * has no artist, and will be cut off within seconds -- it must
-     * never seed or reset Radio's anchor.
+     * SECOND ROUND on the original design: being such a short loop, if
+     * it only played once it would end well before real resolution
+     * finishes -- it genuinely needs to repeat. `player.repeatMode =
+     * REPEAT_MODE_ONE` while the opening plays, and
+     * `stopOpeningLoopIfActive()` restores `REPEAT_MODE_OFF` as soon
+     * as the real track starts (`playQueue()`/`playQueueShuffled()`
+     * already call it themselves, see their comments) -- without this,
+     * the popurrí's first real track would keep looping forever
+     * instead of advancing to the second.
      *
-     * Doesn't use loop/repeat mode -- deliberate choice to avoid
-     * complicating the player's `repeatMode` (which is also a user
-     * setting, not something this mechanism should touch). Whatever
-     * file Miguel Ángel adds just needs to run longer than the
-     * typical wait (deliberately not exactly 30s -- if it's shorter,
-     * its natural silence at the end will play out; making it a
-     * couple of minutes long is the simplest way to avoid needing any
-     * loop logic).
+     * `openingLoopActive` is what distinguishes "the loop is playing,
+     * repeat mode needs restoring" from "the user already had their
+     * own cyclic playback on, don't touch that" -- this mechanism
+     * never turns the user's own cyclic mode on or off, only its own.
+     *
+     * Marked `isRadioStation = true` -- same reason as ShoutCast
+     * stations (see that comment): this isn't a real track, has no
+     * artist, and will be cut off within seconds -- it must never seed
+     * or reset Radio's anchor.
      */
+    private var openingLoopActive = false
+
+    /**
+     * Índice en la cola donde quedó insertado el opening -- `playQueue()`
+     * INSERTA, no reemplaza (ver su comentario), así que la pista real
+     * que lo sustituye se añade DESPUÉS de él en la cola en vez de
+     * borrarlo -- sin esto, el opening se saltaría bien (el `seekTo()`
+     * de `playQueue()` ya salta a la pista nueva) pero se quedaría
+     * como un hueco extraño en "Cola de reproducción", visible si el
+     * usuario pulsa "anterior". `stopOpeningLoopIfActive()` lo borra de
+     * verdad, no solo lo salta.
+     * ---
+     * Index in the queue where the opening ended up inserted --
+     * `playQueue()` INSERTS, doesn't replace (see its comment), so the
+     * real track that replaces it gets added AFTER it in the queue
+     * instead of erasing it -- without this, the opening would get
+     * skipped fine (`playQueue()`'s `seekTo()` already jumps to the new
+     * track) but would linger as a strange gap in "Cola de
+     * reproducción", visible if the user taps "previous".
+     * `stopOpeningLoopIfActive()` actually deletes it, not just skips
+     * it.
+     */
+    private var openingLoopQueueIndex: Int? = null
+
     fun playOpeningLoopIfAvailable(context: Context) {
         val resId = context.resources.getIdentifier("popurri_opening", "raw", context.packageName)
         if (resId == 0) return
+        val insertedAt = queueItems.size
         val uri = "android.resource://${context.packageName}/$resId"
         playQueue(
             listOf(
@@ -3293,6 +3329,19 @@ class PlayerManager @Inject constructor(
                 ),
             ),
         )
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        openingLoopActive = true
+        openingLoopQueueIndex = insertedAt
+    }
+
+    /** Ver el comentario de `playOpeningLoopIfAvailable()`. Llamado automáticamente por `playQueue()`/`playQueueShuffled()`. */
+    private fun stopOpeningLoopIfActive() {
+        if (openingLoopActive) {
+            player.repeatMode = Player.REPEAT_MODE_OFF
+            openingLoopActive = false
+            openingLoopQueueIndex?.let { index -> removeFromQueue(index) }
+            openingLoopQueueIndex = null
+        }
     }
 
     fun play(
@@ -3484,6 +3533,7 @@ class PlayerManager @Inject constructor(
 
     fun playQueue(items: List<QueueItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
+        stopOpeningLoopIfActive()
         val insertAt = if (queueItems.isEmpty()) {
             0
         } else {
