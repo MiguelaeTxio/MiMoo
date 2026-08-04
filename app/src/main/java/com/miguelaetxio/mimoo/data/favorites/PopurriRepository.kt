@@ -1,5 +1,7 @@
 package com.miguelaetxio.mimoo.data.favorites
 
+import android.content.Context
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
@@ -14,6 +16,7 @@ import com.miguelaetxio.mimoo.data.remote.ArtistDirectoryRepository
 import com.miguelaetxio.mimoo.data.remote.ArtistResolution
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroup
 import com.miguelaetxio.mimoo.util.SearchNormalizer
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -77,6 +80,8 @@ class PopurriRepository @Inject constructor(
     private val artistDirectoryRepository: ArtistDirectoryRepository,
     private val searchResultTrackRepository: SearchResultTrackRepository,
     private val streamResolver: StreamResolver,
+    @ApplicationContext private val appContext: Context,
+    private val storageManager: StorageManager,
 ) {
     companion object {
         const val TRACK_CAP = 100
@@ -174,18 +179,43 @@ class PopurriRepository @Inject constructor(
         shuffle: Boolean,
     ): Boolean {
         if (artists.isEmpty()) return false
+        log("playArtistsProgressively() -- ${artists.size} artista(s) seleccionados: ${artists.joinToString { it.artist }}")
         val localIndex = buildLocalIndex()
         val queues = artists.mapNotNull { fav ->
-            val resolution = artistDirectoryRepository.resolveArtist(fav.artist)
-            val resolved = resolution as? ArtistResolution.Resolved ?: return@mapNotNull null
-            val albums = artistDirectoryRepository.getAlbums(resolved.mbid)
-            val singles = artistDirectoryRepository.getSingles(resolved.mbid)
+            val resolution = try {
+                artistDirectoryRepository.resolveArtist(fav.artist)
+            } catch (e: Exception) {
+                log("playArtistsProgressively() -- resolveArtist('${fav.artist}') lanzó excepción: ${e.javaClass.simpleName}: ${e.message}")
+                return@mapNotNull null
+            }
+            val resolved = resolution as? ArtistResolution.Resolved
+            if (resolved == null) {
+                log("playArtistsProgressively() -- '${fav.artist}' no se pudo resolver a un MBID ($resolution), se descarta de este popurrí")
+                return@mapNotNull null
+            }
+            val albums = try {
+                artistDirectoryRepository.getAlbums(resolved.mbid)
+            } catch (e: Exception) {
+                log("playArtistsProgressively() -- getAlbums('${resolved.canonicalName}') lanzó excepción: ${e.javaClass.simpleName}: ${e.message}")
+                return@mapNotNull null
+            }
+            val singles = try {
+                artistDirectoryRepository.getSingles(resolved.mbid)
+            } catch (e: Exception) {
+                log("playArtistsProgressively() -- getSingles('${resolved.canonicalName}') lanzó excepción: ${e.javaClass.simpleName}: ${e.message}")
+                emptyList()
+            }
+            log("playArtistsProgressively() -- '${fav.artist}' -> '${resolved.canonicalName}' (${albums.size} álbumes, ${singles.size} sencillos)")
             val units = (albums + singles).map { rg ->
                 AlbumUnit.ReleaseGroupUnit(resolved.canonicalName, rg) as AlbumUnit
             }
             ArrayDeque(units)
         }
-        return playRoundRobinProgressively(playerManager, queues, localIndex, shuffle)
+        val started = playRoundRobinProgressively(playerManager, queues, localIndex, shuffle)
+        if (!started) {
+            log("playArtistsProgressively() -- NINGÚN artista dio ni una sola pista reproducible, popurrí vacío")
+        }
+        return started
     }
 
     /** Mismo arreglo que playArtistsProgressively() -- ver su comentario. */
@@ -195,11 +225,16 @@ class PopurriRepository @Inject constructor(
         shuffle: Boolean,
     ): Boolean {
         if (albums.isEmpty()) return false
+        log("playAlbumsProgressively() -- ${albums.size} álbum(es) seleccionados: ${albums.joinToString { "${it.artist} - ${it.album}" }}")
         val localIndex = buildLocalIndex()
         val queues = albums.map { fav ->
             ArrayDeque(listOf(AlbumUnit.FavoriteAlbumUnit(fav) as AlbumUnit))
         }
-        return playRoundRobinProgressively(playerManager, queues, localIndex, shuffle)
+        val started = playRoundRobinProgressively(playerManager, queues, localIndex, shuffle)
+        if (!started) {
+            log("playAlbumsProgressively() -- NINGÚN álbum dio ni una sola pista reproducible, popurrí vacío")
+        }
+        return started
     }
 
     /**
@@ -282,6 +317,7 @@ class PopurriRepository @Inject constructor(
                 val tracks = try {
                     resolveUnit(unit, localIndex)
                 } catch (e: Exception) {
+                    log("playRoundRobinProgressively() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
                     emptyList()
                 }
                 val fresh = collectFresh(tracks, seenKeys, totalCollected)
@@ -307,6 +343,10 @@ class PopurriRepository @Inject constructor(
                 return true
             }
         }
+        log(
+            "playRoundRobinProgressively() -- Fase 1 agotada sin encontrar ni una sola pista " +
+                "reproducible en ${queues.size} cola(s) (tope=$TRACK_CAP, recogidas=${totalCollected[0]})",
+        )
         return false
     }
 
@@ -328,6 +368,7 @@ class PopurriRepository @Inject constructor(
                 val tracks = try {
                     resolveUnit(unit, localIndex)
                 } catch (e: Exception) {
+                    log("continueCollecting() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
                     emptyList()
                 }
                 val fresh = collectFresh(tracks, seenKeys, totalCollected)
@@ -339,7 +380,16 @@ class PopurriRepository @Inject constructor(
                 }
             }
         }
+        log("continueCollecting() -- terminado, ${totalCollected[0]}/$TRACK_CAP pistas reunidas en total")
     }
+
+    /** Nombre corto de una unidad de trabajo, solo para los mensajes de depuración. */
+    private fun unitLabel(unit: AlbumUnit): String = when (unit) {
+        is AlbumUnit.ReleaseGroupUnit -> "${unit.artist} - ${unit.releaseGroup.title}"
+        is AlbumUnit.FavoriteAlbumUnit -> "${unit.favorite.artist} - ${unit.favorite.album}"
+    }
+
+    private fun log(line: String) = PopurriDebugLogger.log(appContext, storageManager, line)
 
     /** Filtra por deduplicación global (artista+título normalizados) y respeta el tope de 100, compartido por las dos fases. */
     private fun collectFresh(
@@ -558,9 +608,15 @@ class PopurriRepository @Inject constructor(
         plan: List<QueueItem>,
         shuffle: Boolean,
     ): Boolean {
-        if (plan.isEmpty()) return false
+        if (plan.isEmpty()) {
+            log("playProgressively() -- plan vacío, no hay ningún sencillo favorito resoluble")
+            return false
+        }
         val firstBatch = resolveStreamUrlsConcurrently(plan.take(INITIAL_BATCH_SIZE))
-        if (firstBatch.isEmpty()) return false
+        if (firstBatch.isEmpty()) {
+            log("playProgressively() -- no se pudo resolver la URL de streaming de la primera pista del plan (${plan.size} en total)")
+            return false
+        }
         if (shuffle) {
             playerManager.playQueueShuffled(firstBatch)
         } else {

@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.favorites.FavoritePlaylistRow
 import com.miguelaetxio.mimoo.data.favorites.FavoritesRepository
 import com.miguelaetxio.mimoo.data.favorites.FavoriteTrackRow
+import com.miguelaetxio.mimoo.data.favorites.PopurriDebugLogger
 import com.miguelaetxio.mimoo.data.favorites.PopurriRepository
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
@@ -60,6 +62,7 @@ class FavoritesViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val autoSyncPusher: AutoSyncPusher,
     @ApplicationContext private val appContext: Context,
+    private val storageManager: StorageManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
@@ -233,6 +236,35 @@ class FavoritesViewModel @Inject constructor(
      * PopurriRepository, this ViewModel just reflects the result in
      * the UI.
      */
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-03), con captura de
+     * pantalla: al generar un popurrí de 7 artistas favoritos, salió
+     * en pantalla el texto pelado "timeout" -- el mensaje crudo de una
+     * excepción de red (probablemente de
+     * `ArtistDirectoryRepository.getAlbums()`, que no estaba envuelta
+     * en un `try/catch` y tumbaba toda la construcción de colas sin
+     * ningún control, ver `PopurriRepository.playArtistsProgressively()`)
+     * mostrado tal cual, sin contexto ninguno.
+     *
+     * Ahora el mensaje que ve el usuario es SIEMPRE uno claro y
+     * accionable -- el detalle real de la excepción (clase + mensaje)
+     * va al registro de depuración propio de Favoritos
+     * (`PopurriDebugLogger`, nuevo hoy mismo), no a la pantalla.
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-03), with a
+     * screenshot: generating a popurrí from 7 favorite artists showed
+     * the bare text "timeout" on screen -- a raw network exception
+     * message (likely from `ArtistDirectoryRepository.getAlbums()`,
+     * which wasn't wrapped in a `try/catch` and brought down the whole
+     * queue-building process with no handling at all, see
+     * `PopurriRepository.playArtistsProgressively()`) shown as-is, with
+     * no context.
+     *
+     * Now the message the user sees is ALWAYS a clear, actionable one
+     * -- the real exception detail (class + message) goes to
+     * Favorites' own debug log (`PopurriDebugLogger`, new today), not
+     * to the screen.
+     */
     private fun generateAndPlay(action: suspend () -> Boolean) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isGeneratingPopurri = true, errorMessage = null)
@@ -247,9 +279,14 @@ class FavoritesViewModel @Inject constructor(
                 }
                 _uiState.value = _uiState.value.copy(isGeneratingPopurri = false)
             } catch (e: Exception) {
+                PopurriDebugLogger.log(
+                    appContext, storageManager,
+                    "FavoritesViewModel.generateAndPlay() -- excepción sin capturar: " +
+                        "${e.javaClass.simpleName}: ${e.message}",
+                )
                 _uiState.value = _uiState.value.copy(
                     isGeneratingPopurri = false,
-                    errorMessage = e.message ?: "Error al generar el popurrí",
+                    errorMessage = "No se ha podido generar el popurrí. Vuelve a intentarlo.",
                 )
             }
         }
