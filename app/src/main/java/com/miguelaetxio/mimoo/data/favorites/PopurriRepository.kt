@@ -456,8 +456,28 @@ class PopurriRepository @Inject constructor(
             }
         }
         return when (unit) {
-            is AlbumUnit.ReleaseGroupUnit ->
-                resolveTracksForReleaseGroup(unit.releaseGroup.id, unit.artist, unit.releaseGroup.title)
+            is AlbumUnit.ReleaseGroupUnit -> {
+                // Bug real (2026-08-03, log real como prueba: 100% de
+                // los álbumes de este flujo fallaban con HTTP 404) --
+                // `unit.releaseGroup.id` es un id de RELEASE-GROUP
+                // (getAlbums()/getSingles()), pero
+                // resolveTracksForReleaseGroup()/matchAlbumTracks()
+                // exige el id de una RELEASE concreta. Se resuelve
+                // aquí antes de pedir el tracklist -- mismo mecanismo
+                // que ya usaba ArtistDirectoryRepository.getTrackCount(),
+                // ahora compartido vía resolveRepresentativeReleaseId().
+                val releaseId = artistDirectoryRepository
+                    .resolveRepresentativeReleaseId(unit.releaseGroup.id)
+                if (releaseId == null) {
+                    log(
+                        "resolveUnit() -- '${unit.artist} - ${unit.releaseGroup.title}' sin ninguna " +
+                            "release resoluble para su release-group (${unit.releaseGroup.id})",
+                    )
+                    emptyList()
+                } else {
+                    resolveTracksForReleaseGroup(releaseId, unit.artist, unit.releaseGroup.title)
+                }
+            }
             is AlbumUnit.FavoriteAlbumUnit ->
                 resolveFavoriteAlbumTracks(unit.favorite)
         }

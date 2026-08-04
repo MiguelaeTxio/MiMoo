@@ -201,6 +201,60 @@ class ArtistDirectoryRepository @Inject constructor(
             .releaseGroups
 
     /**
+     * Bug real reportado por Miguel Ángel (2026-08-03), con log real
+     * como prueba: el 100% de los álbumes de un popurrí de artistas
+     * favoritos fallaban con HTTP 404, SIEMPRE, sin excepción. Causa:
+     * `getAlbums()`/`getSingles()` devuelven release-GROUPS (la obra
+     * en abstracto, "Doolittle" como concepto) -- pero
+     * `PopurriRepository` pasaba ese mismo id directamente a
+     * `AlbumMatchRepository.matchAlbumTracks()`, que internamente
+     * llama a `musicBrainzApiService.lookupRelease(mbid)`, un
+     * endpoint DISTINTO que exige el id de una RELEASE concreta (una
+     * edición/publicación real, con su propio id, nunca el mismo que
+     * el de su release-group). Pedir una release-group por la ruta de
+     * releases da 404 siempre -- no es una casualidad de red, es un id
+     * del tipo equivocado en cada intento.
+     *
+     * Mismo mecanismo que ya usaba `getTrackCount()` más arriba (que
+     * SÍ lo hacía bien) -- se extrae aquí como función propia para que
+     * `PopurriRepository` también pueda usarlo antes de pedir el
+     * tracklist de un álbum encontrado vía artista (no aplica al
+     * álbum encontrado vía `searchAlbumCandidates()`, que ya devuelve
+     * ids de release reales directamente).
+     * ---
+     * Real bug reported by Miguel Ángel (2026-08-03), with a real log
+     * as proof: 100% of the albums in a favorite-artists popurrí
+     * failed with HTTP 404, ALWAYS, no exceptions. Cause:
+     * `getAlbums()`/`getSingles()` return release-GROUPS (the work in
+     * the abstract, "Doolittle" as a concept) -- but
+     * `PopurriRepository` was passing that same id straight to
+     * `AlbumMatchRepository.matchAlbumTracks()`, which internally
+     * calls `musicBrainzApiService.lookupRelease(mbid)`, a DIFFERENT
+     * endpoint that requires the id of a specific RELEASE (a real
+     * edition/pressing, with its own id, never the same as its
+     * release-group's). Asking for a release-group via the releases
+     * route 404s every time -- not a network coincidence, a wrong-type
+     * id on every attempt.
+     *
+     * Same mechanism `getTrackCount()` above already used correctly --
+     * extracted here as its own function so `PopurriRepository` can
+     * also use it before requesting an album's tracklist when found
+     * via artist (doesn't apply to an album found via
+     * `searchAlbumCandidates()`, which already returns real release
+     * ids directly).
+     */
+    suspend fun resolveRepresentativeReleaseId(releaseGroupMbid: String): String? =
+        try {
+            musicBrainzApiService
+                .browseReleasesByReleaseGroup(releaseGroupMbid)
+                .releases
+                .firstOrNull()
+                ?.id
+        } catch (e: Exception) {
+            null
+        }
+
+    /**
      * Número de pistas de un álbum, solo vía MusicBrainz (sin
      * YouTube) -- usado por ArtistScreen para el conteo "álbum
      * completo / álbum parcial" (S018). Resuelve una release
@@ -220,12 +274,7 @@ class ArtistDirectoryRepository @Inject constructor(
      */
     suspend fun getTrackCount(releaseGroupMbid: String): Int? =
         try {
-            val releaseId = musicBrainzApiService
-                .browseReleasesByReleaseGroup(releaseGroupMbid)
-                .releases
-                .firstOrNull()
-                ?.id
-                ?: return null
+            val releaseId = resolveRepresentativeReleaseId(releaseGroupMbid) ?: return null
             musicBrainzApiService.lookupRelease(releaseId).media
                 .sumOf { it.tracks.size }
         } catch (e: Exception) {
