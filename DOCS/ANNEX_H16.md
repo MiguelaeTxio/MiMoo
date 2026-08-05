@@ -102,38 +102,96 @@ punto de entrada para añadir exclusiones desde el Explorador (H12).
 
 ---
 
-## Puntos de diseño SIN cerrar -- decidir con Miguel Ángel antes de escribir código
+## Puntos de diseño -- CERRADOS con Miguel Ángel en S029
 
-1. **Ubicación exacta del botón en el ExoPlayer** -- ¿mini-barra y
-   expandido, o solo uno de los dos? H13 tocó ambos para
-   aleatorio/cíclico; ¿mismo criterio aquí?
-2. **Interacción entre "no me gusta" y "favorito"** -- si un
-   artista/álbum está en Favoritos y se marca como "no me gusta"
-   (o al revés), ¿son estados independientes que pueden coexistir sin
-   más, o uno debe impedir/quitar al otro?
-3. **Comportamiento si lo que suena AHORA MISMO se marca como "no me
-   gusta"** -- ¿la pista en curso se corta y salta a la siguiente de
-   la cola de inmediato, o termina de sonar y solo se excluye a partir
-   de ahí?
-4. **Alcance del CRUD** -- ¿solo ver/borrar lo ya añadido desde el
-   reproductor y el Explorador, o también permite añadir un
-   artista/tema a mano escribiendo su nombre?
+1. **Ubicación del botón en el ExoPlayer:** en AMBOS sitios, mini-barra
+   y expandido -- mismo criterio que H13 con aleatorio/cíclico.
+2. **Interacción "no me gusta" vs "favorito":** SE EXCLUYEN. Marcar
+   algo como "no me gusta" quita cualquier estado de favorito que
+   tuviera (y viceversa) -- no pueden coexistir.
+3. **Si lo que suena AHORA MISMO se marca como "no me gusta":** se
+   corta y salta a la siguiente pista de la cola de inmediato.
+4. **Alcance del CRUD:** SOLO ver/borrar lo ya añadido desde el
+   reproductor y el Explorador -- sin añadir a mano escribiendo un
+   nombre.
+
+---
+
+## COMPLETADAS EN S029
+
+Sesión de apertura de H16 (surgió durante el diseño de H15, ver
+`DOCS/ANNEX_H15.md`). Sin UI ni motor de Radio tocados todavía --
+trabajo real de esta sesión:
+
+1. **Diseño cerrado con Miguel Ángel** -- los cuatro puntos de la
+   sección anterior, más las cuatro decisiones de alcance registradas
+   arriba en "Decisiones ya cerradas" (exclusión de cualquier versión
+   del tema, exclusión total de artista, efecto sobre lo ya
+   descargado, doble punto de entrada ExoPlayer+Explorador).
+2. **Capa de datos completa, construida y verificada en build verde**
+   (commit `31ad6b0`):
+   - `DislikedArtist.kt`/`DislikedTrack.kt` (entidades Room). Artista:
+     clave primaria simple (`artist`), mismo patrón que
+     `FavoriteArtist`. Tema: clave compuesta (`artist`, `title`) --
+     DELIBERADAMENTE sin `youtubeId`, para que la exclusión cubra
+     cualquier versión del tema (directo/remasterizado/estudio), no un
+     vídeo concreto.
+   - `DislikedArtistDao.kt`/`DislikedTrackDao.kt` y
+     `DislikedArtistRepository.kt`/`DislikedTrackRepository.kt`, con
+     `normalizedKeysSnapshot()` en ambos para comprobación en memoria
+     O(1) desde Radio/Popurrí (usa
+     `SearchNormalizer.normalizeArtistName()` +
+     `SearchNormalizer.songTitleKey()`, el mismo mecanismo que ya
+     colapsa versiones distintas del mismo tema en el resto de la
+     app).
+   - `AppDatabase.kt`: versión 13→14, `MIGRATION_13_14` (tablas
+     `disliked_artists`/`disliked_tracks`, ambas tablas nuevas, no
+     toca ninguna existente). `DatabaseModule.kt`: migración
+     registrada, DAOs provistos.
+   - Ciclo de backup/sync a Drive cableado ENTERO, leyendo
+     `FavoritesRepository`/`BackupRepository`/`BackupImportRepository`/
+     `BackupMirrorRepository` reales antes de tocar nada (directriz
+     4.1) para no repetir el bug histórico de `favorite_artists`
+     quedándose fuera del bundle (2026-08-02): `BackupDto.kt`
+     (`DislikedArtistBackupDto`/`DislikedTrackBackupDto`, campo nuevo
+     en `BackupBundle`, versión de bundle 4→5, con valor por defecto
+     para no romper copias antiguas), `BackupRepository.kt`
+     (`buildCurrentBundle()`), `BackupImportRepository.kt`
+     (`importDestructively()` y `applyCloudWinsTargeted()`),
+     `BackupMirrorRepository.kt` (`BundleComparison`/`compare()`).
+   - Decisión técnica explícita: la lista negra NO viaja en
+     `importSharedBundle()` (H10, hash de compartición) -- es
+     preferencia personal de Radio/Popurrí, no contenido musical
+     compartido.
+3. **Verificación de compilación real** vía GitHub Actions (no solo
+   inspección visual): commit `31ad6b0` build verde.
+4. Sin verificación en dispositivo real todavía -- no hay nada visible
+   en la UI que probar en este punto (solo capa de datos).
 
 ---
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H16
 
-La sesión que retome H16 debe cerrar los cuatro puntos de diseño de
-arriba con Miguel Ángel primero. Cerrado el diseño:
+Petición explícita de Miguel Ángel al cierre de S029: **empezar por el
+CRUD**, no por el orden original de la sección "Contexto técnico".
 
-1. Leer `FavoritesRepository`/`FavoriteArtist`/`FavoriteAlbum`
-   completos (directriz 4.1 -- nunca inferir su forma de memoria) para
-   decidir si `DislikedArtist`/`DislikedTrack` los replica tal cual.
-2. Construir entidades + DAO + repositorio + migración Room +
-   sincronización a Drive.
-3. Inyectar el filtro de exclusión en `RadioRepository` (tres
-   cascadas) y `PopurriRepository` (streaming y ya descargado).
-4. Construir el botón + diálogo en `PlayerBar.kt`.
-5. Añadir la acción en `ExplorerScreen.kt`.
-6. Construir la pantalla CRUD + entrada en el drawer.
-7. Verificar en dispositivo real.
+1. Construir la pantalla nueva de gestión (CRUD: listar y borrar
+   artistas/temas de `disliked_artists`/`disliked_tracks` -- sin
+   añadir a mano, ver "Puntos de diseño -- CERRADOS" punto 4) + su
+   entrada propia en el drawer de `MainActivity.kt`/`NavGraph.kt`.
+2. Leer `RadioRepository.kt` completo (2.314 líneas, lógica de
+   cascada sensible con varios bugs reales de fondo en sesiones
+   anteriores -- S020 a S028) antes de tocarlo. Inyectar el filtro de
+   exclusión en las tres cascadas
+   (`suggestRelatedArtist()`/`fetchRoundCandidate()`/
+   `verifyTrackExists()`), usando
+   `normalizedKeysSnapshot()` de ambos repositorios.
+3. Mismo filtro en `PopurriRepository`, antes de encolar cualquier
+   tema (streaming o ya descargado).
+4. Botón + diálogo "¿artista o tema?" en `PlayerBar.kt` (mini-barra y
+   expandido), con corte inmediato de la pista en curso si se marca lo
+   que suena ahora mismo, y con la exclusión mutua con Favoritos
+   (punto 2 de "Puntos de diseño -- CERRADOS").
+5. Acción "no me gusta" en `ExplorerScreen.kt` (artista y tema).
+6. Verificar en dispositivo real -- CRUD, Radio, Popurrí y
+   exclusión mutua con Favoritos.
