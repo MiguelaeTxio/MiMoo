@@ -22,6 +22,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -353,6 +354,13 @@ class PlayerManager @Inject constructor(
     // las listas no sean siempre igual"). Preferencia suave, ver
     // RadioSessionHistoryManager.
     private val radioSessionHistoryManager: com.miguelaetxio.mimoo.data.access.RadioSessionHistoryManager,
+    // H16 -- Lista Negra ("no me gusta"): exclusión GLOBAL y DURA de
+    // artistas/temas en cualquier sesión de Radio, inyectada en las
+    // tres cascadas de fetchRoundCandidate() (conocidos/exploración/
+    // disco) -- ver ANNEX_H16.md, "Hoja de Ruta para la Siguiente
+    // Sesión que retome H16", punto 2.
+    private val dislikedArtistRepository: com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository,
+    private val dislikedTrackRepository: com.miguelaetxio.mimoo.data.local.repository.DislikedTrackRepository,
 ) {
 
     /**
@@ -1012,6 +1020,40 @@ class PlayerManager @Inject constructor(
     private val radioUnusableArtistsThisRound = mutableSetOf<String>()
 
     /**
+     * H16 -- Lista Negra: nombres de artista tal cual guardados en
+     * `disliked_artists`, en minúsculas -- MISMO criterio de
+     * comparación que el resto de esta clase usa para excludeArtists/
+     * avoidArtists/radioRoundArtists (`.lowercase()`, no
+     * `SearchNormalizer.normalizeArtistName()`), para no introducir un
+     * segundo criterio de igualdad de nombres dentro de la misma
+     * cascada. Releído al empezar cada `fetchRoundCandidate()`
+     * (`refreshDislikedSnapshots()`) -- barato (consulta Room local) y
+     * hace que un "no me gusta" añadido a mitad de sesión surta efecto
+     * en la vuelta siguiente, sin esperar a una sesión de Radio nueva.
+     * EXCLUSIÓN DURA: se mezcla en los mismos sets ya usados como
+     * exclusión dura (nunca en los `avoid*`, que son preferencia
+     * blanda) -- si eso deja una cuota sin candidatos, la cuota se
+     * queda sin candidatos, misma degradación normal que ya usa el
+     * resto de la cascada 80/10/10.
+     */
+    private var dislikedArtistNamesLower: Set<String> = emptySet()
+
+    /** H16 -- ver el kdoc de `dislikedArtistNamesLower`. Claves de `DislikedTrackRepository.key()`, listas para comparar contra `DislikedTrackRepository.key(item.artist, item.title)`. */
+    private var dislikedTrackKeysSnapshot: Set<String> = emptySet()
+
+    /** H16 -- releído al principio de cada `fetchRoundCandidate()`. */
+    private suspend fun refreshDislikedSnapshots() {
+        dislikedArtistNamesLower = dislikedArtistRepository.getAll().first().map { it.artist.lowercase() }.toSet()
+        dislikedTrackKeysSnapshot = dislikedTrackRepository.normalizedKeysSnapshot()
+    }
+
+    /** H16 -- ¿este tema concreto está en la Lista Negra? Cualquier versión (directo/remasterizado/estudio), ver `DislikedTrackRepository.key()`. */
+    private fun isTrackDisliked(artist: String?, title: String?): Boolean {
+        if (artist.isNullOrBlank() || title.isNullOrBlank()) return false
+        return com.miguelaetxio.mimoo.data.local.repository.DislikedTrackRepository.key(artist, title) in dislikedTrackKeysSnapshot
+    }
+
+    /**
      * S027 -- REDISEÑO COMPLETO del reparto de Radio, orden textual de
      * Miguel Ángel tras el desastre de AC/DC. Sustituye por completo
      * al sistema de porcentajes con reparto al agotarse (`basePercent`/
@@ -1630,6 +1672,7 @@ class PlayerManager @Inject constructor(
      */
     private suspend fun fetchRoundCandidate(anchor: RadioAnchor, anchorArtistName: String): QueueItem? {
         rollRadioRoundIfComplete()
+        refreshDislikedSnapshots()
 
         val avoidNames = radioSessionHistoryManager.recentlyUsedLower()
         val knownQuota = uiPreferencesManager.radioKnownQuotaPerTen.value
@@ -1733,7 +1776,7 @@ class PlayerManager @Inject constructor(
             radioRoundUnknownCount >= unknownSlotsPerRound
         ) {
             val discoItem = pickDiscoCandidate(
-                anchor, radioRoundArtists, avoidNames,
+                anchor, radioRoundArtists + dislikedArtistNamesLower, avoidNames,
                 allowRepeat = false,
                 maxArtistsToProfile = RADIO_CLASSICAL_DISCO_PROFILE_LIMIT,
             )
@@ -1788,6 +1831,23 @@ class PlayerManager @Inject constructor(
         // artistas ya usados, respetando aún la regla dura de no
         // repetir dentro de esta ronda de 10.
         suspend fun tryCandidate(artist: String): QueueItem? {
+            // H16 -- exclusión dura de la Lista Negra. En el flujo
+            // principal (searchPhase() más abajo) esto ya está cubierto
+            // ANTES de llegar aquí, porque `dislikedArtistNamesLower` se
+            // mezcla en el `exclude()` que ve `suggestRelatedArtist()` --
+            // pero `tryCandidate()` también se llama desde
+            // `resolveFinalFallback()` con artistas que NO pasaron por
+            // esa exclusión (el diccionario de éxitos y el disco local
+            // tienen sus propios caminos), así que se comprueba también
+            // aquí, sin excepción.
+            if (artist.lowercase() in dislikedArtistNamesLower) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- candidato '$artist' descartado: artista en la Lista Negra",
+                )
+                radioUnusableArtistsThisRound.add(artist.lowercase())
+                return null
+            }
             // S027 -- pregunta de Miguel Ángel: "¿se puede recibir todo
             // el paquete de búsquedas en una sola llamada?" -- sí. Antes
             // de buscar tema a tema, se pide (o ya está en la tarjeta de
@@ -1818,6 +1878,16 @@ class PlayerManager @Inject constructor(
                     appContext, storageManager,
                     "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA ya sonado " +
                         "esta sesión: '${item.artist}' ('${item.title}')",
+                )
+                return null
+            }
+            // H16 -- tema concreto en la Lista Negra (cualquier versión
+            // de ese tema de ese artista, ver `DislikedTrackRepository`).
+            if (isTrackDisliked(item.artist, item.title)) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado por TEMA en la Lista " +
+                        "Negra: '${item.artist}' ('${item.title}')",
                 )
                 return null
             }
@@ -2009,16 +2079,18 @@ class PlayerManager @Inject constructor(
         // al arrancar la sesión (ver ese bloque) -- se trata como
         // cualquier otro artista, ni más vetado ni menos.
         searchPhase(
-            { radioRoundArtists + radioUnusableArtistsThisRound + radioUsedArtists.map { it.lowercase() } },
+            { radioRoundArtists + radioUnusableArtistsThisRound + radioUsedArtists.map { it.lowercase() } + dislikedArtistNamesLower },
             "sin repetir artista de la sesión",
         )?.let { return it }
 
         // S027 -- fase 2, SOLO si la 1 se agotó de verdad: se permite
         // repetir un artista ya usado en la sesión, pero la regla de
         // no repetir DENTRO de esta ronda de 10 sigue siendo dura --
-        // `radioRoundArtists` se mantiene en la exclusión.
+        // `radioRoundArtists` se mantiene en la exclusión. H16 -- la
+        // Lista Negra tampoco se relaja aquí, exclusión dura sin
+        // excepción en ninguna fase.
         searchPhase(
-            { radioRoundArtists + radioUnusableArtistsThisRound },
+            { radioRoundArtists + radioUnusableArtistsThisRound + dislikedArtistNamesLower },
             "repitiendo artista ya usado esta sesión",
         )?.let { return it }
 
@@ -2030,7 +2102,12 @@ class PlayerManager @Inject constructor(
             val item = radioPendingUnknown.removeFirst()
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
                 titleKey(item.title) in radioUsedTitles ||
-                item.artist?.lowercase() in radioRoundArtists
+                item.artist?.lowercase() in radioRoundArtists ||
+                // H16 -- mismo caso que en takeFromPendingIfRoomThisRound():
+                // un "no me gusta" puede llegar después de que este item
+                // se guardara en la cola de espera.
+                item.artist?.lowercase() in dislikedArtistNamesLower ||
+                isTrackDisliked(item.artist, item.title)
             ) {
                 continue
             }
@@ -2097,7 +2174,14 @@ class PlayerManager @Inject constructor(
         while (iterator.hasNext()) {
             val item = iterator.next()
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
-                titleKey(item.title) in radioUsedTitles
+                titleKey(item.title) in radioUsedTitles ||
+                // H16 -- un "no me gusta" puede llegar a mitad de una
+                // sesión de Radio ya en marcha, después de que este
+                // item se guardara en la cola pendiente de una ronda
+                // anterior. Se descarta aquí igual que un tema ya
+                // sonado, en vez de servirlo.
+                item.artist?.lowercase() in dislikedArtistNamesLower ||
+                isTrackDisliked(item.artist, item.title)
             ) {
                 iterator.remove()
                 continue
@@ -2202,7 +2286,7 @@ class PlayerManager @Inject constructor(
         repeat(UNKNOWN_CANDIDATE_ATTEMPTS) {
             val artist = radioRepository.suggestRelatedArtist(
                 anchor,
-                anchorExclusion + triedNames + radioUnusableArtistsThisRound,
+                anchorExclusion + triedNames + radioUnusableArtistsThisRound + dislikedArtistNamesLower,
                 avoidNames,
                 genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
             ) ?: return@repeat
@@ -2216,7 +2300,9 @@ class PlayerManager @Inject constructor(
             )
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
-                titleKey(item.title) !in radioUsedTitles
+                titleKey(item.title) !in radioUsedTitles &&
+                // H16 -- exclusión dura también en el último recurso de Exploración.
+                !isTrackDisliked(item.artist, item.title)
             ) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
@@ -2405,9 +2491,13 @@ class PlayerManager @Inject constructor(
         // básico"*. Tenía razón, y la excusa de "es que si no, la Radio
         // se para" no vale: que se pare.
         val hit = fresh
-        if (hit != null && hit.artist.lowercase() !in radioRoundArtists) {
+        // H16 -- `randomHit()` no acepta una exclusión dura de artista
+        // (solo `avoidArtists`, preferencia blanda), así que el filtro
+        // de Lista Negra se aplica aquí, sobre el resultado, antes de
+        // aceptarlo -- igual que ya se hacía con `radioRoundArtists`.
+        if (hit != null && hit.artist.lowercase() !in radioRoundArtists && hit.artist.lowercase() !in dislikedArtistNamesLower) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
-            if (item != null) {
+            if (item != null && !isTrackDisliked(item.artist, item.title)) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "resolveFinalFallback(ancla='$anchorArtistName') -> " +
@@ -2446,7 +2536,7 @@ class PlayerManager @Inject constructor(
             return unknownItem
         }
 
-        val discoItem = pickDiscoCandidate(anchor, emptySet(), avoidNames + radioRoundArtists)
+        val discoItem = pickDiscoCandidate(anchor, dislikedArtistNamesLower, avoidNames + radioRoundArtists)
         if (discoItem != null && discoItem.artist?.lowercase() !in radioRoundArtists) {
             radioRoundDiscoCount++
             registerRoundArtist(discoItem.artist)
@@ -2670,7 +2760,13 @@ class PlayerManager @Inject constructor(
         // uno ("hasta que no quede más remedio"). Este es el segundo
         // peldaño de la porción de disco: más temas de artistas ya
         // usados.
-        val artistTracks = downloadedTracks.filter { it.artist.equals(chosenArtist, ignoreCase = true) }
+        // H16 -- se excluyen aquí también los temas concretos en la
+        // Lista Negra de este artista (el artista en sí no está
+        // marcado, o `chosenArtist` no habría llegado hasta aquí --
+        // ver `excludeArtists` más arriba).
+        val artistTracks = downloadedTracks
+            .filter { it.artist.equals(chosenArtist, ignoreCase = true) }
+            .filter { !isTrackDisliked(it.artist, it.title) }
         val unheard = artistTracks.filter {
             knownHitsRepository.songKey(it.artist, it.title) !in radioUsedSongs &&
                 titleKey(it.title) !in radioUsedTitles
