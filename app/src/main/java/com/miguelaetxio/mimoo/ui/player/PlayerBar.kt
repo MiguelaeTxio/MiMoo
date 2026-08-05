@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -99,6 +100,7 @@ fun PlayerBar(
     val menuAlbum by viewModel.menuAlbum.collectAsState()
     val localFilePath by viewModel.localFilePath.collectAsState()
     val ringtoneMessage by viewModel.ringtoneMessage.collectAsState()
+    val dislikeChoiceVisible by viewModel.dislikeChoiceVisible.collectAsState()
 
     // "Elegir como tono para un contacto" (2026-08-02) -- aviso final vía Toast,
     // PlayerBar no tiene Scaffold/SnackbarHost propio.
@@ -272,6 +274,29 @@ fun PlayerBar(
         )
     }
 
+    // H16 -- botón "no me gusta" del reproductor: pregunta si el
+    // rechazo es del artista o del tema que suena en ese momento --
+    // ver ANNEX_H16.md, "Decisiones ya cerradas con Miguel Ángel en
+    // S029", punto 4. Mismo criterio que los otros diálogos de esta
+    // pantalla: va ANTES del `return` de más abajo.
+    if (dislikeChoiceVisible) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDislikeChoice,
+            title = { Text("No me gusta") },
+            text = { Text("¿El rechazo es del artista o solo de este tema?") },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmDislikeArtist) {
+                    Text("Artista")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::confirmDislikeTrack) {
+                    Text("Solo este tema")
+                }
+            },
+        )
+    }
+
     val title = state.currentTitle ?: return
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
     var isExpanded by remember { mutableStateOf(true) }
@@ -283,7 +308,9 @@ fun PlayerBar(
                 artist = state.currentArtist,
                 coverArtUrl = coverArtUrl,
                 isPlaying = state.isPlaying,
+                showDislikeButton = state.currentYoutubeId != null,
                 onTogglePlayPause = viewModel::togglePlayPause,
+                onDislike = viewModel::requestDislikeChoice,
                 onExpand = { isExpanded = true },
             )
             return@Surface
@@ -383,6 +410,22 @@ fun PlayerBar(
                             } else {
                                 LocalContentColor.current
                             },
+                        )
+                    }
+                }
+
+                // H16 -- botón "no me gusta", mismo criterio de
+                // visibilidad que Favorito (solo si la pista actual
+                // tiene equivalente real en la biblioteca). Sin estado
+                // ON/OFF propio -- es una acción que abre el diálogo
+                // "¿artista o tema?", no un chequeo del estado actual
+                // (la gestión de lo ya marcado vive en la pantalla
+                // CRUD, "Lista negra").
+                if (state.currentYoutubeId != null) {
+                    GlassIconButton(onClick = viewModel::requestDislikeChoice) {
+                        Icon(
+                            Icons.Filled.ThumbDown,
+                            contentDescription = "No me gusta",
                         )
                     }
                 }
@@ -651,7 +694,9 @@ private fun PlayerBarCollapsed(
     artist: String?,
     coverArtUrl: String?,
     isPlaying: Boolean,
+    showDislikeButton: Boolean,
     onTogglePlayPause: () -> Unit,
+    onDislike: () -> Unit,
     onExpand: () -> Unit,
 ) {
     Row(
@@ -704,6 +749,15 @@ private fun PlayerBarCollapsed(
             }
         }
         Spacer(Modifier.width(8.dp))
+        // H16 -- mismo criterio de ubicación que H13 (aleatorio/
+        // cíclico): el botón "no me gusta" vive en AMBOS sitios,
+        // mini-barra y expandido -- ver ANNEX_H16.md, "Puntos de
+        // diseño -- CERRADOS", punto 1.
+        if (showDislikeButton) {
+            GlassIconButton(onClick = onDislike) {
+                Icon(Icons.Filled.ThumbDown, contentDescription = "No me gusta")
+            }
+        }
         GlassIconButton(onClick = onTogglePlayPause) {
             Icon(
                 imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,

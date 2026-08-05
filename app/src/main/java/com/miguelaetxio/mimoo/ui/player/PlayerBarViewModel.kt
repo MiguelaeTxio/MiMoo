@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.miguelaetxio.mimoo.data.contacts.ContactRingtoneRepository
 import com.miguelaetxio.mimoo.data.contacts.SetContactRingtoneResult
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository
+import com.miguelaetxio.mimoo.data.local.repository.DislikedTrackRepository
+import com.miguelaetxio.mimoo.data.local.repository.FavoriteArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlaybackState
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
@@ -32,6 +36,12 @@ class PlayerBarViewModel @Inject constructor(
     private val coverArtRepository: CoverArtRepository,
     private val downloadQueueManager: com.miguelaetxio.mimoo.data.download.DownloadQueueManager,
     private val contactRingtoneRepository: ContactRingtoneRepository,
+    // H16 -- botón "no me gusta" del reproductor (roadmap punto 4).
+    private val dislikedArtistRepository: DislikedArtistRepository,
+    private val dislikedTrackRepository: DislikedTrackRepository,
+    private val favoriteArtistRepository: FavoriteArtistRepository,
+    private val autoSyncPusher: AutoSyncPusher,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     val state: StateFlow<PlaybackState> = playerManager.state
@@ -276,14 +286,21 @@ class PlayerBarViewModel @Inject constructor(
         val current = state.value
         val youtubeId = current.currentYoutubeId ?: return
         val title = current.currentTitle ?: return
+        val makingFavorite = !_isCurrentFavorite.value
         viewModelScope.launch {
             searchResultTrackRepository.setFavoriteEnsuringRow(
                 youtubeId = youtubeId,
-                isFavorite = !_isCurrentFavorite.value,
+                isFavorite = makingFavorite,
                 title = title,
                 channelTitle = current.currentChannelTitle ?: title,
                 artist = current.currentArtist,
             )
+            // H16 -- exclusión mutua: marcar como favorito quita
+            // cualquier "no me gusta" que tuviera este mismo tema --
+            // ver ANNEX_H16.md, "Puntos de diseño -- CERRADOS", punto 2.
+            if (makingFavorite && current.currentArtist != null) {
+                dislikedTrackRepository.remove(current.currentArtist, title)
+            }
             refreshFavoriteState(youtubeId)
         }
     }
@@ -337,6 +354,103 @@ class PlayerBarViewModel @Inject constructor(
 
     /** S027 -- cancelar el modal "¿Quién es el artista?" de Radio. */
     fun dismissRadioArtistPrompt() = playerManager.dismissRadioArtistPrompt()
+
+    /**
+     * H16 -- botón "no me gusta" del ExoPlayer (mini-barra y
+     * expandido, roadmap punto 4). Al pulsarlo se pregunta si el
+     * rechazo es del ARTISTA o del TEMA que suena en ese momento --
+     * ver ANNEX_H16.md, "Decisiones ya cerradas con Miguel Ángel en
+     * S029", punto 4. `true` = visible; el botón que lo dispara ya
+     * comprueba que hay una pista sonando (mismo criterio que
+     * `state.currentYoutubeId != null` en el resto de botones
+     * condicionales de PlayerBar).
+     */
+    private val _dislikeChoiceVisible = MutableStateFlow(false)
+    val dislikeChoiceVisible: StateFlow<Boolean> = _dislikeChoiceVisible.asStateFlow()
+
+    fun requestDislikeChoice() {
+        if (state.value.currentTitle == null) return
+        _dislikeChoiceVisible.value = true
+    }
+
+    fun dismissDislikeChoice() {
+        _dislikeChoiceVisible.value = false
+    }
+
+    /**
+     * H16 -- rechazo de ARTISTA: exclusión GLOBAL, cualquier sesión de
+     * Radio y de cualquier popurrí, presente y futuro (punto 2 de
+     * "Decisiones ya cerradas"). Al ser el artista de lo que suena
+     * AHORA MISMO, se corta y salta a la siguiente pista de inmediato
+     * (punto 3 de "Puntos de diseño -- CERRADOS").
+     */
+    fun confirmDislikeArtist() {
+        val current = state.value
+        val artist = current.currentArtist ?: _menuArtist.value
+        _dislikeChoiceVisible.value = false
+        if (artist.isNullOrBlank()) return
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(appContext) {
+                dislikedArtistRepository.add(artist)
+                // H16 -- exclusión mutua con Favoritos (artista y, si
+                // el tema que suena es de él, también su favorito de
+                // pista) -- ver ANNEX_H16.md punto 2 de "Puntos de
+                // diseño -- CERRADOS".
+                if (favoriteArtistRepository.isFavorite(artist)) {
+                    favoriteArtistRepository.toggle(artist)
+                }
+                val youtubeId = current.currentYoutubeId
+                if (youtubeId != null && _isCurrentFavorite.value) {
+                    val title = current.currentTitle
+                    if (title != null) {
+                        searchResultTrackRepository.setFavoriteEnsuringRow(
+                            youtubeId = youtubeId,
+                            isFavorite = false,
+                            title = title,
+                            channelTitle = current.currentChannelTitle ?: title,
+                            artist = current.currentArtist,
+                        )
+                    }
+                }
+            }
+            playerManager.playNext()
+            current.currentYoutubeId?.let { refreshFavoriteState(it) }
+        }
+    }
+
+    /**
+     * H16 -- rechazo de TEMA: cualquier versión de ese tema de ese
+     * artista (directo, remasterizado, estudio...), no solo el vídeo
+     * concreto que sonaba -- punto 1 de "Decisiones ya cerradas". Al
+     * ser siempre el tema que suena AHORA MISMO en este punto de
+     * entrada (ExoPlayer), se corta y salta a la siguiente pista de
+     * inmediato.
+     */
+    fun confirmDislikeTrack() {
+        val current = state.value
+        val artist = current.currentArtist ?: _menuArtist.value
+        val title = current.currentTitle
+        _dislikeChoiceVisible.value = false
+        if (artist.isNullOrBlank() || title.isNullOrBlank()) return
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(appContext) {
+                dislikedTrackRepository.add(artist, title)
+                // H16 -- exclusión mutua con Favoritos, mismo tema.
+                val youtubeId = current.currentYoutubeId
+                if (youtubeId != null && _isCurrentFavorite.value) {
+                    searchResultTrackRepository.setFavoriteEnsuringRow(
+                        youtubeId = youtubeId,
+                        isFavorite = false,
+                        title = title,
+                        channelTitle = current.currentChannelTitle ?: title,
+                        artist = current.currentArtist,
+                    )
+                }
+            }
+            playerManager.playNext()
+            current.currentYoutubeId?.let { refreshFavoriteState(it) }
+        }
+    }
 
     /**
      * "Elegir como tono para un contacto" (2026-08-02) -- aviso final
