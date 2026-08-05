@@ -14,6 +14,8 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.ArtistDisambiguationDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
+import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
@@ -24,6 +26,8 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.ArtistDisambiguation
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
+import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
+import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
 
 @Database(
     entities = [
@@ -37,8 +41,10 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
         ArtistDisambiguation::class,
         FavoriteTrack::class,
         FavoritePlaylist::class,
+        DislikedArtist::class,
+        DislikedTrack::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -52,6 +58,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun artistDisambiguationDao(): ArtistDisambiguationDao
     abstract fun favoriteTrackDao(): FavoriteTrackDao
     abstract fun favoritePlaylistDao(): FavoritePlaylistDao
+    abstract fun dislikedArtistDao(): DislikedArtistDao
+    abstract fun dislikedTrackDao(): DislikedTrackDao
 
     companion object {
         /**
@@ -415,6 +423,48 @@ abstract class AppDatabase : RoomDatabase() {
                         "PRIMARY KEY(`playlistId`), " +
                         "FOREIGN KEY(`playlistId`) REFERENCES `playlists`(`id`) " +
                         "ON DELETE CASCADE)"
+                )
+            }
+        }
+
+        /**
+         * Crea disliked_artists y disliked_tracks (H16, S029) --
+         * petición explícita de Miguel Ángel: exclusión global y dura
+         * de artistas/temas para Radio (H08/H15) y popurrí de
+         * Favoritos. disliked_artists: clave primaria simple (artist),
+         * mismo patrón que MIGRATION_11_12/favorite_artists.
+         * disliked_tracks: clave compuesta (artist, title) -- "no me
+         * gusta" de un tema excluye cualquier versión de ese título de
+         * ese artista, no un vídeo de YouTube concreto, así que no hay
+         * columna youtubeId -- ver comentario de la entidad
+         * DislikedTrack. Dos tablas nuevas, no toca ninguna tabla
+         * existente.
+         * ---
+         * Creates disliked_artists and disliked_tracks (H16, S029) --
+         * explicit request from Miguel Ángel: global, hard exclusion
+         * of artists/tracks for Radio (H08/H15) and the Favorites
+         * popurrí. disliked_artists: simple primary key (artist), same
+         * pattern as MIGRATION_11_12/favorite_artists. disliked_tracks:
+         * composite key (artist, title) -- disliking a track excludes
+         * any version of that title by that artist, not one specific
+         * YouTube video, so there's no youtubeId column -- see the
+         * DislikedTrack entity's comment. Two new tables, doesn't
+         * touch any existing table.
+         */
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `disliked_artists` (" +
+                        "`artist` TEXT NOT NULL, " +
+                        "`dislikedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`artist`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `disliked_tracks` (" +
+                        "`artist` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`dislikedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`artist`, `title`))"
                 )
             }
         }

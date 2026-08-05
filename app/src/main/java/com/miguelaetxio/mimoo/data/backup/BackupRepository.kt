@@ -6,6 +6,8 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.access.UiPreferencesManager
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
+import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
@@ -50,6 +52,8 @@ class BackupRepository @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val favoriteRadioStationDao: FavoriteRadioStationDao,
     private val channelSubscriptionDao: ChannelSubscriptionDao,
+    private val dislikedArtistDao: DislikedArtistDao,
+    private val dislikedTrackDao: DislikedTrackDao,
     private val uiPreferencesManager: UiPreferencesManager,
     // S025 -- el diccionario del ancla (H08) viaja en la copia, igual
     // que las descargas, los favoritos y las listas.
@@ -142,6 +146,8 @@ class BackupRepository @Inject constructor(
             favoriteArtists = favoriteArtistDao.getAllOnce().map { it.toBackupDto() },
             favoriteTracks = favoriteTrackDao.getAllOnce().map { it.toBackupDto() },
             favoritePlaylists = favoritePlaylistNames.map { FavoritePlaylistBackupDto(playlistName = it) },
+            dislikedArtists = dislikedArtistDao.getAllOnce().map { it.toBackupDto() },
+            dislikedTracks = dislikedTrackDao.getAllOnce().map { it.toBackupDto() },
             anchorArtists = anchorDictionary.learnedArtistsSnapshot().map {
                 AnchorArtistBackupDto(
                     artist = it.artist,
@@ -226,6 +232,8 @@ class BackupRepository @Inject constructor(
         favoriteArtists = favoriteArtists ?: emptyList(),
         favoriteTracks = favoriteTracks ?: emptyList(),
         favoritePlaylists = favoritePlaylists ?: emptyList(),
+        dislikedArtists = dislikedArtists ?: emptyList(),
+        dislikedTracks = dislikedTracks ?: emptyList(),
     )
 
     /**

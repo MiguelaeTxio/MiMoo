@@ -1,6 +1,8 @@
 package com.miguelaetxio.mimoo.data.backup
 
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
+import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
+import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
@@ -94,9 +96,29 @@ data class BackupBundle(
     val favoriteArtists: List<FavoriteArtistBackupDto> = emptyList(),
     val favoriteTracks: List<FavoriteTrackBackupDto> = emptyList(),
     val favoritePlaylists: List<FavoritePlaylistBackupDto> = emptyList(),
+    /**
+     * H16 (S029) -- lista negra ("no me gusta") de artistas y temas,
+     * petición explícita de Miguel Ángel. Con valor por defecto para
+     * que una copia de versión anterior siga importándose sin tocarla
+     * -- mismo criterio que favoriteArtists/favoriteTracks al
+     * añadirse. DELIBERADAMENTE NO viaja en `importSharedBundle()`
+     * (H10, hash de compartición): un "no me gusta" es una preferencia
+     * personal de Radio/Popurrí, no parte del contenido musical que se
+     * comparte -- ver `DOCS/ANNEX_H16.md`.
+     * ---
+     * H16 (S029) -- "dislike" blacklist of artists and tracks, explicit
+     * request from Miguel Ángel. Default value so an older-version
+     * copy keeps importing without touching it -- same criterion used
+     * when favoriteArtists/favoriteTracks were added. DELIBERATELY
+     * NOT carried in `importSharedBundle()` (H10, share hash): a
+     * "dislike" is a personal Radio/Popurrí preference, not part of
+     * the shared music content -- see `DOCS/ANNEX_H16.md`.
+     */
+    val dislikedArtists: List<DislikedArtistBackupDto> = emptyList(),
+    val dislikedTracks: List<DislikedTrackBackupDto> = emptyList(),
 ) {
     companion object {
-        const val CURRENT_VERSION = 4
+        const val CURRENT_VERSION = 5
 
         /**
          * S025 -- versión mínima legible.
@@ -333,6 +355,46 @@ fun FavoriteTrackBackupDto.toEntity(): FavoriteTrack = FavoriteTrack(
  */
 data class FavoritePlaylistBackupDto(
     val playlistName: String,
+)
+
+/** "No me gusta" de ARTISTA exportable (H16, S029) -- ver comentario de dislikedArtists en BackupBundle. */
+data class DislikedArtistBackupDto(
+    val artist: String,
+    val dislikedAt: Long,
+)
+
+fun DislikedArtist.toBackupDto(): DislikedArtistBackupDto = DislikedArtistBackupDto(
+    artist = artist,
+    dislikedAt = dislikedAt,
+)
+
+fun DislikedArtistBackupDto.toEntity(): DislikedArtist = DislikedArtist(
+    artist = artist,
+    dislikedAt = dislikedAt,
+)
+
+/**
+ * "No me gusta" de TEMA exportable (H16, S029) -- clave (artist,
+ * title), nunca youtubeId (ver comentario de la entidad
+ * DislikedTrack: excluye cualquier versión del tema, no un vídeo
+ * concreto).
+ */
+data class DislikedTrackBackupDto(
+    val artist: String,
+    val title: String,
+    val dislikedAt: Long,
+)
+
+fun DislikedTrack.toBackupDto(): DislikedTrackBackupDto = DislikedTrackBackupDto(
+    artist = artist,
+    title = title,
+    dislikedAt = dislikedAt,
+)
+
+fun DislikedTrackBackupDto.toEntity(): DislikedTrack = DislikedTrack(
+    artist = artist,
+    title = title,
+    dislikedAt = dislikedAt,
 )
 
 /**

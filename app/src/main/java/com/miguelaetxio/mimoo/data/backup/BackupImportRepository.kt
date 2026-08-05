@@ -10,6 +10,8 @@ import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.remote.AnchorDictionary
 import com.miguelaetxio.mimoo.data.local.AppDatabase
 import com.miguelaetxio.mimoo.data.local.dao.ChannelSubscriptionDao
+import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
+import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteAlbumDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoriteArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
@@ -98,6 +100,8 @@ class BackupImportRepository @Inject constructor(
     private val playlistDao: PlaylistDao,
     private val favoriteRadioStationDao: FavoriteRadioStationDao,
     private val channelSubscriptionDao: ChannelSubscriptionDao,
+    private val dislikedArtistDao: DislikedArtistDao,
+    private val dislikedTrackDao: DislikedTrackDao,
     private val uiPreferencesManager: UiPreferencesManager,
     private val storageManager: StorageManager,
     // S025 -- el diccionario del ancla (H08) entra en la importación
@@ -148,7 +152,9 @@ class BackupImportRepository @Inject constructor(
                 trackDao.deleteAll()
                 favoriteRadioStationDao.deleteAll()
                 channelSubscriptionDao.deleteAll()
-                val stepTables = "importDestructively() -- 9 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
+                dislikedArtistDao.deleteAll()
+                dislikedTrackDao.deleteAll()
+                val stepTables = "importDestructively() -- 11 tablas borradas. Insertando ${bundle.tracks.size} pistas..."
                 Log.d(TAG, stepTables)
                 BackupDebugLogger.log(context, storageManager, stepTables)
 
@@ -162,6 +168,8 @@ class BackupImportRepository @Inject constructor(
                     favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
                 }
                 bundle.favoriteTracks.forEach { dto -> favoriteTrackDao.insert(dto.toEntity()) }
+                bundle.dislikedArtists.forEach { dto -> dislikedArtistDao.insert(dto.toEntity()) }
+                bundle.dislikedTracks.forEach { dto -> dislikedTrackDao.insert(dto.toEntity()) }
 
                 val newPlaylistIdsByName = mutableMapOf<String, Long>()
                 bundle.playlists.forEach { playlistDto ->
@@ -196,7 +204,8 @@ class BackupImportRepository @Inject constructor(
                     "${bundle.favoriteAlbums.size} favoritos de álbum, ${bundle.favoriteArtists.size} de artista, " +
                     "${bundle.favoriteTracks.size} de sencillo en streaming, ${bundle.playlists.size} playlists " +
                     "(${bundle.favoritePlaylists.size} favoritas), ${bundle.radioStations.size} emisoras, " +
-                    "${bundle.channelSubscriptions.size} canales"
+                    "${bundle.channelSubscriptions.size} canales, ${bundle.dislikedArtists.size} artistas y " +
+                    "${bundle.dislikedTracks.size} temas en la lista negra"
                 Log.d(TAG, stepDone)
                 BackupDebugLogger.log(context, storageManager, stepDone)
             }
@@ -325,6 +334,13 @@ class BackupImportRepository @Inject constructor(
                 bundle.radioStations.forEach { dto -> favoriteRadioStationDao.insert(dto.toEntity()) }
                 channelSubscriptionDao.deleteAll()
                 bundle.channelSubscriptions.forEach { dto -> channelSubscriptionDao.insert(dto.toEntity()) }
+
+                // Lista negra "no me gusta" (H16, S029) -- sin archivos físicos de
+                // por medio, mismo patrón de reemplazo entero que favoritos/radio/canal.
+                dislikedArtistDao.deleteAll()
+                bundle.dislikedArtists.forEach { dto -> dislikedArtistDao.insert(dto.toEntity()) }
+                dislikedTrackDao.deleteAll()
+                bundle.dislikedTracks.forEach { dto -> dislikedTrackDao.insert(dto.toEntity()) }
             }
 
             // Ajustes de UI (SharedPreferences, fuera de Room) -- la nube gana, igual
@@ -337,7 +353,8 @@ class BackupImportRepository @Inject constructor(
             mergeAnchorDictionary(bundle)
 
             val stepDone2 = "applyCloudWinsTargeted() -- ${bundle.radioStations.size} emisora(s), " +
-                "${bundle.channelSubscriptions.size} canal(es), cristal=${bundle.uiSettings.glassBorderEnabled}"
+                "${bundle.channelSubscriptions.size} canal(es), cristal=${bundle.uiSettings.glassBorderEnabled}, " +
+                "${bundle.dislikedArtists.size} artistas y ${bundle.dislikedTracks.size} temas en la lista negra"
             Log.d(TAG, stepDone2)
             BackupDebugLogger.log(context, storageManager, stepDone2)
 

@@ -65,6 +65,14 @@ data class BundleComparison(
     val remoteFavoriteTrackCount: Int,
     val localFavoritePlaylistCount: Int,
     val remoteFavoritePlaylistCount: Int,
+    // H16 (S029) -- mismo motivo que favoriteArtists al añadirse: sin
+    // esta comparación, dos dispositivos que solo divergieran en la
+    // lista negra quedarían marcados `identical = true` y la
+    // sincronización nunca se dispararía.
+    val localDislikedArtistCount: Int,
+    val remoteDislikedArtistCount: Int,
+    val localDislikedTrackCount: Int,
+    val remoteDislikedTrackCount: Int,
 ) {
     /** Diferencia absoluta total, para el aviso ("X pistas/álbumes/listas/emisoras/canales de diferencia"). */
     val totalDifference: Int
@@ -75,7 +83,9 @@ data class BundleComparison(
             kotlin.math.abs(localChannelCount - remoteChannelCount) +
             kotlin.math.abs(localFavoriteArtistCount - remoteFavoriteArtistCount) +
             kotlin.math.abs(localFavoriteTrackCount - remoteFavoriteTrackCount) +
-            kotlin.math.abs(localFavoritePlaylistCount - remoteFavoritePlaylistCount)
+            kotlin.math.abs(localFavoritePlaylistCount - remoteFavoritePlaylistCount) +
+            kotlin.math.abs(localDislikedArtistCount - remoteDislikedArtistCount) +
+            kotlin.math.abs(localDislikedTrackCount - remoteDislikedTrackCount)
 
     /**
      * Total de favoritos (álbum + artista + sencillo en streaming +
@@ -126,6 +136,11 @@ class BackupMirrorRepository @Inject constructor() {
         val localFavoritePlaylistKeys = local.favoritePlaylists.map { it.playlistName }.toSet()
         val remoteFavoritePlaylistKeys = remote.favoritePlaylists.map { it.playlistName }.toSet()
 
+        val localDislikedArtistKeys = local.dislikedArtists.map { it.artist }.toSet()
+        val remoteDislikedArtistKeys = remote.dislikedArtists.map { it.artist }.toSet()
+        val localDislikedTrackKeys = local.dislikedTracks.map { it.artist to it.title }.toSet()
+        val remoteDislikedTrackKeys = remote.dislikedTracks.map { it.artist to it.title }.toSet()
+
         val identical = localTrackIds == remoteTrackIds &&
             localFavoriteKeys == remoteFavoriteKeys &&
             localPlaylistNames == remotePlaylistNames &&
@@ -134,7 +149,9 @@ class BackupMirrorRepository @Inject constructor() {
             settingsIdentical &&
             localFavoriteArtistKeys == remoteFavoriteArtistKeys &&
             localFavoriteTrackKeys == remoteFavoriteTrackKeys &&
-            localFavoritePlaylistKeys == remoteFavoritePlaylistKeys
+            localFavoritePlaylistKeys == remoteFavoritePlaylistKeys &&
+            localDislikedArtistKeys == remoteDislikedArtistKeys &&
+            localDislikedTrackKeys == remoteDislikedTrackKeys
 
         return BundleComparison(
             identical = identical,
@@ -154,6 +171,10 @@ class BackupMirrorRepository @Inject constructor() {
             remoteFavoriteTrackCount = remote.favoriteTracks.size,
             localFavoritePlaylistCount = local.favoritePlaylists.size,
             remoteFavoritePlaylistCount = remote.favoritePlaylists.size,
+            localDislikedArtistCount = local.dislikedArtists.size,
+            remoteDislikedArtistCount = remote.dislikedArtists.size,
+            localDislikedTrackCount = local.dislikedTracks.size,
+            remoteDislikedTrackCount = remote.dislikedTracks.size,
         )
     }
 }
