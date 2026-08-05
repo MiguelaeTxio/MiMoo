@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -712,6 +713,32 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Favorites.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                    .glassChip(),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                                ),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    unselectedContainerColor = Color.Transparent,
+                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
+                                ),
+                            )
+                            NavigationDrawerItem(
+                                label = { Text("Lista negra") },
+                                icon = {
+                                    Icon(
+                                        Icons.Filled.ThumbDown,
+                                        contentDescription = null,
+                                    )
+                                },
+                                selected = currentRoute == Screen.Disliked.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Disliked.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

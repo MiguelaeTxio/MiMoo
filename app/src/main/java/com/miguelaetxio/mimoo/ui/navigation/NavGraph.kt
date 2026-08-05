@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.miguelaetxio.mimoo.ui.album.AlbumScreen
 import com.miguelaetxio.mimoo.ui.artist.ArtistScreen
+import com.miguelaetxio.mimoo.ui.disliked.DislikedScreen
 import com.miguelaetxio.mimoo.ui.downloads.DownloadsScreen
 import com.miguelaetxio.mimoo.ui.explorer.ExplorerScreen
 import com.miguelaetxio.mimoo.ui.favorites.FavoritesScreen
@@ -27,6 +28,7 @@ sealed class Screen(val route: String) {
     object Library : Screen("library")
     object Explorer : Screen("explorer")
     object Favorites : Screen("favorites")
+    object Disliked : Screen("disliked")
     object Playlists : Screen("playlists")
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
@@ -105,6 +107,9 @@ fun MiMooNavGraph(
                     navController.navigate(Screen.PlaylistDetail.routeFor(playlistId))
                 },
             )
+        }
+        composable(Screen.Disliked.route) {
+            DislikedScreen(onOpenDrawer = onOpenDrawer)
         }
         composable(Screen.Playlists.route) {
             PlaylistsScreen(
