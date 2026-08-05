@@ -1210,6 +1210,33 @@ class RadioRepository @Inject constructor(
         null
     }
 
+    /**
+     * H15 (miMooutCast) -- construye un `RadioAnchor` A MANO, sin
+     * artista de origen, a partir de género y/o década elegidos por
+     * el usuario (una única dimensión con la otra libre, decisión
+     * cerrada con Miguel Ángel en S029 -- ver `DOCS/ANNEX_H15.md`).
+     * Misma forma que `resolveAnchor()` ya produce, para que el motor
+     * de la cascada 80/10/10 (`fetchRoundCandidate()` en
+     * `PlayerManager`, `suggestRelatedArtist()` aquí mismo) la consuma
+     * sin saber que no viene de un artista real -- el punto entero de
+     * H15 es que solo cambia el PUNTO DE ENTRADA del ancla.
+     *
+     * `genres = emptySet()` cuando no se elige género (década sola) es
+     * un caso NUEVO que la Radio automática nunca produce (un artista
+     * real siempre trae género real) -- ver el ajuste correspondiente
+     * en `GenreMatchQuality.of()`, que trata un ancla sin géneros
+     * como "sin restricción de género" en vez de "0% siempre".
+     */
+    fun manualAnchor(genre: String?, decadeBegin: Int?): RadioAnchor =
+        RadioAnchor(
+            genre = genre ?: "",
+            genres = genre?.let { setOf(it) } ?: emptySet(),
+            country = null,
+            decadeBegin = decadeBegin,
+            originGroup = null,
+            isClassical = genre == "classical",
+        )
+
     suspend fun resolveAnchor(
         sourceArtist: String,
         sourceTrackTitle: String? = null,
@@ -1608,6 +1635,21 @@ class RadioRepository @Inject constructor(
         // metal, classic rock... -- la consulta trae decenas de
         // británicos de los 70 y deja de depender de una etiqueta
         // suelta elegida por azar alfabético.
+        // H15 (miMooutCast) -- ancla manual sin género NI origen (año
+        // sola, sin ninguna otra dimensión elegida): no queda ningún
+        // término real que mandar a MusicBrainz (ver el comentario de
+        // `buildGenreQuery()`, decadeBegin nunca ha formado parte de
+        // esta consulta) -- se corta aquí, limpio, en vez de gastar
+        // una llamada de red para nada. Con género O con origen (aunque
+        // sea sin el otro) sí hay término real y se sigue normal.
+        if (anchor.genre.isBlank() && anchor.originGroup == null) {
+            log(
+                "suggestRelatedArtist(sin género ni origen, década=${anchor.decadeBegin}) -- ancla " +
+                    "\"década sola\" (miMooutCast): la Exploración no puede buscar en MusicBrainz sin " +
+                    "género ni origen, esta porción se queda sin candidatos",
+            )
+            return null
+        }
         val candidates = findCandidatesForGenres(
             listOf(anchor.genre) + anchor.genres.filter { it != anchor.genre },
             anchor.originGroup,
@@ -1714,6 +1756,12 @@ class RadioRepository @Inject constructor(
         offset: Int = 0,
     ): List<String> = try {
         val query = buildGenreQuery(genre, originGroup, decadeBegin, isClassical)
+        // H15 (miMooutCast) -- ancla "década sola" (sin género ni
+        // origen): no queda ningún término real que mandar a
+        // MusicBrainz (ver el comentario de `buildGenreQuery()`), así
+        // que se corta aquí, limpio, en vez de mandar una consulta
+        // vacía que devolvería basura o un error.
+        if (query.isBlank()) return emptyList()
         // S010 -- offset aleatorio, no siempre 0, para variar entre
         // sesiones de Radio con el mismo ancla.
         //
@@ -1815,20 +1863,37 @@ class RadioRepository @Inject constructor(
         isClassical: Boolean,
     ): String {
         fun escape(value: String) = value.replace("\"", "")
-        var query = "tag:\"${escape(genre)}\""
+        // H15 (miMooutCast) -- ancla "origen solo" (sin género): no
+        // hay ninguna etiqueta que buscar, así que la cláusula
+        // `tag:""` (rota) se omite entera y la consulta arranca
+        // directamente por país -- ver el `if` de más abajo. Si
+        // TAMPOCO hay origen (ancla "década sola"), no queda ningún
+        // término real que mandar a MusicBrainz -- decadeBegin nunca
+        // ha formado parte de esta consulta (ver el comentario debajo
+        // sobre por qué se quitó en S027): la búsqueda en vivo por
+        // año/década se hace verificando cada TEMA candidato, nunca
+        // filtrando artistas por su fecha de nacimiento/formación.
+        // `findCandidates()` es quien decide qué hacer si esto
+        // devuelve una cadena vacía.
+        var query = if (genre.isBlank()) "" else "tag:\"${escape(genre)}\""
         if (!isClassical) {
-            query += when (originGroup) {
+            val originClause = when (originGroup) {
                 null -> ""
                 OriginGroup.MUNDIAL -> {
                     val otherCountries = OriginGroup.entries
                         .filter { it != OriginGroup.MUNDIAL }
                         .flatMap { OriginGroup.countriesOf(it) }
-                    " AND NOT (" + otherCountries.joinToString(" OR ") { "country:$it" } + ")"
+                    "NOT (" + otherCountries.joinToString(" OR ") { "country:$it" } + ")"
                 }
                 else -> {
                     val countries = OriginGroup.countriesOf(originGroup)
-                    " AND (" + countries.joinToString(" OR ") { "country:$it" } + ")"
+                    "(" + countries.joinToString(" OR ") { "country:$it" } + ")"
                 }
+            }
+            query = when {
+                originClause.isEmpty() -> query
+                query.isEmpty() -> originClause
+                else -> "$query AND $originClause"
             }
             if (decadeBegin != null) {
                 // S027 -- QUITADO. Esta cláusula filtraba por

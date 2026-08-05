@@ -125,6 +125,20 @@ object GenreMatchQuality {
         // de 30% configurado. Con el filtro estricto de siempre daba
         // 0% sin remedio.
         val anchorSpecific = specificGenres(anchorGenres, genreTree)
+        // H15 (miMooutCast) -- caso NUEVO que la Radio automática
+        // nunca produce: un ancla manual anclada solo en década (o
+        // solo en origen, cuando se construya esa sección), sin
+        // género elegido. `anchorGenres` llega vacío a propósito
+        // (`RadioRepository.manualAnchor()`), no por un artista sin
+        // datos catalogados -- géneros vacíos de un candidato real
+        // dan igual, esto es sobre el ANCLA. Sin este caso especial,
+        // `union = candidates` (ancla vacía no aporta nada), `shared`
+        // siempre vacío, 0% siempre: ningún candidato podría pasar
+        // nunca la comprobación de género, aunque el usuario haya
+        // elegido explícitamente "sin restricción de género".
+        if (anchorGenres.isEmpty()) {
+            return Result(matches = true, overlapPercent = 100, sharedGenres = emptySet())
+        }
         val (candidates, anchors) = if (anchorSpecific.isNotEmpty()) {
             specificGenres(candidateGenres, genreTree) to anchorSpecific
         } else {

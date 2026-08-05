@@ -630,6 +630,10 @@ class PlayerManager @Inject constructor(
                     // used-artists list, recalculated from scratch
                     // from this new artist on the next top-up.
                     radioAnchor = null
+                    // H15 -- una pista propia nueva del usuario vuelve
+                    // siempre al modo automático, aunque la sesión
+                    // anterior fuera de ancla manual.
+                    manualAnchorActive = false
                     radioUsedArtists.clear()
                     radioRecentArtists.clear()
                     radioTracksAccepted = 0
@@ -931,6 +935,22 @@ class PlayerManager @Inject constructor(
     private var radioAnchorArtistFallback: String? = null
     private var radioAnchorTrackTitle: String? = null
     private var radioAnchor: RadioAnchor? = null
+
+    /**
+     * H15 (miMooutCast) -- `true` cuando la sesión de Radio en curso
+     * arrancó desde un ancla elegida A MANO (género/origen/década,
+     * `PlayerManager.startRadioFromManualAnchor()`), no desde una
+     * pista propia sonando. Orden explícita de Miguel Ángel: nada de
+     * cupos ni de rondas de 10 aquí -- es simplemente ir poniendo
+     * temas que encajen, uno detrás de otro, sin repetir. Cuando es
+     * `true`, `fetchOneRadioTrack()` llama a
+     * `fetchSimpleManualCandidate()` en vez de a
+     * `fetchRoundCandidate()` (el motor de cupos de la Radio
+     * automática) -- mismo resto de la maquinaria de arranque/relleno
+     * de cola (`topUpRadioQueueIfNeeded()`), solo cambia CÓMO se
+     * encuentra cada candidato.
+     */
+    private var manualAnchorActive = false
 
     /**
      * S026 -- true tras un `TrackExistence.NetworkUnavailable` tratando
@@ -1625,7 +1645,14 @@ class PlayerManager @Inject constructor(
                 // no teníamos red."* No influye en lo que suena; solo
                 // engorda el diccionario de la tarjeta.
                 radioRepository.reconcilePending()
-                fetchRoundCandidate(anchor, anchorArtistName)
+                // H15 (miMooutCast) -- sesión de ancla manual: SIN
+                // CUPOS, ver el kdoc de `manualAnchorActive` y de
+                // `fetchSimpleManualCandidate()`.
+                if (manualAnchorActive) {
+                    fetchSimpleManualCandidate(anchor, anchorArtistName)
+                } else {
+                    fetchRoundCandidate(anchor, anchorArtistName)
+                }
             }
         } catch (e: Exception) {
             RadioDebugLogger.log(
@@ -2475,7 +2502,14 @@ class PlayerManager @Inject constructor(
         // `excludeSongKeys = emptySet()` directamente, o sea que se
         // repetía aunque hubiera material sin estrenar.
         val fresh = knownHitsRepository.randomHit(
-            anchor.genre, anchor.decadeBegin, anchorOrigin(anchor),
+            // H15 (miMooutCast) -- un ancla manual sin género elegido
+            // (decisión de década sola) llega con `anchor.genre = ""`
+            // (String no nulo, ver `RadioRepository.manualAnchor()`),
+            // no `null` -- `.ifBlank { null }` para que sí dispare el
+            // camino "sin género" que `randomHit()` ya sabía manejar
+            // (`genre: String?`), en vez de buscar literalmente por la
+            // cadena vacía.
+            anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
             excludeSongKeys = radioUsedSongs, avoidArtists = avoidNames + radioRoundArtists,
             anchorGenres = anchor.genres,
             classical = anchor.isClassical,
@@ -3296,6 +3330,137 @@ class PlayerManager @Inject constructor(
      * The station's name is the title shown; there's no artist to
      * identify, there never will be.
      */
+    /**
+     * H15 (miMooutCast) -- arranca una sesión de Radio nueva anclada
+     * A MANO (género, origen o década elegidos por el usuario -- una
+     * única dimensión, S029 -- sin partir de ninguna pista sonando).
+     *
+     * SIN CUPOS. Orden explícita de Miguel Ángel: nada de porcentajes
+     * 80/10/10 ni de rondas de 10 -- eso es exclusivo de la Radio
+     * automática (H08), que SÍ necesita repartir entre conocidos/
+     * disco/desconocidos porque el ancla es un artista real con toda
+     * esa maquinaria alrededor. Aquí es sencillo: streaming continuo
+     * de temas que encajen con la elección, sin repetir, cada uno
+     * buscado por `fetchSimpleManualCandidate()` (dictionario ->
+     * MusicBrainz en vivo -> biblioteca local, el primero que
+     * encuentre algo, sin contar cuotas de nada).
+     *
+     * `radioAnchor` se fija DIRECTAMENTE y `manualAnchorActive = true`
+     * hace que `fetchOneRadioTrack()` -- reutilizado tal cual, junto
+     * con `topUpRadioQueueIfNeeded()` para el relleno en segundo
+     * plano -- llame a `fetchSimpleManualCandidate()` en vez de al
+     * motor de cupos.
+     *
+     * Devuelve `false` si no se encontró NI UN SOLO candidato para
+     * arrancar (combinación demasiado restrictiva) -- la pantalla de
+     * miMooutCast decide qué mostrar en ese caso, la cola no se toca.
+     */
+    suspend fun startRadioFromManualAnchor(anchor: RadioAnchor, displayLabel: String): Boolean {
+        clearQueue()
+        radioAnchor = anchor
+        manualAnchorActive = true
+        radioAnchorArtist = displayLabel
+        radioAnchorArtistFallback = displayLabel
+        radioAnchorTrackTitle = displayLabel
+        val first = fetchOneRadioTrack(displayLabel) ?: return false
+        first.artist?.let { radioUsedArtists.add(it) }
+        radioUsedSongs.add(knownHitsRepository.songKey(first.artist, first.title))
+        withContext(Dispatchers.Main) {
+            playQueue(listOf(first))
+        }
+        topUpRadioQueueIfNeeded()
+        return true
+    }
+
+    /**
+     * H15 (miMooutCast) -- busca UN candidato para el ancla manual,
+     * sin cupos: prueba en orden dictionario -> MusicBrainz en vivo ->
+     * biblioteca local, se queda con el primero que encuentre algo.
+     * Reutiliza `radioUsedArtists`/`radioUsedSongs` (los mismos sets
+     * de sesión que ya usa la Radio automática) para no repetir, y el
+     * mismo filtro de Lista Negra de H16
+     * (`dislikedArtistNamesLower`/`isTrackDisliked()`), releído en
+     * cada llamada -- mismo criterio que `refreshDislikedSnapshots()`
+     * en `fetchRoundCandidate()`.
+     */
+    private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
+        refreshDislikedSnapshots()
+        val excludeLower = radioUsedArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
+
+        // 1 -- dictionario de éxitos. `relaxGenre = true` cuando no
+        // hay género elegido (década u origen solos): es el "modo
+        // degradado" que ya existía para cuando MusicBrainz está
+        // caído (S022) -- aquí se reutiliza tal cual porque el efecto
+        // es idéntico, "sin género real que filtrar".
+        knownHitsRepository.randomHit(
+            anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
+            excludeSongKeys = radioUsedSongs, avoidArtists = excludeLower,
+            relaxGenre = anchor.genre.isBlank(),
+            anchorGenres = anchor.genres,
+            classical = anchor.isClassical,
+            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+        )?.let { hit ->
+            if (hit.artist.lowercase() !in excludeLower) {
+                val item = resolveYoutubeCandidate(anchorLabel, hit.artist, hit.song)
+                if (item != null && !isTrackDisliked(item.artist, item.title)) {
+                    RadioDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> dictionario: " +
+                            "'${hit.artist}' - '${hit.song}'",
+                    )
+                    return item
+                }
+            }
+        }
+
+        // 2 -- MusicBrainz en vivo. Con género O con origen (aunque
+        // sea sin el otro) hay término real que buscar -- ver
+        // `RadioRepository.buildGenreQuery()`. "Década sola" (sin
+        // ninguno de los dos) no puede aportar nada aquí, y
+        // `suggestRelatedArtist()` ya lo sabe y devuelve `null` limpio.
+        radioRepository.suggestRelatedArtist(
+            anchor, excludeLower, emptySet(),
+            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+        )?.let { artist ->
+            val item = resolveYoutubeCandidate(
+                anchorLabel, artist, songTitle = null,
+                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+                expectedYear = anchor.anchorYear,
+            )
+            if (item != null &&
+                knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
+                !isTrackDisliked(item.artist, item.title)
+            ) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
+                        "'${item.artist}' - '${item.title}'",
+                )
+                return item
+            }
+        }
+
+        // 3 -- biblioteca local, último recurso, funciona con
+        // cualquier combinación (el filtro de género de
+        // `GenreMatchQuality.of()` ya trata un ancla sin género como
+        // "sin restricción", ver su comentario H15).
+        pickDiscoCandidate(anchor, excludeLower, emptySet())?.let { item ->
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> biblioteca local: " +
+                    "'${item.artist}' - '${item.title}'",
+            )
+            return item
+        }
+
+        RadioDebugLogger.log(
+            appContext, storageManager,
+            "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en ninguna de " +
+                "las tres fuentes",
+        )
+        return null
+    }
+
     fun playRadioStation(streamUrl: String, title: String, artworkUri: String? = null) {
         playQueue(
             listOf(
@@ -3897,6 +4062,7 @@ class PlayerManager @Inject constructor(
         radioAnchorArtistFallback = null
         radioAnchorTrackTitle = null
         radioAnchor = null
+        manualAnchorActive = false
         radioUsedArtists.clear()
         radioRecentArtists.clear()
         radioTracksAccepted = 0

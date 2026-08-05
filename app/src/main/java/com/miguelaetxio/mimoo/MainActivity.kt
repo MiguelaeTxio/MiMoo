@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -722,6 +723,17 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.RadioBrowser.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                            )
+                            CompactDrawerItem(
+                                label = "miMooutCast",
+                                icon = Icons.Filled.Tune,
+                                selected = currentRoute == Screen.Mimooutcast.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Mimooutcast.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },

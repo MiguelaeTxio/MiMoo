@@ -15,6 +15,7 @@ import com.miguelaetxio.mimoo.ui.explorer.ExplorerScreen
 import com.miguelaetxio.mimoo.ui.favorites.FavoritesScreen
 import com.miguelaetxio.mimoo.ui.importlink.ImportLinkScreen
 import com.miguelaetxio.mimoo.ui.library.LibraryScreen
+import com.miguelaetxio.mimoo.ui.mimooutcast.MimooutcastScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistDetailScreen
 import com.miguelaetxio.mimoo.ui.playlist.PlaylistsScreen
 import com.miguelaetxio.mimoo.ui.queue.QueueScreen
@@ -29,6 +30,7 @@ sealed class Screen(val route: String) {
     object Explorer : Screen("explorer")
     object Favorites : Screen("favorites")
     object Disliked : Screen("disliked")
+    object Mimooutcast : Screen("mimooutcast")
     object Playlists : Screen("playlists")
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun routeFor(playlistId: Long) = "playlist/$playlistId"
@@ -110,6 +112,9 @@ fun MiMooNavGraph(
         }
         composable(Screen.Disliked.route) {
             DislikedScreen(onOpenDrawer = onOpenDrawer)
+        }
+        composable(Screen.Mimooutcast.route) {
+            MimooutcastScreen(onOpenDrawer = onOpenDrawer)
         }
         composable(Screen.Playlists.route) {
             PlaylistsScreen(
