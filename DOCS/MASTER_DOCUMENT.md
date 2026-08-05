@@ -31,6 +31,7 @@ queda abierto en cada uno.
 | H12 | Directorio de Música (Artista/Álbum/Canción) + Favoritos sin Descarga | `DOCS/ANNEX_H12.md` |
 | H13 | UX del Reproductor (ExoPlayer) — Estado Visual de Controles | `DOCS/ANNEX_H13.md` |
 | H14 | Almacenamiento de la Biblioteca — Carpeta Configurable y Traslado | `DOCS/ANNEX_H14.md` |
+| H15 | miMooutCast — Radio de Ancla a la Carta (Géneros/Décadas) | `DOCS/ANNEX_H15.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -105,6 +106,13 @@ destructivo antes de tiempo, reentrante). Motivado por el caso de uso
 de mover la biblioteca a una tarjeta externa sin perder favoritos,
 listas ni canales. Sin verificar en dispositivo todavía. Ver
 `DOCS/ANNEX_H14.md`.
+H15: hito nuevo (2026-08-04, cierre de S028) -- miMooutCast, ancla de
+Radio elegida a mano (género y/o década de MusicBrainz) en vez de
+derivada de una pista sonando, reutilizando el motor de H08 ya
+construido y corregido en S028. Sin código todavía -- alcance
+deliberadamente abierto en dos puntos (si se pide también origen/país,
+e interacción exacta entre las dos secciones), a cerrar con Miguel
+Ángel al arrancar la sesión que lo retome. Ver `DOCS/ANNEX_H15.md`.
 
 ---
 

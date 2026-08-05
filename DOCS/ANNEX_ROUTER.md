@@ -34,17 +34,34 @@ abierto, sin mencionar jamás su propio estado.
 | H05 | `DOCS/ANNEX_H05.md` | PAUSADO |
 | H06 | `DOCS/ANNEX_H06.md` | PAUSADO |
 | H07 | `DOCS/ANNEX_H07.md` | PAUSADO |
-| H08 | `DOCS/ANNEX_H08.md` | ← **EN PROGRESO** |
+| H08 | `DOCS/ANNEX_H08.md` | PAUSADO |
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
+| H15 | `DOCS/ANNEX_H15.md` | ← **EN PROGRESO** |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-08-04 (cierre de S028)** — PCH explícito de Miguel Ángel al
+  cierre de sesión: H08 pasa a PAUSADO (sesión larga -- 31 commits --
+  que cubrió entero el punto 1 de su hoja de ruta, Favoritos, más una
+  cascada de bugs reales de Radio/Favoritos encontrados en dispositivo,
+  ver `DOCS/ANNEX_H08.md` sección "COMPLETADAS EN S028"; su hoja de
+  ruta pendiente queda intacta, sin tocar), **H15 abierto EN
+  PROGRESO** -- hito nuevo (miMooutCast: ancla de Radio elegida a mano
+  por género/década de MusicBrainz en vez de derivada de una pista
+  sonando, reutilizando el motor de H08), a petición explícita de
+  Miguel Ángel: *"vamos a preparar un hito nuevo para la siguiente
+  sesión, nuestro propio ShoutCast: miMooutCast... eligiendo el ancla
+  a la carta: con dos secciones, géneros y décadas."* Alcance
+  deliberadamente abierto en dos puntos (origen/país sí o no, y la
+  interacción exacta entre las dos secciones) -- ver
+  `DOCS/ANNEX_H15.md`.
 
 - **2026-07-29** — PCH formal explícito de Miguel Ángel al arranque de
   S026, resolviendo la incidencia de proceso dejada abierta en

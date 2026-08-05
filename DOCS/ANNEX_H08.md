@@ -3177,6 +3177,109 @@ flujo de trabajo repetidamente. La vida corta del token de sesión
 puede necesitar revisarse si vuelve a pasar.
 
 
+## COMPLETADAS EN S028
+
+Sesión larga y densa -- 31 commits, todos en verde. Cubrió el punto 1
+de la hoja de ruta anterior (Favoritos) entero, más una cascada larga
+de bugs reales de Radio y Favoritos encontrados en dispositivo real
+por Miguel Ángel a lo largo de la propia sesión, con log/captura como
+prueba en casi todos los casos.
+
+### Favoritos, diseño y construcción completa
+
+Sesión de diseño primero (sin código), cerrando con Miguel Ángel todos
+los puntos abiertos del punto 1 de la hoja de ruta anterior: qué
+significa "favorito de lista de reproducción" (marcar/pinchar entre
+las propias, no favoritos de listas ajenas), sin cascada entre niveles
+(favoritear un artista no favoritea sus álbumes ni al revés), y el
+generador de popurrís desde la selección (cola efímera tipo Radio,
+reparto por turnos entre artistas/álbumes elegidos, tope de 100 sin
+repetir, streaming con preferencia local, casillas de selección con
+marcar/desmarcar todos). Construido entero: `FavoriteTrack`/
+`FavoritePlaylist` (capa de datos, migración 12→13), `PopurriRepository`
+(reparto por turnos + reproducción progresiva, evolucionada varias
+veces durante la sesión -- ver más abajo), pantalla `FavoritesScreen`
+con pestañas Artistas/Álbumes/Sencillos/Listas, favorito de sencillo
+funcionando también en streaming sin descargar, estrella de favorito
+en playlists propias, y retirada de las vistas de favoritos duplicadas
+de Biblioteca (`3896981`).
+
+### Bugs reales de sincronización entre dispositivos, encontrados en cascada
+
+`favorite_artists` (de H12) nunca se había conectado al sistema de
+sincronización -- se quedó fuera desde que se creó la tabla. Al
+corregirlo aparecieron dos capas más del mismo problema, cada una
+encontrada solo al probar la anterior en dispositivo real: el bundle
+de sincronización no incluía los favoritos nuevos (`c590e52`), Gson
+ignoraba los valores por defecto de Kotlin al reconstruir el bundle
+desde una copia sin esos campos, provocando un crash real
+(`2d7bfb9`), y el fallo de fondo real: los toggles de favorito de
+Artista/Álbum/Sencillo/Playlist nunca pasaban por
+`AutoSyncPusher.executeIfConnected()`, así que nunca disparaban push a
+Drive en absoluto -- arreglado en los seis puntos de llamada
+encontrados (`1ee253f`). Añadido de paso: recuento de favoritos en el
+diálogo de sincronización y favorito de artista desde Biblioteca
+(`52192d6`).
+
+### Reproducción progresiva y latencia real de los popurrís
+
+Cadena larga de arreglos de rendimiento, cada uno encontrado al medir
+el anterior en la práctica: primero solo la resolución de streaming se
+hizo progresiva (`3a74893`), luego se descubrió que construir el PLAN
+en sí seguía siendo bloqueante (8 minutos sin sonar nada,
+`4b734e5`), luego que `matchAlbumTracks()` buscaba en YouTube el álbum
+entero en serie (`774443f`), luego un id de release-group pasado
+donde se esperaba un id de release causaba HTTP 404 en el 100% de los
+álbumes del popurrí de artistas (`47b3932`, encontrado gracias al
+`PopurriDebugLogger` nuevo de esta misma sesión, `faad5c0`), y
+finalmente que pulsar reproducir varias veces seguidas lanzaba varios
+popurrís en paralelo (`5ae0b0b`). Por petición explícita de Miguel
+Ángel, se añadió un "opening" de mix (loop de batería real
+proporcionado por él, `app/src/main/res/raw/popurri_opening.wav`) que
+rellena la espera restante en vez de silencio, cortándose solo en
+cuanto arranca la primera pista real (`245f040`, `4f622c8`).
+
+### Radio: cascada larga de bugs reales de repertorio clásico
+
+Reportado en dispositivo real, uno detrás de otro, cada arreglo
+revelando el siguiente al probarlo: el cartel "Radio detenida: sin
+conexión" salía con Wi-Fi conectado, primero por no comprobar
+conexión real (`79ac73d`), luego porque `NET_CAPABILITY_VALIDATED` en
+sí no es fiable -- sustituido por una sonda HTTP real (`e96f2d2`).
+Verificación de repertorio clásico: MusicBrainz cataloga la obra bajo
+el COMPOSITOR, no el intérprete -- reintento como compositor añadido
+(`2c42dd2`); punto muerto real en los cupos 80/10/10 que dejaba la
+Radio completamente parada en anclas clásicas (`78160b7`); cupo de
+disco activo específico para clásica, sin repetir nunca
+(`4979fb7`), reordenado después para no bloquear el arranque con la
+búsqueda de disco (`a7b61ae`, `dce9b47`); un artista fallido se seguía
+proponiendo durante 15 reintentos por una foto fija del conjunto de
+exclusión (`90a5be3`); obras identificadas solo por el nombre del
+movimiento (Andante/Allegro...) se rechazaban siempre (`83381d6`),
+con el reintento de compositor limitado después a cuando el título
+lo menciona de verdad, por rendimiento (`bae4460`); vídeos
+explicativos/tutoriales colándose como si fueran interpretaciones
+reales (`8763ba1`); y aprovechamiento real de la discografía ya
+descargada en bloque, con coincidencia por solapamiento en vez de
+solo subconjunto completo (`9d0a2e9`).
+
+### ShoutCast (H09) roto por reutilizar código de streaming ajeno
+
+Bug real de una sesión anterior (no de esta), encontrado al probar el
+arreglo del modal de streaming: las emisoras ShoutCast preguntaban
+"¿Quién es el artista?" -- primero arreglado el camino de `play()`
+(`7b0be7e`), luego encontrado un SEGUNDO camino independiente
+(`onMediaItemTransition()`/`topUpRadioQueueIfNeeded()` tratando
+cualquier pista nueva como candidata a sembrar una sesión de Radio,
+`937aeba`) -- las emisoras llevan ahora una marca explícita
+(`isRadioStation`) que las excluye de toda la lógica de Radio.
+
+### Otros
+
+"Elegir como tono para un contacto" en el menú de tres puntos
+(`220b7c8`, solo Android 10+). Un build roto por un `--` dentro de un
+comentario XML, corregido en el commit siguiente (`a1229df`).
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
 ### 1. Favoritos -- funcionalidad dispersa, sin estructurar. Orden textual de Miguel Ángel para empezar la próxima sesión
