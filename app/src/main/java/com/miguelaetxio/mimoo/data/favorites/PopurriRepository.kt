@@ -7,6 +7,8 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository
+import com.miguelaetxio.mimoo.data.local.repository.DislikedTrackRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
@@ -82,6 +84,13 @@ class PopurriRepository @Inject constructor(
     private val streamResolver: StreamResolver,
     @ApplicationContext private val appContext: Context,
     private val storageManager: StorageManager,
+    // H16 -- Lista Negra ("no me gusta"): mismo filtro DURO que en
+    // RadioRepository/PlayerManager, aplicado aquí antes de encolar
+    // cualquier tema del popurrí -- streaming o ya descargado. Ver
+    // ANNEX_H16.md, "Hoja de Ruta para la Siguiente Sesión que retome
+    // H16", punto 3.
+    private val dislikedArtistRepository: DislikedArtistRepository,
+    private val dislikedTrackRepository: DislikedTrackRepository,
 ) {
     companion object {
         const val TRACK_CAP = 100
@@ -117,6 +126,32 @@ class PopurriRepository @Inject constructor(
      * screen. Same criterion as AutoSyncPusher.pushScope.
      */
     private val resolveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * H16 -- snapshot de la Lista Negra, releída al arrancar CADA
+     * popurrí (playArtistsProgressively()/playAlbumsProgressively()/
+     * buildFromFavoriteTracks()) -- un popurrí es una cola efímera de
+     * construcción rápida, no una sesión larga como la Radio, así que
+     * una única lectura al principio basta (a diferencia de
+     * PlayerManager.fetchRoundCandidate(), que la relee en cada
+     * vuelta). Mismas claves normalizadas que expone
+     * DislikedArtistRepository/DislikedTrackRepository -- pensadas
+     * explícitamente para este uso, ver sus kdocs.
+     */
+    private var dislikedArtistKeysSnapshot: Set<String> = emptySet()
+    private var dislikedTrackKeysSnapshot: Set<String> = emptySet()
+
+    private suspend fun refreshDislikedSnapshots() {
+        dislikedArtistKeysSnapshot = dislikedArtistRepository.normalizedKeysSnapshot()
+        dislikedTrackKeysSnapshot = dislikedTrackRepository.normalizedKeysSnapshot()
+    }
+
+    private fun isArtistDisliked(artist: String?): Boolean =
+        !artist.isNullOrBlank() && SearchNormalizer.normalizeArtistName(artist) in dislikedArtistKeysSnapshot
+
+    private fun isTrackDisliked(artist: String?, title: String?): Boolean =
+        !artist.isNullOrBlank() && !title.isNullOrBlank() &&
+            DislikedTrackRepository.key(artist, title) in dislikedTrackKeysSnapshot
 
     /** Una pista ya emparejada a MusicBrainz+YouTube, todavía sin decidir local/streaming. */
     private data class PendingTrack(
@@ -179,9 +214,15 @@ class PopurriRepository @Inject constructor(
         shuffle: Boolean,
     ): Boolean {
         if (artists.isEmpty()) return false
+        refreshDislikedSnapshots()
         log("playArtistsProgressively() -- ${artists.size} artista(s) seleccionados: ${artists.joinToString { it.artist }}")
         val localIndex = buildLocalIndex()
-        val queues = artists.mapNotNull { fav ->
+        // H16 -- Favoritos y Lista Negra se excluyen mutuamente (marcar
+        // "no me gusta" quita el favorito, y viceversa -- ver PlayerBar),
+        // así que en teoría esta lista nunca debería traer un artista
+        // disliked; se filtra igualmente por seguridad defensiva, sin
+        // depender de que ese otro punto nunca falle.
+        val queues = artists.filterNot { isArtistDisliked(it.artist) }.mapNotNull { fav ->
             val resolution = try {
                 artistDirectoryRepository.resolveArtist(fav.artist)
             } catch (e: Exception) {
@@ -225,9 +266,11 @@ class PopurriRepository @Inject constructor(
         shuffle: Boolean,
     ): Boolean {
         if (albums.isEmpty()) return false
+        refreshDislikedSnapshots()
         log("playAlbumsProgressively() -- ${albums.size} álbum(es) seleccionados: ${albums.joinToString { "${it.artist} - ${it.album}" }}")
         val localIndex = buildLocalIndex()
-        val queues = albums.map { fav ->
+        // H16 -- ver el comentario equivalente en playArtistsProgressively().
+        val queues = albums.filterNot { isArtistDisliked(it.artist) }.map { fav ->
             ArrayDeque(listOf(AlbumUnit.FavoriteAlbumUnit(fav) as AlbumUnit))
         }
         val started = playRoundRobinProgressively(playerManager, queues, localIndex, shuffle)
@@ -255,16 +298,24 @@ class PopurriRepository @Inject constructor(
         favoriteTracks: List<FavoriteTrack>,
         favoriteLocalTracks: List<SearchResultTrack>,
     ): List<QueueItem> {
+        refreshDislikedSnapshots()
         val seen = mutableSetOf<String>()
         val items = mutableListOf<QueueItem>()
         for (local in favoriteLocalTracks) {
             if (local.downloadStatus != DownloadStatus.DONE || local.filePath == null) continue
             if (!seen.add(local.youtubeId)) continue
+            // H16 -- ya descargado no significa exento: un tema
+            // marcado "no me gusta" deja de sonar en cualquier
+            // contexto automático (Radio, popurrí), aunque siga en el
+            // disco/Biblioteca local -- ver ANNEX_H16.md, "Decisiones
+            // ya cerradas con Miguel Ángel en S029", punto 3.
+            val artistName = local.artist ?: local.channelTitle
+            if (isArtistDisliked(artistName) || isTrackDisliked(artistName, local.title)) continue
             items += QueueItem(
                 uri = local.filePath,
                 title = local.title,
                 isLocal = true,
-                artist = local.artist ?: local.channelTitle,
+                artist = artistName,
                 youtubeId = local.youtubeId,
             )
             if (items.size >= TRACK_CAP) break
@@ -272,6 +323,7 @@ class PopurriRepository @Inject constructor(
         if (items.size < TRACK_CAP) {
             for (fav in favoriteTracks) {
                 if (!seen.add(fav.youtubeId)) continue
+                if (isArtistDisliked(fav.artist) || isTrackDisliked(fav.artist, fav.title)) continue
                 items += QueueItem(
                     uri = "https://youtu.be/${fav.youtubeId}",
                     title = fav.title,
@@ -403,6 +455,12 @@ class PopurriRepository @Inject constructor(
             val key = SearchNormalizer.normalizeArtistName(track.artist) to
                 SearchNormalizer.normalize(track.title)
             if (!seenKeys.add(key)) continue
+            // H16 -- exclusión dura de la Lista Negra, mismo punto
+            // único de paso que ya usan las dos fases del reparto por
+            // turnos (Fase 1 en playRoundRobinProgressively(), Fase 2
+            // en continueCollecting()) para deduplicar. No cuenta para
+            // el tope de 100 -- simplemente no se ofrece.
+            if (isArtistDisliked(track.artist) || isTrackDisliked(track.artist, track.title)) continue
             fresh += track
             totalCollected[0]++
         }
