@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,9 +52,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -623,14 +622,9 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                                 )
                             }
-                            NavigationDrawerItem(
-                                label = { Text("Búsqueda") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Search,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Búsqueda",
+                                icon = Icons.Filled.Search,
                                 selected = currentRoute == Screen.Search.route,
                                 onClick = {
                                     navController.navigate(
@@ -638,25 +632,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Biblioteca") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.LibraryMusic,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Biblioteca",
+                                icon = Icons.Filled.LibraryMusic,
                                 selected = currentRoute == Screen.Library.route,
                                 onClick = {
                                     navController.navigate(
@@ -664,25 +643,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Explorador") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Explore,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Explorador",
+                                icon = Icons.Filled.Explore,
                                 selected = currentRoute == Screen.Explorer.route,
                                 onClick = {
                                     navController.navigate(
@@ -690,25 +654,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Favoritos") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Star,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Favoritos",
+                                icon = Icons.Filled.Star,
                                 selected = currentRoute == Screen.Favorites.route,
                                 onClick = {
                                     navController.navigate(
@@ -716,25 +665,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Lista negra") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.ThumbDown,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Lista negra",
+                                icon = Icons.Filled.ThumbDown,
                                 selected = currentRoute == Screen.Disliked.route,
                                 onClick = {
                                     navController.navigate(
@@ -742,25 +676,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Listas") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.QueueMusic,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Listas",
+                                icon = Icons.Filled.QueueMusic,
                                 selected = currentRoute == Screen.Playlists.route,
                                 onClick = {
                                     navController.navigate(
@@ -768,25 +687,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Importar enlace") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Link,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Importar enlace",
+                                icon = Icons.Filled.Link,
                                 selected = currentRoute == Screen.ImportLink.route,
                                 onClick = {
                                     navController.navigate(
@@ -794,25 +698,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Cola de reproducción") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.PlaylistPlay,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Cola de reproducción",
+                                icon = Icons.Filled.PlaylistPlay,
                                 selected = currentRoute == Screen.Queue.route,
                                 onClick = {
                                     navController.navigate(
@@ -820,25 +709,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Radio Online") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Radio,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Radio Online",
+                                icon = Icons.Filled.Radio,
                                 selected = currentRoute == Screen.RadioBrowser.route,
                                 onClick = {
                                     navController.navigate(
@@ -846,25 +720,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Canales") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Podcasts,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Canales",
+                                icon = Icons.Filled.Podcasts,
                                 selected = currentRoute == Screen.Channels.route,
                                 onClick = {
                                     navController.navigate(
@@ -872,25 +731,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Descargas") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Downloading,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Descargas",
+                                icon = Icons.Filled.Downloading,
                                 selected = currentRoute == Screen.Downloads.route,
                                 onClick = {
                                     navController.navigate(
@@ -898,25 +742,10 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
-                            NavigationDrawerItem(
-                                label = { Text("Ajustes") },
-                                icon = {
-                                    Icon(
-                                        Icons.Filled.Settings,
-                                        contentDescription = null,
-                                    )
-                                },
+                            CompactDrawerItem(
+                                label = "Ajustes",
+                                icon = Icons.Filled.Settings,
                                 selected = currentRoute == Screen.Settings.route,
                                 onClick = {
                                     navController.navigate(
@@ -924,16 +753,6 @@ class MainActivity : ComponentActivity() {
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                    .glassChip(),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
-                                ),
-                                colors = NavigationDrawerItemDefaults.colors(
-                                    unselectedContainerColor = Color.Transparent,
-                                    selectedContainerColor = Color.White.copy(alpha = 0.22f),
-                                ),
                             )
                         }
                     },
@@ -997,5 +816,44 @@ class MainActivity : ComponentActivity() {
             }
             }
         }
+    }
+}
+
+/**
+ * Fila de drawer compacta -- petición explícita de Miguel Ángel
+ * (2026-08-06): "ya hay demasiadas opciones en la sidebar, hay que
+ * poner el tamaño de la fuente 3/4 de altura". `NavigationDrawerItem`
+ * de Material3 no expone ninguna API pública para reducir su altura
+ * mínima fija (~56dp) -- se sustituye por un `Row` propio con el
+ * mismo lenguaje visual (glassChip, `active = selected` para el
+ * resaltado en vez de `NavigationDrawerItemDefaults.colors()`), con
+ * icono y texto a ~3/4 de su tamaño por defecto (24dp/14sp ->
+ * 18dp/10,5sp) y menos padding, para que quepan las mismas opciones
+ * en menos alto sin necesidad de scroll.
+ */
+@Composable
+private fun CompactDrawerItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .glassChip(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                ),
+                active = selected,
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(16.dp))
+        Text(label, fontSize = 10.5.sp)
     }
 }
