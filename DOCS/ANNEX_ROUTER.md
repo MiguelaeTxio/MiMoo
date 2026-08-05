@@ -41,12 +41,34 @@ abierto, sin mencionar jamás su propio estado.
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
-| H15 | `DOCS/ANNEX_H15.md` | PAUSADO |
-| H16 | `DOCS/ANNEX_H16.md` | ← **EN PROGRESO** |
+| H15 | `DOCS/ANNEX_H15.md` | ← **EN PROGRESO** |
+| H16 | `DOCS/ANNEX_H16.md` | PAUSADO |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-08-06 (S030)** — PCH explícito de Miguel Ángel a mitad de
+  sesión, tras una discusión de proceso sobre por qué el cierre de
+  S029 no dejó constancia clara de que la siguiente sesión debía
+  empezar por H15: **H16 pasa a PAUSADO** (los cinco puntos de código
+  de su hoja de ruta quedan completos y en build verde -- CRUD, filtro
+  en las tres cascadas de Radio, filtro en Popurrí, botón+diálogo del
+  ExoPlayer, acción en el Explorador -- pendiente solo de verificación
+  en dispositivo real, ver `DOCS/ANNEX_H16.md` sección "COMPLETADAS EN
+  S030"), **H15 (miMooutCast) abierto EN PROGRESO** -- a petición
+  explícita de Miguel Ángel, cita textual: *"vamos a preparar un hito
+  nuevo para la siguiente sesión, nuestro propio ShoutCast:
+  miMooutCast, en esta vista vamos a usar la radio que hemos montado
+  eligiendo el ancla a la carta: con dos secciones, géneros y décadas
+  -- ahora pondremos música eligiendo entre los géneros o entre las
+  décadas que existen en MusicBrainz... Tenemos que cuidar la UX con
+  las chapitas de cristal esmerilado tal como ya está funcionando en
+  la app y que sea muy intuitivo. La siguiente sesión debe empezar con
+  este nuevo hito."* Su hoja de ruta (`DOCS/ANNEX_H15.md`) ya quedó
+  cerrada en tres de sus cuatro puntos de alcance en S029 y no se
+  toca -- coincide exactamente con lo que Miguel Ángel acaba de
+  describir.
 
 - **2026-08-05 (S029)** — PCH explícito de Miguel Ángel a mitad de
   sesión (CASO D, hito nuevo): H15 pasa a PAUSADO (sesión de diseño

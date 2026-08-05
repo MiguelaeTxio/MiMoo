@@ -170,28 +170,80 @@ trabajo real de esta sesión:
 
 ---
 
+## COMPLETADAS EN S030
+
+Sesión que retomó H16 desde el CRUD (orden dejado en
+`RESUMPTION_POINT.md` al cierre de S029) y completó los cinco puntos
+de su hoja de ruta -- parte en esta misma sesión, parte en una sesión
+paralela sobre el mismo repositorio (commits `1e4b66d`/`8c755bc`,
+verificados leyendo su diff real antes de darlos por buenos, código
+como fuente de verdad).
+
+1. **CRUD de gestión** (commit `c50c3e7`, build verde): `DislikedScreen.kt`
+   + `DislikedViewModel.kt` (pestañas Artistas/Temas, listar y borrar,
+   sin alta manual -- "Puntos de diseño -- CERRADOS" punto 4), ruta
+   `Screen.Disliked` en `NavGraph.kt`, entrada propia "Lista negra" en
+   el drawer de `MainActivity.kt` (icono ThumbDown, bajo Favoritos).
+2. **Filtro en las tres cascadas de Radio** (commit `c86a378`, build
+   verde): inyectado en `PlayerManager.kt` -- que es donde vive de
+   verdad `fetchRoundCandidate()`/`tryCandidate()`/
+   `pickDiscoCandidate()`/`resolveFinalFallback()` (el motor real de
+   la cascada 80/10/10), no en `RadioRepository.kt` como decía el
+   punto 2 de la hoja de ruta anterior -- corrección de ubicación
+   hecha sobre el código real, directriz 4.1. Snapshot de
+   `DislikedArtistRepository`/`DislikedTrackRepository` releído en
+   cada vuelta (`refreshDislikedSnapshots()`), mezclado en TODOS los
+   sets de exclusión DURA que ya usaban las dos fases de búsqueda,
+   `fetchFromUnknown()`, `pickDiscoCandidate()` y el resultado de
+   `randomHit()` en `resolveFinalFallback()` -- nunca en los `avoid*`
+   blandos. Las colas pendientes entre rondas
+   (`takeFromPendingIfRoomThisRound()`, `radioPendingUnknown`) también
+   descartan items encolados antes de que se marcara el "no me gusta".
+3. **Filtro en `PopurriRepository`** (commit `a542c7a`, build verde):
+   mismo filtro en el punto único de deduplicación (`collectFresh()`)
+   compartido por los modos artista/álbum del reparto por turnos, más
+   `buildFromFavoriteTracks()` (que no pasa por ahí) y un filtro
+   defensivo a nivel de artista/álbum de entrada.
+4. **Botón + diálogo en el ExoPlayer** (commit `1e4b66d`, sesión
+   paralela, build verde): diálogo "Artista"/"Solo este tema" en
+   `PlayerBar.kt` (mini-barra y expandido, icono ThumbDown junto a
+   Favorito), mutación en `PlayerBarViewModel.kt` vía
+   `AutoSyncPusher.executeIfConnected()`, corte inmediato con
+   `playerManager.playNext()` en los dos casos, y exclusión mutua con
+   Favoritos en ambos sentidos (incluida la pieza que faltaba:
+   `toggleCurrentFavorite()` ahora también quita el "no me gusta" del
+   tema al marcarlo favorito).
+5. **Acción en el Explorador** (commit `8c755bc`, sesión paralela,
+   build verde): con una precisión de alcance sobre la hoja de ruta
+   anterior -- `ExplorerScreen.kt` solo tiene drill Letras->Artistas,
+   sin nivel de tema (eso vive en `SongScreen`, fuera de ese archivo),
+   así que la acción quedó a nivel de artista únicamente, con icono
+   `ThumbDown` por fila (ON en rojo si ya está en la lista) y estado
+   observado en vivo (`collect` del Flow) para reaccionar si se marca
+   desde el ExoPlayer o el CRUD mientras el Explorador sigue abierto.
+
+**Sin verificar en dispositivo real todavía** -- los cinco puntos
+compilan en verde en GitHub Actions, pero ninguno se ha probado en
+hardware.
+
+**Fuera de la hoja de ruta de H16, hecho en la misma sesión por
+petición aparte de Miguel Ángel** (commits `2072e0a`/`ae150f5`): el
+drawer de `MainActivity.kt` tenía demasiadas opciones para caber sin
+scroll tras añadir "Lista negra" -- sustituidos los 12
+`NavigationDrawerItem` por un `CompactDrawerItem` propio (icono y
+texto a ~3/4 de tamaño, menos padding). El primer commit rompió el
+build (`Row`/`fillMaxWidth`/`size`/`width`/`@Composable` nunca se
+habían usado antes en ese archivo, faltaban los imports) --
+diagnosticado con la API de anotaciones de GitHub Actions y corregido
+en el commit siguiente, ya en verde.
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H16
 
-Petición explícita de Miguel Ángel al cierre de S029: **empezar por el
-CRUD**, no por el orden original de la sección "Contexto técnico".
+Punto único pendiente: **verificación en dispositivo real** -- CRUD,
+filtro en Radio, filtro en Popurrí, botón del ExoPlayer, acción del
+Explorador, exclusión mutua con Favoritos en los dos sentidos, y el
+drawer compacto. Nada de código pendiente salvo lo que salga de esa
+verificación.
 
-1. Construir la pantalla nueva de gestión (CRUD: listar y borrar
-   artistas/temas de `disliked_artists`/`disliked_tracks` -- sin
-   añadir a mano, ver "Puntos de diseño -- CERRADOS" punto 4) + su
-   entrada propia en el drawer de `MainActivity.kt`/`NavGraph.kt`.
-2. Leer `RadioRepository.kt` completo (2.314 líneas, lógica de
-   cascada sensible con varios bugs reales de fondo en sesiones
-   anteriores -- S020 a S028) antes de tocarlo. Inyectar el filtro de
-   exclusión en las tres cascadas
-   (`suggestRelatedArtist()`/`fetchRoundCandidate()`/
-   `verifyTrackExists()`), usando
-   `normalizedKeysSnapshot()` de ambos repositorios.
-3. Mismo filtro en `PopurriRepository`, antes de encolar cualquier
-   tema (streaming o ya descargado).
-4. Botón + diálogo "¿artista o tema?" en `PlayerBar.kt` (mini-barra y
-   expandido), con corte inmediato de la pista en curso si se marca lo
-   que suena ahora mismo, y con la exclusión mutua con Favoritos
-   (punto 2 de "Puntos de diseño -- CERRADOS").
-5. Acción "no me gusta" en `ExplorerScreen.kt` (artista y tema).
-6. Verificar en dispositivo real -- CRUD, Radio, Popurrí y
-   exclusión mutua con Favoritos.
