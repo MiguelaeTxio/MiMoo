@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +29,7 @@ import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.ui.library.LetterGrid
 import com.miguelaetxio.mimoo.ui.library.displayArtistName
 import com.miguelaetxio.mimoo.ui.theme.glassChip
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 
 /**
  * Explorador (H12, S018 rediseño) -- por letra, dos bloques: "Ya
@@ -102,8 +104,10 @@ fun ExplorerScreen(
                         onlineArtists = uiState.onlineArtists,
                         isLoadingOnline = uiState.isLoadingOnline,
                         hasMoreOnline = uiState.hasMoreOnline,
+                        dislikedArtistKeys = uiState.dislikedArtistKeys,
                         onArtistClick = onOpenArtist,
                         onLoadMore = viewModel::loadMoreOnline,
+                        onToggleDislike = viewModel::toggleArtistDisliked,
                     )
                 }
             }
@@ -140,8 +144,10 @@ private fun ColumnScope.ExplorerArtistContent(
     onlineArtists: List<MusicBrainzArtistSummary>,
     isLoadingOnline: Boolean,
     hasMoreOnline: Boolean,
+    dislikedArtistKeys: Set<String>,
     onArtistClick: (String) -> Unit,
     onLoadMore: () -> Unit,
+    onToggleDislike: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
 
@@ -171,7 +177,9 @@ private fun ColumnScope.ExplorerArtistContent(
                 ExplorerArtistRow(
                     name = displayArtistName(artist),
                     isLocal = true,
+                    isDisliked = SearchNormalizer.normalizeArtistName(artist) in dislikedArtistKeys,
                     onClick = { onArtistClick(artist) },
+                    onToggleDislike = { onToggleDislike(artist) },
                 )
             }
         }
@@ -186,7 +194,9 @@ private fun ColumnScope.ExplorerArtistContent(
             ExplorerArtistRow(
                 name = artist.name,
                 isLocal = false,
+                isDisliked = SearchNormalizer.normalizeArtistName(artist.name) in dislikedArtistKeys,
                 onClick = { onArtistClick(artist.name) },
+                onToggleDislike = { onToggleDislike(artist.name) },
             )
         }
         if (isLoadingOnline) {
@@ -215,7 +225,9 @@ private fun ColumnScope.ExplorerArtistContent(
 private fun ExplorerArtistRow(
     name: String,
     isLocal: Boolean,
+    isDisliked: Boolean,
     onClick: () -> Unit,
+    onToggleDislike: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -248,6 +260,18 @@ private fun ExplorerArtistRow(
                 tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.width(4.dp))
+        }
+        // H16 -- acción "no me gusta" desde el Explorador (roadmap
+        // punto 5). Solo a nivel de artista -- esta pantalla no lista
+        // temas individuales (drill Letras -> Artistas únicamente), a
+        // diferencia del ExoPlayer, que sí ofrece la disyuntiva
+        // artista/tema porque siempre hay una pista concreta sonando.
+        IconButton(onClick = onToggleDislike, modifier = Modifier.size(36.dp)) {
+            Icon(
+                Icons.Filled.ThumbDown,
+                contentDescription = if (isDisliked) "Quitar de la lista negra" else "No me gusta",
+                tint = if (isDisliked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Icon(
             Icons.Filled.ChevronRight,

@@ -2,13 +2,17 @@ package com.miguelaetxio.mimoo.ui.explorer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
+import com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository
+import com.miguelaetxio.mimoo.data.local.repository.FavoriteArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.remote.ArtistDirectoryRepository
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.ui.library.sortLetterFor
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +52,8 @@ data class ExplorerUiState(
     val isLoadingOnline: Boolean = false,
     val hasMoreOnline: Boolean = true,
     val errorMessage: String? = null,
+    /** H16 -- claves normalizadas (SearchNormalizer.normalizeArtistName()) de artistas en la Lista Negra, para pintar el icono de cada fila. */
+    val dislikedArtistKeys: Set<String> = emptySet(),
 )
 
 /**
@@ -72,6 +78,13 @@ data class ExplorerUiState(
 class ExplorerViewModel @Inject constructor(
     private val artistDirectoryRepository: ArtistDirectoryRepository,
     private val searchResultTrackRepository: SearchResultTrackRepository,
+    // H16 -- acción "no me gusta" en cada fila de artista (roadmap
+    // punto 5). Ver ANNEX_H16.md, "Contexto técnico", punto
+    // "ExplorerScreen.kt/ExplorerViewModel.kt".
+    private val dislikedArtistRepository: DislikedArtistRepository,
+    private val favoriteArtistRepository: FavoriteArtistRepository,
+    private val autoSyncPusher: AutoSyncPusher,
+    @ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     companion object {
@@ -97,6 +110,43 @@ class ExplorerViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         localArtistsForLetter = localArtistsFor(currentDrill.letter),
                     )
+                }
+            }
+        }
+        // H16 -- observado en vivo (no un snapshot puntual): si se
+        // marca/desmarca desde otro sitio (ExoPlayer, pantalla CRUD)
+        // mientras el Explorador está abierto, los iconos de fila se
+        // actualizan solos.
+        viewModelScope.launch {
+            dislikedArtistRepository.getAll().collect { disliked ->
+                _uiState.value = _uiState.value.copy(
+                    dislikedArtistKeys = disliked.map { SearchNormalizer.normalizeArtistName(it.artist) }.toSet(),
+                )
+            }
+        }
+    }
+
+    private fun isArtistDisliked(artist: String): Boolean =
+        SearchNormalizer.normalizeArtistName(artist) in _uiState.value.dislikedArtistKeys
+
+    /**
+     * H16 -- acción "no me gusta" de una fila de artista del
+     * Explorador. Alterna: añade si no estaba, quita si ya estaba
+     * (mismo criterio de icono ON/OFF que el resto de la app).
+     * Exclusión mutua con Favoritos, mismo criterio que el botón del
+     * ExoPlayer -- ver ANNEX_H16.md, "Puntos de diseño -- CERRADOS",
+     * punto 2.
+     */
+    fun toggleArtistDisliked(artist: String) {
+        viewModelScope.launch {
+            autoSyncPusher.executeIfConnected(appContext) {
+                if (isArtistDisliked(artist)) {
+                    dislikedArtistRepository.remove(artist)
+                } else {
+                    dislikedArtistRepository.add(artist)
+                    if (favoriteArtistRepository.isFavorite(artist)) {
+                        favoriteArtistRepository.toggle(artist)
+                    }
                 }
             }
         }
