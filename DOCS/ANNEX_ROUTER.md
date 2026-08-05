@@ -41,11 +41,30 @@ abierto, sin mencionar jamás su propio estado.
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
-| H15 | `DOCS/ANNEX_H15.md` | ← **EN PROGRESO** |
+| H15 | `DOCS/ANNEX_H15.md` | PAUSADO |
+| H16 | `DOCS/ANNEX_H16.md` | ← **EN PROGRESO** |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-08-05 (S029)** — PCH explícito de Miguel Ángel a mitad de
+  sesión (CASO D, hito nuevo): H15 pasa a PAUSADO (sesión de diseño
+  sin código -- se cerraron tres de los cuatro puntos de alcance
+  abiertos: origen/país sí se pide con la misma organización de
+  4 grupos que la Radio, interacción de "una dimensión elegida, el
+  resto libre", catálogo de géneros con lista fija; queda solo el
+  rango de décadas por cerrar, ver `DOCS/ANNEX_H15.md` sección
+  "COMPLETADAS EN S029"), **H16 abierto EN PROGRESO** -- hito nuevo
+  (Lista Negra / "No me gusta" de artistas y temas), a petición
+  explícita de Miguel Ángel surgida durante la propia sesión: botón
+  en el ExoPlayer que pregunta artista o tema, exclusión GLOBAL de
+  cualquier sesión de Radio y de cualquier popurrí de Favoritos
+  (incluido lo ya descargado), también añadible desde el Explorador,
+  con vista CRUD de gestión con entrada propia en el menú lateral. No
+  encajaba en H15 (ancla a mano) ni en H08 en solitario (toca también
+  ExoPlayer y Explorador) -- mismo criterio que abrió H14. Ver
+  `DOCS/ANNEX_H16.md`.
 
 - **2026-08-04 (cierre de S028)** — PCH explícito de Miguel Ángel al
   cierre de sesión: H08 pasa a PAUSADO (sesión larga -- 31 commits --

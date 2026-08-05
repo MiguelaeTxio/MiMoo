@@ -96,22 +96,42 @@ Radio ya construida.
 
 ---
 
+## COMPLETADAS EN S029
+
+Sesión de diseño (sin código): se cerraron tres de los cuatro puntos
+de alcance que dejó abiertos la apertura del hito, concertados
+explícitamente con Miguel Ángel:
+
+1. **Origen/país:** SÍ se pide, como tercera sección junto a Géneros y
+   Décadas, con la misma organización de 4 grupos que ya usa la Radio
+   (`OriginGroup`: Iberoamericana/Anglosajona/Europea/Mundial).
+2. **Interacción entre secciones:** se elige una única dimensión
+   (género, década u origen) y las otras dos quedan libres -- no hace
+   falta elegir varias antes de arrancar.
+3. **Catálogo de géneros:** lista fija, no una consulta en vivo a la
+   API de géneros de MusicBrainz.
+
+Sin código todavía. La sesión derivó hacia el diseño de un hito nuevo,
+H16 (Lista Negra / "No me gusta"), surgido de una petición explícita
+de Miguel Ángel durante esta misma conversación -- ver
+`DOCS/ANNEX_H16.md`.
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H15
 
-Esta es una petición deliberadamente abierta en dos puntos concretos
-(alcance del origen/país, y la interacción exacta género+década) --
-**la sesión que la retome debe cerrar esos dos puntos con Miguel
-Ángel primero, antes de escribir código**, mismo patrón que ya se usó
-para abrir H08 (S013) y H12 (S017): sesión de diseño primero si hace
-falta, o preguntas puntuales de alcance al arrancar si el diseño ya
-está lo bastante cerrado con lo escrito arriba.
+Queda un único punto de alcance sin cerrar:
 
-Una vez cerrado el alcance:
+1. **Rango de décadas** de la lista fija (límite inferior/superior,
+   p.ej. 1950-2020) -- cerrar con Miguel Ángel antes de construir la
+   lista.
 
-1. Construir la función de ancla manual en `RadioRepository`.
-2. Resolver de dónde sale el catálogo real de géneros de MusicBrainz
-   (reutilizar lo que ya exista de H08/H09 antes de construir algo
-   nuevo).
-3. Construir la pantalla nueva (dos secciones, cristal esmerilado,
-   intuitiva) y su entrada en la navegación.
-4. Verificar en dispositivo real.
+Una vez cerrado ese punto:
+
+2. Construir la función de ancla manual en `RadioRepository` (recibe
+   género y/o década y/o origen elegidos a mano, sin artista de
+   origen, devuelve un `RadioAnchor` con la misma forma que
+   `resolveAnchor()`).
+3. Construir la lista fija de géneros y la lista fija de décadas.
+4. Construir la pantalla nueva (tres secciones -- Géneros, Décadas,
+   Origen --, cristal esmerilado, intuitiva) y su entrada en la
+   navegación.
+5. Verificar en dispositivo real.

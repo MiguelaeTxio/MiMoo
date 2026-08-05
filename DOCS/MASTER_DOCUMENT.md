@@ -32,6 +32,7 @@ queda abierto en cada uno.
 | H13 | UX del Reproductor (ExoPlayer) — Estado Visual de Controles | `DOCS/ANNEX_H13.md` |
 | H14 | Almacenamiento de la Biblioteca — Carpeta Configurable y Traslado | `DOCS/ANNEX_H14.md` |
 | H15 | miMooutCast — Radio de Ancla a la Carta (Géneros/Décadas) | `DOCS/ANNEX_H15.md` |
+| H16 | Lista Negra ("No me gusta") de Artistas y Temas | `DOCS/ANNEX_H16.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -109,10 +110,28 @@ listas ni canales. Sin verificar en dispositivo todavía. Ver
 H15: hito nuevo (2026-08-04, cierre de S028) -- miMooutCast, ancla de
 Radio elegida a mano (género y/o década de MusicBrainz) en vez de
 derivada de una pista sonando, reutilizando el motor de H08 ya
-construido y corregido en S028. Sin código todavía -- alcance
-deliberadamente abierto en dos puntos (si se pide también origen/país,
-e interacción exacta entre las dos secciones), a cerrar con Miguel
-Ángel al arrancar la sesión que lo retome. Ver `DOCS/ANNEX_H15.md`.
+construido y corregido en S028. Sin código todavía. En S029 se
+cerraron tres de los cuatro puntos de alcance abiertos: se pide
+también origen/país (misma organización en 4 grupos que ya usa la
+Radio, `OriginGroup`), la interacción entre secciones es "se elige una
+única dimensión (género/década/origen) y las otras quedan libres", y
+el catálogo de géneros será una lista fija, no una consulta en vivo a
+MusicBrainz. Queda un único punto abierto: el rango de décadas de esa
+lista fija. Ver `DOCS/ANNEX_H15.md`.
+H16: hito nuevo (2026-08-05, apertura en S029) -- Lista Negra ("No me
+gusta") de artistas y temas, a petición explícita de Miguel Ángel
+surgida durante el diseño de H15: botón nuevo en el ExoPlayer que, al
+pulsarse, pregunta si el rechazo es del artista o del tema sonando;
+marcar algo como "no me gusta" es GLOBAL (excluye de cualquier sesión
+de Radio y de cualquier popurrí de Favoritos futuros) y también se
+puede añadir desde el Explorador (H12). El rechazo de un tema concreto
+excluye CUALQUIER VERSIÓN de ese tema del artista, no solo el vídeo de
+YouTube concreto que sonaba. Un tema ya descargado que se marca como
+"no me gusta" deja de sonar en cualquier contexto (Radio, popurrí).
+Vista de gestión (CRUD) con entrada propia en el menú lateral. Sin
+código todavía -- diseño técnico abierto (ver
+`DOCS/ANNEX_H16.md`), a cerrar con Miguel Ángel antes de escribir
+nada.
 
 ---
 
