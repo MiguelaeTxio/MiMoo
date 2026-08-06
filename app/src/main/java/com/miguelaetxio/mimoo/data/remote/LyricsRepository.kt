@@ -1,9 +1,12 @@
 package com.miguelaetxio.mimoo.data.remote
 
+import android.content.Context
+import com.miguelaetxio.mimoo.data.download.StorageManager
 import com.miguelaetxio.mimoo.data.local.dao.LyricsCacheDao
 import com.miguelaetxio.mimoo.data.local.entity.LyricsCache
 import com.miguelaetxio.mimoo.data.remote.dto.LrcLibLyricsResult
 import com.miguelaetxio.mimoo.util.SearchNormalizer
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -47,7 +50,11 @@ data class LyricsResult(
 class LyricsRepository @Inject constructor(
     private val api: LrcLibApiService,
     private val dao: LyricsCacheDao,
+    @ApplicationContext private val appContext: Context,
+    private val storageManager: StorageManager,
 ) {
+    private fun log(line: String) = LyricsDebugLogger.log(appContext, storageManager, line)
+
     /**
      * Resuelve la letra de artista+título, sirviendo de caché si ya se
      * consultó antes. `album`/`durationSeconds` son opcionales y
@@ -67,6 +74,14 @@ class LyricsRepository @Inject constructor(
         val titleKey = SearchNormalizer.songTitleKey(title, artist)
 
         dao.get(artistKey, titleKey)?.let { cached ->
+            log(
+                "getLyrics(artist='$artist', title='$title') -- CACHÉ: " +
+                    if (cached.hasLyrics) {
+                        if (cached.syncedLyrics != null) "sincronizada" else "plana"
+                    } else {
+                        "sin letra (confirmado previamente)"
+                    },
+            )
             return@withContext LyricsResult(
                 artist = cached.artist,
                 title = cached.title,
@@ -74,6 +89,8 @@ class LyricsRepository @Inject constructor(
                 syncedLyrics = cached.syncedLyrics,
             )
         }
+
+        log("getLyrics(artist='$artist', title='$title', album=$album, durationSeconds=$durationSeconds) -- sin caché, consultando lrclib.net")
 
         val remote: LrcLibLyricsResult? = try {
             api.getLyrics(
@@ -89,11 +106,26 @@ class LyricsRepository @Inject constructor(
             // consulta en cada reproducción del mismo tema. Un fallo de
             // red puntual se corrige solo en la siguiente consulta si
             // Miguel Ángel vuelve a pedir el mismo tema con conexión.
+            log(
+                "getLyrics(artist='$artist', title='$title') -- EXCEPCIÓN: " +
+                    "${e::class.java.simpleName}: ${e.message}",
+            )
             null
         }
 
         val plainLyrics = remote?.plainLyrics?.takeIf { it.isNotBlank() }
         val syncedLyrics = remote?.syncedLyrics?.takeIf { it.isNotBlank() }
+
+        log(
+            "getLyrics(artist='$artist', title='$title') -- RESULTADO: " +
+                when {
+                    remote == null -> "sin respuesta (excepción ya registrada arriba)"
+                    syncedLyrics != null -> "sincronizada (lrclib id=${remote.id})"
+                    plainLyrics != null -> "plana, sin sincronizar (lrclib id=${remote.id})"
+                    remote.instrumental -> "instrumental (lrclib id=${remote.id}, sin letra)"
+                    else -> "respuesta sin ninguna letra (lrclib id=${remote.id})"
+                } + " -- cacheada",
+        )
 
         dao.insert(
             LyricsCache(
@@ -127,8 +159,11 @@ class LyricsRepository @Inject constructor(
      */
     suspend fun searchLyrics(query: String): List<LrcLibLyricsResult> = withContext(Dispatchers.IO) {
         try {
-            api.searchLyrics(query = query)
+            val results = api.searchLyrics(query = query)
+            log("searchLyrics(query='$query') -- ${results.size} resultado(s)")
+            results
         } catch (e: Exception) {
+            log("searchLyrics(query='$query') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             emptyList()
         }
     }
