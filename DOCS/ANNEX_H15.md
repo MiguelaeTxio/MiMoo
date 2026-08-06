@@ -179,6 +179,29 @@ encontrado y corregido tras prueba en dispositivo real:
 Miguel Ángel lo está probando en dispositivo real ahora mismo --
 "parece que va bien" tras el arreglo del punto 10.
 
+## COMPLETADAS EN S031 (incidencia real, H15 PAUSADO -- H17 es el hito EN PROGRESO)
+
+Miguel Ángel compartió `mimooutcast_debug.txt` de una sesión real de
+verificación mientras H17 estaba activo. Un hallazgo real, ajeno a
+H17 pero en código compartido con H08 (Radio):
+
+11. **Falso positivo de artista en `RadioRepository.stripTitleNoise()`**
+    -- caso real del log: sesión de "Minimal Techno" resolvió `'Teste'
+    - 'MUUD - Testē'`, presentando como tema de "Teste" un vídeo que en
+    realidad es de otro artista, MUUD. Causa: el segmento anterior al
+    primer " - " del título del vídeo se quitaba SIEMPRE, asumiendo
+    que era el propio artista repetido, sin comprobar nunca que
+    coincidiera de verdad con el artista buscado -- con "MUUD -
+    Testē", la limpieza ciega descartaba "MUUD" y dejaba "Testē",
+    texto que por casualidad se parece a "Teste" y que
+    `firstReleaseYearFromMusicBrainz()` terminaba "confirmando".
+    Arreglado: `stripTitleNoise()` ahora recibe el artista y solo
+    quita el segmento inicial si coincide de verdad con él (mismo
+    criterio que `SearchNormalizer.songTitleKey()`/`cleanSongTitle()`,
+    H17). Build verde (`9328658`). Comparte código con H08 -- el fix
+    corrige la verificación en ambos hitos. Sin verificar en
+    dispositivo real todavía (H15 sigue pausado).
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H15
 
 Sin código pendiente. Punto único: **seguir la verificación en

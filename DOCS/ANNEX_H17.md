@@ -182,6 +182,15 @@ real encontrado con ese mismo log, construidos y en build verde
   `PlayerBarViewModel.fetchLyricsForCurrentTrack()` antes de llamar a
   `LyricsRepository.getLyrics()`. Verificado contra los 7 casos reales
   del log: los 7 resuelven al título real de la canción.
+- **Hallazgo relacionado, fuera de H17** (compartido a la vez que
+  `letras_debug.txt`): Miguel Ángel adjuntó también
+  `mimooutcast_debug.txt` (H15/H08, código compartido de verificación
+  de Radio) y pidió revisarlo -- se encontró y corrigió un falso
+  positivo de artista en `RadioRepository.stripTitleNoise()` (mismo
+  patrón de fondo que el fix de arriba: limpieza de título sin
+  comprobar que el segmento quitado sea de verdad el artista). Ver
+  `DOCS/ANNEX_H15.md`, "COMPLETADAS EN S031", punto 11 -- registrado
+  ahí por ser código de H15/H08, no de H17.
 
 Sin tocar: verificación en dispositivo real de que el fix resuelve los
 casos que antes daban 404 (Willie Nelson, King Crimson, Thin Lizzy).
