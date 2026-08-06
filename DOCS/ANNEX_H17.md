@@ -63,59 +63,70 @@ puntos, entrada en `NavGraph.kt`/`MainActivity.kt`.
 
 ---
 
-## Puntos de diseño -- ABIERTOS
+## Puntos de diseño -- CERRADOS EN S031
 
-**Ninguno de estos se cierra solo -- decidir con Miguel Ángel al
-empezar la siguiente sesión, antes de escribir una sola línea de
-código, mismo patrón ya usado en H08/H12/H15.**
+Los seis puntos quedaron cerrados con Miguel Ángel, en sesión de
+diseño puro (sin código), en el orden previsto -- el punto 1
+condicionaba el 2, tal como estaba anotado.
 
-1. **Fuente de las letras.** No hay ninguna elegida todavía. Esto es
-   la decisión técnica que condiciona todo lo demás -- opciones reales
-   a valorar en la propia sesión de diseño (con sus condiciones de uso
-   y disponibilidad de letras SINCRONIZADAS, que es lo que hace falta
-   para "karaoke" de verdad, no solo texto estático):
-   - APIs de letras sincronizadas (formato LRC, con timestamp por
-     línea) -- p.ej. lrclib.net (gratuita, sin API key, pensada
-     exactamente para esto).
-   - APIs de letras SIN sincronizar (texto plano) -- más fáciles de
-     conseguir pero no sirven para "karaoke" tal cual, solo para
-     "leer la letra" (la pantalla del drawer).
-   - Revisar términos de uso de cualquier fuente antes de integrarla --
-     algunas prohíben explícitamente el uso en apps de terceros.
-2. **¿"Karaoke" significa sincronizado línea a línea (resaltando la
-   línea que toca según el tiempo de reproducción), o solo mostrar la
-   letra completa mientras suena, sin resaltar nada?** Si es lo
-   primero (lo que sugiere la palabra "karaoke"), hace falta una
-   fuente con timestamps -- ver punto 1. Si una fuente da letra pero
-   sin sincronizar, ¿se muestra igual sin resaltado, o se trata como
-   "sin letra"?
-3. **¿Se cachean las letras localmente (Room) o se piden a la fuente
-   cada vez?** Coherente con el patrón general de la app (todo lo demás
-   cachea) pero a decidir explícitamente.
-4. **Forma de la ventana de karaoke sobre el ExoPlayer** -- el propio
-   Miguel Ángel lo dejó abierto ("encima o debajo del mismo"): ¿modal
-   a pantalla completa, hoja inferior (bottom sheet) parcial, o
-   superpuesta sin tapar los controles de reproducción? Cristal
-   esmerilado, coherente con el resto de la app.
-5. **Alcance de la pantalla de búsqueda del drawer** -- ¿busca letras
-   de cualquier canción vía la fuente elegida (aunque no esté en tu
-   biblioteca), solo entre tu biblioteca local/descargada, o ambas
-   cosas con alguna distinción visual?
-6. **¿Aplica igual a cualquier procedencia de pista** (biblioteca
-   local, Radio, Popurrí, miMooutCast, streaming de búsqueda) **o solo
-   a según qué tipos**? Previsiblemente debería ser igual para
-   cualquier pista que suene, dado que el punto de entrada es el
-   ExoPlayer genérico -- confirmar.
+1. **Fuente de las letras: lrclib.net.** Confirmado en línea (S031):
+   API abierta, gratuita, sin API key ni registro, sin límite de
+   peticiones. Endpoints relevantes -- `GET /api/get` (búsqueda exacta
+   por track/artista/álbum/duración) y `GET /api/search` (búsqueda más
+   flexible, la que usa el punto 5). La respuesta trae `syncedLyrics`
+   (formato LRC, timestamp por línea) y `plainLyrics` por separado --
+   un tema puede tener ambas, solo la plana, o ninguna.
+2. **Definición de "karaoke" y comportamiento según disponibilidad de
+   letra --** revisado una vez cerrado el punto 4 (ver más abajo, la
+   revisión queda incorporada aquí sin dejar versiones contradictorias:
+   - Si el tema tiene `syncedLyrics` -> karaoke real, resaltado línea a
+     línea según el tiempo de reproducción.
+   - Si el tema NO tiene `syncedLyrics` pero SÍ tiene `plainLyrics` ->
+     se muestra la letra completa, scrolleable, SIN resaltado y SIN
+     ningún aviso de "no hay karaoke" (el aviso se reservó
+     exclusivamente para el caso siguiente).
+   - Si el tema no tiene ninguna letra (ni sincronizada ni plana) ->
+     mensaje informativo de que no hay letra disponible.
+3. **Caché local en Room.** Mismo patrón que el resto de la app
+   (Radio, Favoritos, Lista Negra): primera consulta a lrclib.net por
+   artista+título, resultado guardado localmente (letra sincronizada /
+   letra plana / "sin letra confirmado"); consultas siguientes del
+   mismo tema se sirven de caché sin red.
+4. **Forma de la ventana de karaoke sobre el ExoPlayer.** Panel de
+   cristal esmerilado justo encima del reproductor (que hoy ocupa ~1/3
+   de la pantalla), con altura variable según el caso:
+   - **1/3 de pantalla** cuando se muestra letra plana scrolleable (sin
+     `syncedLyrics` pero con `plainLyrics`).
+   - **1/9 de pantalla** cuando hay karaoke sincronizado activo (panel
+     tipo teleprompter, se auto-desplaza con el tiempo, no necesita
+     scroll manual) y también cuando no hay ninguna letra (mensaje
+     informativo mínimo).
+5. **Alcance de la pantalla de búsqueda del drawer: ambas, con
+   distinción visual.** Buscador libre contra `lrclib.net` (endpoint
+   `search`, cualquier canción exista o no en la biblioteca), marcando
+   con un chip/icono los resultados que coinciden con algo ya
+   descargado en MiMoo.
+6. **Procedencia de pista: aplica a cualquier origen EXCEPTO Radios
+   Online del Mundo (H09) y cualquier stream sin metadatos fiables.**
+   Biblioteca local, Radio (H08), Popurrí, miMooutCast (H15) y
+   streaming de búsqueda (H01) sí lo tienen -- todos resuelven
+   artista+título estructurados igual. Radio-Browser.info (H09) queda
+   excluido explícitamente por Miguel Ángel.
 
 ---
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H17
 
-1. Cerrar los seis puntos de diseño de arriba con Miguel Ángel, en
-   orden -- el punto 1 (fuente) condiciona la viabilidad real del
-   punto 2 (sincronizado o no), así que se cierra primero.
-2. Una vez cerrado el diseño: construir el cliente de la fuente
-   elegida (+ caché local si se decide), la pantalla de búsqueda del
-   drawer, la ventana de karaoke sobre el ExoPlayer y su entrada en el
-   menú de tres puntos, y la navegación.
-3. Verificar en dispositivo real.
+1. Construir el cliente de lrclib.net (endpoints `get` y `search`),
+   entidad/DAO/repositorio de letras en Room para la caché (artista +
+   título -> sincronizada / plana / sin letra confirmado).
+2. Construir la ventana de karaoke sobre el ExoPlayer (panel de
+   cristal esmerilado de altura variable, 1/3 o 1/9 según el caso
+   cerrado en el punto 4) y su entrada condicional en el menú de tres
+   puntos de `PlayerBar.kt` -- excluyendo explícitamente las pistas de
+   Radio-Browser.info (H09) y cualquier stream sin metadatos fiables
+   (punto 6).
+3. Construir la pantalla de búsqueda de letras del drawer (búsqueda
+   libre contra `lrclib.net`, chip/icono para lo ya descargado) y su
+   entrada en `NavGraph.kt`/`MainActivity.kt`.
+4. Verificar en dispositivo real.
