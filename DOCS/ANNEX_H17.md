@@ -117,10 +117,10 @@ condicionaba el 2, tal como estaba anotado.
 
 ## COMPLETADAS EN S031
 
-Los tres bloques de la Hoja de Ruta, más el log de diagnóstico añadido
-a petición de Miguel Ángel, construidos y en build verde (GitHub
-Actions, runs `8959f75`, `ddd61e2`, `ecf2463` y `f5e1f7c`), pendientes
-solo de verificación en dispositivo real:
+Los tres bloques de la Hoja de Ruta, el log de diagnóstico y un fix
+real encontrado con ese mismo log, construidos y en build verde
+(GitHub Actions, runs `8959f75`, `ddd61e2`, `ecf2463`, `f5e1f7c` y
+`c8eb2e9`), pendientes solo de verificación en dispositivo real:
 
 - **Bloque 1 -- cliente de lrclib.net + caché local.**
   `LrcLibApiService` (endpoints `get`/`search`, campos de respuesta
@@ -161,20 +161,44 @@ solo de verificación en dispositivo real:
   Petición explícita de Miguel Ángel al detectar que ambos métodos son
   defensivos por diseño (`catch (e: Exception)` -> "sin letra"/lista
   vacía en silencio) y no dejaban ninguna pista diagnosticable.
+- **Fix real encontrado en la primera prueba en dispositivo** (run
+  `c8eb2e9`), diagnosticado con el propio `letras_debug.txt`:
+  `getLyrics()` consultaba lrclib.net con el título CRUDO del vídeo de
+  YouTube ("The Beach Boys - Surfin' U.S.A. (Lyric Video)", "Eric
+  Clapton - Wonderful Tonight [Official Live]"...) en vez del título
+  real de la canción. `GET /api/get` de lrclib.net exige coincidencia
+  exacta de `track_name`, así que fallaba con 404 en la mayoría de
+  casos (Willie Nelson, King Crimson, Thin Lizzy en el log real), y en
+  los que "acertaba" (Beach Boys, Eric Clapton, Roy Orbison) era por
+  coincidencia parcial inconsistente -- el único tema con título ya
+  limpio en el log (Fleetwood Mac, `title='Go Your Own Way'`, sin
+  prefijo de artista ni sufijo) fue el único fiable de primeras.
+  Arreglo: `SearchNormalizer.cleanSongTitle()` (nueva función, mismos
+  cuatro primeros pasos que `songTitleKey()` -- quitar paréntesis/
+  corchetes, partir por guion, quitar el segmento que sea el propio
+  artista, quitar coletillas finales y años sueltos -- pero SIN el
+  paso final de `normalize()`+`tight()`, conservando texto legible
+  para la API en vez de una clave interna), usada en
+  `PlayerBarViewModel.fetchLyricsForCurrentTrack()` antes de llamar a
+  `LyricsRepository.getLyrics()`. Verificado contra los 7 casos reales
+  del log: los 7 resuelven al título real de la canción.
 
-Sin tocar: verificación en dispositivo real de los tres bloques.
+Sin tocar: verificación en dispositivo real de que el fix resuelve los
+casos que antes daban 404 (Willie Nelson, King Crimson, Thin Lizzy).
 
 ---
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H17
 
-1. Verificar en dispositivo real los tres bloques construidos en
-   S031: cliente + caché de letras (bloque 1), ventana de karaoke
-   sobre el ExoPlayer con sus tres variantes de altura/contenido y su
-   exclusión de Radio-Browser.info (bloque 2), y la pantalla de
+1. Verificar en dispositivo real, con el fix de `cleanSongTitle()` ya
+   aplicado, que los temas que antes fallaban con 404 en
+   `letras_debug.txt` (Willie Nelson "Always On My Mind", King Crimson
+   "The Court Of The Crimson King", Thin Lizzy "The Boys Are Back In
+   Town") ahora sí traen letra si lrclib.net la tiene. Verificar
+   también el resto sin construir: cliente + caché de letras (bloque
+   1), ventana de karaoke con sus tres variantes de altura/contenido y
+   su exclusión de Radio-Browser.info (bloque 2), y la pantalla de
    búsqueda de letras del drawer con su distinción visual "ya en tu
-   biblioteca" (bloque 3). `letras_debug.txt` (LyricsDebugLogger) está
-   disponible para diagnosticar cualquier tema sin letra que debería
-   tenerla. Sin código pendiente -- si la verificación revela algo
-   roto, es una incidencia real que retoma H17 puntualmente (PCH), no
-   algo que quede "a medias" de S031.
+   biblioteca" (bloque 3). Sin código pendiente -- si la verificación
+   revela algo roto, es una incidencia real que retoma H17
+   puntualmente (PCH), no algo que quede "a medias" de S031.
