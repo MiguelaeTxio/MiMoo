@@ -718,7 +718,7 @@ class RadioRepository @Inject constructor(
     }
 
     private suspend fun verifyTrackExistsForArtist(artist: String, rawVideoTitle: String): TrackExistence {
-        val cleanTitle = stripTitleNoise(rawVideoTitle)
+        val cleanTitle = stripTitleNoise(rawVideoTitle, artist)
         if (cleanTitle.isBlank()) return TrackExistence.NotFound
 
         anchorDictionary.trackYear(artist, cleanTitle)?.let { year ->
@@ -831,7 +831,7 @@ class RadioRepository @Inject constructor(
         artist: String,
         trackTitle: String?,
     ): TrackDecade {
-        val cleanTitle = trackTitle?.let { stripTitleNoise(it) }
+        val cleanTitle = trackTitle?.let { stripTitleNoise(it, artist) }
 
         anchorDictionary.trackYear(artist, cleanTitle)?.let { year ->
             log("resolveOriginalDecade('$artist' -- '$cleanTitle') -> $year, del diccionario en tarjeta")
@@ -2025,11 +2025,55 @@ class RadioRepository @Inject constructor(
         return null
     }
 
-    private fun stripTitleNoise(rawTitle: String): String {
+    /**
+     * Fix real (S031, hallazgo con `mimooutcast_debug.txt` -- primera
+     * prueba en dispositivo de miMooutCast): antes se quitaba SIEMPRE
+     * el segmento anterior al primer " - ", asumiendo que era el
+     * propio artista repetido (patrón típico de título de YouTube,
+     * "Artista - Tema"). Caso real del log: MusicBrainz sugirió el
+     * artista "Teste"; el vídeo encontrado se titulaba "MUUD -
+     * Testē" (de OTRO artista, MUUD). La limpieza ciega descartaba
+     * "MUUD" sin comprobar nada, dejando el título en "Testē" --
+     * texto que por casualidad se parece al propio "Teste" buscado, y
+     * que `firstReleaseYearFromMusicBrainz()` terminaba "confirmando"
+     * como si fuera de verdad un tema de "Teste", cuando el vídeo real
+     * es de un artista completamente distinto.
+     *
+     * Ahora solo se quita el segmento inicial si coincide de verdad
+     * con el artista que se está verificando -- mismo criterio que ya
+     * usa `SearchNormalizer.songTitleKey()`/`cleanSongTitle()` (H17,
+     * S031) antes de dar el mismo paso por bueno. Si no coincide, se
+     * conserva el título completo (con el nombre del otro artista
+     * dentro): la verificación downstream (diccionarios/MusicBrainz/
+     * Discogs/Wikidata) seguirá intentando encontrarlo tal cual, y si
+     * no lo encuentra, se descarta correctamente -- en vez de que una
+     * limpieza equivocada fabrique una "confirmación" falsa.
+     * ---
+     * Real fix (S031, finding from `mimooutcast_debug.txt`): the
+     * segment before the first " - " used to be stripped
+     * unconditionally, assuming it was always the artist repeated.
+     * Real case from the log: MusicBrainz suggested artist "Teste";
+     * the video found was titled "MUUD - Testē" (a DIFFERENT artist,
+     * MUUD). The blind cleanup discarded "MUUD", leaving "Testē" --
+     * text that coincidentally resembles "Teste" itself, which
+     * `firstReleaseYearFromMusicBrainz()` ended up "confirming" as if
+     * it were really a "Teste" track. Now the prefix is only stripped
+     * if it actually matches the artist being verified.
+     */
+    private fun stripTitleNoise(rawTitle: String, artist: String): String {
         val withoutBrackets = rawTitle
             .replace(Regex("\\([^)]*\\)"), " ")
             .replace(Regex("\\[[^]]*]"), " ")
-        val withoutArtistPrefix = withoutBrackets.substringAfter(" - ", withoutBrackets)
+        val firstSegment = withoutBrackets.substringBefore(" - ", "")
+        val artistKey = SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(artist))
+        val withoutArtistPrefix = if (
+            firstSegment.isNotBlank() &&
+            SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(firstSegment)) == artistKey
+        ) {
+            withoutBrackets.substringAfter(" - ", withoutBrackets)
+        } else {
+            withoutBrackets
+        }
         // S027 -- orden textual de Miguel Ángel: "no me vale Remaster
         // 1970, no me vale Remaster 2025... es el título de la canción
         // y el nombre del grupo". Ya se quitaba "(2015 Remastered
