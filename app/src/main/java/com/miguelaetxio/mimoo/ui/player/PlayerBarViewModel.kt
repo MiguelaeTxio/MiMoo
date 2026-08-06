@@ -13,6 +13,8 @@ import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlaybackState
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
+import com.miguelaetxio.mimoo.data.remote.LyricsRepository
+import com.miguelaetxio.mimoo.data.remote.LyricsResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -41,6 +43,8 @@ class PlayerBarViewModel @Inject constructor(
     private val dislikedTrackRepository: DislikedTrackRepository,
     private val favoriteArtistRepository: FavoriteArtistRepository,
     private val autoSyncPusher: AutoSyncPusher,
+    // H17 (S031, bloque 2) -- ventana de karaoke del menú de tres puntos.
+    private val lyricsRepository: LyricsRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
@@ -167,6 +171,56 @@ class PlayerBarViewModel @Inject constructor(
     private val _menuAlbum = MutableStateFlow<String?>(null)
     val menuAlbum: StateFlow<String?> = _menuAlbum.asStateFlow()
 
+    /**
+     * H17 (S031, bloque 2) -- ventana de karaoke, ver DOCS/ANNEX_H17.md,
+     * "Puntos de diseño -- CERRADOS EN S031". `_lyricsPanelVisible` es
+     * el interruptor del usuario (entrada "Karaoke" del menú de tres
+     * puntos); mientras esté visible, `_lyricsResult` se refresca solo
+     * al cambiar de pista (mismo disparador que `_menuArtist`/
+     * `_coverArtUrl`, ver el `collect` de `init`). `_lyricsResult`
+     * queda en `null` mientras se resuelve la consulta -- `_lyricsLoading`
+     * distingue "cargando" de "consultado y sin letra" (que sí trae un
+     * `LyricsResult` con ambos campos nulos, ver LyricsRepository).
+     */
+    private val _lyricsPanelVisible = MutableStateFlow(false)
+    val lyricsPanelVisible: StateFlow<Boolean> = _lyricsPanelVisible.asStateFlow()
+    private val _lyricsLoading = MutableStateFlow(false)
+    val lyricsLoading: StateFlow<Boolean> = _lyricsLoading.asStateFlow()
+    private val _lyricsResult = MutableStateFlow<LyricsResult?>(null)
+    val lyricsResult: StateFlow<LyricsResult?> = _lyricsResult.asStateFlow()
+
+    /** Entrada "Karaoke" del menú de tres puntos -- toggle simple, abrir dispara la consulta. */
+    fun toggleLyricsPanel() {
+        if (_lyricsPanelVisible.value) {
+            _lyricsPanelVisible.value = false
+        } else {
+            _lyricsPanelVisible.value = true
+            fetchLyricsForCurrentTrack()
+        }
+    }
+
+    private fun fetchLyricsForCurrentTrack() {
+        val current = state.value
+        val artist = current.currentArtist ?: _menuArtist.value
+        val title = current.currentTitle
+        if (artist.isNullOrBlank() || title.isNullOrBlank()) {
+            _lyricsResult.value = null
+            return
+        }
+        val album = _menuAlbum.value
+        val durationSeconds = current.durationMs.takeIf { it > 0 }?.let { (it / 1000).toInt() }
+        viewModelScope.launch {
+            _lyricsLoading.value = true
+            _lyricsResult.value = lyricsRepository.getLyrics(
+                artist = artist,
+                title = title,
+                album = album,
+                durationSeconds = durationSeconds,
+            )
+            _lyricsLoading.value = false
+        }
+    }
+
     private fun resolveMenuArtist(track: com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack?): String? {
         val current = state.value
         return track?.artist?.takeIf { it.isNotBlank() }
@@ -264,6 +318,13 @@ class PlayerBarViewModel @Inject constructor(
                     _menuAlbum.value = track?.album
                     if (track != null && track.coverArtUrl == null) {
                         requestCoverArtIfMissing(track.artist, track.album)
+                    }
+                    // H17 (S031) -- si el panel de karaoke está abierto,
+                    // la letra se refresca sola al cambiar de pista, en
+                    // vez de quedarse mostrando la del tema anterior.
+                    if (_lyricsPanelVisible.value) {
+                        _lyricsResult.value = null
+                        fetchLyricsForCurrentTrack()
                     }
                 }
         }

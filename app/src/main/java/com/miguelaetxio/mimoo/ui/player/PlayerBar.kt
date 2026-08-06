@@ -4,9 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Download
@@ -22,9 +26,11 @@ import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,11 +40,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import com.miguelaetxio.mimoo.data.remote.LyricsResult
 import com.miguelaetxio.mimoo.ui.theme.glassChip
+import com.miguelaetxio.mimoo.util.LrcLine
+import com.miguelaetxio.mimoo.util.LrcParser
 
 /**
  * S010 -- "reproductor expandido", rediseño completo pedido por
@@ -101,6 +111,9 @@ fun PlayerBar(
     val localFilePath by viewModel.localFilePath.collectAsState()
     val ringtoneMessage by viewModel.ringtoneMessage.collectAsState()
     val dislikeChoiceVisible by viewModel.dislikeChoiceVisible.collectAsState()
+    val lyricsPanelVisible by viewModel.lyricsPanelVisible.collectAsState()
+    val lyricsLoading by viewModel.lyricsLoading.collectAsState()
+    val lyricsResult by viewModel.lyricsResult.collectAsState()
 
     // "Elegir como tono para un contacto" (2026-08-02) -- aviso final vía Toast,
     // PlayerBar no tiene Scaffold/SnackbarHost propio.
@@ -301,6 +314,19 @@ fun PlayerBar(
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
     var isExpanded by remember { mutableStateOf(true) }
 
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // H17 (S031, bloque 2) -- panel de karaoke, "justo encima del
+        // ExoPlayer" (punto 4 de "Puntos de diseño -- CERRADOS EN
+        // S031", DOCS/ANNEX_H17.md). Solo con el reproductor
+        // expandido -- la mini-barra colapsada no tiene sitio
+        // razonable para él.
+        if (isExpanded && lyricsPanelVisible) {
+            KaraokeLyricsPanel(
+                loading = lyricsLoading,
+                lyrics = lyricsResult,
+                positionMs = positionMs,
+            )
+        }
     Surface(tonalElevation = 4.dp) {
         if (!isExpanded) {
             PlayerBarCollapsed(
@@ -539,6 +565,25 @@ fun PlayerBar(
                                     },
                                 )
                             }
+                            // H17 (S031, bloque 2) -- entrada de Karaoke
+                            // & Lyrics. Excluida explícitamente cuando
+                            // el stream en curso es una emisora en
+                            // directo (Radio-Browser.info u otro stream
+                            // sin metadatos fiables, ver
+                            // PlaybackState.currentIsRadioStation) --
+                            // punto 6 de "Puntos de diseño -- CERRADOS
+                            // EN S031" en DOCS/ANNEX_H17.md.
+                            if (!state.currentIsRadioStation) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(if (lyricsPanelVisible) "Ocultar karaoke" else "Karaoke")
+                                    },
+                                    onClick = {
+                                        showMenu = false
+                                        viewModel.toggleLyricsPanel()
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -683,6 +728,146 @@ fun PlayerBar(
             // bottom edge of the screen. Explicit request: half as
             // tall as the controls strip above.
             Spacer(Modifier.height(24.dp))
+        }
+    }
+    }
+}
+
+/**
+ * H17 (S031, bloque 2) -- panel de karaoke sobre el ExoPlayer, ver
+ * "Puntos de diseño -- CERRADOS EN S031" de DOCS/ANNEX_H17.md, puntos
+ * 2 y 4. Altura variable según el caso:
+ * - `lyrics.syncedLyrics != null` -> 1/9 de pantalla, teleprompter con
+ *   la línea actual resaltada arriba y las siguientes visibles debajo
+ *   -- se auto-desplaza con `positionMs`, sin scroll manual.
+ * - `lyrics.syncedLyrics == null && lyrics.plainLyrics != null` -> 1/3
+ *   de pantalla, letra completa scrolleable, SIN ningún aviso.
+ * - Sin ninguna letra (o mientras `loading`) -> 1/9 de pantalla,
+ *   mensaje informativo mínimo.
+ * ---
+ * H17 (S031, block 2) -- karaoke panel over the ExoPlayer. Variable
+ * height: 1/9 screen for synced karaoke or the "no lyrics" message,
+ * 1/3 for scrollable plain lyrics with no warning at all.
+ */
+@Composable
+private fun KaraokeLyricsPanel(
+    loading: Boolean,
+    lyrics: LyricsResult?,
+    positionMs: Long,
+) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val syncedLyrics = lyrics?.syncedLyrics
+    val plainLyrics = lyrics?.plainLyrics
+
+    when {
+        !loading && syncedLyrics == null && plainLyrics != null -> {
+            // Letra plana scrolleable, sin resaltado, sin aviso alguno
+            // -- punto 2 revisado tras cerrar el punto 4: el aviso de
+            // "sin karaoke" queda reservado exclusivamente para cuando
+            // no hay ninguna letra en absoluto.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(screenHeight / 3)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .glassChip(interactive = false)
+                    .padding(12.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                Text(
+                    text = plainLyrics,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+        !loading && syncedLyrics != null -> {
+            val lines = remember(syncedLyrics) { LrcParser.parse(syncedLyrics) }
+            KaraokeTeleprompter(lines = lines, positionMs = positionMs, screenHeight = screenHeight)
+        }
+        else -> {
+            // `loading == true`, o consultado y confirmado sin ninguna
+            // letra (ni sincronizada ni plana) -- mismo panel mínimo
+            // para ambos casos, mensaje distinto.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(screenHeight / 9)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .glassChip(interactive = false),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = if (loading) "Buscando letra..." else "No hay letra disponible para este tema.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Teleprompter de karaoke -- panel de 1/9 de pantalla. `animateScrollToItem`
+ * deja la línea actual arriba del panel, con las líneas siguientes
+ * visibles debajo según el espacio disponible -- no hay contexto
+ * "hacia atrás" (líneas ya cantadas), solo la actual y lo que viene,
+ * que es lo relevante para seguir cantando. `LazyColumn` en vez de un
+ * `Column` fijo de N líneas: algunas letras tienen líneas muy largas
+ * que ocuparían más de una línea visual, así que desplazar por índice
+ * es más robusto que asumir una altura fija por línea.
+ * ---
+ * Karaoke teleprompter -- 1/9-screen panel. `animateScrollToItem`
+ * leaves the current line at the top, with upcoming lines visible
+ * below as space allows.
+ */
+@Composable
+private fun KaraokeTeleprompter(lines: List<LrcLine>, positionMs: Long, screenHeight: androidx.compose.ui.unit.Dp) {
+    val currentIndex = remember(lines, positionMs) {
+        val idx = lines.indexOfLast { it.timeMs <= positionMs }
+        idx.coerceAtLeast(0)
+    }
+    val listState = rememberLazyListState()
+    LaunchedEffect(currentIndex) {
+        if (lines.isNotEmpty()) {
+            listState.animateScrollToItem(currentIndex.coerceIn(0, (lines.size - 1).coerceAtLeast(0)))
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(screenHeight / 9)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .glassChip(interactive = false)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (lines.isEmpty()) {
+            Text(
+                text = "No hay letra disponible para este tema.",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            LazyColumn(state = listState, userScrollEnabled = false) {
+                itemsIndexed(lines) { index, line ->
+                    Text(
+                        text = line.text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = if (index == currentIndex) {
+                            MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        } else {
+                            MaterialTheme.typography.bodySmall
+                        },
+                        color = if (index == currentIndex) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.padding(vertical = 2.dp),
+                    )
+                }
+            }
         }
     }
 }

@@ -183,6 +183,24 @@ data class PlaybackState(
     /** S010 -- necesarios junto a currentYoutubeId para poder crear la fila de favorito de una pista transitoria de Radio (SearchResultTrackRepository.setFavoriteEnsuringRow()). */
     val currentArtist: String? = null,
     val currentChannelTitle: String? = null,
+    /**
+     * H17 (S031, punto 6 del anexo) -- true cuando la pista/stream que
+     * suena ahora mismo es una emisora en directo marcada
+     * `QueueItem.isRadioStation` (Radio-Browser.info, H09, o el bucle
+     * de apertura transitorio de miMooutCast antes de fijar el ancla
+     * real) -- ambos casos son streams sin metadatos fiables de
+     * artista/título, exactamente lo que Miguel Ángel pidió excluir
+     * del karaoke. La UI del menú de tres puntos de PlayerBar oculta
+     * la entrada "Karaoke / Ver letra" cuando esto es true, en vez de
+     * intentar una consulta a lrclib.net que nunca podría acertar.
+     * ---
+     * H17 (S031, annex point 6) -- true when the currently playing
+     * track/stream is a live station marked `QueueItem.isRadioStation`
+     * -- both cases are streams without reliable artist/title
+     * metadata, exactly what Miguel Ángel asked to exclude from
+     * karaoke.
+     */
+    val currentIsRadioStation: Boolean = false,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
     val isLocal: Boolean = false,
@@ -3219,6 +3237,7 @@ class PlayerManager @Inject constructor(
             currentYoutubeId = item?.youtubeId,
             currentArtist = item?.artist,
             currentChannelTitle = item?.channelTitle,
+            currentIsRadioStation = item?.isRadioStation ?: false,
             isLocal = item?.isLocal ?: false,
             queueIndex = if (queueItems.isEmpty()) -1 else index,
             queueSize = queueItems.size,
