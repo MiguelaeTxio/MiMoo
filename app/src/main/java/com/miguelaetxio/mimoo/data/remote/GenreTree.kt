@@ -104,6 +104,23 @@ class GenreTree @Inject constructor(
     fun isKnown(genre: String): Boolean = genre.lowercase().trim() in nodes
 
     /**
+     * H15 (miMooutCast) -- hijos DIRECTOS (un solo nivel, no todos los
+     * descendientes) de un género, para desplegar un segundo nivel de
+     * subgéneros al pinchar uno de los géneros raíz de
+     * `MimooutcastCatalog` -- petición explícita de Miguel Ángel
+     * (2026-08-06): *"pinchar electrónica y mostrar un nivel de
+     * géneros dentro de electrónica... siempre que se pueda"*. Vacío
+     * cuando el género no tiene hijos catalogados (p.ej. una hoja) --
+     * la pantalla lo trata entonces como género final, sin segundo
+     * nivel.
+     */
+    fun directChildren(genre: String): List<String> =
+        nodes[genre.lowercase().trim()]?.children.orEmpty()
+            .map { it.lowercase().trim() }
+            .distinct()
+            .sorted()
+
+    /**
      * ¿Es [candidate] un descendiente de [ancestor]?
      *
      * Solo hacia ABAJO. Que `dark wave` sea descendiente de algo no

@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.mimooutcast
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,11 +26,11 @@ import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
  * H15 (miMooutCast) -- pantalla nueva para elegir el ancla de la
- * Radio A MANO: dos secciones, Géneros y Décadas (S029 cerró una
- * tercera, Origen, pendiente de una entrega siguiente -- ver
- * `DOCS/ANNEX_H15.md`). Una sola chapita elegida arranca la sesión
- * de inmediato -- "muy intuitivo", petición explícita de Miguel
- * Ángel -- sin pantalla de confirmación intermedia.
+ * Radio A MANO: tres secciones, Géneros (con un segundo nivel de
+ * subgéneros donde MusicBrainz los tenga catalogados -- petición de
+ * Miguel Ángel, 2026-08-06), Décadas y Origen. Una sola chapita
+ * elegida arranca la sesión de inmediato -- "muy intuitivo" -- sin
+ * pantalla de confirmación intermedia.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,8 +55,14 @@ fun MimooutcastScreen(
                     Box(
                         modifier = Modifier.padding(4.dp).glassChip(shape = CircleShape),
                     ) {
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                        if (uiState.expandedGenre != null) {
+                            IconButton(onClick = viewModel::collapseGenre) {
+                                Icon(Icons.Filled.ArrowBack, contentDescription = "Volver a géneros")
+                            }
+                        } else {
+                            IconButton(onClick = onOpenDrawer) {
+                                Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                            }
                         }
                     }
                 },
@@ -81,7 +89,8 @@ fun MimooutcastScreen(
             }
 
             Text(
-                "Elige una chapita para arrancar la Radio anclada ahí -- sin tener nada sonando antes.",
+                text = uiState.expandedGenre?.let { "Subgéneros de \"${it.label}\" -- o elige el género entero." }
+                    ?: "Elige una chapita para arrancar la Radio anclada ahí -- sin tener nada sonando antes.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -103,25 +112,41 @@ fun MimooutcastScreen(
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                when (uiState.tab) {
-                    MimooutcastTab.GENEROS -> GenreGrid(
+                val expanded = uiState.expandedGenre
+                when {
+                    uiState.tab == MimooutcastTab.GENEROS && expanded != null -> SubgenreGrid(
+                        root = expanded,
+                        subgenres = viewModel.subgenresOf(expanded),
+                        loadingLabel = uiState.loadingLabel,
+                        onPickRoot = { viewModel.startWithGenre(expanded.mbGenre, expanded.label) },
+                        onPickSub = { sub -> viewModel.startWithGenre(sub.mbGenre, sub.label) },
+                    )
+                    uiState.tab == MimooutcastTab.GENEROS -> GenreGrid(
                         genres = viewModel.genres,
                         loadingLabel = uiState.loadingLabel,
-                        onPick = { g -> viewModel.startWithGenre(g.mbGenre, g.label) },
+                        onPick = viewModel::tapGenre,
                     )
-                    MimooutcastTab.DECADAS -> DecadeGrid(
+                    uiState.tab == MimooutcastTab.DECADAS -> DecadeGrid(
                         decades = viewModel.decades,
                         loadingLabel = uiState.loadingLabel,
                         onPick = { d -> viewModel.startWithDecade(d.decadeBegin, d.label) },
                     )
-                    MimooutcastTab.ORIGENES -> OriginGrid(
+                    else -> OriginGrid(
                         origins = viewModel.origins,
                         loadingLabel = uiState.loadingLabel,
                         onPick = { o -> viewModel.startWithOrigin(o.group, o.label) },
                     )
                 }
+                // Petición explícita de Miguel Ángel (2026-08-06): capa
+                // opaca, no un overlay translúcido -- que no se mezcle
+                // con las chapitas de debajo mientras se resuelve.
                 if (uiState.loadingLabel != null) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.94f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
                             Spacer(Modifier.height(12.dp))
@@ -153,6 +178,39 @@ private fun GenreGrid(
                 label = genre.label,
                 enabled = loadingLabel == null,
                 onClick = { onPick(genre) },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+/** H15 -- segundo nivel de un género raíz: sus subgéneros directos + una chapita para el género entero. */
+@Composable
+private fun SubgenreGrid(
+    root: MimooutcastGenre,
+    subgenres: List<MimooutcastGenre>,
+    loadingLabel: String?,
+    onPickRoot: () -> Unit,
+    onPickSub: (MimooutcastGenre) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        AnchorChip(
+            label = "Todo ${root.label}",
+            enabled = loadingLabel == null,
+            onClick = onPickRoot,
+        )
+        subgenres.forEach { sub ->
+            AnchorChip(
+                label = sub.label,
+                enabled = loadingLabel == null,
+                onClick = { onPickSub(sub) },
             )
         }
         Spacer(Modifier.height(16.dp))
