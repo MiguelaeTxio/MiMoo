@@ -117,9 +117,9 @@ condicionaba el 2, tal como estaba anotado.
 
 ## COMPLETADAS EN S031
 
-Bloques 1 y 2 de la Hoja de Ruta, construidos y en build verde
-(GitHub Actions, runs `8959f75` y `ddd61e2`), pendientes de
-verificación en dispositivo real:
+Los tres bloques de la Hoja de Ruta, construidos y en build verde
+(GitHub Actions, runs `8959f75`, `ddd61e2` y `ecf2463`), pendientes
+solo de verificación en dispositivo real:
 
 - **Bloque 1 -- cliente de lrclib.net + caché local.**
   `LrcLibApiService` (endpoints `get`/`search`, campos de respuesta
@@ -141,18 +141,27 @@ verificación en dispositivo real:
   `KaraokeLyricsPanel` justo encima del reproductor expandido con las
   tres alturas/variantes cerradas en el punto 4 del diseño, y
   `KaraokeTeleprompter` con auto-scroll por posición de reproducción.
+- **Bloque 3 -- pantalla de búsqueda de letras del drawer.**
+  `LyricsSearchViewModel`/`LyricsSearchScreen` (ui/lyricssearch):
+  búsqueda libre por botón contra `LyricsRepository.searchLyrics()`,
+  distinción visual "ya en tu biblioteca" (chip) cruzando artista+
+  título normalizados contra `SearchResultTrackRepository`, letra
+  legible al expandir un resultado (`plainLyrics` con prioridad,
+  `syncedLyrics` desnudado de timestamps como respaldo). Ruta
+  `Screen.LyricsSearch` en `NavGraph.kt`, entrada "Letras" en el
+  drawer de `MainActivity.kt`.
 
-Sin tocar: bloque 3 (pantalla de búsqueda del drawer) y verificación
-en dispositivo real de los bloques 1-2.
+Sin tocar: verificación en dispositivo real de los tres bloques.
 
 ---
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H17
 
-1. Construir la pantalla de búsqueda de letras del drawer (búsqueda
-   libre contra `lrclib.net` vía `LyricsRepository.searchLyrics()`,
-   chip/icono para lo que ya está en la biblioteca local -- punto 5
-   del diseño) y su entrada en `NavGraph.kt`/`MainActivity.kt`.
-2. Verificar en dispositivo real los bloques 1 y 2 ya construidos en
-   S031 (cliente + caché de letras, ventana de karaoke y su entrada en
-   el menú de tres puntos) junto con el bloque 3 recién construido.
+1. Verificar en dispositivo real los tres bloques construidos en
+   S031: cliente + caché de letras (bloque 1), ventana de karaoke
+   sobre el ExoPlayer con sus tres variantes de altura/contenido y su
+   exclusión de Radio-Browser.info (bloque 2), y la pantalla de
+   búsqueda de letras del drawer con su distinción visual "ya en tu
+   biblioteca" (bloque 3). Sin código pendiente -- si la verificación
+   revela algo roto, es una incidencia real que retoma H17
+   puntualmente (PCH), no algo que quede "a medias" de S031.
