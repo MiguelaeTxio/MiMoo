@@ -1227,13 +1227,13 @@ class RadioRepository @Inject constructor(
      * en `GenreMatchQuality.of()`, que trata un ancla sin géneros
      * como "sin restricción de género" en vez de "0% siempre".
      */
-    fun manualAnchor(genre: String?, decadeBegin: Int?): RadioAnchor =
+    fun manualAnchor(genre: String?, decadeBegin: Int?, originGroup: OriginGroup? = null): RadioAnchor =
         RadioAnchor(
             genre = genre ?: "",
             genres = genre?.let { setOf(it) } ?: emptySet(),
             country = null,
             decadeBegin = decadeBegin,
-            originGroup = null,
+            originGroup = originGroup,
             isClassical = genre == "classical",
         )
 

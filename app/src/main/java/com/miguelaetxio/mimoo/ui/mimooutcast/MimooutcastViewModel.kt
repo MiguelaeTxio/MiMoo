@@ -4,15 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.remote.MimooutcastCatalog
-import com.miguelaetxio.mimoo.data.remote.RadioRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
+import com.miguelaetxio.mimoo.data.remote.RadioRepositoryimport dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class MimooutcastTab { GENEROS, DECADAS }
+enum class MimooutcastTab { GENEROS, DECADAS, ORIGENES }
 
 data class MimooutcastUiState(
     val tab: MimooutcastTab = MimooutcastTab.GENEROS,
@@ -39,6 +38,7 @@ class MimooutcastViewModel @Inject constructor(
 
     val genres = MimooutcastCatalog.genres
     val decades = MimooutcastCatalog.decades
+    val origins = MimooutcastCatalog.origins
 
     fun selectTab(tab: MimooutcastTab) {
         _uiState.value = _uiState.value.copy(tab = tab)
@@ -48,15 +48,18 @@ class MimooutcastViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(noResultsFor = null)
     }
 
-    fun startWithGenre(mbGenre: String, label: String) = start(mbGenre, decadeBegin = null, label = label)
+    fun startWithGenre(mbGenre: String, label: String) = start(mbGenre, decadeBegin = null, originGroup = null, label = label)
 
-    fun startWithDecade(decadeBegin: Int, label: String) = start(genre = null, decadeBegin = decadeBegin, label = label)
+    fun startWithDecade(decadeBegin: Int, label: String) = start(genre = null, decadeBegin = decadeBegin, originGroup = null, label = label)
 
-    private fun start(genre: String?, decadeBegin: Int?, label: String) {
+    fun startWithOrigin(group: com.miguelaetxio.mimoo.data.remote.OriginGroup, label: String) =
+        start(genre = null, decadeBegin = null, originGroup = group, label = label)
+
+    private fun start(genre: String?, decadeBegin: Int?, originGroup: com.miguelaetxio.mimoo.data.remote.OriginGroup?, label: String) {
         if (_uiState.value.loadingLabel != null) return
         _uiState.value = _uiState.value.copy(loadingLabel = label, noResultsFor = null)
         viewModelScope.launch {
-            val anchor = radioRepository.manualAnchor(genre, decadeBegin)
+            val anchor = radioRepository.manualAnchor(genre, decadeBegin, originGroup)
             val started = playerManager.startRadioFromManualAnchor(anchor, "miMooutCast: $label")
             _uiState.value = _uiState.value.copy(
                 loadingLabel = null,

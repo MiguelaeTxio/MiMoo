@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.remote.MimooutcastDecade
 import com.miguelaetxio.mimoo.data.remote.MimooutcastGenre
+import com.miguelaetxio.mimoo.data.remote.MimooutcastOrigin
 import com.miguelaetxio.mimoo.ui.theme.GlassTokens
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 
@@ -72,6 +73,11 @@ fun MimooutcastScreen(
                     onClick = { viewModel.selectTab(MimooutcastTab.DECADAS) },
                     text = { Text("Décadas") },
                 )
+                Tab(
+                    selected = uiState.tab == MimooutcastTab.ORIGENES,
+                    onClick = { viewModel.selectTab(MimooutcastTab.ORIGENES) },
+                    text = { Text("Origen") },
+                )
             }
 
             Text(
@@ -107,6 +113,11 @@ fun MimooutcastScreen(
                         decades = viewModel.decades,
                         loadingLabel = uiState.loadingLabel,
                         onPick = { d -> viewModel.startWithDecade(d.decadeBegin, d.label) },
+                    )
+                    MimooutcastTab.ORIGENES -> OriginGrid(
+                        origins = viewModel.origins,
+                        loadingLabel = uiState.loadingLabel,
+                        onPick = { o -> viewModel.startWithOrigin(o.group, o.label) },
                     )
                 }
                 if (uiState.loadingLabel != null) {
@@ -167,6 +178,31 @@ private fun DecadeGrid(
                 label = decade.label,
                 enabled = loadingLabel == null,
                 onClick = { onPick(decade) },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun OriginGrid(
+    origins: List<MimooutcastOrigin>,
+    loadingLabel: String?,
+    onPick: (MimooutcastOrigin) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        origins.forEach { origin ->
+            AnchorChip(
+                label = origin.label,
+                enabled = loadingLabel == null,
+                onClick = { onPick(origin) },
             )
         }
         Spacer(Modifier.height(16.dp))

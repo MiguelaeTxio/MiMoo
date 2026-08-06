@@ -25,10 +25,11 @@ data class MimooutcastGenre(val label: String, val mbGenre: String)
 
 data class MimooutcastDecade(val label: String, val decadeBegin: Int)
 
+data class MimooutcastOrigin(val label: String, val group: OriginGroup)
+
 object MimooutcastCatalog {
 
-    val genres: List<MimooutcastGenre> = listOf(
-        MimooutcastGenre("Rock", "rock"),
+    val genres: List<MimooutcastGenre> = listOf(        MimooutcastGenre("Rock", "rock"),
         MimooutcastGenre("Pop", "pop"),
         MimooutcastGenre("Hip Hop", "hip hop"),
         MimooutcastGenre("Electrónica", "electronic"),
@@ -63,5 +64,13 @@ object MimooutcastCatalog {
         MimooutcastDecade("Años 2000", 2000),
         MimooutcastDecade("Años 2010", 2010),
         MimooutcastDecade("Años 2020", 2020),
+    )
+
+    /** Mismos cuatro grupos ya cerrados en H08 (S026) -- `OriginGroup`. */
+    val origins: List<MimooutcastOrigin> = listOf(
+        MimooutcastOrigin("Hispanoamérica", OriginGroup.HISPANOAMERICA),
+        MimooutcastOrigin("Anglosajona", OriginGroup.ANGLOSAJONA),
+        MimooutcastOrigin("Europea", OriginGroup.EUROPEA),
+        MimooutcastOrigin("Mundial", OriginGroup.MUNDIAL),
     )
 }
