@@ -41,12 +41,31 @@ abierto, sin mencionar jamás su propio estado.
 | H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
-| H15 | `DOCS/ANNEX_H15.md` | ← **EN PROGRESO** |
+| H15 | `DOCS/ANNEX_H15.md` | PAUSADO |
 | H16 | `DOCS/ANNEX_H16.md` | PAUSADO |
+| H17 | `DOCS/ANNEX_H17.md` | ← **EN PROGRESO** |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-08-06 (S030, segundo PCH de la sesión)** — PCH explícito de
+  Miguel Ángel: **H15 (miMooutCast) pasa a PAUSADO** -- construido
+  entero (ancla manual, tres secciones Géneros/Décadas/Origen,
+  subgéneros, loop de apertura, log de diagnóstico propio, y un bug
+  real de pérdida de ancla a mitad de sesión corregido tras prueba en
+  dispositivo real, ver `DOCS/ANNEX_H15.md` sección "COMPLETADAS EN
+  S030") -- Miguel Ángel lo está probando y "parece que va bien".
+  **H17 (Karaoke & Lyrics) abierto EN PROGRESO** -- hito nuevo, cita
+  textual: *"vamos a pasar a crear un hito nuevo, Karaoke & Lyrics:
+  consistirá en añadir una entrada en la sidebar para buscar y leer
+  letras de canciones y una entrada en el menú de tres puntos del
+  ExoPlayer que abrirá una ventana encima o debajo del mismo donde
+  visualizar el karaoke del tema que se está ejecutando si se dispone
+  de letras."* Sin diseño cerrado todavía -- ver
+  `DOCS/ANNEX_H17.md`, puntos de diseño abiertos a cerrar con Miguel
+  Ángel al empezar la siguiente sesión, antes de escribir código
+  (mismo patrón ya usado en H08/H12/H15).
 
 - **2026-08-06 (S030)** — PCH explícito de Miguel Ángel a mitad de
   sesión, tras una discusión de proceso sobre por qué el cierre de

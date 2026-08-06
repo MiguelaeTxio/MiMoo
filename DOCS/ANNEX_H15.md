@@ -116,22 +116,74 @@ H16 (Lista Negra / "No me gusta"), surgido de una petición explícita
 de Miguel Ángel durante esta misma conversación -- ver
 `DOCS/ANNEX_H16.md`.
 
+## COMPLETADAS EN S030
+
+Sesión que retomó H15 tras un PCH a mitad de la sesión (venía de
+trabajar en H16/Lista Negra). Hito completo en código, con un bug real
+encontrado y corregido tras prueba en dispositivo real:
+
+1. **Rango de décadas cerrado**: 1950-2020 (ocho décadas), extendiendo
+   un decenio el precedente ya usado en H09 (`RadioGenreCatalog`,
+   50s-2010s) -- asunción declarada a Miguel Ángel, sin objeción.
+2. **`RadioRepository.manualAnchor(genre, decadeBegin, originGroup)`**
+   -- construye el `RadioAnchor` a mano, sin artista de origen.
+3. **SIN CUPOS -- corrección de rumbo a mitad de sesión.** El primer
+   intento reutilizó el motor de cupos 80/10/10 de la Radio automática
+   (interpretación literal de "mismo motor" en el objetivo del hito) --
+   equivocado, orden explícita de Miguel Ángel: streaming simple, sin
+   porcentajes ni rondas de 10, eso es exclusivo de H08.
+   `PlayerManager.fetchSimpleManualCandidate()`: dictionario
+   (`relaxGenre` cuando no hay género) -> MusicBrainz en vivo ->
+   biblioteca local, el primero que encuentre algo. Reutiliza
+   `fetchOneRadioTrack()`/`topUpRadioQueueIfNeeded()` sin tocarlos --
+   `manualAnchorActive` es lo que distingue qué motor usar.
+4. **`buildGenreQuery()`/`findCandidates()` arreglados** para
+   funcionar sin género (ancla "origen solo" vía `country:` en la
+   consulta a MusicBrainz). "Década sola" (sin género ni origen) no
+   tiene término real que mandar a MusicBrainz -- limitación real de
+   la arquitectura (decadeBegin nunca ha formado parte de la
+   consulta, se verifica por tema, no por artista, desde S027), no un
+   bug: esa combinación solo puede tirar de la biblioteca local y del
+   diccionario de éxitos (`relaxGenre`).
+5. **`GenreMatchQuality.of()`**: un ancla sin género ya no da 0%
+   siempre -- se trata como "sin restricción de género".
+6. **`MimooutcastCatalog.kt`**: 24 géneros raíz verificados uno a uno
+   contra `genre_tree.json` + 8 décadas + los 4 `OriginGroup` ya
+   cerrados en H08.
+7. **Subgéneros (petición durante la sesión)**:
+   `GenreTree.directChildren()` -- un segundo nivel de chapitas al
+   pinchar un género raíz con hijos catalogados (p.ej. Electrónica),
+   con una chapita "Todo `<género>`" para el género entero. Los
+   géneros sin hijos (hojas) arrancan directo, "siempre que se
+   pueda" tal como se pidió.
+8. **Loop de batería + capa opaca (peticiones durante la sesión)**:
+   `PlayerManager.playOpeningLoopIfAvailable()` reutilizado tal cual
+   mientras se resuelve el primer tema; fondo opaco al 94% detrás del
+   spinner de carga, sin mezclarse con las chapitas de debajo.
+9. **`MimooutcastDebugLogger.kt`** (`mimooutcast_debug.txt`) -- fichero
+   de diagnóstico propio, separado de `radio_relacionados_debug.txt`
+   (H08), mismo patrón que el resto de logs del proyecto. No existía
+   al principio de la sesión; las cuatro llamadas de
+   `fetchSimpleManualCandidate()` escribían por error en el de H08.
+10. **Bug real, encontrado por Miguel Ángel probando en dispositivo**:
+    temas sin relación con el ancla colándose a mitad de sesión
+    (Soundgarden dentro de una sesión de "minimal techno"). Causa: los
+    `QueueItem` de `fetchSimpleManualCandidate()` nunca marcaban
+    `isFromRadio = true` -- el flag que distingue "esto lo añadió la
+    propia Radio" de "pista propia nueva del usuario". Sin él, al
+    llegar al final de la cola el código reseteaba el ancla entera y
+    caía en el motor automático de H08, anclado en lo último que
+    sonaba. Corregido con `.copy(isFromRadio = true)` en los tres
+    retornos de la función.
+
+Miguel Ángel lo está probando en dispositivo real ahora mismo --
+"parece que va bien" tras el arreglo del punto 10.
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H15
 
-Queda un único punto de alcance sin cerrar:
-
-1. **Rango de décadas** de la lista fija (límite inferior/superior,
-   p.ej. 1950-2020) -- cerrar con Miguel Ángel antes de construir la
-   lista.
-
-Una vez cerrado ese punto:
-
-2. Construir la función de ancla manual en `RadioRepository` (recibe
-   género y/o década y/o origen elegidos a mano, sin artista de
-   origen, devuelve un `RadioAnchor` con la misma forma que
-   `resolveAnchor()`).
-3. Construir la lista fija de géneros y la lista fija de décadas.
-4. Construir la pantalla nueva (tres secciones -- Géneros, Décadas,
-   Origen --, cristal esmerilado, intuitiva) y su entrada en la
-   navegación.
-5. Verificar en dispositivo real.
+Sin código pendiente. Punto único: **seguir la verificación en
+dispositivo real** que Miguel Ángel ya tiene en marcha -- las tres
+secciones (Géneros con subgéneros, Décadas, Origen), el loop de
+apertura, y sobre todo confirmar que el ancla se mantiene fija toda la
+sesión sin drift de género tras el arreglo del punto 10 de
+"COMPLETADAS EN S030".
