@@ -1,6 +1,5 @@
 package com.miguelaetxio.mimoo.ui.mimooutcast
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
@@ -10,7 +9,6 @@ import com.miguelaetxio.mimoo.data.remote.MimooutcastGenre
 import com.miguelaetxio.mimoo.data.remote.OriginGroup
 import com.miguelaetxio.mimoo.data.remote.RadioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,7 +43,6 @@ class MimooutcastViewModel @Inject constructor(
     private val radioRepository: RadioRepository,
     private val playerManager: PlayerManager,
     private val genreTree: GenreTree,
-    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MimooutcastUiState())
@@ -106,13 +103,6 @@ class MimooutcastViewModel @Inject constructor(
     private fun start(genre: String?, decadeBegin: Int?, originGroup: OriginGroup?, label: String) {
         if (_uiState.value.loadingLabel != null) return
         _uiState.value = _uiState.value.copy(loadingLabel = label, noResultsFor = null)
-        // Petición explícita de Miguel Ángel (2026-08-06): el loop de
-        // batería de ~3s ya construido para los popurrís de Favoritos
-        // (`playOpeningLoopIfAvailable()`) suena mientras se resuelve
-        // el primer tema -- se corta solo en cuanto
-        // `startRadioFromManualAnchor()` llama a `playQueue()` con la
-        // pista real (mismo mecanismo, sin tocar nada de él).
-        playerManager.playOpeningLoopIfAvailable(appContext)
         viewModelScope.launch {
             val anchor = radioRepository.manualAnchor(genre, decadeBegin, originGroup)
             val started = playerManager.startRadioFromManualAnchor(anchor, "miMooutCast: $label")

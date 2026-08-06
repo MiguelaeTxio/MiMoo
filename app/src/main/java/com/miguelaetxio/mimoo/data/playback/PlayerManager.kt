@@ -3357,12 +3357,27 @@ class PlayerManager @Inject constructor(
      */
     suspend fun startRadioFromManualAnchor(anchor: RadioAnchor, displayLabel: String): Boolean {
         clearQueue()
+        // H15 -- el loop de batería tiene que arrancar DESPUÉS de
+        // clearQueue() (que para el player y vacía la cola -- si
+        // sonara antes, esta misma llamada lo mataría) y ANTES de la
+        // búsqueda real (fetchOneRadioTrack() puede tardar varios
+        // segundos) -- petición explícita de Miguel Ángel (2026-08-06).
+        // Se corta solo en cuanto playQueue() añade la pista real, más
+        // abajo.
+        playOpeningLoopIfAvailable(appContext)
         radioAnchor = anchor
         manualAnchorActive = true
         radioAnchorArtist = displayLabel
         radioAnchorArtistFallback = displayLabel
         radioAnchorTrackTitle = displayLabel
-        val first = fetchOneRadioTrack(displayLabel) ?: return false
+        val first = fetchOneRadioTrack(displayLabel)
+        if (first == null) {
+            // Sin esto, el loop de batería (REPEAT_MODE_ONE) se
+            // quedaría sonando en bucle para siempre -- nunca llega a
+            // sonar una pista real que lo corte.
+            withContext(Dispatchers.Main) { stopOpeningLoopIfActive() }
+            return false
+        }
         first.artist?.let { radioUsedArtists.add(it) }
         radioUsedSongs.add(knownHitsRepository.songKey(first.artist, first.title))
         withContext(Dispatchers.Main) {
