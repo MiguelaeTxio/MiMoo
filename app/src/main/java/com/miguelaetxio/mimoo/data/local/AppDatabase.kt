@@ -16,6 +16,7 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoriteTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
+import com.miguelaetxio.mimoo.data.local.dao.LyricsCacheDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
@@ -28,6 +29,7 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
+import com.miguelaetxio.mimoo.data.local.entity.LyricsCache
 
 @Database(
     entities = [
@@ -43,8 +45,9 @@ import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
         FavoritePlaylist::class,
         DislikedArtist::class,
         DislikedTrack::class,
+        LyricsCache::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -60,6 +63,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoritePlaylistDao(): FavoritePlaylistDao
     abstract fun dislikedArtistDao(): DislikedArtistDao
     abstract fun dislikedTrackDao(): DislikedTrackDao
+    abstract fun lyricsCacheDao(): LyricsCacheDao
 
     companion object {
         /**
@@ -465,6 +469,41 @@ abstract class AppDatabase : RoomDatabase() {
                         "`title` TEXT NOT NULL, " +
                         "`dislikedAt` INTEGER NOT NULL, " +
                         "PRIMARY KEY(`artist`, `title`))"
+                )
+            }
+        }
+
+        /**
+         * Crea lyrics_cache (H17, S031) -- caché local de letras de
+         * lrclib.net, ver comentario de la entidad LyricsCache. Clave
+         * compuesta (artistKey, titleKey), mismo patrón que
+         * disliked_tracks (MIGRATION_13_14) pero sobre las claves
+         * NORMALIZADAS en vez de los valores tal cual, porque aquí la
+         * clave sirve para deduplicar consultas de red, no solo para
+         * identificar filas. Tabla nueva, no toca ninguna tabla
+         * existente.
+         * ---
+         * Creates lyrics_cache (H17, S031) -- local cache of lrclib.net
+         * lyrics, see the LyricsCache entity's comment. Composite key
+         * (artistKey, titleKey), same pattern as disliked_tracks
+         * (MIGRATION_13_14) but over the NORMALIZED keys instead of the
+         * raw values, because here the key exists to deduplicate
+         * network queries, not just to identify rows. New table,
+         * doesn't touch any existing table.
+         */
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `lyrics_cache` (" +
+                        "`artistKey` TEXT NOT NULL, " +
+                        "`titleKey` TEXT NOT NULL, " +
+                        "`artist` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`plainLyrics` TEXT, " +
+                        "`syncedLyrics` TEXT, " +
+                        "`hasLyrics` INTEGER NOT NULL, " +
+                        "`cachedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`artistKey`, `titleKey`))"
                 )
             }
         }

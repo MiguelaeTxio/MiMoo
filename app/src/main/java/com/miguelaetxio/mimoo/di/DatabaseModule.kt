@@ -14,6 +14,7 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoriteTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
+import com.miguelaetxio.mimoo.data.local.dao.LyricsCacheDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -47,6 +48,7 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_11_12,
                 AppDatabase.MIGRATION_12_13,
                 AppDatabase.MIGRATION_13_14,
+                AppDatabase.MIGRATION_14_15,
             )
             .build()
 
@@ -110,4 +112,9 @@ object DatabaseModule {
     @Provides
     fun provideDislikedTrackDao(db: AppDatabase): DislikedTrackDao =
         db.dislikedTrackDao()
+
+    /** H17 (S031) -- mismo patrón que el resto de DAOs de este módulo, para no repetir el fallo [Dagger/MissingBinding] documentado arriba. */
+    @Provides
+    fun provideLyricsCacheDao(db: AppDatabase): LyricsCacheDao =
+        db.lyricsCacheDao()
 }

@@ -5,6 +5,7 @@ import com.miguelaetxio.mimoo.data.remote.DiscogsApiService
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.ItunesApiService
+import com.miguelaetxio.mimoo.data.remote.LrcLibApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
 import com.miguelaetxio.mimoo.data.remote.RadioBrowserApiService
 import com.miguelaetxio.mimoo.data.remote.WikidataApiService
@@ -56,6 +57,28 @@ object NetworkModule {
     // cuando MusicBrainz/Cover Art Archive no tiene coincidencia. Sin
     // API key, ver ItunesApiService.
     private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
+
+    // lrclib.net (H17, S031) -- fuente de letras de Karaoke & Lyrics,
+    // ver DOCS/ANNEX_H17.md punto 1. Confirmado en línea esta sesión:
+    // abierta, gratuita, sin API key, sin límite de peticiones. Ver
+    // LrcLibApiService.
+    private const val LRCLIB_BASE_URL = "https://lrclib.net/api/"
+
+    // Recomendado (no exigido) por la propia documentación de
+    // lrclib.net: identificar la app con nombre+versión+enlace al
+    // proyecto, mismo espíritu que MUSICBRAINZ_USER_AGENT/
+    // RADIO_BROWSER_USER_AGENT arriba.
+    private const val LRCLIB_USER_AGENT =
+        "MiMoo/1.0 ( https://github.com/MiguelaeTxio/MiMoo )"
+
+    private class LrcLibUserAgentInterceptor : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request().newBuilder()
+                .header("User-Agent", LRCLIB_USER_AGENT)
+                .build()
+            return chain.proceed(request)
+        }
+    }
 
     // Buena práctica documentada por el propio servicio (no
     // obligatoria, pero recomendada) -- identificar la app con un
@@ -348,4 +371,38 @@ object NetworkModule {
     fun provideItunesApiService(
         @Named("itunesRetrofit") retrofit: Retrofit,
     ): ItunesApiService = retrofit.create(ItunesApiService::class.java)
+
+    // lrclib.net (H17, S031). Cliente propio solo por el interceptor
+    // de User-Agent recomendado -- sin rate limiting, no lo exige el
+    // servicio (confirmado en línea esta sesión).
+    @Provides
+    @Singleton
+    @Named("lrcLibOkHttpClient")
+    fun provideLrcLibOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(LrcLibUserAgentInterceptor())
+            .addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BASIC
+                }
+            )
+            .build()
+
+    @Provides
+    @Singleton
+    @Named("lrcLibRetrofit")
+    fun provideLrcLibRetrofit(
+        @Named("lrcLibOkHttpClient") okHttpClient: OkHttpClient,
+    ): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(LRCLIB_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideLrcLibApiService(
+        @Named("lrcLibRetrofit") retrofit: Retrofit,
+    ): LrcLibApiService = retrofit.create(LrcLibApiService::class.java)
 }
