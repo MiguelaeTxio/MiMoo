@@ -3398,6 +3398,23 @@ class PlayerManager @Inject constructor(
      * (`dislikedArtistNamesLower`/`isTrackDisliked()`), releído en
      * cada llamada -- mismo criterio que `refreshDislikedSnapshots()`
      * en `fetchRoundCandidate()`.
+     *
+     * BUG REAL, S030 -- reportado por Miguel Ángel: temas de Soundgarden
+     * sonando dentro de una sesión anclada en "minimal techno". Causa:
+     * los tres `return` de esta función devolvían el `QueueItem` de
+     * `resolveYoutubeCandidate()`/`pickDiscoCandidate()` TAL CUAL, sin
+     * `isFromRadio = true` -- el flag que el bloque de
+     * `onMediaItemTransition` (más arriba en esta clase) usa para
+     * distinguir "esto lo añadió la propia Radio" de "esto es una
+     * pista propia nueva del usuario". Sin el flag, en cuanto la
+     * reproducción alcanzaba el último item de la cola, ese bloque
+     * interpretaba CADA pista de miMooutCast como si el usuario
+     * acabara de elegirla a mano -- reseteaba `radioAnchor = null` y
+     * `manualAnchorActive = false`, y la siguiente búsqueda caía en el
+     * motor automático de H08, anclado en lo que sonaba en ese momento
+     * en vez de en la elección original. `.copy(isFromRadio = true)`
+     * en los tres retornos, igual que ya hace el motor de cupos en sus
+     * dos puntos de construcción del `QueueItem` final.
      */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
@@ -3424,7 +3441,7 @@ class PlayerManager @Inject constructor(
                         "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> dictionario: " +
                             "'${hit.artist}' - '${hit.song}'",
                     )
-                    return item
+                    return item.copy(isFromRadio = true)
                 }
             }
         }
@@ -3452,7 +3469,7 @@ class PlayerManager @Inject constructor(
                     "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
                         "'${item.artist}' - '${item.title}'",
                 )
-                return item
+                return item.copy(isFromRadio = true)
             }
         }
 
@@ -3466,7 +3483,7 @@ class PlayerManager @Inject constructor(
                 "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> biblioteca local: " +
                     "'${item.artist}' - '${item.title}'",
             )
-            return item
+            return item.copy(isFromRadio = true)
         }
 
         MimooutcastDebugLogger.log(
