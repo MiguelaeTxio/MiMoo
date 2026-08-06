@@ -117,8 +117,9 @@ condicionaba el 2, tal como estaba anotado.
 
 ## COMPLETADAS EN S031
 
-Los tres bloques de la Hoja de Ruta, construidos y en build verde
-(GitHub Actions, runs `8959f75`, `ddd61e2` y `ecf2463`), pendientes
+Los tres bloques de la Hoja de Ruta, más el log de diagnóstico añadido
+a petición de Miguel Ángel, construidos y en build verde (GitHub
+Actions, runs `8959f75`, `ddd61e2`, `ecf2463` y `f5e1f7c`), pendientes
 solo de verificación en dispositivo real:
 
 - **Bloque 1 -- cliente de lrclib.net + caché local.**
@@ -150,6 +151,16 @@ solo de verificación en dispositivo real:
   `syncedLyrics` desnudado de timestamps como respaldo). Ruta
   `Screen.LyricsSearch` en `NavGraph.kt`, entrada "Letras" en el
   drawer de `MainActivity.kt`.
+- **Log de diagnóstico** (`LyricsDebugLogger`, mismo patrón exacto que
+  `RadioDebugLogger`/`RadioBrowserDebugLogger`, run `f5e1f7c`):
+  `letras_debug.txt`, últimas 400 líneas. `LyricsRepository` registra
+  cada decisión real de `getLyrics()`/`searchLyrics()` -- hit de caché
+  (con qué tipo de letra), consulta a lrclib.net, excepción si falla
+  la petición, y el resultado final antes de cachear (sincronizada /
+  plana / instrumental / sin ninguna letra, con el id de lrclib.net).
+  Petición explícita de Miguel Ángel al detectar que ambos métodos son
+  defensivos por diseño (`catch (e: Exception)` -> "sin letra"/lista
+  vacía en silencio) y no dejaban ninguna pista diagnosticable.
 
 Sin tocar: verificación en dispositivo real de los tres bloques.
 
@@ -162,6 +173,8 @@ Sin tocar: verificación en dispositivo real de los tres bloques.
    sobre el ExoPlayer con sus tres variantes de altura/contenido y su
    exclusión de Radio-Browser.info (bloque 2), y la pantalla de
    búsqueda de letras del drawer con su distinción visual "ya en tu
-   biblioteca" (bloque 3). Sin código pendiente -- si la verificación
-   revela algo roto, es una incidencia real que retoma H17
-   puntualmente (PCH), no algo que quede "a medias" de S031.
+   biblioteca" (bloque 3). `letras_debug.txt` (LyricsDebugLogger) está
+   disponible para diagnosticar cualquier tema sin letra que debería
+   tenerla. Sin código pendiente -- si la verificación revela algo
+   roto, es una incidencia real que retoma H17 puntualmente (PCH), no
+   algo que quede "a medias" de S031.
