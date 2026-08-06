@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
@@ -679,6 +680,17 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Disliked.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                            )
+                            CompactDrawerItem(
+                                label = "Letras",
+                                icon = Icons.Filled.Subtitles,
+                                selected = currentRoute == Screen.LyricsSearch.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.LyricsSearch.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
