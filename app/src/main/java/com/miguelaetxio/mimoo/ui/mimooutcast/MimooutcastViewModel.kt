@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.remote.MimooutcastCatalog
-import com.miguelaetxio.mimoo.data.remote.RadioRepositoryimport dagger.hilt.android.lifecycle.HiltViewModel
+import com.miguelaetxio.mimoo.data.remote.RadioRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
