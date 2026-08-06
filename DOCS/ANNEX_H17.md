@@ -115,18 +115,44 @@ condicionaba el 2, tal como estaba anotado.
 
 ---
 
+## COMPLETADAS EN S031
+
+Bloques 1 y 2 de la Hoja de Ruta, construidos y en build verde
+(GitHub Actions, runs `8959f75` y `ddd61e2`), pendientes de
+verificación en dispositivo real:
+
+- **Bloque 1 -- cliente de lrclib.net + caché local.**
+  `LrcLibApiService` (endpoints `get`/`search`, campos de respuesta
+  verificados en línea esta sesión), `NetworkModule` (Retrofit +
+  OkHttpClient con User-Agent recomendado), entidad `LyricsCache` +
+  `LyricsCacheDao` (clave compuesta artistKey+titleKey normalizada vía
+  `SearchNormalizer`), `AppDatabase` v14->v15 (`MIGRATION_14_15`),
+  `LyricsRepository` (`getLyrics()` cachea con o sin letra;
+  `searchLyrics()` búsqueda libre en crudo para el bloque 3).
+- **Bloque 2 -- ventana de karaoke sobre el ExoPlayer.**
+  `PlaybackState.currentIsRadioStation` (nuevo campo en
+  `PlayerManager.kt`, reflejo de `QueueItem.isRadioStation` de la
+  pista en curso -- implementa la exclusión del punto 6).
+  `PlayerBarViewModel`: estado de letras + `toggleLyricsPanel()`,
+  refresco automático al cambiar de pista si el panel está abierto.
+  `LrcParser` (util): parseo de `syncedLyrics` (LRC) a líneas con
+  timestamp. `PlayerBar.kt`: entrada "Karaoke"/"Ocultar karaoke" en el
+  menú de tres puntos (oculta si `currentIsRadioStation`),
+  `KaraokeLyricsPanel` justo encima del reproductor expandido con las
+  tres alturas/variantes cerradas en el punto 4 del diseño, y
+  `KaraokeTeleprompter` con auto-scroll por posición de reproducción.
+
+Sin tocar: bloque 3 (pantalla de búsqueda del drawer) y verificación
+en dispositivo real de los bloques 1-2.
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H17
 
-1. Construir el cliente de lrclib.net (endpoints `get` y `search`),
-   entidad/DAO/repositorio de letras en Room para la caché (artista +
-   título -> sincronizada / plana / sin letra confirmado).
-2. Construir la ventana de karaoke sobre el ExoPlayer (panel de
-   cristal esmerilado de altura variable, 1/3 o 1/9 según el caso
-   cerrado en el punto 4) y su entrada condicional en el menú de tres
-   puntos de `PlayerBar.kt` -- excluyendo explícitamente las pistas de
-   Radio-Browser.info (H09) y cualquier stream sin metadatos fiables
-   (punto 6).
-3. Construir la pantalla de búsqueda de letras del drawer (búsqueda
-   libre contra `lrclib.net`, chip/icono para lo ya descargado) y su
-   entrada en `NavGraph.kt`/`MainActivity.kt`.
-4. Verificar en dispositivo real.
+1. Construir la pantalla de búsqueda de letras del drawer (búsqueda
+   libre contra `lrclib.net` vía `LyricsRepository.searchLyrics()`,
+   chip/icono para lo que ya está en la biblioteca local -- punto 5
+   del diseño) y su entrada en `NavGraph.kt`/`MainActivity.kt`.
+2. Verificar en dispositivo real los bloques 1 y 2 ya construidos en
+   S031 (cliente + caché de letras, ventana de karaoke y su entrada en
+   el menú de tres puntos) junto con el bloque 3 recién construido.
