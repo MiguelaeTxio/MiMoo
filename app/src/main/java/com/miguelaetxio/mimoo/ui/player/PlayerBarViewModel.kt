@@ -202,11 +202,18 @@ class PlayerBarViewModel @Inject constructor(
     private fun fetchLyricsForCurrentTrack() {
         val current = state.value
         val artist = current.currentArtist ?: _menuArtist.value
-        val title = current.currentTitle
-        if (artist.isNullOrBlank() || title.isNullOrBlank()) {
+        val rawTitle = current.currentTitle
+        if (artist.isNullOrBlank() || rawTitle.isNullOrBlank()) {
             _lyricsResult.value = null
             return
         }
+        // H17 (S031) -- fix real diagnosticado con letras_debug.txt
+        // (primera prueba en dispositivo): lrclib.net exige
+        // coincidencia exacta de track_name, así que hay que limpiar
+        // el título crudo del vídeo (artista repetido delante, "[Official
+        // Live]"/"(Lyric Video)"...) antes de consultarlo -- ver
+        // SearchNormalizer.cleanSongTitle().
+        val title = com.miguelaetxio.mimoo.util.SearchNormalizer.cleanSongTitle(rawTitle, artist)
         val album = _menuAlbum.value
         val durationSeconds = current.durationMs.takeIf { it > 0 }?.let { (it / 1000).toInt() }
         viewModelScope.launch {

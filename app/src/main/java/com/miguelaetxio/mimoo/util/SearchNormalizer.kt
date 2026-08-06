@@ -256,6 +256,75 @@ object SearchNormalizer {
         return key.ifBlank { tight(normalize(title)) }
     }
 
+    /**
+     * H17 (S031) -- título "limpio" y LEGIBLE de un tema, para
+     * consultar APIs externas que esperan el título real de la
+     * canción (lrclib.net vía `LyricsRepository.getLyrics()`), no el
+     * título completo del vídeo de YouTube.
+     *
+     * Fallo real diagnosticado con `letras_debug.txt` (S031, primera
+     * prueba en dispositivo de Miguel Ángel): `getLyrics()` se estaba
+     * llamando con el título crudo del reproductor
+     * ("The Beach Boys - Surfin' U.S.A. (Lyric Video)", "Eric Clapton
+     * - Wonderful Tonight [Official Live]"...) en vez del título real
+     * de la canción. `GET /api/get` de lrclib.net espera coincidencia
+     * exacta de `track_name` -- con el prefijo del artista y los
+     * sufijos de YouTube delante, la consulta fallaba con 404 salvo
+     * que lrclib.net acertara "por chiripa" alguna coincidencia
+     * parcial (varios casos reales del log: aciertos inconsistentes
+     * con título sucio, acierto limpio y directo con título ya sin
+     * prefijo ni sufijo).
+     *
+     * Mismos cuatro primeros pasos que `songTitleKey()` (quitar
+     * segmentos entre paréntesis/corchetes, partir por guion, quitar
+     * el segmento que sea el propio artista, quitar coletillas
+     * finales y años sueltos) pero SIN el último paso de
+     * `normalize()`+`tight()`: el resultado conserva mayúsculas,
+     * acentos y puntuación reales -- aquí el destino es una API
+     * externa que compara texto legible, no una clave interna de
+     * deduplicación.
+     * ---
+     * H17 (S031) -- "clean", human-readable song title for querying
+     * external APIs (lrclib.net) that expect the real song title, not
+     * the full YouTube video title. Real bug diagnosed with
+     * `letras_debug.txt` (S031, Miguel Ángel's first device test):
+     * `getLyrics()` was being called with the raw player title instead
+     * of the actual song title, causing inconsistent 404s against
+     * lrclib.net's exact-match `track_name`. Same first four steps as
+     * `songTitleKey()` but without the final normalize()+tight() --
+     * keeps real casing/accents/punctuation, since the destination
+     * compares readable text, not a dedup key.
+     */
+    fun cleanSongTitle(title: String, artist: String? = null): String {
+        val withoutBrackets = title
+            .replace(Regex("\\([^()]*\\)"), " ")
+            .replace(Regex("\\[[^\\[\\]]*\\]"), " ")
+        val parts = withoutBrackets
+            .split(" - ", " – ", " — ")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toMutableList()
+        val artistKey = artist?.let { tight(normalizeArtistName(it)) }.orEmpty()
+        if (artistKey.isNotEmpty()) {
+            if (parts.size > 1 && tight(normalizeArtistName(parts.first())) == artistKey) {
+                parts.removeAt(0)
+            }
+            if (parts.size > 1 && tight(normalizeArtistName(parts.last())) == artistKey) {
+                parts.removeAt(parts.size - 1)
+            }
+        }
+        while (parts.size > 1 && isOnlyDecoration(parts.last())) {
+            parts.removeAt(parts.size - 1)
+        }
+        val skeleton = parts.joinToString(" - ")
+            .replace(Regex("\\b(19|20)\\d{2}\\b"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        // Misma red de seguridad que songTitleKey(): si de tanto podar
+        // no queda nada, vale más el título original que uno vacío.
+        return skeleton.ifBlank { title.trim() }
+    }
+
     private fun isOnlyDecoration(segment: String): Boolean {
         val words = normalize(segment).split(" ").filter { it.isNotBlank() }
         return words.isNotEmpty() && words.all { it in STRONG_DECORATION || it in FILLER_WORDS }
