@@ -3418,7 +3418,7 @@ class PlayerManager @Inject constructor(
             if (hit.artist.lowercase() !in excludeLower) {
                 val item = resolveYoutubeCandidate(anchorLabel, hit.artist, hit.song)
                 if (item != null && !isTrackDisliked(item.artist, item.title)) {
-                    RadioDebugLogger.log(
+                    MimooutcastDebugLogger.log(
                         appContext, storageManager,
                         "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> dictionario: " +
                             "'${hit.artist}' - '${hit.song}'",
@@ -3446,7 +3446,7 @@ class PlayerManager @Inject constructor(
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
                 !isTrackDisliked(item.artist, item.title)
             ) {
-                RadioDebugLogger.log(
+                MimooutcastDebugLogger.log(
                     appContext, storageManager,
                     "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
                         "'${item.artist}' - '${item.title}'",
@@ -3460,7 +3460,7 @@ class PlayerManager @Inject constructor(
         // `GenreMatchQuality.of()` ya trata un ancla sin género como
         // "sin restricción", ver su comentario H15).
         pickDiscoCandidate(anchor, excludeLower, emptySet())?.let { item ->
-            RadioDebugLogger.log(
+            MimooutcastDebugLogger.log(
                 appContext, storageManager,
                 "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> biblioteca local: " +
                     "'${item.artist}' - '${item.title}'",
@@ -3468,7 +3468,7 @@ class PlayerManager @Inject constructor(
             return item
         }
 
-        RadioDebugLogger.log(
+        MimooutcastDebugLogger.log(
             appContext, storageManager,
             "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en ninguna de " +
                 "las tres fuentes",
