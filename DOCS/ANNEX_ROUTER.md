@@ -43,11 +43,34 @@ abierto, sin mencionar jamás su propio estado.
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
 | H15 | `DOCS/ANNEX_H15.md` | PAUSADO |
 | H16 | `DOCS/ANNEX_H16.md` | PAUSADO |
-| H17 | `DOCS/ANNEX_H17.md` | ← **EN PROGRESO** |
+| H17 | `DOCS/ANNEX_H17.md` | PAUSADO |
+| H18 | `DOCS/ANNEX_H18.md` | ← **EN PROGRESO** |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-08-07 (arranque de S032)** — PCH explícito de Miguel Ángel al
+  inicio de sesión, tras corregir un malentendido de S031: la petición
+  de producto que quedó "sin triar, a decidir contigo" en
+  `RESUMPTION_POINT.md` (botón de play en filas de Favoritos +
+  ordenación transversal de listas) era el punto de arranque de S032,
+  no algo secundario. **H17 (Karaoke & Lyrics) pasa a PAUSADO** -- sin
+  incidencia nueva, diseño y construcción cerrados en S031, hoja de
+  ruta intacta (solo verificación en dispositivo pendiente, ver
+  `DOCS/ANNEX_H17.md`). **H18 (Play y Ordenación de Listas de Items)
+  abierto EN PROGRESO** -- hito nuevo, alcance confirmado por Miguel
+  Ángel: (1) botón de play en las filas de item de Favoritos
+  (artistas, álbumes, sencillos, listas) y (2) ordenación
+  (alfabética/orden de adición, ascendente y descendente) en todas las
+  listas de items de la app. Sin diseño técnico cerrado todavía -- ver
+  `DOCS/ANNEX_H18.md`, cinco puntos de diseño abiertos a cerrar con
+  Miguel Ángel al empezar la siguiente sesión, antes de escribir código
+  (mismo patrón ya usado en H08/H12/H15/H16). De paso, se corrige un
+  hueco de documentación heredado de S030: H17 nunca se había añadido
+  a la tabla de hitos de `DOCS/MASTER_DOCUMENT.md` (solo vivía en este
+  enrutador) -- añadido junto con H18 en el mismo commit, sin tocar
+  ninguna hoja de ruta.
 
 - **2026-08-06 (S030, segundo PCH de la sesión)** — PCH explícito de
   Miguel Ángel: **H15 (miMooutCast) pasa a PAUSADO** -- construido

@@ -33,6 +33,8 @@ queda abierto en cada uno.
 | H14 | Almacenamiento de la Biblioteca — Carpeta Configurable y Traslado | `DOCS/ANNEX_H14.md` |
 | H15 | miMooutCast — Radio de Ancla a la Carta (Géneros/Décadas) | `DOCS/ANNEX_H15.md` |
 | H16 | Lista Negra ("No me gusta") de Artistas y Temas | `DOCS/ANNEX_H16.md` |
+| H17 | Karaoke & Lyrics | `DOCS/ANNEX_H17.md` |
+| H18 | Play y Ordenación de Listas de Items | `DOCS/ANNEX_H18.md` |
 
 **Resumen de qué hay construido en cada hito (migrado desde la sesión
 skill-based, 2026-07-02; actualizado 2026-07-15):**
@@ -132,6 +134,26 @@ Vista de gestión (CRUD) con entrada propia en el menú lateral. Sin
 código todavía -- diseño técnico abierto (ver
 `DOCS/ANNEX_H16.md`), a cerrar con Miguel Ángel antes de escribir
 nada.
+H17: hito nuevo (2026-08-06, cierre de S030) -- Karaoke & Lyrics:
+entrada en el drawer para buscar y leer letras de cualquier canción, y
+entrada en el menú de tres puntos del ExoPlayer que muestra el
+karaoke del tema en curso si hay letra disponible. Diseño cerrado y
+construido entero en S031 -- cliente lrclib.net + caché Room, panel de
+karaoke sobre el ExoPlayer con tres variantes según disponibilidad de
+letra, pantalla de búsqueda del drawer con distinción "ya en tu
+biblioteca", log de diagnóstico propio y un fix real de limpieza de
+título de YouTube antes de consultar la API. Sin código pendiente --
+solo verificación en dispositivo real. Ver `DOCS/ANNEX_H17.md`.
+H18: hito nuevo (2026-08-07, apertura en S032) -- Play y Ordenación de
+Listas de Items, a petición explícita de Miguel Ángel surgida al
+cierre de S031: falta el botón de play en las filas de item de
+Favoritos (artistas, álbumes, sencillos, listas) y falta ordenación
+(alfabética / por orden de adición, ascendente y descendente)
+aplicable a todas las listas de items de la app. Confirmado contra el
+código real de `FavoritesScreen.kt` (ninguna de las cuatro pestañas
+tiene botón de play en su fila). Sin código todavía -- diseño técnico
+abierto (ver `DOCS/ANNEX_H18.md`), a cerrar con Miguel Ángel antes de
+escribir nada.
 
 ---
 

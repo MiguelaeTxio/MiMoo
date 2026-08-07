@@ -10,47 +10,25 @@
 
 ## Qué hacer en la siguiente sesión
 
-**H17 (Karaoke & Lyrics) EN PROGRESO** -- diseño cerrado y los tres
-bloques de construcción completos (cliente lrclib.net + caché, ventana
-de karaoke sobre el ExoPlayer, pantalla de búsqueda del drawer), más
-un log de diagnóstico y un fix real ya en build verde. **Sin código
-pendiente** -- el único punto de la Hoja de Ruta es verificación en
-dispositivo real, con foco especial en los tres temas que en
-`letras_debug.txt` fallaban con 404 (Willie Nelson "Always On My
-Mind", King Crimson "The Court Of The Crimson King", Thin Lizzy "The
-Boys Are Back In Town") antes del fix de `cleanSongTitle()`. Detalle
-completo en `DOCS/ANNEX_H17.md`, "COMPLETADAS EN S031".
+**H18 (Play y Ordenación de Listas de Items) EN PROGRESO** -- hito
+nuevo abierto al arranque de S032 (PCH explícito, ver
+`DOCS/ANNEX_ROUTER.md`). Sin código todavía -- cinco puntos de diseño
+abiertos por cerrar con Miguel Ángel antes de escribir nada (qué
+significa "play" por tipo de item, icono/posición del botón,
+alcance cerrado de qué pantallas entran en "todas las listas de items
+de la app", mecanismo de orden de adición, UI del control de orden).
+Detalle completo en `DOCS/ANNEX_H18.md`.
 
-## Petición de producto nueva, SIN HITO ASIGNADO -- triar al empezar la siguiente sesión
+## H17 (Karaoke & Lyrics) -- PAUSADO, diseño y construcción completos, sin verificar en dispositivo
 
-Miguel Ángel, cita textual al cierre de S031: *"Cuando diseñamos el
-CRUD de favoritos y su vista, tuvimos un error de bulto, no incluimos
-el botón del play en ninguna de las columnas de items, ni en
-artistas, ni en álbumes, ni en sencillos, ni en listas. Tampoco
-incluimos ordenar las listas por orden alfabético o por orden de
-adición, ascendentes y descendentes. No sé a que hito pertenece
-esto"*. Dos piezas:
-
-1. **Falta el botón de play en las filas/columnas de item** de las
-   vistas de Favoritos -- artistas, álbumes, sencillos y listas.
-2. **Falta ordenar** (alfabético / orden de adición, cada uno
-   ascendente y descendente) -- Miguel Ángel especifica que esto debe
-   aplicarse a **todas las listas de items** de la app, no solo a
-   Favoritos.
-
-**Sin triar todavía.** Candidatos razonables por descriptor de hito en
-`MASTER_DOCUMENT.md` -- H03 ("Biblioteca Local: Reproducción Offline,
-CRUD, Favoritos y Carátulas"), H04 ("Listas de Reproducción Locales"),
-H12 ("Directorio de Música... + Favoritos sin Descarga") -- pero
-**no se ha confirmado con Miguel Ángel cuál(es)**, y el propio Miguel
-Ángel dijo explícitamente que no lo sabe. La siguiente sesión que
-retome esto debe: (a) localizar las pantallas de Favoritos reales
-(`FavoritesScreen.kt` y las que correspondan a artistas/álbumes/
-sencillos/listas) para confirmar el alcance exacto antes de tocar
-nada, (b) preguntar a Miguel Ángel a qué hito(s) asignar esto -- o si
-prefiere abrir un hito nuevo dado que "ordenar en todas las listas de
-items" es una petición transversal que no encaja limpiamente en uno
-solo. **No inventar la asignación de hito.**
+Pasó a PAUSADO al arranque de S032 (PCH explícito, sin incidencia
+nueva). Sin código pendiente -- el único punto de su hoja de ruta
+(intacta) es verificación en dispositivo real, con foco especial en
+los tres temas que en `letras_debug.txt` fallaban con 404 (Willie
+Nelson "Always On My Mind", King Crimson "The Court Of The Crimson
+King", Thin Lizzy "The Boys Are Back In Town") antes del fix de
+`cleanSongTitle()`. Detalle completo en `DOCS/ANNEX_H17.md`,
+"COMPLETADAS EN S031".
 
 ## H15 (miMooutCast) -- PAUSADO, completo en código, con un fix real más en S031
 
