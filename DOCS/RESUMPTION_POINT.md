@@ -1,6 +1,6 @@
 # PUNTO DE REANUDACIÓN — MiMoo
 
-**Última sesión cerrada:** S030 (2026-08-06)
+**Última sesión cerrada:** S031 (2026-08-06/07)
 **Hito con la hoja de ruta activa:** ver `DOCS/ANNEX_ROUTER.md`
 
 > El estado de los hitos vive **exclusivamente** en
@@ -10,62 +10,73 @@
 
 ## Qué hacer en la siguiente sesión
 
-**H17 (Karaoke & Lyrics) EN PROGRESO** -- hito nuevo, sin diseño
-cerrado todavía. Antes de escribir una sola línea de código: cerrar
-con Miguel Ángel los seis puntos de diseño ABIERTOS de
-`DOCS/ANNEX_H17.md` -- empezando por el punto 1 (fuente de las
-letras), que condiciona la viabilidad del punto 2 (¿karaoke
-sincronizado línea a línea, o solo letra estática?). Mismo patrón de
-sesión de diseño primero ya usado en H08/H12/H15 -- no dar nada por
-supuesto ni inventar la fuente de letras sin decidirla explícitamente.
+**H17 (Karaoke & Lyrics) EN PROGRESO** -- diseño cerrado y los tres
+bloques de construcción completos (cliente lrclib.net + caché, ventana
+de karaoke sobre el ExoPlayer, pantalla de búsqueda del drawer), más
+un log de diagnóstico y un fix real ya en build verde. **Sin código
+pendiente** -- el único punto de la Hoja de Ruta es verificación en
+dispositivo real, con foco especial en los tres temas que en
+`letras_debug.txt` fallaban con 404 (Willie Nelson "Always On My
+Mind", King Crimson "The Court Of The Crimson King", Thin Lizzy "The
+Boys Are Back In Town") antes del fix de `cleanSongTitle()`. Detalle
+completo en `DOCS/ANNEX_H17.md`, "COMPLETADAS EN S031".
 
-**Petición explícita de Miguel Ángel, cita textual (2026-08-06):**
-*"vamos a pasar a crear un hito nuevo, Karaoke & Lyrics: consistirá en
-añadir una entrada en la sidebar para buscar y leer letras de
-canciones y una entrada en el menú de tres puntos del ExoPlayer que
-abrirá una ventana encima o debajo del mismo donde visualizar el
-karaoke del tema que se está ejecutando si se dispone de letras."*
+## Petición de producto nueva, SIN HITO ASIGNADO -- triar al empezar la siguiente sesión
 
-## H15 (miMooutCast) -- PAUSADO, completo en código, en verificación de dispositivo
+Miguel Ángel, cita textual al cierre de S031: *"Cuando diseñamos el
+CRUD de favoritos y su vista, tuvimos un error de bulto, no incluimos
+el botón del play en ninguna de las columnas de items, ni en
+artistas, ni en álbumes, ni en sencillos, ni en listas. Tampoco
+incluimos ordenar las listas por orden alfabético o por orden de
+adición, ascendentes y descendentes. No sé a que hito pertenece
+esto"*. Dos piezas:
 
-Los diez puntos de "COMPLETADAS EN S030" en `DOCS/ANNEX_H15.md` están
-hechos y en build verde, incluido un bug real de pérdida de ancla a
-mitad de sesión encontrado y corregido tras prueba en dispositivo real
-(Soundgarden colándose en una sesión de "minimal techno" -- causa:
-`QueueItem` sin `isFromRadio = true`). Miguel Ángel lo estaba probando
-al cierre de esta sesión, "parece que va bien" tras el arreglo. **No
-hay código pendiente** -- si al seguir probando aparece algo nuevo, es
-una incidencia que retoma H15 puntualmente (PCH), no algo que quede
-"a medias" de esta sesión.
+1. **Falta el botón de play en las filas/columnas de item** de las
+   vistas de Favoritos -- artistas, álbumes, sencillos y listas.
+2. **Falta ordenar** (alfabético / orden de adición, cada uno
+   ascendente y descendente) -- Miguel Ángel especifica que esto debe
+   aplicarse a **todas las listas de items** de la app, no solo a
+   Favoritos.
+
+**Sin triar todavía.** Candidatos razonables por descriptor de hito en
+`MASTER_DOCUMENT.md` -- H03 ("Biblioteca Local: Reproducción Offline,
+CRUD, Favoritos y Carátulas"), H04 ("Listas de Reproducción Locales"),
+H12 ("Directorio de Música... + Favoritos sin Descarga") -- pero
+**no se ha confirmado con Miguel Ángel cuál(es)**, y el propio Miguel
+Ángel dijo explícitamente que no lo sabe. La siguiente sesión que
+retome esto debe: (a) localizar las pantallas de Favoritos reales
+(`FavoritesScreen.kt` y las que correspondan a artistas/álbumes/
+sencillos/listas) para confirmar el alcance exacto antes de tocar
+nada, (b) preguntar a Miguel Ángel a qué hito(s) asignar esto -- o si
+prefiere abrir un hito nuevo dado que "ordenar en todas las listas de
+items" es una petición transversal que no encaja limpiamente en uno
+solo. **No inventar la asignación de hito.**
+
+## H15 (miMooutCast) -- PAUSADO, completo en código, con un fix real más en S031
+
+Sigue completo y en build verde (ver "COMPLETADAS EN S030" en
+`DOCS/ANNEX_H15.md`). En S031, revisando `mimooutcast_debug.txt`
+compartido junto con el de H17, se encontró y corrigió un fix real
+adicional: falso positivo de artista en
+`RadioRepository.stripTitleNoise()` (caso real: sesión de "Minimal
+Techno" resolvió como candidato "Teste" un vídeo que en realidad es de
+otro artista, "MUUD"). Causa: el segmento antes del primer " - " del
+título del vídeo se quitaba siempre sin comprobar que coincidiera de
+verdad con el artista buscado. Arreglado -- ver "COMPLETADAS EN S031"
+en `DOCS/ANNEX_H15.md`, punto 11. Build verde (`9328658`), **sin
+verificar en dispositivo real todavía** (H15 sigue pausado). Comparte
+código con H08 (Radio) -- el fix corrige la verificación en ambos.
 
 ## H16 (Lista Negra) -- PAUSADO, cinco puntos de código completos, sin fallos conocidos
 
-Confirmado por Miguel Ángel al empezar S030: "el CRUD de Lista Negra
-está activo y funcionando y no sé de que falle de momento". Los cinco
-puntos de `DOCS/ANNEX_H16.md` siguen sin verificación exhaustiva en
-dispositivo de TODOS los casos (exclusión mutua con Favoritos en los
-dos sentidos, filtro en Popurrí, drawer compacto) pero nada reportado
-como roto.
+Sin cambios en S031. Los cinco puntos de `DOCS/ANNEX_H16.md` siguen
+sin verificación exhaustiva en dispositivo de TODOS los casos
+(exclusión mutua con Favoritos en los dos sentidos, filtro en
+Popurrí, drawer compacto) pero nada reportado como roto.
 
-## Incidencia de proceso de S029->S030, ya corregida -- para no repetirla
+## Trabajo pendiente de otras sesiones, sin tocar en S031
 
-El cierre de S029 dejó a H16 como el hito EN PROGRESO pese a que
-Miguel Ángel había pedido explícitamente al cierre de S028 que la
-siguiente sesión empezara por H15 (miMooutCast) -- el cierre no dejó
-constancia clara de que ese compromiso seguía vivo, lo que causó
-confusión real a Miguel Ángel al empezar S030 (ver
-`DOCS/ANNEX_ROUTER.md`, entrada "2026-08-06 (S030)"). **Regla para
-sesiones futuras**, ya aplicada en el PCH de H15->H17 de esta misma
-sesión: si una sesión deriva hacia un hito nuevo a mitad de camino, o
-si se pausa un hito antes de agotar su hoja de ruta, el cierre debe
-decir EXPLÍCITAMENTE en este archivo qué pasa con el compromiso
-anterior -- no basta con que el nuevo hito EN PROGRESO quede bien
-descrito, tiene que quedar igual de explícito qué se pospone y por
-qué.
-
-## Trabajo pendiente de otras sesiones, sin tocar en S030
-
-Sigue exactamente igual que al cierre de S029:
+Sigue exactamente igual que al cierre de S030:
 
 1. **Auditoría pendiente de la semilla de 1.161 artistas**
    (`anchor_artists.json`) -- sigue sin tocar, no se puede verificar
@@ -95,6 +106,20 @@ Sigue exactamente igual que al cierre de S029:
 
 ## Incidencias de proceso a tener en cuenta
 
+- **Limpieza de título que quita un segmento por posición (prefijo/
+  sufijo antes o después de un separador) debe comprobar SIEMPRE que
+  ese segmento coincide de verdad con lo que se cree que es (el
+  artista buscado), nunca asumirlo solo por estar en esa posición.**
+  Dos bugs reales de la misma familia encontrados y corregidos en
+  S031: `PlayerBarViewModel` consultaba lrclib.net con el título crudo
+  del vídeo sin limpiar (arreglado con
+  `SearchNormalizer.cleanSongTitle()`, que sí hace esta comprobación),
+  y `RadioRepository.stripTitleNoise()` quitaba el prefijo antes del
+  primer " - " sin comprobar que fuera el artista que se estaba
+  verificando (caso real: "MUUD - Testē" al buscar el artista "Teste"
+  -- confirmó un tema de un artista completamente distinto). Ambos
+  arreglados con el mismo criterio: comparar el segmento candidato
+  contra el artista normalizado antes de darlo por bueno.
 - **Nunca poner `--` dentro de un comentario XML.** Rompió el build
   una vez en S028 (`AndroidManifest.xml`, permiso `WRITE_CONTACTS`) --
   la especificación XML prohíbe esa secuencia en cualquier punto de un
@@ -111,14 +136,13 @@ Sigue exactamente igual que al cierre de S029:
   Actions. El resto de archivos grandes del proyecto (`PlayerBar.kt`,
   `PlayerManager.kt`) sí los tenían todos, así que este bug fue
   específico de un archivo que hasta ahora solo había usado `Column`.
-- **Patrón muy repetido en S027-S028, en línea con lo ya visto**: la
-  inmensa mayoría de los bugs reales de esas sesiones (Favoritos y
-  Radio) se encontraron SOLO al probar el arreglo anterior en
+- **Patrón muy repetido en S027-S031**: la inmensa mayoría de los
+  bugs reales de estas sesiones (Favoritos, Radio, y ahora Karaoke &
+  Lyrics) se encontraron SOLO al probar el arreglo anterior en
   dispositivo real -- nunca se dieron por buenos sin log/captura de
   Miguel Ángel confirmándolo. Seguir pidiendo pruebas hasta
   confirmación real, no dar nada por cerrado con el primer arreglo que
-  "debería" funcionar -- mismo criterio aplica a H16 cuando se retome
-  para su verificación en dispositivo.
+  "debería" funcionar.
 - **`PopurriDebugLogger`** (`popurri_favoritos_debug.txt`, mismo
   patrón que `RadioDebugLogger`) -- pedir este archivo específico ante
   cualquier fallo futuro de popurrís de Favoritos.
@@ -126,19 +150,7 @@ Sigue exactamente igual que al cierre de S029:
   desde el entorno de trabajo del modelo (redirige a un host de blob
   storage fuera de la lista permitida). El paso del workflow que
   publica los errores de compilación como anotaciones del check
-  (legible por API) sigue siendo el método fiable -- usado en S030
-  para diagnosticar y confirmar en verde los dos builds rotos por
-  imports del drawer compacto.
-- **`str_replace` con `old_str`/`new_str` casi idénticos (una edición
-  "sin cambio real de contenido", solo para forzar un chequeo) puede
-  fusionar dos líneas sin salto de línea entre ellas** si el
-  `old_str`/`new_str` no incluye el `\n` final de la línea -- pasó
-  DOS VECES en S030 (import de `RadioRepository` en
-  `MimooutcastViewModel.kt`, import de `ExplorerScreen` en
-  `NavGraph.kt`), ambas rompieron el build. Si una edición no cambia
-  contenido real, mejor no hacerla -- y si hace falta, revisar el
-  resultado con `view` antes de dar la edición por buena, no fiarse de
-  que "no cambia nada" sea inofensivo.
+  (legible por API) sigue siendo el método fiable.
 - **`isFromRadio = true` es obligatorio en CUALQUIER `QueueItem` que
   añada un motor de reproducción automática** (Radio, miMooutCast, lo
   que venga después) -- sin él, `onMediaItemTransition` lo confunde
