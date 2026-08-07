@@ -738,8 +738,10 @@ fun PlayerBar(
  * "Puntos de diseño -- CERRADOS EN S031" de DOCS/ANNEX_H17.md, puntos
  * 2 y 4. Altura variable según el caso:
  * - `lyrics.syncedLyrics != null` -> 1/9 de pantalla, teleprompter con
- *   la línea actual resaltada arriba y las siguientes visibles debajo
- *   -- se auto-desplaza con `positionMs`, sin scroll manual.
+ *   la línea actual resaltada CENTRADA en el hueco del panel (H17,
+ *   bug real, 2026-08-07 -- antes quedaba pegada arriba) y las líneas
+ *   siguientes visibles debajo -- se auto-desplaza con `positionMs`,
+ *   sin scroll manual.
  * - `lyrics.syncedLyrics == null && lyrics.plainLyrics != null` -> 1/3
  *   de pantalla, letra completa scrolleable, SIN ningún aviso.
  * - Sin ninguna letra (o mientras `loading`) -> 1/9 de pantalla,
@@ -807,18 +809,32 @@ private fun KaraokeLyricsPanel(
 }
 
 /**
- * Teleprompter de karaoke -- panel de 1/9 de pantalla. `animateScrollToItem`
- * deja la línea actual arriba del panel, con las líneas siguientes
- * visibles debajo según el espacio disponible -- no hay contexto
- * "hacia atrás" (líneas ya cantadas), solo la actual y lo que viene,
- * que es lo relevante para seguir cantando. `LazyColumn` en vez de un
- * `Column` fijo de N líneas: algunas letras tienen líneas muy largas
- * que ocuparían más de una línea visual, así que desplazar por índice
- * es más robusto que asumir una altura fija por línea.
+ * Teleprompter de karaoke -- panel de 1/9 de pantalla.
+ *
+ * Bug real reportado por Miguel Ángel (2026-08-07): la línea activa
+ * quedaba pegada arriba del todo del panel en vez de centrada en el
+ * hueco disponible -- `animateScrollToItem(index)` a secas posiciona
+ * el inicio del item en el borde superior del viewport, que es lo que
+ * se veía. Corregido con el patrón estándar de "centrar en dos
+ * pasos": primero un scroll normal para que el item entre en
+ * `layoutInfo`, luego una corrección con el offset exacto
+ * (viewport - alto del item) / 2 leído de `visibleItemsInfo` -- no
+ * hace falta precalcular alturas de fuente a mano (la línea activa
+ * usa `bodyLarge` en negrita, más alta que el resto en `bodySmall`),
+ * el propio layout ya sabe cuánto mide.
  * ---
- * Karaoke teleprompter -- 1/9-screen panel. `animateScrollToItem`
- * leaves the current line at the top, with upcoming lines visible
- * below as space allows.
+ * Karaoke teleprompter -- 1/9-screen panel.
+ *
+ * Real bug reported by Miguel Ángel (2026-08-07): the active line sat
+ * glued to the very top of the panel instead of centered in the
+ * available space -- a bare `animateScrollToItem(index)` places the
+ * item's start at the viewport's top edge, which is exactly what was
+ * showing. Fixed with the standard "two-step centering" pattern:
+ * first a normal scroll so the item enters `layoutInfo`, then a
+ * correction scroll with the exact offset (viewport - item height) /
+ * 2 read from `visibleItemsInfo` -- no need to hand-precompute font
+ * heights (the active line uses bold `bodyLarge`, taller than the
+ * rest in `bodySmall`), the layout itself already knows its size.
  */
 @Composable
 private fun KaraokeTeleprompter(lines: List<LrcLine>, positionMs: Long, screenHeight: androidx.compose.ui.unit.Dp) {
@@ -828,8 +844,17 @@ private fun KaraokeTeleprompter(lines: List<LrcLine>, positionMs: Long, screenHe
     }
     val listState = rememberLazyListState()
     LaunchedEffect(currentIndex) {
-        if (lines.isNotEmpty()) {
-            listState.animateScrollToItem(currentIndex.coerceIn(0, (lines.size - 1).coerceAtLeast(0)))
+        if (lines.isEmpty()) return@LaunchedEffect
+        val targetIndex = currentIndex.coerceIn(0, lines.size - 1)
+        listState.animateScrollToItem(targetIndex)
+        val info = listState.layoutInfo
+        val itemInfo = info.visibleItemsInfo.firstOrNull { it.index == targetIndex }
+        if (itemInfo != null) {
+            val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
+            val centerOffset = (viewportHeight - itemInfo.size) / 2
+            if (centerOffset > 0) {
+                listState.animateScrollToItem(targetIndex, -centerOffset)
+            }
         }
     }
     Box(

@@ -192,8 +192,28 @@ real encontrado con ese mismo log, construidos y en build verde
   `DOCS/ANNEX_H15.md`, "COMPLETADAS EN S031", punto 11 -- registrado
   ahí por ser código de H15/H08, no de H17.
 
+## Fix real de S032 (H17 pausado, incidencia puntual sin PCH)
+
+Miguel Ángel, feedback en dispositivo (2026-08-07): *"la frase
+resaltada se ve arriba del todo y el efecto no es bueno. Debería de
+verse en medio del hueco destinado y no arriba del todo"*.
+Confirmado contra `KaraokeTeleprompter()`
+(`ui/player/PlayerBar.kt`): `animateScrollToItem(currentIndex)` a
+secas posiciona el inicio del item en el borde superior del
+viewport -- exactamente el efecto descrito. Corregido con el patrón
+estándar de "centrar en dos pasos": scroll normal para que el item
+entre en `listState.layoutInfo`, luego una corrección con offset
+`(alto del viewport - alto del item) / 2` leído de
+`visibleItemsInfo` -- no hace falta precalcular alturas de fuente a
+mano (la línea activa es `bodyLarge` en negrita, más alta que el
+resto en `bodySmall`), el propio layout ya sabe cuánto mide cada uno.
+Sin migración, sin cambio de diseño -- corrección puntual de una
+incidencia real, mismo criterio que el resto del proyecto (no
+requiere PCH, H17 sigue PAUSADO).
+
 Sin tocar: verificación en dispositivo real de que el fix resuelve los
-casos que antes daban 404 (Willie Nelson, King Crimson, Thin Lizzy).
+casos que antes daban 404 (Willie Nelson, King Crimson, Thin Lizzy), Y
+AHORA TAMBIÉN de que la línea activa del teleprompter se ve centrada.
 
 ---
 
@@ -204,10 +224,11 @@ casos que antes daban 404 (Willie Nelson, King Crimson, Thin Lizzy).
    `letras_debug.txt` (Willie Nelson "Always On My Mind", King Crimson
    "The Court Of The Crimson King", Thin Lizzy "The Boys Are Back In
    Town") ahora sí traen letra si lrclib.net la tiene. Verificar
-   también el resto sin construir: cliente + caché de letras (bloque
-   1), ventana de karaoke con sus tres variantes de altura/contenido y
-   su exclusión de Radio-Browser.info (bloque 2), y la pantalla de
-   búsqueda de letras del drawer con su distinción visual "ya en tu
-   biblioteca" (bloque 3). Sin código pendiente -- si la verificación
-   revela algo roto, es una incidencia real que retoma H17
-   puntualmente (PCH), no algo que quede "a medias" de S031.
+   también el fix de centrado del teleprompter (S032) y el resto sin
+   construir: cliente + caché de letras (bloque 1), ventana de karaoke
+   con sus tres variantes de altura/contenido y su exclusión de
+   Radio-Browser.info (bloque 2), y la pantalla de búsqueda de letras
+   del drawer con su distinción visual "ya en tu biblioteca" (bloque
+   3). Sin código pendiente -- si la verificación revela algo roto, es
+   una incidencia real que retoma H17 puntualmente (PCH), no algo que
+   quede "a medias".
