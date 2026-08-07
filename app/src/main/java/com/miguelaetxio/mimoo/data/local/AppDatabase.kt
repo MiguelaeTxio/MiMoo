@@ -47,7 +47,7 @@ import com.miguelaetxio.mimoo.data.local.entity.LyricsCache
         DislikedTrack::class,
         LyricsCache::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -504,6 +504,48 @@ abstract class AppDatabase : RoomDatabase() {
                         "`hasLyrics` INTEGER NOT NULL, " +
                         "`cachedAt` INTEGER NOT NULL, " +
                         "PRIMARY KEY(`artistKey`, `titleKey`))"
+                )
+            }
+        }
+
+        /**
+         * Adds addedAt to favorite_artists/favorite_albums/
+         * favorite_tracks/favorite_playlists (H18, S032) -- needed for
+         * the "order added" sort in the Favorites screen, requested
+         * explicitly by Miguel Ángel. NOT NULL with DEFAULT 0, same
+         * reasoning as MIGRATION_2_3's isFavorite: existing rows don't
+         * have a real creation timestamp to recover, so they collapse
+         * to the oldest possible value (0) instead of a fabricated
+         * "now" -- they'll simply sort first under "orden de adición
+         * ascendente" until re-favorited. Four ALTER TABLE statements,
+         * no new tables, no existing table dropped.
+         * ---
+         * Añade addedAt a favorite_artists/favorite_albums/
+         * favorite_tracks/favorite_playlists (H18, S032) -- hace falta
+         * para el orden "por orden de adición" de la pantalla de
+         * Favoritos, pedido explícitamente por Miguel Ángel. NOT NULL
+         * con DEFAULT 0, mismo razonamiento que isFavorite en
+         * MIGRATION_2_3: las filas existentes no tienen una fecha de
+         * alta real que recuperar, así que colapsan al valor más
+         * antiguo posible (0) en vez de un "ahora" inventado --
+         * simplemente ordenarán primero bajo "orden de adición
+         * ascendente" hasta que se vuelvan a marcar como favoritas.
+         * Cuatro ALTER TABLE, sin tablas nuevas, sin tocar ninguna
+         * tabla existente más allá de añadir la columna.
+         */
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE favorite_artists ADD COLUMN addedAt INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE favorite_albums ADD COLUMN addedAt INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE favorite_tracks ADD COLUMN addedAt INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE favorite_playlists ADD COLUMN addedAt INTEGER NOT NULL DEFAULT 0"
                 )
             }
         }

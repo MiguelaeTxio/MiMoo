@@ -39,4 +39,5 @@ import androidx.room.ForeignKey
 )
 data class FavoritePlaylist(
     val playlistId: Long,
+    val addedAt: Long = System.currentTimeMillis(),
 )

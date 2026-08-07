@@ -132,8 +132,10 @@ class BackupRepository @Inject constructor(
         // exporta por NOMBRE (playlistId no sirve en destino, se remapea
         // siempre en la importación -- mismo criterio que PlaylistBackupDto).
         val playlistNamesById = allPlaylists.associate { it.id to it.name }
-        val favoritePlaylistNames = favoritePlaylistDao.getAllOnce()
-            .mapNotNull { fav -> playlistNamesById[fav.playlistId] }
+        val favoritePlaylistExportRows = favoritePlaylistDao.getAllOnce()
+            .mapNotNull { fav ->
+                playlistNamesById[fav.playlistId]?.let { name -> name to fav.addedAt }
+            }
 
         return BackupBundle(
             exportedAt = System.currentTimeMillis(),
@@ -145,7 +147,9 @@ class BackupRepository @Inject constructor(
             uiSettings = UiSettingsBackupDto(glassBorderEnabled = uiPreferencesManager.glassBorderEnabled.value),
             favoriteArtists = favoriteArtistDao.getAllOnce().map { it.toBackupDto() },
             favoriteTracks = favoriteTrackDao.getAllOnce().map { it.toBackupDto() },
-            favoritePlaylists = favoritePlaylistNames.map { FavoritePlaylistBackupDto(playlistName = it) },
+            favoritePlaylists = favoritePlaylistExportRows.map { (name, addedAt) ->
+                FavoritePlaylistBackupDto(playlistName = name, addedAt = addedAt)
+            },
             dislikedArtists = dislikedArtistDao.getAllOnce().map { it.toBackupDto() },
             dislikedTracks = dislikedTrackDao.getAllOnce().map { it.toBackupDto() },
             anchorArtists = anchorDictionary.learnedArtistsSnapshot().map {

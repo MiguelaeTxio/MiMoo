@@ -162,10 +162,12 @@ class BackupImportRepository @Inject constructor(
                 trackDao.insertAll(newTracks)
 
                 bundle.favoriteAlbums.forEach { dto ->
-                    favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
+                    favoriteAlbumDao.insert(
+                        FavoriteAlbum(artist = dto.artist, album = dto.album, addedAt = dto.addedAt)
+                    )
                 }
                 bundle.favoriteArtists.forEach { dto ->
-                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
+                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist, addedAt = dto.addedAt))
                 }
                 bundle.favoriteTracks.forEach { dto -> favoriteTrackDao.insert(dto.toEntity()) }
                 bundle.dislikedArtists.forEach { dto -> dislikedArtistDao.insert(dto.toEntity()) }
@@ -189,7 +191,9 @@ class BackupImportRepository @Inject constructor(
                 }
                 bundle.favoritePlaylists.forEach { dto ->
                     val newPlaylistId = newPlaylistIdsByName[dto.playlistName] ?: return@forEach
-                    favoritePlaylistDao.insert(FavoritePlaylist(playlistId = newPlaylistId))
+                    favoritePlaylistDao.insert(
+                        FavoritePlaylist(playlistId = newPlaylistId, addedAt = dto.addedAt)
+                    )
                 }
 
                 bundle.radioStations.forEach { dto -> favoriteRadioStationDao.insert(dto.toEntity()) }
@@ -298,10 +302,12 @@ class BackupImportRepository @Inject constructor(
                 favoriteTrackDao.deleteAll()
                 favoritePlaylistDao.deleteAll()
                 bundle.favoriteAlbums.forEach { dto ->
-                    favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
+                    favoriteAlbumDao.insert(
+                        FavoriteAlbum(artist = dto.artist, album = dto.album, addedAt = dto.addedAt)
+                    )
                 }
                 bundle.favoriteArtists.forEach { dto ->
-                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
+                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist, addedAt = dto.addedAt))
                 }
                 bundle.favoriteTracks.forEach { dto -> favoriteTrackDao.insert(dto.toEntity()) }
 
@@ -323,7 +329,9 @@ class BackupImportRepository @Inject constructor(
                 }
                 bundle.favoritePlaylists.forEach { dto ->
                     val newPlaylistId = newPlaylistIdsByName[dto.playlistName] ?: return@forEach
-                    favoritePlaylistDao.insert(FavoritePlaylist(playlistId = newPlaylistId))
+                    favoritePlaylistDao.insert(
+                        FavoritePlaylist(playlistId = newPlaylistId, addedAt = dto.addedAt)
+                    )
                 }
 
                 // Favoritos de radio (H09) y suscripciones de canal (H11) -- H07
@@ -482,10 +490,12 @@ class BackupImportRepository @Inject constructor(
                 }
 
                 bundle.favoriteAlbums.forEach { dto ->
-                    favoriteAlbumDao.insert(FavoriteAlbum(artist = dto.artist, album = dto.album))
+                    favoriteAlbumDao.insert(
+                        FavoriteAlbum(artist = dto.artist, album = dto.album, addedAt = dto.addedAt)
+                    )
                 }
                 bundle.favoriteArtists.forEach { dto ->
-                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist))
+                    favoriteArtistDao.insert(FavoriteArtist(artist = dto.artist, addedAt = dto.addedAt))
                 }
 
                 val existingPlaylistNames = playlistDao.getAllPlaylistsOnce().map { it.name }.toSet()

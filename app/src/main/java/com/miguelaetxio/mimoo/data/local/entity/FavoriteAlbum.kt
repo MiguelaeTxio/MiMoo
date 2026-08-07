@@ -27,4 +27,5 @@ import androidx.room.Entity
 data class FavoriteAlbum(
     val artist: String,
     val album: String,
+    val addedAt: Long = System.currentTimeMillis(),
 )

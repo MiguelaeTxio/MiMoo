@@ -24,4 +24,5 @@ import androidx.room.Entity
 )
 data class FavoriteArtist(
     val artist: String,
+    val addedAt: Long = System.currentTimeMillis(),
 )

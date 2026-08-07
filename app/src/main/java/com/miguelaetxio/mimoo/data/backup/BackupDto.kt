@@ -185,17 +185,21 @@ data class TrackBackupDto(
     val sourceUrl: String?,
 )
 
+/** `addedAt` con default 0L (H18, S032) -- backups anteriores sin este campo se leen igual, mismo criterio que favoriteArtists/favoriteTracks al añadirse. */
 data class FavoriteAlbumBackupDto(
     val artist: String,
     val album: String,
+    val addedAt: Long = 0L,
 )
 
-/** Favorito de ARTISTA exportable -- ver comentario de favoriteArtists en BackupBundle. */
+/** Favorito de ARTISTA exportable -- ver comentario de favoriteArtists en BackupBundle. `addedAt` con default 0L (H18, S032), mismo criterio de compatibilidad hacia atrás. */
 data class FavoriteArtistBackupDto(
     val artist: String,
+    val addedAt: Long = 0L,
 )
 
-fun FavoriteArtist.toBackupDto(): FavoriteArtistBackupDto = FavoriteArtistBackupDto(artist = artist)
+fun FavoriteArtist.toBackupDto(): FavoriteArtistBackupDto =
+    FavoriteArtistBackupDto(artist = artist, addedAt = addedAt)
 
 /**
  * `originalId` es el id autogenerado de la Playlist en el
@@ -260,7 +264,7 @@ fun SearchResultTrack.toBackupDto(): TrackBackupDto = TrackBackupDto(
 )
 
 fun FavoriteAlbum.toBackupDto(): FavoriteAlbumBackupDto =
-    FavoriteAlbumBackupDto(artist = artist, album = album)
+    FavoriteAlbumBackupDto(artist = artist, album = album, addedAt = addedAt)
 
 /**
  * Favorito de emisora exportable (H07, réplica total). Transporta los
@@ -320,6 +324,7 @@ data class FavoriteTrackBackupDto(
     val artist: String,
     val thumbnailUrl: String?,
     val durationSeconds: Int,
+    val addedAt: Long = 0L,
 )
 
 fun FavoriteTrack.toBackupDto(): FavoriteTrackBackupDto = FavoriteTrackBackupDto(
@@ -328,6 +333,7 @@ fun FavoriteTrack.toBackupDto(): FavoriteTrackBackupDto = FavoriteTrackBackupDto
     artist = artist,
     thumbnailUrl = thumbnailUrl,
     durationSeconds = durationSeconds,
+    addedAt = addedAt,
 )
 
 fun FavoriteTrackBackupDto.toEntity(): FavoriteTrack = FavoriteTrack(
@@ -336,6 +342,7 @@ fun FavoriteTrackBackupDto.toEntity(): FavoriteTrack = FavoriteTrack(
     artist = artist,
     thumbnailUrl = thumbnailUrl,
     durationSeconds = durationSeconds,
+    addedAt = addedAt,
 )
 
 /**
@@ -355,6 +362,7 @@ fun FavoriteTrackBackupDto.toEntity(): FavoriteTrack = FavoriteTrack(
  */
 data class FavoritePlaylistBackupDto(
     val playlistName: String,
+    val addedAt: Long = 0L,
 )
 
 /** "No me gusta" de ARTISTA exportable (H16, S029) -- ver comentario de dislikedArtists en BackupBundle. */

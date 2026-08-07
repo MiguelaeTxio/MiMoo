@@ -38,4 +38,5 @@ data class FavoriteTrack(
     val artist: String,
     val thumbnailUrl: String?,
     val durationSeconds: Int,
+    val addedAt: Long = System.currentTimeMillis(),
 )
