@@ -184,29 +184,62 @@ verificación en dispositivo real:
   es una migración sobre la tabla más grande y más usada de la app,
   fuera de alcance de H18. Colapsa a `0L`, documentado en el KDoc de
   `FavoriteTrackRow`.
+- **Bloque 4 -- ordenación extendida a Listas, Canales y Lista
+  Negra.** Nuevo `ui/common/Sorting.kt`: `SortCriterion`/
+  `SortDirection`, `SortControl` (composable) y `sortedByCriterion()`
+  extraídos de `FavoritesScreen`/`FavoritesViewModel` (bloque 3) para
+  reutilizarlos sin duplicar la misma UI y lógica en cada pantalla
+  nueva -- Favoritos ahora importa del paquete compartido en vez de
+  declarar sus propias copias. `PlaylistsScreen` (H04): orden sobre
+  `Playlist.name`/`createdAt` (ya existente). `ChannelsScreen` (H11):
+  orden sobre `ChannelSubscription.title`/`subscribedAt` (ya
+  existente), combinado en el `uiState` vía dos `MutableStateFlow`
+  nuevos. `DislikedScreen` (H16): un único control compartido por las
+  dos pestañas (Artistas/Temas, mismo patrón de control global de
+  pantalla que Favoritos), orden sobre `DislikedArtist.artist`/
+  `DislikedTrack.title` y `dislikedAt` (ambos ya existentes desde H16).
+  Ninguna de las tres pantallas necesitó migración.
+- **Bloque 5 -- Explorador (H12), verificado y resuelto que NO
+  aplica.** Código real leído en `ExplorerViewModel.kt`,
+  `ArtistViewModel.kt`, `AlbumViewModel.kt`: cada letra del Explorador
+  pinta dos bloques -- local (`localArtistsForLetter`, ya forzado a
+  `.sorted()`, sin ningún campo de fecha de alta) y una muestra
+  paginada de MusicBrainz con scroll infinito
+  (`onlineArtists`/`loadMoreOnline()`) -- reordenar este segundo
+  bloque rompería el propio mecanismo de paginación progresiva.
+  `ArtistScreen` muestra álbumes/sencillos de la discografía completa
+  vía MusicBrainz (catálogo remoto, no una lista que el usuario
+  cure). `AlbumScreen` muestra las pistas del álbum en su orden real
+  de disco -- reordenarlas por nombre o fecha rompería el orden de
+  escucha natural del álbum. **Ninguna de las tres encaja con el
+  concepto de "lista de items que el usuario añade y acumula"** que sí
+  tienen Favoritos/Listas/Canales/Lista Negra -- decisión explícita,
+  no un olvido: Explorador y las páginas de H12 se quedan **sin**
+  control de ordenación.
 
-Sin tocar: verificación en dispositivo real de los tres bloques.
+Sin tocar: verificación en dispositivo real de los cuatro bloques de
+código (1-4). El hito queda completo en código -- H18 no tiene ya
+ningún paso de implementación pendiente.
 
 ---
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H18
 
-1. **Verificar en dispositivo real** los bloques 1-3: migración sin
-   pérdida de datos existentes, botones de play/aleatorio con la
-   matriz exacta por tipo de fila, y el control de ordenación
-   (criterio + dirección) en las cuatro pestañas de Favoritos.
-2. **Extender ordenación** a `PlaylistsScreen.kt` (H04), Canales (H11)
-   y Lista Negra (H16) -- mismas tres entidades que ya tienen
-   timestamp (`Playlist.createdAt`, `ChannelSubscription.subscribedAt`,
-   `DislikedArtist`/`DislikedTrack.dislikedAt`), sin migración
-   adicional.
-3. **Explorador (H12).** Leer el código real de esa pantalla antes de
-   decidir cómo (o si) aplica el orden de adición ahí -- sus listas
-   vienen de MusicBrainz (catálogo remoto paginado), no de una tabla
-   local con alta propia. Si no aplica, dejar solo el orden alfabético
-   ahí y decirlo explícitamente, no en silencio.
+**Sin código pendiente.** El único punto es verificación en
+dispositivo real:
 
-Cualquier incidencia real que aparezca durante la construcción
-(imports que faltan, verificación en dispositivo, etc.) se corrige de
-inmediato en la misma sesión, mismo criterio que el resto del
-proyecto.
+1. Migración `MIGRATION_15_16` sin pérdida de datos existentes en las
+   cuatro tablas de Favoritos.
+2. Botones de play/aleatorio con la matriz exacta por tipo de fila
+   (Sencillos sin aleatorio) en las cuatro pestañas de Favoritos.
+3. Control de ordenación (criterio + dirección) en Favoritos,
+   PlaylistsScreen, Canales y Lista Negra -- confirmar que las cuatro
+   combinaciones (alfabético/adición × ascendente/descendente)
+   producen el orden esperado en cada pantalla.
+4. Confirmar que Explorador/ArtistScreen/AlbumScreen siguen
+   funcionando exactamente igual que antes de H18 (no se tocó su
+   código en absoluto, pero conviene confirmarlo tras el bloque 5).
+
+Cualquier incidencia real detectada en dispositivo es una incidencia
+real que retoma H18 puntualmente (PCH), no algo que quede "a medias"
+de S032.

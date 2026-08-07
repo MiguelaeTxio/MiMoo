@@ -11,16 +11,16 @@
 ## Qué hacer en la siguiente sesión
 
 **H18 (Play y Ordenación de Listas de Items) EN PROGRESO** -- diseño
-cerrado y los tres primeros bloques construidos en S032 (migración +
-propagación a backup/sync, botones de play/aleatorio individuales en
-Favoritos, control de ordenación en las cuatro pestañas), en build
-verde (`041e151`, `95d2bdc`, `299e751`). **Sin verificar en
-dispositivo real todavía.** Quedan dos bloques de la hoja de ruta:
-extender la ordenación a `PlaylistsScreen.kt`/Canales/Lista Negra
-(mismas entidades, ya tienen timestamp, sin migración), y decidir
-sobre Explorador (H12) leyendo su código real antes de asumir si
-aplica el orden de adición. Detalle completo en `DOCS/ANNEX_H18.md`,
-"COMPLETADAS EN S032".
+cerrado y los CINCO bloques de la hoja de ruta cerrados en S032
+(migración + propagación a backup/sync, botones de play/aleatorio en
+Favoritos, control de ordenación en Favoritos, ordenación extendida a
+PlaylistsScreen/Canales/Lista Negra, y Explorador verificado y resuelto
+que NO aplica -- decisión explícita, no un olvido), en build verde
+(`041e151`, `95d2bdc`, `299e751`, `a702733`). **Sin código
+pendiente -- H18 solo necesita verificación en dispositivo real** (las
+cuatro combinaciones de orden en cada pantalla, la matriz de
+play/aleatorio, la migración sin pérdida de datos). Detalle completo
+en `DOCS/ANNEX_H18.md`, "COMPLETADAS EN S032".
 
 ## H17 (Karaoke & Lyrics) -- PAUSADO, diseño y construcción completos, sin verificar en dispositivo
 
