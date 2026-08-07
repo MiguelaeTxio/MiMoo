@@ -68,48 +68,102 @@ items de la app" es el punto de diseño 3, abajo.
 
 ---
 
-## Puntos de diseño -- ABIERTOS, a cerrar con Miguel Ángel antes de escribir código
+## Puntos de diseño -- CERRADOS EN S032
 
-Mismo patrón que H08/H12/H15/H16: sesión de diseño puro antes de tocar
-nada. Ningún paso de código se ejecuta hasta cerrar estos cinco
-puntos:
+Los cinco puntos, más una precisión técnica surgida al revisar
+`TracksTab`, quedaron cerrados con Miguel Ángel en la propia sesión de
+apertura del hito (sin código todavía, ver "Hoja de Ruta" abajo):
 
-1. **Qué significa "play" para cada tipo de item de Favoritos.**
-   ¿Artista/álbum reproducen el equivalente a la selección individual
-   de ese único elemento en el popurrí ya existente
-   (`playSelectedArtists`/`playSelectedAlbums` con un solo item), o
-   necesitan una función dedicada? ¿Sencillo reproduce solo esa pista
-   sola, o la encola sobre lo que suene? ¿Lista reproduce la playlist
-   entera en su orden guardado?
-2. **Icono y posición del botón de play en cada fila.** Junto al
-   `IconButton` de estrella ya existente, o sustituyendo el `clickable`
-   de fila completa en `PlaylistsTab` (que hoy abre detalle en vez de
-   reproducir).
-3. **Alcance cerrado de "todas las listas de items de la app".**
-   Confirmar explícitamente con Miguel Ángel qué pantallas entran --
-   ¿las cuatro pestañas de Favoritos, más `PlaylistsScreen`,
-   Explorador (H12), Canales (H11)? ¿Entra también la vista CRUD de
-   Lista Negra (H16), que es de exclusión, no de reproducción? No
-   inventar la lista -- preguntarla.
-4. **Mecanismo de "orden de adición".** Verificar contra las entidades
-   reales (`FavoriteArtist`, `FavoriteAlbum`, `FavoriteTrack`,
-   `FavoritePlaylist` y las que correspondan de las pantallas
-   confirmadas en el punto 3) si ya existe un campo de timestamp de
-   alta, o si hace falta añadirlo con una migración de Room nueva.
-5. **UI del control de orden.** Un único selector por pantalla con las
-   cuatro combinaciones (alfabético asc/desc, adición asc/desc), o dos
-   controles independientes (criterio + dirección). Mismo lenguaje
-   visual de cristal esmerilado que el resto de la app.
+1. **Qué significa "play"/"aleatorio" por tipo de item, y matriz exacta
+   por fila -- solo en las cuatro pestañas de Favoritos:**
+   - **Artistas:** play = mix de temas de ESE artista concreto (no
+     mezcla con otros favoritos); aleatorio = lo mismo, barajado. Misma
+     lógica que ya usa `SelectionHeader.onPlaySequential`/
+     `onPlayShuffled` -> `playSelectedArtists()`, pero aplicada a un
+     conjunto de un solo elemento en vez de a la selección con
+     checkbox.
+   - **Álbumes:** igual criterio que Artistas -- play/aleatorio del
+     álbum concreto de esa fila, reutilizando
+     `playSelectedAlbums()` con un único `AlbumKey`.
+   - **Sencillos:** **SOLO play, sin botón de aleatorio** -- una única
+     pista no tiene nada que barajar (precisión de Miguel Ángel al
+     revisar `TracksTab`: "en los sencillos no tiene sentido el
+     aleatorio").
+   - **Listas:** play = reproducir la playlist entera en su orden
+     guardado; aleatorio = la misma playlist barajada. Ambos botones,
+     igual que Artistas/Álbumes.
+2. **Posición: junto al `IconButton` de estrella ya existente**, en las
+   cuatro filas (`FavoriteRow` para Artistas/Álbumes, fila propia de
+   `TracksTab`, fila propia de `PlaylistsTab`).
+3. **Alcance cerrado, con dos piezas separadas por pantalla:**
+   - **Botón de play/aleatorio:** exclusivo de las cuatro pestañas de
+     `FavoritesScreen.kt`. **No aplica a Lista Negra** (confirmado
+     explícitamente por Miguel Ángel -- "ahí no encaja para nada,
+     evidentemente", son artistas/temas que no se quieren escuchar).
+   - **Ordenación:** aplica a las cuatro pestañas de `FavoritesScreen`,
+     más `PlaylistsScreen.kt` (H04), Explorador/páginas de
+     Artista-Álbum-Canción (H12), Canales (H11) y **Lista Negra (H16,
+     confirmado explícitamente que sí entra)**.
+4. **Mecanismo de "orden de adición" -- verificado contra las
+   entidades reales en S032:**
+   - `FavoriteArtist`, `FavoriteAlbum`, `FavoriteTrack`,
+     `FavoritePlaylist` -- **sin ningún campo de timestamp.** Hace
+     falta una migración de Room nueva (siguiente en la cadena:
+     `MIGRATION_15_16`, versión de `AppDatabase` 15->16) que añada un
+     campo de alta (p.ej. `addedAt: Long`) a las cuatro tablas.
+   - `Playlist` (H04) ya tiene `createdAt`. `ChannelSubscription`
+     (H11) ya tiene `subscribedAt`. `DislikedArtist`/`DislikedTrack`
+     (H16) ya tienen `dislikedAt`. **Ninguna de estas tres necesita
+     migración** para el orden de adición.
+   - Explorador (H12) queda pendiente de verificar en el bloque que le
+     corresponda -- sus listas vienen de MusicBrainz (catálogo remoto
+     paginado), no de una tabla local con alta propia, así que "orden
+     de adición" puede no tener el mismo sentido ahí. **No se cierra
+     ahora** -- se revisa contra el código real de esa pantalla al
+     llegar a ese bloque, sin asumir.
+5. **UI del control de orden: criterio aparte, un único control que
+   solo alterna dirección.** Un selector (chip/dropdown, cristal
+   esmerilado) para elegir el criterio -- alfabético o adición -- y,
+   una vez elegido, un único icono/control que al pulsarlo invierte
+   ascendente/descendente del criterio activo. No es un ciclo que rote
+   por las cuatro combinaciones con un solo toque.
 
 ---
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H18
 
-Sesión de diseño puro, sin código: cerrar los cinco puntos de arriba
-con Miguel Ángel, en el orden dado (el punto 3 condiciona el alcance
-real de investigación de código de los puntos 4-5, así que conviene
-cerrarlo pronto). Como parte de la propia sesión de diseño, grepear y
-leer el código real de las pantallas que Miguel Ángel confirme en el
-punto 3 (nunca inferir su estructura de memoria) antes de proponer la
-solución técnica concreta. Solo tras cerrar los cinco puntos se
-escribe una hoja de ruta ejecutable con pasos de código.
+Diseño cerrado -- ya se puede escribir código. Orden recomendado
+(cada bloque cerrado se commitea de inmediato, `newflow-android-edit`
+PASO 5):
+
+1. **Migración `MIGRATION_15_16`.** Añadir campo de timestamp de alta
+   a `FavoriteArtist`, `FavoriteAlbum`, `FavoriteTrack`,
+   `FavoritePlaylist` (`ALTER TABLE ... ADD COLUMN addedAt INTEGER NOT
+   NULL DEFAULT 0`, patrón ya usado en migraciones anteriores de la
+   cadena) + subir versión de `AppDatabase` a 16 + actualizar los
+   `data class` de las cuatro entidades.
+2. **Botones de play/aleatorio en `FavoritesScreen.kt`.** Extraer de
+   `FavoritesViewModel` las funciones ya existentes
+   (`playSelectedArtists`/`playSelectedAlbums`/
+   `playAllFavoriteTracks`) o añadir variantes de un solo elemento;
+   añadir `IconButton`s de `Icons.Filled.PlayArrow`/
+   `Icons.Filled.Shuffle` junto a la estrella en `FavoriteRow`
+   (Artistas/Álbumes) y en la fila de `PlaylistsTab`; en `TracksTab`
+   solo `PlayArrow`, sin `Shuffle` (punto 1).
+3. **Control de ordenación en las cuatro pestañas de
+   `FavoritesScreen`.** Selector de criterio (alfabético/adición) +
+   toggle de dirección, aplicado sobre las listas ya cargadas en
+   `FavoritesUiState` (orden en memoria, sin tocar los repositorios
+   salvo que el volumen lo justifique).
+4. **Extender ordenación** a `PlaylistsScreen.kt`, Canales (H11) y
+   Lista Negra (H16) -- mismas tres entidades que ya tienen timestamp,
+   sin migración adicional.
+5. **Explorador (H12).** Leer el código real de esa pantalla antes de
+   decidir cómo (o si) aplica el orden de adición ahí -- ver punto 4
+   de diseño. Si no aplica, dejar solo el orden alfabético en esa
+   pantalla y decirlo explícitamente en el anexo, no en silencio.
+
+Cualquier incidencia real que aparezca durante la construcción
+(imports que faltan, verificación en dispositivo, etc.) se corrige de
+inmediato en la misma sesión, mismo criterio que el resto del
+proyecto.
