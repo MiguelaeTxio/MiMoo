@@ -8,6 +8,8 @@ import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
 import com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.DislikedTrackRepository
+import com.miguelaetxio.mimoo.ui.common.SortCriterion
+import com.miguelaetxio.mimoo.ui.common.SortDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,13 @@ data class DislikedUiState(
     val tab: DislikedTab = DislikedTab.ARTISTS,
     val artists: List<DislikedArtist> = emptyList(),
     val tracks: List<DislikedTrack> = emptyList(),
+    // H18 (S032) -- ordenación reutilizando dislikedAt, ya existente
+    // en las dos entidades desde H16, sin migración. Un único
+    // criterio/dirección compartido por las dos pestañas -- mismo
+    // patrón que FavoritesUiState (control global de pantalla), no
+    // uno por pestaña.
+    val sortCriterion: SortCriterion = SortCriterion.ALPHABETICAL,
+    val sortDirection: SortDirection = SortDirection.ASCENDING,
 )
 
 /**
@@ -69,6 +78,21 @@ class DislikedViewModel @Inject constructor(
 
     fun selectTab(tab: DislikedTab) {
         _uiState.value = _uiState.value.copy(tab = tab)
+    }
+
+    // --- Ordenación (H18, S032) ---
+
+    fun setSortCriterion(criterion: SortCriterion) {
+        _uiState.value = _uiState.value.copy(sortCriterion = criterion)
+    }
+
+    fun toggleSortDirection() {
+        val next = if (_uiState.value.sortDirection == SortDirection.ASCENDING) {
+            SortDirection.DESCENDING
+        } else {
+            SortDirection.ASCENDING
+        }
+        _uiState.value = _uiState.value.copy(sortDirection = next)
     }
 
     fun removeArtist(artist: String) {

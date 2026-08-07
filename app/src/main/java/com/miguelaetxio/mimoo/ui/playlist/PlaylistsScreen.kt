@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
+import com.miguelaetxio.mimoo.ui.common.SortControl
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,6 +115,13 @@ fun PlaylistsScreen(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
+
+                SortControl(
+                    criterion = uiState.sortCriterion,
+                    direction = uiState.sortDirection,
+                    onCriterionChange = viewModel::setSortCriterion,
+                    onToggleDirection = viewModel::toggleSortDirection,
+                )
 
                 if (uiState.filteredPlaylists.isEmpty()) {
                     Box(

@@ -16,6 +16,8 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
+import com.miguelaetxio.mimoo.ui.common.SortCriterion
+import com.miguelaetxio.mimoo.ui.common.SortDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,12 +28,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class FavoritesTab { ARTISTS, ALBUMS, TRACKS, PLAYLISTS }
-
-/** Criterio de orden (H18, S032) -- alfabético o por fecha de alta, criterio elegido aparte de la dirección. */
-enum class SortCriterion { ALPHABETICAL, DATE_ADDED }
-
-/** Dirección de orden (H18, S032) -- un único control la alterna, sin tocar el criterio activo. */
-enum class SortDirection { ASCENDING, DESCENDING }
 
 /** Clave de selección de álbum -- FavoriteAlbum no es Parcelable/no hace falta, basta el par (artist, album). */
 data class AlbumKey(val artist: String, val album: String)

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import com.miguelaetxio.mimoo.ui.common.SortControl
 
 /**
  * Pantalla "Canales" (H11 PASO 3, S011) -- canales de YouTube a los
@@ -95,18 +96,26 @@ fun ChannelsScreen(
             return@Scaffold
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(vertical = 8.dp),
-        ) {
-            items(uiState.channels, key = { it.subscription.channelId }) { channel ->
-                ChannelSection(
-                    channel = channel,
-                    onPlayAll = { viewModel.playChannelTracks(channel) },
-                    onUnsubscribe = { viewModel.unsubscribe(activity, channel.subscription) },
-                    onPlayTrack = { viewModel.playTrack(it) },
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            SortControl(
+                criterion = uiState.sortCriterion,
+                direction = uiState.sortDirection,
+                onCriterionChange = viewModel::setSortCriterion,
+                onToggleDirection = viewModel::toggleSortDirection,
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp),
+            ) {
+                items(uiState.channels, key = { it.subscription.channelId }) { channel ->
+                    ChannelSection(
+                        channel = channel,
+                        onPlayAll = { viewModel.playChannelTracks(channel) },
+                        onUnsubscribe = { viewModel.unsubscribe(activity, channel.subscription) },
+                        onPlayTrack = { viewModel.playTrack(it) },
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                }
             }
         }
     }

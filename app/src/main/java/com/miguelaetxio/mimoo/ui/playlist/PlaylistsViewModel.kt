@@ -7,6 +7,9 @@ import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.repository.FavoritePlaylistRepository
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
+import com.miguelaetxio.mimoo.ui.common.SortCriterion
+import com.miguelaetxio.mimoo.ui.common.SortDirection
+import com.miguelaetxio.mimoo.ui.common.sortedByCriterion
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +37,9 @@ data class PlaylistsUiState(
     val syncBlockedMessage: String? = null,
     // Sesión de diseño de Favoritos (2026-08-02): playlists propias marcadas como favoritas.
     val favoritePlaylistIds: Set<Long> = emptySet(),
+    // H18 (S032) -- ordenación reutilizando Playlist.createdAt, ya existente, sin migración.
+    val sortCriterion: SortCriterion = SortCriterion.ALPHABETICAL,
+    val sortDirection: SortDirection = SortDirection.ASCENDING,
 )
 
 /**
@@ -140,6 +146,23 @@ class PlaylistsViewModel @Inject constructor(
         recompute()
     }
 
+    // --- Ordenación (H18, S032) ---
+
+    fun setSortCriterion(criterion: SortCriterion) {
+        _uiState.value = _uiState.value.copy(sortCriterion = criterion)
+        recompute()
+    }
+
+    fun toggleSortDirection() {
+        val next = if (_uiState.value.sortDirection == SortDirection.ASCENDING) {
+            SortDirection.DESCENDING
+        } else {
+            SortDirection.ASCENDING
+        }
+        _uiState.value = _uiState.value.copy(sortDirection = next)
+        recompute()
+    }
+
     private fun recompute() {
         val query = SearchNormalizer.normalize(_uiState.value.filterQuery)
         val playlists = _uiState.value.playlists
@@ -148,6 +171,10 @@ class PlaylistsViewModel @Inject constructor(
         } else {
             playlists.filter { SearchNormalizer.normalize(it.name).contains(query) }
         }
-        _uiState.value = _uiState.value.copy(filteredPlaylists = filtered)
+        val sorted = sortedByCriterion(
+            filtered, _uiState.value.sortCriterion, _uiState.value.sortDirection,
+            nameOf = { it.name }, addedAtOf = { it.createdAt },
+        )
+        _uiState.value = _uiState.value.copy(filteredPlaylists = sorted)
     }
 }

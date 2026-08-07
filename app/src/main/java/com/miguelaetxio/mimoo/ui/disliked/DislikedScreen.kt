@@ -18,6 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
+import com.miguelaetxio.mimoo.ui.common.SortControl
+import com.miguelaetxio.mimoo.ui.common.SortCriterion
+import com.miguelaetxio.mimoo.ui.common.SortDirection
+import com.miguelaetxio.mimoo.ui.common.sortedByCriterion
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
@@ -81,9 +85,26 @@ fun DislikedScreen(
                 )
             }
 
+            SortControl(
+                criterion = uiState.sortCriterion,
+                direction = uiState.sortDirection,
+                onCriterionChange = viewModel::setSortCriterion,
+                onToggleDirection = viewModel::toggleSortDirection,
+            )
+
             when (uiState.tab) {
-                DislikedTab.ARTISTS -> ArtistsTab(uiState.artists, onRemove = viewModel::removeArtist)
-                DislikedTab.TRACKS -> TracksTab(uiState.tracks, onRemove = viewModel::removeTrack)
+                DislikedTab.ARTISTS -> ArtistsTab(
+                    artists = uiState.artists,
+                    criterion = uiState.sortCriterion,
+                    direction = uiState.sortDirection,
+                    onRemove = viewModel::removeArtist,
+                )
+                DislikedTab.TRACKS -> TracksTab(
+                    tracks = uiState.tracks,
+                    criterion = uiState.sortCriterion,
+                    direction = uiState.sortDirection,
+                    onRemove = viewModel::removeTrack,
+                )
             }
         }
     }
@@ -97,7 +118,12 @@ private fun EmptyTabMessage(text: String) {
 }
 
 @Composable
-private fun ArtistsTab(artists: List<DislikedArtist>, onRemove: (String) -> Unit) {
+private fun ArtistsTab(
+    artists: List<DislikedArtist>,
+    criterion: SortCriterion,
+    direction: SortDirection,
+    onRemove: (String) -> Unit,
+) {
     if (artists.isEmpty()) {
         EmptyTabMessage(
             "Todavía no has marcado ningún artista como \"no me gusta\". " +
@@ -105,8 +131,12 @@ private fun ArtistsTab(artists: List<DislikedArtist>, onRemove: (String) -> Unit
         )
         return
     }
+    val sorted = sortedByCriterion(
+        artists, criterion, direction,
+        nameOf = { it.artist }, addedAtOf = { it.dislikedAt },
+    )
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(artists, key = { it.artist }) { disliked ->
+        items(sorted, key = { it.artist }) { disliked ->
             DislikedRow(
                 icon = Icons.Filled.Person,
                 title = disliked.artist,
@@ -118,7 +148,12 @@ private fun ArtistsTab(artists: List<DislikedArtist>, onRemove: (String) -> Unit
 }
 
 @Composable
-private fun TracksTab(tracks: List<DislikedTrack>, onRemove: (String, String) -> Unit) {
+private fun TracksTab(
+    tracks: List<DislikedTrack>,
+    criterion: SortCriterion,
+    direction: SortDirection,
+    onRemove: (String, String) -> Unit,
+) {
     if (tracks.isEmpty()) {
         EmptyTabMessage(
             "Todavía no has marcado ningún tema como \"no me gusta\". " +
@@ -126,8 +161,12 @@ private fun TracksTab(tracks: List<DislikedTrack>, onRemove: (String, String) ->
         )
         return
     }
+    val sorted = sortedByCriterion(
+        tracks, criterion, direction,
+        nameOf = { it.title }, addedAtOf = { it.dislikedAt },
+    )
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(tracks, key = { "${it.artist}|${it.title}" }) { disliked ->
+        items(sorted, key = { "${it.artist}|${it.title}" }) { disliked ->
             DislikedRow(
                 icon = Icons.Filled.MusicNote,
                 title = disliked.title,

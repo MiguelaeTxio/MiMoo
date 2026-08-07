@@ -12,6 +12,9 @@ import com.miguelaetxio.mimoo.data.local.repository.ChannelSubscriptionRepositor
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.ui.common.SortCriterion
+import com.miguelaetxio.mimoo.ui.common.SortDirection
+import com.miguelaetxio.mimoo.ui.common.sortedByCriterion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,6 +41,9 @@ data class ChannelsUiState(
     val channels: List<ChannelWithTracks> = emptyList(),
     /** H07 PARTE 1 (S015) -- aviso cuando dar de baja se rechaza por falta de conexión. */
     val syncBlockedMessage: String? = null,
+    // H18 (S032) -- ordenación reutilizando ChannelSubscription.subscribedAt, ya existente, sin migración.
+    val sortCriterion: SortCriterion = SortCriterion.ALPHABETICAL,
+    val sortDirection: SortDirection = SortDirection.ASCENDING,
 )
 
 /**
@@ -58,23 +64,49 @@ class ChannelsViewModel @Inject constructor(
     /** H07 PARTE 1 (S015) -- separado del combine principal porque no depende de Room/Flow. */
     private val _syncBlockedMessage = MutableStateFlow<String?>(null)
 
+    // H18 (S032) -- estado de ordenación, mismo patrón que _syncBlockedMessage.
+    private val _sortCriterion = MutableStateFlow(SortCriterion.ALPHABETICAL)
+    private val _sortDirection = MutableStateFlow(SortDirection.ASCENDING)
+
     val uiState: StateFlow<ChannelsUiState> = combine(
         channelSubscriptionRepository.getAll(),
         searchResultTrackRepository.getByStatus(DownloadStatus.DONE),
         _syncBlockedMessage,
-    ) { subscriptions, downloadedTracks, syncBlockedMessage ->
+        _sortCriterion,
+        _sortDirection,
+    ) { subscriptions, downloadedTracks, syncBlockedMessage, sortCriterion, sortDirection ->
+        val channels = subscriptions.map { subscription ->
+            ChannelWithTracks(
+                subscription = subscription,
+                tracks = downloadedTracks
+                    .filter { it.channelTitle == subscription.title }
+                    .sortedByDescending { it.lastSearchedAt },
+            )
+        }
         ChannelsUiState(
-            channels = subscriptions.map { subscription ->
-                ChannelWithTracks(
-                    subscription = subscription,
-                    tracks = downloadedTracks
-                        .filter { it.channelTitle == subscription.title }
-                        .sortedByDescending { it.lastSearchedAt },
-                )
-            },
+            channels = sortedByCriterion(
+                channels, sortCriterion, sortDirection,
+                nameOf = { it.subscription.title }, addedAtOf = { it.subscription.subscribedAt },
+            ),
             syncBlockedMessage = syncBlockedMessage,
+            sortCriterion = sortCriterion,
+            sortDirection = sortDirection,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChannelsUiState())
+
+    // --- Ordenación (H18, S032) ---
+
+    fun setSortCriterion(criterion: SortCriterion) {
+        _sortCriterion.value = criterion
+    }
+
+    fun toggleSortDirection() {
+        _sortDirection.value = if (_sortDirection.value == SortDirection.ASCENDING) {
+            SortDirection.DESCENDING
+        } else {
+            SortDirection.ASCENDING
+        }
+    }
 
     /**
      * H07 PARTE 1 (S015) -- réplica total: hasta ahora dar de baja se

@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -22,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.favorites.FavoritePlaylistRow
 import com.miguelaetxio.mimoo.data.favorites.FavoriteTrackRow
+import com.miguelaetxio.mimoo.ui.common.SortControl
+import com.miguelaetxio.mimoo.ui.common.sortedByCriterion
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
@@ -122,65 +122,6 @@ private fun EmptyTabMessage(text: String) {
     Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-}
-
-/**
- * Control de ordenación compartido por las cuatro pestañas (H18,
- * S032) -- diseño cerrado con Miguel Ángel: criterio aparte
- * (alfabético/adición) y un único control que solo alterna
- * ascendente/descendente del criterio ya elegido, sin ciclar por las
- * cuatro combinaciones con un solo toque.
- */
-@Composable
-private fun SortControl(
-    criterion: SortCriterion,
-    direction: SortDirection,
-    onCriterionChange: (SortCriterion) -> Unit,
-    onToggleDirection: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FilterChip(
-            selected = criterion == SortCriterion.ALPHABETICAL,
-            onClick = { onCriterionChange(SortCriterion.ALPHABETICAL) },
-            label = { Text("Alfabético") },
-        )
-        Spacer(Modifier.width(8.dp))
-        FilterChip(
-            selected = criterion == SortCriterion.DATE_ADDED,
-            onClick = { onCriterionChange(SortCriterion.DATE_ADDED) },
-            label = { Text("Adición") },
-        )
-        Spacer(Modifier.weight(1f))
-        IconButton(onClick = onToggleDirection) {
-            Icon(
-                if (direction == SortDirection.ASCENDING) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
-                contentDescription = if (direction == SortDirection.ASCENDING) {
-                    "Orden ascendente, tocar para invertir"
-                } else {
-                    "Orden descendente, tocar para invertir"
-                },
-            )
-        }
-    }
-}
-
-/** Aplica criterio+dirección a cualquier lista de favoritos (H18, S032) -- nameOf/addedAtOf desacoplan esta función del tipo de fila concreto. */
-private fun <T> sortedByCriterion(
-    items: List<T>,
-    criterion: SortCriterion,
-    direction: SortDirection,
-    nameOf: (T) -> String,
-    addedAtOf: (T) -> Long,
-): List<T> {
-    val comparator = when (criterion) {
-        SortCriterion.ALPHABETICAL -> compareBy(String.CASE_INSENSITIVE_ORDER, nameOf)
-        SortCriterion.DATE_ADDED -> compareBy(addedAtOf)
-    }
-    val sorted = items.sortedWith(comparator)
-    return if (direction == SortDirection.DESCENDING) sorted.reversed() else sorted
 }
 
 /**
