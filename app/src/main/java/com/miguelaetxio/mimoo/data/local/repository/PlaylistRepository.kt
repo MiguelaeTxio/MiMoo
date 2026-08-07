@@ -4,9 +4,26 @@ import com.miguelaetxio.mimoo.data.local.dao.PlaylistDao
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.entity.PlaylistTrackCrossRef
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
+import com.miguelaetxio.mimoo.data.playback.PlayerManager
+import com.miguelaetxio.mimoo.data.playback.QueueItem
+import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * Resultado de intentar reproducir una playlist completa por id (H18,
+ * S032) -- ver playPlaylistById(), extraída de
+ * PlaylistDetailViewModel.playAll() para poder reutilizarla también
+ * desde el botón individual de play/aleatorio de la pestaña "Listas"
+ * de Favoritos, sin duplicar la lógica de resolución de streaming.
+ * `started = false` cubre tanto la playlist vacía como el caso en que
+ * ninguna pista se pudo resolver.
+ */
+data class PlaylistPlayResult(
+    val started: Boolean,
+    val resolutionFailures: Int,
+)
 
 /**
  * Repository for playlists and their track membership/order
@@ -80,4 +97,81 @@ class PlaylistRepository @Inject constructor(
 
     suspend fun updatePosition(playlistId: Long, youtubeId: String, position: Int) =
         dao.updatePosition(playlistId, youtubeId, position)
+
+    /**
+     * Reproduce la playlist completa en el orden guardado (H18, S032,
+     * lógica extraída de PlaylistDetailViewModel.playAll() para
+     * reutilizarla desde el botón individual de play/aleatorio de la
+     * pestaña "Listas" de Favoritos -- mismo comportamiento exacto:
+     * pistas descargadas en local, el resto resuelve streaming vía
+     * StreamResolver, una pista cuya resolución falla se omite sin
+     * abortar el resto). `shuffle = true` activa el modo aleatorio del
+     * reproductor tras encolar, mismo criterio que el resto de
+     * popurrís de la app (SelectionHeader/playAllFavoriteTracks).
+     * ---
+     * Plays the whole playlist in its saved order (H18, S032, logic
+     * extracted from PlaylistDetailViewModel.playAll() to reuse from
+     * the individual play/shuffle button in the Favorites "Listas"
+     * tab -- exact same behavior: downloaded tracks play locally, the
+     * rest resolve streaming via StreamResolver, a track whose
+     * resolution fails is skipped without aborting the rest).
+     * `shuffle = true` turns on the player's shuffle mode after
+     * queueing, same criterion as the rest of the app's popurrís
+     * (SelectionHeader/playAllFavoriteTracks).
+     */
+    suspend fun playPlaylistById(
+        playlistId: Long,
+        shuffle: Boolean,
+        playerManager: PlayerManager,
+        streamResolver: StreamResolver,
+    ): PlaylistPlayResult {
+        val tracks = dao.getTracksForPlaylistOnce(playlistId)
+        if (tracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
+
+        var resolutionFailures = 0
+        val items = tracks.mapNotNull { track ->
+            val localPath = track.filePath
+            val remoteUrl = track.youtubeUrl
+            if (localPath != null) {
+                QueueItem(
+                    uri = localPath,
+                    title = track.title,
+                    isLocal = true,
+                    artist = track.artist ?: track.channelTitle,
+                    youtubeId = track.youtubeId,
+                    channelTitle = track.channelTitle,
+                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
+                )
+            } else if (remoteUrl == null) {
+                resolutionFailures++
+                null
+            } else {
+                try {
+                    val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
+                    playerManager.resolveStreamItem(
+                        streamUrl = streamUrl,
+                        videoTitle = track.title,
+                        structuredArtist = track.artist,
+                        youtubeId = track.youtubeId,
+                        artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
+                    ) ?: run {
+                        resolutionFailures++
+                        null
+                    }
+                } catch (e: Exception) {
+                    resolutionFailures++
+                    null
+                }
+            }
+        }
+
+        if (items.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = resolutionFailures)
+
+        if (shuffle) {
+            playerManager.playQueueShuffled(items)
+        } else {
+            playerManager.playQueue(items)
+        }
+        return PlaylistPlayResult(started = true, resolutionFailures = resolutionFailures)
+    }
 }

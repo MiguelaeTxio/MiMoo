@@ -8,7 +8,6 @@ import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
-import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,25 +128,18 @@ class PlaylistDetailViewModel @Inject constructor(
     }
 
     /**
-     * Plays the whole playlist in saved order. Downloaded tracks
-     * (filePath != null) play locally; tracks that were never
-     * downloaded resolve a live stream URL via StreamResolver first
-     * — same call SearchViewModel.playTrack uses
-     * (streamResolver.resolveAudioStreamUrl(track.youtubeUrl)).
-     * Resolution runs sequentially and a track whose resolution fails
-     * is skipped rather than aborting the whole queue, since one dead
-     * link should not block playback of the rest of the playlist.
+     * Plays the whole playlist in saved order -- delegates to
+     * PlaylistRepository.playPlaylistById() (H18, S032), which now
+     * holds this exact logic so it can also be reused from the
+     * individual play/shuffle button in the Favorites "Listas" tab.
+     * This ViewModel only reflects isResolving/resolveError in the UI.
      * ---
-     * Reproduce la playlist completa en el orden guardado. Las pistas
-     * descargadas (filePath != null) reproducen en local; las que
-     * nunca se descargaron resuelven primero una URL de streaming en
-     * vivo vía StreamResolver — la misma llamada que usa
-     * SearchViewModel.playTrack
-     * (streamResolver.resolveAudioStreamUrl(track.youtubeUrl)). La
-     * resolución se ejecuta de forma secuencial y una pista cuya
-     * resolución falla se omite en vez de abortar toda la cola, ya
-     * que un enlace muerto no debería bloquear la reproducción del
-     * resto de la lista.
+     * Reproduce la playlist completa en el orden guardado -- delega en
+     * PlaylistRepository.playPlaylistById() (H18, S032), que ahora
+     * contiene esta misma lógica exacta para poder reutilizarla
+     * también desde el botón individual de play/aleatorio de la
+     * pestaña "Listas" de Favoritos. Este ViewModel solo refleja
+     * isResolving/resolveError en la UI.
      */
     fun playAll() {
         val tracks = _uiState.value.tracks
@@ -158,70 +150,21 @@ class PlaylistDetailViewModel @Inject constructor(
                 isResolving = true,
                 resolveError = null,
             )
-            var resolutionFailures = 0
-            val items = tracks.mapNotNull { track ->
-                val localPath = track.filePath
-                val remoteUrl = track.youtubeUrl
-                if (localPath != null) {
-                    QueueItem(
-                        uri = localPath,
-                        title = track.title,
-                        isLocal = true,
-                        artist = track.artist ?: track.channelTitle,
-                        youtubeId = track.youtubeId,
-                        channelTitle = track.channelTitle,
-                        artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                    )
-                } else if (remoteUrl == null) {
-                    // Pista sintética (local:) sin filePath -- caso
-                    // extremo que no debería darse nunca en la
-                    // práctica (las sintéticas siempre vienen de un
-                    // archivo real en disco), pero sin URL real de
-                    // YouTube que resolver no hay nada que reproducir.
-                    // ---
-                    // Synthetic (local:) track with no filePath --
-                    // edge case that shouldn't happen in practice
-                    // (synthetic tracks always come from a real disk
-                    // file), but with no real YouTube URL to resolve
-                    // there's nothing to play.
-                    resolutionFailures++
-                    null
-                } else {
-                    try {
-                        val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                        // S027 -- nunca el canal como artista;
-                        // resolución verificada (artista estructurado
-                        // o identifyFromTitleWords contra MusicBrainz)
-                        // -- si no identifica nada, se excluye del
-                        // lote, igual que un fallo de red.
-                        playerManager.resolveStreamItem(
-                            streamUrl = streamUrl,
-                            videoTitle = track.title,
-                            structuredArtist = track.artist,
-                            youtubeId = track.youtubeId,
-                            artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                        ) ?: run {
-                            resolutionFailures++
-                            null
-                        }
-                    } catch (e: Exception) {
-                        resolutionFailures++
-                        null
-                    }
-                }
-            }
+            val result = repository.playPlaylistById(
+                playlistId = playlistId,
+                shuffle = false,
+                playerManager = playerManager,
+                streamResolver = streamResolver,
+            )
             _uiState.value = _uiState.value.copy(
                 isResolving = false,
-                resolveError = if (resolutionFailures > 0) {
-                    "No se pudieron resolver $resolutionFailures pista(s); " +
+                resolveError = if (result.resolutionFailures > 0) {
+                    "No se pudieron resolver ${result.resolutionFailures} pista(s); " +
                         "se reproduce el resto."
                 } else {
                     null
                 },
             )
-            if (items.isNotEmpty()) {
-                playerManager.playQueue(items)
-            }
         }
     }
 

@@ -13,7 +13,9 @@ import com.miguelaetxio.mimoo.data.favorites.PopurriRepository
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteArtist
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteTrack
+import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
+import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +65,8 @@ class FavoritesViewModel @Inject constructor(
     private val autoSyncPusher: AutoSyncPusher,
     @ApplicationContext private val appContext: Context,
     private val storageManager: StorageManager,
+    private val playlistRepository: PlaylistRepository,
+    private val streamResolver: StreamResolver,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
@@ -182,13 +186,30 @@ class FavoritesViewModel @Inject constructor(
     // --- Generación y reproducción de popurrís ---
 
     fun playSelectedArtists(shuffle: Boolean) {
-        val selected = _uiState.value.artists.filter { it.artist in _uiState.value.selectedArtists }
+        playArtists(_uiState.value.selectedArtists, shuffle)
+    }
+
+    /** Play/aleatorio individual de una fila de Artistas (H18, S032) -- mix de ESE artista concreto, sin mezclar con otros favoritos. */
+    fun playArtist(artist: String, shuffle: Boolean) {
+        playArtists(setOf(artist), shuffle)
+    }
+
+    private fun playArtists(names: Set<String>, shuffle: Boolean) {
+        val selected = _uiState.value.artists.filter { it.artist in names }
         if (selected.isEmpty()) return
         generateAndPlay { popurriRepository.playArtistsProgressively(playerManager, selected, shuffle) }
     }
 
     fun playSelectedAlbums(shuffle: Boolean) {
-        val keys = _uiState.value.selectedAlbums
+        playAlbums(_uiState.value.selectedAlbums, shuffle)
+    }
+
+    /** Play/aleatorio individual de una fila de Álbumes (H18, S032) -- mismo criterio que playArtist(). */
+    fun playAlbum(artist: String, album: String, shuffle: Boolean) {
+        playAlbums(setOf(AlbumKey(artist, album)), shuffle)
+    }
+
+    private fun playAlbums(keys: Set<AlbumKey>, shuffle: Boolean) {
         val selected = _uiState.value.albums.filter { AlbumKey(it.artist, it.album) in keys }
         if (selected.isEmpty()) return
         generateAndPlay { popurriRepository.playAlbumsProgressively(playerManager, selected, shuffle) }
@@ -201,6 +222,52 @@ class FavoritesViewModel @Inject constructor(
                 favoriteLocalTracks = pendingLocalFavorites(),
             )
             popurriRepository.playProgressively(playerManager, plan, shuffle)
+        }
+    }
+
+    /**
+     * Play individual de un sencillo (H18, S032) -- SOLO play, sin
+     * aleatorio (una única pista no tiene nada que barajar, precisión
+     * cerrada con Miguel Ángel). Reutiliza el mismo pipeline que
+     * playAllFavoriteTracks(), acotado a esta única fila -- prioriza
+     * la copia local si existe, igual que buildFromFavoriteTracks()
+     * hace para el conjunto completo.
+     */
+    fun playTrack(row: FavoriteTrackRow) {
+        generateAndPlay {
+            val plan = if (row.isDownloaded) {
+                popurriRepository.buildFromFavoriteTracks(
+                    favoriteTracks = emptyList(),
+                    favoriteLocalTracks = favoritesRepository.getFavoriteLocalTracks().first()
+                        .filter { it.youtubeId == row.youtubeId },
+                )
+            } else {
+                popurriRepository.buildFromFavoriteTracks(
+                    favoriteTracks = listOf(
+                        FavoriteTrack(row.youtubeId, row.title, row.artist, row.thumbnailUrl, durationSeconds = 0)
+                    ),
+                    favoriteLocalTracks = emptyList(),
+                )
+            }
+            popurriRepository.playProgressively(playerManager, plan, shuffle = false)
+        }
+    }
+
+    /**
+     * Play/aleatorio individual de una fila de Listas (H18, S032) --
+     * reproduce la playlist entera en su orden guardado, vía
+     * PlaylistRepository.playPlaylistById() (misma lógica exacta que
+     * PlaylistDetailViewModel.playAll(), extraída para reutilizarla
+     * aquí sin duplicarla).
+     */
+    fun playPlaylist(playlistId: Long, shuffle: Boolean) {
+        generateAndPlay {
+            playlistRepository.playPlaylistById(
+                playlistId = playlistId,
+                shuffle = shuffle,
+                playerManager = playerManager,
+                streamResolver = streamResolver,
+            ).started
         }
     }
 

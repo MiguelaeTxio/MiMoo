@@ -200,7 +200,10 @@ private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel)
                     title = favorite.artist,
                     subtitle = null,
                     checked = favorite.artist in uiState.selectedArtists,
+                    isGenerating = uiState.isGeneratingPopurri,
                     onCheckedChange = { viewModel.toggleArtistSelection(favorite.artist) },
+                    onPlay = { viewModel.playArtist(favorite.artist, shuffle = false) },
+                    onShuffle = { viewModel.playArtist(favorite.artist, shuffle = true) },
                     onRemoveFavorite = { viewModel.removeArtistFavorite(favorite.artist) },
                 )
             }
@@ -231,7 +234,10 @@ private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
                     title = favorite.album,
                     subtitle = favorite.artist,
                     checked = key in uiState.selectedAlbums,
+                    isGenerating = uiState.isGeneratingPopurri,
                     onCheckedChange = { viewModel.toggleAlbumSelection(key) },
+                    onPlay = { viewModel.playAlbum(favorite.artist, favorite.album, shuffle = false) },
+                    onShuffle = { viewModel.playAlbum(favorite.artist, favorite.album, shuffle = true) },
                     onRemoveFavorite = { viewModel.removeAlbumFavorite(favorite.artist, favorite.album) },
                 )
             }
@@ -286,6 +292,14 @@ private fun TracksTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    // H18 (S032) -- SOLO play, sin aleatorio: un único
+                    // sencillo no tiene nada que barajar.
+                    IconButton(
+                        onClick = { viewModel.playTrack(row) },
+                        enabled = !uiState.isGeneratingPopurri,
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
+                    }
                     IconButton(onClick = { viewModel.removeTrackFavorite(row) }) {
                         Icon(Icons.Filled.Star, contentDescription = "Quitar de favoritos")
                     }
@@ -326,6 +340,19 @@ private fun PlaylistsTab(
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(row.playlist.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                // H18 (S032) -- play/aleatorio de la playlist entera en su orden guardado.
+                IconButton(
+                    onClick = { viewModel.playPlaylist(row.playlist.id, shuffle = false) },
+                    enabled = !uiState.isGeneratingPopurri,
+                ) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
+                }
+                IconButton(
+                    onClick = { viewModel.playPlaylist(row.playlist.id, shuffle = true) },
+                    enabled = !uiState.isGeneratingPopurri,
+                ) {
+                    Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir aleatorio")
+                }
                 IconButton(onClick = { viewModel.removePlaylistFavorite(row.playlist.id) }) {
                     Icon(Icons.Filled.Star, contentDescription = "Quitar de favoritos")
                 }
@@ -340,7 +367,10 @@ private fun FavoriteRow(
     title: String,
     subtitle: String?,
     checked: Boolean,
+    isGenerating: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    onPlay: () -> Unit,
+    onShuffle: () -> Unit,
     onRemoveFavorite: () -> Unit,
 ) {
     Row(
@@ -364,6 +394,14 @@ private fun FavoriteRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        // H18 (S032) -- play/aleatorio de ESTE item concreto, sin
+        // marcar casilla ni usar el popurrí de selección de arriba.
+        IconButton(onClick = onPlay, enabled = !isGenerating) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
+        }
+        IconButton(onClick = onShuffle, enabled = !isGenerating) {
+            Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir aleatorio")
         }
         IconButton(onClick = onRemoveFavorite) {
             Icon(Icons.Filled.Star, contentDescription = "Quitar de favoritos")
