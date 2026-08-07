@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -123,6 +125,65 @@ private fun EmptyTabMessage(text: String) {
 }
 
 /**
+ * Control de ordenación compartido por las cuatro pestañas (H18,
+ * S032) -- diseño cerrado con Miguel Ángel: criterio aparte
+ * (alfabético/adición) y un único control que solo alterna
+ * ascendente/descendente del criterio ya elegido, sin ciclar por las
+ * cuatro combinaciones con un solo toque.
+ */
+@Composable
+private fun SortControl(
+    criterion: SortCriterion,
+    direction: SortDirection,
+    onCriterionChange: (SortCriterion) -> Unit,
+    onToggleDirection: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterChip(
+            selected = criterion == SortCriterion.ALPHABETICAL,
+            onClick = { onCriterionChange(SortCriterion.ALPHABETICAL) },
+            label = { Text("Alfabético") },
+        )
+        Spacer(Modifier.width(8.dp))
+        FilterChip(
+            selected = criterion == SortCriterion.DATE_ADDED,
+            onClick = { onCriterionChange(SortCriterion.DATE_ADDED) },
+            label = { Text("Adición") },
+        )
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = onToggleDirection) {
+            Icon(
+                if (direction == SortDirection.ASCENDING) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
+                contentDescription = if (direction == SortDirection.ASCENDING) {
+                    "Orden ascendente, tocar para invertir"
+                } else {
+                    "Orden descendente, tocar para invertir"
+                },
+            )
+        }
+    }
+}
+
+/** Aplica criterio+dirección a cualquier lista de favoritos (H18, S032) -- nameOf/addedAtOf desacoplan esta función del tipo de fila concreto. */
+private fun <T> sortedByCriterion(
+    items: List<T>,
+    criterion: SortCriterion,
+    direction: SortDirection,
+    nameOf: (T) -> String,
+    addedAtOf: (T) -> Long,
+): List<T> {
+    val comparator = when (criterion) {
+        SortCriterion.ALPHABETICAL -> compareBy(String.CASE_INSENSITIVE_ORDER, nameOf)
+        SortCriterion.DATE_ADDED -> compareBy(addedAtOf)
+    }
+    val sorted = items.sortedWith(comparator)
+    return if (direction == SortDirection.DESCENDING) sorted.reversed() else sorted
+}
+
+/**
  * Cabecera común a Artistas/Álbumes: "Marcar/desmarcar todos" +
  * botones de reproducción según selección.
  *
@@ -193,8 +254,18 @@ private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel)
             onPlaySequential = { viewModel.playSelectedArtists(shuffle = false) },
             onPlayShuffled = { viewModel.playSelectedArtists(shuffle = true) },
         )
+        SortControl(
+            criterion = uiState.sortCriterion,
+            direction = uiState.sortDirection,
+            onCriterionChange = viewModel::setSortCriterion,
+            onToggleDirection = viewModel::toggleSortDirection,
+        )
+        val sortedArtists = sortedByCriterion(
+            uiState.artists, uiState.sortCriterion, uiState.sortDirection,
+            nameOf = { it.artist }, addedAtOf = { it.addedAt },
+        )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(uiState.artists, key = { it.artist }) { favorite ->
+            items(sortedArtists, key = { it.artist }) { favorite ->
                 FavoriteRow(
                     icon = Icons.Filled.Person,
                     title = favorite.artist,
@@ -226,8 +297,18 @@ private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
             onPlaySequential = { viewModel.playSelectedAlbums(shuffle = false) },
             onPlayShuffled = { viewModel.playSelectedAlbums(shuffle = true) },
         )
+        SortControl(
+            criterion = uiState.sortCriterion,
+            direction = uiState.sortDirection,
+            onCriterionChange = viewModel::setSortCriterion,
+            onToggleDirection = viewModel::toggleSortDirection,
+        )
+        val sortedAlbums = sortedByCriterion(
+            uiState.albums, uiState.sortCriterion, uiState.sortDirection,
+            nameOf = { it.album }, addedAtOf = { it.addedAt },
+        )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(uiState.albums, key = { "${it.artist}|${it.album}" }) { favorite ->
+            items(sortedAlbums, key = { "${it.artist}|${it.album}" }) { favorite ->
                 val key = AlbumKey(favorite.artist, favorite.album)
                 FavoriteRow(
                     icon = Icons.Filled.Album,
@@ -274,8 +355,18 @@ private fun TracksTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
                 Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir todos, aleatorio")
             }
         }
+        SortControl(
+            criterion = uiState.sortCriterion,
+            direction = uiState.sortDirection,
+            onCriterionChange = viewModel::setSortCriterion,
+            onToggleDirection = viewModel::toggleSortDirection,
+        )
+        val sortedTracks = sortedByCriterion(
+            uiState.tracks, uiState.sortCriterion, uiState.sortDirection,
+            nameOf = { it.title }, addedAtOf = { it.addedAt },
+        )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(uiState.tracks, key = { it.youtubeId }) { row: FavoriteTrackRow ->
+            items(sortedTracks, key = { it.youtubeId }) { row: FavoriteTrackRow ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -322,39 +413,55 @@ private fun PlaylistsTab(
         )
         return
     }
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(uiState.playlists, key = { it.playlist.id }) { row: FavoritePlaylistRow ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .glassChip()
-                    .clickable { onOpenPlaylist(row.playlist.id) }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    Icons.Filled.QueueMusic,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(row.playlist.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                // H18 (S032) -- play/aleatorio de la playlist entera en su orden guardado.
-                IconButton(
-                    onClick = { viewModel.playPlaylist(row.playlist.id, shuffle = false) },
-                    enabled = !uiState.isGeneratingPopurri,
+    Column(modifier = Modifier.fillMaxSize()) {
+        SortControl(
+            criterion = uiState.sortCriterion,
+            direction = uiState.sortDirection,
+            onCriterionChange = viewModel::setSortCriterion,
+            onToggleDirection = viewModel::toggleSortDirection,
+        )
+        val sortedPlaylists = sortedByCriterion(
+            uiState.playlists, uiState.sortCriterion, uiState.sortDirection,
+            nameOf = { it.playlist.name }, addedAtOf = { it.addedAt },
+        )
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(sortedPlaylists, key = { it.playlist.id }) { row: FavoritePlaylistRow ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .glassChip()
+                        .clickable { onOpenPlaylist(row.playlist.id) }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
-                }
-                IconButton(
-                    onClick = { viewModel.playPlaylist(row.playlist.id, shuffle = true) },
-                    enabled = !uiState.isGeneratingPopurri,
-                ) {
-                    Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir aleatorio")
-                }
-                IconButton(onClick = { viewModel.removePlaylistFavorite(row.playlist.id) }) {
-                    Icon(Icons.Filled.Star, contentDescription = "Quitar de favoritos")
+                    Icon(
+                        Icons.Filled.QueueMusic,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        row.playlist.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // H18 (S032) -- play/aleatorio de la playlist entera en su orden guardado.
+                    IconButton(
+                        onClick = { viewModel.playPlaylist(row.playlist.id, shuffle = false) },
+                        enabled = !uiState.isGeneratingPopurri,
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
+                    }
+                    IconButton(
+                        onClick = { viewModel.playPlaylist(row.playlist.id, shuffle = true) },
+                        enabled = !uiState.isGeneratingPopurri,
+                    ) {
+                        Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir aleatorio")
+                    }
+                    IconButton(onClick = { viewModel.removePlaylistFavorite(row.playlist.id) }) {
+                        Icon(Icons.Filled.Star, contentDescription = "Quitar de favoritos")
+                    }
                 }
             }
         }

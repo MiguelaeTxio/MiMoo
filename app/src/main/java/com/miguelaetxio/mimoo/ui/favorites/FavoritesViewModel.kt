@@ -27,6 +27,12 @@ import javax.inject.Inject
 
 enum class FavoritesTab { ARTISTS, ALBUMS, TRACKS, PLAYLISTS }
 
+/** Criterio de orden (H18, S032) -- alfabético o por fecha de alta, criterio elegido aparte de la dirección. */
+enum class SortCriterion { ALPHABETICAL, DATE_ADDED }
+
+/** Dirección de orden (H18, S032) -- un único control la alterna, sin tocar el criterio activo. */
+enum class SortDirection { ASCENDING, DESCENDING }
+
 /** Clave de selección de álbum -- FavoriteAlbum no es Parcelable/no hace falta, basta el par (artist, album). */
 data class AlbumKey(val artist: String, val album: String)
 
@@ -40,6 +46,8 @@ data class FavoritesUiState(
     val selectedAlbums: Set<AlbumKey> = emptySet(),
     val isGeneratingPopurri: Boolean = false,
     val errorMessage: String? = null,
+    val sortCriterion: SortCriterion = SortCriterion.ALPHABETICAL,
+    val sortDirection: SortDirection = SortDirection.ASCENDING,
 )
 
 /**
@@ -108,6 +116,21 @@ class FavoritesViewModel @Inject constructor(
 
     fun selectTab(tab: FavoritesTab) {
         _uiState.value = _uiState.value.copy(tab = tab)
+    }
+
+    // --- Ordenación (H18, S032) -- criterio y dirección compartidos por las cuatro pestañas ---
+
+    fun setSortCriterion(criterion: SortCriterion) {
+        _uiState.value = _uiState.value.copy(sortCriterion = criterion)
+    }
+
+    fun toggleSortDirection() {
+        val next = if (_uiState.value.sortDirection == SortDirection.ASCENDING) {
+            SortDirection.DESCENDING
+        } else {
+            SortDirection.ASCENDING
+        }
+        _uiState.value = _uiState.value.copy(sortDirection = next)
     }
 
     // --- Selección (Artistas) ---

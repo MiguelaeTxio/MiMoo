@@ -22,21 +22,47 @@ import javax.inject.Singleton
  * Una playlist propia junto a si está marcada como favorita -- para
  * pintar la pestaña "Listas de reproducción" de Favoritos sin que la
  * pantalla tenga que cruzar dos flujos ella misma.
+ *
+ * `addedAt` es el FavoritePlaylist.addedAt real (H18, S032) -- cuándo
+ * se marcó como favorita, no Playlist.createdAt (cuándo se creó la
+ * playlist, un dato distinto).
  * ---
  * A user's own playlist alongside whether it's marked favorite -- so
  * the Favorites screen's "Playlists" tab doesn't have to cross-
  * reference two flows itself.
+ *
+ * `addedAt` is the real FavoritePlaylist.addedAt (H18, S032) -- when
+ * it was marked favorite, not Playlist.createdAt (when the playlist
+ * itself was created, a different fact).
  */
-data class FavoritePlaylistRow(val playlist: Playlist, val isFavorite: Boolean)
+data class FavoritePlaylistRow(val playlist: Playlist, val isFavorite: Boolean, val addedAt: Long)
 
 /**
  * Un sencillo favorito unificado, sea cual sea la tabla de origen
  * (favorito en streaming, favorito ya descargado, o ambas a la vez) --
  * ver comentario de la entidad FavoriteTrack.
+ *
+ * `addedAt` (H18, S032): para el favorito en streaming es el
+ * FavoriteTrack.addedAt real. Para un sencillo ya descargado
+ * (isFavorite=true en SearchResultTrack), NO existe ningún timestamp
+ * de cuándo se marcó -- esa tabla nunca lo tuvo, y añadirlo excede el
+ * alcance de H18 (migración sobre la tabla más grande de la app, usada
+ * en todo el proyecto, no solo en Favoritos). Colapsa a 0L, mismo
+ * criterio que las filas pre-migración de MIGRATION_15_16 -- ordenan
+ * primero bajo "adición ascendente" en vez de un valor inventado.
  * ---
  * A unified favorite single, whatever the source table (streaming
  * favorite, already-downloaded favorite, or both at once) -- see the
  * FavoriteTrack entity's comment.
+ *
+ * `addedAt` (H18, S032): for the streaming favorite it's the real
+ * FavoriteTrack.addedAt. For an already-downloaded single
+ * (isFavorite=true on SearchResultTrack), NO timestamp of when it was
+ * marked ever existed -- that table never had one, and adding it is
+ * out of scope for H18 (a migration on the app's largest table, used
+ * everywhere, not just Favorites). Collapses to 0L, same criterion as
+ * MIGRATION_15_16's pre-migration rows -- sorts first under "adición
+ * ascendente" instead of a fabricated value.
  */
 data class FavoriteTrackRow(
     val youtubeId: String,
@@ -44,6 +70,7 @@ data class FavoriteTrackRow(
     val artist: String,
     val thumbnailUrl: String?,
     val isDownloaded: Boolean,
+    val addedAt: Long,
 )
 
 /**
@@ -97,6 +124,7 @@ class FavoritesRepository @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                     thumbnailUrl = track.thumbnailUrl,
                     isDownloaded = true,
+                    addedAt = 0L,
                 )
             }
             for (track in streamingFavorites) {
@@ -107,6 +135,7 @@ class FavoritesRepository @Inject constructor(
                     artist = track.artist,
                     thumbnailUrl = track.thumbnailUrl,
                     isDownloaded = false,
+                    addedAt = track.addedAt,
                 )
             }
             rows.values.toList()
@@ -120,10 +149,10 @@ class FavoritesRepository @Inject constructor(
             playlistRepository.getAllPlaylists(),
             favoritePlaylistRepository.getAll(),
         ) { playlists, favorites ->
-            val favoriteIds = favorites.map { it.playlistId }.toSet()
+            val addedAtById = favorites.associate { it.playlistId to it.addedAt }
             playlists
-                .filter { it.id in favoriteIds }
-                .map { FavoritePlaylistRow(it, isFavorite = true) }
+                .filter { it.id in addedAtById }
+                .map { FavoritePlaylistRow(it, isFavorite = true, addedAt = addedAtById.getValue(it.id)) }
         }
 
     suspend fun toggleArtist(artist: String) = favoriteArtistRepository.toggle(artist)
