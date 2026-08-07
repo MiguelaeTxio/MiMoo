@@ -130,38 +130,81 @@ apertura del hito (sin código todavía, ver "Hoja de Ruta" abajo):
 
 ---
 
+## COMPLETADAS EN S032
+
+Los tres primeros bloques, construidos y en build verde (GitHub
+Actions, runs `041e151`, `95d2bdc`, `299e751`), pendientes de
+verificación en dispositivo real:
+
+- **Bloque 1 -- migración + propagación a backup/sync.**
+  `AppDatabase` 15->16, `MIGRATION_15_16` (4x `ALTER TABLE ADD COLUMN
+  addedAt INTEGER NOT NULL DEFAULT 0` sobre `favorite_artists`/
+  `favorite_albums`/`favorite_tracks`/`favorite_playlists`, filas
+  existentes colapsan a 0, no a un "ahora" inventado -- mismo criterio
+  que `isFavorite` en `MIGRATION_2_3`). Las cuatro entidades con
+  `addedAt: Long = System.currentTimeMillis()` como default de alta.
+  Hallazgo real corregido en el mismo bloque: los DTOs de backup/sync
+  (`BackupDto.kt`) de las cuatro entidades no llevaban `addedAt` --
+  un Export/Import (H06) o una sincronización automática (H07) habría
+  perdido la fecha real. Corregido con default `0L` en los DTOs para
+  compatibilidad con backups antiguos, propagado en `toBackupDto()`/
+  `toEntity()` y en los tres puntos de importación de
+  `BackupImportRepository.kt`. `FavoritePlaylist`, que se exporta por
+  NOMBRE (el `playlistId` se remapea siempre en destino), resuelto
+  emparejando nombre+`addedAt` en `BackupRepository`.
+- **Bloque 2 -- botones de play/aleatorio individuales.** Matriz
+  exacta del punto 1 de diseño: Artistas/Álbumes/Listas con
+  play+aleatorio del item concreto, Sencillos solo play. Nueva
+  `PlaylistRepository.playPlaylistById()` (lógica extraída de
+  `PlaylistDetailViewModel.playAll()`, que ahora delega en ella --
+  sin duplicación). `FavoritesViewModel`:
+  `playArtist()`/`playAlbum()`/`playTrack()`/`playPlaylist()`
+  (variantes de un solo elemento sobre las funciones de selección ya
+  existentes, refactorizadas a `playArtists()`/`playAlbums()`
+  parametrizadas). `FavoritesScreen`: `IconButton`s nuevos junto a la
+  estrella en las cuatro filas, deshabilitados durante
+  `isGeneratingPopurri` (mismo blindaje que `SelectionHeader` contra
+  el bug de doble-tap de S030).
+- **Bloque 3 -- control de ordenación.** Nuevo `SortControl`
+  (`FavoritesScreen.kt`): dos `FilterChip` de criterio (alfabético/
+  adición) + un `IconButton` que solo invierte ascendente/descendente
+  del criterio activo -- exactamente el punto 5 de diseño, criterio y
+  dirección separados. `sortedByCriterion()`, función genérica
+  aplicada en las cuatro pestañas antes de pintar cada `LazyColumn`.
+  `PlaylistsTab` gana un `Column` envolvente (antes no tenía ninguna
+  cabecera). Hallazgo real corregido en el mismo bloque: ni
+  `FavoriteTrackRow` ni `FavoritePlaylistRow` llevaban `addedAt`, así
+  que el orden de adición no habría tenido datos en Sencillos ni
+  Listas -- añadido a ambos, propagado desde `FavoritePlaylist.addedAt`
+  real (no `Playlist.createdAt`, que es un dato distinto) y desde
+  `FavoriteTrack.addedAt` para el favorito en streaming.
+  **Excepción documentada, no ocultada:** un sencillo ya descargado
+  (`isFavorite=true` en `SearchResultTrack`) no tiene NINGÚN
+  timestamp de cuándo se marcó -- esa tabla nunca lo tuvo, y añadirlo
+  es una migración sobre la tabla más grande y más usada de la app,
+  fuera de alcance de H18. Colapsa a `0L`, documentado en el KDoc de
+  `FavoriteTrackRow`.
+
+Sin tocar: verificación en dispositivo real de los tres bloques.
+
+---
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H18
 
-Diseño cerrado -- ya se puede escribir código. Orden recomendado
-(cada bloque cerrado se commitea de inmediato, `newflow-android-edit`
-PASO 5):
-
-1. **Migración `MIGRATION_15_16`.** Añadir campo de timestamp de alta
-   a `FavoriteArtist`, `FavoriteAlbum`, `FavoriteTrack`,
-   `FavoritePlaylist` (`ALTER TABLE ... ADD COLUMN addedAt INTEGER NOT
-   NULL DEFAULT 0`, patrón ya usado en migraciones anteriores de la
-   cadena) + subir versión de `AppDatabase` a 16 + actualizar los
-   `data class` de las cuatro entidades.
-2. **Botones de play/aleatorio en `FavoritesScreen.kt`.** Extraer de
-   `FavoritesViewModel` las funciones ya existentes
-   (`playSelectedArtists`/`playSelectedAlbums`/
-   `playAllFavoriteTracks`) o añadir variantes de un solo elemento;
-   añadir `IconButton`s de `Icons.Filled.PlayArrow`/
-   `Icons.Filled.Shuffle` junto a la estrella en `FavoriteRow`
-   (Artistas/Álbumes) y en la fila de `PlaylistsTab`; en `TracksTab`
-   solo `PlayArrow`, sin `Shuffle` (punto 1).
-3. **Control de ordenación en las cuatro pestañas de
-   `FavoritesScreen`.** Selector de criterio (alfabético/adición) +
-   toggle de dirección, aplicado sobre las listas ya cargadas en
-   `FavoritesUiState` (orden en memoria, sin tocar los repositorios
-   salvo que el volumen lo justifique).
-4. **Extender ordenación** a `PlaylistsScreen.kt`, Canales (H11) y
-   Lista Negra (H16) -- mismas tres entidades que ya tienen timestamp,
-   sin migración adicional.
-5. **Explorador (H12).** Leer el código real de esa pantalla antes de
-   decidir cómo (o si) aplica el orden de adición ahí -- ver punto 4
-   de diseño. Si no aplica, dejar solo el orden alfabético en esa
-   pantalla y decirlo explícitamente en el anexo, no en silencio.
+1. **Verificar en dispositivo real** los bloques 1-3: migración sin
+   pérdida de datos existentes, botones de play/aleatorio con la
+   matriz exacta por tipo de fila, y el control de ordenación
+   (criterio + dirección) en las cuatro pestañas de Favoritos.
+2. **Extender ordenación** a `PlaylistsScreen.kt` (H04), Canales (H11)
+   y Lista Negra (H16) -- mismas tres entidades que ya tienen
+   timestamp (`Playlist.createdAt`, `ChannelSubscription.subscribedAt`,
+   `DislikedArtist`/`DislikedTrack.dislikedAt`), sin migración
+   adicional.
+3. **Explorador (H12).** Leer el código real de esa pantalla antes de
+   decidir cómo (o si) aplica el orden de adición ahí -- sus listas
+   vienen de MusicBrainz (catálogo remoto paginado), no de una tabla
+   local con alta propia. Si no aplica, dejar solo el orden alfabético
+   ahí y decirlo explícitamente, no en silencio.
 
 Cualquier incidencia real que aparezca durante la construcción
 (imports que faltan, verificación en dispositivo, etc.) se corrige de

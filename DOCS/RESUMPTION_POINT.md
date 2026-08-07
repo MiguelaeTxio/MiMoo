@@ -10,14 +10,17 @@
 
 ## Qué hacer en la siguiente sesión
 
-**H18 (Play y Ordenación de Listas de Items) EN PROGRESO** -- hito
-nuevo abierto al arranque de S032 (PCH explícito, ver
-`DOCS/ANNEX_ROUTER.md`). Sin código todavía -- cinco puntos de diseño
-abiertos por cerrar con Miguel Ángel antes de escribir nada (qué
-significa "play" por tipo de item, icono/posición del botón,
-alcance cerrado de qué pantallas entran en "todas las listas de items
-de la app", mecanismo de orden de adición, UI del control de orden).
-Detalle completo en `DOCS/ANNEX_H18.md`.
+**H18 (Play y Ordenación de Listas de Items) EN PROGRESO** -- diseño
+cerrado y los tres primeros bloques construidos en S032 (migración +
+propagación a backup/sync, botones de play/aleatorio individuales en
+Favoritos, control de ordenación en las cuatro pestañas), en build
+verde (`041e151`, `95d2bdc`, `299e751`). **Sin verificar en
+dispositivo real todavía.** Quedan dos bloques de la hoja de ruta:
+extender la ordenación a `PlaylistsScreen.kt`/Canales/Lista Negra
+(mismas entidades, ya tienen timestamp, sin migración), y decidir
+sobre Explorador (H12) leyendo su código real antes de asumir si
+aplica el orden de adición. Detalle completo en `DOCS/ANNEX_H18.md`,
+"COMPLETADAS EN S032".
 
 ## H17 (Karaoke & Lyrics) -- PAUSADO, diseño y construcción completos, sin verificar en dispositivo
 
