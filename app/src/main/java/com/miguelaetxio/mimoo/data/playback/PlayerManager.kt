@@ -2099,6 +2099,7 @@ class PlayerManager @Inject constructor(
                 anchorArtistName, artist, songTitle = null,
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
                 expectedYear = if (anchor.isClassical) null else anchor.anchorYear,
+                genreHint = anchor.genre.ifBlank { null },
             ) ?: return null
 
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
@@ -2527,6 +2528,7 @@ class PlayerManager @Inject constructor(
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
                 expectedYear = if (anchor.isClassical) null else anchor.anchorYear,
                 yearWindow = yearWindow,
+                genreHint = anchor.genre.ifBlank { null },
             )
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
@@ -3213,8 +3215,29 @@ class PlayerManager @Inject constructor(
          */
         expectedYear: Int? = null,
         yearWindow: Int = uiPreferencesManager.radioYearWindow.value,
+        /**
+         * H15/H08, S032 -- BUG REAL con dos casos en el propio log de
+         * Miguel Ángel: ancla 'Minimal Techno', candidatos 'Shed'
+         * (cobertizo de jardín en inglés) y 'Scuba' (submarinismo).
+         * Buscando solo el nombre pelado, los 20 resultados de YouTube
+         * eran vídeos de bricolaje y de buceo -- ninguno era el
+         * artista real, porque su nombre es también una palabra
+         * inglesa corriente y YouTube no tiene forma de saber que se
+         * busca al músico. Con canción conocida (`songTitle != null`)
+         * esto no hace falta -- la propia canción ya desambigua. Sin
+         * ella, se añade el género del ancla a la consulta ("Shed
+         * minimal techno" en vez de "Shed" a secas) para que YouTube
+         * tenga con qué distinguir al artista de la palabra suelta.
+         * `null`/blank (ancla sin género -- década u origen solos) no
+         * añade nada, igual que antes.
+         */
+        genreHint: String? = null,
     ): QueueItem? = try {
-        val query = if (songTitle != null) "$artist $songTitle" else artist
+        val query = when {
+            songTitle != null -> "$artist $songTitle"
+            !genreHint.isNullOrBlank() -> "$artist $genreHint"
+            else -> artist
+        }
         // S026 -- LÍMITE MÁS ANCHO para "solo artista" (Exploración, o
         // "artista conocido, tema no catalogado"). Causa real,
         // confirmada contando el propio log de Miguel Ángel: buscar
@@ -3666,6 +3689,7 @@ class PlayerManager @Inject constructor(
                     anchorLabel, artist, songTitle = null,
                     expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
                     expectedYear = anchor.anchorYear,
+                    genreHint = anchor.genre.ifBlank { null },
                 )
                 if (item != null &&
                     knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&

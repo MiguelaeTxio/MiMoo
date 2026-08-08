@@ -403,6 +403,28 @@ automática (H08) se ha tocado:
     `onMediaItemTransition()`. Aplica por igual a Radio y a miMooutCast
     -- cualquier corrutina de la sesión que se abandona se cancela,
     sea cual sea el modo. Sin verificar en dispositivo real todavía.
+19. **Orden explícita de Miguel Ángel tras insistir en que la búsqueda
+    en biblioteca local no era la causa real: "sigue mirando a ver qué
+    es lo que falla... vamos a ver cómo estamos buscando en
+    YouTube".** Quitada la biblioteca local de miMooutCast por
+    completo (`pickDiscoCandidate()` fuera de
+    `fetchSimpleManualCandidate()` -- streaming puro, más rápido). Y
+    arreglo real de fondo en `resolveYoutubeCandidate()` (compartida
+    con Radio): con dos casos reales del propio log ('Shed' -- nombre
+    real de un productor de minimal techno, también la palabra inglesa
+    "cobertizo"; 'Scuba' -- ídem, "submarinismo"), la búsqueda "solo
+    artista" (sin canción conocida) mandaba a YouTube el nombre pelado
+    a secas -- de los 20 resultados, ninguno era música, todos vídeos
+    de bricolaje o de buceo. Nuevo parámetro `genreHint` en
+    `resolveYoutubeCandidate()`: cuando no hay canción conocida, añade
+    el género del ancla a la consulta ("Shed minimal techno" en vez de
+    "Shed" a secas) para desambiguar. Aplicado en los tres puntos de
+    llamada "solo artista" -- `fetchRoundCandidate()` (Exploración),
+    `fetchFromUnknown()`/`resolveFinalFallback()` y
+    `fetchSimpleManualCandidate()` -- beneficia a Radio y a miMooutCast
+    por igual, sin tocar ningún filtro de exactitud
+    (`verifyTrackExists()` sigue exigiendo lo mismo de siempre). Sin
+    verificar en dispositivo real todavía.
 
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
