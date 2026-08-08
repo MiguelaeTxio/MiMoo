@@ -395,6 +395,10 @@ class PlayerManager @Inject constructor(
     // Sesión que retome H16", punto 2.
     private val dislikedArtistRepository: com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository,
     private val dislikedTrackRepository: com.miguelaetxio.mimoo.data.local.repository.DislikedTrackRepository,
+    // H15 (miMooutCast), S032 -- señal compartida para enrutar el log
+    // de depuración entre Radio y miMooutCast en las funciones que
+    // ambos comparten. Ver el kdoc de MiMooutcastSessionFlag.
+    private val mimooutcastSessionFlag: MiMooutcastSessionFlag,
 ) {
 
     /**
@@ -1008,7 +1012,29 @@ class PlayerManager @Inject constructor(
      * de cola (`topUpRadioQueueIfNeeded()`), solo cambia CÓMO se
      * encuentra cada candidato.
      */
-    private var manualAnchorActive = false
+    // H15 (miMooutCast), S032 -- delega en `mimooutcastSessionFlag`
+    // como ÚNICA fuente de verdad, en vez de mantener un booleano
+    // propio en paralelo que podría desincronizarse. Ver el kdoc de
+    // MiMooutcastSessionFlag -- RadioRepository/AnchorDictionary leen
+    // la misma bandera para enrutar su propio log de depuración.
+    private var manualAnchorActive: Boolean
+        get() = mimooutcastSessionFlag.active
+        set(value) { mimooutcastSessionFlag.active = value }
+
+    /**
+     * H15 (miMooutCast), S032 -- `resolveYoutubeCandidate()` es
+     * compartida por Radio y miMooutCast; sus propias trazas deben ir
+     * al archivo de quien la está usando de verdad, nunca mezclarse.
+     * Orden explícita y repetida de Miguel Ángel: el debug de Radio no
+     * debe tocarse en absoluto mientras se usa miMooutCast.
+     */
+    private fun sharedResolveLog(line: String) {
+        if (manualAnchorActive) {
+            MimooutcastDebugLogger.log(appContext, storageManager, line)
+        } else {
+            RadioDebugLogger.log(appContext, storageManager, line)
+        }
+    }
 
     /**
      * S026 -- true tras un `TrackExistence.NetworkUnavailable` tratando
@@ -1515,6 +1541,23 @@ class PlayerManager @Inject constructor(
      * altogether in S025.
      */
     private suspend fun resolveAnchorWithFallbacks(anchorArtistName: String): RadioAnchor? {
+        // H15 (miMooutCast), S032 -- BLINDAJE DIRECTO EN LA FUNCIÓN,
+        // no en cada sitio que la llama. Orden explícita y repetida de
+        // Miguel Ángel: la Radio no puede saltar NUNCA durante
+        // miMooutCast. Esta función es el motor de anclaje de artista
+        // de la Radio automática -- si por cualquier vía (una que ya
+        // se blindó, o una que todavía no se ha encontrado) se llega
+        // aquí con una sesión de ancla manual activa, se niega a
+        // ejecutar en vez de fiarse de que el llamante ya lo comprobó.
+        if (manualAnchorActive) {
+            MimooutcastDebugLogger.log(
+                appContext, storageManager,
+                "resolveAnchorWithFallbacks() -- BLOQUEADO: se ha llamado con una sesión de " +
+                    "miMooutCast activa (ancla='$radioAnchorArtist'), argumento recibido " +
+                    "'$anchorArtistName' -- rechazado, la Radio no puede anclar nada aquí",
+            )
+            return null
+        }
         // Histórico. S010 dio un respaldo para canales que NO son un
         // artista ("OldGuitar8", sin resultados en MusicBrainz): solo
         // saltaba cuando el canal FALLABA. S023 descubrió el agujero
@@ -1813,6 +1856,21 @@ class PlayerManager @Inject constructor(
      *    verdad no quede nada más.
      */
     private suspend fun fetchRoundCandidate(anchor: RadioAnchor, anchorArtistName: String): QueueItem? {
+        // H15 (miMooutCast), S032 -- mismo blindaje directo que
+        // resolveAnchorWithFallbacks(): este es el motor de cupos
+        // 80/10/10 de la Radio automática. Si se llega aquí con una
+        // sesión de miMooutCast activa, se rechaza sin ejecutar nada
+        // -- ese motor de cupos no tiene ningún papel en miMooutCast
+        // (regla explícita y repetida de Miguel Ángel).
+        if (manualAnchorActive) {
+            MimooutcastDebugLogger.log(
+                appContext, storageManager,
+                "fetchRoundCandidate() -- BLOQUEADO: se ha llamado con una sesión de miMooutCast " +
+                    "activa (ancla='$radioAnchorArtist'), argumento recibido '$anchorArtistName' -- " +
+                    "rechazado, el motor de cupos de Radio no puede ejecutar aquí",
+            )
+            return null
+        }
         rollRadioRoundIfComplete()
         refreshDislikedSnapshots()
 
@@ -3228,8 +3286,7 @@ class PlayerManager @Inject constructor(
                 }
             }
             if (networkLost) {
-                RadioDebugLogger.log(
-                    appContext, storageManager,
+                sharedResolveLog(
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
                         "RADIO DETENIDA: sin red para verificar si el candidato es un tema real de '$artist'",
                 )
@@ -3245,8 +3302,7 @@ class PlayerManager @Inject constructor(
                 } else {
                     "de década distinta de $expectedDecadeBegin"
                 }
-                RadioDebugLogger.log(
-                    appContext, storageManager,
+                sharedResolveLog(
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
                         "$decadeRejectedCount confirmados pero $criterio: descartados",
                 )
@@ -3282,8 +3338,7 @@ class PlayerManager @Inject constructor(
         }
 
         if (track == null) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
+            sharedResolveLog(
                 "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- 0 de " +
                     "${searchResult.tracks.size} resultados pasaron el filtro" +
                     (if (songTitle == null) " (duración/compilación/canal/existencia real)" else " de duración/compilación"),
@@ -3293,15 +3348,13 @@ class PlayerManager @Inject constructor(
             val streamUrl = try {
                 streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
             } catch (e: Exception) {
-                RadioDebugLogger.log(
-                    appContext, storageManager,
+                sharedResolveLog(
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
                         "resolveAudioStreamUrl() falló: ${e::class.java.simpleName}: ${e.message}",
                 )
                 return null
             }
-            RadioDebugLogger.log(
-                appContext, storageManager,
+            sharedResolveLog(
                 "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -> añadido: '${track.title}'",
             )
             QueueItem(
@@ -3316,8 +3369,7 @@ class PlayerManager @Inject constructor(
             )
         }
     } catch (e: Exception) {
-        RadioDebugLogger.log(
-            appContext, storageManager,
+        sharedResolveLog(
             "resolveYoutubeCandidate(ancla='$anchorArtistName', artist='$artist') -- EXCEPCIÓN: " +
                 "${e::class.java.simpleName}: ${e.message}",
         )

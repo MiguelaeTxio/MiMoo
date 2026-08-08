@@ -268,6 +268,39 @@ automática (H08) se ha tocado:
     el guardián); el de `clearQueue()` se mantiene, por si ese es el
     otro punto de entrada real. Sin verificar en dispositivo real
     todavía.
+15. **BUG REAL, cerrado: el propio archivo `radio_relacionados_debug.txt`
+    se actualizaba durante sesiones de miMooutCast, aunque el bug del
+    punto 14 ya estuviera corregido.** Causa real, no cosmética:
+    `resolveYoutubeCandidate()` (compartida, `PlayerManager.kt`) y
+    `RadioRepository.suggestRelatedArtist()`/`verifyTrackExists()`/
+    `ensureDiscographyCached()`/`resolveAnchor()` (compartidas,
+    `RadioRepository.kt`) usan legítimamente el mismo mecanismo de
+    exploración de MusicBrainz para el tier 2 de
+    `fetchSimpleManualCandidate()`, y todas escribían siempre a
+    `RadioDebugLogger`/`radio_relacionados_debug.txt`, con
+    independencia de si las llamaba Radio o miMooutCast --
+    `AnchorDictionary` (temas.json/pendientes.json, también
+    compartido) hacía lo mismo. Orden explícita y repetida de Miguel
+    Ángel, tras varias rondas de confusión real por esto: *"el debug
+    de radio relacionados no tiene por qué actualizarse cuando se está
+    usando miMooutCast"* -- sin excepción, sea cual sea el motivo
+    interno de la llamada compartida.
+
+    Corregido con una señal compartida mínima nueva,
+    `MiMooutcastSessionFlag` (`@Singleton`, `data/playback/`):
+    `PlayerManager.manualAnchorActive` deja de ser un booleano propio
+    y pasa a DELEGAR en `mimooutcastSessionFlag.active` como única
+    fuente de verdad (evita que dos banderas separadas puedan
+    desincronizarse). `RadioRepository`/`AnchorDictionary` reciben
+    esta misma señal inyectada (inyectar `PlayerManager` directamente
+    en ellas habría creado una dependencia circular) y centralizan su
+    log en una función `log()`/`sharedResolveLog()` que enruta a
+    `MimooutcastDebugLogger` o `RadioDebugLogger` según el valor de la
+    señal. Con el motor de cupos de Radio (`fetchRoundCandidate()`) y
+    `resolveAnchorWithFallbacks()` ya bloqueados en seco por el punto
+    14, en la práctica `radio_relacionados_debug.txt` no debería
+    recibir ni una sola línea mientras miMooutCast está activo. Sin
+    verificar en dispositivo real todavía.
 
 Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual

@@ -188,6 +188,10 @@ class RadioRepository @Inject constructor(
     // teléfono tenía conexión real. Ver verifyTrackExists() y
     // resolveOriginalDecade() más abajo.
     private val networkConnectivityChecker: NetworkConnectivityChecker,
+    // H15 (miMooutCast), S032 -- señal compartida para enrutar el log
+    // de depuración entre Radio y miMooutCast. Ver el kdoc de
+    // MiMooutcastSessionFlag.
+    private val mimooutcastSessionFlag: com.miguelaetxio.mimoo.data.playback.MiMooutcastSessionFlag,
 ) {
     /**
      * Perfil de un artista para la fuente de "disco" (10% de la
@@ -2103,7 +2107,20 @@ class RadioRepository @Inject constructor(
             .trim()
     }
 
-    private fun log(line: String) = RadioDebugLogger.log(appContext, storageManager, line)
+    // H15 (miMooutCast), S032 -- enruta según `mimooutcastSessionFlag`
+    // (única fuente de verdad, ver su kdoc). Orden explícita y
+    // repetida de Miguel Ángel: el debug de Radio no debe tocarse en
+    // absoluto mientras se usa miMooutCast, y esta función centraliza
+    // TODO el log de RadioRepository -- suggestRelatedArtist(),
+    // verifyTrackExists(), ensureDiscographyCached(), resolveAnchor(),
+    // etc. -- así que enrutar aquí basta para las tres.
+    private fun log(line: String) {
+        if (mimooutcastSessionFlag.active) {
+            MimooutcastDebugLogger.log(appContext, storageManager, line)
+        } else {
+            RadioDebugLogger.log(appContext, storageManager, line)
+        }
+    }
 
     private fun isPlaceholderArtist(name: String): Boolean =
         name.equals("Various Artists", ignoreCase = true) ||

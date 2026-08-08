@@ -71,6 +71,10 @@ import javax.inject.Singleton
 class AnchorDictionary @Inject constructor(
     @ApplicationContext private val context: Context,
     private val storageManager: StorageManager,
+    // H15 (miMooutCast), S032 -- señal compartida para enrutar el log
+    // de depuración entre Radio y miMooutCast. Ver el kdoc de
+    // MiMooutcastSessionFlag.
+    private val mimooutcastSessionFlag: com.miguelaetxio.mimoo.data.playback.MiMooutcastSessionFlag,
 ) {
 
     /** Lo que se sabe de un ARTISTA: país, géneros y años de actividad. */
@@ -973,14 +977,24 @@ class AnchorDictionary @Inject constructor(
                 if (runCatching { doc.delete() }.getOrDefault(false)) deleted++
             }
             if (deleted > 0) {
-                RadioDebugLogger.log(
-                    context,
-                    storageManager,
+                log(
                     "AnchorDictionary.cleanupStrayFiles('$name') -- $deleted duplicado(s) " +
                         "del fallo del MIME borrados; conservado el mayor " +
                         "(${content?.length ?: 0} caracteres)",
                 )
             }
+        }
+    }
+
+    // H15 (miMooutCast), S032 -- enruta según `mimooutcastSessionFlag`
+    // (única fuente de verdad, ver su kdoc). Orden explícita y
+    // repetida de Miguel Ángel: el debug de Radio no debe tocarse en
+    // absoluto mientras se usa miMooutCast.
+    private fun log(line: String) {
+        if (mimooutcastSessionFlag.active) {
+            MimooutcastDebugLogger.log(context, storageManager, line)
+        } else {
+            RadioDebugLogger.log(context, storageManager, line)
         }
     }
 
@@ -1059,9 +1073,7 @@ class AnchorDictionary @Inject constructor(
                 // S025 -- rastro en el log de la Radio. Cuando esto
                 // fallaba en silencio, la unica pista era que el
                 // contador volvia a cero, y hubo que adivinar. Ya no.
-                RadioDebugLogger.log(
-                    context,
-                    storageManager,
+                log(
                     "AnchorDictionary.writeText('$name') -> ${if (ok) "OK" else "FALLO"}, " +
                         "${content.length} caracteres, " +
                         "destino=${if (cachedDir != null) "tarjeta" else "interno"}",
@@ -1073,9 +1085,7 @@ class AnchorDictionary @Inject constructor(
             // sesión y se reintentará al siguiente aprendizaje. Pero se
             // informa del fallo: `flush()` necesita saberlo para no dar
             // por guardado lo que no lo está.
-            RadioDebugLogger.log(
-                context,
-                storageManager,
+            log(
                 "AnchorDictionary.writeText('$name') -> EXCEPCIÓN: " +
                     "${e::class.java.simpleName}: ${e.message}",
             )
