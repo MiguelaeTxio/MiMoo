@@ -186,6 +186,7 @@ interface MusicBrainzApiService {
     suspend fun searchReleaseGroups(
         @Query("query") query: String,
         @Query("limit") limit: Int = 25,
+        @Query("offset") offset: Int = 0,
         @Query("fmt") format: String = "json",
     ): MusicBrainzReleaseGroupSearchResponse
 

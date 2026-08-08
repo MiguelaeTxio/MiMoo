@@ -480,6 +480,46 @@ automática (H08) se ha tocado:
     miles de temas reales que existen. Sin verificar en dispositivo
     real todavía.
 
+22. **"Década sola" (sin género ni origen) no tenía NINGUNA fuente
+    posible en streaming puro.** Descubierto al probar "Años 90" sin
+    origen seleccionado: `suggestRelatedArtist()` devuelve `null`
+    limpio por diseño cuando no hay género ni origen (MusicBrainz no
+    tiene un campo fiable de "década de actividad" a nivel de
+    artista) -- antes esto lo salvaba la biblioteca local (quitada en
+    el punto 20), así que década sola se quedó sin ninguna fuente
+    posible. Miguel Ángel, tras confirmar que era década sola de
+    verdad: *"sí es posible hacerlo con streaming puro... en vez de
+    'dame un artista de este género' hay que preguntar 'dame una
+    grabación publicada en esta década'."*
+
+    Nueva `RadioRepository.suggestArtistFromDecade()`: busca
+    directamente por FECHA DE PRIMERA EDICIÓN del release-group
+    (`firstreleasedate:[decadaInicio-01-01 TO decadaFin-12-31]`) en
+    vez de por artista, y extrae el artista del `artist-credit` de los
+    resultados (campo nuevo en el DTO `MusicBrainzReleaseGroup`,
+    reutilizando `MusicBrainzArtistCredit` ya existente). Paginación
+    con el mismo `miMooutCastOffset`/`MIMOOUTCAST_PAGE_SIZE` del punto
+    21 -- tampoco se agota nunca. `fetchSimpleManualCandidate()`
+    detecta el caso "década sola" (`genre.isBlank() && originGroup ==
+    null && decadeBegin != null`) y usa esta función en vez de
+    `suggestRelatedArtist()`.
+
+    **AVISO EXPLÍCITO, no ocultado: el nombre del campo
+    `firstreleasedate` no se ha podido verificar contra la API en
+    vivo** (bloqueada por robots.txt en el entorno de Claude, ni
+    `web_fetch` ni `bash_tool` consiguen alcanzar `musicbrainz.org`).
+    Se basa en que el campo DEVUELTO por la búsqueda es
+    `first-release-date` (confirmado contra la documentación oficial)
+    y en la convención de MusicBrainz de quitar guiones entre campo
+    devuelto y campo buscable -- razonable, pero no probado. El log
+    de `suggestArtistFromDecade()` deja constancia clara de cuántos
+    release-groups trae la respuesta cruda en cada llamada, para poder
+    distinguir de un vistazo "la sintaxis del campo está mal" (0
+    release-groups siempre) de "de verdad no hay nada en esta página"
+    (release-groups > 0 pero sin artist-credit útil). **Es el primer
+    sitio a mirar si década sola sigue sin encontrar nada tras esta
+    build.** Sin verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

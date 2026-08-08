@@ -3712,26 +3712,41 @@ class PlayerManager @Inject constructor(
 
         repeat(MIMOOUTCAST_CANDIDATE_ATTEMPTS) {
             val windowLower = baseWindowLower + triedThisCall
-            // MusicBrainz en vivo. Con género O con origen (aunque sea
-            // sin el otro) hay término real que buscar -- ver
-            // `RadioRepository.buildGenreQuery()`. "Década sola" (sin
-            // ninguno de los dos) no puede aportar nada aquí, y
-            // `suggestRelatedArtist()` ya lo sabe y devuelve `null`
-            // limpio.
-            //
-            // `offset = miMooutCastOffset` -- SIN esto, cada intento
-            // consultaba la MISMA región del catálogo (con solo un
-            // pequeño desplazamiento aleatorio interno de
-            // `findCandidates()`, 0-90). Orden de Miguel Ángel: *"no
-            // son 25 candidatos, hay cientos de miles de temas de
-            // minimal techno"* -- MusicBrainz tiene dos millones de
-            // artistas, y esta ancla no se agota nunca de verdad
-            // mientras queden páginas por delante.
-            val artist = radioRepository.suggestRelatedArtist(
-                anchor, windowLower, emptySet(),
-                offset = miMooutCastOffset,
-                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
-            )
+            // H15 (miMooutCast), S032 -- "década sola" (sin género ni
+            // origen): `suggestRelatedArtist()` no tiene ningún
+            // término real que mandar a MusicBrainz y devuelve `null`
+            // limpio siempre -- por diseño (ver `buildGenreQuery()`,
+            // MusicBrainz no tiene un campo fiable de "década de
+            // actividad" a nivel de artista). Se busca en su lugar
+            // directamente por fecha de primera edición del disco --
+            // ver `suggestArtistFromDecade()`, incluye su propio aviso
+            // de verificación pendiente en el kdoc.
+            val isDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
+            val artist = if (isDecadeOnly) {
+                radioRepository.suggestArtistFromDecade(
+                    decadeBegin = anchor.decadeBegin!!,
+                    excludeArtists = windowLower,
+                    offset = miMooutCastOffset,
+                )
+            } else {
+                // MusicBrainz en vivo. Con género O con origen (aunque
+                // sea sin el otro) hay término real que buscar -- ver
+                // `RadioRepository.buildGenreQuery()`.
+                //
+                // `offset = miMooutCastOffset` -- SIN esto, cada
+                // intento consultaba la MISMA región del catálogo (con
+                // solo un pequeño desplazamiento aleatorio interno de
+                // `findCandidates()`, 0-90). Orden de Miguel Ángel:
+                // *"no son 25 candidatos, hay cientos de miles de
+                // temas de minimal techno"* -- MusicBrainz tiene dos
+                // millones de artistas, y esta ancla no se agota nunca
+                // de verdad mientras queden páginas por delante.
+                radioRepository.suggestRelatedArtist(
+                    anchor, windowLower, emptySet(),
+                    offset = miMooutCastOffset,
+                    genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+                )
+            }
             if (artist == null) {
                 // Página sin nada nuevo -- se avanza y se sigue,
                 // mismo principio que `radioUnknownOffset` en la Radio
@@ -3741,9 +3756,10 @@ class PlayerManager @Inject constructor(
             }
             triedThisCall += artist.lowercase()
 
-            // Veto DURO de la ventana -- suggestRelatedArtist() solo la
-            // trata como preferencia blanda internamente, así que se
-            // repite la comprobación aquí antes de aceptar nada.
+            // Veto DURO de la ventana -- las dos funciones de arriba
+            // solo la tratan como preferencia blanda internamente, así
+            // que se repite la comprobación aquí antes de aceptar
+            // nada.
             if (artist.lowercase() in windowLower) return@repeat
             val item = resolveYoutubeCandidate(
                 anchorLabel, artist, songTitle = null,

@@ -167,6 +167,19 @@ data class MusicBrainzReleaseGroup(
     @SerializedName("title") val title: String,
     @SerializedName("first-release-date") val firstReleaseDate: String? = null,
     @SerializedName("primary-type") val primaryType: String? = null,
+    /**
+     * H15 (miMooutCast), S032 -- añadido para `suggestArtistFromDecade()`:
+     * ancla "década sola" (sin género ni origen) no tiene ningún
+     * término real que mandar a la búsqueda de artistas, así que en
+     * vez de eso se busca directamente por FECHA DE PRIMERA EDICIÓN
+     * (`firstreleasedate`, ver `RadioRepository.suggestArtistFromDecade()`)
+     * y se extrae el artista de aquí. Verificado que el endpoint de
+     * búsqueda de release-group ya trae `artist-credit` sin necesitar
+     * `inc=` -- mismo campo, mismo DTO reutilizado
+     * (`MusicBrainzArtistCredit`) que `MusicBrainzRelease`/
+     * `MusicBrainzRecording`.
+     */
+    @SerializedName("artist-credit") val artistCredit: List<MusicBrainzArtistCredit> = emptyList(),
 )
 
 /**

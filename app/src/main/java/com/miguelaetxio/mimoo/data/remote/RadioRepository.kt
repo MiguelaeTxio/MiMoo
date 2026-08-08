@@ -1680,6 +1680,70 @@ class RadioRepository @Inject constructor(
     }
 
     /**
+     * H15 (miMooutCast), S032 -- ancla "década sola" en streaming puro
+     * (sin género ni origen -- `suggestRelatedArtist()` no puede hacer
+     * nada aquí, ver su propio guard). Orden explícita de Miguel
+     * Ángel, tras confirmar que era año/década sola de verdad: *"sí es
+     * posible hacerlo con streaming puro... hay que cambiar el tipo de
+     * consulta -- en vez de 'dame un artista de este género' hay que
+     * preguntar 'dame una grabación publicada en esta década'."*
+     *
+     * Busca directamente por FECHA DE PRIMERA EDICIÓN del
+     * release-group (`firstreleasedate`, rango de los diez años de la
+     * década) en vez de por artista -- MusicBrainz no tiene ningún
+     * campo fiable de "década de actividad" a nivel de artista (ver el
+     * comentario de S027 sobre por qué el ancla nunca usa
+     * `life-span.begin`), pero SÍ tiene la fecha real de cada disco.
+     *
+     * **AVISO DE VERIFICACIÓN PENDIENTE**: el nombre del campo
+     * `firstreleasedate` no se ha podido confirmar contra la API en
+     * vivo (bloqueada por robots.txt en el entorno de Claude) -- se
+     * basa en que el campo DEVUELTO por la búsqueda es
+     * `first-release-date` (confirmado contra la documentación
+     * oficial) y en la convención de nombres de MusicBrainz de quitar
+     * guiones entre campo devuelto y campo buscable. Si esta consulta
+     * devuelve sistemáticamente vacío, es el primer sitio a revisar --
+     * el log deja constancia clara de cuántos release-groups trae la
+     * respuesta cruda, para poder distinguir "la sintaxis del campo
+     * está mal" de "de verdad no hay nada esta página".
+     */
+    suspend fun suggestArtistFromDecade(
+        decadeBegin: Int,
+        excludeArtists: Set<String>,
+        offset: Int = 0,
+    ): String? {
+        val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
+        val decadeEnd = decadeBegin + 9
+        val query = "firstreleasedate:[$decadeBegin-01-01 TO $decadeEnd-12-31]"
+        return try {
+            val response = musicBrainzApiService.searchReleaseGroups(
+                query = query,
+                limit = MIMOOUTCAST_DECADE_PAGE_SIZE,
+                offset = offset,
+            )
+            noteSuccess()
+            val candidates = response.releaseGroups
+                .flatMap { it.artistCredit }
+                .map { it.name }
+                .distinct()
+                .filter { it.lowercase() !in excludeLower }
+            log(
+                "suggestArtistFromDecade(década=$decadeBegin, offset=$offset) -- " +
+                    "${response.releaseGroups.size} release-groups en bruto, " +
+                    "${candidates.size} artistas distintos tras excluir ${excludeArtists.size} ya usados",
+            )
+            candidates.randomOrNull()
+        } catch (e: Exception) {
+            noteFailure(e)
+            log(
+                "suggestArtistFromDecade(década=$decadeBegin, offset=$offset) -- EXCEPCIÓN: " +
+                    "${e::class.java.simpleName}: ${e.message}",
+            )
+            null
+        }
+    }
+
+    /**
      * S026 -- expone `GenreMatchQuality` a `PlayerManager` (porción
      * DISCO), que no tiene acceso directo a `GenreTree`. Mismo umbral
      * por porcentaje que en Conocidos y Exploración -- ver
@@ -2424,6 +2488,9 @@ class RadioRepository @Inject constructor(
          * pedir de más no cuesta precisión -- cuesta no encontrarlo.
          */
         const val ANCHOR_SEARCH_LIMIT = 25
+
+        /** H15 (miMooutCast), S032 -- página de `suggestArtistFromDecade()`. Mismo tamaño que el resto de páginas del proyecto. */
+        const val MIMOOUTCAST_DECADE_PAGE_SIZE = 25
 
         /**
          * Palabras iniciales del título que se prueban como nombre de
