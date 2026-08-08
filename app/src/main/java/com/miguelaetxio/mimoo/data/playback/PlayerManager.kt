@@ -3719,15 +3719,22 @@ class PlayerManager @Inject constructor(
             // MusicBrainz no tiene un campo fiable de "década de
             // actividad" a nivel de artista). Se busca en su lugar
             // directamente por fecha de primera edición del disco --
-            // ver `suggestArtistFromDecade()`, incluye su propio aviso
-            // de verificación pendiente en el kdoc.
+            // ver `suggestArtistFromDecade()`, que además de artista
+            // devuelve el TÍTULO del disco encontrado, para que la
+            // búsqueda de más abajo sea tan precisa como "artista +
+            // canción" en vez de "solo artista" a ciegas por toda su
+            // discografía (incluidas décadas ajenas).
             val isDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
-            val artist = if (isDecadeOnly) {
-                radioRepository.suggestArtistFromDecade(
+            val artistName: String?
+            val knownTitle: String?
+            if (isDecadeOnly) {
+                val candidate = radioRepository.suggestArtistFromDecade(
                     decadeBegin = anchor.decadeBegin!!,
                     excludeArtists = windowLower,
                     offset = miMooutCastOffset,
                 )
+                artistName = candidate?.artist
+                knownTitle = candidate?.title
             } else {
                 // MusicBrainz en vivo. Con género O con origen (aunque
                 // sea sin el otro) hay término real que buscar -- ver
@@ -3741,28 +3748,29 @@ class PlayerManager @Inject constructor(
                 // temas de minimal techno"* -- MusicBrainz tiene dos
                 // millones de artistas, y esta ancla no se agota nunca
                 // de verdad mientras queden páginas por delante.
-                radioRepository.suggestRelatedArtist(
+                artistName = radioRepository.suggestRelatedArtist(
                     anchor, windowLower, emptySet(),
                     offset = miMooutCastOffset,
                     genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
                 )
+                knownTitle = null
             }
-            if (artist == null) {
+            if (artistName == null) {
                 // Página sin nada nuevo -- se avanza y se sigue,
                 // mismo principio que `radioUnknownOffset` en la Radio
                 // automática ("la exploración no se agota nunca").
                 miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
                 return@repeat
             }
-            triedThisCall += artist.lowercase()
+            triedThisCall += artistName.lowercase()
 
             // Veto DURO de la ventana -- las dos funciones de arriba
             // solo la tratan como preferencia blanda internamente, así
             // que se repite la comprobación aquí antes de aceptar
             // nada.
-            if (artist.lowercase() in windowLower) return@repeat
+            if (artistName.lowercase() in windowLower) return@repeat
             val item = resolveYoutubeCandidate(
-                anchorLabel, artist, songTitle = null,
+                anchorLabel, artistName, songTitle = knownTitle,
                 expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
                 expectedYear = anchor.anchorYear,
                 genreHint = anchor.genre.ifBlank { null },

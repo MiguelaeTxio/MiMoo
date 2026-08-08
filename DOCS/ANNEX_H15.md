@@ -516,9 +516,25 @@ automática (H08) se ha tocado:
     release-groups trae la respuesta cruda en cada llamada, para poder
     distinguir de un vistazo "la sintaxis del campo está mal" (0
     release-groups siempre) de "de verdad no hay nada en esta página"
-    (release-groups > 0 pero sin artist-credit útil). **Es el primer
-    sitio a mirar si década sola sigue sin encontrar nada tras esta
-    build.** Sin verificar en dispositivo real todavía.
+    (release-groups > 0 pero sin artist-credit útil).
+
+    **CONFIRMADO CON LOG REAL (2026-08-08): el campo `firstreleasedate`
+    es correcto.** `suggestArtistFromDecade(década=1990, offset=0)`
+    devolvió 25 release-groups reales en la primera llamada, no una
+    lista vacía -- ya no es una apuesta, es un hecho verificado.
+
+    **Refinamiento en el mismo log**: el primer artista devuelto ('The
+    Spectres') tenía un disco real de 1990, pero el grueso de su
+    discografía es de los 60-80 -- al pasar solo el nombre del artista
+    (sin canción conocida), `resolveYoutubeCandidate()` gastaba
+    intentos enteros descartando temas suyos de décadas ajenas antes
+    de acertar por casualidad. Corregido: `suggestArtistFromDecade()`
+    ahora devuelve `DecadeCandidate(artist, title)` -- el TÍTULO del
+    disco concreto que tiene la fecha correcta, no solo el artista --
+    y `fetchSimpleManualCandidate()` lo pasa como canción conocida a
+    `resolveYoutubeCandidate()`, con la misma precisión de "artista +
+    canción" que el resto del proyecto usa en cualquier otro punto.
+    Sin verificar en dispositivo real todavía.
 
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual

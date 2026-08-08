@@ -1707,11 +1707,54 @@ class RadioRepository @Inject constructor(
      * respuesta cruda, para poder distinguir "la sintaxis del campo
      * está mal" de "de verdad no hay nada esta página".
      */
+    /**
+     * H15 (miMooutCast), S032 -- resultado de `suggestArtistFromDecade()`:
+     * artista Y título del disco concreto que tiene fecha de primera
+     * edición dentro de la década -- no solo el nombre del artista.
+     * Sin el título, `resolveYoutubeCandidate()` tendría que buscar
+     * "solo artista" (sin canción conocida) y filtrar a ciegas entre
+     * TODA su discografía -- incluida la de décadas completamente
+     * distintas -- hasta encontrar por casualidad algo de la década
+     * correcta. Con el título ya en la mano, la búsqueda es tan
+     * precisa como "artista + canción" en cualquier otro punto del
+     * proyecto.
+     */
+    data class DecadeCandidate(val artist: String, val title: String)
+
+    /**
+     * H15 (miMooutCast), S032 -- ancla "década sola" en streaming puro
+     * (sin género ni origen -- `suggestRelatedArtist()` no puede hacer
+     * nada aquí, ver su propio guard). Orden explícita de Miguel
+     * Ángel, tras confirmar que era año/década sola de verdad: *"sí es
+     * posible hacerlo con streaming puro... hay que cambiar el tipo de
+     * consulta -- en vez de 'dame un artista de este género' hay que
+     * preguntar 'dame una grabación publicada en esta década'."*
+     *
+     * Busca directamente por FECHA DE PRIMERA EDICIÓN del
+     * release-group (`firstreleasedate`, rango de los diez años de la
+     * década) en vez de por artista -- MusicBrainz no tiene ningún
+     * campo fiable de "década de actividad" a nivel de artista (ver el
+     * comentario de S027 sobre por qué el ancla nunca usa
+     * `life-span.begin`), pero SÍ tiene la fecha real de cada disco.
+     *
+     * Devuelve `DecadeCandidate` (artista + título del disco), no solo
+     * el artista -- verificado con log real (2026-08-08): el primer
+     * artista devuelto ('The Spectres') SÍ tenía un disco real de la
+     * década pedida, pero el grueso de su discografía es de los 60-80
+     * -- sin el título concreto, `resolveYoutubeCandidate()` gastaba
+     * intentos enteros rechazando temas suyos de décadas ajenas antes
+     * de rendirse o acertar por casualidad.
+     *
+     * VERIFICADO CONTRA LA API EN VIVO (2026-08-08, log real de Miguel
+     * Ángel): `firstreleasedate` SÍ es el campo correcto --
+     * `suggestArtistFromDecade(década=1990, offset=0)` devolvió 25
+     * release-groups reales en la primera llamada, no una lista vacía.
+     */
     suspend fun suggestArtistFromDecade(
         decadeBegin: Int,
         excludeArtists: Set<String>,
         offset: Int = 0,
-    ): String? {
+    ): DecadeCandidate? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val decadeEnd = decadeBegin + 9
         val query = "firstreleasedate:[$decadeBegin-01-01 TO $decadeEnd-12-31]"
@@ -1723,14 +1766,12 @@ class RadioRepository @Inject constructor(
             )
             noteSuccess()
             val candidates = response.releaseGroups
-                .flatMap { it.artistCredit }
-                .map { it.name }
-                .distinct()
-                .filter { it.lowercase() !in excludeLower }
+                .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }
+                .filter { it.artist.lowercase() !in excludeLower }
             log(
                 "suggestArtistFromDecade(década=$decadeBegin, offset=$offset) -- " +
                     "${response.releaseGroups.size} release-groups en bruto, " +
-                    "${candidates.size} artistas distintos tras excluir ${excludeArtists.size} ya usados",
+                    "${candidates.size} candidatos artista+disco tras excluir ${excludeArtists.size} ya usados",
             )
             candidates.randomOrNull()
         } catch (e: Exception) {
