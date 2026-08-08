@@ -1436,9 +1436,16 @@ class PlayerManager @Inject constructor(
                     // artista suave y tema duro) lo hace
                     // acceptRadioItem() dentro de la vuelta. Aquí solo
                     // queda la red de seguridad del artista, por si la
-                    // pista llegó por un camino que no pasa por allí.
-                    newItem.artist?.let { radioUsedArtists.add(it) }
-                    if (manualAnchorActive) rememberMiMooutCastArtist(newItem.artist)
+                    // pista llegó por un camino que no pasa por allí --
+                    // SOLO para Radio: `radioUsedArtists` no significa
+                    // nada en miMooutCast, y escribir ahí durante una
+                    // sesión de ancla manual solo contaminaría el
+                    // estado de la Radio (H15, S032).
+                    if (manualAnchorActive) {
+                        rememberMiMooutCastArtist(newItem.artist)
+                    } else {
+                        newItem.artist?.let { radioUsedArtists.add(it) }
+                    }
                     radioUsedSongs.add(knownHitsRepository.songKey(newItem.artist, newItem.title))
 
                     withContext(Dispatchers.Main) {
@@ -3504,9 +3511,9 @@ class PlayerManager @Inject constructor(
      * disco/desconocidos porque el ancla es un artista real con toda
      * esa maquinaria alrededor. Aquí es sencillo: streaming continuo
      * de temas que encajen con la elección, sin repetir, cada uno
-     * buscado por `fetchSimpleManualCandidate()` (dictionario ->
-     * MusicBrainz en vivo -> biblioteca local, el primero que
-     * encuentre algo, sin contar cuotas de nada).
+     * buscado por `fetchSimpleManualCandidate()` (MusicBrainz en vivo
+     * -> biblioteca local, el primero que encuentre algo -- SIN
+     * diccionario de éxitos, ver su kdoc; sin contar cuotas de nada).
      *
      * `radioAnchor` se fija DIRECTAMENTE y `manualAnchorActive = true`
      * hace que `fetchOneRadioTrack()` -- reutilizado tal cual, junto
@@ -3541,7 +3548,11 @@ class PlayerManager @Inject constructor(
             withContext(Dispatchers.Main) { stopOpeningLoopIfActive() }
             return false
         }
-        first.artist?.let { radioUsedArtists.add(it) }
+        // H15 (miMooutCast) -- SOLO la ventana propia. `radioUsedArtists`
+        // es de la Radio automática, `fetchSimpleManualCandidate()` no
+        // la lee para nada -- escribir ahí no aportaría nada a
+        // miMooutCast y solo contaminaría el estado de la Radio si se
+        // cambia de modo sin pasar por clearQueue().
         rememberMiMooutCastArtist(first.artist)
         radioUsedSongs.add(knownHitsRepository.songKey(first.artist, first.title))
         withContext(Dispatchers.Main) {
@@ -3553,18 +3564,20 @@ class PlayerManager @Inject constructor(
 
     /**
      * H15 (miMooutCast) -- busca UN candidato para el ancla manual,
-     * sin cupos: prueba en orden dictionario -> MusicBrainz en vivo ->
-     * biblioteca local, se queda con el primero que encuentre algo.
-     * Reutiliza `radioUsedArtists`/`radioUsedSongs` (los mismos sets
-     * de sesión que ya usa la Radio automática) para no repetir, y el
-     * mismo filtro de Lista Negra de H16
+     * sin cupos: prueba en orden MusicBrainz en vivo -> biblioteca
+     * local, se queda con el primero que encuentre algo. Reutiliza
+     * `radioUsedSongs` (no repetir tema jamás en la sesión, compartido
+     * con la Radio automática solo como generador de clave, sin ningún
+     * significado de "éxito") y el mismo filtro de Lista Negra de H16
      * (`dislikedArtistNamesLower`/`isTrackDisliked()`), releído en
-     * cada llamada -- mismo criterio que `refreshDislikedSnapshots()`
-     * en `fetchRoundCandidate()`.
+     * cada llamada. La ventana de no-repetición de artista
+     * (`miMooutCastRecentArtists`, 10 temas) es EXCLUSIVA de
+     * miMooutCast -- nunca `radioUsedArtists`, que es de toda la
+     * sesión y solo pertenece a la Radio automática.
      *
      * BUG REAL, S030 -- reportado por Miguel Ángel: temas de Soundgarden
      * sonando dentro de una sesión anclada en "minimal techno". Causa:
-     * los tres `return` de esta función devolvían el `QueueItem` de
+     * los `return` de esta función devolvían el `QueueItem` de
      * `resolveYoutubeCandidate()`/`pickDiscoCandidate()` TAL CUAL, sin
      * `isFromRadio = true` -- el flag que el bloque de
      * `onMediaItemTransition` (más arriba en esta clase) usa para
@@ -3576,42 +3589,25 @@ class PlayerManager @Inject constructor(
      * `manualAnchorActive = false`, y la siguiente búsqueda caía en el
      * motor automático de H08, anclado en lo que sonaba en ese momento
      * en vez de en la elección original. `.copy(isFromRadio = true)`
-     * en los tres retornos, igual que ya hace el motor de cupos en sus
+     * en los retornos, igual que ya hace el motor de cupos en sus
      * dos puntos de construcción del `QueueItem` final.
      *
-     * BUG REAL, S032 -- reportado por Miguel Ángel (con
-     * `mimooutcast_debug.txt` real): esta función usaba
-     * `radioUsedArtists` (preferencia BLANDA, de toda la sesión,
-     * pensada para la Radio automática) como si fuera la ventana de
-     * no-repetición de artista de miMooutCast. Orden explícita y
-     * repetida: *"la única regla es no repetir tema jamás y no
-     * repetir artista en una ventana de 10 temas"* -- y ojo, EXCLUSIVA
-     * de este modo, nunca tocar `radioUsedArtists` ni su
-     * comportamiento en la Radio. Ahora usa `miMooutCastRecentArtists`
-     * (ventana dura, FIFO, tamaño 10, ver su kdoc) y las tres fuentes
-     * comparten el mismo veto explícito: si el candidato resuelto
-     * pertenece a un artista dentro de la ventana, se descarta sin
-     * excepción y se prueba la fuente siguiente -- ninguna de las tres
-     * fuentes vale más que las otras, la única pregunta en cada una es
-     * si el tema encaja con el ancla elegida.
-     */
-    /**
-     * H15 (miMooutCast), S032 -- BUG REAL DE FONDO, corregido:
-     * hasta ahora este método probaba primero el diccionario de
-     * éxitos (`knownHitsRepository.randomHit()`) -- un concepto de la
-     * Radio automática, curado con música POPULAR, que no tiene
-     * ningún papel en miMooutCast. Orden explícita y repetida de
-     * Miguel Ángel, hasta agotar la paciencia: *"esto no tiene nada
-     * que ver con la radio... aquí no hay éxitos, que aquí no hay
-     * cuota... lo único que hay que hacer es cumplir el ancla, y el
-     * ancla solamente va por una cosa: o género, o década, o origen.
-     * Y ya está. No repetir temas y no repetir artista en una ventana
-     * de diez temas."* Quitado el peldaño del diccionario -- solo
-     * quedan las dos fuentes que comprueban género/década/origen de
-     * verdad contra metadatos reales (MusicBrainz, biblioteca local),
-     * sin ningún filtro de "es un éxito conocido". El diccionario
-     * SIGUE existiendo tal cual en `fetchRoundCandidate()` (Radio
-     * automática) -- esto es exclusivo de miMooutCast.
+     * H15 (miMooutCast), S032 -- BUG REAL DE FONDO, corregido: esta
+     * función probaba primero el diccionario de éxitos
+     * (`knownHitsRepository.randomHit()`) -- un concepto de la Radio
+     * automática, curado con música POPULAR, que no tiene ningún papel
+     * en miMooutCast. Orden explícita y repetida de Miguel Ángel, hasta
+     * agotar la paciencia: *"esto no tiene nada que ver con la radio...
+     * aquí no hay éxitos, que aquí no hay cuota... lo único que hay que
+     * hacer es cumplir el ancla, y el ancla solamente va por una cosa: o
+     * género, o década, o origen. Y ya está. No repetir temas y no
+     * repetir artista en una ventana de diez temas."* Quitado el
+     * peldaño del diccionario -- solo quedan las dos fuentes que
+     * comprueban género/década/origen de verdad contra metadatos
+     * reales (MusicBrainz, biblioteca local), sin ningún filtro de "es
+     * un éxito conocido". El diccionario SIGUE existiendo tal cual en
+     * `fetchRoundCandidate()` (Radio automática) -- esto es exclusivo
+     * de miMooutCast.
      */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()

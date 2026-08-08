@@ -341,6 +341,38 @@ automática (H08) se ha tocado:
     `fetchRoundCandidate()` (Radio automática) -- Miguel Ángel confirmó
     explícitamente que ahí sí debe seguir.** Sin verificar en
     dispositivo real todavía.
+17. **Auditoría completa a petición de Miguel Ángel ("no voy a instalar
+    ninguna build hasta que me asegures que el código de miMooutCast
+    no tiene absolutamente nada que ver con el de la radio").**
+    Rastreado el camino de código completo desde
+    `startRadioFromManualAnchor()` hasta el final, función por función.
+    Dos hallazgos reales más, de la misma clase que los puntos 12-16
+    (variables de sesión compartidas sin necesidad):
+    - `startRadioFromManualAnchor()` y `topUpRadioQueueIfNeeded()`
+      escribían en `radioUsedArtists` (exclusiva de la Radio) incluso
+      durante una sesión de miMooutCast, aunque
+      `fetchSimpleManualCandidate()` nunca la lee -- no cambiaba nada
+      del comportamiento (ambas rutas de entrada, `clearQueue()` para
+      miMooutCast y el bloque de "nueva sesión" para la Radio natural,
+      limpian `radioUsedArtists` antes de usarla, así que no había
+      contaminación real posible entre sesiones), pero sí era código
+      que "tenía que ver con la radio" sin necesidad. Quitado --
+      miMooutCast ya solo escribe en `miMooutCastRecentArtists`.
+    - Dos comentarios (KDoc) desactualizados que todavía describían el
+      orden "dictionario -> MusicBrainz -> biblioteca local" tras
+      haberse quitado el diccionario en el punto 16 -- corregidos para
+      que no describan un comportamiento que ya no existe.
+
+    Confirmado con grep exhaustivo sobre el archivo completo: la única
+    llamada real a `knownHitsRepository.randomHit()` (el diccionario)
+    que queda en todo `PlayerManager.kt` está dentro de
+    `fetchRoundCandidate()`; todas las llamadas a `RadioDebugLogger.log()`
+    que quedan caen dentro de `resolveAnchorWithFallbacks()`/
+    `fetchRoundCandidate()` (bloqueadas en seco para miMooutCast) o de
+    sus funciones auxiliares exclusivas (`exhaustPortion()`,
+    `fetchFromUnknown()`, `resolveFinalFallback()`, todas solo
+    invocadas desde dentro de `fetchRoundCandidate()`). Sin verificar
+    en dispositivo real todavía.
 
 Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
