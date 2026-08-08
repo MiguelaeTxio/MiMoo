@@ -3637,12 +3637,20 @@ class PlayerManager @Inject constructor(
      * `fetchRoundCandidate()` (Radio automática) -- esto es exclusivo
      * de miMooutCast.
      */
+    /**
+     * H15 (miMooutCast), S032 -- BUG REAL DE FONDO, corregido: se
+     * quita por completo el peldaño de biblioteca local
+     * (`pickDiscoCandidate()`). Orden explícita de Miguel Ángel:
+     * *"eliminemos por completo la búsqueda local... miMooutCast es
+     * únicamente en streaming... es una pérdida de tiempo."*
+     * miMooutCast solo tiene una fuente: MusicBrainz en vivo.
+     */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
         val windowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
 
-        // 1 -- MusicBrainz en vivo. Con género O con origen (aunque
-        // sea sin el otro) hay término real que buscar -- ver
+        // MusicBrainz en vivo. Con género O con origen (aunque sea sin
+        // el otro) hay término real que buscar -- ver
         // `RadioRepository.buildGenreQuery()`. "Década sola" (sin
         // ninguno de los dos) no puede aportar nada aquí, y
         // `suggestRelatedArtist()` ya lo sabe y devuelve `null` limpio.
@@ -3673,24 +3681,9 @@ class PlayerManager @Inject constructor(
             }
         }
 
-        // 2 -- biblioteca local, último recurso, funciona con
-        // cualquier combinación (el filtro de género de
-        // `GenreMatchQuality.of()` ya trata un ancla sin género como
-        // "sin restricción", ver su comentario H15). `pickDiscoCandidate`
-        // ya excluye `windowLower` de forma dura vía `excludeArtists`.
-        pickDiscoCandidate(anchor, windowLower, emptySet())?.let { item ->
-            MimooutcastDebugLogger.log(
-                appContext, storageManager,
-                "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> biblioteca local: " +
-                    "'${item.artist}' - '${item.title}'",
-            )
-            return item.copy(isFromRadio = true)
-        }
-
         MimooutcastDebugLogger.log(
             appContext, storageManager,
-            "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en ninguna de " +
-                "las dos fuentes",
+            "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en streaming",
         )
         return null
     }
