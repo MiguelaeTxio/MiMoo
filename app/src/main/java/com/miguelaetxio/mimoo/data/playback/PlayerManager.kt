@@ -561,6 +561,32 @@ class PlayerManager @Inject constructor(
                 // tiene "canción siguiente", y NUNCA termina, así que
                 // no hay ningún "después" que planificar.
                 if (isLastItem && currentItem?.isFromRadio != true && currentItem?.isRadioStation != true) {
+                    // DIAGNÓSTICO, S032 -- bug real reportado por Miguel
+                    // Ángel: durante una sesión de miMooutCast, este
+                    // bloque se disparaba y `resolveAnchorWithFallbacks()`
+                    // acababa anclando en artistas sueltos sin relación
+                    // con el ancla elegida (ver `ANNEX_H15.md`,
+                    // "COMPLETADAS EN S032", punto 14). Confirmado que NO
+                    // es el loop de apertura (`isRadioStation = true`, ya
+                    // excluido arriba). Esta traza deja constancia del
+                    // ítem exacto que dispara el reset -- título, si
+                    // llevaba `isFromRadio`, y si interrumpió una sesión
+                    // de ancla manual -- para localizar la causa real con
+                    // el próximo log en vez de seguir adivinando.
+                    if (manualAnchorActive) {
+                        val wasManualAnchor = radioAnchorArtist
+                        managerScope.launch {
+                            MimooutcastDebugLogger.log(
+                                appContext, storageManager,
+                                "onMediaItemTransition() -- RESET SOSPECHOSO: se interrumpe una sesión " +
+                                    "de ancla manual ('$wasManualAnchor') porque el ítem actual " +
+                                    "(index=$currentIndex/${queueItems.lastIndex}, " +
+                                    "título='${currentItem?.title}', artist='${currentItem?.artist}', " +
+                                    "uri='${currentItem?.uri}', isFromRadio=${currentItem?.isFromRadio}, " +
+                                    "isRadioStation=${currentItem?.isRadioStation}) no lleva isFromRadio",
+                            )
+                        }
+                    }
                     // H08 (S009, corrección tras corte a los 3 temas)
                     // -- se fija el "ancla": el artista que de verdad
                     // arrancó la Radio. Si la cadena de "relacionados"
@@ -4206,6 +4232,23 @@ class PlayerManager @Inject constructor(
      * artist.
      */
     fun clearQueue() {
+        // DIAGNÓSTICO, S032 -- mismo bug que la traza de
+        // onMediaItemTransition() más arriba: si esto se llama con una
+        // sesión de miMooutCast todavía activa, es la otra vía posible
+        // por la que se pierden `radioAnchor`/`manualAnchorActive` a
+        // mitad de sesión. La pila de llamada (`Throwable().stackTrace`,
+        // solo para el log, nunca se lanza) dice quién la invocó.
+        if (manualAnchorActive) {
+            val wasManualAnchor = radioAnchorArtist
+            val caller = Throwable().stackTrace.getOrNull(1)?.toString()
+            managerScope.launch {
+                MimooutcastDebugLogger.log(
+                    appContext, storageManager,
+                    "clearQueue() -- RESET SOSPECHOSO: se interrumpe una sesión de ancla manual " +
+                        "('$wasManualAnchor') -- llamante: $caller",
+                )
+            }
+        }
         queueItems.clear()
         player.clearMediaItems()
         player.stop()
