@@ -1363,8 +1363,7 @@ class PlayerManager @Inject constructor(
                         keepGoing to backlog
                     }
                     if (!shouldContinue) {
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
+                        sharedResolveLog(
                             "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió o backlog ya " +
                                 "llegó a $RADIO_QUEUE_SIZE (backlog actual: $backlogNow)",
                         )
@@ -1379,8 +1378,7 @@ class PlayerManager @Inject constructor(
                         // muestre el modal "¿Quién es el artista?" con
                         // el título del vídeo como contexto; queda
                         // esperando a submitRadioArtist().
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
+                        sharedResolveLog(
                             "topUpRadioQueueIfNeeded() -- parado: no hay artista ancla (la última " +
                                 "pista propia del usuario no tiene 'artist'), se pregunta al usuario",
                         )
@@ -1409,8 +1407,7 @@ class PlayerManager @Inject constructor(
                     val newItem = fetchOneRadioTrack(anchorArtistName)
                     if (newItem == null) {
                         val backlogFinal = withContext(Dispatchers.Main) { currentRadioBacklog() }
-                        RadioDebugLogger.log(
-                            appContext, storageManager,
+                        sharedResolveLog(
                             "topUpRadioQueueIfNeeded() -- parado del todo: sin más candidatos para " +
                                 "el ancla de '$anchorArtistName' -- backlog final: $backlogFinal",
                         )
@@ -1784,8 +1781,7 @@ class PlayerManager @Inject constructor(
                 // (deja sonar lo que hay en cola, solo avisa cuando se
                 // acaba). No se pide NINGÚN candidato nuevo con un
                 // ancla que no sabe distinguir una época de otra.
-                RadioDebugLogger.log(
-                    appContext, storageManager,
+                sharedResolveLog(
                     "fetchOneRadioTrack(ancla='$anchorArtistName') -- RADIO DETENIDA: sin red al fijar " +
                         "la década del ancla, no se arranca una sesión sin control temporal",
                 )
@@ -1813,8 +1809,7 @@ class PlayerManager @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            RadioDebugLogger.log(
-                appContext, storageManager,
+            sharedResolveLog(
                 "fetchOneRadioTrack(ancla='$anchorArtistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}",
             )
             null

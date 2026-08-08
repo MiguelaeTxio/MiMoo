@@ -299,8 +299,21 @@ automática (H08) se ha tocado:
     señal. Con el motor de cupos de Radio (`fetchRoundCandidate()`) y
     `resolveAnchorWithFallbacks()` ya bloqueados en seco por el punto
     14, en la práctica `radio_relacionados_debug.txt` no debería
-    recibir ni una sola línea mientras miMooutCast está activo. Sin
-    verificar en dispositivo real todavía.
+    recibir ni una sola línea mientras miMooutCast está activo.
+
+    **Corrección real tras la primera verificación de Miguel Ángel**
+    (capturas de pantalla, tamaño de `radio_relacionados_debug.txt`
+    creciendo unos bytes durante una sesión de miMooutCast): el
+    arreglo de arriba no cubría `topUpRadioQueueIfNeeded()` ni
+    `fetchOneRadioTrack()` -- las dos funciones compartidas que
+    envuelven a `fetchRoundCandidate()`/`fetchSimpleManualCandidate()`
+    y que también llamaban a `RadioDebugLogger.log()` directamente en
+    varios de sus propios puntos de control (backlog lleno, sin
+    artista ancla, agotamiento total, sin red al fijar década,
+    excepción general) -- estas SÍ se ejecutan igual en ambos modos,
+    así que sus logs directos escapaban al enrutador. Las cinco
+    llamadas sueltas de estas dos funciones pasadas también a
+    `sharedResolveLog()`. Sin verificar en dispositivo real todavía.
 
 Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
