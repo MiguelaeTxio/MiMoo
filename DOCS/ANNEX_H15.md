@@ -322,3 +322,8 @@ Sin código pendiente. Puntos:
    miMooutCast, y que un ancla genuinamente agotada (género/década/
    origen muy nicho, sin más candidatos en ninguna fuente) muestra el
    aviso "Sin más música" en vez de quedarse en silencio.
+3. **Verificar en dispositivo los puntos 14 y 15**: que
+   `radio_relacionados_debug.txt` NO recibe ni una sola línea nueva
+   durante una sesión de miMooutCast (todo debe ir a
+   `mimooutcast_debug.txt`), y que no vuelve a aparecer ningún nombre
+   de artista suelto sin relación con el ancla elegida.
