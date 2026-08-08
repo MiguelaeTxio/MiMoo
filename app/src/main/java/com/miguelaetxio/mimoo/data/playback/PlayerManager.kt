@@ -758,6 +758,7 @@ class PlayerManager @Inject constructor(
                         }
                     }
                     radioUnknownOffset = 0
+                    miMooutCastOffset = 0
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
                     radioLibraryArtistProfileCache.clear()
@@ -1296,6 +1297,23 @@ class PlayerManager @Inject constructor(
 
     /** Cuánto avanza la exploración cuando una página no da nada. */
     private val UNKNOWN_PAGE_SIZE = 25
+
+    /**
+     * H15 (miMooutCast), S032 -- MISMO PRINCIPIO que
+     * `radioUnknownOffset`, pero EXCLUSIVO de miMooutCast (nunca
+     * tocar `radioUnknownOffset` desde aquí). Orden explícita de
+     * Miguel Ángel, al ver que el ancla se daba por agotada tras un
+     * puñado de intentos: *"no son 25 candidatos, es que hay miles de
+     * candidatos... cientos de miles de temas de minimal techno... no
+     * somos capaces de poner 15 o 20 de cientos de miles."*
+     * MusicBrainz tiene dos millones de artistas -- si una página no
+     * trae nada nuevo, es que se ha llegado al final de ESA página,
+     * no al final del catálogo. Se resetea a 0 en los mismos puntos
+     * que `radioUnknownOffset` -- los dos límites de sesión,
+     * `clearQueue()` y el bloque de "nueva sesión" de
+     * `onMediaItemTransition()`.
+     */
+    private var miMooutCastOffset = 0
 
     private fun titleKey(title: String?): String =
         SearchNormalizer.tight(SearchNormalizer.songTitleKey(title.orEmpty()))
@@ -3667,47 +3685,97 @@ class PlayerManager @Inject constructor(
      * *"eliminemos por completo la búsqueda local... miMooutCast es
      * únicamente en streaming... es una pérdida de tiempo."*
      * miMooutCast solo tiene una fuente: MusicBrainz en vivo.
+     *
+     * BUG REAL DE FONDO, S032 -- el más grave de todos: esta función
+     * probaba UN SOLO candidato por llamada y, si fallaba, devolvía
+     * `null` -- y `topUpRadioQueueIfNeeded()` interpreta CUALQUIER
+     * `null` como agotamiento TOTAL del ancla, mostrando el aviso "Sin
+     * más música" con un solo fallo. Caso real del propio log de
+     * Miguel Ángel: `suggestRelatedArtist()` ya tenía 25 candidatos en
+     * su propia bolsa para 'minimal techno'; se probó 'Altinbas'
+     * (encontrado, añadido), después 'Marco Carola' (0 de 20
+     * resultados de YouTube pasaron el filtro) -- y ahí, con UN solo
+     * fallo, se declaró el ancla agotada "de verdad", sin haber
+     * probado ni una fracción de los otros 23+ candidatos disponibles.
+     * Mismo patrón que `resolveFinalFallback()`/`UNKNOWN_CANDIDATE_ATTEMPTS`
+     * ya usa para la Radio automática -- aquí no existía ningún
+     * reintento equivalente. Ahora prueba hasta
+     * `MIMOOUTCAST_CANDIDATE_ATTEMPTS` candidatos DISTINTOS (cada
+     * fallo se añade a `windowLower` SOLO para esta llamada, para que
+     * `suggestRelatedArtist()` no vuelva a sugerir el mismo) antes de
+     * rendirse de verdad.
      */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
-        val windowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
+        val baseWindowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
+        val triedThisCall = mutableSetOf<String>()
 
-        // MusicBrainz en vivo. Con género O con origen (aunque sea sin
-        // el otro) hay término real que buscar -- ver
-        // `RadioRepository.buildGenreQuery()`. "Década sola" (sin
-        // ninguno de los dos) no puede aportar nada aquí, y
-        // `suggestRelatedArtist()` ya lo sabe y devuelve `null` limpio.
-        radioRepository.suggestRelatedArtist(
-            anchor, windowLower, emptySet(),
-            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
-        )?.let { artist ->
+        repeat(MIMOOUTCAST_CANDIDATE_ATTEMPTS) {
+            val windowLower = baseWindowLower + triedThisCall
+            // MusicBrainz en vivo. Con género O con origen (aunque sea
+            // sin el otro) hay término real que buscar -- ver
+            // `RadioRepository.buildGenreQuery()`. "Década sola" (sin
+            // ninguno de los dos) no puede aportar nada aquí, y
+            // `suggestRelatedArtist()` ya lo sabe y devuelve `null`
+            // limpio.
+            //
+            // `offset = miMooutCastOffset` -- SIN esto, cada intento
+            // consultaba la MISMA región del catálogo (con solo un
+            // pequeño desplazamiento aleatorio interno de
+            // `findCandidates()`, 0-90). Orden de Miguel Ángel: *"no
+            // son 25 candidatos, hay cientos de miles de temas de
+            // minimal techno"* -- MusicBrainz tiene dos millones de
+            // artistas, y esta ancla no se agota nunca de verdad
+            // mientras queden páginas por delante.
+            val artist = radioRepository.suggestRelatedArtist(
+                anchor, windowLower, emptySet(),
+                offset = miMooutCastOffset,
+                genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+            )
+            if (artist == null) {
+                // Página sin nada nuevo -- se avanza y se sigue,
+                // mismo principio que `radioUnknownOffset` en la Radio
+                // automática ("la exploración no se agota nunca").
+                miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
+                return@repeat
+            }
+            triedThisCall += artist.lowercase()
+
             // Veto DURO de la ventana -- suggestRelatedArtist() solo la
             // trata como preferencia blanda internamente, así que se
             // repite la comprobación aquí antes de aceptar nada.
-            if (artist.lowercase() !in windowLower) {
-                val item = resolveYoutubeCandidate(
-                    anchorLabel, artist, songTitle = null,
-                    expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
-                    expectedYear = anchor.anchorYear,
-                    genreHint = anchor.genre.ifBlank { null },
+            if (artist.lowercase() in windowLower) return@repeat
+            val item = resolveYoutubeCandidate(
+                anchorLabel, artist, songTitle = null,
+                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+                expectedYear = anchor.anchorYear,
+                genreHint = anchor.genre.ifBlank { null },
+            )
+            if (item != null &&
+                knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
+                !isTrackDisliked(item.artist, item.title)
+            ) {
+                MimooutcastDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
+                        "'${item.artist}' - '${item.title}'",
                 )
-                if (item != null &&
-                    knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
-                    !isTrackDisliked(item.artist, item.title)
-                ) {
-                    MimooutcastDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
-                            "'${item.artist}' - '${item.title}'",
-                    )
-                    return item.copy(isFromRadio = true)
-                }
+                return item.copy(isFromRadio = true)
             }
+            // Este candidato concreto no dio nada verificable en
+            // YouTube -- se avanza también la página, para que el
+            // SIGUIENTE intento (dentro de esta llamada, o en la
+            // próxima vuelta de topUpRadioQueueIfNeeded()) no vuelva a
+            // caer en la misma región estrecha del catálogo una y otra
+            // vez.
+            miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
         }
 
         MimooutcastDebugLogger.log(
             appContext, storageManager,
-            "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en streaming",
+            "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en streaming " +
+                "tras $MIMOOUTCAST_CANDIDATE_ATTEMPTS intentos (${triedThisCall.size} artistas distintos " +
+                "probados, offset ahora en $miMooutCastOffset)",
         )
         return null
     }
@@ -4364,6 +4432,7 @@ class PlayerManager @Inject constructor(
         radioPendingUnknown.clear()
         radioClassicalDiscoExhausted = false
         radioUnknownOffset = 0
+        miMooutCastOffset = 0
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
         radioLibraryArtistProfileCache.clear()
@@ -4715,5 +4784,22 @@ class PlayerManager @Inject constructor(
          * peor caso, solo cuando los anteriores fallan.
          */
         const val UNKNOWN_CANDIDATE_ATTEMPTS = 4
+
+        /**
+         * H15 (miMooutCast), S032 -- mismo concepto que
+         * `UNKNOWN_CANDIDATE_ATTEMPTS`, para `fetchSimpleManualCandidate()`.
+         * Antes era uno implícito -- un solo candidato, y si fallaba,
+         * `topUpRadioQueueIfNeeded()` declaraba el ancla entera
+         * agotada. Ocho acota el coste (ocho búsquedas de YouTube en
+         * el peor caso, solo cuando los anteriores fallan) sin
+         * rendirse con la primera casualidad -- `suggestRelatedArtist()`
+         * suele traer 20-25 candidatos de golpe para un género real
+         * como minimal techno, así que ocho intentos reales antes de
+         * declarar agotamiento es proporcionado, no arbitrario.
+         */
+        const val MIMOOUTCAST_CANDIDATE_ATTEMPTS = 8
+
+        /** H15 (miMooutCast), S032 -- mismo tamaño que `UNKNOWN_PAGE_SIZE` de la Radio, ver `miMooutCastOffset`. */
+        const val MIMOOUTCAST_PAGE_SIZE = 25
     }
 }

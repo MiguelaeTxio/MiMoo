@@ -423,8 +423,62 @@ automática (H08) se ha tocado:
     `fetchFromUnknown()`/`resolveFinalFallback()` y
     `fetchSimpleManualCandidate()` -- beneficia a Radio y a miMooutCast
     por igual, sin tocar ningún filtro de exactitud
-    (`verifyTrackExists()` sigue exigiendo lo mismo de siempre). Sin
-    verificar en dispositivo real todavía.
+    (`verifyTrackExists()` sigue exigiendo lo mismo de siempre).
+20. **BUG REAL DE FONDO, el más grave de todos: un solo candidato
+    fallido bastaba para declarar el ancla entera agotada.**
+    `fetchSimpleManualCandidate()` probaba UN solo artista por llamada
+    (`suggestRelatedArtist()` + `resolveYoutubeCandidate()`); si ese
+    fallaba, devolvía `null` -- y `topUpRadioQueueIfNeeded()`
+    interpreta CUALQUIER `null` como agotamiento TOTAL, mostrando el
+    aviso "Sin más música". Caso real, verificado en el log con fecha:
+    sesión "Minimal Techno" encontró y añadió 'Altinbas - Drifting
+    Figures' (con el `genreHint` del punto 19 funcionando), probó
+    'Marco Carola' a continuación -- 0 de 20 resultados de YouTube
+    pasaron el filtro -- y con ESE ÚNICO fallo se declaró el ancla
+    agotada "de verdad", sin haber probado ni una fracción de los
+    otros 23+ candidatos que `suggestRelatedArtist()` ya tenía en su
+    propia bolsa de 25. Miguel Ángel, tras ver el patrón repetirse:
+    *"si seguimos buscando con el mismo código, podemos estar así
+    hasta el 3052... el código no sirve, hay que buscar otra
+    estrategia."*
+
+    Mismo patrón que `resolveFinalFallback()`/`UNKNOWN_CANDIDATE_ATTEMPTS`
+    ya usa para la Radio automática (S027) -- para miMooutCast no
+    existía ningún reintento equivalente hasta ahora. Nueva constante
+    `MIMOOUTCAST_CANDIDATE_ATTEMPTS = 8`:
+    `fetchSimpleManualCandidate()` reescrita con un `repeat(8)` que
+    prueba hasta ocho candidatos DISTINTOS antes de rendirse -- cada
+    fallo se añade a la ventana de exclusión SOLO para esa llamada
+    (`triedThisCall`), para que `suggestRelatedArtist()` no vuelva a
+    sugerir el mismo artista que ya falló.
+21. **Corrección inmediata del propio Miguel Ángel al ver el punto 20:
+    "cuando lleguemos a los 25 candidatos, también muere... no son 25
+    candidatos, hay cientos de miles de temas de minimal techno."**
+    Con razón: `suggestRelatedArtist()` sin `offset` explícito consulta
+    siempre la MISMA región del catálogo (solo con un pequeño
+    desplazamiento aleatorio interno de `findCandidates()`, 0-90) --
+    el `repeat(8)` del punto 20 probaba ocho veces dentro de esa misma
+    región estrecha, no ocho regiones distintas. La Radio automática
+    ya tenía resuelto este mismo problema desde S025
+    (`radioUnknownOffset`, con su propio comentario: *"MusicBrainz
+    tiene dos millones de artistas... la exploración NO se agota
+    nunca"*) -- miMooutCast nunca heredó ese mecanismo.
+
+    Nuevo `miMooutCastOffset` (campo de sesión, EXCLUSIVO de
+    miMooutCast, nunca toca `radioUnknownOffset`), reseteado a 0 en
+    los mismos dos puntos que su equivalente de Radio
+    (`clearQueue()`, bloque de "nueva sesión" de
+    `onMediaItemTransition()`). `fetchSimpleManualCandidate()` ahora
+    pasa `offset = miMooutCastOffset` a `suggestRelatedArtist()` y lo
+    avanza en `MIMOOUTCAST_PAGE_SIZE` (25, mismo tamaño que
+    `UNKNOWN_PAGE_SIZE`) cada vez que una página no da nada
+    aprovechable -- tanto dentro de los 8 intentos de una misma
+    llamada como entre llamadas sucesivas de la misma sesión, sin
+    reiniciarse nunca hasta el final real de la sesión. El ancla ya no
+    se declara agotada tras rebuscar en el mismo rincón estrecho del
+    catálogo una y otra vez -- avanza de verdad por los cientos de
+    miles de temas reales que existen. Sin verificar en dispositivo
+    real todavía.
 
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
