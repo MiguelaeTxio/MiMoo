@@ -184,8 +184,7 @@ fun PlayerBar(
             title = { Text("Sin más música") },
             text = {
                 Text(
-                    "No queda más música que encaje con \"$exhaustedAnchor\" en ninguna " +
-                        "fuente (diccionario, MusicBrainz o tu biblioteca). Prueba con otra " +
+                    "No queda más música que encaje con \"$exhaustedAnchor\". Prueba con otra " +
                         "combinación en miMooutCast.",
                 )
             },
