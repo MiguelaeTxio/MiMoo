@@ -3595,40 +3595,29 @@ class PlayerManager @Inject constructor(
      * fuentes vale más que las otras, la única pregunta en cada una es
      * si el tema encaja con el ancla elegida.
      */
+    /**
+     * H15 (miMooutCast), S032 -- BUG REAL DE FONDO, corregido:
+     * hasta ahora este método probaba primero el diccionario de
+     * éxitos (`knownHitsRepository.randomHit()`) -- un concepto de la
+     * Radio automática, curado con música POPULAR, que no tiene
+     * ningún papel en miMooutCast. Orden explícita y repetida de
+     * Miguel Ángel, hasta agotar la paciencia: *"esto no tiene nada
+     * que ver con la radio... aquí no hay éxitos, que aquí no hay
+     * cuota... lo único que hay que hacer es cumplir el ancla, y el
+     * ancla solamente va por una cosa: o género, o década, o origen.
+     * Y ya está. No repetir temas y no repetir artista en una ventana
+     * de diez temas."* Quitado el peldaño del diccionario -- solo
+     * quedan las dos fuentes que comprueban género/década/origen de
+     * verdad contra metadatos reales (MusicBrainz, biblioteca local),
+     * sin ningún filtro de "es un éxito conocido". El diccionario
+     * SIGUE existiendo tal cual en `fetchRoundCandidate()` (Radio
+     * automática) -- esto es exclusivo de miMooutCast.
+     */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
         val windowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
 
-        // 1 -- dictionario de éxitos. `relaxGenre = true` cuando no
-        // hay género elegido (década u origen solos): es el "modo
-        // degradado" que ya existía para cuando MusicBrainz está
-        // caído (S022) -- aquí se reutiliza tal cual porque el efecto
-        // es idéntico, "sin género real que filtrar".
-        knownHitsRepository.randomHit(
-            anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
-            excludeSongKeys = radioUsedSongs, avoidArtists = windowLower,
-            relaxGenre = anchor.genre.isBlank(),
-            anchorGenres = anchor.genres,
-            classical = anchor.isClassical,
-            genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
-        )?.let { hit ->
-            // Veto DURO de la ventana -- randomHit() solo la trata como
-            // preferencia blanda internamente, así que se repite la
-            // comprobación aquí antes de aceptar nada.
-            if (hit.artist.lowercase() !in windowLower) {
-                val item = resolveYoutubeCandidate(anchorLabel, hit.artist, hit.song)
-                if (item != null && !isTrackDisliked(item.artist, item.title)) {
-                    MimooutcastDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> dictionario: " +
-                            "'${hit.artist}' - '${hit.song}'",
-                    )
-                    return item.copy(isFromRadio = true)
-                }
-            }
-        }
-
-        // 2 -- MusicBrainz en vivo. Con género O con origen (aunque
+        // 1 -- MusicBrainz en vivo. Con género O con origen (aunque
         // sea sin el otro) hay término real que buscar -- ver
         // `RadioRepository.buildGenreQuery()`. "Década sola" (sin
         // ninguno de los dos) no puede aportar nada aquí, y
@@ -3637,9 +3626,9 @@ class PlayerManager @Inject constructor(
             anchor, windowLower, emptySet(),
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )?.let { artist ->
-            // Mismo veto DURO que en el peldaño 1 -- suggestRelatedArtist()
-            // también puede devolver un nombre dentro de la ventana si
-            // internamente se queda sin alternativas.
+            // Veto DURO de la ventana -- suggestRelatedArtist() solo la
+            // trata como preferencia blanda internamente, así que se
+            // repite la comprobación aquí antes de aceptar nada.
             if (artist.lowercase() !in windowLower) {
                 val item = resolveYoutubeCandidate(
                     anchorLabel, artist, songTitle = null,
@@ -3660,7 +3649,7 @@ class PlayerManager @Inject constructor(
             }
         }
 
-        // 3 -- biblioteca local, último recurso, funciona con
+        // 2 -- biblioteca local, último recurso, funciona con
         // cualquier combinación (el filtro de género de
         // `GenreMatchQuality.of()` ya trata un ancla sin género como
         // "sin restricción", ver su comentario H15). `pickDiscoCandidate`
@@ -3677,7 +3666,7 @@ class PlayerManager @Inject constructor(
         MimooutcastDebugLogger.log(
             appContext, storageManager,
             "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en ninguna de " +
-                "las tres fuentes",
+                "las dos fuentes",
         )
         return null
     }

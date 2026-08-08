@@ -313,7 +313,34 @@ automática (H08) se ha tocado:
     excepción general) -- estas SÍ se ejecutan igual en ambos modos,
     así que sus logs directos escapaban al enrutador. Las cinco
     llamadas sueltas de estas dos funciones pasadas también a
-    `sharedResolveLog()`. Sin verificar en dispositivo real todavía.
+    `sharedResolveLog()`.
+16. **BUG REAL DE FONDO, corregido: `fetchSimpleManualCandidate()`
+    probaba primero el diccionario de éxitos
+    (`knownHitsRepository.randomHit()`) -- un concepto de la Radio
+    automática (curado con música POPULAR) que nunca tuvo ningún papel
+    en miMooutCast.** Esto explica por qué Minimal Techno/Schranz/
+    Bulería no encontraban apenas nada (esos géneros no existen en un
+    diccionario pensado para éxitos mainstream, así que siempre caían
+    al peldaño 2), pero el problema de fondo era más grave: incluso
+    para anclas donde el diccionario SÍ tenía contenido (Años 80/90),
+    estaba sesgando lo que sonaba hacia "lo que es un éxito conocido"
+    en vez de "lo que encaja con el ancla", exactamente lo contrario
+    de la regla. Orden explícita y repetida de Miguel Ángel, hasta
+    agotar la paciencia: *"esto no tiene nada que ver con la radio...
+    aquí no hay éxitos, que aquí no hay cuota... lo único que hay que
+    hacer es cumplir el ancla, y el ancla solamente va por una cosa: o
+    género, o década, o origen. Y ya está. No repetir temas y no
+    repetir artista en una ventana de diez temas."*
+
+    Quitado el peldaño del diccionario de `fetchSimpleManualCandidate()`
+    por completo. Solo quedan dos fuentes, renumeradas: (1) MusicBrainz
+    en vivo (`suggestRelatedArtist()`/`resolveYoutubeCandidate()`), (2)
+    biblioteca local (`pickDiscoCandidate()`) -- las dos comprueban
+    género/década/origen contra metadatos reales, sin ningún filtro de
+    "es conocido". **El diccionario sigue existiendo tal cual en
+    `fetchRoundCandidate()` (Radio automática) -- Miguel Ángel confirmó
+    explícitamente que ahí sí debe seguir.** Sin verificar en
+    dispositivo real todavía.
 
 Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
