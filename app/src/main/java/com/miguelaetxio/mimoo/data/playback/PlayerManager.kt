@@ -560,33 +560,30 @@ class PlayerManager @Inject constructor(
                 // resetea el ancla de Radio: no tiene artista, no
                 // tiene "canción siguiente", y NUNCA termina, así que
                 // no hay ningún "después" que planificar.
-                if (isLastItem && currentItem?.isFromRadio != true && currentItem?.isRadioStation != true) {
-                    // DIAGNÓSTICO, S032 -- bug real reportado por Miguel
-                    // Ángel: durante una sesión de miMooutCast, este
-                    // bloque se disparaba y `resolveAnchorWithFallbacks()`
-                    // acababa anclando en artistas sueltos sin relación
-                    // con el ancla elegida (ver `ANNEX_H15.md`,
-                    // "COMPLETADAS EN S032", punto 14). Confirmado que NO
-                    // es el loop de apertura (`isRadioStation = true`, ya
-                    // excluido arriba). Esta traza deja constancia del
-                    // ítem exacto que dispara el reset -- título, si
-                    // llevaba `isFromRadio`, y si interrumpió una sesión
-                    // de ancla manual -- para localizar la causa real con
-                    // el próximo log en vez de seguir adivinando.
-                    if (manualAnchorActive) {
-                        val wasManualAnchor = radioAnchorArtist
-                        managerScope.launch {
-                            MimooutcastDebugLogger.log(
-                                appContext, storageManager,
-                                "onMediaItemTransition() -- RESET SOSPECHOSO: se interrumpe una sesión " +
-                                    "de ancla manual ('$wasManualAnchor') porque el ítem actual " +
-                                    "(index=$currentIndex/${queueItems.lastIndex}, " +
-                                    "título='${currentItem?.title}', artist='${currentItem?.artist}', " +
-                                    "uri='${currentItem?.uri}', isFromRadio=${currentItem?.isFromRadio}, " +
-                                    "isRadioStation=${currentItem?.isRadioStation}) no lleva isFromRadio",
-                            )
-                        }
-                    }
+                //
+                // H15 (miMooutCast), S032 -- BLINDAJE EXPLÍCITO añadido
+                // tras un bug real reportado por Miguel Ángel: "se nos
+                // mete Radio" en medio de una sesión de miMooutCast --
+                // confirmado con log real (`resolveAnchorWithFallbacks()`
+                // disparándose con nombres sueltos ajenos al ancla, ver
+                // ANNEX_H15.md, "COMPLETADAS EN S032" punto 14). Orden
+                // explícita: *"hay que deshabilitar la radio cuando se
+                // hace el minuscast"*. `!manualAnchorActive` hace que
+                // este bloque -- cuyo único propósito es detectar "el
+                // usuario acaba de arrancar una pista propia, hay que
+                // resetear y re-anclar Radio desde ella" -- quede
+                // completamente inerte mientras miMooutCast está en
+                // marcha, sin depender de que `isFromRadio` llegue
+                // siempre a tiempo en el ítem que dispara la transición
+                // (no se ha podido reproducir el timing exacto del fallo
+                // original, pero este blindaje es correcto de todos
+                // modos: este bloque no tiene ningún propósito legítimo
+                // mientras `manualAnchorActive` es `true`).
+                if (isLastItem &&
+                    !manualAnchorActive &&
+                    currentItem?.isFromRadio != true &&
+                    currentItem?.isRadioStation != true
+                ) {
                     // H08 (S009, corrección tras corte a los 3 temas)
                     // -- se fija el "ancla": el artista que de verdad
                     // arrancó la Radio. Si la cadena de "relacionados"

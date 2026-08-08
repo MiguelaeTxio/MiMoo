@@ -243,35 +243,31 @@ automática (H08) se ha tocado:
     -- a diferencia de `dismissRadioNetworkLost()`, reintentar aquí
     solo repetiría el mismo aviso de inmediato, ya que el ancla no
     cambia sola).
-14. **BUG REAL CONFIRMADO, sin cerrar todavía: `resolveAnchorWithFallbacks()`
-    (la cascada de Radio para fijar un artista-ancla) se dispara
-    DE VERDAD durante una sesión de miMooutCast activa.** Miguel Ángel
-    reportó "se nos mete Radio y no funciona nada" con un log real
-    (`radio_relacionados_debug__1_.txt`); confirmado línea a línea:
-    a las 20:41-20:46, en medio de una sesión `miMooutCast: Años 80`,
-    aparecen tres llamadas a `resolveAnchor()` con nombres sueltos sin
-    relación con la década 1980 ('Beethoven, Ludwig van', 'Juan Carlos
-    Carrillo', 'Deep Purple Official') -- exactamente los dos primeros
-    peldaños de `resolveAnchorWithFallbacks()`
-    (`radioAnchorArtistFallback` y `parseArtistFromTitle(radioAnchorTrackTitle)`),
-    que solo se invoca cuando `radioAnchor == null`. Solo dos sitios
-    ponen `radioAnchor = null`: el bloque de "nueva sesión" dentro de
-    `onMediaItemTransition()` (cuando el ítem que arranca es el último
-    de la cola, sin `isFromRadio` ni `isRadioStation`) y `clearQueue()`.
-    **Hipótesis descartada con evidencia de código:** no es el loop de
-    apertura ("Preparando tu mezcla…") -- ese ítem lleva
-    `isRadioStation = true` y ya está excluido de la condición.
-    **Sin cerrar:** no se ha podido reproducir el disparador exacto
-    todavía. Añadida traza de diagnóstico en los dos puntos
-    sospechosos (`onMediaItemTransition()` y `clearQueue()`,
-    `PlayerManager.kt`) que, si se dispara durante una sesión de
-    ancla manual, deja constancia en `mimooutcast_debug.txt` del ítem
-    exacto (título/artist/uri/isFromRadio/isRadioStation) o del
-    llamante (pila de llamada) que lo provocó -- sin este dato no se
-    puede corregir sin adivinar, y Miguel Ángel ha pedido
-    explícitamente no seguir adivinando. **Siguiente paso: repetir la
-    prueba y compartir `mimooutcast_debug.txt` de nuevo -- la traza
-    nueva debería señalar la causa exacta.**
+14. **BUG REAL, cerrado: `resolveAnchorWithFallbacks()` (la cascada de
+    Radio para fijar un artista-ancla) se disparaba durante una sesión
+    de miMooutCast activa.** Miguel Ángel reportó "se nos mete Radio y
+    no funciona nada" con un log real (`radio_relacionados_debug__1_.txt`);
+    confirmado línea a línea: a las 20:41-20:46, en medio de una
+    sesión `miMooutCast: Años 80`, aparecen tres llamadas a
+    `resolveAnchor()` con nombres sueltos sin relación con la década
+    1980 ('Beethoven, Ludwig van', 'Juan Carlos Carrillo', 'Deep
+    Purple Official'). Diagnóstico añadido primero (sin cambiar
+    comportamiento) para localizar el disparador exacto; Miguel Ángel
+    señaló la causa antes de que hiciera falta: el bloque de "nueva
+    sesión" en `onMediaItemTransition()` no comprobaba
+    `manualAnchorActive` en absoluto -- solo miraba si el ítem que
+    arranca lleva `isFromRadio`/`isRadioStation`, y ese chequeo por sí
+    solo no bastaba para blindarlo contra una sesión de miMooutCast en
+    marcha. Orden explícita: *"hay que deshabilitar la radio cuando se
+    hace el minuscast"*. Corregido añadiendo `!manualAnchorActive`
+    como condición explícita del bloque -- mientras miMooutCast está
+    activo, este detector de "el usuario acaba de arrancar una pista
+    propia" queda completamente inerte, sin depender de que
+    `isFromRadio` llegue siempre a tiempo. Diagnóstico de
+    `onMediaItemTransition()` retirado (inalcanzable ya, protegido por
+    el guardián); el de `clearQueue()` se mantiene, por si ese es el
+    otro punto de entrada real. Sin verificar en dispositivo real
+    todavía.
 
 Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
