@@ -19,6 +19,7 @@ import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -695,6 +696,13 @@ class PlayerManager @Inject constructor(
                     // siempre al modo automático, aunque la sesión
                     // anterior fuera de ancla manual.
                     manualAnchorActive = false
+                    // H15 (miMooutCast), S032 -- mismo motivo que en
+                    // clearQueue(): una corrutina de reposición de la
+                    // sesión anterior, si seguía viva (atascada en
+                    // red), debe cancelarse aquí también, no solo en
+                    // clearQueue().
+                    topUpJob?.cancel()
+                    isRadioTopUpRunning = false
                     radioUsedArtists.clear()
                     miMooutCastRecentArtists.clear()
                     radioRecentArtists.clear()
@@ -960,6 +968,12 @@ class PlayerManager @Inject constructor(
      * causes an onMediaItemTransition that would call it again).
      */
     private var isRadioTopUpRunning = false
+    /**
+     * H15 (miMooutCast), S032 -- referencia cancelable de la corrutina
+     * de `topUpRadioQueueIfNeeded()`. Ver el comentario junto a su
+     * `managerScope.launch{}` y `clearQueue()`, que la cancela.
+     */
+    private var topUpJob: Job? = null
 
     /**
      * H08 (S009) -- el artista que arrancó la Radio (el último tema
@@ -1353,7 +1367,21 @@ class PlayerManager @Inject constructor(
         if (radioArtistPromptPending) return
 
         isRadioTopUpRunning = true
-        managerScope.launch {
+        // H15 (miMooutCast), S032 -- BUG REAL DE FONDO, encontrado con
+        // el log fechado de Miguel Ángel: `isRadioTopUpRunning` era
+        // solo un booleano de reentrancia, nunca cancelaba la
+        // corrutina de una sesión ANTERIOR al arrancar una nueva. Si
+        // esa corrutina vieja se quedaba atascada reintentando contra
+        // MusicBrainz caído (503 en cadena, visto en el log real:
+        // `resolveAnchor('Beethoven, Ludwig van')`,
+        // `resolveAnchor('Juan Carlos Carrillo')` sonando DENTRO de
+        // una sesión de "Minimal Techno" con fecha de hoy) seguía viva
+        // de fondo -- y como `isRadioTopUpRunning` seguía en `true`
+        // hasta que ella misma terminara, el relleno de la sesión
+        // NUEVA quedaba bloqueado hasta que la vieja, tarde o
+        // temprano, se rindiera. `topUpJob` guarda la corrutina para
+        // poder cancelarla explícitamente -- ver `clearQueue()`.
+        topUpJob = managerScope.launch {
             try {
                 while (true) {
                     val (shouldContinue, backlogNow) = withContext(Dispatchers.Main) {
@@ -4261,6 +4289,21 @@ class PlayerManager @Inject constructor(
      * artist.
      */
     fun clearQueue() {
+        // H15 (miMooutCast), S032 -- BUG REAL DE FONDO: se cancela
+        // aquí, ANTES que ninguna otra cosa, la corrutina de reposición
+        // de una sesión anterior si seguía viva -- ver el comentario
+        // completo junto a `topUpJob` y `topUpRadioQueueIfNeeded()`.
+        // Sin esto, una corrutina vieja atascada en red (MusicBrainz
+        // caído, reintentos con espera) sigue corriendo de fondo tras
+        // `clearQueue()`, con `isRadioTopUpRunning` todavía en `true`
+        // hasta que ella misma termine -- bloqueando el relleno de la
+        // sesión NUEVA mientras tanto, y generando líneas de log
+        // (`resolveAnchor(...)`, `lookupArtistProfile(...)`) que
+        // parecían "Radio metiéndose" en la sesión nueva sin serlo de
+        // verdad: eran una sesión ANTERIOR, todavía sin cancelar.
+        topUpJob?.cancel()
+        isRadioTopUpRunning = false
+
         // DIAGNÓSTICO, S032 -- mismo bug que la traza de
         // onMediaItemTransition() más arriba: si esto se llama con una
         // sesión de miMooutCast todavía activa, es la otra vía posible

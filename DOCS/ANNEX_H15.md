@@ -373,8 +373,38 @@ automática (H08) se ha tocado:
     `fetchFromUnknown()`, `resolveFinalFallback()`, todas solo
     invocadas desde dentro de `fetchRoundCandidate()`). Sin verificar
     en dispositivo real todavía.
+18. **BUG REAL DE FONDO, encontrado con evidencia fechada: las
+    corrutinas de reposición de una sesión ANTERIOR nunca se
+    cancelaban al arrancar una sesión nueva.** Miguel Ángel confirmó
+    tras instalar el build con fecha en los logs (punto 17): el log
+    `mimooutcast_debug__4_.txt` mostraba `resolveAnchor('Beethoven,
+    Ludwig van')`/`resolveAnchor('Juan Carlos Carrillo')` con fecha de
+    HOY, en medio de una sesión de "Minimal Techno". Descartado que
+    fuera el guardián de los puntos 14/17 fallando -- confirmado con
+    grep exhaustivo que `resolveAnchor()` solo tiene un llamante real
+    en todo el proyecto (`resolveAnchorWithFallbacks()`, bloqueada en
+    seco). Causa real: `isRadioTopUpRunning` era solo un booleano de
+    reentrancia -- nunca cancelaba la corrutina de
+    `topUpRadioQueueIfNeeded()` de una sesión ANTERIOR (posiblemente
+    una Radio normal usada antes en la misma sesión de app) si esta
+    seguía viva, atascada reintentando contra MusicBrainz caído (503
+    en cadena, visto en el mismo log). Esa corrutina vieja seguía
+    corriendo de fondo después de `clearQueue()`/una nueva sesión,
+    generando exactamente estas líneas sueltas -- y de paso, con
+    `isRadioTopUpRunning` todavía en `true` hasta que ella misma
+    terminara, bloqueaba el relleno de la sesión NUEVA mientras tanto
+    (encaja con "se pega un rato" antes de encontrar el primer tema).
 
-Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
+    Corregido con `topUpJob: Job?` (nuevo campo), que guarda la
+    corrutina de `topUpRadioQueueIfNeeded()` y se cancela
+    explícitamente (`topUpJob?.cancel()` + `isRadioTopUpRunning =
+    false`) en los DOS puntos donde arranca una sesión nueva --
+    `clearQueue()` y el bloque de "nueva sesión" de
+    `onMediaItemTransition()`. Aplica por igual a Radio y a miMooutCast
+    -- cualquier corrutina de la sesión que se abandona se cancela,
+    sea cual sea el modo. Sin verificar en dispositivo real todavía.
+
+Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
 centrado del karaoke sobre H17). Sin verificar en dispositivo real
