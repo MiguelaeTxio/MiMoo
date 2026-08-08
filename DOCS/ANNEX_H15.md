@@ -202,11 +202,65 @@ H17 pero en código compartido con H08 (Radio):
     corrige la verificación en ambos hitos. Sin verificar en
     dispositivo real todavía (H15 sigue pausado).
 
+## COMPLETADAS EN S032 (incidencia real, H15 PAUSADO -- H18 es el hito EN PROGRESO)
+
+Miguel Ángel compartió `mimooutcast_debug.txt`/`radio_relacionados_debug.txt`
+de sesiones reales. Dos incidencias reales en el mismo bloque, ambas
+**EXCLUSIVAS de miMooutCast** -- ni una sola línea de la Radio
+automática (H08) se ha tocado:
+
+12. **`fetchSimpleManualCandidate()` usaba `radioUsedArtists`
+    (preferencia BLANDA, de toda la sesión, pensada para la Radio
+    automática) como si fuera la regla de no-repetición de artista de
+    miMooutCast.** Orden explícita y repetida de Miguel Ángel
+    (2026-08-07), tras un malentendido sobre qué papel juegan
+    "biblioteca local"/cupos en este modo (ninguno -- la única
+    pregunta es si el tema encaja con el ancla elegida): *"la única
+    regla es no repetir tema jamás y no repetir artista en una
+    ventana de 10 temas"*. Arreglado con `miMooutCastRecentArtists`
+    (nuevo, `ArrayDeque` FIFO de tamaño máximo 10, `PlayerManager.kt`)
+    -- ventana DURA e independiente de `radioUsedArtists`, que sigue
+    intacta para la Radio. Las tres fuentes de
+    `fetchSimpleManualCandidate()` (dictionario, MusicBrainz,
+    biblioteca local) comparten ahora el mismo veto explícito contra
+    esta ventana, sin que ninguna fuente valga más que otra.
+13. **Bug real de fondo, mismo log: una sesión anclada en "Minimal
+    Techno" sirvió un único tema (Charlotte Bendiks) y se quedó muda
+    para siempre, sin ningún aviso en pantalla.** Causa:
+    `topUpRadioQueueIfNeeded()` hacía `break` sin más en cuanto
+    `fetchOneRadioTrack()` devolvía `null` -- sin distinguir "de
+    verdad no queda nada de este género en ninguna fuente" de
+    cualquier otro motivo. Como el ancla en miMooutCast nunca se
+    relaja (regla del punto 12), un agotamiento real no tiene ninguna
+    alternativa que ofrecer -- la única opción honesta es avisar,
+    igual que ya hace `radioNetworkLost` para la pérdida de conexión.
+    Nuevo `PlaybackState.miMooutCastAnchorExhausted: String?` (guarda
+    la etiqueta del ancla agotada), publicado solo cuando
+    `manualAnchorActive && !radioNetworkLost` (para no confundirlo con
+    el aviso de sin conexión, que ya tiene el suyo propio). Diálogo
+    nuevo en `PlayerBar.kt` ("Sin más música... prueba con otra
+    combinación"), sin reintento automático (`dismissMiMooutCastAnchorExhausted()`
+    -- a diferencia de `dismissRadioNetworkLost()`, reintentar aquí
+    solo repetiría el mismo aviso de inmediato, ya que el ancla no
+    cambia sola).
+
+Ambas incidencias corregidas en la misma sesión, sin necesidad de PCH
+(H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
+sobre código de un hito pausado, mismo criterio que el fix de
+centrado del karaoke sobre H17). Sin verificar en dispositivo real
+todavía.
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H15
 
-Sin código pendiente. Punto único: **seguir la verificación en
-dispositivo real** que Miguel Ángel ya tiene en marcha -- las tres
-secciones (Géneros con subgéneros, Décadas, Origen), el loop de
-apertura, y sobre todo confirmar que el ancla se mantiene fija toda la
-sesión sin drift de género tras el arreglo del punto 10 de
-"COMPLETADAS EN S030".
+Sin código pendiente. Puntos:
+
+1. **Seguir la verificación en dispositivo real** que Miguel Ángel ya
+   tiene en marcha -- las tres secciones (Géneros con subgéneros,
+   Décadas, Origen), el loop de apertura, y sobre todo confirmar que
+   el ancla se mantiene fija toda la sesión sin drift de género tras
+   el arreglo del punto 10 de "COMPLETADAS EN S030".
+2. **Verificar en dispositivo el arreglo de S032**: que un artista no
+   vuelve a sonar hasta pasados 10 temas dentro de una misma sesión de
+   miMooutCast, y que un ancla genuinamente agotada (género/década/
+   origen muy nicho, sin más candidatos en ninguna fuente) muestra el
+   aviso "Sin más música" en vez de quedarse en silencio.

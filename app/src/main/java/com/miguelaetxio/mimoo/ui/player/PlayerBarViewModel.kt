@@ -416,6 +416,9 @@ class PlayerBarViewModel @Inject constructor(
     /** S026 -- botón "Reintentar" del aviso de Radio detenida por falta de red. */
     fun dismissRadioNetworkLost() = playerManager.dismissRadioNetworkLost()
 
+    /** H15 (miMooutCast), S032 -- ver PlayerManager.dismissMiMooutCastAnchorExhausted(). */
+    fun dismissMiMooutCastAnchorExhausted() = playerManager.dismissMiMooutCastAnchorExhausted()
+
     /** S027 -- respuesta del modal "¿Quién es el artista?" de Radio. */
     fun submitRadioArtist(artist: String, songTitle: String) =
         playerManager.submitRadioArtist(artist, songTitle)

@@ -221,6 +221,21 @@ data class PlaybackState(
      */
     val radioNetworkLost: Boolean = false,
     /**
+     * H15 (miMooutCast), S032 -- bug real reportado por Miguel Ángel:
+     * una sesión anclada en "Minimal Techno" sirvió un único tema y
+     * se quedó muda para siempre, sin ningún aviso -- `break` sin más
+     * en `topUpRadioQueueIfNeeded()` cuando `fetchOneRadioTrack()`
+     * devuelve `null`. El ancla en miMooutCast nunca se relaja (ver
+     * `fetchSimpleManualCandidate()`), así que cuando de verdad se
+     * agota en las tres fuentes no hay ningún otro candidato posible
+     * que ofrecer -- la única alternativa honesta es avisar, igual
+     * que ya hace `radioNetworkLost`, en vez de dejar sonar el
+     * silencio. `String?` en vez de `Boolean`: guarda la etiqueta del
+     * ancla agotada (p.ej. "miMooutCast: Minimal Techno") para que el
+     * mensaje sea concreto. Ver `PlayerManager.dismissMiMooutCastAnchorExhausted()`.
+     */
+    val miMooutCastAnchorExhausted: String? = null,
+    /**
      * S027 -- no nulo cuando la última pista propia del usuario (la
      * que arrancaría la Radio) no tiene artista identificable, ni por
      * el artista estructurado de H05 ni por el propio título
@@ -654,6 +669,7 @@ class PlayerManager @Inject constructor(
                     // anterior fuera de ancla manual.
                     manualAnchorActive = false
                     radioUsedArtists.clear()
+                    miMooutCastRecentArtists.clear()
                     radioRecentArtists.clear()
                     radioTracksAccepted = 0
                     radioPortionUsed.clear()
@@ -1038,6 +1054,43 @@ class PlayerManager @Inject constructor(
     private val radioUsedSongs = mutableSetOf<String>()
 
     /**
+     * H15 (miMooutCast) -- ventana DURA de no-repetición de artista,
+     * EXCLUSIVA de este modo. Instrucción explícita y repetida de
+     * Miguel Ángel (2026-08-07), tras un malentendido previo sobre
+     * "biblioteca local"/cupos que NO aplican a miMooutCast: *"la
+     * única regla es no repetir tema jamás y no repetir artista en
+     * una ventana de 10 temas"*. A diferencia de `radioUsedArtists`
+     * (preferencia blanda, toda la sesión, EXCLUSIVO de la Radio
+     * automática -- nunca tocar su comportamiento desde aquí), aquí
+     * el veto es DURO dentro de la ventana y desaparece pasados 10
+     * temas: `fetchSimpleManualCandidate()` descarta cualquier
+     * candidato cuyo artista esté en esta cola, sin excepción ni
+     * "hasta que no quede más remedio". Un `ArrayDeque` de tamaño
+     * máximo 10, FIFO -- ver `rememberMiMooutCastArtist()`.
+     * ---
+     * H15 (miMooutCast) -- HARD artist-repeat window, EXCLUSIVE to
+     * this mode. Explicit, repeated instruction from Miguel Ángel
+     * (2026-08-07): "the only rule is never repeat a song, and never
+     * repeat an artist within a window of 10 tracks." Unlike
+     * `radioUsedArtists` (soft, session-wide, EXCLUSIVE to automatic
+     * Radio -- never touch its behavior from here), the veto here is
+     * HARD within the window and disappears after 10 tracks:
+     * `fetchSimpleManualCandidate()` discards any candidate whose
+     * artist is in this queue, no exceptions, no "unless there's
+     * truly nothing else." A max-size-10 FIFO `ArrayDeque` -- see
+     * `rememberMiMooutCastArtist()`.
+     */
+    private val miMooutCastRecentArtists = ArrayDeque<String>()
+
+    private fun rememberMiMooutCastArtist(artist: String?) {
+        if (artist.isNullOrBlank()) return
+        miMooutCastRecentArtists.addLast(artist)
+        while (miMooutCastRecentArtists.size > 10) {
+            miMooutCastRecentArtists.removeFirst()
+        }
+    }
+
+    /**
      * S027 -- artistas cuyos temas encontrados ya se comprobaron
      * TODOS de década distinta a la del ancla, esta sesión. Caso real
      * reportado por Miguel Ángel con log: sesión anclada en AC/DC
@@ -1312,6 +1365,25 @@ class PlayerManager @Inject constructor(
                             "topUpRadioQueueIfNeeded() -- parado del todo: sin más candidatos para " +
                                 "el ancla de '$anchorArtistName' -- backlog final: $backlogFinal",
                         )
+                        // H15 (miMooutCast), S032 -- solo cuando el
+                        // agotamiento es REAL (las tres fuentes sin
+                        // nada, no una pérdida de red -- ese caso ya
+                        // tiene su propio aviso vía `radioNetworkLost`
+                        // más arriba en `fetchOneRadioTrack()`). El
+                        // ancla nunca se relaja, así que no hay nada
+                        // más que ofrecer -- avisar en vez de silencio.
+                        if (manualAnchorActive && !radioNetworkLost) {
+                            MimooutcastDebugLogger.log(
+                                appContext, storageManager,
+                                "topUpRadioQueueIfNeeded() -- AVISO EN PANTALLA: ancla " +
+                                    "'$anchorArtistName' agotada de verdad en las tres fuentes",
+                            )
+                            withContext(Dispatchers.Main) {
+                                _state.value = _state.value.copy(
+                                    miMooutCastAnchorExhausted = anchorArtistName,
+                                )
+                            }
+                        }
                         break
                     }
                     // S020 -- el registro real (porción, totales,
@@ -1320,6 +1392,7 @@ class PlayerManager @Inject constructor(
                     // queda la red de seguridad del artista, por si la
                     // pista llegó por un camino que no pasa por allí.
                     newItem.artist?.let { radioUsedArtists.add(it) }
+                    if (manualAnchorActive) rememberMiMooutCastArtist(newItem.artist)
                     radioUsedSongs.add(knownHitsRepository.songKey(newItem.artist, newItem.title))
 
                     withContext(Dispatchers.Main) {
@@ -3399,6 +3472,7 @@ class PlayerManager @Inject constructor(
             return false
         }
         first.artist?.let { radioUsedArtists.add(it) }
+        rememberMiMooutCastArtist(first.artist)
         radioUsedSongs.add(knownHitsRepository.songKey(first.artist, first.title))
         withContext(Dispatchers.Main) {
             playQueue(listOf(first))
@@ -3434,10 +3508,26 @@ class PlayerManager @Inject constructor(
      * en vez de en la elección original. `.copy(isFromRadio = true)`
      * en los tres retornos, igual que ya hace el motor de cupos en sus
      * dos puntos de construcción del `QueueItem` final.
+     *
+     * BUG REAL, S032 -- reportado por Miguel Ángel (con
+     * `mimooutcast_debug.txt` real): esta función usaba
+     * `radioUsedArtists` (preferencia BLANDA, de toda la sesión,
+     * pensada para la Radio automática) como si fuera la ventana de
+     * no-repetición de artista de miMooutCast. Orden explícita y
+     * repetida: *"la única regla es no repetir tema jamás y no
+     * repetir artista en una ventana de 10 temas"* -- y ojo, EXCLUSIVA
+     * de este modo, nunca tocar `radioUsedArtists` ni su
+     * comportamiento en la Radio. Ahora usa `miMooutCastRecentArtists`
+     * (ventana dura, FIFO, tamaño 10, ver su kdoc) y las tres fuentes
+     * comparten el mismo veto explícito: si el candidato resuelto
+     * pertenece a un artista dentro de la ventana, se descarta sin
+     * excepción y se prueba la fuente siguiente -- ninguna de las tres
+     * fuentes vale más que las otras, la única pregunta en cada una es
+     * si el tema encaja con el ancla elegida.
      */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
-        val excludeLower = radioUsedArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
+        val windowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
 
         // 1 -- dictionario de éxitos. `relaxGenre = true` cuando no
         // hay género elegido (década u origen solos): es el "modo
@@ -3446,13 +3536,16 @@ class PlayerManager @Inject constructor(
         // es idéntico, "sin género real que filtrar".
         knownHitsRepository.randomHit(
             anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
-            excludeSongKeys = radioUsedSongs, avoidArtists = excludeLower,
+            excludeSongKeys = radioUsedSongs, avoidArtists = windowLower,
             relaxGenre = anchor.genre.isBlank(),
             anchorGenres = anchor.genres,
             classical = anchor.isClassical,
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )?.let { hit ->
-            if (hit.artist.lowercase() !in excludeLower) {
+            // Veto DURO de la ventana -- randomHit() solo la trata como
+            // preferencia blanda internamente, así que se repite la
+            // comprobación aquí antes de aceptar nada.
+            if (hit.artist.lowercase() !in windowLower) {
                 val item = resolveYoutubeCandidate(anchorLabel, hit.artist, hit.song)
                 if (item != null && !isTrackDisliked(item.artist, item.title)) {
                     MimooutcastDebugLogger.log(
@@ -3471,32 +3564,38 @@ class PlayerManager @Inject constructor(
         // ninguno de los dos) no puede aportar nada aquí, y
         // `suggestRelatedArtist()` ya lo sabe y devuelve `null` limpio.
         radioRepository.suggestRelatedArtist(
-            anchor, excludeLower, emptySet(),
+            anchor, windowLower, emptySet(),
             genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
         )?.let { artist ->
-            val item = resolveYoutubeCandidate(
-                anchorLabel, artist, songTitle = null,
-                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
-                expectedYear = anchor.anchorYear,
-            )
-            if (item != null &&
-                knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
-                !isTrackDisliked(item.artist, item.title)
-            ) {
-                MimooutcastDebugLogger.log(
-                    appContext, storageManager,
-                    "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
-                        "'${item.artist}' - '${item.title}'",
+            // Mismo veto DURO que en el peldaño 1 -- suggestRelatedArtist()
+            // también puede devolver un nombre dentro de la ventana si
+            // internamente se queda sin alternativas.
+            if (artist.lowercase() !in windowLower) {
+                val item = resolveYoutubeCandidate(
+                    anchorLabel, artist, songTitle = null,
+                    expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
+                    expectedYear = anchor.anchorYear,
                 )
-                return item.copy(isFromRadio = true)
+                if (item != null &&
+                    knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
+                    !isTrackDisliked(item.artist, item.title)
+                ) {
+                    MimooutcastDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
+                            "'${item.artist}' - '${item.title}'",
+                    )
+                    return item.copy(isFromRadio = true)
+                }
             }
         }
 
         // 3 -- biblioteca local, último recurso, funciona con
         // cualquier combinación (el filtro de género de
         // `GenreMatchQuality.of()` ya trata un ancla sin género como
-        // "sin restricción", ver su comentario H15).
-        pickDiscoCandidate(anchor, excludeLower, emptySet())?.let { item ->
+        // "sin restricción", ver su comentario H15). `pickDiscoCandidate`
+        // ya excluye `windowLower` de forma dura vía `excludeArtists`.
+        pickDiscoCandidate(anchor, windowLower, emptySet())?.let { item ->
             MimooutcastDebugLogger.log(
                 appContext, storageManager,
                 "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> biblioteca local: " +
@@ -4116,6 +4215,7 @@ class PlayerManager @Inject constructor(
         radioAnchor = null
         manualAnchorActive = false
         radioUsedArtists.clear()
+        miMooutCastRecentArtists.clear()
         radioRecentArtists.clear()
         radioTracksAccepted = 0
         radioPortionUsed.clear()
@@ -4179,6 +4279,18 @@ class PlayerManager @Inject constructor(
         radioNetworkLost = false
         _state.value = _state.value.copy(radioNetworkLost = false)
         topUpRadioQueueIfNeeded()
+    }
+
+    /**
+     * H15 (miMooutCast), S032 -- descarta el aviso de ancla agotada.
+     * A diferencia de `dismissRadioNetworkLost()`, NO reintenta la
+     * búsqueda: el ancla nunca se relaja (regla explícita de Miguel
+     * Ángel), así que sin contenido nuevo (una descarga nueva, un
+     * dictionario ampliado...) se agotaría de inmediato otra vez --
+     * reintentar aquí solo repetiría el mismo aviso en bucle.
+     */
+    fun dismissMiMooutCastAnchorExhausted() {
+        _state.value = _state.value.copy(miMooutCastAnchorExhausted = null)
     }
 
     /**

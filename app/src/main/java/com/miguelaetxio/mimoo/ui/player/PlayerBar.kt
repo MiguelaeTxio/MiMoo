@@ -171,6 +171,32 @@ fun PlayerBar(
         )
     }
 
+    // H15 (miMooutCast), S032 -- bug real reportado por Miguel Ángel:
+    // una sesión anclada en "Minimal Techno" sirvió un único tema y se
+    // quedó muda para siempre, sin ningún aviso. El ancla en
+    // miMooutCast nunca se relaja, así que cuando de verdad se agota
+    // en las tres fuentes no hay nada más que ofrecer -- se avisa en
+    // vez de dejar sonar el silencio.
+    val exhaustedAnchor = state.miMooutCastAnchorExhausted
+    if (exhaustedAnchor != null) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Sin más música") },
+            text = {
+                Text(
+                    "No queda más música que encaje con \"$exhaustedAnchor\" en ninguna " +
+                        "fuente (diccionario, MusicBrainz o tu biblioteca). Prueba con otra " +
+                        "combinación en miMooutCast.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissMiMooutCastAnchorExhausted) {
+                    Text("Entendido")
+                }
+            },
+        )
+    }
+
     // S027 -- red de seguridad: si la Radio llega al final de la cola
     // sin ancla (caso residual, p.ej. pista local sin artista), se
     // pregunta igual. El disparo normal es el de más abajo, al
