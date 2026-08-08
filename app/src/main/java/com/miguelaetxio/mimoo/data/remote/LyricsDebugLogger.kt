@@ -37,7 +37,15 @@ object LyricsDebugLogger {
     private const val MAX_LINES = 400
     private const val LOGCAT_TAG = "MiMoo-Letras"
 
-    private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
+    // H15, S032 -- bug real de diagnóstico reportado por Miguel Ángel:
+    // sin fecha en el timestamp, y con el archivo recortado a las
+    // últimas MAX_LINES líneas sin importar el día, entradas de
+    // sesiones de DÍAS DISTINTOS podían convivir en el mismo archivo
+    // sin ninguna forma de distinguirlas -- llevó a diagnosticar como
+    // "bug todavía vivo" lo que en realidad era una prueba de un día
+    // anterior al arreglo. Aplicado a los siete logs de depuración de
+    // la app por igual, no solo a este.
+    private val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
 
     fun log(context: Context, storageManager: StorageManager, line: String) {
         Log.d(LOGCAT_TAG, line)
