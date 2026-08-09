@@ -903,6 +903,23 @@ automática (H08) se ha tocado:
       no hace falta bifurcar la lógica según el motivo. Sin verificar
       en dispositivo real todavía.
 
+35. **Órdenes directas y explícitas de Miguel Ángel, sin margen de
+    interpretación: "quita el puto loop de los cojones" y "como mucho
+    espero 10 [segundos] y ya es mucho. Si no somos capaces de poner
+    un tema en menos de 10 segundos, mejor lo dejamos."** El tope de
+    30 segundos del punto 34 no era lo pedido -- se quería quitar el
+    loop de apertura del todo, no darle un límite.
+
+    `startRadioFromManualAnchor()` ya no llama a
+    `playOpeningLoopIfAvailable()` -- miMooutCast no reproduce nada
+    mientras busca el primer tema, silencio hasta que aparece uno real
+    (o el tope de tiempo, o el botón "Dejar de buscar"). La función en
+    sí se deja en el archivo (podría hacer falta en otro sitio en el
+    futuro), solo se quita la llamada. `MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS`
+    bajado de 30.000 a 10.000 ms -- mismo límite que ya se pidió para
+    encontrar cada tema durante la sesión (punto 29), ahora también
+    para el primero. Sin verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

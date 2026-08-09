@@ -3705,14 +3705,18 @@ class PlayerManager @Inject constructor(
         // valor por defecto (`true`) esta sesión nueva se habría
         // suprimido a sí misma antes de encontrar el primer tema.
         clearQueue(stayStopped = false)
-        // H15 -- el loop de batería tiene que arrancar DESPUÉS de
-        // clearQueue() (que para el player y vacía la cola -- si
-        // sonara antes, esta misma llamada lo mataría) y ANTES de la
-        // búsqueda real (fetchOneRadioTrack() puede tardar varios
-        // segundos) -- petición explícita de Miguel Ángel (2026-08-06).
-        // Se corta solo en cuanto playQueue() añade la pista real, más
-        // abajo.
-        playOpeningLoopIfAvailable(appContext)
+        // H15 (miMooutCast), S032 -- QUITADO. Orden directa de Miguel
+        // Ángel: *"quita el puto loop de los cojones."* Antes sonaba
+        // aquí mientras se buscaba el primer tema (petición de Miguel
+        // Ángel, 2026-08-06) -- con el buscador tardando más de lo
+        // esperado en la práctica, dejó de ser "rellenar un hueco de
+        // unos segundos" para convertirse en el propio problema.
+        // `playOpeningLoopIfAvailable()` se queda en el archivo (podría
+        // hacer falta en otro sitio en el futuro) pero ya no se llama
+        // desde aquí -- miMooutCast ya no reproduce nada mientras
+        // busca, silencio hasta que aparece la primera pista real (o
+        // el tope de `MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS`, o el
+        // botón "Dejar de buscar").
         radioAnchor = anchor
         manualAnchorActive = true
         radioAnchorArtist = displayLabel
@@ -5137,15 +5141,15 @@ class PlayerManager @Inject constructor(
         const val MIMOOUTCAST_PAGE_SIZE = 25
 
         /**
-         * H15 (miMooutCast), S032 -- tope de tiempo del loop de
-         * apertura antes de rendirse solo. Miguel Ángel, repetido:
-         * *"tarda un huevo... el loop de batería."* 30 segundos es un
-         * término medio sin dato más fino que lo afine por ahora --
-         * bastante para dar una oportunidad real a géneros de nicho o
-         * clásica, sin dejar el loop sonando indefinidamente si nadie
-         * pulsa "dejar de buscar".
+         * H15 (miMooutCast), S032 -- tope de tiempo de la búsqueda del
+         * primer tema antes de rendirse sola. Bajado de 30 a 10
+         * segundos, orden explícita de Miguel Ángel: *"como mucho
+         * espero 10 y ya es mucho. Si no somos capaces de poner un
+         * tema en menos de 10 segundos, mejor lo dejamos."* Mismo
+         * límite que ya se pidió para encontrar cada tema durante la
+         * sesión -- ahora también para el primero.
          */
-        const val MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS = 30_000L
+        const val MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS = 10_000L
 
         /**
          * H15/H08, S032 -- tamaño del lote de `verifyTrackExists()` en
