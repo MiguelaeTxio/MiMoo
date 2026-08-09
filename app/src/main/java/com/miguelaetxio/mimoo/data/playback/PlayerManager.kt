@@ -3822,7 +3822,46 @@ class PlayerManager @Inject constructor(
             // sin ningún cambio.
             val decadeYearWindow = 5
             val decadeCentralYear = anchor.decadeBegin?.let { it + 5 }
-            if (isDecadeOnly) {
+            if (miMooutCastRequireKnownInSpain) {
+                // H15 (miMooutCast), S032 -- botón "Conocido en
+                // España" encendido: se busca DIRECTAMENTE dentro del
+                // diccionario de éxitos (mismo mecanismo que la Radio,
+                // `KnownHitsRepository.randomHit()`), no en
+                // MusicBrainz con un filtro a posteriori. Primer
+                // intento de este botón, bug real con log delante:
+                // buscar un artista al azar en todo MusicBrainz y
+                // comprobar DESPUÉS si por casualidad está en la
+                // lista de éxitos casi nunca coincide -- "Años 90"
+                // encontró 9 artistas reales, 1 solo coincidía
+                // ('Nena'), agotado tras 8 intentos. Con el
+                // diccionario como fuente directa, cada resultado YA
+                // es "conocido en España" por construcción -- sin
+                // ningún filtro posterior que hacer.
+                val hit = knownHitsRepository.randomHit(
+                    anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
+                    excludeSongKeys = radioUsedSongs, avoidArtists = windowLower,
+                    relaxGenre = anchor.genre.isBlank(),
+                    anchorGenres = anchor.genres,
+                    classical = anchor.isClassical,
+                    genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+                )
+                artistName = hit?.artist
+                knownTitle = hit?.song
+            } else if (isDecadeOnly) {
+                // "década sola" (sin género ni origen):
+                // `suggestRelatedArtist()` no tiene ningún término
+                // real que mandar a MusicBrainz y devuelve `null`
+                // limpio siempre -- por diseño (ver
+                // `buildGenreQuery()`, MusicBrainz no tiene un campo
+                // fiable de "década de actividad" a nivel de
+                // artista). Se busca en su lugar directamente por
+                // fecha de primera edición del disco -- ver
+                // `suggestArtistFromDecade()`, que además de artista
+                // devuelve el TÍTULO del disco encontrado, para que
+                // la búsqueda de más abajo sea tan precisa como
+                // "artista + canción" en vez de "solo artista" a
+                // ciegas por toda su discografía (incluidas décadas
+                // ajenas).
                 val candidate = radioRepository.suggestArtistFromDecade(
                     decadeBegin = anchor.decadeBegin!!,
                     excludeArtists = windowLower,
@@ -3842,7 +3881,9 @@ class PlayerManager @Inject constructor(
                 // diccionario local."* `AnchorDictionary` es
                 // exactamente eso -- base local aprendida, sin red --
                 // y es correcta para la Radio (S025) pero no para
-                // miMooutCast.
+                // miMooutCast. (Distinta de `KnownHitsRepository`, el
+                // diccionario de ÉXITOS -- ese sí se usa arriba, pero
+                // solo cuando el usuario enciende el botón a propósito.)
                 //
                 // `offset = miMooutCastOffset` -- SIN esto, cada
                 // intento consultaba la MISMA región del catálogo (con
@@ -3865,29 +3906,19 @@ class PlayerManager @Inject constructor(
                 // Página sin nada nuevo -- se avanza y se sigue,
                 // mismo principio que `radioUnknownOffset` en la Radio
                 // automática ("la exploración no se agota nunca").
+                // (Con el diccionario de éxitos como fuente, avanzar
+                // el offset no tiene efecto real -- `randomHit()` no
+                // pagina -- pero tampoco hace daño, así que se deja
+                // igual para no bifurcar la lógica de reintento.)
                 miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
                 return@repeat
             }
             triedThisCall += artistName.lowercase()
 
-            // Veto DURO de la ventana -- las dos funciones de arriba
-            // solo la tratan como preferencia blanda internamente, así
-            // que se repite la comprobación aquí antes de aceptar
-            // nada.
+            // Veto DURO de la ventana -- las funciones de arriba solo
+            // la tratan como preferencia blanda internamente, así que
+            // se repite la comprobación aquí antes de aceptar nada.
             if (artistName.lowercase() in windowLower) return@repeat
-            // H15 (miMooutCast), S032 -- botón transversal "Conocido en
-            // España". Se comprueba AQUÍ, antes de gastar tiempo en
-            // YouTube/verificación -- si el candidato no pasa este
-            // filtro, no tiene sentido resolverlo primero para
-            // descartarlo después. `isKnownArtistAnywhere()` ya existe
-            // (S026, salvaguarda de Hispanoamérica) y compara contra
-            // `es` + `intl` del diccionario de éxitos -- éxitos EN
-            // ESPAÑA, sean o no artistas españoles, nunca "cualquier
-            // tema del Billboard sin más".
-            if (miMooutCastRequireKnownInSpain && !knownHitsRepository.isKnownArtistAnywhere(artistName)) {
-                miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
-                return@repeat
-            }
             val item = resolveYoutubeCandidate(
                 anchorLabel, artistName, songTitle = knownTitle,
                 expectedDecadeBegin = if (isDecadeOnly || anchor.isClassical) null else anchor.decadeBegin,
@@ -3904,7 +3935,8 @@ class PlayerManager @Inject constructor(
                 miMooutCastTracksServed++
                 MimooutcastDebugLogger.log(
                     appContext, storageManager,
-                    "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
+                    "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> " +
+                        "${if (miMooutCastRequireKnownInSpain) "diccionario de éxitos" else "MusicBrainz"}: " +
                         "'${item.artist}' - '${item.title}' (ventana usada: $window)",
                 )
                 return item.copy(isFromRadio = true)

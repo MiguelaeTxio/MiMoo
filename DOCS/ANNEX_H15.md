@@ -753,6 +753,32 @@ automática (H08) se ha tocado:
     cualquier otro rechazo, para no rebuscar en la misma región
     estrecha del catálogo. Sin verificar en dispositivo real todavía.
 
+29. **Corrección real, misma sesión, del punto 28: el botón "Conocido
+    en España" casi no encontraba nada.** Log real: sesión "Años 90"
+    con el interruptor encendido encontró 9 artistas reales distintos
+    vía MusicBrainz (Ugly Kid Joe, Sleep Chamber, Slapstick, UHF,
+    Barricada, Necrosis, NOFX, Dodgy, Joey Calderazzo...) y **solo
+    uno** ('Nena') pasó el filtro de `isKnownArtistAnywhere()` --
+    agotado tras 8 intentos, "Sin más música" en pantalla. El
+    planteamiento del punto 28 era al revés de como tenía que ser:
+    buscar un artista al azar en TODO MusicBrainz y comprobar DESPUÉS
+    si por casualidad está en una lista de éxitos pequeña y curada es
+    buscar una aguja en un pajar -- la probabilidad de acertar por
+    azar es minúscula.
+
+    Corregido de raíz: con el interruptor encendido, la FUENTE del
+    candidato pasa a ser directamente `KnownHitsRepository.randomHit()`
+    -- el mismo mecanismo que usa la Radio automática, con género,
+    década y origen del ancla -- en vez de `suggestRelatedArtist()`/
+    `suggestArtistFromDecade()` (MusicBrainz) con un filtro a
+    posteriori. Cada resultado del diccionario YA es "conocido en
+    España" por construcción, así que no hace falta ningún filtro
+    después -- se quita el `isKnownArtistAnywhere()` del punto 28, que
+    ya no pinta nada aquí. Con el interruptor apagado (el caso por
+    defecto, y todo lo probado hasta el punto 28), el comportamiento
+    es exactamente el de siempre -- streaming puro, sin tocar. Sin
+    verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
