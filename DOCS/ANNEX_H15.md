@@ -814,6 +814,35 @@ automática (H08) se ha tocado:
     antes se ignoraba por completo. Sin verificar en dispositivo real
     todavía.
 
+32. **Clásica seguía tardando muchísimo tras los puntos 30-31 --
+    "a las dos horas ha encontrado unos temas de clásica".** Log real
+    nuevo: 'Anton Webern' y 'John Zorn' sí encontraron temas reales en
+    tiempo razonable, pero 'Herbie Hancock' arrastró decenas de
+    `retryOnceIfTransient()` y muchos "NO ENCONTRADO" antes de dar con
+    dos temas válidos. Causa parcial identificada y corregida: varios
+    de los títulos rechazados eran contenido hablado/educativo que
+    nunca iba a coincidir con ninguna obra catalogada --
+    `"JOHN ZORN Composer Portrait"`, `"The Orchestral Woodwind
+    Section: An Introduction"` -- y `looksLikeNonSong()` no los
+    reconocía como "esto no es música". Añadidos `portrait`/`retrato`/
+    `an introduction`/`una introducción` a `NOT_MUSIC_TITLE_HINTS`
+    para descartarlos ANTES de gastar una llamada de red en
+    verificarlos.
+
+    **Sin resolver del todo, dicho con honestidad:** clásica/jazz
+    tiene en YouTube una proporción de contenido que nunca va a
+    coincidir con una obra concreta (actuaciones con varios artistas a
+    la vez -- "Gustavo Dudamel & Herbie Hancock & George Gershwin",
+    versiones de otros intérpretes -- "Cracow Klezmer Band plays
+    Zorn") mucho mayor que en géneros populares, y eso no se arregla
+    con una lista de palabras clave. Sumado a que MusicBrainz/Discogs
+    se muestran especialmente inestables en las sesiones de clásica de
+    este log concreto (ráfagas de `retryOnceIfTransient()`), es
+    probable que clásica siga siendo, de forma estructural, más lenta
+    que otros géneros -- no se puede prometer que quede por debajo de
+    los 10 segundos con el diseño actual. Sin verificar en dispositivo
+    real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

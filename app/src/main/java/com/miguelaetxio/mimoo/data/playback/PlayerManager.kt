@@ -5005,6 +5005,22 @@ class PlayerManager @Inject constructor(
             "reaction",
             "reacciona",
             "minutes on",
+            // H15/H08, S032 -- añadidos con log real: sesión "Clásica"
+            // rechazando decenas de candidatos válidos por gastar
+            // tiempo comprobando contenido que nunca iba a coincidir
+            // con ninguna obra catalogada -- "JOHN ZORN Composer
+            // Portrait", "The Orchestral Woodwind Section: An
+            // Introduction". Frecuentes en canales de clásica/jazz
+            // (perfiles de compositor, vídeos educativos por
+            // instrumento), no delatan una chapuza de audio como
+            // "Best of"/"Full Concert" (que sí se dejan pasar en
+            // clásica, ver el comentario de `looksLikeNonSong()`) --
+            // esto es directamente contenido hablado/educativo, nunca
+            // una obra concreta.
+            "portrait",
+            "retrato",
+            "an introduction",
+            "una introducción",
         )
 
         /**
