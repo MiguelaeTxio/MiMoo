@@ -699,6 +699,28 @@ automática (H08) se ha tocado:
     confirmar que los tiempos bajan de verdad de los 10 segundos con
     un log nuevo.
 
+27. **Confirmado por Miguel Ángel ("Sí") y pendiente de implementar
+    desde entonces -- ahora sí.** Bug real con timestamps: `clearQueue()`
+    a las 11:33:15.474 (botón "vaciar cola"), y 200ms después,
+    `topUpRadioQueueIfNeeded() -- parado: no hay artista ancla... se
+    pregunta al usuario` -- disparado automáticamente por el cambio de
+    estado del player, no por ninguna acción del usuario, cayendo en
+    la lógica de continuación de la Radio aunque lo vaciado fuera una
+    sesión de miMooutCast.
+
+    Nuevo parámetro `clearQueue(stayStopped: Boolean = true)` --
+    vaciar la cola SIEMPRE deja el reproductor parado del todo por
+    defecto, sin intentar continuar nada, ni para miMooutCast ni para
+    la Radio (un vaciado explícito no tiene "después" que planificar
+    en ningún caso). `startRadioFromManualAnchor()` pasa
+    `stayStopped = false` explícitamente, porque esa llamada concreta
+    es la preparación de una sesión NUEVA que sí sigue buscando justo
+    después. Nuevo campo `radioStayStopped`, comprobado al principio
+    de `topUpRadioQueueIfNeeded()`; se resetea también en el bloque de
+    "nueva sesión" de `onMediaItemTransition()` (una pista propia
+    nueva del usuario siempre puede continuar con normalidad). Sin
+    verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

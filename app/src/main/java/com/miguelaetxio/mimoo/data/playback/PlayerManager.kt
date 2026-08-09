@@ -704,6 +704,11 @@ class PlayerManager @Inject constructor(
                     // clearQueue().
                     topUpJob?.cancel()
                     isRadioTopUpRunning = false
+                    // H15 (miMooutCast), S032 -- una pista propia nueva
+                    // SIEMPRE puede continuar con normalidad, aunque un
+                    // vaciado de cola anterior hubiera dejado
+                    // `radioStayStopped = true`. Ver `clearQueue(stayStopped)`.
+                    radioStayStopped = false
                     radioUsedArtists.clear()
                     miMooutCastRecentArtists.clear()
                     radioRecentArtists.clear()
@@ -971,6 +976,15 @@ class PlayerManager @Inject constructor(
      * causes an onMediaItemTransition that would call it again).
      */
     private var isRadioTopUpRunning = false
+    /**
+     * H15 (miMooutCast), S032 -- ver el kdoc completo de
+     * `clearQueue(stayStopped: Boolean)`. `true` mientras el último
+     * vaciado de cola fue explícito (botón "vaciar cola") y no el
+     * arranque de una sesión nueva -- en ese estado,
+     * `topUpRadioQueueIfNeeded()` no debe intentar continuar nada, ni
+     * para miMooutCast ni para la Radio.
+     */
+    private var radioStayStopped = false
     /**
      * H15 (miMooutCast), S032 -- referencia cancelable de la corrutina
      * de `topUpRadioQueueIfNeeded()`. Ver el comentario junto a su
@@ -1382,6 +1396,12 @@ class PlayerManager @Inject constructor(
     private fun topUpRadioQueueIfNeeded() {
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
+        // H15 (miMooutCast), S032 -- ver el kdoc de `clearQueue(stayStopped)`.
+        // Un vaciado explícito de cola no tiene "después" que
+        // planificar, sea cual sea el modo que estuviera activo -- ni
+        // se busca música nueva para miMooutCast, ni se pregunta
+        // "¿quién es el artista?" para la Radio.
+        if (radioStayStopped) return
         // Blindaje adicional al de onMediaItemTransition() -- ver el
         // comentario de QueueItem.isRadioStation. Si por cualquier
         // otro camino se llegara a llamar aquí con una emisora en
@@ -3619,7 +3639,13 @@ class PlayerManager @Inject constructor(
      * miMooutCast decide qué mostrar en ese caso, la cola no se toca.
      */
     suspend fun startRadioFromManualAnchor(anchor: RadioAnchor, displayLabel: String): Boolean {
-        clearQueue()
+        // H15 (miMooutCast), S032 -- `stayStopped = false` explícito:
+        // esta llamada a `clearQueue()` es la preparación de una
+        // sesión NUEVA (justo debajo se busca el primer tema) y no un
+        // vaciado a secas -- ver el kdoc de `clearQueue()`. Con el
+        // valor por defecto (`true`) esta sesión nueva se habría
+        // suprimido a sí misma antes de encontrar el primer tema.
+        clearQueue(stayStopped = false)
         // H15 -- el loop de batería tiene que arrancar DESPUÉS de
         // clearQueue() (que para el player y vacía la cola -- si
         // sonara antes, esta misma llamada lo mataría) y ANTES de la
@@ -4460,7 +4486,34 @@ class PlayerManager @Inject constructor(
      * the queue, it would still be anchored to the previous session's
      * artist.
      */
-    fun clearQueue() {
+    /**
+     * H15 (miMooutCast), S032 -- Miguel Ángel, orden explícita tras un
+     * bug real (log con timestamps: `clearQueue()` a las 11:33:15.474,
+     * `topUpRadioQueueIfNeeded() -- parado: no hay artista ancla...
+     * se pregunta al usuario` a las 11:33:15.677, 200ms después): al
+     * vaciar la cola a mano (botón "vaciar cola" de `QueueScreen`,
+     * general para toda la app), el reproductor quedaba sin ancla, y
+     * el siguiente `topUpRadioQueueIfNeeded()` -- disparado
+     * automáticamente por el cambio de estado del player, no por
+     * ninguna acción del usuario -- caía en la lógica de continuación
+     * de la Radio ("¿quién es el artista?"), aunque lo que se acabara
+     * de vaciar fuera una sesión de miMooutCast. *"El arreglo es que,
+     * cuando se vacía la cola, si lo que había activo era miMooutCast,
+     * el reproductor simplemente se pare -- sin preguntar nada, sin
+     * tocar ninguna lógica de la Radio en absoluto."* Confirmado por
+     * Miguel Ángel.
+     *
+     * `stayStopped = true` por defecto: vaciar la cola SIEMPRE deja el
+     * reproductor parado del todo, sin intentar continuar nada -- ni
+     * para miMooutCast ni para la Radio, da igual cuál estuviera
+     * activa; un vaciado explícito no tiene "después" que planificar
+     * en ningún caso. `startRadioFromManualAnchor()` pasa `false`
+     * explícitamente, porque ESA llamada a `clearQueue()` es la
+     * preparación de una sesión NUEVA que sí necesita seguir buscando
+     * temas justo después -- no un vaciado a secas.
+     */
+    fun clearQueue(stayStopped: Boolean = true) {
+        radioStayStopped = stayStopped
         // H15 (miMooutCast), S032 -- BUG REAL DE FONDO: se cancela
         // aquí, ANTES que ninguna otra cosa, la corrutina de reposición
         // de una sesión anterior si seguía viva -- ver el comentario
