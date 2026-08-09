@@ -2291,20 +2291,43 @@ class RadioRepository @Inject constructor(
      * it were really a "Teste" track. Now the prefix is only stripped
      * if it actually matches the artist being verified.
      */
+    /**
+     * H15/H08, S032 -- BUG REAL, log real: sesión "Clásica" con
+     * candidatos reales y muy conocidos (Joe Hisaishi/久石譲) dando
+     * "NO ENCONTRADO" sistemáticamente, 0 de 4 títulos confirmados.
+     * Causa: esta función solo limpiaba puntuación ASCII -- paréntesis
+     * `()`, separador " - " con espacios a ambos lados. Los títulos de
+     * este log usaban paréntesis de ANCHO COMPLETO japoneses (`（）`,
+     * Unicode distinto de `()`, la regex ASCII no los reconoce) y un
+     * guion sin espacios (`久石譲-風の谷のナウシカ`, no coincide con
+     * `" - "` literal) -- el título que llegaba a la comparación
+     * seguía contaminado con el nombre del artista y los corchetes,
+     * nunca coincidía con el catálogo real por mucho que el tema
+     * existiera y estuviera bien documentado. Añadido el mismo
+     * tratamiento para `（）`/`【】`/`「」` (corchetes de ancho completo
+     * corrientes en títulos japoneses/chinos) y para un guion sin
+     * espacios como separador alternativo cuando `" - "` no aparece.
+     */
     private fun stripTitleNoise(rawTitle: String, artist: String): String {
         val withoutBrackets = rawTitle
             .replace(Regex("\\([^)]*\\)"), " ")
             .replace(Regex("\\[[^]]*]"), " ")
-        val firstSegment = withoutBrackets.substringBefore(" - ", "")
+            .replace(Regex("（[^）]*）"), " ")
+            .replace(Regex("【[^】]*】"), " ")
+            .replace(Regex("「[^」]*」"), " ")
         val artistKey = SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(artist))
-        val withoutArtistPrefix = if (
-            firstSegment.isNotBlank() &&
-            SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(firstSegment)) == artistKey
-        ) {
-            withoutBrackets.substringAfter(" - ", withoutBrackets)
-        } else {
-            withoutBrackets
+        // Separador preferido " - " (con espacios) -- si no aparece,
+        // se prueba un guion sin espacios como alternativa (títulos
+        // japoneses/asiáticos rara vez llevan espacio alrededor del
+        // guion). Nunca los dos a la vez -- en cuanto uno de los dos
+        // encuentra el prefijo del artista, se usa ese.
+        fun stripPrefixWith(separator: String): String? {
+            val firstSegment = withoutBrackets.substringBefore(separator, "")
+            if (firstSegment.isBlank()) return null
+            val matches = SearchNormalizer.tight(SearchNormalizer.normalizeArtistName(firstSegment)) == artistKey
+            return if (matches) withoutBrackets.substringAfter(separator, withoutBrackets) else null
         }
+        val withoutArtistPrefix = stripPrefixWith(" - ") ?: stripPrefixWith("-") ?: withoutBrackets
         // S027 -- orden textual de Miguel Ángel: "no me vale Remaster
         // 1970, no me vale Remaster 2025... es el título de la canción
         // y el nombre del grupo". Ya se quitaba "(2015 Remastered

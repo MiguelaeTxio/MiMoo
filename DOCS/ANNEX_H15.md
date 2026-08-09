@@ -779,6 +779,41 @@ automática (H08) se ha tocado:
     es exactamente el de siempre -- streaming puro, sin tocar. Sin
     verificar en dispositivo real todavía.
 
+30. **BUG REAL DE VELOCIDAD, el más grave medido hasta ahora: 4
+    minutos 19 segundos para UN SOLO candidato.** Log real: artista
+    'dai' (nombre que colisiona con "Dai Dai", canción del Mundial de
+    Shakira/Burna Boy) -- 19 llamadas a `verifyTrackExists()` UNA
+    DETRÁS DE OTRA sobre los hasta 20 resultados de YouTube, cada una
+    con su propio coste de red (ya paralelizado entre MusicBrainz/
+    Discogs/Wikidata por el punto 26, pero el bucle EXTERIOR sobre los
+    20 resultados seguía siendo secuencial). Corregido: se comprueban
+    ahora por lotes de `YOUTUBE_VERIFY_BATCH_SIZE` (5) en paralelo
+    (`async`/`coroutineScope`) dentro de `resolveYoutubeCandidate()`,
+    ni uno a uno (demasiado lento) ni los 20 a la vez (arriesgaría
+    saturar MusicBrainz, ya inestable con 503 de por sí -- 20
+    candidatos × 3 fuentes cada uno serían 60 peticiones simultáneas).
+    Dentro de cada lote se conserva el orden original de YouTube para
+    decidir cuál vale si varios confirman a la vez.
+31. **BUG REAL, mismo log: sesión "Clásica" con candidatos reales y
+    muy conocidos (Joe Hisaishi/久石譲) dando "NO ENCONTRADO"
+    sistemáticamente, 0 de 4 títulos confirmados, género entero sin
+    servir ni un tema.** Causa: `stripTitleNoise()` solo limpiaba
+    puntuación ASCII -- paréntesis `()`, separador `" - "` con
+    espacios a ambos lados. Los títulos de este log usaban paréntesis
+    de ANCHO COMPLETO japoneses (`（）`, carácter Unicode distinto de
+    `()`, la regex ASCII no los reconoce) y un guion sin espacios
+    (`久石譲-風の谷のナウシカ`, no coincide con `" - "` literal) -- el
+    título que llegaba a la comparación seguía contaminado con el
+    nombre del artista y los corchetes, nunca coincidía con el
+    catálogo real por mucho que el tema existiera y estuviera bien
+    documentado. Añadido el mismo tratamiento para `（）`/`【】`/`「」`
+    (corchetes de ancho completo corrientes en títulos japoneses/
+    chinos) y un guion sin espacios como separador alternativo cuando
+    `" - "` no aparece. Ninguno de los dos arreglos toca el resto del
+    comportamiento -- solo añaden reconocimiento de puntuación que
+    antes se ignoraba por completo. Sin verificar en dispositivo real
+    todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

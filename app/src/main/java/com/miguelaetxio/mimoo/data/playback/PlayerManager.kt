@@ -22,7 +22,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -3375,39 +3377,60 @@ class PlayerManager @Inject constructor(
             // vez de loguear cada uno, y se resume en una sola línea
             // al final de la búsqueda.
             var decadeRejectedCount = 0
-            for (candidate in filtered) {
-                when (
-                    val existence = radioRepository.verifyTrackExists(
-                        artist,
-                        candidate.title,
-                        // Arreglo real pedido por Miguel Ángel (2026-08-02) --
-                        // ver el comentario de verifyTrackExists(). Solo tiene
-                        // efecto en ancla clásica; radioAnchorArtist es la
-                        // misma identidad (compositor) que fijó el ancla.
-                        composerFallback = if (isClassicalAnchor()) radioAnchorArtist else null,
-                    )
-                ) {
-                    is RadioRepository.TrackExistence.Confirmed -> {
-                        // S027 -- ventana de años cuando hay año exacto
-                        // del ancla Y del candidato; si falta cualquiera
-                        // de los dos, se cae a comparar por década fija
-                        // (comportamiento anterior).
-                        val rejected = if (expectedYear != null && existence.exactYear != null) {
-                            kotlin.math.abs(existence.exactYear - expectedYear) > yearWindow
-                        } else {
-                            expectedDecadeBegin != null && existence.decadeBegin != expectedDecadeBegin
+            // H15/H08, S032 -- BUG REAL DE VELOCIDAD, medido con log
+            // real: candidato 'dai' (nombre que colisiona con una
+            // canción del Mundial de Shakira/Burna Boy) tardó 4
+            // minutos 19 segundos -- 19 comprobaciones de
+            // `verifyTrackExists()` UNA DETRÁS DE OTRA sobre los hasta
+            // 20 resultados de YouTube. Orden de Miguel Ángel: *"todo
+            // lo que sea tardar más de 10 segundos... lo voy a
+            // considerar fracaso."* Se comprueban ahora por LOTES de
+            // `YOUTUBE_VERIFY_BATCH_SIZE` en paralelo (`async`) en vez
+            // de uno a uno -- ni todos los 20 a la vez (podría saturar
+            // MusicBrainz, ya de por sí inestable con 503) ni
+            // estrictamente secuencial. Dentro de cada lote se
+            // conserva el orden original de YouTube para decidir cuál
+            // vale si varios confirman a la vez.
+            outer@ for (batch in filtered.chunked(YOUTUBE_VERIFY_BATCH_SIZE)) {
+                val batchResults = coroutineScope {
+                    batch.map { candidate ->
+                        async {
+                            candidate to radioRepository.verifyTrackExists(
+                                artist,
+                                candidate.title,
+                                // Arreglo real pedido por Miguel Ángel (2026-08-02) --
+                                // ver el comentario de verifyTrackExists(). Solo tiene
+                                // efecto en ancla clásica; radioAnchorArtist es la
+                                // misma identidad (compositor) que fijó el ancla.
+                                composerFallback = if (isClassicalAnchor()) radioAnchorArtist else null,
+                            )
                         }
-                        if (rejected) {
-                            decadeRejectedCount++
-                            continue
+                    }.map { it.await() }
+                }
+                for ((candidate, existence) in batchResults) {
+                    when (existence) {
+                        is RadioRepository.TrackExistence.Confirmed -> {
+                            // S027 -- ventana de años cuando hay año exacto
+                            // del ancla Y del candidato; si falta cualquiera
+                            // de los dos, se cae a comparar por década fija
+                            // (comportamiento anterior).
+                            val rejected = if (expectedYear != null && existence.exactYear != null) {
+                                kotlin.math.abs(existence.exactYear - expectedYear) > yearWindow
+                            } else {
+                                expectedDecadeBegin != null && existence.decadeBegin != expectedDecadeBegin
+                            }
+                            if (rejected) {
+                                decadeRejectedCount++
+                                continue
+                            }
+                            confirmed = candidate
+                            break@outer
                         }
-                        confirmed = candidate
-                        break
-                    }
-                    RadioRepository.TrackExistence.NotFound -> continue
-                    RadioRepository.TrackExistence.NetworkUnavailable -> {
-                        networkLost = true
-                        break
+                        RadioRepository.TrackExistence.NotFound -> continue
+                        RadioRepository.TrackExistence.NetworkUnavailable -> {
+                            networkLost = true
+                            break@outer
+                        }
                     }
                 }
             }
@@ -5012,5 +5035,17 @@ class PlayerManager @Inject constructor(
 
         /** H15 (miMooutCast), S032 -- mismo tamaño que `UNKNOWN_PAGE_SIZE` de la Radio, ver `miMooutCastOffset`. */
         const val MIMOOUTCAST_PAGE_SIZE = 25
+
+        /**
+         * H15/H08, S032 -- tamaño del lote de `verifyTrackExists()` en
+         * paralelo dentro de `resolveYoutubeCandidate()`. Ni 1 (lo de
+         * antes -- secuencial, hasta 4 minutos para un candidato
+         * problemático) ni 20 (todos a la vez -- MusicBrainz ya es
+         * inestable de por sí con 503, saturarla con 20 peticiones
+         * simultáneas por cada UNA de las tres fuentes -- 60 llamadas
+         * a la vez -- lo pondría peor, no mejor). 5 es un término
+         * medio razonable, sin dato que lo afine más por ahora.
+         */
+        const val YOUTUBE_VERIFY_BATCH_SIZE = 5
     }
 }
