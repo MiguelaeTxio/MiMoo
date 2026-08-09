@@ -954,6 +954,29 @@ automática (H08) se ha tocado:
     si es sistemáticamente 0, es el primer sitio a mirar. Sin
     verificar en dispositivo real todavía.
 
+37. **El rediseño del punto 36 falló en dispositivo real: "Clásica" no
+    encontró nada -- confirmado con captura de pantalla, "No se ha
+    encontrado ningún tema para 'Clásica'".** Descartado primero, con
+    el código delante, que fuera un fallo de enrutado (`anchor.genre`
+    para clásica es literalmente el texto `"classical"`, no vacío --
+    `RadioRepository.manualAnchor()` lo confirma, `isClassical = genre
+    == "classical"`; la rama nueva SÍ se estaba usando). Causa más
+    probable, sin poder confirmarlo en vivo: el campo `tag` es válido
+    tanto en la búsqueda de artista como en la de disco (confirmado
+    contra la documentación oficial), pero las etiquetas de género
+    están mucho menos pobladas en discos (`release-group`) que en
+    artistas en la base de datos real de MusicBrainz -- cambié un
+    camino lento-pero-fiable por uno rápido-pero-vacío.
+
+    Corregido con una RED DE SEGURIDAD, no revirtiendo el intento: se
+    prueba primero el camino rápido de un solo paso
+    (`suggestWorkForGenre()`); si no da nada, cae automáticamente al
+    camino de dos pasos que sí sabíamos que funcionaba
+    (`suggestRelatedArtist()` y, si es clásica,
+    `suggestWorkForArtist()`). Mejor lento-pero-fiable de reserva que
+    rápido-pero-vacío sin ninguna alternativa. Sin verificar en
+    dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

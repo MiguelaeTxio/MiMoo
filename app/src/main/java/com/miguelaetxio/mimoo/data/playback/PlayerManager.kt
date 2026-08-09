@@ -3967,24 +3967,48 @@ class PlayerManager @Inject constructor(
                 // eran DOS peticiones en serie: `suggestRelatedArtist()`
                 // (un artista) y, solo para clásica, un segundo viaje
                 // a `suggestWorkForArtist()` (una obra suya). Ahora,
-                // con género, es SIEMPRE una sola petición --
+                // con género, se prueba primero UNA sola petición --
                 // `suggestWorkForGenre()` busca directamente obras
                 // etiquetadas con el género y devuelve artista Y
-                // título A LA VEZ del mismo resultado, mismo patrón
-                // que `suggestArtistFromDecade()` aplicado a género en
-                // vez de a fecha. Se aplica a género CON o SIN origen
-                // a la vez -- el origen ya no puede afinar esta
-                // búsqueda (release-group no tiene país por artista de
-                // forma fiable), pero sigue filtrando después, igual
-                // que antes, vía `resolveYoutubeCandidate()`.
-                val candidate = radioRepository.suggestWorkForGenre(
+                // título A LA VEZ del mismo resultado.
+                //
+                // RED DE SEGURIDAD, misma sesión: probado en
+                // dispositivo real, "Clásica" no encontró NADA con
+                // este camino -- las etiquetas de género en discos
+                // (`release-group`) están mucho menos pobladas en
+                // MusicBrainz que en artistas, aunque el campo
+                // `tag:` en sí sea válido para los dos (confirmado
+                // contra la documentación oficial). En vez de
+                // rendirse, si el camino rápido no da nada, cae al
+                // camino de dos pasos que SÍ sabíamos que funcionaba
+                // (aunque más lento): `suggestRelatedArtist()` (un
+                // artista) y, si es clásica, `suggestWorkForArtist()`
+                // (una obra suya). Mejor lento-pero-fiable de reserva
+                // que rápido-pero-vacío sin ninguna alternativa.
+                val fast = radioRepository.suggestWorkForGenre(
                     genre = anchor.genre,
                     excludeArtists = windowLower,
                     offset = miMooutCastOffset,
                     resultWindowLimit = window,
                 )
-                artistName = candidate?.artist
-                knownTitle = candidate?.title
+                if (fast != null) {
+                    artistName = fast.artist
+                    knownTitle = fast.title
+                } else {
+                    val fallbackArtist = radioRepository.suggestRelatedArtist(
+                        anchor, windowLower, emptySet(),
+                        offset = miMooutCastOffset,
+                        genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+                        useLocalDictionary = false,
+                        resultWindowLimit = window,
+                    )
+                    artistName = fallbackArtist
+                    knownTitle = if (anchor.isClassical && fallbackArtist != null) {
+                        radioRepository.suggestWorkForArtist(fallbackArtist)
+                    } else {
+                        null
+                    }
+                }
             } else {
                 // Origen SOLO (sin género): no hay ninguna etiqueta de
                 // género que buscar en release-group, así que
