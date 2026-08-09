@@ -623,6 +623,46 @@ automática (H08) se ha tocado:
     recorta cuántos de los ya devueltos entran en el sorteo. Sin
     verificar en dispositivo real todavía.
 
+25. **CAUSA REAL, por fin, de "las sesiones siguen activas por debajo"
+    -- confirmada con log real, no supuesta.** Miguel Ángel, con toda
+    la razón tras varios intentos previos que no lo resolvían del
+    todo: *"lo de que las sesiones siguen activas por debajo ya no
+    cuantas veces lo has arreglado ya he perdido la cuenta."* El
+    arreglo del punto 18 (`topUpJob?.cancel()`) SÍ funcionaba -- la
+    prueba es que en el log aparece `JobCancellationException:
+    StandaloneCoroutine was cancelled`, la señal de que la cancelación
+    se disparaba de verdad. El problema real estaba un paso más allá:
+    **`findCandidates()` (y otras 19 funciones más en los dos
+    archivos) atrapaban esa excepción con un `catch (e: Exception)`
+    genérico**, que en Kotlin también captura `CancellationException`
+    -- y en vez de dejarla propagarse (que es lo que de verdad para
+    una corrutina), la trataban como un fallo más: "0 candidatos,
+    reintento". Log real, sesión "Minimal Techno" cambiada a "Años 90"
+    a las 10:16:07: la sesión vieja de Minimal Techno siguió
+    reintentando 8 veces más, 20 segundos, con `JobCancellationException`
+    en cada intento, sin llegar a pararse nunca de verdad.
+
+    **No es un fallo exclusivo de miMooutCast** -- es un error de
+    manejo de excepciones que rompe la cancelación cooperativa en
+    cualquier corrutina, Radio incluida, y por eso se corrige en los
+    20 sitios donde aparece el patrón (`RadioRepository.kt`: 15,
+    `PlayerManager.kt`: 5), no solo en el camino de miMooutCast --
+    orden explícita de Miguel Ángel de no volver a pedirle alcance
+    para esto: *"no es una elección de diseño... es una cosa que está
+    simplemente mal hecha en todos los sitios donde aparece."* Cada
+    `catch (e: Exception)` ahora tiene delante un
+    `catch (e: CancellationException) { throw e }` que la relanza sin
+    tocarla -- patrón estándar de Kotlin para no romper la cancelación
+    cooperativa. Import de `kotlinx.coroutines.CancellationException`
+    añadido en ambos archivos. Sin verificar en dispositivo real
+    todavía.
+
+    **Nota aparte, sin cerrar:** en el mismo log, "The Supremes"
+    (grupo real de Motown de los 60) acabó sirviendo un "2019 Tour
+    Trailer" -- claramente no un tema real de los 90, un fallo de
+    calidad en la verificación que queda pendiente de mirar, distinto
+    de la cancelación.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

@@ -17,6 +17,7 @@ import com.miguelaetxio.mimoo.data.remote.RadioDebugLogger
 import com.miguelaetxio.mimoo.data.remote.RadioRepository
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -1878,6 +1879,8 @@ class PlayerManager @Inject constructor(
                     fetchRoundCandidate(anchor, anchorArtistName)
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             sharedResolveLog(
                 "fetchOneRadioTrack(ancla='$anchorArtistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}",
@@ -3435,6 +3438,8 @@ class PlayerManager @Inject constructor(
         } else {
             val streamUrl = try {
                 streamResolver.resolveAudioStreamUrl("https://youtu.be/${track.youtubeId}")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 sharedResolveLog(
                     "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -- " +
@@ -3456,6 +3461,8 @@ class PlayerManager @Inject constructor(
                 artworkUri = track.thumbnailUrl,
             )
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         sharedResolveLog(
             "resolveYoutubeCandidate(ancla='$anchorArtistName', artist='$artist') -- EXCEPCIÓN: " +
@@ -4046,6 +4053,8 @@ class PlayerManager @Inject constructor(
         managerScope.launch {
             val identified = try {
                 radioRepository.identifyFromTitleWords(title)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 null
             }
@@ -4172,6 +4181,8 @@ class PlayerManager @Inject constructor(
         }
         val identified = try {
             radioRepository.identifyFromTitleWords(videoTitle)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             null
         }

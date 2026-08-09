@@ -8,6 +8,7 @@ import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -469,6 +470,8 @@ class RadioRepository @Inject constructor(
 
         val pick = try {
             findAnchorArtistMbid(artist)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             noteFailure(e)
             null
@@ -485,6 +488,8 @@ class RadioRepository @Inject constructor(
             page++
             val response = try {
                 musicBrainzApiService.browseReleaseGroupsByArtist(pick.mbid, limit = pageSize, offset = offset)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 noteFailure(e)
                 break
@@ -922,6 +927,8 @@ class RadioRepository @Inject constructor(
     suspend fun resolveArtistFactsForDictionary(name: String): DictionaryOutcome {
         val mbid = try {
             findAnchorArtistMbid(name)?.mbid
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             noteFailure(e)
             return DictionaryOutcome.NETWORK_DOWN
@@ -932,6 +939,8 @@ class RadioRepository @Inject constructor(
         }
         val detail = try {
             musicBrainzApiService.lookupArtist(mbid).also { noteSuccess() }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             noteFailure(e)
             return DictionaryOutcome.NETWORK_DOWN
@@ -982,6 +991,8 @@ class RadioRepository @Inject constructor(
         for (name in artists) {
             val mbid = try {
                 findAnchorArtistMbid(name)?.mbid
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 noteFailure(e)
                 return
@@ -996,6 +1007,8 @@ class RadioRepository @Inject constructor(
             }
             val detail = try {
                 musicBrainzApiService.lookupArtist(mbid).also { noteSuccess() }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 noteFailure(e)
                 return
@@ -1104,6 +1117,8 @@ class RadioRepository @Inject constructor(
 
         noteSuccess()
         years.filter { it in 1850..2100 }.minOrNull()
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         noteFailure(e)
         null
@@ -1162,6 +1177,8 @@ class RadioRepository @Inject constructor(
                 log("firstReleaseYearFromDiscogs('$artist' -- '$title') -> $year")
             }
             year
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Discogs no es MusicBrainz: que falle no debe marcar el
             // servicio como degradado ni afectar a las porciones.
@@ -1208,6 +1225,8 @@ class RadioRepository @Inject constructor(
             log("firstReleaseYearFromWikidata('$artist' -- '$title') -> $year")
         }
         year
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         // Wikidata es el último recurso: si falla, no hay año y ya
         // está. No cuenta como fallo de servicio de MusicBrainz.
@@ -1490,6 +1509,8 @@ class RadioRepository @Inject constructor(
                 originGroup = originGroup,
                 isClassical = isClassical,
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             noteFailure(e)
             // S025 -- el artista no está en el diccionario Y no se ha
@@ -1831,6 +1852,8 @@ class RadioRepository @Inject constructor(
                     "${windowed.size} en la ventana de selección",
             )
             windowed.randomOrNull()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             noteFailure(e)
             log(
@@ -1885,6 +1908,8 @@ class RadioRepository @Inject constructor(
                 country = detail.country?.trim()?.ifBlank { null },
                 decadeBegin = parseDecadeBegin(detail.lifeSpan?.begin),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             noteFailure(e)
             log("lookupArtistProfile('$artistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
@@ -1977,6 +2002,8 @@ class RadioRepository @Inject constructor(
         // igual.
         noteSuccess()
         found
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         noteFailure(e)
         log("findCandidates(género='$genre', grupo=${originGroup ?: "?"}, década=$decadeBegin) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
@@ -2183,6 +2210,8 @@ class RadioRepository @Inject constructor(
                     )
                     .artists
                 pickAnchorArtist(candidate, hits)?.let { candidate }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Un 503 aquí no significa "estas palabras no son un
                 // artista". Se corta la búsqueda entera en vez de
@@ -2347,6 +2376,8 @@ class RadioRepository @Inject constructor(
 
             log("desambiguación cargada -- ${forced.size} con MBID fijado, ${blocked.size} sin resolver, ${confirmed.size} confirmados")
             Disambiguation(forced, blocked, confirmed)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Sin la lista se sigue funcionando: lo que se pierde son
             // las correcciones manuales, no la comprobación de nombre.
