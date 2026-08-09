@@ -1890,6 +1890,42 @@ class RadioRepository @Inject constructor(
     }
 
     /**
+     * H15/H08, S032 -- BUG REAL DE VELOCIDAD para el ancla clásica,
+     * repetido dos veces por Miguel Ángel: *"tarda un huevo en empezar
+     * la música clásica."* Causa de fondo: `suggestRelatedArtist()`
+     * solo da un nombre de compositor/intérprete -- la búsqueda de
+     * "solo artista" que viene después es a ciegas por TODA su
+     * discografía en YouTube (grabaciones en directo, documentales,
+     * versiones de otros intérpretes...), con una tasa de acierto
+     * mucho más baja que en géneros populares. Mismo principio que
+     * `suggestArtistFromDecade()` (año central en vez de rango): en
+     * vez de adivinar, se pregunta a MusicBrainz una OBRA concreta y
+     * real de ese artista -- con el título ya en la mano, la búsqueda
+     * en YouTube es tan precisa como "artista + canción conocida" en
+     * cualquier otro punto del proyecto, no "solo artista" a ciegas.
+     */
+    suspend fun suggestWorkForArtist(artistName: String): String? {
+        val safeArtist = artistName.replace("\"", "")
+        val query = "artist:\"$safeArtist\""
+        return try {
+            val response = musicBrainzApiService.searchReleaseGroups(query = query, limit = ANCHOR_SEARCH_LIMIT)
+            noteSuccess()
+            val title = response.releaseGroups.map { it.title }.randomOrNull()
+            log(
+                "suggestWorkForArtist('$artistName') -- ${response.releaseGroups.size} obras encontradas" +
+                    if (title != null) ", elegida '$title'" else ", ninguna usable",
+            )
+            title
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            noteFailure(e)
+            log("suggestWorkForArtist('$artistName') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+            null
+        }
+    }
+
+    /**
      * S026 -- expone `GenreMatchQuality` a `PlayerManager` (porción
      * DISCO), que no tiene acceso directo a `GenreTree`. Mismo umbral
      * por porcentaje que en Conocidos y Exploración -- ver

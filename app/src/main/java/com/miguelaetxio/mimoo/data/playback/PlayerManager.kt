@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -3732,13 +3733,23 @@ class PlayerManager @Inject constructor(
         // `cancelMimooutcastSearch()` (botón nuevo "dejar de buscar")
         // y `playQueue()` (cualquier otra cosa que empiece a sonar) la
         // puedan matar de verdad.
+        //
+        // Repetido dos veces por Miguel Ángel tras esto: el botón
+        // ayuda, pero no basta si nadie se acuerda de pulsarlo --
+        // `MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS` para automáticamente
+        // en vez de depender de que el usuario se dé cuenta y actúe.
+        // `job.cancel()` en el `finally`, siempre, pase lo que pase
+        // (éxito, cancelación manual, o tope de tiempo) -- cancelar un
+        // `Job` ya terminado es una operación seura y sin efecto, así
+        // que no hace falta bifurcar la lógica según el motivo.
         val job = managerScope.async { fetchOneRadioTrack(displayLabel) }
         initialSearchJob = job
         val first = try {
-            job.await()
+            withTimeoutOrNull(MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS) { job.await() }
         } catch (e: CancellationException) {
             null
         } finally {
+            job.cancel()
             if (initialSearchJob === job) initialSearchJob = null
         }
         if (first == null) {
@@ -3971,7 +3982,22 @@ class PlayerManager @Inject constructor(
                     useLocalDictionary = false,
                     resultWindowLimit = window,
                 )
-                knownTitle = null
+                // H15/H08, S032 -- BUG REAL DE VELOCIDAD, repetido dos
+                // veces por Miguel Ángel: "tarda un huevo en empezar la
+                // música clásica". Con el nombre del compositor/
+                // intérprete ya en la mano, se pregunta a MusicBrainz
+                // una OBRA concreta y real suya (`suggestWorkForArtist()`)
+                // en vez de buscar "solo artista" a ciegas por toda su
+                // discografía en YouTube -- misma precisión que
+                // "artista + canción" en cualquier otro punto del
+                // proyecto. `null` (obra no encontrada, o ancla no
+                // clásica) cae al comportamiento de siempre -- "solo
+                // artista", sin tocar género/origen no clásicos.
+                knownTitle = if (anchor.isClassical && artistName != null) {
+                    radioRepository.suggestWorkForArtist(artistName)
+                } else {
+                    null
+                }
             }
             if (artistName == null) {
                 // Página sin nada nuevo -- se avanza y se sigue,
@@ -5109,6 +5135,17 @@ class PlayerManager @Inject constructor(
 
         /** H15 (miMooutCast), S032 -- mismo tamaño que `UNKNOWN_PAGE_SIZE` de la Radio, ver `miMooutCastOffset`. */
         const val MIMOOUTCAST_PAGE_SIZE = 25
+
+        /**
+         * H15 (miMooutCast), S032 -- tope de tiempo del loop de
+         * apertura antes de rendirse solo. Miguel Ángel, repetido:
+         * *"tarda un huevo... el loop de batería."* 30 segundos es un
+         * término medio sin dato más fino que lo afine por ahora --
+         * bastante para dar una oportunidad real a géneros de nicho o
+         * clásica, sin dejar el loop sonando indefinidamente si nadie
+         * pulsa "dejar de buscar".
+         */
+        const val MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS = 30_000L
 
         /**
          * H15/H08, S032 -- tamaño del lote de `verifyTrackExists()` en

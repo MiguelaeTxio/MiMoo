@@ -874,6 +874,35 @@ automática (H08) se ha tocado:
     explícita, que sería engañoso. Sin verificar en dispositivo real
     todavía.
 
+34. **Miguel Ángel repitió el mismo aviso varias veces seguidas: "tarda
+    un huevo en empezar la música clásica" y "el loop de batería" --
+    los arreglos anteriores (paralelizado por lotes, filtro de
+    documentales/retratos) no bastaban.** Dos arreglos de fondo más:
+
+    - **Velocidad de clásica**: nueva `RadioRepository.suggestWorkForArtist()`
+      -- mismo principio que `suggestArtistFromDecade()` (preguntar
+      algo concreto en vez de adivinar a ciegas): con el nombre del
+      compositor/intérprete ya en la mano, se pregunta a MusicBrainz
+      una OBRA real y concreta suya (`artist:"NOMBRE"` sobre
+      release-group) en vez de hacer una búsqueda "solo artista" a
+      ciegas por toda su discografía en YouTube. Con el título ya
+      conocido, la búsqueda es tan precisa como "artista + canción"
+      en cualquier otro punto del proyecto. Solo afecta al ancla
+      clásica (`anchor.isClassical`) -- género/origen no clásicos, sin
+      tocar.
+    - **Loop de apertura sin tope**: aunque ya había botón "Dejar de
+      buscar" y cancelación automática al empezar a sonar otra cosa,
+      seguía sin haber ningún límite si nadie se daba cuenta y
+      actuaba. Nueva `MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS` (30
+      segundos, valor de partida sin dato más fino que lo afine) --
+      `withTimeoutOrNull()` envolviendo la espera del primer tema; si
+      se cumple el plazo, se rinde sola, sin esperar a que el usuario
+      pulse nada. `job.cancel()` siempre en el `finally`, pase lo que
+      pase (éxito, cancelación manual, o tope de tiempo cumplido) --
+      cancelar un `Job` ya terminado es una operación segura, así que
+      no hace falta bifurcar la lógica según el motivo. Sin verificar
+      en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
