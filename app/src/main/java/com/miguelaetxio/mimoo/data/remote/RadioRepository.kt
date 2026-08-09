@@ -1860,11 +1860,28 @@ class RadioRepository @Inject constructor(
         val centralYear = decadeBegin + 5
         val query = "firstreleasedate:$centralYear"
         return try {
-            val response = musicBrainzApiService.searchReleaseGroups(
+            suspend fun fetch(o: Int) = musicBrainzApiService.searchReleaseGroups(
                 query = query,
                 limit = MIMOOUTCAST_DECADE_PAGE_SIZE,
-                offset = offset,
+                offset = o,
             )
+            var response = fetch(offset)
+            // H15 (miMooutCast), S032 -- vuelta al principio si el
+            // offset se pasó del final, mismo patrón que ya existía en
+            // `findCandidates()` (S024) para el camino de origen-solo
+            // -- que un offset alto dé vacío no significa que el año
+            // esté agotado, puede que solo se haya pasado del tamaño
+            // real del catálogo para ese año. Orden de Miguel Ángel al
+            // ver el límite artificial de reintentos que esto obligaba
+            // a poner: *"pero por qué tiene que tener límite, quién
+            // coño ha dicho de ponerle límite."*
+            if (response.releaseGroups.isEmpty() && offset > 0) {
+                log(
+                    "suggestArtistFromDecade(año central=$centralYear) -- vacío con offset $offset; " +
+                        "se reintenta desde el principio por si el desplazamiento se pasó del final",
+                )
+                response = fetch(0)
+            }
             noteSuccess()
             val allCandidates = response.releaseGroups
                 .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }
@@ -1961,11 +1978,24 @@ class RadioRepository @Inject constructor(
         val safeGenre = genre.replace("\"", "")
         val query = "tag:\"$safeGenre\""
         return try {
-            val response = musicBrainzApiService.searchReleaseGroups(
+            suspend fun fetch(o: Int) = musicBrainzApiService.searchReleaseGroups(
                 query = query,
                 limit = ANCHOR_SEARCH_LIMIT,
-                offset = offset,
+                offset = o,
             )
+            var response = fetch(offset)
+            // H15 (miMooutCast), S032 -- vuelta al principio si el
+            // offset se pasó del final, mismo patrón que ya existía en
+            // `findCandidates()` (S024). Orden de Miguel Ángel: *"pero
+            // por qué tiene que tener límite, quién coño ha dicho de
+            // ponerle límite."*
+            if (response.releaseGroups.isEmpty() && offset > 0) {
+                log(
+                    "suggestWorkForGenre('$genre') -- vacío con offset $offset; se reintenta desde el " +
+                        "principio por si el desplazamiento se pasó del final",
+                )
+                response = fetch(0)
+            }
             noteSuccess()
             val allCandidates = response.releaseGroups
                 .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }

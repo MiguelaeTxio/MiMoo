@@ -1081,6 +1081,26 @@ automática (H08) se ha tocado:
     tiene su propio tope (el tamaño del recopilatorio, punto 41), sin
     tocar. Sin verificar en dispositivo real todavía.
 
+43. **Miguel Ángel volvió a preguntar, esta vez sobre el fondo del
+    asunto: "pero por qué tiene que tener límite, quién coño ha dicho
+    de ponerle límite."** Tenía razón otra vez -- encontrada la causa
+    real de por qué hacía falta cualquier número: `suggestWorkForGenre()`
+    y `suggestArtistFromDecade()` (las dos funciones nuevas de género y
+    década) se rendían en cuanto el offset se pasaba del final del
+    catálogo real, aunque quedaran artistas de sobra en las páginas
+    anteriores -- exactamente el mismo bug que `findCandidates()` (el
+    camino de origen-solo) ya tenía documentado y arreglado desde S024
+    ("el offset aleatorio se pasa de largo cuando el conjunto es
+    pequeño"), pero que nunca se trasladó a las dos funciones nuevas.
+
+    Corregido de raíz, no con otro número: las dos funciones ahora
+    reintentan desde offset 0 antes de devolver `null`, mismo patrón
+    que `findCandidates()`. Con esto, `MIMOOUTCAST_CANDIDATE_ATTEMPTS`
+    deja de ser un juicio de "cuántos intentos son razonables" -- pasa
+    a ser una válvula de seguridad puramente técnica (que la app no se
+    cuelgue si la red falla del todo), subida a 200. Sin verificar en
+    dispositivo real todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué

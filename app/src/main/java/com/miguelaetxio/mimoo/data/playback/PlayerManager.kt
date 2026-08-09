@@ -5251,27 +5251,26 @@ class PlayerManager @Inject constructor(
         const val UNKNOWN_CANDIDATE_ATTEMPTS = 4
 
         /**
-         * H15 (miMooutCast), S032 -- mismo concepto que
-         * `UNKNOWN_CANDIDATE_ATTEMPTS`, para `fetchSimpleManualCandidate()`.
-         *
-         * CORREGIDO, orden directa de Miguel Ángel al ver el 8
-         * original: *"lo de ríndete a los 8 intentos es una mierda que
-         * no sé de dónde ha salido, ni para MusicBrainz ni para
-         * MusicBrainz."* Tenía razón -- el razonamiento original
-         * (ocho intentos "proporcionados" porque `suggestRelatedArtist()`
-         * trae 20-25 candidatos de golpe) se olvidaba de que
-         * `miMooutCastOffset` avanza de verdad en cada fallo -- cada
-         * intento explora una región NUEVA del catálogo real, no
-         * repite la misma página. Ocho fallos seguidos no significa
-         * "esto está agotado", solo que esas ocho regiones concretas
-         * no dieron nada -- con dos millones de artistas en
-         * MusicBrainz, eso no prueba nada sobre el resto. Subido a 40
-         * -- mismo principio que el punto 41 aplicó a clásica (probar
-         * mucho más antes de rendirse), aquí sin un tope natural como
-         * el tamaño de una lista fija, así que se sube el número en
-         * vez de usar el tamaño de una colección.
+         * H15 (miMooutCast), S032 -- ya NO es un juicio de "esto está
+         * agotado" -- es una válvula de seguridad puramente técnica,
+         * para que la app no se quede literalmente colgada en un bucle
+         * sin fin si la red falla del todo. Miguel Ángel, tras subir
+         * esto de 8 a 40, rechazó también el 40: *"pero por qué tiene
+         * que tener límite, quién coño ha dicho de ponerle límite."*
+         * Tenía razón otra vez -- el motivo real de por qué 8 (y luego
+         * 40) parecían necesarios era que `suggestWorkForGenre()`/
+         * `suggestArtistFromDecade()` se rendían en cuanto el offset
+         * se pasaba del final del catálogo real, aunque quedaran
+         * artistas de sobra más atrás. Arreglado eso de raíz (las dos
+         * funciones ahora reintentan desde offset 0 antes de devolver
+         * `null`, mismo patrón que `findCandidates()` ya tenía desde
+         * S024) -- con esto, un intento que falla de verdad significa
+         * que se ha recorrido el catálogo entero sin nada dos veces
+         * seguidas, no "mala suerte con la región". Subido a 200 --
+         * ya no es "cuántos intentos son razonables", es solo "que no
+         * se cuelgue nunca si todo falla a la vez".
          */
-        const val MIMOOUTCAST_CANDIDATE_ATTEMPTS = 40
+        const val MIMOOUTCAST_CANDIDATE_ATTEMPTS = 200
 
         /** H15 (miMooutCast), S032 -- mismo tamaño que `UNKNOWN_PAGE_SIZE` de la Radio, ver `miMooutCastOffset`. */
         const val MIMOOUTCAST_PAGE_SIZE = 25
