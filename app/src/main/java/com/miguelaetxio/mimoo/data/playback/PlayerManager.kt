@@ -3752,6 +3752,18 @@ class PlayerManager @Inject constructor(
             val isDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
             val artistName: String?
             val knownTitle: String?
+            // H15 (miMooutCast), S032 -- solo para década sola: año
+            // central de la década ±5, propuesta de Miguel Ángel tras
+            // ver que el rango de 10 años completo hacía la búsqueda
+            // demasiado ancha y lenta. Reutiliza el mecanismo YA
+            // EXISTENTE de `expectedYear`/`yearWindow` de
+            // `resolveYoutubeCandidate()` (el mismo que usa la Radio
+            // automática al anclar en un tema concreto, S027) en vez
+            // de la comprobación de década rígida
+            // (`expectedDecadeBegin`) que sigue usando género/origen
+            // sin ningún cambio.
+            val decadeYearWindow = 5
+            val decadeCentralYear = anchor.decadeBegin?.let { it + 5 }
             if (isDecadeOnly) {
                 val candidate = radioRepository.suggestArtistFromDecade(
                     decadeBegin = anchor.decadeBegin!!,
@@ -3807,8 +3819,9 @@ class PlayerManager @Inject constructor(
             if (artistName.lowercase() in windowLower) return@repeat
             val item = resolveYoutubeCandidate(
                 anchorLabel, artistName, songTitle = knownTitle,
-                expectedDecadeBegin = if (anchor.isClassical) null else anchor.decadeBegin,
-                expectedYear = anchor.anchorYear,
+                expectedDecadeBegin = if (isDecadeOnly || anchor.isClassical) null else anchor.decadeBegin,
+                expectedYear = if (isDecadeOnly) decadeCentralYear else anchor.anchorYear,
+                yearWindow = if (isDecadeOnly) decadeYearWindow else uiPreferencesManager.radioYearWindow.value,
                 genreHint = anchor.genre.ifBlank { null },
             )
             if (item != null &&

@@ -582,6 +582,47 @@ automática (H08) se ha tocado:
     `false` explícitamente y salta ese bloque entero. Sin verificar en
     dispositivo real todavía.
 
+24. **EXCLUSIVO DE DÉCADA -- Miguel Ángel fue explícito: "vamos a hacer
+    exactamente el mismo razonamiento, esta vez para las décadas.
+    Espero que no lo extrapoles por tu cuenta a absolutamente nada
+    más."** El punto 23 (ventana creciente) se había aplicado también
+    a década sin que se pidiera para ahí -- mismo error que el
+    diccionario local del punto 23, mismo patrón que Miguel Ángel ya
+    había señalado antes. No se revierte (orden explícita: *"quién te
+    ha dicho que pierdas el tiempo en revertir... quieres estarte
+    quieto"*), pero este punto 24 es un cambio nuevo, acotado solo a
+    década, con su propio permiso explícito.
+
+    Log real (`Años 90`, 2026-08-08 21:59-22:00): el rango de década
+    completo (`firstreleasedate:[1990-01-01 TO 1999-12-31]`) combinado
+    con la ventana creciente del punto 23 usada como límite de la
+    PETICIÓN a MusicBrainz (no solo de la selección) provocó 16
+    intentos seguidos con 0 artistas encontrados -- páginas de solo 5
+    discos al principio de sesión, demasiado pequeñas, con el offset
+    saltando de 25 en 25 por encima sin explorar lo saltado.
+
+    Propuesta de Miguel Ángel, aceptada tal cual: *"si tenemos un
+    tema+artista de referencia en un año del medio de la década (1965,
+    1975... 1995...) y buscamos relacionados con ese tema comprobando
+    ±5 años"* -- confirmado explícitamente que es SOLO por año, sin
+    ninguna noción de parecido/género. `suggestArtistFromDecade()`
+    ahora consulta `firstreleasedate:AÑO_CENTRAL` (año exacto, no
+    rango) -- más estrecha, resultados más claramente "de esa época".
+    La comprobación de ±5 reutiliza el mecanismo YA EXISTENTE
+    `expectedYear`/`yearWindow` de `resolveYoutubeCandidate()` (el
+    mismo que usa la Radio automática al anclar en un tema concreto,
+    S027) en vez de inventar uno nuevo -- `fetchSimpleManualCandidate()`
+    pasa `expectedYear = añoCentral, yearWindow = 5` solo en la rama de
+    década sola; género/origen siguen usando `expectedDecadeBegin`
+    exactamente como antes, sin tocar.
+
+    De paso, separado (dentro de esta misma función, sin tocar
+    `suggestRelatedArtist()`) el bug real del punto 23: `limit` de la
+    petición a MusicBrainz vuelve a ser siempre
+    `MIMOOUTCAST_DECADE_PAGE_SIZE` fijo; `resultWindowLimit` ahora solo
+    recorta cuántos de los ya devueltos entran en el sorteo. Sin
+    verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
