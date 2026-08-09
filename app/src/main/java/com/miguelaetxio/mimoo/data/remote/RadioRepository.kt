@@ -1525,6 +1525,33 @@ class RadioRepository @Inject constructor(
         offset: Int = 0,
         /** S026 -- ver KnownHitsRepository.randomHit(). */
         genreMatchThresholdPercent: Int = 40,
+        /**
+         * H15 (miMooutCast), S032 -- orden explícita y repetida de
+         * Miguel Ángel: *"todo en streaming... te limpiaste el culo con
+         * eso y la semilla de un diccionario local."* `AnchorDictionary`
+         * es exactamente eso -- una base local aprendida de sesiones
+         * anteriores, sin ir a red. Para la Radio automática (S025) es
+         * el comportamiento correcto y deseado (*"quiero que la base de
+         * datos que he construido se use de una vez"*, orden distinta y
+         * anterior, específica de Radio) -- por eso el valor por
+         * defecto es `true` y la Radio no cambia en nada. miMooutCast
+         * pasa `false` explícitamente.
+         */
+        useLocalDictionary: Boolean = true,
+        /**
+         * H15 (miMooutCast), S032 -- ventana creciente: *"entre los
+         * primeros 5 en el primer tema, entre los 10 en el segundo, 15,
+         * 20, 25... aumentando hasta que lleguemos al tope de artistas
+         * en ese género"*. `null` (valor por defecto) preserva el
+         * comportamiento de siempre de la Radio -- azar entre TODOS los
+         * candidatos encontrados, sin ventana. Cuando se pasa un valor,
+         * limita tanto cuántos candidatos se piden a MusicBrainz
+         * (`findCandidatesForGenres()`) como cuántos de los ya
+         * devueltos entran en el sorteo final -- los primeros N según
+         * el orden de relevancia que ya trae MusicBrainz, no un
+         * recorte a ciegas.
+         */
+        resultWindowLimit: Int? = null,
     ): String? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val avoidLower = avoidArtists.map { it.lowercase() }.toSet()
@@ -1543,6 +1570,10 @@ class RadioRepository @Inject constructor(
         // segundo de MusicBrainz. Solo si de ahí no sale nada -- la
         // base todavía no cubre ese género, o aún no se ha construido --
         // se cae a la búsqueda en vivo, exactamente como antes.
+        //
+        // H15 (miMooutCast) -- `useLocalDictionary = false` salta este
+        // bloque entero: streaming puro, nunca la base local.
+        if (useLocalDictionary) {
         val localGenres = (listOf(anchor.genre) + anchor.genres).toSet()
         val fromDictionary = anchorDictionary
             .artistsMatching(localGenres, anchor.originGroup)
@@ -1606,6 +1637,7 @@ class RadioRepository @Inject constructor(
                     "$genreMatchThresholdPercent% de coincidencia -- se cae a la búsqueda en vivo"
             )
         }
+        }
 
         // S020 -- cascada de DOS peldaños, nunca tres. El tercero
         // (`findCandidatesAnyGenre`: mantener década, soltar el género)
@@ -1661,9 +1693,16 @@ class RadioRepository @Inject constructor(
             excludeLower,
             anchor.isClassical,
             offset,
+            limit = resultWindowLimit ?: ENOUGH_CANDIDATES,
         )
-        val preferred = candidates.filter { it.lowercase() !in avoidLower }
-        val chosen = preferred.ifEmpty { candidates }.randomOrNull()
+        // H15 (miMooutCast), S032 -- ventana creciente: de los
+        // candidatos devueltos (ya en el orden de relevancia de
+        // MusicBrainz), el sorteo solo mira los primeros
+        // `resultWindowLimit`. `null` (Radio) no recorta nada -- mismo
+        // comportamiento de siempre, azar entre todos.
+        val windowed = if (resultWindowLimit != null) candidates.take(resultWindowLimit) else candidates
+        val preferred = windowed.filter { it.lowercase() !in avoidLower }
+        val chosen = preferred.ifEmpty { windowed }.randomOrNull()
         if (chosen == null) {
             log(
                 "suggestRelatedArtist(género='${anchor.genre}', país=${anchor.country ?: "?"}, " +
@@ -1754,6 +1793,8 @@ class RadioRepository @Inject constructor(
         decadeBegin: Int,
         excludeArtists: Set<String>,
         offset: Int = 0,
+        /** H15 (miMooutCast), S032 -- ventana creciente, ver el kdoc del mismo parámetro en `suggestRelatedArtist()`. `null` = tamaño de siempre. */
+        resultWindowLimit: Int? = null,
     ): DecadeCandidate? {
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val decadeEnd = decadeBegin + 9
@@ -1761,7 +1802,7 @@ class RadioRepository @Inject constructor(
         return try {
             val response = musicBrainzApiService.searchReleaseGroups(
                 query = query,
-                limit = MIMOOUTCAST_DECADE_PAGE_SIZE,
+                limit = resultWindowLimit ?: MIMOOUTCAST_DECADE_PAGE_SIZE,
                 offset = offset,
             )
             noteSuccess()
@@ -1847,11 +1888,20 @@ class RadioRepository @Inject constructor(
         excludeLower: Set<String>,
         isClassical: Boolean,
         offset: Int = 0,
+        /**
+         * H15 (miMooutCast), S032 -- ventana creciente pedida por
+         * Miguel Ángel: *"entre los primeros 5... entre los 10 en el
+         * segundo, 15, 20, 25... aumentando hasta que lleguemos al
+         * tope de artistas en ese género."* Por defecto
+         * `ENOUGH_CANDIDATES`, el mismo tope de siempre para la Radio
+         * automática -- sin tocar su comportamiento.
+         */
+        limit: Int = ENOUGH_CANDIDATES,
     ): List<String> {
         val all = linkedSetOf<String>()
         for (genre in genres) {
-            all += findCandidates(genre, originGroup, decadeBegin, excludeLower, isClassical, offset)
-            if (all.size >= ENOUGH_CANDIDATES) break
+            all += findCandidates(genre, originGroup, decadeBegin, excludeLower, isClassical, offset, limit)
+            if (all.size >= limit) break
         }
         return all.toList()
     }
@@ -1863,6 +1913,8 @@ class RadioRepository @Inject constructor(
         excludeLower: Set<String>,
         isClassical: Boolean,
         offset: Int = 0,
+        /** H15 (miMooutCast), S032 -- ver `findCandidatesForGenres()`. Por defecto `ANCHOR_SEARCH_LIMIT`, igual que siempre. */
+        limit: Int = ANCHOR_SEARCH_LIMIT,
     ): List<String> = try {
         val query = buildGenreQuery(genre, originGroup, decadeBegin, isClassical)
         // H15 (miMooutCast) -- ancla "década sola" (sin género ni
@@ -1883,7 +1935,7 @@ class RadioRepository @Inject constructor(
         val randomOffset = offset + (0..90 step 10).toList().random()
 
         suspend fun fetch(offset: Int) = musicBrainzApiService
-            .searchArtists(query = query, limit = 25, offset = offset)
+            .searchArtists(query = query, limit = limit, offset = offset)
             .artists
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }

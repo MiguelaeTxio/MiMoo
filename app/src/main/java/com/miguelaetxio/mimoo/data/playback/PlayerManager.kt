@@ -759,6 +759,7 @@ class PlayerManager @Inject constructor(
                     }
                     radioUnknownOffset = 0
                     miMooutCastOffset = 0
+                    miMooutCastTracksServed = 0
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
                     radioLibraryArtistProfileCache.clear()
@@ -1314,6 +1315,22 @@ class PlayerManager @Inject constructor(
      * `onMediaItemTransition()`.
      */
     private var miMooutCastOffset = 0
+
+    /**
+     * H15 (miMooutCast), S032 -- cuántos temas se han servido YA en
+     * esta sesión de miMooutCast. Diseño explícito de Miguel Ángel:
+     * *"entre los primeros 5 en el primer tema, entre los 10 en el
+     * segundo, 15, 20, 25... aumentando hasta que lleguemos al tope de
+     * artistas en ese género. Así, aunque de sesión en sesión se
+     * terminen repitiendo los artistas en el primer tema, el tema sí
+     * será aleatorio... la aleatoriedad está asegurada entre
+     * sesiones."* Se resetea en los mismos dos puntos que
+     * `miMooutCastOffset` -- los dos límites de sesión.
+     */
+    private var miMooutCastTracksServed = 0
+
+    /** H15 (miMooutCast), S032 -- ventana del tema `miMooutCastTracksServed + 1`: 5, 10, 15, 20... ver el kdoc de `miMooutCastTracksServed`. */
+    private fun currentMiMooutCastWindow(): Int = (miMooutCastTracksServed + 1) * 5
 
     private fun titleKey(title: String?): String =
         SearchNormalizer.tight(SearchNormalizer.songTitleKey(title.orEmpty()))
@@ -3712,18 +3729,26 @@ class PlayerManager @Inject constructor(
 
         repeat(MIMOOUTCAST_CANDIDATE_ATTEMPTS) {
             val windowLower = baseWindowLower + triedThisCall
-            // H15 (miMooutCast), S032 -- "década sola" (sin género ni
-            // origen): `suggestRelatedArtist()` no tiene ningún
-            // término real que mandar a MusicBrainz y devuelve `null`
-            // limpio siempre -- por diseño (ver `buildGenreQuery()`,
-            // MusicBrainz no tiene un campo fiable de "década de
-            // actividad" a nivel de artista). Se busca en su lugar
-            // directamente por fecha de primera edición del disco --
-            // ver `suggestArtistFromDecade()`, que además de artista
-            // devuelve el TÍTULO del disco encontrado, para que la
-            // búsqueda de más abajo sea tan precisa como "artista +
-            // canción" en vez de "solo artista" a ciegas por toda su
-            // discografía (incluidas décadas ajenas).
+            // H15 (miMooutCast), S032 -- ventana creciente pedida por
+            // Miguel Ángel: 5 candidatos en el primer tema de la
+            // sesión, 10 en el segundo, 15, 20... hasta el tope de lo
+            // que MusicBrainz devuelva para este ancla. Se calcula UNA
+            // vez por tema (no por cada uno de los 8 intentos internos
+            // de este `repeat` -- todos los intentos de encontrar EL
+            // MISMO tema comparten la misma ventana).
+            val window = currentMiMooutCastWindow()
+            // "década sola" (sin género ni origen):
+            // `suggestRelatedArtist()` no tiene ningún término real que
+            // mandar a MusicBrainz y devuelve `null` limpio siempre --
+            // por diseño (ver `buildGenreQuery()`, MusicBrainz no tiene
+            // un campo fiable de "década de actividad" a nivel de
+            // artista). Se busca en su lugar directamente por fecha de
+            // primera edición del disco -- ver `suggestArtistFromDecade()`,
+            // que además de artista devuelve el TÍTULO del disco
+            // encontrado, para que la búsqueda de más abajo sea tan
+            // precisa como "artista + canción" en vez de "solo artista"
+            // a ciegas por toda su discografía (incluidas décadas
+            // ajenas).
             val isDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
             val artistName: String?
             val knownTitle: String?
@@ -3732,6 +3757,7 @@ class PlayerManager @Inject constructor(
                     decadeBegin = anchor.decadeBegin!!,
                     excludeArtists = windowLower,
                     offset = miMooutCastOffset,
+                    resultWindowLimit = window,
                 )
                 artistName = candidate?.artist
                 knownTitle = candidate?.title
@@ -3739,6 +3765,14 @@ class PlayerManager @Inject constructor(
                 // MusicBrainz en vivo. Con género O con origen (aunque
                 // sea sin el otro) hay término real que buscar -- ver
                 // `RadioRepository.buildGenreQuery()`.
+                //
+                // `useLocalDictionary = false` -- orden explícita y
+                // repetida de Miguel Ángel: *"todo en streaming...
+                // te limpiaste el culo con eso y la semilla de un
+                // diccionario local."* `AnchorDictionary` es
+                // exactamente eso -- base local aprendida, sin red --
+                // y es correcta para la Radio (S025) pero no para
+                // miMooutCast.
                 //
                 // `offset = miMooutCastOffset` -- SIN esto, cada
                 // intento consultaba la MISMA región del catálogo (con
@@ -3752,6 +3786,8 @@ class PlayerManager @Inject constructor(
                     anchor, windowLower, emptySet(),
                     offset = miMooutCastOffset,
                     genreMatchThresholdPercent = uiPreferencesManager.radioGenreMatchThresholdPercent.value,
+                    useLocalDictionary = false,
+                    resultWindowLimit = window,
                 )
                 knownTitle = null
             }
@@ -3779,10 +3815,13 @@ class PlayerManager @Inject constructor(
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
                 !isTrackDisliked(item.artist, item.title)
             ) {
+                // H15 (miMooutCast), S032 -- un tema servido más: la
+                // ventana del SIGUIENTE tema crece 5 puestos.
+                miMooutCastTracksServed++
                 MimooutcastDebugLogger.log(
                     appContext, storageManager,
                     "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -> MusicBrainz: " +
-                        "'${item.artist}' - '${item.title}'",
+                        "'${item.artist}' - '${item.title}' (ventana usada: $window)",
                 )
                 return item.copy(isFromRadio = true)
             }
@@ -4457,6 +4496,7 @@ class PlayerManager @Inject constructor(
         radioClassicalDiscoExhausted = false
         radioUnknownOffset = 0
         miMooutCastOffset = 0
+        miMooutCastTracksServed = 0
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
         radioLibraryArtistProfileCache.clear()

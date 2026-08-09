@@ -536,6 +536,52 @@ automática (H08) se ha tocado:
     canción" que el resto del proyecto usa en cualquier otro punto.
     Sin verificar en dispositivo real todavía.
 
+23. **Metodología nueva de Miguel Ángel: describir lo que hace un DJ
+    humano ("me dicen 'pincha minimal techno', miro en Google, cojo el
+    PRIMER resultado...") y depurar el sistema contra ese patrón.**
+    Comparado punto por punto contra el código real: un solo fallo
+    real confirmado -- todo el sistema elegía candidato con
+    `.randomOrNull()` (al azar entre toda la página), nunca "el
+    primero" como haría un humano confiando en el orden de relevancia
+    de la búsqueda. El resto de la lista de un DJ humano (validar en
+    YouTube que el tema es real, construir la cola sobre la marcha, no
+    repetir artista en 10 temas, no repetir tema+artista aunque cambie
+    la versión pero sí permitir el mismo tema por artista distinto,
+    nunca usar el nombre del canal) ya estaba correctamente cumplido.
+
+    Diseño de Miguel Ángel para el hueco encontrado, confirmado en dos
+    rondas antes de tocar código: ventana CRECIENTE de candidatos entre
+    los que elegir al azar -- 5 en el primer tema de la sesión, 10 en
+    el segundo, 15, 20, 25... subiendo de 5 en 5 sin techo fijo, hasta
+    el tope real de lo que MusicBrainz devuelva para ese ancla. Así el
+    primer tema de cada sesión sigue siendo variado entre sesiones (no
+    siempre el mismo top-1), y la aleatoriedad real crece según avanza
+    la propia sesión.
+
+    Implementado con un contador de sesión nuevo,
+    `miMooutCastTracksServed` (mismos dos puntos de reseteo que
+    `miMooutCastOffset`), y `currentMiMooutCastWindow()` = `(temas
+    servidos + 1) * 5`. Nuevo parámetro `resultWindowLimit: Int?` en
+    `suggestRelatedArtist()` y en `suggestArtistFromDecade()` -- `null`
+    (valor por defecto) preserva el comportamiento de siempre de la
+    Radio automática sin ningún cambio; miMooutCast pasa la ventana
+    calculada, que limita tanto cuántos candidatos se piden a
+    MusicBrainz como cuántos de los devueltos entran en el sorteo
+    final (los primeros N según el orden de relevancia que ya trae la
+    API, no un recorte a ciegas). `ENOUGH_CANDIDATES`/`ANCHOR_SEARCH_LIMIT`
+    siguen siendo los valores por defecto de la Radio, intactos.
+
+    **De paso, arreglado algo que Miguel Ángel ya había señalado y
+    seguía sin tocar**: `suggestRelatedArtist()` consultaba primero
+    `AnchorDictionary` (base local aprendida de sesiones anteriores,
+    sin red) antes de ir a MusicBrainz en vivo -- correcto y deseado
+    para la Radio automática (orden explícita y distinta de S025), pero
+    exactamente el "local" que Miguel Ángel prohibió para miMooutCast
+    ("todo en streaming"). Nuevo parámetro `useLocalDictionary: Boolean`
+    -- `true` por defecto (Radio sin cambios), miMooutCast pasa
+    `false` explícitamente y salta ese bloque entero. Sin verificar en
+    dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
