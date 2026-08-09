@@ -117,8 +117,17 @@ class MimooutcastViewModel @Inject constructor(
     fun startWithOrigin(group: OriginGroup, label: String) =
         start(genre = null, decadeBegin = null, originGroup = group, label = label)
 
+    /**
+     * H15 (miMooutCast), S032 -- distingue "el usuario canceló a
+     * propósito" (botón "dejar de buscar") de "se buscó de verdad y no
+     * se encontró nada" -- sin esto, cancelar mostraría el mismo aviso
+     * "sin resultados" que un fallo real, lo cual sería engañoso.
+     */
+    private var searchCancelledByUser = false
+
     private fun start(genre: String?, decadeBegin: Int?, originGroup: OriginGroup?, label: String) {
         if (_uiState.value.loadingLabel != null) return
+        searchCancelledByUser = false
         _uiState.value = _uiState.value.copy(loadingLabel = label, noResultsFor = null)
         viewModelScope.launch {
             val anchor = radioRepository.manualAnchor(genre, decadeBegin, originGroup)
@@ -128,8 +137,20 @@ class MimooutcastViewModel @Inject constructor(
             )
             _uiState.value = _uiState.value.copy(
                 loadingLabel = null,
-                noResultsFor = if (started) null else label,
+                noResultsFor = if (started || searchCancelledByUser) null else label,
             )
         }
+    }
+
+    /**
+     * H15 (miMooutCast), S032 -- botón "dejar de buscar" pedido por
+     * Miguel Ángel: *"cuando ya veo que no encuentra absolutamente
+     * nada y voy a escuchar otra cosa, te salta lo que estaba
+     * buscando."* Ver `PlayerManager.cancelMimooutcastSearch()`.
+     */
+    fun cancelSearch() {
+        searchCancelledByUser = true
+        playerManager.cancelMimooutcastSearch()
+        _uiState.value = _uiState.value.copy(loadingLabel = null)
     }
 }

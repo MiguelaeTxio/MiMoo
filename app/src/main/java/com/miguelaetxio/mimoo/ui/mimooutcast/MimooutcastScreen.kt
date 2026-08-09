@@ -177,6 +177,15 @@ fun MimooutcastScreen(
                             CircularProgressIndicator()
                             Spacer(Modifier.height(12.dp))
                             Text("Buscando \"${uiState.loadingLabel}\"...")
+                            // H15 (miMooutCast), S032 -- botón "dejar de
+                            // buscar" pedido por Miguel Ángel: *"cuando ya
+                            // veo que no encuentra absolutamente nada y voy
+                            // a escuchar otra cosa, te salta lo que estaba
+                            // buscando."*
+                            Spacer(Modifier.height(16.dp))
+                            TextButton(onClick = viewModel::cancelSearch) {
+                                Text("Dejar de buscar")
+                            }
                         }
                     }
                 }

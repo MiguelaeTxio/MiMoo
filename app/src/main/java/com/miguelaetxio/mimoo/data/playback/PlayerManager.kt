@@ -995,6 +995,16 @@ class PlayerManager @Inject constructor(
     private var topUpJob: Job? = null
 
     /**
+     * H15 (miMooutCast), S032 -- ver el kdoc completo junto a
+     * `startRadioFromManualAnchor()` y `cancelMimooutcastSearch()`.
+     * `Job` de la búsqueda del primer tema, para que se pueda cancelar
+     * de verdad si el usuario deja de esperar (botón "dejar de
+     * buscar") o si empieza a sonar cualquier otra cosa (`playQueue()`
+     * la cancela al principio).
+     */
+    private var initialSearchJob: Job? = null
+
+    /**
      * H08 (S009) -- el artista que arrancó la Radio (el último tema
      * "propio" del usuario, no de Radio, antes de que empezara a
      * reponer).
@@ -3707,7 +3717,30 @@ class PlayerManager @Inject constructor(
         radioAnchorArtist = displayLabel
         radioAnchorArtistFallback = displayLabel
         radioAnchorTrackTitle = displayLabel
-        val first = fetchOneRadioTrack(displayLabel)
+        // H15 (miMooutCast), S032 -- BUG REAL, dos quejas juntas de
+        // Miguel Ángel: el loop de apertura sonaba varios MINUTOS
+        // (para eso no se diseñó -- "eso era por rellenar un hueco de
+        // unos segundos"), y si mientras tanto se ponía a escuchar
+        // otra cosa, la búsqueda vieja -- que seguía viva de fondo,
+        // sin nadie rastreándola -- acababa apareciendo de golpe
+        // encima de lo nuevo ("te salta lo que estaba buscando").
+        // Antes, `fetchOneRadioTrack()` se llamaba en la propia
+        // corrutina del ViewModel, sin ningún `Job` que otra parte del
+        // código pudiera cancelar -- ahora se lanza en `managerScope`
+        // (vive con el propio `PlayerManager`, no con la pantalla) y
+        // se guarda en `initialSearchJob`, para que
+        // `cancelMimooutcastSearch()` (botón nuevo "dejar de buscar")
+        // y `playQueue()` (cualquier otra cosa que empiece a sonar) la
+        // puedan matar de verdad.
+        val job = managerScope.async { fetchOneRadioTrack(displayLabel) }
+        initialSearchJob = job
+        val first = try {
+            job.await()
+        } catch (e: CancellationException) {
+            null
+        } finally {
+            if (initialSearchJob === job) initialSearchJob = null
+        }
         if (first == null) {
             // Sin esto, el loop de batería (REPEAT_MODE_ONE) se
             // quedaría sonando en bucle para siempre -- nunca llega a
@@ -3727,6 +3760,21 @@ class PlayerManager @Inject constructor(
         }
         topUpRadioQueueIfNeeded()
         return true
+    }
+
+    /**
+     * H15 (miMooutCast), S032 -- botón "dejar de buscar" pedido por
+     * Miguel Ángel: *"cuando ya veo que no encuentra absolutamente
+     * nada y voy a escuchar otra cosa, te salta lo que estaba
+     * buscando."* Cancela la búsqueda del primer tema si sigue en
+     * marcha (ver `initialSearchJob`) y para el loop de apertura --
+     * sin esto último, el loop (`REPEAT_MODE_ONE`) se quedaría sonando
+     * para siempre, ya que nunca llegaría una pista real que lo corte.
+     */
+    fun cancelMimooutcastSearch() {
+        initialSearchJob?.cancel()
+        initialSearchJob = null
+        stopOpeningLoopIfActive()
     }
 
     /**
@@ -4319,6 +4367,16 @@ class PlayerManager @Inject constructor(
 
     fun playQueue(items: List<QueueItem>, startIndex: Int = 0) {
         if (items.isEmpty()) return
+        // H15 (miMooutCast), S032 -- ver el kdoc de `initialSearchJob`.
+        // Si esta llamada viene DEL PROPIO `startRadioFromManualAnchor()`
+        // tras encontrar la primera pista, `initialSearchJob` ya está
+        // en `null` (se limpia en su `finally` antes de llegar aquí) --
+        // esto solo tiene efecto real cuando lo que empieza a sonar es
+        // OTRA cosa (una pista propia, un favorito...) mientras una
+        // búsqueda de miMooutCast seguía viva de fondo sin que nadie
+        // la parara.
+        initialSearchJob?.cancel()
+        initialSearchJob = null
         stopOpeningLoopIfActive()
         val insertAt = if (queueItems.isEmpty()) {
             0

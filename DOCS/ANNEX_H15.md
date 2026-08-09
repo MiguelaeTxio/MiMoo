@@ -843,6 +843,37 @@ automática (H08) se ha tocado:
     los 10 segundos con el diseño actual. Sin verificar en dispositivo
     real todavía.
 
+33. **Dos quejas juntas de Miguel Ángel sobre el mismo problema de
+    fondo:** *"el loop de batería, eso era por rellenar un hueco de
+    unos segundos, pero esto llega varios minutos antes de poner
+    ningún tema. Y hay que introducir un botón de dejar de buscar
+    porque cuando ya veo que no encuentra absolutamente nada y voy a
+    escuchar otra cosa, te salta lo que estaba buscando."* La segunda
+    parte era un bug real, no solo una petición de UX: la búsqueda del
+    primer tema (`fetchOneRadioTrack()` dentro de
+    `startRadioFromManualAnchor()`) se ejecutaba en la propia corrutina
+    del ViewModel de la pantalla, sin ningún `Job` que otra parte del
+    código pudiera cancelar -- si el usuario se ponía a escuchar otra
+    cosa mientras tanto, esa búsqueda vieja seguía viva de fondo, y en
+    cuanto encontraba algo, llamaba a `playQueue()` e interrumpía lo
+    que sonaba en ese momento.
+
+    Corregido: la búsqueda ahora se lanza en `managerScope` (vive con
+    el propio `PlayerManager`, no con la pantalla) y se guarda en
+    `initialSearchJob`, un `Job` de verdad. Dos formas de matarla:
+    (1) `playQueue()` la cancela al principio -- cualquier otra cosa
+    que empiece a sonar mata automáticamente una búsqueda de
+    miMooutCast abandonada, sin que el usuario tenga que hacer nada;
+    (2) nuevo botón "Dejar de buscar" en la propia pantalla de carga
+    de miMooutCast, que llama a
+    `PlayerManager.cancelMimooutcastSearch()` (cancela el `Job` y para
+    el loop de apertura, que si no se quedaría sonando para siempre).
+    `MimooutcastViewModel` distingue "cancelado a propósito" de
+    "buscado de verdad y no se encontró nada" (`searchCancelledByUser`)
+    para no mostrar el aviso de "sin resultados" tras una cancelación
+    explícita, que sería engañoso. Sin verificar en dispositivo real
+    todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
