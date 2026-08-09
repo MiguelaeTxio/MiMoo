@@ -30,6 +30,18 @@ data class MimooutcastUiState(
     val loadingLabel: String? = null,
     /** `true` cuando la última elección no encontró NI UN candidato -- ver PlayerManager.startRadioFromManualAnchor(). */
     val noResultsFor: String? = null,
+    /**
+     * H15 (miMooutCast), S032 -- botón TRANSVERSAL (afecta a las tres
+     * pestañas por igual, no solo a la que esté abierta ahora mismo).
+     * Orden explícita de Miguel Ángel: *"activar o desactivar las
+     * listas de éxitos españolas y comparar contra estas listas de
+     * éxitos. En géneros nicho la desactivamos para tener candidatos,
+     * y en décadas como los 90 o en géneros como hard rock, podemos
+     * activar conocido en España."* `false` por defecto -- streaming
+     * puro, el comportamiento de toda esta sesión hasta ahora, sin
+     * ningún filtro de fama.
+     */
+    val requireKnownInSpain: Boolean = false,
 )
 
 /**
@@ -58,6 +70,11 @@ class MimooutcastViewModel @Inject constructor(
 
     fun dismissNoResults() {
         _uiState.value = _uiState.value.copy(noResultsFor = null)
+    }
+
+    /** H15 (miMooutCast), S032 -- ver el kdoc de `requireKnownInSpain` en el UiState. */
+    fun toggleRequireKnownInSpain() {
+        _uiState.value = _uiState.value.copy(requireKnownInSpain = !_uiState.value.requireKnownInSpain)
     }
 
     /**
@@ -105,7 +122,10 @@ class MimooutcastViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(loadingLabel = label, noResultsFor = null)
         viewModelScope.launch {
             val anchor = radioRepository.manualAnchor(genre, decadeBegin, originGroup)
-            val started = playerManager.startRadioFromManualAnchor(anchor, "miMooutCast: $label")
+            val started = playerManager.startRadioFromManualAnchor(
+                anchor, "miMooutCast: $label",
+                requireKnownInSpain = _uiState.value.requireKnownInSpain,
+            )
             _uiState.value = _uiState.value.copy(
                 loadingLabel = null,
                 noResultsFor = if (started) null else label,

@@ -1332,6 +1332,21 @@ class PlayerManager @Inject constructor(
     private var miMooutCastOffset = 0
 
     /**
+     * H15 (miMooutCast), S032 -- botón transversal (afecta a género,
+     * década y origen por igual) de la pantalla de miMooutCast. Orden
+     * explícita de Miguel Ángel: *"activar o desactivar las listas de
+     * éxitos españolas y comparar contra estas listas de éxitos. En
+     * géneros nicho la desactivamos para tener candidatos, y en
+     * décadas como los 90 o en géneros como hard rock, podemos activar
+     * conocido en España."* Se fija en cada
+     * `startRadioFromManualAnchor()`, no se resetea en `clearQueue()`
+     * -- un valor que quede aquí mientras ninguna sesión de
+     * miMooutCast está activa es inerte, solo importa cuando
+     * `fetchSimpleManualCandidate()` lo consulta.
+     */
+    private var miMooutCastRequireKnownInSpain = false
+
+    /**
      * H15 (miMooutCast), S032 -- cuántos temas se han servido YA en
      * esta sesión de miMooutCast. Diseño explícito de Miguel Ángel:
      * *"entre los primeros 5 en el primer tema, entre los 10 en el
@@ -3638,7 +3653,17 @@ class PlayerManager @Inject constructor(
      * arrancar (combinación demasiado restrictiva) -- la pantalla de
      * miMooutCast decide qué mostrar en ese caso, la cola no se toca.
      */
-    suspend fun startRadioFromManualAnchor(anchor: RadioAnchor, displayLabel: String): Boolean {
+    suspend fun startRadioFromManualAnchor(
+        anchor: RadioAnchor,
+        displayLabel: String,
+        /**
+         * H15 (miMooutCast), S032 -- botón transversal de la pantalla
+         * de miMooutCast. Ver el kdoc completo de
+         * `miMooutCastRequireKnownInSpain`.
+         */
+        requireKnownInSpain: Boolean = false,
+    ): Boolean {
+        miMooutCastRequireKnownInSpain = requireKnownInSpain
         // H15 (miMooutCast), S032 -- `stayStopped = false` explícito:
         // esta llamada a `clearQueue()` es la preparación de una
         // sesión NUEVA (justo debajo se busca el primer tema) y no un
@@ -3850,6 +3875,19 @@ class PlayerManager @Inject constructor(
             // que se repite la comprobación aquí antes de aceptar
             // nada.
             if (artistName.lowercase() in windowLower) return@repeat
+            // H15 (miMooutCast), S032 -- botón transversal "Conocido en
+            // España". Se comprueba AQUÍ, antes de gastar tiempo en
+            // YouTube/verificación -- si el candidato no pasa este
+            // filtro, no tiene sentido resolverlo primero para
+            // descartarlo después. `isKnownArtistAnywhere()` ya existe
+            // (S026, salvaguarda de Hispanoamérica) y compara contra
+            // `es` + `intl` del diccionario de éxitos -- éxitos EN
+            // ESPAÑA, sean o no artistas españoles, nunca "cualquier
+            // tema del Billboard sin más".
+            if (miMooutCastRequireKnownInSpain && !knownHitsRepository.isKnownArtistAnywhere(artistName)) {
+                miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
+                return@repeat
+            }
             val item = resolveYoutubeCandidate(
                 anchorLabel, artistName, songTitle = knownTitle,
                 expectedDecadeBegin = if (isDecadeOnly || anchor.isClassical) null else anchor.decadeBegin,

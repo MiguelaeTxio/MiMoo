@@ -721,6 +721,38 @@ automática (H08) se ha tocado:
     nueva del usuario siempre puede continuar con normalidad). Sin
     verificar en dispositivo real todavía.
 
+28. **Botón nuevo, transversal, pedido por Miguel Ángel:** *"activar o
+    desactivar las listas de éxitos españolas y comparar contra estas
+    listas de éxitos. En géneros nicho la desactivamos para tener
+    candidatos, y en décadas como los 90 o en géneros como hard rock,
+    podemos activar conocido en España."* Distinto del diccionario
+    quitado en el punto 16: aquello era una FUENTE prioritaria
+    (probar primero); esto es un FILTRO opcional que se puede
+    encender o apagar, y que se aplica DESPUÉS de encontrar un
+    candidato real por streaming, no en su lugar.
+
+    Nuevo toggle "Conocido en España" en `MimooutcastScreen.kt`,
+    encima de las pestañas (transversal de verdad -- afecta a género,
+    década y origen por igual, no a una pestaña concreta). `false` por
+    defecto -- streaming puro, sin cambios en el comportamiento visto
+    hasta ahora. `MimooutcastUiState.requireKnownInSpain` +
+    `toggleRequireKnownInSpain()`, pasado a
+    `PlayerManager.startRadioFromManualAnchor(..., requireKnownInSpain)`
+    y guardado en `miMooutCastRequireKnownInSpain` (campo de sesión).
+
+    `fetchSimpleManualCandidate()` comprueba el filtro justo después
+    del veto de ventana y ANTES de `resolveYoutubeCandidate()` --
+    rechazar un candidato que no es "conocido en España" no debe
+    gastar tiempo en YouTube/verificación para descartarlo después,
+    tiene que cortar antes. Reutiliza
+    `KnownHitsRepository.isKnownArtistAnywhere()`, ya existente (S026,
+    salvaguarda de Hispanoamérica) -- compara contra `es` + `intl` del
+    diccionario de éxitos, éxitos EN ESPAÑA sean o no artistas
+    españoles, nunca "cualquier tema del Billboard sin más". Un
+    candidato rechazado por este filtro avanza el offset igual que
+    cualquier otro rechazo, para no rebuscar en la misma región
+    estrecha del catálogo. Sin verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
