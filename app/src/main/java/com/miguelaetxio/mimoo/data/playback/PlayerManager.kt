@@ -3901,47 +3901,48 @@ class PlayerManager @Inject constructor(
      * probado ni una fracción de los otros 23+ candidatos disponibles.
      * Mismo patrón que `resolveFinalFallback()`/`UNKNOWN_CANDIDATE_ATTEMPTS`
      * ya usa para la Radio automática -- aquí no existía ningún
-     * reintento equivalente. Ahora prueba hasta
-     * `MIMOOUTCAST_CANDIDATE_ATTEMPTS` candidatos DISTINTOS (cada
-     * fallo se añade a `windowLower` SOLO para esta llamada, para que
-     * `suggestRelatedArtist()` no vuelva a sugerir el mismo) antes de
-     * rendirse de verdad.
+     * reintento equivalente. Se le puso primero un tope de intentos
+     * (8, luego 40) -- Miguel Ángel rechazó la propia idea de un
+     * número inventado: *"no quiero límite. Quién cojones dijo de
+     * poner esa mierda?"* Con razón: cada intento ya explora una
+     * región NUEVA del catálogo (el offset avanza de verdad), así que
+     * un número de intentos nunca fue una medida honesta de
+     * agotamiento. Ahora prueba SIN LÍMITE, cada fallo se añade a
+     * `windowLower` SOLO para esta llamada (para que
+     * `suggestRelatedArtist()` no vuelva a sugerir el mismo) -- solo
+     * se para cuando encuentra un tema válido, o por cancelación
+     * externa (cambio de sesión, "Dejar de buscar"). Clásica es la
+     * única excepción con un final genuino: el recopilatorio fijo
+     * (`ClassicalGreatestHits`) sí se agota de verdad cuando se prueban
+     * las cien obras.
      */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
         val baseWindowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
         val triedThisCall = mutableSetOf<String>()
 
-        // H15 (miMooutCast), S032 -- BUG REAL, captura de pantalla de
-        // Miguel Ángel: el recopilatorio fijo de clásica SÍ funcionaba
-        // de verdad (Grieg, Schumann, Debussy, todo real) pero
-        // "Sin más música" saltaba con un puñado de temas en cola, muy
-        // lejos de las 100 obras del recopilatorio y de las 200
-        // pedidas. Causa: `MIMOOUTCAST_CANDIDATE_ATTEMPTS` (8) está
-        // pensado para el catálogo INFINITO de MusicBrainz -- rendirse
-        // tras 8 fallos ahí es razonable, hay miles más por probar.
-        // Para una lista FIJA de 100 obras no tiene ningún sentido:
-        // bastaba una mala racha de 8 seguidas para declarar agotado
-        // el ancla con 90 obras todavía sin intentar. Clásica prueba
-        // ahora la lista COMPLETA restante en una sola llamada, no
-        // solo 8 -- una vez agotado el índice de verdad, cada
-        // iteración de más es barata (`artistName == null` de
-        // inmediato, sin ningún trabajo), así que no cuesta nada
-        // ponerlo alto.
-        val attempts = if (anchor.isClassical) {
-            com.miguelaetxio.mimoo.data.remote.ClassicalGreatestHits.works.size
-        } else {
-            MIMOOUTCAST_CANDIDATE_ATTEMPTS
-        }
-        repeat(attempts) {
+        // H15 (miMooutCast), S032 -- SIN LÍMITE. Orden directa de
+        // Miguel Ángel, rechazando el propio concepto de un número
+        // inventado: *"no quiero límite. Quién cojones dijo de poner
+        // esa mierda?"* Nadie lo pidió -- lo puse yo, y estaba mal
+        // razonado (ver el punto 42 del anexo). Quitado del todo: este
+        // bucle ya no cuenta intentos, sigue intentando hasta que la
+        // propia fuente dice honestamente que no hay nada más --
+        // `classicalHitsIndex >= classicalHitsOrder.size` para
+        // clásica (el recopilatorio fijo SÍ se agota de verdad, eso no
+        // es un número inventado, es su tamaño real), o hasta que se
+        // cancele desde fuera (cambio de sesión, "Dejar de buscar")
+        // para género/década/origen, cuyo catálogo real en MusicBrainz
+        // es demasiado grande para tener un final práctico.
+        while (true) {
             val windowLower = baseWindowLower + triedThisCall
             // H15 (miMooutCast), S032 -- ventana creciente pedida por
             // Miguel Ángel: 5 candidatos en el primer tema de la
             // sesión, 10 en el segundo, 15, 20... hasta el tope de lo
             // que MusicBrainz devuelva para este ancla. Se calcula UNA
-            // vez por tema (no por cada uno de los 8 intentos internos
-            // de este `repeat` -- todos los intentos de encontrar EL
-            // MISMO tema comparten la misma ventana).
+            // vez por tema (no por cada intento de este bucle -- todos
+            // los intentos de encontrar EL MISMO tema comparten la
+            // misma ventana).
             val window = currentMiMooutCastWindow()
             // "década sola" (sin género ni origen):
             // `suggestRelatedArtist()` no tiene ningún término real que
@@ -3981,13 +3982,28 @@ class PlayerManager @Inject constructor(
                 // ese recopilatorio."* `classicalHitsOrder` ya viene
                 // barajado desde `startRadioFromManualAnchor()` -- aquí
                 // solo se avanza el índice, sin ninguna llamada a
-                // MusicBrainz. `null` cuando se acaban las cien obras
-                // (todas probadas ya, con o sin éxito) -- cae al mismo
-                // "página sin nada nuevo" de siempre.
-                val next = classicalHitsOrder.getOrNull(classicalHitsIndex)
+                // MusicBrainz.
+                //
+                // FINAL REAL, no un número inventado: cuando el índice
+                // llega al final de la lista, el recopilatorio está
+                // agotado DE VERDAD -- las cien obras ya se probaron,
+                // con o sin éxito. A diferencia de género/década/
+                // origen (MusicBrainz, sin final práctico), aquí SÍ
+                // hay un final genuino, así que se para aquí en vez de
+                // seguir en un bucle que ya no tiene nada nuevo que
+                // ofrecer.
+                if (classicalHitsIndex >= classicalHitsOrder.size) {
+                    MimooutcastDebugLogger.log(
+                        appContext, storageManager,
+                        "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- recopilatorio de " +
+                            "clásica agotado de verdad (${classicalHitsOrder.size} obras probadas)",
+                    )
+                    return null
+                }
+                val next = classicalHitsOrder[classicalHitsIndex]
                 classicalHitsIndex++
-                artistName = next?.first
-                knownTitle = next?.second
+                artistName = next.first
+                knownTitle = next.second
             } else if (miMooutCastRequireKnownInSpain) {
                 // H15 (miMooutCast), S032 -- botón "Conocido en
                 // España" encendido: se busca DIRECTAMENTE dentro del
@@ -4136,14 +4152,14 @@ class PlayerManager @Inject constructor(
                 // pagina -- pero tampoco hace daño, así que se deja
                 // igual para no bifurcar la lógica de reintento.)
                 miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
-                return@repeat
+                continue
             }
             triedThisCall += artistName.lowercase()
 
             // Veto DURO de la ventana -- las funciones de arriba solo
             // la tratan como preferencia blanda internamente, así que
             // se repite la comprobación aquí antes de aceptar nada.
-            if (artistName.lowercase() in windowLower) return@repeat
+            if (artistName.lowercase() in windowLower) continue
             val item = resolveYoutubeCandidate(
                 anchorLabel, artistName, songTitle = knownTitle,
                 expectedDecadeBegin = if (isDecadeOnly || anchor.isClassical) null else anchor.decadeBegin,
@@ -4174,14 +4190,6 @@ class PlayerManager @Inject constructor(
             // vez.
             miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
         }
-
-        MimooutcastDebugLogger.log(
-            appContext, storageManager,
-            "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- sin candidatos en streaming " +
-                "tras $MIMOOUTCAST_CANDIDATE_ATTEMPTS intentos (${triedThisCall.size} artistas distintos " +
-                "probados, offset ahora en $miMooutCastOffset)",
-        )
-        return null
     }
 
     fun playRadioStation(streamUrl: String, title: String, artworkUri: String? = null) {
@@ -5249,28 +5257,6 @@ class PlayerManager @Inject constructor(
          * peor caso, solo cuando los anteriores fallan.
          */
         const val UNKNOWN_CANDIDATE_ATTEMPTS = 4
-
-        /**
-         * H15 (miMooutCast), S032 -- ya NO es un juicio de "esto está
-         * agotado" -- es una válvula de seguridad puramente técnica,
-         * para que la app no se quede literalmente colgada en un bucle
-         * sin fin si la red falla del todo. Miguel Ángel, tras subir
-         * esto de 8 a 40, rechazó también el 40: *"pero por qué tiene
-         * que tener límite, quién coño ha dicho de ponerle límite."*
-         * Tenía razón otra vez -- el motivo real de por qué 8 (y luego
-         * 40) parecían necesarios era que `suggestWorkForGenre()`/
-         * `suggestArtistFromDecade()` se rendían en cuanto el offset
-         * se pasaba del final del catálogo real, aunque quedaran
-         * artistas de sobra más atrás. Arreglado eso de raíz (las dos
-         * funciones ahora reintentan desde offset 0 antes de devolver
-         * `null`, mismo patrón que `findCandidates()` ya tenía desde
-         * S024) -- con esto, un intento que falla de verdad significa
-         * que se ha recorrido el catálogo entero sin nada dos veces
-         * seguidas, no "mala suerte con la región". Subido a 200 --
-         * ya no es "cuántos intentos son razonables", es solo "que no
-         * se cuelgue nunca si todo falla a la vez".
-         */
-        const val MIMOOUTCAST_CANDIDATE_ATTEMPTS = 200
 
         /** H15 (miMooutCast), S032 -- mismo tamaño que `UNKNOWN_PAGE_SIZE` de la Radio, ver `miMooutCastOffset`. */
         const val MIMOOUTCAST_PAGE_SIZE = 25

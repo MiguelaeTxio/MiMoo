@@ -1101,6 +1101,31 @@ automática (H08) se ha tocado:
     cuelgue si la red falla del todo), subida a 200. Sin verificar en
     dispositivo real todavía.
 
+43. **Miguel Ángel rechazó el propio concepto de un límite, no solo el
+    número: "no quiero límite. Quién cojones dijo de poner esa
+    mierda?"** Quitado de verdad, no subido otra vez -- el
+    `repeat(attempts)` (fuera 8 o 40) se sustituye por un `while(true)`
+    sin ningún conteo. El bucle ya no lleva la cuenta de intentos --
+    solo se para por dos motivos genuinos: (1) encuentra un tema
+    válido, o (2) para clásica, el recopilatorio fijo se agota DE
+    VERDAD (`classicalHitsIndex >= classicalHitsOrder.size` -- eso no
+    es un número inventado, es el tamaño real de la lista). Para
+    género/década/origen (MusicBrainz, sin final práctico) no hay
+    ningún tope -- la única forma de que se pare es una cancelación
+    externa de verdad: cambio de sesión (`clearQueue()`/nueva sesión)
+    o el botón "Dejar de buscar", ambos ya cancelan la corrutina
+    correctamente desde los puntos 18 y 33.
+
+    Quitada la constante `MIMOOUTCAST_CANDIDATE_ATTEMPTS` por completo
+    -- quedaba huérfana tras el cambio, y su comentario ya no describía
+    lo que hacía el código.
+
+    **Con honestidad, sin ocultarlo**: si la red se cae del todo y
+    ninguna fuente responde nunca, este bucle no tiene ningún tope
+    propio que lo pare solo -- depende enteramente de que algo externo
+    lo cancele. Es la consecuencia directa y aceptada de "sin límite",
+    no un descuido. Sin verificar en dispositivo real todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
