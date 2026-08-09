@@ -5253,16 +5253,25 @@ class PlayerManager @Inject constructor(
         /**
          * H15 (miMooutCast), S032 -- mismo concepto que
          * `UNKNOWN_CANDIDATE_ATTEMPTS`, para `fetchSimpleManualCandidate()`.
-         * Antes era uno implícito -- un solo candidato, y si fallaba,
-         * `topUpRadioQueueIfNeeded()` declaraba el ancla entera
-         * agotada. Ocho acota el coste (ocho búsquedas de YouTube en
-         * el peor caso, solo cuando los anteriores fallan) sin
-         * rendirse con la primera casualidad -- `suggestRelatedArtist()`
-         * suele traer 20-25 candidatos de golpe para un género real
-         * como minimal techno, así que ocho intentos reales antes de
-         * declarar agotamiento es proporcionado, no arbitrario.
+         *
+         * CORREGIDO, orden directa de Miguel Ángel al ver el 8
+         * original: *"lo de ríndete a los 8 intentos es una mierda que
+         * no sé de dónde ha salido, ni para MusicBrainz ni para
+         * MusicBrainz."* Tenía razón -- el razonamiento original
+         * (ocho intentos "proporcionados" porque `suggestRelatedArtist()`
+         * trae 20-25 candidatos de golpe) se olvidaba de que
+         * `miMooutCastOffset` avanza de verdad en cada fallo -- cada
+         * intento explora una región NUEVA del catálogo real, no
+         * repite la misma página. Ocho fallos seguidos no significa
+         * "esto está agotado", solo que esas ocho regiones concretas
+         * no dieron nada -- con dos millones de artistas en
+         * MusicBrainz, eso no prueba nada sobre el resto. Subido a 40
+         * -- mismo principio que el punto 41 aplicó a clásica (probar
+         * mucho más antes de rendirse), aquí sin un tope natural como
+         * el tamaño de una lista fija, así que se sube el número en
+         * vez de usar el tamaño de una colección.
          */
-        const val MIMOOUTCAST_CANDIDATE_ATTEMPTS = 8
+        const val MIMOOUTCAST_CANDIDATE_ATTEMPTS = 40
 
         /** H15 (miMooutCast), S032 -- mismo tamaño que `UNKNOWN_PAGE_SIZE` de la Radio, ver `miMooutCastOffset`. */
         const val MIMOOUTCAST_PAGE_SIZE = 25

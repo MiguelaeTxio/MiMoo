@@ -1063,6 +1063,24 @@ automática (H08) se ha tocado:
     ponerlo alto. El resto de géneros/década/origen, sin cambios,
     siguen en 8. Sin verificar en dispositivo real todavía.
 
+42. **Miguel Ángel rechazó el propio número 8, sin distinguir clásica
+    del resto: "lo de ríndete a los 8 intentos es una mierda que no sé
+    de dónde ha salido, ni para MusicBrainz ni para MusicBrainz."**
+    Con razón: el razonamiento original ("ocho es proporcionado porque
+    `suggestRelatedArtist()` trae 20-25 candidatos de golpe") se
+    olvidaba de que `miMooutCastOffset` avanza de verdad en cada
+    fallo -- cada intento explora una región NUEVA del catálogo real,
+    no repite la misma página. Ocho fallos seguidos no prueba que el
+    género esté agotado, solo que esas ocho regiones concretas no
+    dieron nada -- con dos millones de artistas en MusicBrainz, eso no
+    dice nada sobre el resto. `MIMOOUTCAST_CANDIDATE_ATTEMPTS` subido
+    de 8 a 40 -- mismo principio que el punto 41 aplicó a clásica
+    (probar mucho más antes de rendirse), aquí sin un tope natural
+    como el tamaño de una lista fija, así que se sube el número
+    directamente. Afecta a género/década/origen por igual; clásica ya
+    tiene su propio tope (el tamaño del recopilatorio, punto 41), sin
+    tocar. Sin verificar en dispositivo real todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
