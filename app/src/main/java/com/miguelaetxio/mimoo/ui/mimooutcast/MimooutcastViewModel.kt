@@ -42,6 +42,14 @@ data class MimooutcastUiState(
      * ningún filtro de fama.
      */
     val requireKnownInSpain: Boolean = false,
+    /**
+     * H15 (miMooutCast), S032 -- filtro de búsqueda de géneros pedido
+     * por Miguel Ángel: *"hay que poner un filtro para buscar
+     * géneros."* Filtra tanto la lista de géneros raíz como el
+     * desplegable de subgéneros (cuando `expandedGenre != null`) por
+     * coincidencia de texto en el nombre, sin distinguir mayúsculas.
+     */
+    val genreSearchQuery: String = "",
 )
 
 /**
@@ -164,5 +172,10 @@ class MimooutcastViewModel @Inject constructor(
         searchCancelledByUser = true
         playerManager.cancelMimooutcastSearch()
         _uiState.value = _uiState.value.copy(loadingLabel = null)
+    }
+
+    /** H15 (miMooutCast), S032 -- ver el kdoc de `genreSearchQuery` en el UiState. */
+    fun updateGenreSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(genreSearchQuery = query)
     }
 }

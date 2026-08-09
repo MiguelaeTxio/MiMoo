@@ -1037,6 +1037,40 @@ automática (H08) se ha tocado:
     de géneros. El resto de géneros, sin cambios. Sin verificar en
     dispositivo real todavía.
 
+40. **Filtro de búsqueda de géneros, pedido por Miguel Ángel: "hay que
+    poner un filtro para buscar géneros."** Nuevo campo de texto en la
+    pestaña Géneros (solo ahí -- Décadas y Origen tienen listas cortas
+    y fijas, no lo necesitan), que filtra por coincidencia de texto
+    tanto la lista de géneros raíz como el desplegable de subgéneros
+    de un género expandido. Nuevo `MimooutcastUiState.genreSearchQuery`
+    + `updateGenreSearchQuery()`. Sin verificar en dispositivo real
+    todavía.
+
+41. **BUG REAL, captura de pantalla de Miguel Ángel: el recopilatorio
+    fijo de clásica SÍ funcionaba de verdad (Grieg, Schumann, Debussy,
+    todo real y sonando) pero "Sin más música" saltaba con un puñado
+    de temas en cola, muy lejos de las 200 pedidas.** Causa:
+    `MIMOOUTCAST_CANDIDATE_ATTEMPTS` (8) está pensado para el catálogo
+    INFINITO de MusicBrainz -- rendirse tras 8 fallos ahí es razonable,
+    hay miles más por probar. Para una lista FIJA de 100 obras no
+    tenía ningún sentido: bastaba una mala racha de 8 seguidas para
+    declarar el ancla agotada con 90 obras todavía sin intentar.
+    Corregido: clásica prueba ahora la lista completa restante en una
+    sola llamada (`repeat(ClassicalGreatestHits.works.size)` en vez de
+    `repeat(MIMOOUTCAST_CANDIDATE_ATTEMPTS)`) -- una vez agotado el
+    índice de verdad, cada iteración de más es barata (comprobación
+    `null` inmediata, sin trabajo real), así que no cuesta nada
+    ponerlo alto. El resto de géneros/década/origen, sin cambios,
+    siguen en 8. Sin verificar en dispositivo real todavía.
+
+    **Pendiente de confirmar, sin tocar todavía**: la otra petición de
+    la misma orden -- *"si un género carece de muchos artistas
+    aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
+    debe pasar exactamente con un género por debajo de ese mínimo
+    (¿se quita del catálogo?, ¿se avisa antes de buscar?, algo
+    distinto) antes de tocar código, para no construir algo que no sea
+    lo pedido.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

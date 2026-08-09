@@ -122,6 +122,22 @@ fun MimooutcastScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             )
 
+            // H15 (miMooutCast), S032 -- filtro de búsqueda de géneros
+            // pedido por Miguel Ángel: *"hay que poner un filtro para
+            // buscar géneros."* Solo en la pestaña Géneros -- Décadas y
+            // Origen tienen listas cortas y fijas, no lo necesitan.
+            if (uiState.tab == MimooutcastTab.GENEROS) {
+                OutlinedTextField(
+                    value = uiState.genreSearchQuery,
+                    onValueChange = viewModel::updateGenreSearchQuery,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    placeholder = { Text("Buscar género...") },
+                    singleLine = true,
+                )
+            }
+
             if (uiState.noResultsFor != null) {
                 Box(
                     modifier = Modifier
@@ -139,16 +155,19 @@ fun MimooutcastScreen(
 
             Box(modifier = Modifier.weight(1f)) {
                 val expanded = uiState.expandedGenre
+                val query = uiState.genreSearchQuery.trim()
                 when {
                     uiState.tab == MimooutcastTab.GENEROS && expanded != null -> SubgenreGrid(
                         root = expanded,
-                        subgenres = viewModel.subgenresOf(expanded),
+                        subgenres = viewModel.subgenresOf(expanded)
+                            .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) },
                         loadingLabel = uiState.loadingLabel,
                         onPickRoot = { viewModel.startWithGenre(expanded.mbGenre, expanded.label) },
                         onPickSub = { sub -> viewModel.startWithGenre(sub.mbGenre, sub.label) },
                     )
                     uiState.tab == MimooutcastTab.GENEROS -> GenreGrid(
-                        genres = viewModel.genres,
+                        genres = viewModel.genres
+                            .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) },
                         loadingLabel = uiState.loadingLabel,
                         onPick = viewModel::tapGenre,
                     )

@@ -3912,7 +3912,28 @@ class PlayerManager @Inject constructor(
         val baseWindowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower
         val triedThisCall = mutableSetOf<String>()
 
-        repeat(MIMOOUTCAST_CANDIDATE_ATTEMPTS) {
+        // H15 (miMooutCast), S032 -- BUG REAL, captura de pantalla de
+        // Miguel Ángel: el recopilatorio fijo de clásica SÍ funcionaba
+        // de verdad (Grieg, Schumann, Debussy, todo real) pero
+        // "Sin más música" saltaba con un puñado de temas en cola, muy
+        // lejos de las 100 obras del recopilatorio y de las 200
+        // pedidas. Causa: `MIMOOUTCAST_CANDIDATE_ATTEMPTS` (8) está
+        // pensado para el catálogo INFINITO de MusicBrainz -- rendirse
+        // tras 8 fallos ahí es razonable, hay miles más por probar.
+        // Para una lista FIJA de 100 obras no tiene ningún sentido:
+        // bastaba una mala racha de 8 seguidas para declarar agotado
+        // el ancla con 90 obras todavía sin intentar. Clásica prueba
+        // ahora la lista COMPLETA restante en una sola llamada, no
+        // solo 8 -- una vez agotado el índice de verdad, cada
+        // iteración de más es barata (`artistName == null` de
+        // inmediato, sin ningún trabajo), así que no cuesta nada
+        // ponerlo alto.
+        val attempts = if (anchor.isClassical) {
+            com.miguelaetxio.mimoo.data.remote.ClassicalGreatestHits.works.size
+        } else {
+            MIMOOUTCAST_CANDIDATE_ATTEMPTS
+        }
+        repeat(attempts) {
             val windowLower = baseWindowLower + triedThisCall
             // H15 (miMooutCast), S032 -- ventana creciente pedida por
             // Miguel Ángel: 5 candidatos en el primer tema de la
