@@ -920,6 +920,40 @@ automática (H08) se ha tocado:
     encontrar cada tema durante la sesión (punto 29), ahora también
     para el primero. Sin verificar en dispositivo real todavía.
 
+36. **REDISEÑO DE FONDO para género, orden directa de Miguel Ángel tras
+    rechazar el tope de tiempo como solución real:** *"si no eres
+    capaz de encontrar un algoritmo que sea capaz de poner uno de los
+    cientos de miles de temas de clásica en menos de 10 segundos, que
+    te estés quieto y elimines toda la funcionalidad de miMooutCast
+    porque no sirve para nada."* El camino anterior para género eran
+    DOS peticiones a MusicBrainz en serie: `suggestRelatedArtist()`
+    (un artista) y, solo para clásica, un segundo viaje a
+    `suggestWorkForArtist()` (una obra suya) -- dos ida y vuelta antes
+    de tener nada que buscar en YouTube, sin contar reintentos.
+
+    Nueva `RadioRepository.suggestWorkForGenre()`: UNA sola petición
+    -- busca directamente release-groups etiquetados con el género
+    (`tag:"GÉNERO"`, mismo campo ya confirmado funcionando en la
+    búsqueda de artista) y extrae artista Y título A LA VEZ del mismo
+    resultado, mismo patrón que `suggestArtistFromDecade()` aplicado a
+    género en vez de a fecha. Con género presente (con o sin origen a
+    la vez), `fetchSimpleManualCandidate()` usa esta función siempre,
+    no solo para clásica -- beneficia a todos los géneros por igual.
+    Origen SOLO (sin género) se queda con el camino antiguo
+    (`suggestRelatedArtist()`, "solo artista" vía país/región) porque
+    release-group no tiene país por artista de forma fiable que
+    buscar. `suggestWorkForArtist()` (artista ya conocido -> una obra
+    suya) queda sin usar por ahora, se deja en el archivo.
+
+    **AVISO DE VERIFICACIÓN PENDIENTE, mismo criterio que con
+    `firstreleasedate` en su momento**: que el campo `tag` funcione en
+    la búsqueda de release-group igual de bien que ya está confirmado
+    en la de artista no se ha podido probar en vivo (mismo bloqueo de
+    robots.txt de siempre). El log de `suggestWorkForGenre()` deja
+    constancia de cuántos release-groups trae la respuesta en bruto --
+    si es sistemáticamente 0, es el primer sitio a mirar. Sin
+    verificar en dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

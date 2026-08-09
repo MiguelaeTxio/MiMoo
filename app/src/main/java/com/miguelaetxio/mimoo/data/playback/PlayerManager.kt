@@ -3956,7 +3956,42 @@ class PlayerManager @Inject constructor(
                 )
                 artistName = candidate?.artist
                 knownTitle = candidate?.title
+            } else if (anchor.genre.isNotBlank()) {
+                // H15/H08, S032 -- REDISEÑO DE FONDO, orden directa de
+                // Miguel Ángel tras rechazar el tope de tiempo como
+                // solución: *"si no eres capaz de encontrar un
+                // algoritmo que sea capaz de poner uno de los cientos
+                // de miles de temas de clásica en menos de 10
+                // segundos, que te estés quieto y elimines toda la
+                // funcionalidad de miMooutCast."* Antes, con género,
+                // eran DOS peticiones en serie: `suggestRelatedArtist()`
+                // (un artista) y, solo para clásica, un segundo viaje
+                // a `suggestWorkForArtist()` (una obra suya). Ahora,
+                // con género, es SIEMPRE una sola petición --
+                // `suggestWorkForGenre()` busca directamente obras
+                // etiquetadas con el género y devuelve artista Y
+                // título A LA VEZ del mismo resultado, mismo patrón
+                // que `suggestArtistFromDecade()` aplicado a género en
+                // vez de a fecha. Se aplica a género CON o SIN origen
+                // a la vez -- el origen ya no puede afinar esta
+                // búsqueda (release-group no tiene país por artista de
+                // forma fiable), pero sigue filtrando después, igual
+                // que antes, vía `resolveYoutubeCandidate()`.
+                val candidate = radioRepository.suggestWorkForGenre(
+                    genre = anchor.genre,
+                    excludeArtists = windowLower,
+                    offset = miMooutCastOffset,
+                    resultWindowLimit = window,
+                )
+                artistName = candidate?.artist
+                knownTitle = candidate?.title
             } else {
+                // Origen SOLO (sin género): no hay ninguna etiqueta de
+                // género que buscar en release-group, así que
+                // `suggestWorkForGenre()` no puede hacer nada aquí --
+                // se mantiene el camino de siempre, "solo artista" vía
+                // país/región.
+                //
                 // MusicBrainz en vivo. Con género O con origen (aunque
                 // sea sin el otro) hay término real que buscar -- ver
                 // `RadioRepository.buildGenreQuery()`.
@@ -3986,22 +4021,7 @@ class PlayerManager @Inject constructor(
                     useLocalDictionary = false,
                     resultWindowLimit = window,
                 )
-                // H15/H08, S032 -- BUG REAL DE VELOCIDAD, repetido dos
-                // veces por Miguel Ángel: "tarda un huevo en empezar la
-                // música clásica". Con el nombre del compositor/
-                // intérprete ya en la mano, se pregunta a MusicBrainz
-                // una OBRA concreta y real suya (`suggestWorkForArtist()`)
-                // en vez de buscar "solo artista" a ciegas por toda su
-                // discografía en YouTube -- misma precisión que
-                // "artista + canción" en cualquier otro punto del
-                // proyecto. `null` (obra no encontrada, o ancla no
-                // clásica) cae al comportamiento de siempre -- "solo
-                // artista", sin tocar género/origen no clásicos.
-                knownTitle = if (anchor.isClassical && artistName != null) {
-                    radioRepository.suggestWorkForArtist(artistName)
-                } else {
-                    null
-                }
+                knownTitle = null
             }
             if (artistName == null) {
                 // Página sin nada nuevo -- se avanza y se sigue,

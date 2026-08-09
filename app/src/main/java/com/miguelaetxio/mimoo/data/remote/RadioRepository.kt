@@ -1926,6 +1926,67 @@ class RadioRepository @Inject constructor(
     }
 
     /**
+     * H15/H08, S032 -- REDISEÑO DE FONDO para género, orden directa de
+     * Miguel Ángel tras rechazar el tope de tiempo como "solución":
+     * *"si no eres capaz de encontrar un algoritmo que sea capaz de
+     * poner uno de los cientos de miles de temas de clásica en menos
+     * de 10 segundos, que te estés quieto y elimines toda la
+     * funcionalidad de miMooutCast."* El camino anterior para género
+     * eran DOS pasos en serie: `suggestRelatedArtist()` (un artista) y
+     * luego, para clásica, `suggestWorkForArtist()` (una obra suya) --
+     * dos peticiones a MusicBrainz, una detrás de otra, antes de tener
+     * nada que buscar en YouTube. Esta función lo hace en UNA sola
+     * petición: busca directamente release-groups etiquetados con el
+     * género (`tag:"GÉNERO"`, mismo campo que ya usa
+     * `suggestRelatedArtist()` para artistas) y extrae artista Y
+     * título A LA VEZ del mismo resultado -- mismo patrón que
+     * `suggestArtistFromDecade()`, aplicado ahora a género en vez de a
+     * fecha.
+     *
+     * **AVISO DE VERIFICACIÓN PENDIENTE, igual que con `firstreleasedate`
+     * en su momento**: que el campo `tag` funcione en la búsqueda de
+     * release-group tan bien como ya está confirmado que funciona en
+     * la de artista no se ha podido probar en vivo (mismo bloqueo de
+     * robots.txt de siempre). El log dice cuántos release-groups trae
+     * la respuesta en bruto -- si es sistemáticamente 0, es el primer
+     * sitio a mirar.
+     */
+    suspend fun suggestWorkForGenre(
+        genre: String,
+        excludeArtists: Set<String>,
+        offset: Int = 0,
+        resultWindowLimit: Int? = null,
+    ): DecadeCandidate? {
+        val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
+        val safeGenre = genre.replace("\"", "")
+        val query = "tag:\"$safeGenre\""
+        return try {
+            val response = musicBrainzApiService.searchReleaseGroups(
+                query = query,
+                limit = ANCHOR_SEARCH_LIMIT,
+                offset = offset,
+            )
+            noteSuccess()
+            val allCandidates = response.releaseGroups
+                .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }
+                .filter { it.artist.lowercase() !in excludeLower }
+            val windowed = if (resultWindowLimit != null) allCandidates.take(resultWindowLimit) else allCandidates
+            log(
+                "suggestWorkForGenre('$genre', offset=$offset) -- ${response.releaseGroups.size} " +
+                    "release-groups en bruto, ${allCandidates.size} candidatos artista+obra tras excluir " +
+                    "${excludeArtists.size} ya usados, ${windowed.size} en la ventana de selección",
+            )
+            windowed.randomOrNull()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            noteFailure(e)
+            log("suggestWorkForGenre('$genre', offset=$offset) -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+            null
+        }
+    }
+
+    /**
      * S026 -- expone `GenreMatchQuality` a `PlayerManager` (porción
      * DISCO), que no tiene acceso directo a `GenreTree`. Mismo umbral
      * por porcentaje que en Conocidos y Exploración -- ver
