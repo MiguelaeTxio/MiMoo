@@ -1014,6 +1014,29 @@ automática (H08) se ha tocado:
     sesión de clásica en curso. Sin verificar en dispositivo real
     todavía.
 
+39. **Fallo real mío, no una repetición vacía: el punto 38 arregló el
+    ALGORITMO de clásica pero dejó la PANTALLA sin tocar.** Captura de
+    pantalla de Miguel Ángel: tocar "Clásica" seguía desplegando un
+    submenú completo de subgéneros (Andalusian Classical, Chinese
+    Classical, Guoyue, Japanese Classical...) -- exactamente lo que ya
+    había pedido quitar (*"clásica no es necesario buscar con tanto
+    subgénero, buscamos classical y punto"*), y que además, si se
+    tocaba cualquiera de esos subgéneros en vez de "Todo Clásica", ni
+    siquiera entraba en el recopilatorio nuevo del punto 38 -- caía en
+    el buscador viejo de MusicBrainz, porque `genre` dejaba de ser
+    exactamente el texto `"classical"` (`RadioAnchor.isClassical`
+    exige coincidencia exacta).
+
+    Causa: `MimooutcastViewModel.tapGenre()` despliega el submenú de
+    subgéneros cuando el árbol de géneros de MusicBrainz tiene hijos
+    para ese género -- y "classical" sí los tiene ahí (existen de
+    verdad como géneros de MusicBrainz), aunque miMooutCast ya no deba
+    ofrecerlos. Corregido: `tapGenre()` ahora comprueba primero si es
+    "classical" -- en ese caso va SIEMPRE directa a arrancar la
+    sesión, nunca al desplegable, sea lo que sea que devuelva el árbol
+    de géneros. El resto de géneros, sin cambios. Sin verificar en
+    dispositivo real todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

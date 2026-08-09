@@ -84,8 +84,20 @@ class MimooutcastViewModel @Inject constructor(
      * "siempre que se pueda": los que no tengan hijos (hojas de la
      * taxonomía) arrancan igual que antes, sin segundo nivel posible.
      */
+    /**
+     * H15 (miMooutCast), S032 -- clásica ya no tiene subgéneros que
+     * explorar, orden explícita de Miguel Ángel, repetida más de una
+     * vez: *"clásica no es necesario buscar con tanto subgénero,
+     * buscamos classical y punto."* Va directa a arrancar, nunca al
+     * desplegable de subgéneros -- sea cual sea lo que devuelva el
+     * árbol de géneros de MusicBrainz para "classical" (Andalusian
+     * Classical, Chinese Classical, Japanese Classical... existen ahí,
+     * pero ya no se muestran como opción). El resto de géneros, sin
+     * cambios: si tienen hijos reales, se sigue mostrando el
+     * desplegable.
+     */
     fun tapGenre(genre: MimooutcastGenre) {
-        if (subgenresOf(genre).isEmpty()) {
+        if (genre.mbGenre == "classical" || subgenresOf(genre).isEmpty()) {
             startWithGenre(genre.mbGenre, genre.label)
         } else {
             _uiState.value = _uiState.value.copy(expandedGenre = genre)
