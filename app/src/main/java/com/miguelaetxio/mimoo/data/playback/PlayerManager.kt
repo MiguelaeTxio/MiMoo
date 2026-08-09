@@ -1462,6 +1462,15 @@ class PlayerManager @Inject constructor(
         // directo sonando, esto lo corta igual: nunca hay un
         // "después" que planificar para un stream que no termina.
         if (queueItems.getOrNull(player.currentMediaItemIndex)?.isRadioStation == true) return
+        // H15 (miMooutCast), S032 -- orden completa de Miguel Ángel,
+        // corrigiendo mi primera lectura a medias: *"si se le da a
+        // cancelar la búsqueda, si se alcanzan los 200 temas de cola,
+        // si se cierra la aplicación o si se borra la cola de
+        // reproducción."* Sí hay un tamaño que para el bucle -- 200,
+        // no infinito de verdad. `miMooutCastQueueTarget` ya vale 200
+        // para toda sesión de miMooutCast (no solo clásica, ver
+        // `startRadioFromManualAnchor()`), y sigue siendo
+        // `RADIO_QUEUE_SIZE` (10, de siempre) para la Radio.
         if (currentRadioBacklog() >= miMooutCastQueueTarget) return
         // S026 -- si la última vuelta se detuvo por falta de red para
         // verificar un candidato, no se reintenta sola: espera a que
@@ -3736,16 +3745,22 @@ class PlayerManager @Inject constructor(
         // necesario buscar con tanto subgénero, buscamos classical y
         // punto. Coges un recopilatorio de los mejores 100 temas de
         // clásica de todos los tiempos y vamos poniendo temas
-        // aleatoriamente sin repetir de ese recopilatorio... nunca se
-        // para de buscar hasta tener 200 temas en cola."* Barajado una
-        // vez aquí, al arrancar la sesión -- `fetchSimpleManualCandidate()`
-        // lo recorre en este orden sin repetir, ver
-        // `classicalHitsOrder`/`classicalHitsIndex`.
+        // aleatoriamente sin repetir de ese recopilatorio."* Barajado
+        // una vez aquí, al arrancar la sesión --
+        // `fetchSimpleManualCandidate()` lo recorre en este orden sin
+        // repetir, ver `classicalHitsOrder`/`classicalHitsIndex`.
         if (anchor.isClassical) {
             classicalHitsOrder = com.miguelaetxio.mimoo.data.remote.ClassicalGreatestHits.works.shuffled()
             classicalHitsIndex = 0
-            miMooutCastQueueTarget = 200
         }
+        // H15 (miMooutCast), S032 -- objetivo de cola de 200, para
+        // TODA sesión de miMooutCast, no solo clásica. Orden completa
+        // de Miguel Ángel, tras corregir mi primera lectura a medias:
+        // *"si se le da a cancelar la búsqueda, si se alcanzan los 200
+        // temas de cola, si se cierra la aplicación o si se borra la
+        // cola de reproducción."* Esos cuatro son los únicos motivos
+        // por los que el bucle de reposición para -- ninguno más.
+        miMooutCastQueueTarget = 200
         // H15 (miMooutCast), S032 -- QUITADO. Orden directa de Miguel
         // Ángel: *"quita el puto loop de los cojones."* Antes sonaba
         // aquí mientras se buscaba el primer tema (petición de Miguel

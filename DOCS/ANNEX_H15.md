@@ -1126,6 +1126,23 @@ automática (H08) se ha tocado:
     lo cancele. Es la consecuencia directa y aceptada de "sin límite",
     no un descuido. Sin verificar en dispositivo real todavía.
 
+44. **Corrección inmediata de Miguel Ángel sobre el punto 43: no es
+    infinito de verdad.** Los cuatro únicos motivos por los que el
+    bucle de reposición de la cola (no el de "buscar UN tema", que
+    sigue sin límite desde el punto 43) debe parar: *"si se le da a
+    cancelar la búsqueda, si se alcanzan los 200 temas de cola, si se
+    cierra la aplicación o si se borra la cola de reproducción."*
+    Revertido el cambio que había quitado la comprobación de tamaño
+    para miMooutCast en `topUpRadioQueueIfNeeded()` -- vuelve a
+    comprobarse, pero ahora el objetivo es 200 para TODA sesión de
+    miMooutCast, no solo clásica (antes solo se subía a 200 si
+    `anchor.isClassical`; ahora `miMooutCastQueueTarget = 200` se fija
+    siempre en `startRadioFromManualAnchor()`). Radio sigue en
+    `RADIO_QUEUE_SIZE` (10), sin tocar. "Cerrar la aplicación" no
+    necesita código propio -- el proceso muere y con él toda la
+    corrutina, ya cubierto por naturaleza. Sin verificar en dispositivo
+    real todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
