@@ -5259,6 +5259,24 @@ class PlayerManager @Inject constructor(
             "retrato",
             "an introduction",
             "una introducción",
+            // H15, S032 -- orden explícita y airada de Miguel Ángel:
+            // *"esto es un popurrí de temas, de putos temas, y no de
+            // obras completas, no de obras full. miMooutCast es para
+            // poner popurrís de temas, nunca de obras completas."*
+            // Un vídeo etiquetado "[Full]" en clásica normalmente
+            // significa la obra ENTERA (una sinfonía de 40+ minutos,
+            // no un tema suelto) -- exactamente lo contrario de lo que
+            // miMooutCast tiene que servir. Palabra completa, igual
+            // que el resto de la lista (nunca a trozo de texto) --
+            // "Original Mix"/"Extended Mix" siguen sin verse afectados
+            // por esta lista, "full" no tiene ese mismo problema de
+            // ambigüedad que se descartó a propósito para "mix" (ver
+            // ANNEX_H08.md, "Filtro por nombre de lo que no es una
+            // canción").
+            "full",
+            "integral",
+            "obra completa",
+            "sinfonia completa",
         )
 
         /**

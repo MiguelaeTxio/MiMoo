@@ -1143,6 +1143,26 @@ automática (H08) se ha tocado:
     corrutina, ya cubierto por naturaleza. Sin verificar en dispositivo
     real todavía.
 
+45. **Orden explícita de Miguel Ángel sobre un caso real (Beethoven,
+    Sinfonía n.º 5 "[Full]" apareció en cola): "esto es un popurrí de
+    temas, y no de obras completas, no de obras full. miMooutCast es
+    para poner popurrís de temas, nunca de obras completas."**
+    Consultado primero `DOCS/ANNEX_H08.md` (existe documentación real
+    del diseño del filtro por título, sección "5. Filtro por nombre de
+    lo que no es una canción") antes de tocar nada -- confirma que la
+    comparación es por PALABRA COMPLETA, no por trozo de texto, y que
+    "mix" se dejó fuera a propósito por ambigüedad ("Original Mix"
+    legítimo). "Full" no tiene ese mismo problema de ambigüedad para
+    lo que pide Miguel Ángel -- aquí SÍ hay que rechazarlo.
+
+    Añadidos `full`/`integral`/`obra completa`/`sinfonia completa` a
+    `NOT_MUSIC_TITLE_HINTS` -- la única lista de las dos que SÍ se
+    aplica en clásica (`COMPILATION_TITLE_HINTS` se salta ahí). Mismo
+    mecanismo de comparación por palabra completa que el resto de la
+    lista, verificado que `SearchNormalizer.normalize()` quita los
+    corchetes antes de comparar, así que "[Full]" se detecta bien. Sin
+    verificar en dispositivo real todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
