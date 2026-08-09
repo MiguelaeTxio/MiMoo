@@ -9,6 +9,8 @@ import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzGenre
 import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -726,6 +728,23 @@ class RadioRepository @Inject constructor(
         return verifyTrackExistsForArtist(composerFallback, effectiveTitle)
     }
 
+    /**
+     * H15/H08, S032 -- BUG REAL DE VELOCIDAD, medido con log real:
+     * "Megadeth" tardó 18,5 segundos en confirmarse; "Christian
+     * Morgenstern", 11,8. Orden explícita de Miguel Ángel: *"todo lo
+     * que sea tardar más de 10 segundos en encontrar un tema lo voy a
+     * considerar fracaso."* Causa: MusicBrainz, Discogs y Wikidata se
+     * consultaban EN CADENA, cada una con su propio reintento de 1,5s
+     * si fallaba -- si MusicBrainz tardaba/fallaba, había que esperar
+     * su reintento completo antes siquiera de EMPEZAR con Discogs, y
+     * lo mismo de Discogs a Wikidata. Ahora las tres arrancan A LA VEZ
+     * (`async`) y se espera a las tres -- el tiempo total pasa a ser
+     * el de la MÁS LENTA de las tres, no la SUMA de las tres. El orden
+     * de prioridad para decidir qué respuesta vale (MusicBrainz >
+     * Discogs > Wikidata) se mantiene exactamente igual que antes,
+     * solo cambia que ya no se espera a que cada una termine para
+     * lanzar la siguiente.
+     */
     private suspend fun verifyTrackExistsForArtist(artist: String, rawVideoTitle: String): TrackExistence {
         val cleanTitle = stripTitleNoise(rawVideoTitle, artist)
         if (cleanTitle.isBlank()) return TrackExistence.NotFound
@@ -739,33 +758,39 @@ class RadioRepository @Inject constructor(
             return TrackExistence.Confirmed(decade, null)
         }
 
-        val mbYear = retryOnceIfTransient { firstReleaseYearFromMusicBrainz(artist, cleanTitle) }
+        val (mbYear, discogsYear, wikidataYear) = coroutineScope {
+            val mb = async { retryOnceIfTransient { firstReleaseYearFromMusicBrainz(artist, cleanTitle) } }
+            val discogs = async { retryOnceIfTransient { firstReleaseYearFromDiscogs(artist, cleanTitle) } }
+            val wikidata = async { retryOnceIfTransient { firstReleaseYearFromWikidata(artist, cleanTitle) } }
+            Triple(mb.await(), discogs.await(), wikidata.await())
+        }
+
         if (mbYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, mbYear, "musicbrainz")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de MusicBrainz ($mbYear)")
             return TrackExistence.Confirmed((mbYear / 10) * 10, mbYear)
         }
-        if (lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()) {
-            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (MusicBrainz no responde, ni siquiera al reintentar, y el teléfono no tiene conexión)")
-            return TrackExistence.NetworkUnavailable
-        }
-
-        val discogsYear = retryOnceIfTransient { firstReleaseYearFromDiscogs(artist, cleanTitle) }
         if (discogsYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, discogsYear, "discogs")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Discogs ($discogsYear)")
             return TrackExistence.Confirmed((discogsYear / 10) * 10, discogsYear)
         }
-        if (lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()) {
-            log("verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (Discogs no responde, ni siquiera al reintentar, y el teléfono no tiene conexión)")
-            return TrackExistence.NetworkUnavailable
-        }
-
-        val wikidataYear = retryOnceIfTransient { firstReleaseYearFromWikidata(artist, cleanTitle) }
         if (wikidataYear != null) {
             anchorDictionary.learnTrackYear(artist, cleanTitle, wikidataYear, "wikidata")
             log("verifyTrackExists('$artist' -- '$cleanTitle') -> CONFIRMADO, de Wikidata ($wikidataYear)")
             return TrackExistence.Confirmed((wikidataYear / 10) * 10, wikidataYear)
+        }
+
+        // Ninguna de las tres encontró nada -- se comprueba UNA sola
+        // vez si es por falta de red real (antes se comprobaba tras
+        // cada una, en cadena; con las tres en paralelo solo tiene
+        // sentido comprobarlo al final, con el resultado conjunto).
+        if (lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()) {
+            log(
+                "verifyTrackExists('$artist' -- '$cleanTitle') -- SIN RED (ninguna fuente respondió, " +
+                    "ni siquiera al reintentar, y el teléfono no tiene conexión)",
+            )
+            return TrackExistence.NetworkUnavailable
         }
 
         log(

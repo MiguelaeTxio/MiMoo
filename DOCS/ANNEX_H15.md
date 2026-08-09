@@ -663,6 +663,42 @@ automática (H08) se ha tocado:
     calidad en la verificación que queda pendiente de mirar, distinto
     de la cancelación.
 
+26. **Objetivo cuantitativo nuevo de Miguel Ángel, con vía libre de
+    implementación: "todo lo que sea tardar más de 10 segundos en
+    encontrar un tema lo voy a considerar fracaso."** Medido contra su
+    propio log real: sesión "Hard Rock" tardó 18,5s en confirmar
+    'Megadeth' (incluye un `retryOnceIfTransient()` de por medio),
+    sesión "Minimal Techno" tardó 11,8s con 'Christian Morgenstern' --
+    las dos por encima del límite. Solo "Hispanoamérica" (7,2s) lo
+    cumplía.
+
+    Causa real: `verifyTrackExistsForArtist()` consultaba MusicBrainz,
+    Discogs y Wikidata **en cadena** -- cada una con su propio
+    reintento de 1,5s si fallaba, y no se empezaba la siguiente fuente
+    hasta que la anterior hubiera terminado del todo (éxito, fallo, Y
+    su reintento). Con tres fuentes potencialmente lentas en serie,
+    los tiempos se suman en el peor caso.
+
+    Corregido: las tres arrancan A LA VEZ (`kotlinx.coroutines.async`)
+    dentro de un `coroutineScope`, y se espera a las tres con
+    `.await()` -- el tiempo total pasa a depender de la MÁS LENTA de
+    las tres, no de la SUMA. El orden de prioridad para decidir qué
+    respuesta vale si varias confirman (MusicBrainz > Discogs >
+    Wikidata) se mantiene exactamente igual que antes, solo cambia que
+    ya no se espera a que cada una termine para lanzar la siguiente.
+    La comprobación de "sin red real" (antes repetida tras cada
+    fuente, en cadena) pasa a hacerse una sola vez, con el resultado
+    conjunto de las tres.
+
+    Acotado a `verifyTrackExistsForArtist()`, que es la que está en el
+    camino crítico de encontrar cada tema de miMooutCast --
+    `resolveOriginalDecade()` (mismo patrón secuencial, pero usado por
+    la Radio automática al fijar su propio ancla desde una pista
+    real, no en el bucle de candidatos de miMooutCast) se deja sin
+    tocar. Sin verificar en dispositivo real todavía -- pendiente
+    confirmar que los tiempos bajan de verdad de los 10 segundos con
+    un log nuevo.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
