@@ -977,6 +977,43 @@ automática (H08) se ha tocado:
     rápido-pero-vacío sin ninguna alternativa. Sin verificar en
     dispositivo real todavía.
 
+38. **Cambio de estrategia completo para clásica, orden explícita de
+    Miguel Ángel tras el fallo del punto 37:** *"clásica no es
+    necesario buscar con tanto subgénero, buscamos classical y punto.
+    Coges un recopilatorio de los mejores 100 temas de clásica de
+    todos los tiempos y vamos poniendo temas aleatoriamente sin
+    repetir de ese recopilatorio hasta encontrar temas... nunca se
+    para de buscar hasta tener 200 temas en cola."* Se abandona por
+    completo, para clásica, la búsqueda dinámica contra MusicBrainz
+    (`suggestWorkForGenre()`/`suggestRelatedArtist()`+`suggestWorkForArtist()`)
+    -- demasiadas obras marginales, verificación demasiado lenta e
+    incierta.
+
+    Nuevo `ClassicalGreatestHits` (archivo aparte): cien obras
+    compositor+título reales y muy conocidas (Beethoven, Mozart, Bach,
+    Vivaldi, Chopin, Tchaikovsky...), elegidas por ser de las más
+    grabadas del repertorio -- máxima probabilidad de encontrar una
+    grabación real y verificable rápido en YouTube. Nuevos campos de
+    sesión `classicalHitsOrder` (la lista barajada una vez al arrancar
+    la sesión, en `startRadioFromManualAnchor()`) y `classicalHitsIndex`
+    (el siguiente por probar) -- reseteados en los mismos dos límites
+    de sesión de siempre. `fetchSimpleManualCandidate()` tiene ahora
+    una rama de máxima prioridad para `anchor.isClassical`: coge
+    `classicalHitsOrder[classicalHitsIndex]` directo, sin ninguna
+    llamada a MusicBrainz -- todo lo demás (veto de ventana, no
+    repetir tema, verificación en YouTube) sigue igual que con
+    cualquier otra fuente.
+
+    Nuevo `miMooutCastQueueTarget` (campo de sesión, por defecto
+    `RADIO_QUEUE_SIZE`/10 de siempre, nunca se toca la constante en
+    sí) -- clásica lo sube a 200 en `startRadioFromManualAnchor()`.
+    `topUpRadioQueueIfNeeded()` (compartida con la Radio) usa este
+    campo en vez de la constante fija en sus tres puntos de
+    comprobación -- para Radio y el resto de miMooutCast sigue
+    valiendo 10 exactamente igual que siempre, solo cambia para una
+    sesión de clásica en curso. Sin verificar en dispositivo real
+    todavía.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de

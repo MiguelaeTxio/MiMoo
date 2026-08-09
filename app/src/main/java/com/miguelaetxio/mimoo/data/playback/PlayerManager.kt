@@ -769,6 +769,9 @@ class PlayerManager @Inject constructor(
                     radioUnknownOffset = 0
                     miMooutCastOffset = 0
                     miMooutCastTracksServed = 0
+                    classicalHitsOrder = emptyList()
+                    classicalHitsIndex = 0
+                    miMooutCastQueueTarget = RADIO_QUEUE_SIZE
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
                     radioLibraryArtistProfileCache.clear()
@@ -1360,6 +1363,29 @@ class PlayerManager @Inject constructor(
     private var miMooutCastRequireKnownInSpain = false
 
     /**
+     * H15 (miMooutCast), S032 -- orden barajado del recopilatorio fijo
+     * de clásica para ESTA sesión (ver `ClassicalGreatestHits`). Se
+     * baraja una vez al arrancar la sesión y se recorre sin repetir --
+     * `classicalHitsIndex` es el siguiente que falta por probar.
+     * Reseteados en los mismos dos límites de sesión que
+     * `miMooutCastOffset`.
+     */
+    private var classicalHitsOrder: List<Pair<String, String>> = emptyList()
+    private var classicalHitsIndex = 0
+
+    /**
+     * H15 (miMooutCast), S032 -- objetivo de cola para ESTA sesión.
+     * Orden explícita de Miguel Ángel para clásica: *"nunca se para de
+     * buscar hasta tener 200 temas en cola."* `RADIO_QUEUE_SIZE` (10)
+     * es el de siempre, compartido con la Radio automática -- este
+     * campo lo sobreescribe SOLO para la sesión de miMooutCast en
+     * curso (clásica lo sube a 200 en `startRadioFromManualAnchor()`,
+     * el resto de géneros/década/origen se quedan en el de siempre).
+     * Nunca se toca `RADIO_QUEUE_SIZE` en sí.
+     */
+    private var miMooutCastQueueTarget = RADIO_QUEUE_SIZE
+
+    /**
      * H15 (miMooutCast), S032 -- cuántos temas se han servido YA en
      * esta sesión de miMooutCast. Diseño explícito de Miguel Ángel:
      * *"entre los primeros 5 en el primer tema, entre los 10 en el
@@ -1436,7 +1462,7 @@ class PlayerManager @Inject constructor(
         // directo sonando, esto lo corta igual: nunca hay un
         // "después" que planificar para un stream que no termina.
         if (queueItems.getOrNull(player.currentMediaItemIndex)?.isRadioStation == true) return
-        if (currentRadioBacklog() >= RADIO_QUEUE_SIZE) return
+        if (currentRadioBacklog() >= miMooutCastQueueTarget) return
         // S026 -- si la última vuelta se detuvo por falta de red para
         // verificar un candidato, no se reintenta sola: espera a que
         // el usuario pulse "reintentar" en el aviso (o vuelva a poner
@@ -1471,13 +1497,13 @@ class PlayerManager @Inject constructor(
                     val (shouldContinue, backlogNow) = withContext(Dispatchers.Main) {
                         val backlog = currentRadioBacklog()
                         val keepGoing = player.repeatMode == Player.REPEAT_MODE_OFF &&
-                            backlog < RADIO_QUEUE_SIZE
+                            backlog < miMooutCastQueueTarget
                         keepGoing to backlog
                     }
                     if (!shouldContinue) {
                         sharedResolveLog(
                             "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió o backlog ya " +
-                                "llegó a $RADIO_QUEUE_SIZE (backlog actual: $backlogNow)",
+                                "llegó a $miMooutCastQueueTarget (backlog actual: $backlogNow)",
                         )
                         break
                     }
@@ -3705,6 +3731,21 @@ class PlayerManager @Inject constructor(
         // valor por defecto (`true`) esta sesión nueva se habría
         // suprimido a sí misma antes de encontrar el primer tema.
         clearQueue(stayStopped = false)
+        // H15 (miMooutCast), S032 -- clásica cambia de estrategia por
+        // completo, orden explícita de Miguel Ángel: *"clásica no es
+        // necesario buscar con tanto subgénero, buscamos classical y
+        // punto. Coges un recopilatorio de los mejores 100 temas de
+        // clásica de todos los tiempos y vamos poniendo temas
+        // aleatoriamente sin repetir de ese recopilatorio... nunca se
+        // para de buscar hasta tener 200 temas en cola."* Barajado una
+        // vez aquí, al arrancar la sesión -- `fetchSimpleManualCandidate()`
+        // lo recorre en este orden sin repetir, ver
+        // `classicalHitsOrder`/`classicalHitsIndex`.
+        if (anchor.isClassical) {
+            classicalHitsOrder = com.miguelaetxio.mimoo.data.remote.ClassicalGreatestHits.works.shuffled()
+            classicalHitsIndex = 0
+            miMooutCastQueueTarget = 200
+        }
         // H15 (miMooutCast), S032 -- QUITADO. Orden directa de Miguel
         // Ángel: *"quita el puto loop de los cojones."* Antes sonaba
         // aquí mientras se buscaba el primer tema (petición de Miguel
@@ -3908,7 +3949,25 @@ class PlayerManager @Inject constructor(
             // sin ningún cambio.
             val decadeYearWindow = 5
             val decadeCentralYear = anchor.decadeBegin?.let { it + 5 }
-            if (miMooutCastRequireKnownInSpain) {
+            if (anchor.isClassical) {
+                // H15 (miMooutCast), S032 -- orden explícita de Miguel
+                // Ángel, sustituye por completo la búsqueda dinámica
+                // contra MusicBrainz para clásica: *"clásica no es
+                // necesario buscar con tanto subgénero, buscamos
+                // classical y punto. Coges un recopilatorio de los
+                // mejores 100 temas de clásica de todos los tiempos y
+                // vamos poniendo temas aleatoriamente sin repetir de
+                // ese recopilatorio."* `classicalHitsOrder` ya viene
+                // barajado desde `startRadioFromManualAnchor()` -- aquí
+                // solo se avanza el índice, sin ninguna llamada a
+                // MusicBrainz. `null` cuando se acaban las cien obras
+                // (todas probadas ya, con o sin éxito) -- cae al mismo
+                // "página sin nada nuevo" de siempre.
+                val next = classicalHitsOrder.getOrNull(classicalHitsIndex)
+                classicalHitsIndex++
+                artistName = next?.first
+                knownTitle = next?.second
+            } else if (miMooutCastRequireKnownInSpain) {
                 // H15 (miMooutCast), S032 -- botón "Conocido en
                 // España" encendido: se busca DIRECTAMENTE dentro del
                 // diccionario de éxitos (mismo mecanismo que la Radio,
@@ -4799,6 +4858,9 @@ class PlayerManager @Inject constructor(
         radioUnknownOffset = 0
         miMooutCastOffset = 0
         miMooutCastTracksServed = 0
+        classicalHitsOrder = emptyList()
+        classicalHitsIndex = 0
+        miMooutCastQueueTarget = RADIO_QUEUE_SIZE
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
         radioLibraryArtistProfileCache.clear()
