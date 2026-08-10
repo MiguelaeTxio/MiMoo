@@ -135,21 +135,28 @@ def pick_best_candidate(artist: str, song: str):
         print(f"  EXCEPCION buscando '{query}': {e}", file=sys.stderr)
         return None
 
-    for entry in entries:
+    print(f"  {len(entries)} resultados en bruto")
+    for i, entry in enumerate(entries):
         if entry is None:
+            print(f"    [{i}] entrada None")
             continue
         video_id = entry.get("id")
         title = entry.get("title") or ""
         if not video_id or not title:
+            print(f"    [{i}] SIN id/title -- claves presentes: {sorted(entry.keys())}")
             continue
         title_norm = normalize(title)
         if not artist_appears_in_title(artist, title_norm):
+            print(f"    [{i}] '{title}' -- artista '{artist}' no aparece en el titulo")
             continue
         if looks_like_non_song(title):
+            print(f"    [{i}] '{title}' -- descartado por NOT_MUSIC_HINTS")
             continue
         duration = entry.get("duration") or 0
         if duration and not (MIN_DURATION_SECONDS <= duration <= MAX_DURATION_SECONDS):
+            print(f"    [{i}] '{title}' -- duracion {duration}s fuera de rango")
             continue
+        print(f"    [{i}] '{title}' -- ACEPTADO")
         return {
             "artist": artist,
             "song": song,

@@ -87,6 +87,13 @@ class SettingsViewModel @Inject constructor(
     // desde el botón "Crear base de datos".
     private val anchorDictionaryBuilder: com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder,
     private val anchorDictionary: com.miguelaetxio.mimoo.data.remote.AnchorDictionary,
+    // H15 (miMooutCast), S032 -- constructor del recopilatorio de
+    // enlaces validados para TODOS los géneros, lanzado desde el
+    // botón "Generar base de datos de miMooutCast". Orden explícita
+    // de Miguel Ángel tras el fallo del script de GitHub Actions
+    // (sin las rutinas ni las cookies reales del teléfono): montarlo
+    // en la propia app, mismo patrón que `anchorDictionaryBuilder`.
+    private val mimooutcastDatabaseBuilder: com.miguelaetxio.mimoo.data.playback.MimooutcastDatabaseBuilder,
 ) : ViewModel() {
 
     // -----------------------------------------------------------------
@@ -209,6 +216,43 @@ class SettingsViewModel @Inject constructor(
     fun dismissDictionaryState() {
         refreshDictionaryCounts()
     }
+
+    // -----------------------------------------------------------------
+    // H15 (miMooutCast), S032 -- Generar base de datos de miMooutCast
+    // (todos los géneros, enlaces ya validados)
+    // -----------------------------------------------------------------
+
+    val mimooutcastBuildProgress: StateFlow<com.miguelaetxio.mimoo.data.playback.MimooutcastDatabaseBuilder.BuildProgress> =
+        mimooutcastDatabaseBuilder.progress
+
+    private var mimooutcastBuildJob: kotlinx.coroutines.Job? = null
+
+    fun startBuildingMimooutcastDatabase() {
+        if (mimooutcastBuildJob?.isActive == true) return
+        // H15, S032 -- horas de red y escritura, mismo motivo que
+        // startBuildingDictionary(): jamás en el hilo principal.
+        mimooutcastBuildJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            mimooutcastDatabaseBuilder.build()
+        }
+    }
+
+    /**
+     * H15, S032 -- CORREGIDO antes de que pasara: mismo bug ya
+     * documentado en `stopBuildingDictionary()` -- cancelar el `Job`
+     * directamente (`job.cancel()`) lanza `CancellationException` en
+     * el siguiente punto de suspensión DENTRO de `build()`, y la
+     * línea final que pone `isRunning = false` nunca llega a
+     * ejecutarse porque está en esa misma corrutina cancelada. Aquí se
+     * usa en su lugar `mimooutcastDatabaseBuilder.cancel()` -- una
+     * bandera interna que el propio bucle de `build()` comprueba y
+     * respeta, dejando que termine su iteración en curso y llegue de
+     * verdad a su propia línea final de estado.
+     */
+    fun stopBuildingMimooutcastDatabase() {
+        mimooutcastDatabaseBuilder.cancel()
+    }
+
+    fun mimooutcastDatabaseFilePath(): String = mimooutcastDatabaseBuilder.outputFilePath()
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
@@ -470,6 +514,17 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _generatedShareFileUri.value = shareCodeRepository.buildLibraryShareFile()
         }
+    }
+
+    /**
+     * H15 (miMooutCast), S032 -- comparte `mimooutcast_database.json`
+     * (el resultado de "Generar base de datos de miMooutCast") por el
+     * selector del sistema, mismo mecanismo que `onShareLibraryClicked()`
+     * -- Miguel Ángel tiene que sacarlo del teléfono para dárselo a
+     * Claude, que lo añadirá a `app/src/main/assets/` del repositorio.
+     */
+    fun onShareMimooutcastDatabaseClicked() {
+        _generatedShareFileUri.value = mimooutcastDatabaseBuilder.shareableUri()
     }
 
     /** Llamado por la UI justo después de lanzar el Intent.ACTION_SEND, para no relanzarlo en la siguiente recomposición. */

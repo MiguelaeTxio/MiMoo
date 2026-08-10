@@ -1268,6 +1268,70 @@ automática (H08) se ha tocado:
     Sin verificar todavía -- pendiente de que Miguel Ángel relance el
     workflow con este arreglo.
 
+    **ACTUALIZACIÓN, misma sesión: el arreglo del mecanismo de
+    búsqueda NO era la causa.** Miguel Ángel relanzó el workflow --
+    exactamente el mismo resultado, 0/104, "SIN CANDIDATO VALIDO" en
+    todas, sin ninguna excepción. Dos suposiciones seguidas falladas
+    -- se para de adivinar. Añadidas trazas detalladas por cada uno de
+    los resultados en bruto de cada búsqueda (cuántos llegan, qué
+    claves trae cada uno si le faltan `id`/`title`, y el motivo exacto
+    de descarte de cada uno: sin id/title, artista no aparece en el
+    título, `NOT_MUSIC_HINTS`, o duración fuera de rango) -- la
+    próxima ejecución tiene que decir la verdad con datos, no otra
+    suposición mía. Pendiente de que Miguel Ángel la relance una
+    tercera vez con esto.
+
+49. **CAMBIO DE ESTRATEGIA COMPLETO, orden explícita de Miguel Ángel
+    tras el fallo del script de GitHub Actions:** *"Vas a montar el
+    script en la propia aplicación. Vas a meter el lanzador en
+    settings, y desde ahí lo lanzo yo, desde la propia aplicación,
+    utilizando las mismas rutinas de la propia aplicación. Y esto lo
+    vamos a hacer con todos y cada uno de los géneros... Una vez que
+    tengamos toda la base de datos completa, ese archivo habrá que
+    grabarlo aparte y tendrá que estar dentro del archivo comprimido
+    de la APK, para que las siguientes instalaciones ya vaya pegado
+    en la propia instalación."* Se abandona GitHub Actions para esto
+    -- bloqueado por IP de centro de datos, sin las cookies ni la IP
+    real del teléfono que sí hacen funcionar la búsqueda en vivo.
+
+    Piezas nuevas:
+    - `PlayerManager.findValidatedTrackForGenre()` -- versión pública
+      y autónoma (sin estado de sesión) de la búsqueda de género,
+      reutiliza exactamente `suggestWorkForGenre()` + respaldo de dos
+      pasos + `resolveYoutubeCandidate()`, la MISMA lógica ya probada
+      en vivo durante horas de esta sesión.
+    - `MimooutcastDatabaseBuilder.kt` -- recorre los 24 géneros del
+      catálogo, hasta 100 temas por género, con una válvula de
+      seguridad real (15 fallos seguidos en el MISMO género hace que
+      pase al siguiente -- no es el mismo error que el punto 42, aquí
+      SÍ hace falta un tope porque el proceso completo tiene que
+      terminar y recorrer los 24, no quedarse atascado en uno solo).
+      Escritura INCREMENTAL -- guarda tras cada género completo, no
+      solo al final, para no perder horas de progreso ante una
+      interrupción.
+    - `SettingsViewModel.kt`/`SettingsScreen.kt` -- botón "Generar
+      base de datos de miMooutCast" en Ajustes, mismo patrón visual ya
+      probado del botón "Crear base de datos" de la Radio (H08).
+      Corregido DE ANTEMANO, antes de que pasara, el mismo bug ya
+      documentado de ese botón (cancelar el `Job` directamente nunca
+      deja ejecutarse la línea final de estado) -- aquí se usa una
+      bandera interna (`cancel()`) que el propio bucle respeta, en vez
+      de `job.cancel()`.
+    - `file_provider_paths.xml` -- corregido ANTES de que fallara en
+      producción: el archivo generado no puede vivir en `cacheDir`
+      (Android puede borrar la caché sin avisar, perdiendo horas de
+      trabajo) ni en `filesDir` a secas (`FileProvider` no lo tenía
+      declarado, habría fallado al compartir) -- nueva subcarpeta
+      `mimooutcast_export/` de `filesDir`, declarada con exposición
+      mínima, mismo criterio que el resto del archivo.
+
+    Sin verificar en dispositivo real todavía -- es un proceso de
+    horas, Miguel Ángel lo lanzará cuando pueda. El archivo resultante
+    tendrá que compartirse y dárselo a Claude para añadirlo a
+    `app/src/main/assets/` del repositorio -- ahí lo empaqueta Gradle
+    dentro del APK sin ningún paso extra, y las siguientes
+    instalaciones ya lo llevarán de fábrica.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué

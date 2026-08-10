@@ -3990,6 +3990,61 @@ class PlayerManager @Inject constructor(
      * cuanto se agota cae en la misma búsqueda dinámica sin límite que
      * usa cualquier otro género.
      */
+    /**
+     * H15 (miMooutCast), S032 -- resultado de `findValidatedTrackForGenre()`:
+     * artista, título y `youtubeId` YA verificados de verdad -- sin la
+     * URL de streaming (esa caduca, nunca se guarda a largo plazo, ver
+     * `ClassicalValidatedLinksRepository`).
+     */
+    data class ValidatedGenreTrack(val artist: String, val title: String, val youtubeId: String)
+
+    /**
+     * H15 (miMooutCast), S032 -- versión PÚBLICA y AUTÓNOMA (sin
+     * estado de sesión, a diferencia de `fetchSimpleManualCandidate()`)
+     * de la búsqueda de género, para que
+     * `MimooutcastDatabaseBuilder` pueda llamarla repetidamente y
+     * construir un recopilatorio de enlaces validados para CUALQUIER
+     * género -- no solo clásica. Orden explícita de Miguel Ángel:
+     * *"Vas a montar el script en la propia aplicación... esto lo
+     * vamos a hacer con todos y cada uno de los géneros."* Reutiliza
+     * exactamente la misma lógica que ya usa
+     * `fetchSimpleManualCandidate()` en vivo durante una sesión real
+     * (`suggestWorkForGenre()` con respaldo de dos pasos, luego
+     * `resolveYoutubeCandidate()`) -- desde el propio teléfono, con
+     * las mismas rutinas ya probadas, no un script aparte sin cookies
+     * ni la IP real del dispositivo.
+     */
+    suspend fun findValidatedTrackForGenre(
+        genre: String,
+        excludeArtists: Set<String>,
+        offset: Int,
+    ): ValidatedGenreTrack? {
+        val fast = radioRepository.suggestWorkForGenre(
+            genre = genre,
+            excludeArtists = excludeArtists,
+            offset = offset,
+        )
+        val (artistName, knownTitle) = if (fast != null) {
+            fast.artist to fast.title
+        } else {
+            val fallbackArtist = radioRepository.suggestRelatedArtist(
+                anchor = RadioAnchor(genre = genre, genres = setOf(genre), country = null),
+                excludeArtists = excludeArtists,
+                offset = offset,
+                useLocalDictionary = false,
+            ) ?: return null
+            fallbackArtist to null
+        }
+        if (artistName.lowercase() in excludeArtists) return null
+        val item = resolveYoutubeCandidate(
+            anchorArtistName = "generador-bd: $genre",
+            artist = artistName,
+            songTitle = knownTitle,
+            genreHint = genre,
+        ) ?: return null
+        return ValidatedGenreTrack(item.artist ?: artistName, item.title, item.youtubeId ?: return null)
+    }
+
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
         val baseWindowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower

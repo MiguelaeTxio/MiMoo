@@ -84,6 +84,7 @@ fun SettingsScreen(
     // S025 -- estado del constructor del diccionario del ancla (H08).
     val dictionaryState by viewModel.dictionaryState.collectAsState()
     androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshDictionaryCounts() }
+    val mimooutcastBuildProgress by viewModel.mimooutcastBuildProgress.collectAsState()
     val pendingConsent by viewModel.pendingConsent.collectAsState()
     val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
     val context = LocalContext.current
@@ -435,6 +436,117 @@ fun SettingsScreen(
                             modifier = Modifier.glassChip(),
                         ) {
                             Text("Aceptar")
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // H15 (miMooutCast), S032 -- BOTÓN "GENERAR BASE DE DATOS
+            // DE MIMOOUTCAST", mismo patrón que el de arriba (H08).
+            //
+            // Orden de Miguel Ángel tras el fallo del script de
+            // GitHub Actions (bloqueado por IP de centro de datos,
+            // sin las rutinas ni las cookies reales del teléfono):
+            // *"Vas a montar el script en la propia aplicación...
+            // desde ahí lo lanzo yo, desde la propia aplicación,
+            // utilizando las mismas rutinas de la propia aplicación.
+            // Y esto lo vamos a hacer con todos y cada uno de los
+            // géneros."*
+            SettingsAccordionSection(
+                title = "Base de datos de miMooutCast",
+                expanded = expandedSection == "mimooutcast_bd",
+                onToggle = {
+                    expandedSection = if (expandedSection == "mimooutcast_bd") null else "mimooutcast_bd"
+                },
+            ) {
+                Text(
+                    "Recorre los 24 géneros de miMooutCast y busca, para cada " +
+                        "uno, temas reales ya comprobados en YouTube -- con esto, " +
+                        "elegir un género en miMooutCast encola de golpe en vez de " +
+                        "tener que buscar en el momento. Tarda un buen rato (horas, " +
+                        "no minutos) y se puede parar: al volver a pulsar sigue " +
+                        "donde lo dejó. Cuando termines, pulsa \"Compartir\" y envíame " +
+                        "el archivo para meterlo en la aplicación de forma " +
+                        "permanente.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+
+                val mbp = mimooutcastBuildProgress
+                when {
+                    mbp.isRunning -> {
+                        LinearProgressIndicator(
+                            progress = {
+                                if (mbp.totalGenres > 0) mbp.currentGenreIndex.toFloat() / mbp.totalGenres else 0f
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Género ${mbp.currentGenreIndex + 1} de ${mbp.totalGenres} " +
+                                "(${mbp.currentGenreLabel}) -- ${mbp.tracksFoundThisGenre} temas " +
+                                "de este género, ${mbp.totalTracksFound} en total",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (mbp.lastError != null) {
+                            Text(
+                                "Último fallo (sigue intentando): ${mbp.lastError}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        // Se puede parar cuando sea: cada género se
+                        // guarda al terminar, no solo al final.
+                        TextButton(
+                            onClick = viewModel::stopBuildingMimooutcastDatabase,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Text("Parar")
+                        }
+                    }
+
+                    mbp.finished || mbp.totalTracksFound > 0 -> {
+                        Text(
+                            if (mbp.finished) {
+                                "Terminado. ${mbp.totalTracksFound} temas guardados en total."
+                            } else {
+                                "Parado. ${mbp.totalTracksFound} temas guardados antes de parar; " +
+                                    "al volver a pulsar sigue donde lo dejó."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row {
+                            TextButton(
+                                onClick = viewModel::startBuildingMimooutcastDatabase,
+                                modifier = Modifier.glassChip(),
+                            ) {
+                                Text(if (mbp.finished) "Volver a generar" else "Continuar")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(
+                                onClick = viewModel::onShareMimooutcastDatabaseClicked,
+                                modifier = Modifier.glassChip(),
+                            ) {
+                                Icon(Icons.Filled.Share, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Compartir")
+                            }
+                        }
+                    }
+
+                    else -> {
+                        TextButton(
+                            onClick = viewModel::startBuildingMimooutcastDatabase,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Icon(Icons.Filled.CloudDownload, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Generar base de datos de miMooutCast")
                         }
                     }
                 }
