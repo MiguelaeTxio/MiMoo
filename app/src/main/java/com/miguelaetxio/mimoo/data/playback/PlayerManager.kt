@@ -376,6 +376,9 @@ class PlayerManager @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val streamResolver: StreamResolver,
     private val knownHitsRepository: com.miguelaetxio.mimoo.data.remote.KnownHitsRepository,
+    // H15 (miMooutCast), S032 -- recopilatorio de enlaces ya validados
+    // para clásica, ver su kdoc completo.
+    private val classicalValidatedLinksRepository: com.miguelaetxio.mimoo.data.remote.ClassicalValidatedLinksRepository,
     // S013/S014 -- fuente de "disco" del cupo 80/10/10 (10%, ver
     // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
     // descargados para poder ofrecer alguno como parte de la Radio.
@@ -769,8 +772,8 @@ class PlayerManager @Inject constructor(
                     radioUnknownOffset = 0
                     miMooutCastOffset = 0
                     miMooutCastTracksServed = 0
-                    classicalHitsOrder = emptyList()
-                    classicalHitsIndex = 0
+                    classicalValidatedOrder = emptyList()
+                    classicalValidatedIndex = 0
                     miMooutCastQueueTarget = RADIO_QUEUE_SIZE
                     radioKnownSongsExhausted = false
                     radioDiscoArtistsExhausted = false
@@ -1363,15 +1366,20 @@ class PlayerManager @Inject constructor(
     private var miMooutCastRequireKnownInSpain = false
 
     /**
-     * H15 (miMooutCast), S032 -- orden barajado del recopilatorio fijo
-     * de clásica para ESTA sesión (ver `ClassicalGreatestHits`). Se
-     * baraja una vez al arrancar la sesión y se recorre sin repetir --
-     * `classicalHitsIndex` es el siguiente que falta por probar.
+     * H15 (miMooutCast), S032 -- orden barajado del recopilatorio de
+     * enlaces YA VALIDADOS de clásica para ESTA sesión (ver
+     * `ClassicalValidatedLinksRepository`). Se baraja una vez al
+     * arrancar la sesión y se recorre sin repetir --
+     * `classicalValidatedIndex` es el siguiente que falta por probar.
+     * Cada entrada ya trae un `youtubeId` comprobado -- resolverla es
+     * solo sacar la URL de streaming del vídeo, sin buscar ni
+     * verificar nada, mucho más rápido que el resto de fuentes.
      * Reseteados en los mismos dos límites de sesión que
      * `miMooutCastOffset`.
      */
-    private var classicalHitsOrder: List<Pair<String, String>> = emptyList()
-    private var classicalHitsIndex = 0
+    private var classicalValidatedOrder: List<com.miguelaetxio.mimoo.data.remote.ClassicalValidatedLinksRepository.ValidatedWork> =
+        emptyList()
+    private var classicalValidatedIndex = 0
 
     /**
      * H15 (miMooutCast), S032 -- objetivo de cola para ESTA sesión.
@@ -1462,16 +1470,17 @@ class PlayerManager @Inject constructor(
         // directo sonando, esto lo corta igual: nunca hay un
         // "después" que planificar para un stream que no termina.
         if (queueItems.getOrNull(player.currentMediaItemIndex)?.isRadioStation == true) return
-        // H15 (miMooutCast), S032 -- orden completa de Miguel Ángel,
-        // corrigiendo mi primera lectura a medias: *"si se le da a
-        // cancelar la búsqueda, si se alcanzan los 200 temas de cola,
-        // si se cierra la aplicación o si se borra la cola de
-        // reproducción."* Sí hay un tamaño que para el bucle -- 200,
-        // no infinito de verdad. `miMooutCastQueueTarget` ya vale 200
-        // para toda sesión de miMooutCast (no solo clásica, ver
-        // `startRadioFromManualAnchor()`), y sigue siendo
-        // `RADIO_QUEUE_SIZE` (10, de siempre) para la Radio.
-        if (currentRadioBacklog() >= miMooutCastQueueTarget) return
+        // H15 (miMooutCast), S032 -- orden final de Miguel Ángel, tras
+        // el método completo (100 obras pre-validadas encoladas de
+        // golpe, luego búsqueda continua): *"sin límites. Cuando
+        // tienes los cien primeros luego ya es non stop. Mientras que
+        // el usuario no borre la cola de reproducción, cierre la
+        // aplicación o cancele la búsqueda."* Ya no hay ningún tamaño
+        // de cola que pare esto para miMooutCast -- solo esos tres
+        // motivos, ninguno de tamaño. Radio (`!manualAnchorActive`)
+        // sigue parándose en `RADIO_QUEUE_SIZE` (10, de siempre), sin
+        // tocar.
+        if (!manualAnchorActive && currentRadioBacklog() >= miMooutCastQueueTarget) return
         // S026 -- si la última vuelta se detuvo por falta de red para
         // verificar un candidato, no se reintenta sola: espera a que
         // el usuario pulse "reintentar" en el aviso (o vuelva a poner
@@ -1505,14 +1514,22 @@ class PlayerManager @Inject constructor(
                 while (true) {
                     val (shouldContinue, backlogNow) = withContext(Dispatchers.Main) {
                         val backlog = currentRadioBacklog()
+                        // H15 (miMooutCast), S032 -- mismo motivo que
+                        // la puerta de entrada de arriba: sin tope de
+                        // tamaño para miMooutCast, solo Radio.
                         val keepGoing = player.repeatMode == Player.REPEAT_MODE_OFF &&
-                            backlog < miMooutCastQueueTarget
+                            (manualAnchorActive || backlog < miMooutCastQueueTarget)
                         keepGoing to backlog
                     }
                     if (!shouldContinue) {
                         sharedResolveLog(
-                            "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió o backlog ya " +
-                                "llegó a $miMooutCastQueueTarget (backlog actual: $backlogNow)",
+                            if (manualAnchorActive) {
+                                "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió (backlog actual: " +
+                                    "$backlogNow, sin tope de tamaño para miMooutCast)"
+                            } else {
+                                "topUpRadioQueueIfNeeded() -- parado: repeatMode cambió o backlog ya " +
+                                    "llegó a $miMooutCastQueueTarget (backlog actual: $backlogNow)"
+                            },
                         )
                         break
                     }
@@ -3353,7 +3370,43 @@ class PlayerManager @Inject constructor(
          * añade nada, igual que antes.
          */
         genreHint: String? = null,
+        /**
+         * H15 (miMooutCast), S032 -- recopilatorio de enlaces YA
+         * VALIDADOS de clásica (ver `ClassicalValidatedLinksRepository`).
+         * Cuando viene informado, se salta la búsqueda en YouTube por
+         * completo -- ya se sabe exactamente qué vídeo es (comprobado
+         * de antemano por `tools/validate_classical_links.py`), así
+         * que solo hace falta resolver su URL de streaming (que sí
+         * caduca y hay que renovar en cada reproducción), no buscar ni
+         * verificar nada. Mucho más rápido que el resto de fuentes.
+         */
+        knownYoutubeId: String? = null,
     ): QueueItem? = try {
+        if (knownYoutubeId != null) {
+            val streamUrl = try {
+                streamResolver.resolveAudioStreamUrl("https://youtu.be/$knownYoutubeId")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                sharedResolveLog(
+                    "resolveYoutubeCandidate(ancla='$anchorArtistName', enlace validado='$knownYoutubeId') -- " +
+                        "resolveAudioStreamUrl() falló: ${e::class.java.simpleName}: ${e.message}",
+                )
+                return null
+            }
+            sharedResolveLog(
+                "resolveYoutubeCandidate(ancla='$anchorArtistName', enlace validado='$knownYoutubeId') -> " +
+                    "añadido: '$songTitle'",
+            )
+            return QueueItem(
+                uri = streamUrl,
+                title = songTitle ?: artist,
+                isLocal = false,
+                artist = artist,
+                isFromRadio = true,
+                youtubeId = knownYoutubeId,
+            )
+        }
         val query = when {
             songTitle != null -> "$artist $songTitle"
             !genreHint.isNullOrBlank() -> "$artist $genreHint"
@@ -3740,26 +3793,31 @@ class PlayerManager @Inject constructor(
         // valor por defecto (`true`) esta sesión nueva se habría
         // suprimido a sí misma antes de encontrar el primer tema.
         clearQueue(stayStopped = false)
-        // H15 (miMooutCast), S032 -- clásica cambia de estrategia por
-        // completo, orden explícita de Miguel Ángel: *"clásica no es
-        // necesario buscar con tanto subgénero, buscamos classical y
-        // punto. Coges un recopilatorio de los mejores 100 temas de
-        // clásica de todos los tiempos y vamos poniendo temas
-        // aleatoriamente sin repetir de ese recopilatorio."* Barajado
-        // una vez aquí, al arrancar la sesión --
-        // `fetchSimpleManualCandidate()` lo recorre en este orden sin
-        // repetir, ver `classicalHitsOrder`/`classicalHitsIndex`.
+        // H15 (miMooutCast), S032 -- clásica prueba primero el
+        // recopilatorio de enlaces YA VALIDADOS (ver
+        // `ClassicalValidatedLinksRepository`), método completo de
+        // Miguel Ángel: *"tienes esos links... se resuelven todos sin
+        // principio [búsqueda]... se encolan estos 100 links
+        // funcionales y conocidos de forma aleatoria [y] se van
+        // buscando los otros [cien] intercalándose a medida que se
+        // van encontrando."* Barajado una vez aquí, al arrancar la
+        // sesión -- `fetchSimpleManualCandidate()` lo recorre en este
+        // orden sin repetir, y en cuanto se agota cae en la búsqueda
+        // dinámica de género de siempre (ver el punto de la condición
+        // más abajo). Si el asset todavía no existe (el workflow de
+        // GitHub no se ha ejecutado nunca), `works` es una lista
+        // vacía y esto no hace nada -- cae directo a la búsqueda
+        // dinámica, sin romper nada.
         if (anchor.isClassical) {
-            classicalHitsOrder = com.miguelaetxio.mimoo.data.remote.ClassicalGreatestHits.works.shuffled()
-            classicalHitsIndex = 0
+            classicalValidatedOrder = classicalValidatedLinksRepository.works.shuffled()
+            classicalValidatedIndex = 0
         }
-        // H15 (miMooutCast), S032 -- objetivo de cola de 200, para
-        // TODA sesión de miMooutCast, no solo clásica. Orden completa
-        // de Miguel Ángel, tras corregir mi primera lectura a medias:
-        // *"si se le da a cancelar la búsqueda, si se alcanzan los 200
-        // temas de cola, si se cierra la aplicación o si se borra la
-        // cola de reproducción."* Esos cuatro son los únicos motivos
-        // por los que el bucle de reposición para -- ninguno más.
+        // H15 (miMooutCast), S032 -- objetivo de cola. Para toda
+        // sesión de miMooutCast en general ya no se usa (ver
+        // `topUpRadioQueueIfNeeded()`, sin tope de tamaño desde la
+        // orden final de Miguel Ángel: *"sin límites... ya es non
+        // stop"*) -- se deja fijado por si algún día vuelve a hacer
+        // falta un tope real, pero hoy es inerte para miMooutCast.
         miMooutCastQueueTarget = 200
         // H15 (miMooutCast), S032 -- QUITADO. Orden directa de Miguel
         // Ángel: *"quita el puto loop de los cojones."* Antes sonaba
@@ -3926,10 +3984,11 @@ class PlayerManager @Inject constructor(
      * `windowLower` SOLO para esta llamada (para que
      * `suggestRelatedArtist()` no vuelva a sugerir el mismo) -- solo
      * se para cuando encuentra un tema válido, o por cancelación
-     * externa (cambio de sesión, "Dejar de buscar"). Clásica es la
-     * única excepción con un final genuino: el recopilatorio fijo
-     * (`ClassicalGreatestHits`) sí se agota de verdad cuando se prueban
-     * las cien obras.
+     * externa (cambio de sesión, "Dejar de buscar"). Clásica prueba
+     * primero el recopilatorio de enlaces YA VALIDADOS
+     * (`ClassicalValidatedLinksRepository`, rápido, sin buscar), y en
+     * cuanto se agota cae en la misma búsqueda dinámica sin límite que
+     * usa cualquier otro género.
      */
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
@@ -3943,12 +4002,12 @@ class PlayerManager @Inject constructor(
         // razonado (ver el punto 42 del anexo). Quitado del todo: este
         // bucle ya no cuenta intentos, sigue intentando hasta que la
         // propia fuente dice honestamente que no hay nada más --
-        // `classicalHitsIndex >= classicalHitsOrder.size` para
-        // clásica (el recopilatorio fijo SÍ se agota de verdad, eso no
-        // es un número inventado, es su tamaño real), o hasta que se
-        // cancele desde fuera (cambio de sesión, "Dejar de buscar")
-        // para género/década/origen, cuyo catálogo real en MusicBrainz
-        // es demasiado grande para tener un final práctico.
+        // `classicalValidatedIndex >= classicalValidatedOrder.size`
+        // hace que clásica pase de los enlaces ya validados a la
+        // búsqueda dinámica de género (sin límite tampoco), o hasta
+        // que se cancele desde fuera (cambio de sesión, "Dejar de
+        // buscar") para el resto, cuyo catálogo real en MusicBrainz es
+        // demasiado grande para tener un final práctico.
         while (true) {
             val windowLower = baseWindowLower + triedThisCall
             // H15 (miMooutCast), S032 -- ventana creciente pedida por
@@ -3974,6 +4033,13 @@ class PlayerManager @Inject constructor(
             val isDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
             val artistName: String?
             val knownTitle: String?
+            // H15 (miMooutCast), S032 -- distinto de `knownTitle`:
+            // cuando viene informado, `resolveYoutubeCandidate()` se
+            // salta la búsqueda entera, ver su kdoc. Solo lo rellena
+            // la rama del recopilatorio de clásica ya validado, más
+            // abajo -- el resto de fuentes se queda en `null`, sin
+            // ningún cambio de comportamiento.
+            var knownYoutubeId: String? = null
             // H15 (miMooutCast), S032 -- solo para década sola: año
             // central de la década ±5, propuesta de Miguel Ángel tras
             // ver que el rango de 10 años completo hacía la búsqueda
@@ -3986,37 +4052,32 @@ class PlayerManager @Inject constructor(
             // sin ningún cambio.
             val decadeYearWindow = 5
             val decadeCentralYear = anchor.decadeBegin?.let { it + 5 }
-            if (anchor.isClassical && classicalHitsIndex < classicalHitsOrder.size) {
-                // H15 (miMooutCast), S032 -- orden explícita de Miguel
-                // Ángel, sustituye por completo la búsqueda dinámica
-                // contra MusicBrainz para clásica: *"clásica no es
-                // necesario buscar con tanto subgénero, buscamos
-                // classical y punto. Coges un recopilatorio de los
-                // mejores 100 temas de clásica de todos los tiempos y
-                // vamos poniendo temas aleatoriamente sin repetir de
-                // ese recopilatorio."* `classicalHitsOrder` ya viene
-                // barajado desde `startRadioFromManualAnchor()` -- aquí
-                // solo se avanza el índice, sin ninguna llamada a
-                // MusicBrainz.
+            if (anchor.isClassical && classicalValidatedIndex < classicalValidatedOrder.size) {
+                // H15 (miMooutCast), S032 -- método completo de Miguel
+                // Ángel: *"tienes esos links [validados por el script
+                // de GitHub], se resuelven todos sin principio [sin
+                // buscar]... se encolan estos 100 links funcionales y
+                // conocidos de forma aleatoria [y] se van buscando los
+                // otros [cien] intercalándose."* `classicalValidatedOrder`
+                // ya viene barajado desde `startRadioFromManualAnchor()`
+                // -- aquí solo se avanza el índice. `knownYoutubeId`
+                // hace que la llamada de más abajo se salte la
+                // búsqueda entera, solo resuelva la URL de streaming
+                // (que sí caduca) de un vídeo YA comprobado.
                 //
-                // CORRECCIÓN, misma sesión: Miguel Ángel rechazó que
-                // agotar las cien obras significara "sin más música"
-                // -- *"seguimos con el puto límite... por cojones hay
-                // que tener un límite."* Razón: cien es el tamaño real
-                // del recopilatorio, no un número inventado, pero eso
-                // no significa que haya que rendirse ahí. La condición
-                // de esta rama ahora exige TAMBIÉN que queden obras
-                // sin probar (`classicalHitsIndex < classicalHitsOrder.size`)
-                // -- en cuanto se agota, esta rama deja de cumplirse y
-                // el flujo cae, sin ningún código extra, en la rama de
-                // género de más abajo (`anchor.genre.isNotBlank()`,
-                // cierto para clásica igual que para cualquier otro
-                // género: `anchor.genre == "classical"`), que sigue
-                // buscando por MusicBrainz de verdad sin límite.
-                val next = classicalHitsOrder[classicalHitsIndex]
-                classicalHitsIndex++
-                artistName = next.first
-                knownTitle = next.second
+                // Igual que antes: en cuanto se agotan los validados,
+                // esta condición deja de cumplirse y el flujo cae, sin
+                // código extra, en la rama de género de más abajo
+                // (`anchor.genre.isNotBlank()`, cierto para clásica
+                // igual que cualquier otro género), que sigue buscando
+                // por MusicBrainz de verdad sin límite -- orden de
+                // Miguel Ángel: *"cien es el tamaño real, pero eso no
+                // significa rendirse ahí."*
+                val next = classicalValidatedOrder[classicalValidatedIndex]
+                classicalValidatedIndex++
+                artistName = next.artist
+                knownTitle = next.title
+                knownYoutubeId = next.youtubeId
             } else if (miMooutCastRequireKnownInSpain) {
                 // H15 (miMooutCast), S032 -- botón "Conocido en
                 // España" encendido: se busca DIRECTAMENTE dentro del
@@ -4179,6 +4240,7 @@ class PlayerManager @Inject constructor(
                 expectedYear = if (isDecadeOnly) decadeCentralYear else anchor.anchorYear,
                 yearWindow = if (isDecadeOnly) decadeYearWindow else uiPreferencesManager.radioYearWindow.value,
                 genreHint = anchor.genre.ifBlank { null },
+                knownYoutubeId = knownYoutubeId,
             )
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
@@ -4900,8 +4962,8 @@ class PlayerManager @Inject constructor(
         radioUnknownOffset = 0
         miMooutCastOffset = 0
         miMooutCastTracksServed = 0
-        classicalHitsOrder = emptyList()
-        classicalHitsIndex = 0
+        classicalValidatedOrder = emptyList()
+        classicalValidatedIndex = 0
         miMooutCastQueueTarget = RADIO_QUEUE_SIZE
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false

@@ -1185,6 +1185,61 @@ automática (H08) se ha tocado:
     en vez de mostrar el cartel. Sin verificar en dispositivo real
     todavía.
 
+47. **REDISEÑO DE FONDO, método completo dictado por Miguel Ángel:**
+    *"Como si haces un script aparte y lo ejecutas desde GitHub para
+    validar los links y se guardan en base de datos. Una vez que
+    tengas esos links se resuelven todos sin principio [sin buscar]...
+    a medida que pase el tiempo irán rompiéndose estos cien links, que
+    se irán renovando a la ejecución de la aplicación [el workflow]...
+    cuando se encolan estos 100 links funcionales y conocidos de forma
+    aleatoria se van buscando los otros [cien] intercalándose a medida
+    que se van encontrando."*
+
+    Antes de tocar nada, encontrado que el proyecto YA tenía
+    `known_hit_artists.json`/`known_hit_classical.json` (104 obras
+    clásicas curadas, mucho mejor que la lista de 100 escrita a mano
+    del punto 38 -- títulos completos con opus, no solo el nombre
+    corto) y todo un patrón establecido de workflows de enriquecimiento
+    (`enrich-dictionary.yml`, `tools/enrich_dictionary_genres.py`).
+    `ClassicalGreatestHits.kt` (punto 38) se borra por redundante.
+
+    Piezas nuevas:
+    - `tools/validate_classical_links.py` -- busca y valida un enlace
+      real de YouTube para cada una de las 104 obras de
+      `known_hit_classical.json`, con las MISMAS reglas de filtrado
+      por título que `PlayerManager.looksLikeNonSong()` en Kotlin
+      (reproducidas a mano en Python, mantener las dos listas en
+      sincronía). Guarda el resultado en
+      `classical_validated_links.json`.
+    - `.github/workflows/validate-classical-links.yml` -- disparo
+      manual, mismo patrón que `enrich-dictionary.yml`, comitea el
+      resultado. Se puede relanzar cuando algún enlace se rompa.
+    - **AVISO EXPLÍCITO, sin ocultarlo**: el entorno de Claude no
+      tiene acceso a YouTube (mismo bloqueo de red de siempre) -- este
+      script NO se ha podido probar en vivo antes de commitear. La
+      primera ejecución real del workflow en GitHub Actions es la
+      primera prueba de verdad.
+    - `ClassicalValidatedLinksRepository.kt` -- carga el JSON de
+      enlaces validados, `emptyList()` mientras el workflow no se haya
+      ejecutado nunca (no rompe nada, cae directo a la búsqueda
+      dinámica).
+    - `resolveYoutubeCandidate()` acepta ahora `knownYoutubeId` --
+      cuando viene informado, se salta la búsqueda entera en YouTube y
+      solo resuelve la URL de streaming (que sí caduca, hay que
+      renovarla en cada reproducción) de un vídeo YA comprobado. Mucho
+      más rápido que el resto de fuentes.
+    - `fetchSimpleManualCandidate()` para clásica: prueba primero los
+      enlaces validados y barajados (`classicalValidatedOrder`/
+      `classicalValidatedIndex`, reseteados en los mismos límites de
+      sesión de siempre) -- rápido, sin buscar. En cuanto se agotan,
+      cae de forma natural (misma condición del punto 46) en la
+      búsqueda dinámica de género de siempre, sin límite.
+
+    Sin verificar en dispositivo real todavía -- y sin poder verificar
+    el propio script hasta su primera ejecución real en GitHub
+    Actions, algo que Miguel Ángel tendrá que disparar a mano
+    (`workflow_dispatch`) cuando pueda.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué

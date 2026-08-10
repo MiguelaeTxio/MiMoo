@@ -1,0 +1,74 @@
+name: Validar enlaces de clasica (miMooutCast)
+
+# Disparo MANUAL, mismo criterio que enrich-dictionary.yml: 104 obras
+# a una busqueda de YouTube cada una, con 1s de cortesia entre
+# peticiones -- unos minutos, no horas. Se puede relanzar sin mas
+# cuando algun enlace se rompa (H15, S032, orden de Miguel Angel:
+# "a medida que pase el tiempo iran rompiendose estos cien links,
+# que se iran renovando").
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-classical-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar yt-dlp
+        run: pip install --upgrade yt-dlp
+
+      - name: Validar enlaces de las 104 obras del recopilatorio
+        run: python3 tools/validate_classical_links.py
+
+      # Antes de commitear, mismo motivo que enrich-dictionary.yml: el
+      # rastreo vive en una maquina efimera y no se puede perder por
+      # un fallo posterior al propio script.
+      - name: Salvar el resultado como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: classical-validated-links
+          path: app/src/main/assets/classical_validated_links.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commitear si ha cambiado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/assets/classical_validated_links.json
+          if git diff --cached --quiet; then
+            echo "Nada que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: enlaces de YouTube validados para el recopilatorio de clasica (miMooutCast)
+
+          Salida de tools/validate_classical_links.py sobre
+          known_hit_classical.json (104 obras). Cada entrada de
+          classical_validated_links.json trae un youtube_id ya
+          comprobado -- mismas reglas de filtrado por titulo que
+          PlayerManager.looksLikeNonSong() en Kotlin (documentales,
+          portraits, obras completas fuera).
+
+          Con esto miMooutCast puede encolar el recopilatorio entero
+          de golpe al elegir Clasica, sin buscar cada obra en vivo.
+          Reejecutar este workflow manualmente cuando algun enlace se
+          rompa.
+          EOF
+          # Reconciliar antes de empujar: main puede haber avanzado
+          # mientras corria el script, mismo motivo que
+          # enrich-dictionary.yml.
+          git pull --rebase origin main
+          git push
