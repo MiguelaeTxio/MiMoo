@@ -3986,7 +3986,7 @@ class PlayerManager @Inject constructor(
             // sin ningún cambio.
             val decadeYearWindow = 5
             val decadeCentralYear = anchor.decadeBegin?.let { it + 5 }
-            if (anchor.isClassical) {
+            if (anchor.isClassical && classicalHitsIndex < classicalHitsOrder.size) {
                 // H15 (miMooutCast), S032 -- orden explícita de Miguel
                 // Ángel, sustituye por completo la búsqueda dinámica
                 // contra MusicBrainz para clásica: *"clásica no es
@@ -3999,22 +3999,20 @@ class PlayerManager @Inject constructor(
                 // solo se avanza el índice, sin ninguna llamada a
                 // MusicBrainz.
                 //
-                // FINAL REAL, no un número inventado: cuando el índice
-                // llega al final de la lista, el recopilatorio está
-                // agotado DE VERDAD -- las cien obras ya se probaron,
-                // con o sin éxito. A diferencia de género/década/
-                // origen (MusicBrainz, sin final práctico), aquí SÍ
-                // hay un final genuino, así que se para aquí en vez de
-                // seguir en un bucle que ya no tiene nada nuevo que
-                // ofrecer.
-                if (classicalHitsIndex >= classicalHitsOrder.size) {
-                    MimooutcastDebugLogger.log(
-                        appContext, storageManager,
-                        "fetchSimpleManualCandidate(miMooutCast='$anchorLabel') -- recopilatorio de " +
-                            "clásica agotado de verdad (${classicalHitsOrder.size} obras probadas)",
-                    )
-                    return null
-                }
+                // CORRECCIÓN, misma sesión: Miguel Ángel rechazó que
+                // agotar las cien obras significara "sin más música"
+                // -- *"seguimos con el puto límite... por cojones hay
+                // que tener un límite."* Razón: cien es el tamaño real
+                // del recopilatorio, no un número inventado, pero eso
+                // no significa que haya que rendirse ahí. La condición
+                // de esta rama ahora exige TAMBIÉN que queden obras
+                // sin probar (`classicalHitsIndex < classicalHitsOrder.size`)
+                // -- en cuanto se agota, esta rama deja de cumplirse y
+                // el flujo cae, sin ningún código extra, en la rama de
+                // género de más abajo (`anchor.genre.isNotBlank()`,
+                // cierto para clásica igual que para cualquier otro
+                // género: `anchor.genre == "classical"`), que sigue
+                // buscando por MusicBrainz de verdad sin límite.
                 val next = classicalHitsOrder[classicalHitsIndex]
                 classicalHitsIndex++
                 artistName = next.first

@@ -1163,6 +1163,28 @@ automática (H08) se ha tocado:
     corchetes antes de comparar, así que "[Full]" se detecta bien. Sin
     verificar en dispositivo real todavía.
 
+46. **Corrección de Miguel Ángel sobre el punto 41/45: agotar las cien
+    obras del recopilatorio NO debe mostrar "Sin más música".**
+    Confirmado con captura de pantalla (Wagner, Ravel, Handel sonando
+    de verdad, pero el aviso saltando con solo un puñado en cola):
+    *"seguimos con el puto límite... por cojones hay que tener un
+    límite."* Cien es el tamaño real del recopilatorio, no un número
+    inventado -- pero eso no significaba que hubiera que rendirse ahí.
+
+    Corregido: la rama de clásica ahora exige TAMBIÉN que queden obras
+    sin probar (`anchor.isClassical && classicalHitsIndex <
+    classicalHitsOrder.size`) -- en cuanto se agota el recopilatorio,
+    esta condición deja de cumplirse y el flujo cae, sin código extra,
+    en la rama de género de siempre (`anchor.genre.isNotBlank()`,
+    cierto para clásica igual que para cualquier otro género, ya que
+    `anchor.genre == "classical"`) -- la búsqueda dinámica contra
+    MusicBrainz en vivo (`suggestWorkForGenre()` + respaldo de dos
+    pasos) que ya usa Hard Rock/Minimal Techno/el resto, sin ningún
+    límite práctico. Primero el recopilatorio (rápido, fiable, obras
+    muy conocidas), y en cuanto se agota, sigue por el camino dinámico
+    en vez de mostrar el cartel. Sin verificar en dispositivo real
+    todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
