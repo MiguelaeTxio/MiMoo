@@ -53,6 +53,14 @@ object MimooutcastCatalog {
         MimooutcastGenre("Salsa", "salsa"),
         MimooutcastGenre("House", "house"),
         MimooutcastGenre("Techno", "techno"),
+        // H15, S032 -- orden explícita de Miguel Ángel: "me encantan
+        // ambos subgéneros [breakbeat y big beat], hay que meterlos.
+        // Metemos EDM y dentro breakbeat y bigbeat." El padre real de
+        // "breakbeat" en los datos de MusicBrainz es "edm", no
+        // "electronic" -- por eso no aparecía dentro de "Electrónica".
+        // Ver `MimooutcastCatalog.subgenresOf()` para el caso especial
+        // de "big beat" (nieto de edm, no hijo directo).
+        MimooutcastGenre("EDM", "edm"),
     )
 
     val decades: List<MimooutcastDecade> = listOf(
@@ -73,4 +81,34 @@ object MimooutcastCatalog {
         MimooutcastOrigin("Europea", OriginGroup.EUROPEA),
         MimooutcastOrigin("Mundial", OriginGroup.MUNDIAL),
     )
+
+    /**
+     * H15, S032 -- ÚNICA fuente de subgéneros, compartida por la
+     * pantalla (`MimooutcastViewModel`) y el generador de base de
+     * datos (`MimooutcastDatabaseBuilder`) -- antes vivía solo en el
+     * ViewModel; movida aquí para que las dos partes vean siempre
+     * exactamente los mismos subgéneros, sin poder divergir.
+     *
+     * Caso especial de "big beat": su padre real en los datos de
+     * MusicBrainz es "breakbeat" (nieto de "edm", no hijo directo), así
+     * que `directChildren()` normal nunca lo encontraría al expandir
+     * EDM. Orden explícita de Miguel Ángel: *"me encantan ambos
+     * subgéneros [breakbeat y big beat], hay que meterlos... para no
+     * aumentar mucho, metemos EDM y dentro breakbeat y bigbeat."* Un
+     * único añadido a mano, no un cambio general de profundidad para
+     * todos los géneros (eso metería cientos de subgéneros muy nicho
+     * sin que se haya pedido).
+     */
+    fun subgenresOf(genre: MimooutcastGenre, genreTree: GenreTree): List<MimooutcastGenre> {
+        val direct = genreTree.directChildren(genre.mbGenre).toMutableList()
+        if (genre.mbGenre == "edm" && "big beat" !in direct) {
+            direct += "big beat"
+        }
+        return direct.map { mb ->
+            MimooutcastGenre(
+                label = mb.split(" ").joinToString(" ") { it.replaceFirstChar(Char::uppercase) },
+                mbGenre = mb,
+            )
+        }
+    }
 }

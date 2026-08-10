@@ -51,6 +51,12 @@ import javax.inject.Singleton
 class MimooutcastDatabaseBuilder @Inject constructor(
     @ApplicationContext private val context: Context,
     private val playerManager: PlayerManager,
+    // H15, S032 -- misma fuente de subgéneros que ya usa la pantalla
+    // (`MimooutcastViewModel.subgenresOf()`), para recorrer también
+    // los subgéneros reales, no solo los 24 raíz. Orden de Miguel
+    // Ángel: *"3, evidentemente 3"* -- ampliar el generador para que
+    // también los recorra, aceptando que tarde mucho más.
+    private val genreTree: com.miguelaetxio.mimoo.data.remote.GenreTree,
 ) {
     data class BuildProgress(
         val isRunning: Boolean = false,
@@ -113,9 +119,32 @@ class MimooutcastDatabaseBuilder @Inject constructor(
         val alreadyStored = loadExisting().toMutableList()
         val storedByGenre = alreadyStored.groupBy { it.genre }.mapValues { it.value.toMutableList() }.toMutableMap()
 
-        _progress.value = BuildProgress(isRunning = true, totalTracksFound = alreadyStored.size)
+        // H15, S032 -- orden explícita de Miguel Ángel: "3, evidentemente
+        // 3" -- recorrer también los subgéneros, no solo los géneros
+        // raíz. Misma fuente que usa la pantalla
+        // (`MimooutcastCatalog.subgenresOf()`), para que la base de
+        // datos cubra exactamente lo que se puede elegir, ni más ni
+        // menos. Clásica queda FUERA de este recorrido de subgéneros
+        // -- ya tiene su propio recopilatorio fijo curado a mano (el
+        // punto 38-41 del anexo), y la propia pantalla tampoco le
+        // muestra ningún desplegable de subgéneros (`tapGenre()`, la
+        // orden de "buscamos classical y punto").
+        val allGenres: List<com.miguelaetxio.mimoo.data.remote.MimooutcastGenre> =
+            MimooutcastCatalog.genres.flatMap { root ->
+                if (root.mbGenre == "classical") {
+                    listOf(root)
+                } else {
+                    listOf(root) + MimooutcastCatalog.subgenresOf(root, genreTree)
+                }
+            }
 
-        for ((genreIndex, genreEntry) in MimooutcastCatalog.genres.withIndex()) {
+        _progress.value = BuildProgress(
+            isRunning = true,
+            totalGenres = allGenres.size,
+            totalTracksFound = alreadyStored.size,
+        )
+
+        for ((genreIndex, genreEntry) in allGenres.withIndex()) {
             if (cancelled) break
             val genre = genreEntry.mbGenre
             val bucket = storedByGenre.getOrPut(genre) { mutableListOf() }
@@ -127,8 +156,8 @@ class MimooutcastDatabaseBuilder @Inject constructor(
             // siguiente tras varias rondas seguidas sin encontrar nada
             // nuevo. No es el mismo error que el punto 42 del anexo
             // (aquí SÍ hace falta un tope, porque el proceso tiene que
-            // terminar en algún momento y avanzar por los 24 géneros,
-            // no quedarse atascado indefinidamente en uno solo).
+            // terminar en algún momento y avanzar por TODOS los
+            // géneros y subgéneros, no quedarse atascado en uno solo).
             var consecutiveFailures = 0
             while (bucket.size < targetPerGenre && consecutiveFailures < 15 && !cancelled) {
                 val excludeLower = bucket.map { it.artist.lowercase() }.toSet()

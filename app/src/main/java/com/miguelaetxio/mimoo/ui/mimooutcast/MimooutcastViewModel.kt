@@ -122,13 +122,9 @@ class MimooutcastViewModel @Inject constructor(
      * mostrar -- no hay lista curada de subgéneros, serían cientos
      * entre los 24 géneros raíz.
      */
+    /** H15, S032 -- delega en la fuente compartida, ver `MimooutcastCatalog.subgenresOf()`. */
     fun subgenresOf(genre: MimooutcastGenre): List<MimooutcastGenre> =
-        genreTree.directChildren(genre.mbGenre).map { mb ->
-            MimooutcastGenre(
-                label = mb.split(" ").joinToString(" ") { it.replaceFirstChar(Char::uppercase) },
-                mbGenre = mb,
-            )
-        }
+        com.miguelaetxio.mimoo.data.remote.MimooutcastCatalog.subgenresOf(genre, genreTree)
 
     fun startWithGenre(mbGenre: String, label: String) = start(mbGenre, decadeBegin = null, originGroup = null, label = label)
 

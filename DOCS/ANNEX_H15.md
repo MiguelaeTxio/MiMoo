@@ -1332,6 +1332,38 @@ automática (H08) se ha tocado:
     dentro del APK sin ningún paso extra, y las siguientes
     instalaciones ya lo llevarán de fábrica.
 
+50. **Miguel Ángel, buscando con el filtro nuevo del punto 40, notó
+    que "big beat" y "breakbeat" no aparecían por ningún lado.**
+    Comprobado contra `genre_tree.json` (los datos reales de
+    MusicBrainz): SÍ existen los dos, pero su padre real es `edm`
+    (`breakbeat`) y `breakbeat` (`big beat`, nieto de `edm`) -- ninguno
+    de los dos cuelga de `electronic` ("Electrónica"), y `edm` ni
+    siquiera era uno de los 24 géneros raíz. Como el desplegable solo
+    mira UN nivel por debajo de cada raíz, eran estructuralmente
+    invisibles, no un fallo del filtro en sí.
+
+    Orden de Miguel Ángel: *"me encantan ambos subgéneros, hay que
+    meterlos... metemos EDM y dentro breakbeat, y bigbeat."* Añadido
+    `EDM` como 25º género raíz. Nueva `MimooutcastCatalog.subgenresOf()`
+    -- ÚNICA fuente de subgéneros, compartida entre la pantalla
+    (`MimooutcastViewModel` ahora delega ahí, antes tenía su propia
+    copia) y el generador de base de datos, para que las dos partes
+    vean siempre exactamente lo mismo. Caso especial, a mano, solo
+    para `big beat` bajo `edm` (nieto, `directChildren()` normal nunca
+    lo encontraría) -- no un cambio general de profundidad para todos
+    los géneros, que habría metido cientos de subgéneros muy nicho sin
+    pedirlo.
+
+    De la misma orden, confirmando la pregunta anterior sobre el
+    generador de base de datos ("3, evidentemente 3"): `build()` ahora
+    recorre género raíz + sus subgéneros reales (misma fuente
+    compartida), no solo los 24 raíces -- Clásica queda fuera de este
+    recorrido de subgéneros, ya tiene su propio recopilatorio fijo
+    (puntos 38-41) y la pantalla tampoco le muestra desplegable.
+    `BuildProgress.totalGenres` ahora refleja el total real (géneros +
+    subgéneros), no solo 24. Sin verificar en dispositivo real
+    todavía.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué
