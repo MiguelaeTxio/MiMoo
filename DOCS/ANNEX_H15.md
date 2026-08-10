@@ -1240,6 +1240,34 @@ automática (H08) se ha tocado:
     Actions, algo que Miguel Ángel tendrá que disparar a mano
     (`workflow_dispatch`) cuando pueda.
 
+48. **BUG REAL DEL SCRIPT, confirmado con la primera ejecución real
+    del workflow: 0 de 104 obras validadas, `classical_validated_links.json`
+    vacío (`[]`).** Sin acceso a los logs completos de la ejecución
+    desde el entorno de Claude (bloqueado por red, igual que YouTube
+    -- ni siquiera la API de logs de GitHub Actions estaba en la lista
+    permitida), Miguel Ángel compartió captura del log real del paso
+    "validate-classical-links": las 104 obras, "SIN CANDIDATO VALIDO",
+    sin ninguna excepción -- ni siquiera Beethoven, Sinfonía n.º 5.
+
+    Causa real encontrada comparando con el mecanismo YA probado en
+    producción (`ExternalLinkResolver.searchYoutube()` en Kotlin +
+    `resolve_youtube_link()` en `link_resolver.py`, usados en toda la
+    sesión para las búsquedas que sí funcionan): el script construía
+    la búsqueda con la opción `default_search` de yt-dlp + `extract_flat=True`
+    a secas -- el mecanismo PROBADO prefija la consulta a mano
+    (`f"ytsearch{{limit}}:{{query}}"`) y usa `extract_flat="in_playlist"`
+    (cadena, no booleano). Con la combinación equivocada, los
+    resultados de búsqueda llegaban sin `title`/`id` rellenos -- el
+    script los descartaba en silencio (`if not video_id or not title:
+    continue`), de ahí el 0/104 sin ninguna excepción visible.
+    Corregido para usar exactamente el mismo mecanismo ya probado, sin
+    inventar nada nuevo. Nombres de campo (`id`/`title`/`duration`)
+    confirmados iguales contra `_entry_to_track()` -- no era el
+    problema, solo la construcción de la búsqueda en sí.
+
+    Sin verificar todavía -- pendiente de que Miguel Ángel relance el
+    workflow con este arreglo.
+
     **Pendiente de confirmar, sin tocar todavía**: la otra petición de
     la misma orden -- *"si un género carece de muchos artistas
     aglutinados, un mínimo de 50 estaría bien"* -- necesita saber qué

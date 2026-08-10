@@ -106,15 +106,15 @@ def looks_like_non_song(title: str) -> bool:
 
 
 def search_youtube(query: str, limit: int):
+    """Mismo mecanismo EXACTO que ExternalLinkResolver.searchYoutube() (Kotlin) + resolve_youtube_link() (link_resolver.py), la única combinacion ya probada en produccion. `extract_flat=True` a secas y `default_search` (usados en el primer intento de este script) dejaban los resultados sin `title`/`id` rellenos -- de ahi el 0/104 real de la primera ejecucion del workflow."""
     options = {
         "quiet": True,
         "no_warnings": True,
-        "extract_flat": True,
+        "extract_flat": "in_playlist",
         "skip_download": True,
-        "default_search": f"ytsearch{limit}",
     }
     with yt_dlp.YoutubeDL(options) as ydl:
-        info = ydl.extract_info(query, download=False)
+        info = ydl.extract_info(f"ytsearch{limit}:{query}", download=False)
     return (info or {}).get("entries") or []
 
 
