@@ -76,6 +76,17 @@ class MimooutcastDatabaseBuilder @Inject constructor(
         val currentGenreLabel: String = "",
         val tracksFoundThisGenre: Int = 0,
         val totalTracksFound: Int = 0,
+        // H15 -- fix real, S033: la posición secuencial
+        // (`currentGenreIndex`) NO es lo mismo que "cuántos géneros
+        // llevo hechos" -- Miguel Ángel, con datos reales: "3 géneros,
+        // 3520 en total... ¿de dónde salen 3520 temas de 2 géneros?".
+        // No salen de 2 géneros: salen de TODOS los géneros ya
+        // marcados agotados en `doneGenres`, estén donde estén en el
+        // recorrido de esta tanda -- pero la pantalla no lo dejaba
+        // claro, mostraba solo la posición. Este contador es la cuenta
+        // real y honesta de "género que ya se ha dado por agotado o
+        // completo", la que hay que enseñar en primer plano.
+        val genresCompleted: Int = 0,
         val lastError: String? = null,
         val finished: Boolean = false,
     )
@@ -187,6 +198,7 @@ class MimooutcastDatabaseBuilder @Inject constructor(
             isRunning = true,
             totalGenres = allGenres.size,
             totalTracksFound = alreadyStored.size,
+            genresCompleted = doneGenres.size,
         )
 
         for ((genreIndex, genreEntry) in allGenres.withIndex()) {
@@ -209,6 +221,7 @@ class MimooutcastDatabaseBuilder @Inject constructor(
                 currentGenreLabel = genreEntry.label,
                 tracksFoundThisGenre = bucket.size,
                 totalTracksFound = storedByGenre.values.sumOf { it.size },
+                genresCompleted = doneGenres.size,
             )
             // H15 -- fix real, S033: este género ya se dio por agotado en
             // una tanda anterior (objetivo alcanzado O válvula de
@@ -249,6 +262,7 @@ class MimooutcastDatabaseBuilder @Inject constructor(
                     currentGenreLabel = genreEntry.label,
                     tracksFoundThisGenre = bucket.size,
                     totalTracksFound = storedByGenre.values.sumOf { it.size },
+                    genresCompleted = doneGenres.size,
                 )
             }
             // H15 -- fix real, S033: solo se marca agotado si el while

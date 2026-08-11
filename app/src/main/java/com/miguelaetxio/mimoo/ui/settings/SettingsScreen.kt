@@ -478,18 +478,35 @@ fun SettingsScreen(
                 val mbp = mimooutcastBuildProgress
                 when {
                     mbp.isRunning -> {
+                        // H15 -- fix real, S033: la barra y el titular usaban
+                        // `currentGenreIndex` (posición de recorrido de ESTA
+                        // tanda, que arranca de cero en cada apertura de la
+                        // app) -- Miguel Ángel, con datos reales: "3 géneros,
+                        // 3520 en total... ¿de dónde salen 3520 temas de 2
+                        // géneros?". No salían de 2 géneros -- salían de
+                        // TODOS los géneros ya agotados en tandas anteriores,
+                        // pero la pantalla no lo mostraba, así que parecía
+                        // un dato roto. `genresCompleted` (`doneGenres.size`,
+                        // persistente entre tandas) es el dato que de verdad
+                        // responde "¿cuántos géneros llevo hechos" -- ahora
+                        // manda tanto en la barra como en el titular.
                         LinearProgressIndicator(
                             progress = {
-                                if (mbp.totalGenres > 0) mbp.currentGenreIndex.toFloat() / mbp.totalGenres else 0f
+                                if (mbp.totalGenres > 0) mbp.genresCompleted.toFloat() / mbp.totalGenres else 0f
                             },
                             modifier = Modifier.fillMaxWidth(),
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "Género ${mbp.currentGenreIndex + 1} de ${mbp.totalGenres} " +
-                                "(${mbp.currentGenreLabel}) -- ${mbp.tracksFoundThisGenre} temas " +
-                                "de este género, ${mbp.totalTracksFound} en total",
+                            "${mbp.genresCompleted} de ${mbp.totalGenres} géneros completados -- " +
+                                "${mbp.totalTracksFound} temas en total",
                             style = MaterialTheme.typography.bodySmall,
+                        )
+                        Text(
+                            "Mirando ahora: ${mbp.currentGenreLabel} (posición ${mbp.currentGenreIndex + 1} " +
+                                "del recorrido) -- ${mbp.tracksFoundThisGenre} temas de este género",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         if (mbp.lastError != null) {
                             Text(
