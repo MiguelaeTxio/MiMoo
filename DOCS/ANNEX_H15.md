@@ -1392,6 +1392,58 @@ automática (H08) se ha tocado:
     que Miguel Ángel relance el generador y confirme que el género que
     muestra la pantalla coincide siempre con lo que está buscando.
 
+52. **Fix real, confirmado por Miguel Ángel con datos reales:** *"anoche
+    llevaba casi 150 géneros... paras, empieza con 3, paras son 12,
+    paras son tal"*, con solo 3274 temas en total. Cifra imposible si
+    esos 150 géneros hubieran llegado al objetivo (100 cada uno =
+    ~15.000) -- solo cuadra si la mayoría son subgéneros nicho que la
+    válvula de seguridad (15 fallos seguidos) corta con un puñado de
+    temas. Causa real: el fichero solo guardaba los temas encontrados,
+    nunca el hecho de que un género ya se había dado por agotado --
+    cada "Parar" + reanudar reintentaba ENTERO cada género nicho (la
+    inmensa mayoría), gastando hasta 15 búsquedas reales cada vez sin
+    avanzar de verdad. Corregido: fichero pasa de array plano a
+    `{tracks, doneGenres}`, con compatibilidad hacia atrás para no
+    perder los 3274 temas ya guardados en el formato viejo. Un género
+    se marca agotado solo si el `while` termina por sus propias
+    condiciones (objetivo o válvula), nunca por cancelación a mitad de
+    búsqueda. Commit `2d4ffa9`, build verde.
+
+    Miguel Ángel cuestionó a continuación el propio razonamiento con el
+    caso base: *"para que un género exista, vamos a suponer que
+    únicamente hay un artista de ese género, ya decimos que ese
+    artista va a tener 22 temas en toda su carrera... ¿tiene pies o
+    cabeza?"* -- no lo tiene: un género con entidad propia en la
+    taxonomía tiene cientos o miles de temas reales, no 22. Que la
+    válvula se dispare tan pronto no es que el género esté agotado de
+    verdad, es que `suggestWorkForGenre()`/`resolveYoutubeCandidate()`
+    están fallando por algo ajeno a cuánta música existe. Sin acceso
+    en vivo a la API de MusicBrainz desde este entorno (bloqueo de
+    robots.txt, confirmado de nuevo al intentarlo) para confirmar si
+    la búsqueda `tag:"género"` (sin verificar en vivo desde que se
+    escribió, ver el aviso en el kdoc de `suggestWorkForGenre()`) es la
+    causa -- pendiente de log real.
+
+53. **Fix real, encontrado al preparar el diagnóstico del punto
+    anterior:** el generador de base de datos llama directamente a
+    `suggestWorkForGenre()`/`suggestRelatedArtist()` (compartidas con
+    Radio) sin pasar por ninguna sesión real de miMooutCast, así que
+    `mimooutcastSessionFlag.active` se quedaba en `false` durante horas
+    de ejecución -- todo ese log caía en `radio_relacionados_debug.txt`,
+    justo la contaminación del log de Radio que Miguel Ángel prohibió
+    explícita y repetidamente en S032. Corregido: `build()` activa la
+    bandera al entrar y la restaura siempre en un `finally`. A partir
+    de ahora el log real del generador (incluida la línea de
+    `suggestWorkForGenre()` con el recuento de release-groups en bruto
+    por género, la pieza que hace falta para el diagnóstico del punto
+    52) cae en `mimooutcast_debug.txt`. Commit `fc9111f`, build verde.
+
+    **Pendiente, siguiente paso concreto:** lanzar el generador un rato
+    corto (no 24h) y compartir `mimooutcast_debug.txt` de ese tramo --
+    con eso se ve si `suggestWorkForGenre()` trae release-groups en
+    bruto de verdad o si la búsqueda por `tag:` está fallando, sin
+    seguir adivinando.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
