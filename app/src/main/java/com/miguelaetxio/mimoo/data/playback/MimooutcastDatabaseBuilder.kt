@@ -71,6 +71,21 @@ class MimooutcastDatabaseBuilder @Inject constructor(
 
     private data class StoredTrack(val genre: String, val artist: String, val title: String, val youtube_id: String)
 
+    // H15 -- fix real, S033: envoltorio del fichero persistido. Antes solo
+    // se guardaba la lista plana de temas -- sin ningún rastro de qué
+    // géneros ya se habían dado por agotados (objetivo alcanzado O
+    // válvula de seguridad de 15 fallos disparada), cada "Parar" +
+    // reanudar volvía a intentar TODOS los géneros incompletos desde
+    // cero, gastando hasta 15 búsquedas reales por género ya agotado sin
+    // avanzar de verdad. Confirmado por Miguel Ángel con datos reales:
+    // "anoche llevaba casi 150 géneros... paras, empieza con 3, paras son
+    // 12" -- y el total (3274) solo cuadra si la mayoría de esos 150
+    // géneros son nicho y se agotaron con un puñado de temas, no con 100.
+    private data class DatabaseFile(
+        val tracks: List<StoredTrack> = emptyList(),
+        val doneGenres: List<String> = emptyList(),
+    )
+
     private val _progress = MutableStateFlow(BuildProgress())
     val progress: StateFlow<BuildProgress> = _progress.asStateFlow()
 
@@ -116,8 +131,10 @@ class MimooutcastDatabaseBuilder @Inject constructor(
      */
     suspend fun build(targetPerGenre: Int = 100) {
         cancelled = false
-        val alreadyStored = loadExisting().toMutableList()
+        val existing = loadExisting()
+        val alreadyStored = existing.tracks.toMutableList()
         val storedByGenre = alreadyStored.groupBy { it.genre }.mapValues { it.value.toMutableList() }.toMutableMap()
+        val doneGenres = existing.doneGenres.toMutableSet()
 
         // H15, S032 -- orden explícita de Miguel Ángel: "3, evidentemente
         // 3" -- recorrer también los subgéneros, no solo los géneros
@@ -165,6 +182,15 @@ class MimooutcastDatabaseBuilder @Inject constructor(
                 tracksFoundThisGenre = bucket.size,
                 totalTracksFound = storedByGenre.values.sumOf { it.size },
             )
+            // H15 -- fix real, S033: este género ya se dio por agotado en
+            // una tanda anterior (objetivo alcanzado O válvula de
+            // seguridad ya disparada) -- se salta SIN gastar ni una sola
+            // búsqueda real. Sin esto, un "Parar" + reanudar reintentaba
+            // ENTERO cada género nicho ya agotado (la inmensa mayoría),
+            // que es justo lo que hacía que el índice se arrastrara desde
+            // cero en cada reinicio en vez de avanzar de verdad.
+            if (genre in doneGenres) continue
+
             // H15, S032 -- válvula de seguridad REAL, no un "ríndete
             // pronto": si un género concreto tiene de verdad menos de
             // `targetPerGenre` artistas verificables, no tiene sentido
@@ -197,26 +223,58 @@ class MimooutcastDatabaseBuilder @Inject constructor(
                     totalTracksFound = storedByGenre.values.sumOf { it.size },
                 )
             }
+            // H15 -- fix real, S033: solo se marca agotado si el while
+            // terminó por SUS PROPIAS condiciones (objetivo alcanzado o
+            // válvula de seguridad) -- nunca por una cancelación a mitad
+            // de búsqueda, que debe poder reintentar ese mismo género la
+            // próxima vez en vez de darlo por bueno a medias.
+            if (!cancelled) {
+                doneGenres += genre
+            }
             // Incremental -- se guarda al terminar CADA género, no solo al final.
-            writeAll(storedByGenre.values.flatten())
+            writeAll(storedByGenre.values.flatten(), doneGenres)
         }
 
         _progress.value = _progress.value.copy(isRunning = false, finished = !cancelled)
     }
 
-    private fun loadExisting(): List<StoredTrack> {
+    /**
+     * H15 -- fix real, S033: el formato viejo (anterior a este fix) era
+     * un array JSON plano de temas, sin ningún envoltorio ni
+     * `doneGenres`. Si el fichero en disco todavía tiene ese formato
+     * (el caso real de Miguel Ángel, con 3274 temas ya acumulados), se
+     * cae a leerlo como array plano -- los temas ya encontrados NO se
+     * pierden, solo se pierde el rastro de qué géneros ya se habían
+     * agotado en esa tanda antigua, que se reintentan una única vez más
+     * y a partir de ahí quedan ya marcados para siempre.
+     */
+    private fun loadExisting(): DatabaseFile {
+        if (!outputFile.exists()) return DatabaseFile()
+        val json = try {
+            outputFile.readText()
+        } catch (e: Exception) {
+            return DatabaseFile()
+        }
         return try {
-            if (!outputFile.exists()) return emptyList()
-            val json = outputFile.readText()
+            val type = object : TypeToken<DatabaseFile>() {}.type
+            Gson().fromJson(json, type) ?: DatabaseFile(tracks = loadLegacyTracks(json))
+        } catch (e: Exception) {
+            DatabaseFile(tracks = loadLegacyTracks(json))
+        }
+    }
+
+    private fun loadLegacyTracks(json: String): List<StoredTrack> {
+        return try {
             val type = object : TypeToken<List<StoredTrack>>() {}.type
-            Gson().fromJson(json, type)
+            Gson().fromJson(json, type) ?: emptyList()
         } catch (e: Exception) {
             emptyList()
         }
     }
 
-    private fun writeAll(tracks: List<StoredTrack>) {
-        val json = GsonBuilder().setPrettyPrinting().create().toJson(tracks)
+    private fun writeAll(tracks: List<StoredTrack>, doneGenres: Set<String>) {
+        val json = GsonBuilder().setPrettyPrinting().create()
+            .toJson(DatabaseFile(tracks, doneGenres.toList()))
         outputFile.writeText(json)
     }
 }
