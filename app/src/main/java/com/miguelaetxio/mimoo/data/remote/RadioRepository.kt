@@ -1960,13 +1960,21 @@ class RadioRepository @Inject constructor(
      * `suggestArtistFromDecade()`, aplicado ahora a género en vez de a
      * fecha.
      *
-     * **AVISO DE VERIFICACIÓN PENDIENTE, igual que con `firstreleasedate`
-     * en su momento**: que el campo `tag` funcione en la búsqueda de
-     * release-group tan bien como ya está confirmado que funciona en
-     * la de artista no se ha podido probar en vivo (mismo bloqueo de
-     * robots.txt de siempre). El log dice cuántos release-groups trae
-     * la respuesta en bruto -- si es sistemáticamente 0, es el primer
-     * sitio a mirar.
+     * **VERIFICACIÓN CONFIRMADA, S033, log real de Miguel Ángel**: el
+     * campo `tag` SÍ funciona en la búsqueda de release-group --
+     * `mimooutcast_database.json`/`radio_relacionados_debug.txt` de una
+     * tanda real muestran 25 release-groups en bruto por búsqueda de
+     * forma consistente. El síntoma real no era ausencia de datos, era
+     * que el título del release-group (que puede ser un ÁLBUM, un EP,
+     * un directo o un recopilatorio, no solo un sencillo) se pasaba
+     * como si fuera el título de una CANCIÓN suelta -- filtrado
+     * correctamente por el filtro de duración/compilación de
+     * `resolveYoutubeCandidate()` caso tras caso ("Derek and the
+     * Dominos -- Layla and Other Assorted Love Songs", un álbum
+     * entero), agotando la válvula de seguridad sin que el género
+     * estuviera agotado de verdad. Corregido filtrando por
+     * `primary-type == "Single"` antes de construir candidatos -- ver
+     * el cuerpo de la función.
      */
     suspend fun suggestWorkForGenre(
         genre: String,
@@ -1997,14 +2005,32 @@ class RadioRepository @Inject constructor(
                 response = fetch(0)
             }
             noteSuccess()
-            val allCandidates = response.releaseGroups
+            // H15 -- fix real, S033: log real de Miguel Ángel confirmó
+            // que esta función ofrecía título de ÁLBUM/EP/directo como
+            // si fuera título de CANCIÓN -- "Derek and the Dominos —
+            // Layla and Other Assorted Love Songs" (álbum entero) o
+            // "Grateful Dead — Dick's Picks, Volume 18" (directo de
+            // horas) mandados a YouTube como si fueran un tema suelto,
+            // rechazados sistemáticamente por el filtro de duración/
+            // compilación -- no porque el género esté agotado, sino
+            // porque el título nunca fue una canción de verdad. Un
+            // release-group con `primary-type` "Single" es el único
+            // caso donde su título SÍ es de forma fiable el nombre de
+            // un tema suelto -- se descartan aquí el resto (Album, EP,
+            // Broadcast, Other) antes de construir candidatos, en vez
+            // de dejar que el filtro de duración los rechace uno a uno
+            // más tarde a coste de una búsqueda real en YouTube cada
+            // vez.
+            val singlesOnly = response.releaseGroups.filter { it.primaryType == "Single" }
+            val allCandidates = singlesOnly
                 .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }
                 .filter { it.artist.lowercase() !in excludeLower }
             val windowed = if (resultWindowLimit != null) allCandidates.take(resultWindowLimit) else allCandidates
             log(
                 "suggestWorkForGenre('$genre', offset=$offset) -- ${response.releaseGroups.size} " +
-                    "release-groups en bruto, ${allCandidates.size} candidatos artista+obra tras excluir " +
-                    "${excludeArtists.size} ya usados, ${windowed.size} en la ventana de selección",
+                    "release-groups en bruto, ${singlesOnly.size} de tipo Single, ${allCandidates.size} " +
+                    "candidatos artista+obra tras excluir ${excludeArtists.size} ya usados, " +
+                    "${windowed.size} en la ventana de selección",
             )
             windowed.randomOrNull()
         } catch (e: CancellationException) {
