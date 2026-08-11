@@ -149,6 +149,22 @@ class MimooutcastDatabaseBuilder @Inject constructor(
             val genre = genreEntry.mbGenre
             val bucket = storedByGenre.getOrPut(genre) { mutableListOf() }
             var offset = 0
+            // H15 -- fix real, S033: si este género ya venía completo de
+            // una tanda anterior (retomar tras "Parar"), el `while` de
+            // abajo no entra ni una vez y el progreso se queda clavado
+            // con el género/etiqueta de la iteración anterior mientras
+            // se salta de largo por todos los géneros ya hechos --
+            // Miguel Ángel lo vio en vivo: "el total va bien pero el
+            // género que se muestra no tiene nada que ver". Se actualiza
+            // aquí, al ENTRAR en cada género, para que la pantalla
+            // siempre refleje cuál se está mirando ahora mismo, esté
+            // completo o no.
+            _progress.value = _progress.value.copy(
+                currentGenreIndex = genreIndex,
+                currentGenreLabel = genreEntry.label,
+                tracksFoundThisGenre = bucket.size,
+                totalTracksFound = storedByGenre.values.sumOf { it.size },
+            )
             // H15, S032 -- válvula de seguridad REAL, no un "ríndete
             // pronto": si un género concreto tiene de verdad menos de
             // `targetPerGenre` artistas verificables, no tiene sentido
