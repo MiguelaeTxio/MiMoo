@@ -1480,6 +1480,40 @@ automática (H08) se ha tocado:
     53) para confirmar que el ritmo de temas encontrados por género
     sube de verdad.
 
+55. **Fix real, confirmado por Miguel Ángel tras instalar el punto
+    54**: *"3 géneros, 18 temas el género actual, y 3520 en total, lo
+    cual quiere decir que hemos obtenido 3502 temas de 2 géneros...
+    ¿tiene pies o cabeza?"* -- no los tiene, y con razón: no era un
+    dato roto, era la pantalla mostrando el número equivocado. El
+    total (3520) nunca salió de los 2 géneros anteriores en ESTA
+    tanda -- salía de TODOS los géneros ya agotados en tandas
+    anteriores (persistentes vía `doneGenres` desde el punto 52), pero
+    la pantalla mostraba `currentGenreIndex` -- la posición dentro del
+    recorrido de ESTA apertura de la app, que arranca de cero cada
+    vez -- como si fuera "cuántos géneros llevo hechos". No lo es: tras
+    instalar el fix de `doneGenres`, el fichero viejo (sin esa marca)
+    obliga a repasar una vez más los géneros ya agotados de antes
+    (coste de migración ya avisado en el punto 52, pero no reflejado
+    en pantalla).
+
+    Corregido con un campo nuevo, `BuildProgress.genresCompleted`
+    (`doneGenres.size`, persistente entre tandas, monótono) que ahora
+    manda tanto en la barra de progreso como en el titular: "X de Y
+    géneros completados -- N temas en total". La posición del
+    recorrido y el género que se está mirando ahora mismo quedan como
+    línea secundaria ("Mirando ahora: ..."), ya no como el número
+    principal -- así el dato que se ve de un vistazo es el que
+    realmente responde a "¿cuántos géneros llevo?". Commit `cd5a9b4`,
+    build verde. Sin verificar en dispositivo real todavía.
+
+    Verificado además, fuera de la app, con una simulación fiel del
+    algoritmo (mismo código traducido a Python, sin red real): tras
+    parar a mitad de un género con temas parciales guardados, una
+    nueva tanda reanuda pasando por los géneros ya hechos casi al
+    instante y llega de nuevo al mismo género con el mismo recuento
+    parcial exacto -- la lógica de conteo queda verificada por fuera,
+    aunque solo el dispositivo real confirma el comportamiento de red.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
