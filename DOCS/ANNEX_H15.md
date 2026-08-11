@@ -1372,6 +1372,26 @@ automática (H08) se ha tocado:
     distinto) antes de tocar código, para no construir algo que no sea
     lo pedido.
 
+51. **Fix real, confirmado por Miguel Ángel en vivo mientras corría el
+    generador de base de datos:** al retomar tras "Parar", el recuento
+    total de temas mostrado era correcto pero el género/etiqueta que
+    aparecía en pantalla "no tenía nada que ver" con lo que estaba
+    pasando en ese momento. Causa: `_progress` (el `StateFlow` que
+    pinta "Género X de Y (label)... N temas de este género") solo se
+    actualizaba dentro del `while` que busca temas nuevos en
+    `MimooutcastDatabaseBuilder.build()` -- si un género ya venía
+    completo de una tanda anterior, ese `while` no entraba ni una sola
+    vez, así que mientras el proceso saltaba de largo por todos los
+    géneros ya terminados, la pantalla se quedaba clavada con el
+    género/etiqueta de la iteración anterior. El fichero JSON en disco
+    era correcto en todo momento -- era solo un dato de pantalla
+    obsoleto. Corregido actualizando `_progress` también al ENTRAR en
+    cada género del bucle, antes de comprobar si hace falta buscar
+    algo más, esté ese género completo o no. Commit `29244d3`, build
+    verde. Sin verificar en dispositivo real todavía -- pendiente de
+    que Miguel Ángel relance el generador y confirme que el género que
+    muestra la pantalla coincide siempre con lo que está buscando.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
