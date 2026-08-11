@@ -57,6 +57,17 @@ class MimooutcastDatabaseBuilder @Inject constructor(
     // Ángel: *"3, evidentemente 3"* -- ampliar el generador para que
     // también los recorra, aceptando que tarde mucho más.
     private val genreTree: com.miguelaetxio.mimoo.data.remote.GenreTree,
+    // H15 -- fix real, S033: SIN esto, `suggestWorkForGenre()` /
+    // `suggestRelatedArtist()` (compartidas con Radio) enrutan su log
+    // por defecto a `radio_relacionados_debug.txt`, porque no hay
+    // ninguna sesión real de miMooutCast activa mientras corre el
+    // generador -- exactamente la contaminación del log de Radio que
+    // Miguel Ángel prohibió explícita y repetidamente en S032 (ver
+    // kdoc de `MiMooutcastSessionFlag`). Se activa al entrar en
+    // `build()` y se restaura siempre en el `finally`, nunca dos
+    // banderas que puedan desincronizarse -- misma única fuente de
+    // verdad que ya usa `PlayerManager.manualAnchorActive`.
+    private val mimooutcastSessionFlag: MiMooutcastSessionFlag,
 ) {
     data class BuildProgress(
         val isRunning: Boolean = false,
@@ -131,6 +142,23 @@ class MimooutcastDatabaseBuilder @Inject constructor(
      */
     suspend fun build(targetPerGenre: Int = 100) {
         cancelled = false
+        // H15 -- fix real, S033: activar la bandera de sesión ANTES de
+        // la primera llamada compartida con Radio, para que TODO el log
+        // de este recorrido caiga en mimooutcast_debug.txt. Se guarda el
+        // valor previo (por si alguna vez esto se llamara mientras ya
+        // hay una sesión real de miMooutCast en marcha, caso hoy
+        // inexistente pero no imposible) y se restaura siempre, incluso
+        // si build() se cancela o lanza.
+        val previousFlag = mimooutcastSessionFlag.active
+        mimooutcastSessionFlag.active = true
+        try {
+            buildInternal(targetPerGenre)
+        } finally {
+            mimooutcastSessionFlag.active = previousFlag
+        }
+    }
+
+    private suspend fun buildInternal(targetPerGenre: Int) {
         val existing = loadExisting()
         val alreadyStored = existing.tracks.toMutableList()
         val storedByGenre = alreadyStored.groupBy { it.genre }.mapValues { it.value.toMutableList() }.toMutableMap()
