@@ -1444,6 +1444,42 @@ automática (H08) se ha tocado:
     bruto de verdad o si la búsqueda por `tag:` está fallando, sin
     seguir adivinando.
 
+54. **Causa real del punto 52, confirmada con el log real que Miguel
+    Ángel compartió** (`radio_relacionados_debug.txt`, tanda de antes
+    del fix de enrutado del punto 53 -- por eso cayó ahí y no en
+    `mimooutcast_debug.txt`): 90 de 157 llamadas a
+    `resolveYoutubeCandidate()` fallaron con "0 de N resultados
+    pasaron el filtro de duración/compilación". No era el género
+    agotado -- `suggestWorkForGenre('freakbeat', ...)` traía 25
+    release-groups en bruto de forma consistente en cada búsqueda
+    (confirma que `tag:"género"` SÍ funciona, el aviso de verificación
+    pendiente del kdoc quedaba obsoleto). El problema real: la función
+    extraía artista+título de CUALQUIER release-group con esa
+    etiqueta, sin distinguir tipo -- pasaba títulos de ÁLBUM ("Derek
+    and the Dominos -- Layla and Other Assorted Love Songs"), de
+    DIRECTO ("Grateful Dead -- Dick's Picks, Volume 18: Dane County
+    Coliseum...", tres horas de concierto) y de RECOPILATORIO
+    ("Various Artists -- English Freakbeat, Vol. 2") a YouTube como si
+    fueran el título de una canción suelta -- rechazados uno tras otro
+    por el filtro de duración, agotando la válvula de seguridad sin
+    que hubiera menos de 15 candidatos reales, solo candidatos con el
+    título equivocado. Confirma exactamente la duda de Miguel Ángel:
+    *"para que un género exista... ¿tiene pies o cabeza [que se agote
+    con 22 temas]?"* -- no la tenía, era un bug de tipo de dato, no de
+    volumen real de música.
+
+    Corregido filtrando por `primary-type == "Single"` antes de
+    construir candidatos en `suggestWorkForGenre()` -- solo ese tipo
+    tiene un título fiablemente igual al de una canción suelta. No
+    toca `suggestArtistFromDecade()` (década sola), que reutiliza el
+    mismo DTO con un propósito distinto (búsqueda por fecha de
+    edición, no por género) -- fuera de alcance de este fix. Commit
+    `b726d5c`, build verde. Sin verificar en dispositivo real
+    todavía -- pendiente de una tanda corta nueva con
+    `mimooutcast_debug.txt` (ya correctamente enrutado tras el punto
+    53) para confirmar que el ritmo de temas encontrados por género
+    sube de verdad.
+
 Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
 (H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
 sobre código de un hito pausado, mismo criterio que el fix de
