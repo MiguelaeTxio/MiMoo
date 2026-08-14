@@ -175,6 +175,18 @@ class MimooutcastDatabaseBuilder @Inject constructor(
         val storedByGenre = alreadyStored.groupBy { it.genre }.mapValues { it.value.toMutableList() }.toMutableMap()
         val doneGenres = existing.doneGenres.toMutableSet()
 
+        // H15 -- fix real, S033: migración de una sola vez para el
+        // fichero real de Miguel Ángel (377 géneros agotados con CERO
+        // temas, entre ellos jazz/blues/breakbeat/afro house/amapiano/
+        // celtic/classical -- ver el estudio que él mismo hizo del
+        // fichero exportado). Antes de este fix, un género a cero se
+        // marcaba agotado igual que uno a 100 y ya no había forma de
+        // reintentarlo salvo tocando el fichero a mano. Se limpia aquí
+        // -- no se toca ni un solo tema ya encontrado, solo la marca de
+        // "agotado" de los que se quedaron sin ninguno.
+        val genresWithZeroTracks = doneGenres.filter { g -> storedByGenre[g].isNullOrEmpty() }
+        doneGenres.removeAll(genresWithZeroTracks.toSet())
+
         // H15, S032 -- orden explícita de Miguel Ángel: "3, evidentemente
         // 3" -- recorrer también los subgéneros, no solo los géneros
         // raíz. Misma fuente que usa la pantalla
@@ -269,8 +281,18 @@ class MimooutcastDatabaseBuilder @Inject constructor(
             // terminó por SUS PROPIAS condiciones (objetivo alcanzado o
             // válvula de seguridad) -- nunca por una cancelación a mitad
             // de búsqueda, que debe poder reintentar ese mismo género la
-            // próxima vez en vez de darlo por bueno a medias.
-            if (!cancelled) {
+            // próxima vez en vez de darlo por bueno a medias. TAMPOCO se
+            // marca si se queda con CERO temas: un género real, exista
+            // lo que exista de él en MusicBrainz, encuentra al menos
+            // alguno en 15 intentos si el mecanismo funciona de verdad
+            // -- cero es la señal de que algo se ha roto (jazz, blues,
+            // breakbeat, afro house, amapiano, celtic y hasta classical
+            // se quedaron así en el estudio real de Miguel Ángel del
+            // fichero exportado), no de que el género esté vacío. Sin
+            // este guard, un género a cero quedaba "agotado" para
+            // siempre y ya no había forma de volver a intentarlo salvo
+            // tocando el fichero a mano.
+            if (!cancelled && bucket.isNotEmpty()) {
                 doneGenres += genre
             }
             // Incremental -- se guarda al terminar CADA género, no solo al final.
