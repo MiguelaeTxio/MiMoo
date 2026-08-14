@@ -1514,11 +1514,42 @@ automática (H08) se ha tocado:
     parcial exacto -- la lógica de conteo queda verificada por fuera,
     aunque solo el dispositivo real confirma el comportamiento de red.
 
-Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
-(H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
-sobre código de un hito pausado, mismo criterio que el fix de
-centrado del karaoke sobre H17). Sin verificar en dispositivo real
-todavía.
+56. **Fix real, a partir del estudio que Miguel Ángel hizo del fichero
+    exportado**: 377 de 577 géneros marcados "agotados" tenían CERO
+    temas -- no solo nicho, entre ellos jazz, blues, bluegrass,
+    breakbeat, afro house, amapiano, celtic e incluso classical (el
+    género raíz). Miguel Ángel propuso que Claude generase a mano la
+    lista de temas que faltan -- rechazado explícitamente: sin acceso
+    en vivo a ninguna base de datos musical desde este entorno
+    (MusicBrainz bloqueado por robots.txt, confirmado varias veces en
+    esta sesión), una lista inventada de memoria habría metido datos
+    no verificados, el mismo tipo de dato que este proyecto no acepta
+    en ningún otro sitio.
+
+    En vez de eso, se pidió el log de una tanda de prueba
+    (`mimooutcast_debug.txt`, 22 minutos, género "big beat") -- prueba
+    de que el fix de `primary-type Single` del punto 54 funciona de
+    verdad (87 temas añadidos frente a solo 9 rechazos), pero el log
+    no llegaba ni a rozar jazz/blues porque **el propio fix del punto
+    52 los tenía bloqueados**: al estar ya marcados agotados, nunca se
+    reintentan, así que era imposible verlos fallar en un log nuevo.
+
+    Corregido con dos cambios en `MimooutcastDatabaseBuilder`: (1) el
+    `while` ya no marca agotado un género que se queda a 0 temas --
+    un género real encuentra al menos alguno en 15 intentos si el
+    mecanismo funciona, cero es señal de fallo, no de vacío; (2)
+    migración de una sola vez al cargar el fichero existente: limpia
+    de `doneGenres` cualquier género ya agotado con cero temas
+    heredado de antes, sin tocar ni un solo tema ya encontrado. Así el
+    generador vuelve a intentar los 377 automáticamente, con el fix de
+    Single ya puesto, sin editar el fichero a mano ni inventar
+    ninguna lista. Commit `a91ea81`, build verde.
+
+    **Pendiente, siguiente paso concreto:** instalar, lanzar un rato,
+    y mandar `mimooutcast_debug.txt` de esa tanda -- con jazz/blues/
+    breakbeat ya reintentables, el log dirá si el fix de Single basta
+    para ellos o si hace falta otra causa más. Sin verificar en
+    dispositivo real todavía.
 
 ## Hoja de Ruta para la Siguiente Sesión que retome H15
 
@@ -1539,3 +1570,9 @@ Sin código pendiente. Puntos:
    durante una sesión de miMooutCast (todo debe ir a
    `mimooutcast_debug.txt`), y que no vuelve a aparecer ningún nombre
    de artista suelto sin relación con el ancla elegida.
+
+Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
+(H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
+sobre código de un hito pausado, mismo criterio que el fix de
+centrado del karaoke sobre H17). Sin verificar en dispositivo real
+todavía.
