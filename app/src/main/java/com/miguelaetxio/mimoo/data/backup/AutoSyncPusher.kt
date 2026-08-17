@@ -134,9 +134,40 @@ class AutoSyncPusher @Inject constructor(
     @Volatile
     private var lastPushAt: Long = 0L
 
+    /**
+     * Fix real (S034, MiMoo-S34H12): esta comprobación usaba
+     * `networkChecker.isConnected()` (basado en
+     * `NET_CAPABILITY_VALIDATED`), el mismo indicador ya documentado
+     * como propenso a falsos negativos transitorios en
+     * `NetworkConnectivityChecker.hasRealInternetAccess()` -- causa
+     * confirmada del bug real "Radio detenida" con conexión real
+     * funcionando, corregido en su día en `RadioRepository` pero nunca
+     * replicado aquí. Resultado: con conexión real funcionando pero la
+     * sonda interna de Android todavía sin validar (tras salir de
+     * Doze, cambio de red, etc.), cualquier añadido/borrado de
+     * favorito/pista/playlist se descartaba en silencio -- ni se
+     * aplicaba en local ni se avisaba al usuario, indistinguible de
+     * "no persiste". Mismo fix que RadioRepository: sonda HTTP real
+     * (`hasRealInternetAccess()`) en vez de la bandera de Android.
+     * ---
+     * Real fix (S034, MiMoo-S34H12): this check used
+     * `networkChecker.isConnected()` (based on
+     * `NET_CAPABILITY_VALIDATED`), the same flag already documented as
+     * prone to transient false negatives in
+     * `NetworkConnectivityChecker.hasRealInternetAccess()` -- the
+     * confirmed cause of the real "Radio detenida" bug with real
+     * connectivity working, fixed back then in `RadioRepository` but
+     * never replicated here. Result: with real connectivity working
+     * but Android's internal validation probe not yet done (after
+     * leaving Doze, a network switch, etc.), any favorite/track/
+     * playlist add or remove was silently dropped -- neither applied
+     * locally nor surfaced to the user, indistinguishable from "it
+     * doesn't persist". Same fix as RadioRepository: a real HTTP probe
+     * (`hasRealInternetAccess()`) instead of Android's flag.
+     */
     suspend fun executeIfConnected(context: Context, mutation: suspend () -> Unit): MutationOutcome {
-        if (!networkChecker.isConnected()) {
-            Log.d(TAG, "executeIfConnected() -- sin conexión, mutación rechazada")
+        if (!networkChecker.hasRealInternetAccess()) {
+            Log.d(TAG, "executeIfConnected() -- sin conexión real, mutación rechazada")
             return MutationOutcome.NoConnection
         }
 
