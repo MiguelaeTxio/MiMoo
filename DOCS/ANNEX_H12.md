@@ -252,3 +252,66 @@ con Miguel Ángel:
 
 No queda ningún punto de diseño abierto para arrancar la
 construcción.
+
+---
+
+## Incidencia real detectada, S033 (2026-08-17)
+
+Miguel Ángel, revisando la app tras meses sin tocar H12 (S018 lo dio
+por construido y compilando en verde, pendiente solo de verificación
+en dispositivo -- ver `DOCS/ANNEX_ROUTER.md` entrada del
+2026-07-19/S018): dos fallos reales, cita textual: *"tenemos un
+problema en el explorador, lo primero es que carece de campo búsqueda
+para buscar en musicbrainz, por otro lado cuando añado favoritos,
+tanto artistas como álbumes, no persisten"*.
+
+Sin diagnosticar todavía -- ningún código leído en esta sesión sobre
+estos dos síntomas. Dos hipótesis sin confirmar, ninguna de las dos
+debe darse por buena sin leer el código real primero:
+
+1. **Campo de búsqueda ausente en el Explorador**: la búsqueda
+   unificada (S017 punto 2, más arriba) se diseñó como pantalla
+   propia que sustituye a `SearchScreen`/`AlbumSearchScreen`, no
+   necesariamente embebida DENTRO del Explorador -- puede que el
+   fallo real sea de navegación/descubribilidad (no hay forma de
+   llegar a ella desde el Explorador) y no de ausencia de
+   funcionalidad. Puede también que nunca se completara del todo en
+   S018 pese a constar como cerrada. Verificar contra el `NavGraph.kt`
+   y el composable real antes de suponer nada.
+2. **Favoritos de artista/álbum que no persisten**: comprobar primero
+   si `FavoriteArtist`/`FavoriteArtistDao` llegaron a crearse de
+   verdad (punto 1 de la hoja de ruta de construcción, más arriba) o
+   si la entidad quedó a medias; comprobar la migración Room asociada
+   está registrada en la base de datos real (mismo patrón de
+   verificación que ya dio problemas reales en H07/H09 con
+   migraciones olvidadas); comprobar que el botón de favorito de
+   `ArtistScreen`/`AlbumScreen` llama de verdad al repositorio y no a
+   un estado solo en memoria del `ViewModel` que se pierde al salir de
+   la pantalla.
+
+## Hoja de Ruta para la Siguiente Sesión que retome H12
+
+Sustituye a la hoja de ruta anterior (ya ejecutada en S017/S018).
+
+1. **Leer antes de suponer nada** (directriz vinculante de la
+   plataforma): `ExplorerScreen`/pantalla de búsqueda unificada real
+   (nombre de archivo a confirmar, no asumir de memoria), `NavGraph.kt`
+   completo, `FavoriteArtist.kt`/`FavoriteArtistDao`/
+   `FavoriteArtistRepository` si existen, `AppDatabase`/lista de
+   migraciones real, y los composables de `ArtistScreen`/`AlbumScreen`
+   en la parte del botón de favorito.
+2. **Diagnosticar el campo de búsqueda** contra lo que S017 diseñó
+   (más arriba, "Búsqueda unificada -- una sola pantalla, cinco tipos
+   de resultado"): ¿existe la pantalla y falta el enlace desde el
+   Explorador, o nunca se completó la parte de MusicBrainz
+   (álbum/artista) y solo quedó la de YouTube (canción/lista/canal)?
+3. **Diagnosticar la persistencia de favoritos** contra la lista de
+   comprobación del apartado anterior (entidad, migración, DAO,
+   llamada real desde el botón).
+4. **Corregir con evidencia real** (log/captura de Miguel Ángel si
+   hace falta reproducir en dispositivo, mismo criterio que el resto
+   del proyecto) -- no aplicar un fix sin haber confirmado antes cuál
+   de las hipótesis es la real.
+5. **Verificación:** inspección visual (`.kt`, directriz de
+   `newflow-android-edit` PASO 4) tras cada bloque; commit por
+   incidencia cerrada, no acumular varias sin commitear.

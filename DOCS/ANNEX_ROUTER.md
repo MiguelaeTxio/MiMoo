@@ -38,17 +38,41 @@ abierto, sin mencionar jamás su propio estado.
 | H09 | `DOCS/ANNEX_H09.md` | PAUSADO |
 | H10 | `DOCS/ANNEX_H10.md` | PAUSADO |
 | H11 | `DOCS/ANNEX_H11.md` | PAUSADO |
-| H12 | `DOCS/ANNEX_H12.md` | PAUSADO |
+| H12 | `DOCS/ANNEX_H12.md` | ← **EN PROGRESO** |
 | H13 | `DOCS/ANNEX_H13.md` | PAUSADO |
 | H14 | `DOCS/ANNEX_H14.md` | PAUSADO |
 | H15 | `DOCS/ANNEX_H15.md` | PAUSADO |
 | H16 | `DOCS/ANNEX_H16.md` | PAUSADO |
 | H17 | `DOCS/ANNEX_H17.md` | PAUSADO |
-| H18 | `DOCS/ANNEX_H18.md` | ← **EN PROGRESO** |
+| H18 | `DOCS/ANNEX_H18.md` | PAUSADO |
 
 ---
 
 ## HISTORIAL DE CAMBIOS DE HITO
+
+- **2026-08-17** — PCH explícito de Miguel Ángel a mitad de sesión:
+  **H18 pasa a PAUSADO** (sin incidencia nueva propia -- toda la
+  sesión desde su apertura en S032 se fue en una cascada de
+  incidencias reales sobre el generador de base de datos de H15,
+  documentada entera en `DOCS/ANNEX_H15.md` puntos 51-56; H18 no
+  recibió trabajo de implementación, su hoja de ruta de diseño queda
+  intacta, sin tocar). **H12 (Directorio de Música + Favoritos sin
+  Descarga) abierto EN PROGRESO** -- dos fallos reales reportados por
+  Miguel Ángel sobre lo que S018 dio por construido: cita textual,
+  *\"tenemos un problema en el explorador, lo primero es que carece de
+  campo búsqueda para buscar en musicbrainz, por otro lado cuando
+  añado favoritos, tanto artistas como álbumes, no persisten\"*. Sin
+  diagnóstico todavía -- ver `DOCS/ANNEX_H12.md`, hoja de ruta nueva a
+  ejecutar leyendo primero el código real (`ExplorerScreen` o
+  equivalente, pantalla de búsqueda unificada, `FavoriteArtist`/
+  `FavoriteAlbumRepository`) antes de suponer la causa.
+
+  De paso, orden explícita de Miguel Ángel para la propia sesión:
+  esperar a que termine el recorrido en curso del generador de
+  miMooutCast (iba por 358 de 581 géneros al cierre de esta sesión,
+  ritmo de varios días, confirmado como normal por él mismo) antes de
+  la siguiente pasada sobre H15 -- sin fecha ni alcance definidos
+  todavía, *\"ya te explicaré\"*.
 
 - **2026-08-07 (arranque de S032)** — PCH explícito de Miguel Ángel al
   inicio de sesión, tras corregir un malentendido de S031: la petición
