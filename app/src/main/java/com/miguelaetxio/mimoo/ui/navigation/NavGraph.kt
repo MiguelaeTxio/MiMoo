@@ -102,6 +102,15 @@ fun MiMooNavGraph(
                 onOpenArtist = { artistName ->
                     navController.navigate(Screen.Artist.routeFor(artistName))
                 },
+                onOpenSong = { artistName, songTitle ->
+                    navController.navigate(Screen.Song.routeFor(artistName, songTitle))
+                },
+                onOpenAlbum = { artistName, albumName ->
+                    navController.navigate(Screen.Album.routeFor(artistName, albumName))
+                },
+                onOpenExternalLink = { url ->
+                    navController.navigate(Screen.ImportLink.routeFor(url))
+                },
             )
         }
         composable(Screen.Favorites.route) {

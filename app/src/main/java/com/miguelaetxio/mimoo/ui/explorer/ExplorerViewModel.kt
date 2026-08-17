@@ -1,21 +1,36 @@
 package com.miguelaetxio.mimoo.ui.explorer
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
+import com.miguelaetxio.mimoo.data.local.repository.ChannelSubscriptionRepository
 import com.miguelaetxio.mimoo.data.local.repository.DislikedArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.FavoriteArtistRepository
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
+import com.miguelaetxio.mimoo.data.remote.AlbumCandidate
+import com.miguelaetxio.mimoo.data.remote.AlbumMatchRepository
 import com.miguelaetxio.mimoo.data.remote.ArtistDirectoryRepository
+import com.miguelaetxio.mimoo.data.remote.ExternalLinkResolver
+import com.miguelaetxio.mimoo.data.remote.SearchResultType
 import com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzArtistSummary
+import com.miguelaetxio.mimoo.data.remote.dto.SearchTypeResult
+import com.miguelaetxio.mimoo.data.remote.dto.TrackDto
 import com.miguelaetxio.mimoo.ui.library.sortLetterFor
+import com.miguelaetxio.mimoo.ui.unifiedsearch.SearchResultKind
 import com.miguelaetxio.mimoo.util.SearchNormalizer
+import com.miguelaetxio.mimoo.util.YoutubeTitleCleaner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,7 +69,32 @@ data class ExplorerUiState(
     val errorMessage: String? = null,
     /** H16 -- claves normalizadas (SearchNormalizer.normalizeArtistName()) de artistas en la Lista Negra, para pintar el icono de cada fila. */
     val dislikedArtistKeys: Set<String> = emptySet(),
-)
+    // --- Búsqueda unificada embebida (S034, incidencia real de
+    // S033: "el explorador carece de campo búsqueda para buscar en
+    // musicbrainz"). Mismos campos y misma lógica que
+    // UnifiedSearchViewModel (H12, S018) -- se dispara la búsqueda
+    // sin salir del Explorador, en vez de navegar a la pantalla
+    // "Búsqueda" aparte. Cuando hasSearched es true y la query no
+    // está vacía, la pantalla sustituye el contenido de letras/
+    // artistas por los resultados de búsqueda; al vaciar la query
+    // vuelve al drill normal (ver ExplorerScreen).
+    val searchQuery: String = "",
+    val isSearching: Boolean = false,
+    val hasSearched: Boolean = false,
+    val searchErrorMessage: String? = null,
+    val searchSongs: List<TrackDto> = emptyList(),
+    val searchAlbums: List<AlbumCandidate> = emptyList(),
+    val searchArtists: List<MusicBrainzArtistSummary> = emptyList(),
+    val searchPlaylists: List<SearchTypeResult> = emptyList(),
+    val searchChannels: List<SearchTypeResult> = emptyList(),
+    val searchSyncBlockedMessage: String? = null,
+    val searchActiveFilter: SearchResultKind? = null,
+) {
+    val isSearchActive: Boolean get() = hasSearched && searchQuery.isNotBlank()
+    val isSearchEmpty: Boolean
+        get() = searchSongs.isEmpty() && searchAlbums.isEmpty() && searchArtists.isEmpty() &&
+            searchPlaylists.isEmpty() && searchChannels.isEmpty()
+}
 
 /**
  * ViewModel de Explorador (H12, S018 rediseño): "Biblioteca pero de
@@ -84,12 +124,23 @@ class ExplorerViewModel @Inject constructor(
     private val dislikedArtistRepository: DislikedArtistRepository,
     private val favoriteArtistRepository: FavoriteArtistRepository,
     private val autoSyncPusher: AutoSyncPusher,
+    // --- Búsqueda unificada embebida (S034) -- mismos repositorios
+    // que UnifiedSearchViewModel, artistDirectoryRepository ya estaba
+    // inyectado arriba y se reutiliza también aquí.
+    private val externalLinkResolver: ExternalLinkResolver,
+    private val albumMatchRepository: AlbumMatchRepository,
+    private val channelSubscriptionRepository: ChannelSubscriptionRepository,
     @ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     companion object {
         private const val PAGE_SIZE = 20
     }
+
+    /** Mismo patrón que UnifiedSearchViewModel.subscribedChannelIds (H11, S011). */
+    val subscribedChannelIds: StateFlow<List<String>> =
+        channelSubscriptionRepository.getAllChannelIds()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** Todos los artistas con algo DESCARGADO (DownloadStatus.DONE) -- mismo filtro que Biblioteca. */
     private var allLocalArtists: List<String> = emptyList()
@@ -227,5 +278,124 @@ class ExplorerViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    // ============================================================
+    // BÚSQUEDA UNIFICADA EMBEBIDA (S034, MiMoo-S34H12)
+    // Mismo motor y mismo comportamiento que UnifiedSearchViewModel
+    // (H12, S018) -- cinco fuentes en paralelo, cada una con su
+    // propio try/catch, filtro de vista por tipo. Duplicado a
+    // propósito en vez de compartir clase: mismo criterio que el
+    // resto del proyecto para pantallas que reutilizan un motor ya
+    // construido (ANNEX_H12.md, "reutiliza el motor de H08 ya
+    // construido", mismo patrón para Explorador reutilizando el
+    // motor de búsqueda de H12).
+    // ============================================================
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+    }
+
+    /** Vacía la búsqueda y vuelve al drill normal (letras/artistas). */
+    fun clearSearch() {
+        _uiState.value = _uiState.value.copy(
+            searchQuery = "",
+            hasSearched = false,
+            searchErrorMessage = null,
+            searchSongs = emptyList(),
+            searchAlbums = emptyList(),
+            searchArtists = emptyList(),
+            searchPlaylists = emptyList(),
+            searchChannels = emptyList(),
+            searchActiveFilter = null,
+        )
+    }
+
+    fun setSearchFilter(kind: SearchResultKind) {
+        val current = _uiState.value.searchActiveFilter
+        _uiState.value = _uiState.value.copy(searchActiveFilter = if (current == kind) null else kind)
+    }
+
+    fun search() {
+        val query = _uiState.value.searchQuery.trim()
+        if (query.isEmpty()) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isSearching = true,
+                hasSearched = true,
+                searchErrorMessage = null,
+            )
+            coroutineScope {
+                val songsDeferred = async { searchSongs(query) }
+                val albumsDeferred = async { searchAlbums(query) }
+                val artistsDeferred = async { searchArtists(query) }
+                val playlistsDeferred = async { searchType(query, SearchResultType.PLAYLIST) }
+                val channelsDeferred = async { searchType(query, SearchResultType.CHANNEL) }
+
+                _uiState.value = _uiState.value.copy(
+                    isSearching = false,
+                    searchSongs = songsDeferred.await(),
+                    searchAlbums = albumsDeferred.await(),
+                    searchArtists = artistsDeferred.await(),
+                    searchPlaylists = playlistsDeferred.await(),
+                    searchChannels = channelsDeferred.await(),
+                )
+            }
+        }
+    }
+
+    private suspend fun searchSongs(query: String): List<TrackDto> =
+        try {
+            externalLinkResolver.searchYoutube(query, limit = 10).tracks.map { entry ->
+                TrackDto(
+                    youtubeId = entry.youtubeId,
+                    title = YoutubeTitleCleaner.clean(entry.title),
+                    durationSeconds = entry.durationSeconds,
+                    thumbnailUrl = entry.thumbnailUrl,
+                    channelTitle = entry.channelTitle,
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+    private suspend fun searchAlbums(query: String): List<AlbumCandidate> =
+        try {
+            albumMatchRepository.searchAlbumCandidates(artist = null, album = query).take(10)
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+    private suspend fun searchArtists(query: String): List<MusicBrainzArtistSummary> =
+        try {
+            artistDirectoryRepository.searchArtistsByQuery(query)
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+    private suspend fun searchType(query: String, type: SearchResultType): List<SearchTypeResult> =
+        try {
+            externalLinkResolver.searchByType(query, type)
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+    /** Mismo patrón que UnifiedSearchViewModel.toggleChannelSubscription() (H07 PARTE 1, S015). */
+    fun toggleSearchChannelSubscription(activity: Activity, result: SearchTypeResult) {
+        viewModelScope.launch {
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                channelSubscriptionRepository.toggle(result)
+            }
+            if (outcome is MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    searchSyncBlockedMessage = "Sin conexión: no se puede cambiar la suscripción ahora mismo.",
+                )
+            }
+        }
+    }
+
+    fun dismissSearchSyncBlockedMessage() {
+        _uiState.value = _uiState.value.copy(searchSyncBlockedMessage = null)
     }
 }
