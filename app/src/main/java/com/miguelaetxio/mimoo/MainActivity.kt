@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.Explore
@@ -61,7 +63,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -618,6 +619,7 @@ class MainActivity : ComponentActivity() {
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet {
+                            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                             Box(
                                 modifier = Modifier
                                     .padding(16.dp)
@@ -783,6 +785,7 @@ class MainActivity : ComponentActivity() {
                                     scope.launch { drawerState.close() }
                                 },
                             )
+                            }
                         }
                     },
                 ) {
@@ -849,16 +852,19 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Fila de drawer compacta -- petición explícita de Miguel Ángel
- * (2026-08-06): "ya hay demasiadas opciones en la sidebar, hay que
- * poner el tamaño de la fuente 3/4 de altura". `NavigationDrawerItem`
- * de Material3 no expone ninguna API pública para reducir su altura
- * mínima fija (~56dp) -- se sustituye por un `Row` propio con el
- * mismo lenguaje visual (glassChip, `active = selected` para el
- * resaltado en vez de `NavigationDrawerItemDefaults.colors()`), con
- * icono y texto a ~3/4 de su tamaño por defecto (24dp/14sp ->
- * 18dp/10,5sp) y menos padding, para que quepan las mismas opciones
- * en menos alto sin necesidad de scroll.
+ * Fila de drawer -- petición explícita de Miguel Ángel (2026-08-06):
+ * "ya hay demasiadas opciones en la sidebar, hay que poner el tamaño
+ * de la fuente 3/4 de altura", para que cupieran las 15 opciones sin
+ * scroll. Revertido (S034, MiMoo-S34H12) -- nueva petición explícita
+ * de Miguel Ángel: "volver a poner un tamaño de letra normal en las
+ * opciones de la sidebar pero hacerla scrollable". La sidebar entera
+ * (`ModalDrawerSheet`) ahora vive dentro de una `Column` con
+ * `verticalScroll()`, así que ya no hace falta comprimir icono/texto
+ * para que quepa todo. `NavigationDrawerItem` de Material3 sigue sin
+ * exponer ninguna API pública para su altura mínima fija (~56dp), así
+ * que se mantiene el `Row` propio (mismo lenguaje visual, glassChip,
+ * `active = selected` para el resaltado), solo que ahora con
+ * icono/texto/padding a tamaño normal en vez de 3/4.
  */
 @Composable
 private fun CompactDrawerItem(
@@ -870,7 +876,7 @@ private fun CompactDrawerItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .glassChip(
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(
                     com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
@@ -878,11 +884,11 @@ private fun CompactDrawerItem(
                 active = selected,
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
         Spacer(Modifier.width(16.dp))
-        Text(label, fontSize = 10.5.sp)
+        Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
