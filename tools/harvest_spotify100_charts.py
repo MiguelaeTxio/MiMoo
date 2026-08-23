@@ -45,6 +45,7 @@ import unicodedata
 
 OUT_RAW = "tools/chart_spotify100_raw.json"
 OUT_REPORT = "tools/chart_spotify100_report.json"
+OUT_DEBUG = "tools/chart_spotify100_debug.json"
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
 
 CREATOR_USER_ID = "115935096"
@@ -91,106 +92,165 @@ def track_rows(playlist, year):
     return rows
 
 
-def main():
+def run():
+    """Envoltorio de nivel superior: SIEMPRE escribe un fichero de
+    diagnostico, exito o fallo. Motivo real, S035: ni los logs del job
+    ni el artefacto subido son legibles desde el entorno de trabajo del
+    modelo (los dos redirigen a subdominios de blob storage de Azure
+    fuera de la lista blanca de red, distintos en cada ejecucion) -- la
+    unica via fiable para depurar un fallo real es que el propio
+    fichero de diagnostico quede COMMITEADO en el repositorio, legible
+    con un simple `git pull` en la siguiente sesion.
+    """
+    import traceback
+    debug = {"ok": False, "stage": "arranque", "error": None, "traceback": None}
     try:
+        debug["stage"] = "import spotify_scraper"
         from spotify_scraper import SpotifyClient
-    except ImportError:
-        print("ERROR: falta la libreria 'spotifyscraper' (pip install spotifyscraper).")
-        return 1
+        debug["spotify_scraper_import_ok"] = True
 
-    with open(DICT_PATH, encoding="utf-8") as handle:
-        dictionary = json.load(handle)
-    known = {
-        fold(entry["artist"])
-        for block in dictionary.values()
-        for origin in ("es", "intl")
-        for entry in block.get(origin) or []
-    }
-    print("Diccionario actual: %d artistas distintos.\n" % len(known), flush=True)
+        debug["stage"] = "cargar diccionario actual"
+        with open(DICT_PATH, encoding="utf-8") as handle:
+            dictionary = json.load(handle)
+        known = {
+            fold(entry["artist"])
+            for block in dictionary.values()
+            for origin in ("es", "intl")
+            for entry in block.get(origin) or []
+        }
+        print("Diccionario actual: %d artistas distintos.\n" % len(known), flush=True)
 
-    with SpotifyClient() as client:
-        user = with_retries("perfil", lambda: client.get_user(CREATOR_USER_ID))
-        if user is None:
-            print("ERROR: no se pudo leer el perfil publico -- revisar el ID de usuario o la libreria.")
-            return 1
+        debug["stage"] = "abrir SpotifyClient"
+        with SpotifyClient() as client:
+            debug["stage"] = "get_user(perfil)"
+            user = with_retries("perfil", lambda: client.get_user(CREATOR_USER_ID))
+            debug["user_fetch_ok"] = user is not None
+            debug["user_repr"] = repr(user)[:2000] if user is not None else None
+            debug["user_attrs"] = sorted(vars(user).keys()) if user is not None and hasattr(user, "__dict__") else \
+                sorted(a for a in dir(user) if not a.startswith("_")) if user is not None else None
+            if user is None:
+                debug["error"] = "get_user() devolvio None tras reintentos"
+                write_debug(debug)
+                print("ERROR: no se pudo leer el perfil publico.")
+                return 1
 
-        playlists = getattr(user, "playlists", None) or []
-        print("Playlists publicas del perfil: %d\n" % len(playlists), flush=True)
+            debug["stage"] = "leer playlists del perfil"
+            playlists = getattr(user, "playlists", None)
+            debug["playlists_attr_found"] = playlists is not None
+            playlists = playlists or []
+            debug["playlists_count"] = len(playlists)
+            if playlists:
+                sample = playlists[0]
+                debug["playlist_sample_repr"] = repr(sample)[:1500]
+                debug["playlist_sample_attrs"] = sorted(vars(sample).keys()) if hasattr(sample, "__dict__") else \
+                    sorted(a for a in dir(sample) if not a.startswith("_"))
+            print("Playlists publicas del perfil: %d\n" % len(playlists), flush=True)
 
-        year_playlists = {}
-        for pl in playlists:
-            title = getattr(pl, "name", None) or ""
-            match = TITLE_PATTERN.match(title)
-            if not match:
-                continue
-            year_playlists[int(match.group(1))] = getattr(pl, "id", None) or getattr(pl, "url", None)
-
-        if not year_playlists:
-            print("ERROR: ninguna playlist del perfil encaja con el patron de titulo esperado -- "
-                  "revisar TITLE_PATTERN o si el perfil cambio.")
-            return 1
-
-        print("Anos encontrados: %d (%s)\n" % (len(year_playlists), sorted(year_playlists)), flush=True)
-
-        harvest = []
-        per_year = {}
-        failed_years = []
-        for year in sorted(year_playlists):
-            playlist_id = year_playlists[year]
-            playlist = with_retries(str(year), lambda pid=playlist_id: client.get_playlist(pid))
-            if playlist is None:
-                failed_years.append(year)
-                continue
-            rows = track_rows(playlist, year)
-            seen = set()
-            unique = []
-            for row in rows:
-                key = (fold(row["artist"]), fold(row["song"]))
-                if key in seen:
+            year_playlists = {}
+            titles_seen = []
+            for pl in playlists:
+                title = getattr(pl, "name", None) or getattr(pl, "title", None) or ""
+                titles_seen.append(title)
+                match = TITLE_PATTERN.match(title)
+                if not match:
                     continue
-                seen.add(key)
-                unique.append(row)
-            harvest += unique
-            per_year[year] = len(unique)
-            print("[%d] %3d canciones" % (year, len(unique)), flush=True)
-            time.sleep(DELAY_SECONDS)
+                pid = getattr(pl, "id", None) or getattr(pl, "url", None) or getattr(pl, "uri", None)
+                year_playlists[int(match.group(1))] = pid
+            debug["titles_seen_sample"] = titles_seen[:15]
+            debug["years_matched"] = sorted(year_playlists)
 
-    seen = set()
-    unique = []
-    for row in sorted(harvest, key=lambda r: r["year"]):
-        key = (fold(row["artist"]), fold(row["song"]))
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(row)
+            if not year_playlists:
+                debug["error"] = "ninguna playlist encaja con TITLE_PATTERN"
+                write_debug(debug)
+                print("ERROR: ninguna playlist del perfil encaja con el patron de titulo esperado.")
+                return 1
 
-    artists = {fold(r["artist"]) for r in unique}
-    nuevos = artists - known
+            print("Anos encontrados: %d (%s)\n" % (len(year_playlists), sorted(year_playlists)), flush=True)
 
-    print("\n--- COSECHA SPOTIFY100 ---\n", flush=True)
-    print("Canciones distintas:  %d" % len(unique))
-    print("Artistas distintos:   %d" % len(artists))
-    print("  ...NUEVOS:          %d" % len(nuevos))
-    print("Anos fallidos:        %s" % failed_years)
+            debug["stage"] = "cosechar playlists"
+            harvest = []
+            per_year = {}
+            failed_years = []
+            for year in sorted(year_playlists):
+                playlist_id = year_playlists[year]
+                playlist = with_retries(str(year), lambda pid=playlist_id: client.get_playlist(pid))
+                if playlist is None:
+                    failed_years.append(year)
+                    continue
+                if year == sorted(year_playlists)[0] and "playlist_full_sample_attrs" not in debug:
+                    debug["playlist_full_sample_attrs"] = sorted(vars(playlist).keys()) if hasattr(playlist, "__dict__") else \
+                        sorted(a for a in dir(playlist) if not a.startswith("_"))
+                    tracks_attr = getattr(playlist, "tracks", None)
+                    if tracks_attr:
+                        debug["track_sample_repr"] = repr(tracks_attr[0])[:1500]
+                rows = track_rows(playlist, year)
+                seen = set()
+                unique = []
+                for row in rows:
+                    key = (fold(row["artist"]), fold(row["song"]))
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    unique.append(row)
+                harvest += unique
+                per_year[year] = len(unique)
+                print("[%d] %3d canciones" % (year, len(unique)), flush=True)
+                time.sleep(DELAY_SECONDS)
 
-    with open(OUT_RAW, "w", encoding="utf-8") as handle:
-        json.dump(unique, handle, ensure_ascii=False, indent=1)
-        handle.write("\n")
-    with open(OUT_REPORT, "w", encoding="utf-8") as handle:
-        json.dump({
-            "canciones": len(unique),
-            "artistas": len(artists),
-            "artistas_nuevos": sorted(nuevos),
-            "por_ano": per_year,
-            "anos_fallidos": failed_years,
-        }, handle, ensure_ascii=False, indent=1, sort_keys=True)
-        handle.write("\n")
+        debug["stage"] = "consolidar cosecha"
+        seen = set()
+        unique = []
+        for row in sorted(harvest, key=lambda r: r["year"]):
+            key = (fold(row["artist"]), fold(row["song"]))
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(row)
 
-    if len(unique) < 200:
-        print("\nERROR: cosecha anormalmente corta -- revisar antes de usar nada de esto.")
+        artists = {fold(r["artist"]) for r in unique}
+        nuevos = artists - known
+
+        print("\n--- COSECHA SPOTIFY100 ---\n", flush=True)
+        print("Canciones distintas:  %d" % len(unique))
+        print("Artistas distintos:   %d" % len(artists))
+        print("  ...NUEVOS:          %d" % len(nuevos))
+        print("Anos fallidos:        %s" % failed_years)
+
+        with open(OUT_RAW, "w", encoding="utf-8") as handle:
+            json.dump(unique, handle, ensure_ascii=False, indent=1)
+            handle.write("\n")
+        with open(OUT_REPORT, "w", encoding="utf-8") as handle:
+            json.dump({
+                "canciones": len(unique),
+                "artistas": len(artists),
+                "artistas_nuevos": sorted(nuevos),
+                "por_ano": per_year,
+                "anos_fallidos": failed_years,
+            }, handle, ensure_ascii=False, indent=1, sort_keys=True)
+            handle.write("\n")
+
+        debug["ok"] = True
+        debug["canciones"] = len(unique)
+        write_debug(debug)
+
+        if len(unique) < 200:
+            print("\nERROR: cosecha anormalmente corta -- revisar antes de usar nada de esto.")
+            return 1
+        return 0
+    except Exception as error:
+        debug["error"] = str(error)
+        debug["traceback"] = traceback.format_exc()
+        write_debug(debug)
+        print("EXCEPCION NO CONTROLADA en stage='%s': %s" % (debug["stage"], error), flush=True)
+        print(debug["traceback"], flush=True)
         return 1
-    return 0
+
+
+def write_debug(debug):
+    with open(OUT_DEBUG, "w", encoding="utf-8") as handle:
+        json.dump(debug, handle, ensure_ascii=False, indent=1, sort_keys=True, default=str)
+        handle.write("\n")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())

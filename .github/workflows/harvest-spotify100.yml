@@ -9,10 +9,13 @@ name: Cosechar listas de Spotify (Las 100 canciones del ano en Espana)
 #   fase 3  merge_charts_into_dictionary.py        -> bloque es
 #   fase 3b merge_intl_charts_into_dictionary.py   -> bloque intl
 #
-# Las cuatro fases corren SEGUIDAS en esta misma ejecucion -- a
-# diferencia de Los 40 (donde cada fase se revisaba aparte antes de
-# seguir), aqui ya sabemos por la sesion de hoy que el pipeline
-# funciona de verdad, asi que se encadena entero.
+# S035 -- ni los logs del job ni el artefacto subido son legibles desde
+# el entorno de trabajo del modelo (redirigen a subdominios de blob
+# storage de Azure fuera de la lista blanca de red, distintos en cada
+# ejecucion). Por eso el commit del fichero de diagnostico
+# (chart_spotify100_debug.json) va SIEMPRE, con "if: always()" y
+# SEPARADO del commit final de fusion -- este ultimo solo si la Fase 1
+# termino de verdad bien.
 on:
   workflow_dispatch:
 
@@ -42,7 +45,22 @@ jobs:
         run: pip install spotifyscraper
 
       - name: Fase 1 -- Cosechar las listas de Spotify
+        id: harvest
         run: python3 tools/harvest_spotify100_charts.py
+
+      - name: Commitear el diagnostico de la Fase 1 (SIEMPRE, exito o fallo)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_spotify100_debug.json tools/chart_spotify100_raw.json tools/chart_spotify100_report.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Sin diagnostico nuevo que commitear."
+            exit 0
+          fi
+          git commit -m "data: diagnostico de la cosecha de Spotify (Fase 1) -- $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --rebase origin main
+          git push
 
       - name: Fase 2 -- Enriquecer con pais y genero
         run: python3 tools/enrich_chart_artists.py
@@ -59,6 +77,7 @@ jobs:
         with:
           name: chart-spotify100
           path: |
+            tools/chart_spotify100_debug.json
             tools/chart_spotify100_raw.json
             tools/chart_spotify100_report.json
             tools/chart_spotify100_enriched.json
@@ -68,13 +87,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Commitear si ha cambiado algo
+      - name: Commitear la fusion final si ha cambiado algo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tools/chart_spotify100_raw.json \
-                  tools/chart_spotify100_report.json \
-                  tools/chart_spotify100_enriched.json \
+          git add tools/chart_spotify100_enriched.json \
                   tools/chart_spotify100_rejected.json \
                   tools/chart_spotify100_intl_rejected.json \
                   app/src/main/assets/known_hit_artists.json
@@ -85,13 +102,12 @@ jobs:
           git commit -F - <<'EOF'
           data: fusión de "Las 100 canciones del año en España" (Spotify) en known_hit_artists.json
 
-          Pipeline completo de un solo tiro (harvest -> enrich -> merge es
-          -> merge intl), mismo mecanismo ya probado con Los 40 esta
-          sesión, reutilizado sin tocar código -- solo variables de
-          entorno apuntando a los ficheros nuevos. Fuente gemela e
-          independiente de Los 40, con más profundidad por año (100
-          canciones representativas, no solo el número 1 semanal) y
-          cobertura desde 1960.
+          Pipeline completo (harvest -> enrich -> merge es -> merge intl),
+          mismo mecanismo ya probado con Los 40 esta sesión, reutilizado
+          sin tocar código -- solo variables de entorno apuntando a los
+          ficheros nuevos. Fuente gemela e independiente de Los 40, con
+          más profundidad por año (100 canciones representativas, no solo
+          el número 1 semanal) y cobertura desde 1960.
           EOF
           git pull --rebase origin main
           git push
