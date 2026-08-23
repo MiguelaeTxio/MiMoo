@@ -94,6 +94,8 @@ class SettingsViewModel @Inject constructor(
     // (sin las rutinas ni las cookies reales del teléfono): montarlo
     // en la propia app, mismo patrón que `anchorDictionaryBuilder`.
     private val mimooutcastDatabaseBuilder: com.miguelaetxio.mimoo.data.playback.MimooutcastDatabaseBuilder,
+    // S034 -- registro de enlaces rotos de la semilla bundleada, ver su kdoc completo.
+    private val mimooutcastBrokenLinksLogger: com.miguelaetxio.mimoo.data.playback.MimooutcastBrokenLinksLogger,
 ) : ViewModel() {
 
     // -----------------------------------------------------------------
@@ -526,6 +528,28 @@ class SettingsViewModel @Inject constructor(
     fun onShareMimooutcastDatabaseClicked() {
         _generatedShareFileUri.value = mimooutcastDatabaseBuilder.shareableUri()
     }
+
+    /**
+     * S034 -- comparte `mimooutcast_broken_links.json` (enlaces de la
+     * semilla bundleada que dejaron de funcionar en uso real, con su
+     * sustituto cuando ya se encontró uno) por el mismo selector del
+     * sistema que `onShareMimooutcastDatabaseClicked()` -- Miguel
+     * Ángel lo saca del teléfono para dármelo, y yo sustituyo en
+     * `mimooutcast_seed.json` cada roto por su sustituto antes de la
+     * siguiente build.
+     */
+    fun onShareMimooutcastBrokenLinksClicked() {
+        _generatedShareFileUri.value = mimooutcastBrokenLinksLogger.shareableUri()
+    }
+
+    /**
+     * S034 -- géneros cuyo contador de enlaces rotos de la semilla ya
+     * llegó a 10 -- ver `MimooutcastBrokenLinksLogger.needsReinstall()`.
+     * Leído una vez al entrar en Ajustes (no observado en vivo -- el
+     * contador solo cambia durante una sesión de reproducción real,
+     * no mientras Ajustes está abierto).
+     */
+    fun mimooutcastGenresNeedingReinstall(): List<String> = mimooutcastBrokenLinksLogger.genresNeedingReinstall()
 
     /** Llamado por la UI justo después de lanzar el Intent.ACTION_SEND, para no relanzarlo en la siguiente recomposición. */
     fun consumeGeneratedShareFileUri() {

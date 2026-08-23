@@ -567,6 +567,33 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                // S034 -- enlaces de la semilla bundleada que dejan de
+                // funcionar en uso real (vídeo caído/retirado), con su
+                // sustituto cuando ya se encontró uno. Orden de Miguel
+                // Ángel: *"se pone un contador de aviso de que se
+                // necesita restaurar la instalación cuando el contador
+                // de links rotos llegue a 10 en un género."*
+                val genresNeedingReinstall = viewModel.mimooutcastGenresNeedingReinstall()
+                if (genresNeedingReinstall.isNotEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Estos géneros tienen 10 o más enlaces rotos en la lista de fábrica -- " +
+                            "conviene actualizar la instalación pronto: " +
+                            genresNeedingReinstall.joinToString(", "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = viewModel::onShareMimooutcastBrokenLinksClicked,
+                    modifier = Modifier.glassChip(),
+                ) {
+                    Icon(Icons.Filled.Share, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Compartir enlaces rotos")
+                }
             }
 
             Spacer(Modifier.height(12.dp))

@@ -122,6 +122,18 @@ data class QueueItem(
     val isRadioStation: Boolean = false,
     val youtubeId: String? = null,
     /**
+     * S034 -- distinto de `isFromRadio`/`isRadioStation`. Marca que
+     * esta pista concreta vino de `mimooutcast_seed.json` (la semilla
+     * bundleada en el APK, ver `MimooutcastSeedRepository`), no de una
+     * búsqueda en vivo -- guarda el género exacto de la semilla bajo
+     * el que se encontró, para poder anotar el enlace roto bajo el
+     * género correcto si `onPlayerError()` la descarta (ver
+     * `MimooutcastBrokenLinksLogger`). `null` para cualquier pista que
+     * no venga de la semilla (búsqueda en vivo, biblioteca local,
+     * clásica -- que tiene su propio sistema de validados aparte).
+     */
+    val mimooutcastSeedGenre: String? = null,
+    /**
      * S010 -- distinto de `artist`. `artist` es el "artista
      * estructurado" de H05 (AlbumMatchRepository): un emparejamiento
      * heurístico contra releases de MusicBrainz por título, útil para
@@ -379,6 +391,10 @@ class PlayerManager @Inject constructor(
     // H15 (miMooutCast), S032 -- recopilatorio de enlaces ya validados
     // para clásica, ver su kdoc completo.
     private val classicalValidatedLinksRepository: com.miguelaetxio.mimoo.data.remote.ClassicalValidatedLinksRepository,
+    // S034 -- semilla bundleada de miMooutCast para TODOS los
+    // géneros (no solo clásica), ver su kdoc completo.
+    private val mimooutcastSeedRepository: com.miguelaetxio.mimoo.data.remote.MimooutcastSeedRepository,
+    private val mimooutcastBrokenLinksLogger: MimooutcastBrokenLinksLogger,
     // S013/S014 -- fuente de "disco" del cupo 80/10/10 (10%, ver
     // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
     // descargados para poder ofrecer alguno como parte de la Radio.
@@ -565,6 +581,30 @@ class PlayerManager @Inject constructor(
                 //     resurrect the player from STATE_ENDED.
                 val currentIndex = player.currentMediaItemIndex
                 val currentItem = queueItems.getOrNull(currentIndex)
+                // S034 -- la pista que acaba de empezar a sonar es una
+                // ENCONTRADA EN VIVO (no de la semilla,
+                // `mimooutcastSeedGenre == null`) dentro de una sesión
+                // de miMooutCast que sí tiene una semilla activa para
+                // este género (`mimooutcastSeedGenre` de sesión, no
+                // confundir con el campo del mismo nombre en
+                // `QueueItem`) -- se anota como sustituto del último
+                // enlace roto sin sustituto todavía de ese género.
+                // No-op limpio si no hay ningún roto pendiente (caso
+                // normal: la mayoría de pistas en vivo no sustituyen
+                // nada).
+                if (manualAnchorActive &&
+                    currentItem?.isFromRadio == true &&
+                    currentItem.mimooutcastSeedGenre == null &&
+                    mimooutcastSeedGenre != null &&
+                    currentItem.youtubeId != null
+                ) {
+                    mimooutcastBrokenLinksLogger.recordReplacement(
+                        genre = mimooutcastSeedGenre!!,
+                        youtubeId = currentItem.youtubeId,
+                        artist = currentItem.artist ?: "",
+                        title = currentItem.title,
+                    )
+                }
                 val isLastItem = queueItems.isNotEmpty() && currentIndex == queueItems.lastIndex
                 // Bug real reportado por Miguel Ángel (2026-08-03) --
                 // ver el comentario de QueueItem.isRadioStation. Una
@@ -913,6 +953,24 @@ class PlayerManager @Inject constructor(
                         "isFromRadio=${failedItem?.isFromRadio} -- " +
                         "${error.errorCodeName}: ${error.message}",
                 )
+                // S034 -- la pista que acaba de fallar EN REPRODUCCIÓN
+                // (no al resolver, ver el otro punto de anotación en
+                // `fetchSimpleManualCandidate()`) venía de
+                // `mimooutcast_seed.json` -- se anota como enlace roto
+                // de ese género. El sustituto se rellena aparte, en
+                // `onMediaItemTransition()`, cuando la siguiente pista
+                // que suena de verdad es una encontrada en vivo para
+                // esa misma sesión.
+                val seedGenre = failedItem?.mimooutcastSeedGenre
+                val brokenYoutubeId = failedItem?.youtubeId
+                if (seedGenre != null && brokenYoutubeId != null) {
+                    mimooutcastBrokenLinksLogger.recordBroken(
+                        genre = seedGenre,
+                        youtubeId = brokenYoutubeId,
+                        artist = failedItem.artist ?: "",
+                        title = failedItem.title,
+                    )
+                }
                 if (player.hasNextMediaItem()) {
                     player.seekToNextMediaItem()
                     player.prepare()
@@ -1380,6 +1438,22 @@ class PlayerManager @Inject constructor(
     private var classicalValidatedOrder: List<com.miguelaetxio.mimoo.data.remote.ClassicalValidatedLinksRepository.ValidatedWork> =
         emptyList()
     private var classicalValidatedIndex = 0
+
+    /**
+     * S034 -- mismo patrón que `classicalValidatedOrder`/
+     * `classicalValidatedIndex`, generalizado a cualquier género (no
+     * solo clásica) desde `mimooutcast_seed.json`. Barajado una vez al
+     * arrancar la sesión, hasta 100 pistas -- orden de Miguel Ángel:
+     * *"ya tenemos links para encolar, 100 en concreto, al azar"*.
+     * `mimooutcastSeedGenre` es el género exacto de la semilla usado
+     * en esta sesión (para anotar bien el enlace roto si hace falta,
+     * ver `onPlayerError()`) -- `null` si no había semilla para el
+     * género elegido, caso en el que esta rama nunca se usa.
+     */
+    private var mimooutcastSeedOrder: List<com.miguelaetxio.mimoo.data.remote.MimooutcastSeedRepository.SeedTrack> =
+        emptyList()
+    private var mimooutcastSeedIndex = 0
+    private var mimooutcastSeedGenre: String? = null
 
     /**
      * H15 (miMooutCast), S032 -- objetivo de cola para ESTA sesión.
@@ -3812,6 +3886,27 @@ class PlayerManager @Inject constructor(
             classicalValidatedOrder = classicalValidatedLinksRepository.works.shuffled()
             classicalValidatedIndex = 0
         }
+        // S034 -- mismo método, generalizado al resto de géneros
+        // (clásica ya tiene el suyo propio, arriba, no se toca).
+        // Orden de Miguel Ángel, palabras textuales: *"se elige el
+        // género en miMooutCast y ya tenemos links para encolar, 100
+        // en concreto, al azar, pero nada más empezar, no dejamos
+        // parar el tiempo sino que comenzamos a buscar más temas y
+        // los vamos encolando a continuación del tema que está
+        // sonando."* El "seguir buscando en paralelo" no necesita
+        // código nuevo -- ya lo hace `topUpRadioQueueIfNeeded()` para
+        // cualquier sesión de miMooutCast, exactamente igual que para
+        // clásica.
+        if (!anchor.isClassical && anchor.genre.isNotBlank()) {
+            val seed = mimooutcastSeedRepository.tracksForGenre(anchor.genre)
+            mimooutcastSeedOrder = seed.shuffled().take(100)
+            mimooutcastSeedIndex = 0
+            mimooutcastSeedGenre = anchor.genre.takeIf { seed.isNotEmpty() }
+        } else {
+            mimooutcastSeedOrder = emptyList()
+            mimooutcastSeedIndex = 0
+            mimooutcastSeedGenre = null
+        }
         // H15 (miMooutCast), S032 -- objetivo de cola. Para toda
         // sesión de miMooutCast en general ya no se usa (ver
         // `topUpRadioQueueIfNeeded()`, sin tope de tamaño desde la
@@ -4095,6 +4190,13 @@ class PlayerManager @Inject constructor(
             // abajo -- el resto de fuentes se queda en `null`, sin
             // ningún cambio de comportamiento.
             var knownYoutubeId: String? = null
+            // S034 -- distinto de `knownYoutubeId`: cuando viene
+            // informado, el candidato actual salió de
+            // `mimooutcast_seed.json` bajo este género exacto -- se
+            // pasa hasta el `QueueItem` final (`mimooutcastSeedGenre`)
+            // para que `onPlayerError()` sepa bajo qué género anotar
+            // el enlace roto si este vídeo ya no existe.
+            var candidateSeedGenre: String? = null
             // H15 (miMooutCast), S032 -- solo para década sola: año
             // central de la década ±5, propuesta de Miguel Ángel tras
             // ver que el rango de 10 años completo hacía la búsqueda
@@ -4133,6 +4235,22 @@ class PlayerManager @Inject constructor(
                 artistName = next.artist
                 knownTitle = next.title
                 knownYoutubeId = next.youtubeId
+            } else if (mimooutcastSeedGenre != null && mimooutcastSeedIndex < mimooutcastSeedOrder.size) {
+                // S034 -- mismo mecanismo que la rama de clásica de
+                // arriba, generalizado al resto de géneros desde
+                // `mimooutcast_seed.json`. En cuanto se agota
+                // (`mimooutcastSeedIndex >= mimooutcastSeedOrder.size`)
+                // esta condición deja de cumplirse y cae, sin código
+                // extra, en la búsqueda dinámica de género de más
+                // abajo -- exactamente el mismo "cien es el tamaño
+                // real, pero eso no significa rendirse ahí" que ya
+                // vale para clásica.
+                val next = mimooutcastSeedOrder[mimooutcastSeedIndex]
+                mimooutcastSeedIndex++
+                artistName = next.artist
+                knownTitle = next.title
+                knownYoutubeId = next.youtubeId
+                candidateSeedGenre = mimooutcastSeedGenre
             } else if (miMooutCastRequireKnownInSpain) {
                 // H15 (miMooutCast), S032 -- botón "Conocido en
                 // España" encendido: se busca DIRECTAMENTE dentro del
@@ -4297,6 +4415,22 @@ class PlayerManager @Inject constructor(
                 genreHint = anchor.genre.ifBlank { null },
                 knownYoutubeId = knownYoutubeId,
             )
+            // S034 -- el candidato de la semilla no resolvió (vídeo
+            // caído/retirado, `resolveAudioStreamUrl()` falló dentro
+            // de `resolveYoutubeCandidate()`) -- se anota como roto
+            // AQUÍ, sin esperar a que llegue a sonar de verdad: si
+            // nunca se encoló, `onPlayerError()` nunca lo vería.
+            if (item == null && candidateSeedGenre != null) {
+                val broken = mimooutcastSeedOrder.getOrNull(mimooutcastSeedIndex - 1)
+                if (broken != null) {
+                    mimooutcastBrokenLinksLogger.recordBroken(
+                        genre = candidateSeedGenre,
+                        youtubeId = broken.youtubeId,
+                        artist = broken.artist,
+                        title = broken.title,
+                    )
+                }
+            }
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
                 !isTrackDisliked(item.artist, item.title)
@@ -4310,7 +4444,12 @@ class PlayerManager @Inject constructor(
                         "${if (miMooutCastRequireKnownInSpain) "diccionario de éxitos" else "MusicBrainz"}: " +
                         "'${item.artist}' - '${item.title}' (ventana usada: $window)",
                 )
-                return item.copy(isFromRadio = true)
+                // S034 -- `candidateSeedGenre` marca la pista devuelta
+                // como salida de la semilla bajo ese género exacto
+                // (`null` para cualquier otra fuente -- clásica, éxitos,
+                // década sola, búsqueda en vivo). Ver el kdoc de
+                // `QueueItem.mimooutcastSeedGenre`.
+                return item.copy(isFromRadio = true, mimooutcastSeedGenre = candidateSeedGenre)
             }
             // Este candidato concreto no dio nada verificable en
             // YouTube -- se avanza también la página, para que el
@@ -5019,6 +5158,9 @@ class PlayerManager @Inject constructor(
         miMooutCastTracksServed = 0
         classicalValidatedOrder = emptyList()
         classicalValidatedIndex = 0
+        mimooutcastSeedOrder = emptyList()
+        mimooutcastSeedIndex = 0
+        mimooutcastSeedGenre = null
         miMooutCastQueueTarget = RADIO_QUEUE_SIZE
         radioKnownSongsExhausted = false
         radioDiscoArtistsExhausted = false
