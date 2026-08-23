@@ -41,6 +41,13 @@ data class FavoritesUiState(
     val selectedArtists: Set<String> = emptySet(),
     val selectedAlbums: Set<AlbumKey> = emptySet(),
     val isGeneratingPopurri: Boolean = false,
+    // Petición explícita de Miguel Ángel (2026-08-23): refleja
+    // PopurriRepository.isBackgroundGenerating -- distinto de
+    // isGeneratingPopurri, que solo cubre el arranque síncrono. Esto
+    // sigue en true mientras el resto del popurrí se sigue resolviendo
+    // de fondo tras haber empezado a sonar, y es lo que habilita el
+    // botón de "Detener generación".
+    val isBackgroundGenerating: Boolean = false,
     val errorMessage: String? = null,
     val sortCriterion: SortCriterion = SortCriterion.ALPHABETICAL,
     val sortDirection: SortDirection = SortDirection.ASCENDING,
@@ -108,6 +115,20 @@ class FavoritesViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(playlists = playlists)
             }
         }
+        viewModelScope.launch {
+            popurriRepository.isBackgroundGenerating.collect { generating ->
+                _uiState.value = _uiState.value.copy(isBackgroundGenerating = generating)
+            }
+        }
+    }
+
+    /**
+     * Botón de parar (2026-08-23): detiene SOLO la resolución de fondo
+     * en curso -- nunca la reproducción ni la cola ya construida. Ver
+     * PopurriRepository.cancelBackgroundGeneration().
+     */
+    fun cancelBackgroundGeneration() {
+        popurriRepository.cancelBackgroundGeneration()
     }
 
     fun selectTab(tab: FavoritesTab) {

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -105,6 +106,28 @@ fun FavoritesScreen(
 
             if (uiState.isGeneratingPopurri) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+            // Petición explícita de Miguel Ángel (2026-08-23): botón
+            // para parar SOLO la generación de fondo del popurrí (no la
+            // reproducción, no la cola ya construida) -- distinto del
+            // botón de limpiar cola que ya existía. Visible mientras
+            // isBackgroundGenerating, que puede seguir en true después
+            // de que isGeneratingPopurri ya haya vuelto a false (la
+            // música ya suena, pero se sigue resolviendo el resto por
+            // detrás).
+            if (uiState.isBackgroundGenerating) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LinearProgressIndicator(modifier = Modifier.weight(1f))
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = { viewModel.cancelBackgroundGeneration() }) {
+                        Icon(Icons.Filled.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Detener generación")
+                    }
+                }
             }
 
             when (uiState.tab) {
