@@ -237,8 +237,8 @@ def run():
             print("\nERROR: cosecha anormalmente corta -- revisar antes de usar nada de esto.")
             return 1
         return 0
-    except Exception as error:
-        debug["error"] = str(error)
+    except BaseException as error:
+        debug["error"] = "%s: %s" % (type(error).__name__, error)
         debug["traceback"] = traceback.format_exc()
         write_debug(debug)
         print("EXCEPCION NO CONTROLADA en stage='%s': %s" % (debug["stage"], error), flush=True)
