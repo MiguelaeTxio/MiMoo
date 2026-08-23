@@ -44,9 +44,33 @@ jobs:
       - name: Instalar spotifyscraper
         run: pip install spotifyscraper
 
+      - name: Sonda de aislamiento (S035, diagnostico de fallos silenciosos)
+        run: |
+          set -x
+          timeout --signal=KILL 60 python3 tools/debug_spotify_probe.py
+          echo "codigo de salida real de la sonda: $?"
+          ls -la tools/chart_spotify100_probe_debug.json || echo "NO SE CREO EL FICHERO DE LA SONDA"
+
+      - name: Commitear el resultado de la sonda (SIEMPRE, antes de la Fase 1)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_spotify100_probe_debug.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Sin resultado de sonda que commitear."
+            exit 0
+          fi
+          git commit -m "data: resultado de la sonda de aislamiento de Spotify -- $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --rebase origin main
+          git push
+
       - name: Fase 1 -- Cosechar las listas de Spotify
         id: harvest
-        run: python3 tools/harvest_spotify100_charts.py
+        run: |
+          set -x
+          timeout --signal=KILL 300 python3 tools/harvest_spotify100_charts.py
+          exit $?
 
       - name: Commitear el diagnostico de la Fase 1 (SIEMPRE, exito o fallo)
         if: always()
