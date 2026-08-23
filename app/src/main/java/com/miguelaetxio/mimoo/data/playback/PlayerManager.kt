@@ -441,6 +441,15 @@ class PlayerManager @Inject constructor(
      */
     val player: ExoPlayer = ExoPlayer.Builder(appContext).build()
 
+    /**
+     * Nivelación de audio en tiempo real (Opción A cerrada con Miguel
+     * Ángel, 2026-08-23) -- ver AudioNormalizer.kt para el detalle
+     * completo. Se engancha/reengancha en cuanto ExoPlayer notifica su
+     * audioSessionId real (init{}, más abajo) y se libera en
+     * release().
+     */
+    private val audioNormalizer = AudioNormalizer()
+
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
 
@@ -490,6 +499,20 @@ class PlayerManager @Inject constructor(
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
+        // Nivelación de audio (2026-08-23) -- Media3 1.10.1 ya no
+        // ofrece el audioSessionId real de forma inmediata al crear el
+        // player (ver release notes de Media3); se engancha el efecto
+        // en cuanto AnalyticsListener lo notifica, y se reengancha si
+        // cambia (p.ej. tras un error de audio que fuerza un nuevo
+        // AudioTrack). Ver AudioNormalizer.kt.
+        player.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+            override fun onAudioSessionIdChanged(
+                eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                audioSessionId: Int,
+            ) {
+                audioNormalizer.attach(audioSessionId)
+            }
+        })
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _state.value = _state.value.copy(isPlaying = isPlaying)
@@ -5282,6 +5305,7 @@ class PlayerManager @Inject constructor(
 
     fun release() {
         managerScope.cancel()
+        audioNormalizer.release()
         player.release()
     }
 
