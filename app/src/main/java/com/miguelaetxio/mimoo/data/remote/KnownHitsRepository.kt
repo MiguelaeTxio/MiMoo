@@ -222,17 +222,6 @@ class KnownHitsRepository @Inject constructor(
         }
     }
 
-    /**
-     * Todos los éxitos conocidos de una década (sin filtrar por
-     * género), para pre-cargar como fuente rápida por defecto de una
-     * sesión de "década sola" en miMooutCast -- ver el comentario real
-     * de esta decisión en `PlayerManager.startRadioFromManualAnchor()`.
-     * Simple envoltorio público de `pool()`, misma lista que ya usa
-     * `randomHit(relaxGenre = true)` internamente.
-     */
-    fun allHitsForDecade(decadeBegin: Int, originGroup: OriginGroup? = null): List<KnownHit> =
-        pool(decadeBegin, originGroup)
-
     /** Comprueba si `artist` es un "éxito conocido" para la década+grupo dados (ignora may/min). */
     fun isKnownHitArtist(artist: String, decadeBegin: Int?, originGroup: OriginGroup?): Boolean =
         lookupHit(artist, decadeBegin, originGroup) != null

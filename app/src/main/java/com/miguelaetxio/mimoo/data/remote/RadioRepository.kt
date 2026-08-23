@@ -1849,6 +1849,46 @@ class RadioRepository @Inject constructor(
      * gastaba intentos enteros rechazando temas suyos de años ajenos
      * antes de rendirse o acertar por casualidad.
      */
+    /**
+     * S035 -- extraída de `suggestArtistFromDecade()` para poder
+     * envolver la llamada de red en `retryOnceIfTransient()` -- mismo
+     * patrón exacto ya usado por
+     * `firstReleaseYearFromMusicBrainz()`/`firstReleaseYearFromDiscogs()`/
+     * `firstReleaseYearFromWikidata()` más abajo, que arregló el bug
+     * real de "Radio detenida" ante un único 503/429/timeout puntual
+     * de MusicBrainz. Log real de Miguel Ángel (mimooutcast_debug.txt,
+     * 2026-08-23): varios `HttpException: HTTP 503` durante búsquedas
+     * de década, cada uno consumiendo sin reintento el tope de 10s de
+     * `MIMOOUTCAST_INITIAL_SEARCH_TIMEOUT_MS` sin encontrar nada --
+     * "Años 90"/"Años 50" se interrumpían antes de llegar a un
+     * candidato real, mientras que "Años 60" (misma sesión) sí llegó a
+     * tiempo. `suggestArtistFromDecade()` ya llamaba a `noteSuccess()`/
+     * `noteFailure()` correctamente, pero nunca reintentaba -- esta
+     * función aísla justo esa llamada para que `retryOnceIfTransient()`
+     * pueda envolverla.
+     */
+    private suspend fun fetchDecadeReleaseGroupsOnce(
+        query: String,
+        offset: Int,
+    ): com.miguelaetxio.mimoo.data.remote.dto.MusicBrainzReleaseGroupSearchResponse? = try {
+        val response = musicBrainzApiService.searchReleaseGroups(
+            query = query,
+            limit = MIMOOUTCAST_DECADE_PAGE_SIZE,
+            offset = offset,
+        )
+        noteSuccess()
+        response
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        noteFailure(e)
+        log(
+            "suggestArtistFromDecade(query='$query', offset=$offset) -- EXCEPCIÓN: " +
+                "${e::class.java.simpleName}: ${e.message}",
+        )
+        null
+    }
+
     suspend fun suggestArtistFromDecade(
         decadeBegin: Int,
         excludeArtists: Set<String>,
@@ -1859,51 +1899,34 @@ class RadioRepository @Inject constructor(
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val centralYear = decadeBegin + 5
         val query = "firstreleasedate:$centralYear"
-        return try {
-            suspend fun fetch(o: Int) = musicBrainzApiService.searchReleaseGroups(
-                query = query,
-                limit = MIMOOUTCAST_DECADE_PAGE_SIZE,
-                offset = o,
-            )
-            var response = fetch(offset)
-            // H15 (miMooutCast), S032 -- vuelta al principio si el
-            // offset se pasó del final, mismo patrón que ya existía en
-            // `findCandidates()` (S024) para el camino de origen-solo
-            // -- que un offset alto dé vacío no significa que el año
-            // esté agotado, puede que solo se haya pasado del tamaño
-            // real del catálogo para ese año. Orden de Miguel Ángel al
-            // ver el límite artificial de reintentos que esto obligaba
-            // a poner: *"pero por qué tiene que tener límite, quién
-            // coño ha dicho de ponerle límite."*
-            if (response.releaseGroups.isEmpty() && offset > 0) {
-                log(
-                    "suggestArtistFromDecade(año central=$centralYear) -- vacío con offset $offset; " +
-                        "se reintenta desde el principio por si el desplazamiento se pasó del final",
-                )
-                response = fetch(0)
-            }
-            noteSuccess()
-            val allCandidates = response.releaseGroups
-                .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }
-                .filter { it.artist.lowercase() !in excludeLower }
-            val windowed = if (resultWindowLimit != null) allCandidates.take(resultWindowLimit) else allCandidates
+        var response = retryOnceIfTransient { fetchDecadeReleaseGroupsOnce(query, offset) } ?: return null
+        // H15 (miMooutCast), S032 -- vuelta al principio si el offset
+        // se pasó del final, mismo patrón que ya existía en
+        // `findCandidates()` (S024) para el camino de origen-solo --
+        // que un offset alto dé vacío no significa que el año esté
+        // agotado, puede que solo se haya pasado del tamaño real del
+        // catálogo para ese año. Orden de Miguel Ángel al ver el
+        // límite artificial de reintentos que esto obligaba a poner:
+        // *"pero por qué tiene que tener límite, quién coño ha dicho
+        // de ponerle límite."*
+        if (response.releaseGroups.isEmpty() && offset > 0) {
             log(
-                "suggestArtistFromDecade(año central=$centralYear, offset=$offset) -- " +
-                    "${response.releaseGroups.size} release-groups en bruto, " +
-                    "${allCandidates.size} candidatos artista+disco tras excluir ${excludeArtists.size} ya usados, " +
-                    "${windowed.size} en la ventana de selección",
+                "suggestArtistFromDecade(año central=$centralYear) -- vacío con offset $offset; " +
+                    "se reintenta desde el principio por si el desplazamiento se pasó del final",
             )
-            windowed.randomOrNull()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            noteFailure(e)
-            log(
-                "suggestArtistFromDecade(año central=$centralYear, offset=$offset) -- EXCEPCIÓN: " +
-                    "${e::class.java.simpleName}: ${e.message}",
-            )
-            null
+            response = retryOnceIfTransient { fetchDecadeReleaseGroupsOnce(query, 0) } ?: return null
         }
+        val allCandidates = response.releaseGroups
+            .flatMap { rg -> rg.artistCredit.map { DecadeCandidate(it.name, rg.title) } }
+            .filter { it.artist.lowercase() !in excludeLower }
+        val windowed = if (resultWindowLimit != null) allCandidates.take(resultWindowLimit) else allCandidates
+        log(
+            "suggestArtistFromDecade(año central=$centralYear, offset=$offset) -- " +
+                "${response.releaseGroups.size} release-groups en bruto, " +
+                "${allCandidates.size} candidatos artista+disco tras excluir ${excludeArtists.size} ya usados, " +
+                "${windowed.size} en la ventana de selección",
+        )
+        return windowed.randomOrNull()
     }
 
     /**
