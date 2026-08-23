@@ -1,6 +1,6 @@
 # PUNTO DE REANUDACIÓN — MiMoo
 
-**Última sesión cerrada:** S033 (2026-08-17)
+**Última sesión cerrada:** S034 (2026-08-23)
 **Hito con la hoja de ruta activa:** ver `DOCS/ANNEX_ROUTER.md`
 
 > El estado de los hitos vive **exclusivamente** en
@@ -11,104 +11,105 @@
 ## Qué hacer en la siguiente sesión
 
 **H12 (Directorio de Música + Favoritos sin Descarga) EN PROGRESO** --
-PCH de esta misma sesión (S033), dos fallos reales reportados por
-Miguel Ángel sobre lo que S018 dio por construido: el Explorador
-carece de campo de búsqueda para buscar en MusicBrainz, y los
-favoritos de artista/álbum no persisten. **Sin diagnosticar
-todavía** -- la hoja de ruta ejecutable (leer el código real antes de
-suponer la causa, dos hipótesis por síntoma sin confirmar ninguna)
-está completa en `DOCS/ANNEX_H12.md`, sección "Hoja de Ruta para la
+las dos hipótesis de S033 quedaron diagnosticadas y corregidas esta
+sesión (S034): campo de búsqueda embebido en el Explorador, y fix
+real de persistencia de favoritos (`AutoSyncPusher` usaba el chequeo
+de conectividad con falsos negativos ya corregido en `RadioRepository`
+para el bug de "Radio detenida"). **Sin diagnóstico nuevo pendiente**
+-- solo queda **verificación en dispositivo real** de los tres puntos
+cerrados esta sesión (búsqueda embebida, persistencia de favoritos,
+sidebar a tamaño normal + scrollable). Hoja de ruta ejecutable
+completa en `DOCS/ANNEX_H12.md`, sección "Hoja de Ruta para la
 Siguiente Sesión que retome H12".
+
+## H15 (miMooutCast) -- PAUSADO, cascada larga de incidencias reales sobre el generador y la reproducción en S034
+
+Mismo criterio que S031/S033: incidencia puntual sobre código de un
+hito pausado, sin PCH -- H12 fue el hito EN PROGRESO durante toda la
+sesión. Detalle técnico completo en `DOCS/ANNEX_H15.md`, sección
+"COMPLETADAS EN S034". Resumen:
+
+1. **41 subgéneros descartados en TODA la app** (miMooutCast Y Radio
+   automática) -- llevaban atascados a 0 temas desde la pasada
+   anterior del generador, confirmado con análisis real (dos
+   exportaciones + 67 minutos de log) antes de tocar código. Fuente
+   única: `GenreTree.isBarren()`, cortando ANTES de cualquier llamada
+   de red en `RadioRepository.suggestWorkForGenre()`/`findCandidates()`.
+   Hubo una corrección real a mitad de camino (primer intento tocó
+   `genre_tree.json` en vez del catálogo propio de miMooutCast,
+   afectando sin necesidad a la Radio -- descubierto y corregido en la
+   misma sesión, restaurando el árbol byte a byte).
+2. **`mimooutcast_seed.json` bundleado en `assets/`** -- copia exacta
+   del export real de Miguel Ángel (22.220 temas/536 géneros). Cierra
+   el objetivo de fondo de todo el hito, aclarado por él con fuerza:
+   la lista tenía que viajar empaquetada en el APK, no regenerarse en
+   cada dispositivo.
+3. **Motor de cola instantánea + búsqueda en paralelo + curación de
+   enlaces rotos por reinstalación** -- método completo dictado por
+   Miguel Ángel: al elegir género se encolan al instante hasta 100
+   pistas de la semilla, la búsqueda en vivo sigue de fondo, los
+   enlaces rotos se anotan con su sustituto (`MimooutcastBrokenLinksLogger`,
+   `mimooutcast_broken_links.json`), y a partir de 10 rotos en un
+   género aparece un aviso en Ajustes. Generaliza a todos los géneros
+   un mecanismo que ya existía, probado, solo para Clásica.
+
+**Nada de esta cascada se ha verificado en dispositivo real
+todavía.** Hoja de ruta de verificación completa (orden concreto de
+qué probar primero) en `DOCS/ANNEX_H15.md`, sección "Hoja de Ruta
+para la Siguiente Sesión que retome H15".
+
+**Ciclo de curación pendiente, sin fecha:** cuando Miguel Ángel
+comparta un `mimooutcast_broken_links.json` real (botón "Compartir
+enlaces rotos" de Ajustes) tras uso real del dispositivo, sustituir
+cada enlace roto por su sustituto dentro de `mimooutcast_seed.json`
+antes de la siguiente build.
+
+## Peticiones de producto nuevas, sin hito asignado todavía (S034, cierre de sesión)
+
+Miguel Ángel las dio al cierre, palabras suyas: *"la siguiente sesión
+tardará dos temas, no sé qué hitos tocará"* -- no encajan en la hoja
+de ruta técnica de H12 ni de H15, quedan aquí hasta que él decida a
+qué hito pertenecen (o si hace falta uno nuevo):
+
+1. **Reproducción de favoritos (artistas/álbumes) se muere esperando
+   el primer tema.** Cita textual: *"al seleccionar artistas favoritos
+   o álbumes favoritos lo primero es poner un tema local, hoy he
+   intentado escuchar una selección de artistas y se muere uno
+   esperando el primer tema, no hay espera, se pone uno local y luego
+   se genera el resto de la cola de reproducción."* Sin diagnosticar
+   -- leer primero el código real de la reproducción de
+   favoritos/selección de artistas (candidato: `FavoritesViewModel`/
+   `LibraryViewModel`-adjacent, comprobar si hay alguna espera
+   bloqueante al primer tema en vez de arrancar con algo local
+   inmediato y generar el resto después) antes de suponer la causa.
+2. **Normalización de la salida de audio.** Sin más detalle todavía
+   -- a concretar con Miguel Ángel qué está pidiendo exactamente
+   (¿ganancia por pista, compresión de rango dinámico, algo del
+   propio ExoPlayer/AudioProcessor?) antes de diseñar nada.
 
 ## H18 (Play y Ordenación de Listas de Items) -- PAUSADO, sin incidencia propia esta sesión
 
-Pasó a PAUSADO en el PCH de S033 sin recibir trabajo de
-implementación -- toda la sesión, desde su apertura en S032, se fue
-en la cascada de incidencias reales sobre H15 (ver abajo). Sigue
-exactamente como quedó en S032: diseño y los cinco bloques de código
-cerrados, build verde, **sin código pendiente -- solo verificación en
-dispositivo real** (las cuatro combinaciones de orden en cada
-pantalla, la matriz de play/aleatorio, la migración sin pérdida de
-datos). Detalle completo en `DOCS/ANNEX_H18.md`, "COMPLETADAS EN
-S032".
-
-## H15 (miMooutCast) -- PAUSADO, cascada de incidencias reales resueltas en S033 sobre el generador de base de datos
-
-Sesión entera de incidencias puntuales sobre código de un hito
-pausado (mismo criterio que S031 con el fix de karaoke sobre H17).
-Punto de partida: Miguel Ángel reportó que el generador de base de
-datos de miMooutCast (H15, punto 50) "sigue igual de mal" al parar y
-reanudar. Cascada real, todo documentado con número de punto en
-`DOCS/ANNEX_H15.md` (51-56):
-
-1. **Punto 51**: la pantalla se quedaba con el género/etiqueta de una
-   tanda anterior al saltar de largo por géneros ya completos --
-   corregido actualizando el progreso al ENTRAR en cada género, no
-   solo al buscar.
-2. **Punto 52**: cada "Parar" + reanudar reintentaba ENTERO cada
-   género nicho ya agotado, gastando hasta 15 búsquedas reales cada
-   vez sin avanzar -- corregido persistiendo `doneGenres` en el
-   fichero (nuevo formato `{tracks, doneGenres}`, con compatibilidad
-   hacia atrás).
-3. **Punto 53**: el generador contaminaba `radio_relacionados_debug.txt`
-   (prohibido explícitamente en S032) por no activar
-   `mimooutcastSessionFlag` -- corregido.
-4. **Punto 54**: causa real de la mayoría de agotamientos prematuros,
-   confirmada con log real -- `suggestWorkForGenre()` pasaba títulos
-   de ÁLBUM/EP/directo/recopilatorio a YouTube como si fueran una
-   canción suelta, rechazados por el filtro de duración. Corregido
-   filtrando por `primary-type == "Single"`.
-5. **Punto 55**: la pantalla mostraba la posición del recorrido (que
-   arranca de cero cada apertura de la app) como si fuera "géneros
-   completados", dando pie a lecturas erróneas de los datos (total
-   grande con índice bajo, que Miguel Ángel cuestionó dos veces con
-   razón). Corregido con `genresCompleted` (`doneGenres.size`,
-   persistente y monótono) como dato principal en pantalla.
-6. **Punto 56**: estudio real de Miguel Ángel del fichero exportado
-   reveló 377 de 577 géneros "agotados" con CERO temas -- incluidos
-   jazz, blues, breakbeat, afro house, amapiano, celtic, classical.
-   Un género real encuentra al menos alguno en 15 intentos si el
-   mecanismo funciona; cero es señal de fallo, no de vacío. Corregido:
-   un género a cero nunca se marca agotado, y se limpian los ya
-   heredados al cargar (sin tocar ni un tema ya encontrado).
-
-**Estado real del fichero de Miguel Ángel a mitad de sesión** (antes
-del punto 56, dato de referencia): 9548-9557 temas guardados, 206
-géneros con al menos 1 tema (55 completos a 100/100, el resto
-parciales, muchos por debajo de 20). El recorrido completo (581
-géneros) lleva **varios días** de ejecución real en el dispositivo --
-confirmado como ritmo normal por Miguel Ángel, iba por 358/581 al
-cierre de esta sesión.
-
-**Pendiente, sin fecha ni alcance definidos todavía** ("ya te
-explicaré", palabras de Miguel Ángel): una segunda pasada sobre H15
-para cubrir lo que falte tras el recorrido actual. No empezar sin que
-él lo concrete primero.
-
-**Rechazado explícitamente en esta sesión**: generar a mano una lista
-de temas/artistas por género para que la app solo tuviera que
-verificarla contra YouTube. Sin acceso en vivo a ninguna base de
-datos musical desde este entorno (MusicBrainz bloqueado por
-robots.txt, confirmado varias veces), una lista así habría metido
-datos no verificados -- mismo criterio de "nada sin verificar de
-verdad" que rige el resto del proyecto (paralelo explícito con
-AperturasAjedrez). Se optó por corregir la causa real (puntos 54 y
-56) en vez de rodearla con datos inventados.
+Sin cambios desde S033. Sigue exactamente como quedó en S032: diseño
+y los cinco bloques de código cerrados, build verde, **sin código
+pendiente -- solo verificación en dispositivo real** (las cuatro
+combinaciones de orden en cada pantalla, la matriz de play/aleatorio,
+la migración sin pérdida de datos). Detalle completo en
+`DOCS/ANNEX_H18.md`, "COMPLETADAS EN S032".
 
 ## H17 (Karaoke & Lyrics) -- PAUSADO, diseño y construcción completos, sin verificar en dispositivo
 
-Sin cambios en S033. Sigue exactamente como quedó en S031/S032: sin
-código pendiente, solo verificación en dispositivo real, con foco
+Sin cambios desde S033. Sigue exactamente como quedó en S031/S032:
+sin código pendiente, solo verificación en dispositivo real, con foco
 especial en los tres temas que en `letras_debug.txt` fallaban con 404
 antes del fix de `cleanSongTitle()`. Detalle completo en
 `DOCS/ANNEX_H17.md`, "COMPLETADAS EN S031".
 
 ## H16 (Lista Negra) -- PAUSADO, cinco puntos de código completos, sin fallos conocidos
 
-Sin cambios en S033. Sigue sin verificación exhaustiva en dispositivo
-de todos los casos, pero nada reportado como roto.
+Sin cambios desde S033. Sigue sin verificación exhaustiva en
+dispositivo de todos los casos, pero nada reportado como roto.
 
-## Trabajo pendiente de otras sesiones, sin tocar en S033
+## Trabajo pendiente de otras sesiones, sin tocar en S034
 
 1. **Auditoría pendiente de la semilla de 1.161 artistas**
    (`anchor_artists.json`) -- sigue sin tocar, no se puede verificar
@@ -128,6 +129,21 @@ de todos los casos, pero nada reportado como roto.
 
 ## Incidencias de proceso a tener en cuenta
 
+- **S034, nueva**: al construir un mensaje de commit con heredoc en
+  varios pasos, verificar SIEMPRE el mensaje final con
+  `git log -1 --format="%B"` antes de darlo por bueno -- una plantilla
+  reutilizada de forma descuidada dejó basura literal (`EOF`, la
+  siguiente línea de comando) dentro del cuerpo de un commit ya
+  pusheado en esta sesión. Preferir heredocs limpios de un solo bloque,
+  sin anidar un segundo `EOF`/comando dentro del mismo heredoc.
+- **S034, nueva**: tras cualquier fix que module qué géneros/etiquetas
+  se excluyen o incluyen en un motor compartido por varias
+  funcionalidades (Radio + miMooutCast, ambas sobre `GenreTree`),
+  verificar el estado real del archivo tocado con `git diff`/lectura
+  directa antes de reportarlo a Miguel Ángel como hecho -- un primer
+  intento en esta sesión modificó un archivo distinto al que se
+  describió verbalmente, y no se detectó hasta una verificación
+  posterior no pedida explícitamente.
 - **Antes de dar una tanda por representativa del comportamiento
   real, comprobar si los géneros/casos que interesan ya están
   marcados como "hechos" en algún mecanismo de resume/skip.** Bug de
@@ -150,7 +166,7 @@ de todos los casos, pero nada reportado como roto.
 - **Antes de añadir un composable nuevo, comprobar sus imports reales
   del archivo, no darlos por hechos.** Bug real de S030 en
   `MainActivity.kt` (imports de `Row`/`fillMaxWidth`/etc. ausentes).
-- **Patrón muy repetido S027-S033**: la inmensa mayoría de los bugs
+- **Patrón muy repetido S027-S034**: la inmensa mayoría de los bugs
   reales de estas sesiones se encontraron SOLO al probar el arreglo
   anterior con datos/logs/capturas reales de Miguel Ángel -- nunca
   darlos por buenos sin esa confirmación, por razonable que parezca el

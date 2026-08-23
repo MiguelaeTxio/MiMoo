@@ -289,29 +289,109 @@ debe darse por buena sin leer el código real primero:
    un estado solo en memoria del `ViewModel` que se pierde al salir de
    la pantalla.
 
+## COMPLETADAS EN S034 (2026-08-23)
+
+Sesión que retomó los dos síntomas de S033, diagnosticados esta vez
+contra código real antes de tocar nada:
+
+1. **Campo de búsqueda del Explorador -- diagnóstico confirmado: no
+   era un fallo funcional, era de descubribilidad.** La búsqueda
+   unificada (S017 punto 2) sí existía y sí consultaba MusicBrainz
+   para álbumes/artistas -- pero como pantalla "Búsqueda" aparte en el
+   drawer, sin ningún campo dentro del propio Explorador. Decisión de
+   Miguel Ángel: añadir un campo de búsqueda embebido DENTRO del
+   Explorador que dispare la misma búsqueda unificada (MusicBrainz +
+   YouTube) sin navegar a la pantalla aparte. `ExplorerViewModel`
+   amplía su estado con los mismos campos que `UnifiedSearchViewModel`
+   (duplicado a propósito, mismo criterio que el resto del proyecto
+   para pantallas que reutilizan un motor ya construido);
+   `ExplorerScreen` gana campo de texto + chips de filtro + las cinco
+   secciones tipadas; `NavGraph.kt` amplía la ruta del Explorador con
+   `onOpenSong`/`onOpenAlbum`/`onOpenExternalLink`, mismo patrón que la
+   ruta de Búsqueda. Commit `692eb75`, build verde.
+2. **Favoritos de artista/álbum que no persistían -- causa real
+   confirmada, no eran los sospechosos habituales.** Entidad, DAO,
+   repositorio y migración de `FavoriteArtist` estaban todos
+   correctos. La causa real: `AutoSyncPusher.executeIfConnected()` --
+   punto único obligatorio por el que pasa cualquier mutación de
+   favorito -- comprobaba conectividad con
+   `NetworkConnectivityChecker.isConnected()`
+   (`NET_CAPABILITY_VALIDATED`), el mismo indicador ya documentado en
+   la propia clase como causa confirmada del bug real "Radio detenida"
+   por falsos negativos transitorios con conexión real funcionando. El
+   fix ya existía (`hasRealInternetAccess()`, sonda HTTP real) y ya se
+   usaba en `RadioRepository`, pero nunca se replicó en
+   `AutoSyncPusher`. Corregido para usar la misma sonda real. Commit
+   `a61ee94`, build verde.
+3. **Incidencia puntual de UI, sin relación con H12**: sidebar
+   (`MainActivity.kt`) vuelta a tamaño de letra/icono normal (petición
+   de Miguel Ángel, revirtiendo la compresión a 3/4 de S032) y hecha
+   scrollable (`Column` + `verticalScroll()`) para que quepan las 15
+   opciones sin necesidad de comprimir nada. Commit `4860687`, build
+   verde.
+
+Los tres puntos quedan pendientes de **verificación en dispositivo
+real** de Miguel Ángel -- ninguno se ha probado todavía fuera de
+GitHub Actions.
+
+## Cascada de incidencias reales sobre H15 (miMooutCast, PAUSADO) -- S034
+
+Mismo patrón que S031/S033: incidencias puntuales sobre código de un
+hito pausado, sin PCH (H12 sigue EN PROGRESO durante toda esta
+cascada). Detalle técnico completo en `DOCS/ANNEX_H15.md`, sección
+"COMPLETADAS EN S034" -- resumen aquí:
+
+1. Miguel Ángel entregó dos exportaciones (`mimooutcast_database_json.txt`,
+   `mimooutcast_database2_json.txt`, la segunda superconjunto exacto
+   de la primera) y un log de debug de 67 minutos. Análisis (sin
+   código, orden explícita: *"no generes código... vamos a analizar el
+   resultado antes de tomar una decisión"*): 41 géneros llevaban
+   atascados a 0 temas desde la primera pasada, reabriéndose sin fin
+   por el propio fix de reapertura de S033, con tres causas de fondo
+   medidas en el log real (escasez de datos en MusicBrainz, red
+   intermitente, verificación final que rechaza siempre a los pocos
+   candidatos que aparecen).
+2. Decisión de Miguel Ángel: *"Eliminamos estos géneros que no llevan
+   a ningún sitio."* Primer intento equivocado (tocó `genre_tree.json`
+   en vez del catálogo de miMooutCast, afectando sin necesidad a la
+   Radio) -- corregido tras verificación posterior. Miguel Ángel amplió
+   después la orden: *"que no deben molestar en ningún sitio, ni en la
+   radio."* Fix final: `GenreTree.isBarren()` (fuente única) + corte
+   ANTES de cualquier llamada de red en `RadioRepository.
+   suggestWorkForGenre()`/`findCandidates()` -- los dos puntos de
+   entrada reales a MusicBrainz compartidos por Radio y miMooutCast.
+   Commits `a5e0d95` (equivocado), `7fb5d9a` (corrección) y `f03a741`
+   (ampliación a Radio).
+3. **Objetivo de fondo aclarado por Miguel Ángel, con fuerza**: todo el
+   mes de generación en dispositivo era el MEDIO, nunca el fin -- el
+   fin siempre fue que la lista viajara empaquetada en el APK, sin
+   tener que regenerarse nunca más. `mimooutcast_seed.json` (copia
+   exacta del export real, 22.220 temas/536 géneros) bundleado en
+   `app/src/main/assets/`. Commit `7fb5d9a`.
+4. **Motor de cola instantánea + búsqueda en paralelo + curación de
+   enlaces rotos**, método completo dictado por Miguel Ángel:
+   generaliza a todos los géneros un mecanismo que ya existía, probado,
+   solo para Clásica (`ClassicalValidatedLinksRepository`). Piezas
+   nuevas: `MimooutcastSeedRepository`, `MimooutcastBrokenLinksLogger`
+   (enlaces rotos + sustituto por género, contador = tamaño de lista,
+   aviso a partir de 10). `PlayerManager` amplía `QueueItem`,
+   `startRadioFromManualAnchor()`, `fetchSimpleManualCandidate()`,
+   `onPlayerError()`, `onMediaItemTransition()` y `clearQueue()`.
+   Botón "Compartir enlaces rotos" en Ajustes, mismo mecanismo que el
+   ya existente para la base de datos. Commit `82c73a1`, build verde.
+
+**Nada de esta cascada se ha verificado en dispositivo real todavía.**
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H12
 
-Sustituye a la hoja de ruta anterior (ya ejecutada en S017/S018).
+Sustituye a la hoja de ruta anterior (ya ejecutada en S034).
 
-1. **Leer antes de suponer nada** (directriz vinculante de la
-   plataforma): `ExplorerScreen`/pantalla de búsqueda unificada real
-   (nombre de archivo a confirmar, no asumir de memoria), `NavGraph.kt`
-   completo, `FavoriteArtist.kt`/`FavoriteArtistDao`/
-   `FavoriteArtistRepository` si existen, `AppDatabase`/lista de
-   migraciones real, y los composables de `ArtistScreen`/`AlbumScreen`
-   en la parte del botón de favorito.
-2. **Diagnosticar el campo de búsqueda** contra lo que S017 diseñó
-   (más arriba, "Búsqueda unificada -- una sola pantalla, cinco tipos
-   de resultado"): ¿existe la pantalla y falta el enlace desde el
-   Explorador, o nunca se completó la parte de MusicBrainz
-   (álbum/artista) y solo quedó la de YouTube (canción/lista/canal)?
-3. **Diagnosticar la persistencia de favoritos** contra la lista de
-   comprobación del apartado anterior (entidad, migración, DAO,
-   llamada real desde el botón).
-4. **Corregir con evidencia real** (log/captura de Miguel Ángel si
-   hace falta reproducir en dispositivo, mismo criterio que el resto
-   del proyecto) -- no aplicar un fix sin haber confirmado antes cuál
-   de las hipótesis es la real.
-5. **Verificación:** inspección visual (`.kt`, directriz de
-   `newflow-android-edit` PASO 4) tras cada bloque; commit por
-   incidencia cerrada, no acumular varias sin commitear.
+1. **Verificar en dispositivo real** los tres puntos de "COMPLETADAS
+   EN S034" de arriba: búsqueda embebida en el Explorador, persistencia
+   de favoritos de artista/álbum, y la sidebar (tamaño normal +
+   scroll).
+2. Si la verificación revela algo roto, corregir con evidencia real
+   (log/captura de Miguel Ángel), mismo criterio que el resto del
+   proyecto -- no reabrir el diagnóstico sin evidencia nueva.
+3. **Sin más síntomas pendientes de H12** más allá de la verificación
+   -- ambas hipótesis de S033 quedaron confirmadas y corregidas.

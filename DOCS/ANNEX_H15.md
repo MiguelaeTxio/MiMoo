@@ -1551,28 +1551,145 @@ automática (H08) se ha tocado:
     para ellos o si hace falta otra causa más. Sin verificar en
     dispositivo real todavía.
 
+## COMPLETADAS EN S034 (2026-08-23, incidencia real, H12 EN PROGRESO -- sin PCH)
+
+Sesión que arrancó en H12 (búsqueda embebida del Explorador,
+persistencia de favoritos -- ver `DOCS/ANNEX_H12.md`) y derivó en una
+cascada larga sobre H15 a partir de dos exportaciones reales que
+Miguel Ángel entregó (`mimooutcast_database_json.txt`/
+`mimooutcast_database2_json.txt`, la segunda superconjunto exacto de
+la primera -- mismos `youtube_id`, nada solo en la primera) y un log
+de debug de 67 minutos.
+
+1. **Análisis, sin código** (orden explícita: *"no generes código...
+   vamos a analizar el resultado antes de tomar una decisión"*): 41
+   subgéneros llevaban atascados a 0 temas desde la primera pasada,
+   reabriéndose sin fin por el propio fix de reapertura de S033
+   (`genresWithZeroTracks`). Tres causas de fondo distintas, medidas
+   en el log real: escasez genuina de datos en MusicBrainz para el
+   género (sin excepción, "0 release-groups en bruto"), red
+   intermitente (`UnknownHostException`/`SocketTimeoutException`, 146
+   de 399 líneas), y -- el caso más revelador -- SÍ aparecía un
+   candidato de artista (11 veces para "rock urbano mexicano" en una
+   sola sesión) pero `verifyTrackExists()`/el filtro de YouTube lo
+   rechazaba siempre, porque géneros regionales/underground no tienen
+   nunca un single "oficial" limpio en ninguna de las 4 fuentes de
+   verificación.
+
+2. **Descarte de los 41, con una corrección real a mitad de camino.**
+   Decisión de Miguel Ángel: *"Eliminamos estos géneros que no llevan
+   a ningún sitio."* Primer intento (commit `a5e0d95`) tocó
+   `genre_tree.json` directamente (quitando los 41 de `children` de su
+   padre) en vez del catálogo propio de miMooutCast -- afectaba sin
+   necesidad a la taxonomía compartida con la Radio automática
+   (`GenreTree.isDescendantOf()`/`isSpecific()`/`directChildren()`).
+   Descubierto al verificar el estado real tras el commit, corregido
+   restaurando `genre_tree.json` byte a byte (diff vacío contra el
+   commit de inicio de sesión) y aplicando el filtro en
+   `MimooutcastCatalog.subgenresOf()` en su lugar (commit `7fb5d9a`).
+
+   Miguel Ángel amplió después la orden, con fuerza: *"que no deben
+   molestar en ningún sitio, ni en la radio."* Motivo real: el ancla
+   de la Radio automática NO sale de un catálogo fijo -- se calcula
+   del propio artista real que se está escuchando
+   (`RadioAnchor.genre`/`genres`, todos los géneros que MusicBrainz le
+   atribuye), así que cualquiera de los 41 puede colarse como ancla de
+   Radio igual que en miMooutCast. Fix final: `GenreTree.isBarren()`
+   (fuente única, set `BARREN_GENRES` en su companion object) + corte
+   ANTES de cualquier llamada de red en `RadioRepository.
+   suggestWorkForGenre()` y `RadioRepository.findCandidates()` (los
+   dos puntos de entrada reales a MusicBrainz compartidos por Radio y
+   miMooutCast -- `findCandidates()` es privada y solo la llama
+   `suggestRelatedArtist()`, así que cortar en estas dos cubre las tres
+   funciones que aparecían fallando en el log). `genre_tree.json` en
+   sí no se toca -- la clasificación de qué género pertenece a qué
+   carpeta sigue intacta, el corte es solo sobre el TÉRMINO DE
+   BÚSQUEDA en vivo. Commit `f03a741`, build verde.
+
+3. **Objetivo de fondo aclarado por Miguel Ángel, con fuerza real.**
+   Tras un primer malentendido (Claude solo bundleó el JSON sin
+   conectar la reproducción en vivo a leer de él), Miguel Ángel aclaró
+   el objetivo completo de todo el hito: *"el objetivo de toda esta
+   mierda de estar un mes sacando la lista de temas es para que esa
+   lista vaya incluida en la aplicación y no se tenga que generar
+   más... lo único que haya que hacer es ir curándola a medida que los
+   links vayan cayendo con el paso del tiempo... hemos hecho esto desde
+   la aplicación pq tú no tienes acceso a musicbrainz y YouTube."*
+   `app/src/main/assets/mimooutcast_seed.json` -- copia exacta del
+   export real de Miguel Ángel (22.220 temas, 536 géneros agotados),
+   mismo formato que ya usa `MimooutcastDatabaseBuilder`
+   (`DatabaseFile`/`StoredTrack`), sin transformación. Commit
+   `7fb5d9a`.
+
+4. **Motor de cola instantánea + búsqueda en paralelo + curación de
+   enlaces rotos por reinstalación**, método completo dictado por
+   Miguel Ángel, cita textual: *"se elige el género en miMooutCast y
+   ya tenemos links para encolar, 100 en concreto, al azar, pero nada
+   más empezar, no dejamos parar el tiempo sino que comenzamos a
+   buscar más temas y los vamos encolando a continuación del tema que
+   está sonando... cuando un link falle, pq está caído, se repone con
+   los nuevos que estamos buscando, se anota el link roto y el
+   sustituto y en la próxima build se sustituye el roto con el nuevo...
+   se pone un contador de aviso de que se necesita restaurar la
+   instalación cuando el contador de links rotos llegue a 10 en un
+   género."*
+
+   Generaliza a TODOS los géneros un mecanismo que ya existía, probado,
+   solo para Clásica (S032, `ClassicalValidatedLinksRepository` +
+   `classicalValidatedOrder`/`Index` dentro de
+   `fetchSimpleManualCandidate()`): recopilatorio ya validado -> se
+   agota -> cae solo, sin código extra, en la búsqueda dinámica de
+   siempre (que ya corre en paralelo vía `topUpRadioQueueIfNeeded()`,
+   sin necesitar concurrencia nueva). Piezas nuevas:
+   - `MimooutcastSeedRepository` -- mismo patrón que
+     `ClassicalValidatedLinksRepository`, carga la semilla agrupada
+     por género.
+   - `MimooutcastBrokenLinksLogger` -- persiste en
+     `mimooutcast_broken_links.json` (misma subcarpeta ya declarada en
+     `file_provider_paths.xml`) los enlaces rotos y su sustituto por
+     género; el "contador" es el tamaño de la lista, sin campo aparte
+     que pueda desincronizarse; aviso a partir de 10.
+   - `PlayerManager.kt` -- `QueueItem.mimooutcastSeedGenre`;
+     `startRadioFromManualAnchor()` baraja hasta 100 pistas de la
+     semilla del género elegido (no-clásica, que sigue con su propio
+     sistema); `fetchSimpleManualCandidate()` consume la semilla igual
+     que ya hace clásica, anotando el roto si falla al resolver;
+     `onPlayerError()` anota el roto si falla ya en reproducción;
+     `onMediaItemTransition()` anota el sustituto cuando la siguiente
+     pista real es una encontrada en vivo; `clearQueue()` resetea el
+     estado de sesión de la semilla.
+   - Botón "Compartir enlaces rotos" en Ajustes (mismo mecanismo que
+     el ya existente para la base de datos) + aviso en rojo cuando
+     algún género llega a 10 rotos.
+
+   Commit `82c73a1`, build verde.
+
+**Nada de esta cascada se ha verificado en dispositivo real
+todavía.** H15 sigue PAUSADO -- H12 fue el hito EN PROGRESO durante
+toda la sesión, sin PCH.
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H15
 
-Sin código pendiente. Puntos:
+Sustituye a la hoja de ruta anterior (verificación de S030/S032, ya
+superada por el trabajo real de S034 de arriba).
 
-1. **Seguir la verificación en dispositivo real** que Miguel Ángel ya
-   tiene en marcha -- las tres secciones (Géneros con subgéneros,
-   Décadas, Origen), el loop de apertura, y sobre todo confirmar que
-   el ancla se mantiene fija toda la sesión sin drift de género tras
-   el arreglo del punto 10 de "COMPLETADAS EN S030".
-2. **Verificar en dispositivo el arreglo de S032**: que un artista no
-   vuelve a sonar hasta pasados 10 temas dentro de una misma sesión de
-   miMooutCast, y que un ancla genuinamente agotada (género/década/
-   origen muy nicho, sin más candidatos en ninguna fuente) muestra el
-   aviso "Sin más música" en vez de quedarse en silencio.
-3. **Verificar en dispositivo los puntos 14 y 15**: que
-   `radio_relacionados_debug.txt` NO recibe ni una sola línea nueva
-   durante una sesión de miMooutCast (todo debe ir a
-   `mimooutcast_debug.txt`), y que no vuelve a aparecer ningún nombre
-   de artista suelto sin relación con el ancla elegida.
-
-Todas las incidencias corregidas en la misma sesión, sin necesidad de PCH
-(H15 sigue PAUSADO, H18 es el hito EN PROGRESO -- incidencia puntual
-sobre código de un hito pausado, mismo criterio que el fix de
-centrado del karaoke sobre H17). Sin verificar en dispositivo real
-todavía.
+1. **Verificar en dispositivo real, en orden**: (a) que los 41
+   géneros descartados ya no aparecen en el desplegable de subgéneros
+   de miMooutCast ni se intentan nunca en la Radio automática; (b) que
+   elegir un género en miMooutCast encola de golpe pistas de la
+   semilla en vez de esperar a ninguna búsqueda; (c) que la búsqueda
+   en vivo sigue encolando de fondo mientras suena; (d) que un enlace
+   de la semilla roto de verdad (probar con uno manipulado si hace
+   falta) se salta solo y queda anotado en Ajustes → "Compartir
+   enlaces rotos"; (e) que el aviso rojo de "restaurar instalación"
+   aparece de verdad al llegar un género a 10 rotos.
+2. **Cuando Miguel Ángel comparta un `mimooutcast_broken_links.json`
+   real**: sustituir cada enlace roto por su sustituto dentro de
+   `mimooutcast_seed.json` antes de la siguiente build -- el ciclo de
+   curación completo que cierra el diseño de este hito.
+3. Puntos de verificación heredados de S030/S032, todavía sin
+   confirmar en dispositivo: ancla fija toda la sesión sin drift de
+   género (S030 punto 10), ventana de no-repetición de artista a 10
+   temas y aviso "Sin más música" en ancla agotada (S032), y que
+   `radio_relacionados_debug.txt` no recibe ninguna línea durante una
+   sesión de miMooutCast (S032 puntos 14-15).
