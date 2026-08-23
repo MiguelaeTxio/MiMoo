@@ -1,0 +1,7 @@
+{
+ "error": "AuthenticationError: This feature requires authentication; build SpotifyClient(cookies=...) with an 'sp_dc' cookie.",
+ "ok": false,
+ "spotify_scraper_version": "3.9.2",
+ "stage": "get_user",
+ "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/MiMoo/MiMoo/tools/debug_spotify_probe.py\", line 29, in <module>\n    user = client.get_user(\"115935096\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/spotify_scraper/_sync/client.py\", line 957, in get_user\n    provider = self._cookie_provider()\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/spotify_scraper/_sync/client.py\", line 1016, in _cookie_provider\n    raise AuthenticationError(\nspotify_scraper.errors.AuthenticationError: This feature requires authentication; build SpotifyClient(cookies=...) with an 'sp_dc' cookie.\n"
+}
