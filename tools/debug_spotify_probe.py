@@ -1,44 +1,52 @@
 #!/usr/bin/env python3
 """
-S035 -- sonda minima de aislamiento. harvest_spotify100_charts.py
-fallaba tres veces seguidas sin escribir NUNCA su fichero de
-diagnostico, ni con `except Exception` ni con `except BaseException`
--- indicio real de que el proceso se esta terminando por una via que
-ni siquiera pasa por una excepcion de Python (señal externa, timeout
-duro de alguna dependencia, etc.). Esta sonda hace lo MINIMO posible
-(una sola llamada, sin reintentos, sin logica alrededor) para aislar
-si el problema esta de verdad en spotifyscraper.get_user(), y vuelca
-CUALQUIER resultado, siempre, con exit(0) fijo para no depender de
-como el step interprete el codigo de salida.
+S035 -- segunda ronda de la sonda de aislamiento. get_user() exige
+cookie de autenticacion (AuthenticationError real, confirmado en la
+sonda anterior) pese a que la documentacion de spotifyscraper lo lista
+como funcion publica -- se descarta ese camino. Esta version comprueba
+en su lugar search() (documentada como anonima) y get_playlist() sobre
+un ID ya validado a mano en esta misma sesion (web_fetch real,
+1960 - LAS 100 CANCIONES DEL ANO EN ESPANA), antes de reescribir el
+cosechador entero sobre una API que tampoco se ha probado en vivo.
 """
 import json
 import sys
 import traceback
 
-result = {"stage": "arranque"}
-try:
-    result["stage"] = "import"
-    from spotify_scraper import SpotifyClient
-    import spotify_scraper
-    result["spotify_scraper_version"] = getattr(spotify_scraper, "__version__", "desconocida")
+KNOWN_PLAYLIST_ID = "450tJfoEUYVS2r6yRGmxr0"  # 1960 - LAS 100 CANCIONES DEL ANO EN ESPANA
 
-    result["stage"] = "construir cliente"
+result = {}
+
+
+def probe(label, fn):
+    entry = {"stage": label}
+    try:
+        value = fn()
+        entry["ok"] = True
+        entry["repr"] = repr(value)[:2500]
+        entry["type"] = str(type(value))
+        entry["dir"] = [a for a in dir(value) if not a.startswith("_")]
+    except BaseException as e:
+        entry["ok"] = False
+        entry["error"] = "%s: %s" % (type(e).__name__, e)
+        entry["traceback"] = traceback.format_exc()
+    result[label] = entry
+
+
+try:
+    from spotify_scraper import SpotifyClient
     client = SpotifyClient()
 
-    result["stage"] = "get_user"
-    user = client.get_user("115935096")
-    result["ok"] = True
-    result["user_repr"] = repr(user)[:2000]
-    result["user_type"] = str(type(user))
-    result["user_dir"] = [a for a in dir(user) if not a.startswith("_")]
+    probe("search_playlist", lambda: client.search(
+        "LAS 100 CANCIONES DEL ANO EN ESPANA", types=("playlist",), limit=10,
+    ))
+    probe("get_playlist", lambda: client.get_playlist(KNOWN_PLAYLIST_ID))
 except BaseException as e:
-    result["ok"] = False
-    result["error"] = "%s: %s" % (type(e).__name__, e)
+    result["import_or_client_error"] = "%s: %s" % (type(e).__name__, e)
     result["traceback"] = traceback.format_exc()
 
 with open("tools/chart_spotify100_probe_debug.json", "w", encoding="utf-8") as f:
     json.dump(result, f, ensure_ascii=False, indent=1, default=str, sort_keys=True)
     f.write("\n")
 
-print(json.dumps(result, ensure_ascii=False, indent=1, default=str)[:3000])
 sys.exit(0)
