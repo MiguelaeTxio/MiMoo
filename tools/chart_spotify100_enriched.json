@@ -1,0 +1,7708 @@
+{
+ "10cc": {
+  "country": null,
+  "genres": [
+   "soft rock",
+   "art rock",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "5000 Volts": {
+  "country": "GB",
+  "genres": [
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "ABBA": {
+  "country": null,
+  "genres": [
+   "pop",
+   "disco",
+   "europop",
+   "glam rock",
+   "pop rock",
+   "euro-disco",
+   "mainstream rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "ABC": {
+  "country": null,
+  "genres": [
+   "new romantic",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Acker Bilk": {
+  "country": "GB",
+  "genres": [
+   "jazz",
+   "easy listening",
+   "swing",
+   "dixieland"
+  ],
+  "via": "musicbrainz"
+ },
+ "Adam & The Ants": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Adriano Celentano": {
+  "country": null,
+  "genres": [
+   "pop",
+   "canzone napoletana"
+  ],
+  "via": "diccionario"
+ },
+ "Adriano Pappalardo": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Aguaviva": {
+  "country": "ES",
+  "genres": [
+   "folk rock",
+   "poetry"
+  ],
+  "via": "diccionario"
+ },
+ "Agustin Pantoja": {
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Air Supply": {
+  "country": "AU",
+  "genres": [
+   "rock",
+   "pop",
+   "easy listening",
+   "classic rock",
+   "ballad",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Al Bano": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Al Bano And Romina Power": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Al Caiola": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "lounge",
+   "exotica"
+  ],
+  "via": "musicbrainz"
+ },
+ "Al Martino": {
+  "country": "US",
+  "genres": [
+   "traditional pop",
+   "easy listening"
+  ],
+  "via": "musicbrainz"
+ },
+ "Al Stewart": {
+  "country": "GB",
+  "genres": [
+   "folk",
+   "singer-songwriter",
+   "folk rock",
+   "baroque pop",
+   "soft rock",
+   "pop rock",
+   "contemporary folk",
+   "folk pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Alain Barrière": {
+  "country": "FR",
+  "genres": [
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Alain Chamfort": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Alameda": {
+  "country": "ES",
+  "genres": [
+   "progressive rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Alaska Y Dinarama": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Alaska Y Los Pegamoides": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "synth-pop",
+   "punk",
+   "glam",
+   "pop rock",
+   "post-punk"
+  ],
+  "via": "diccionario"
+ },
+ "Albert Hammond": {
+  "country": null,
+  "genres": [
+   "soft rock",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Alberto Bourbón": {
+  "country": null,
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Alberto Cortez": {
+  "country": "AR",
+  "genres": [
+   "singer-songwriter",
+   "folk rock",
+   "ballad",
+   "latin ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Aleco Pandas": {
+  "country": null,
+  "genres": [
+   "schlager"
+  ],
+  "via": "discogs"
+ },
+ "Alphaville": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "synth-pop",
+   "pop",
+   "alternative dance",
+   "dance-pop",
+   "dance-rock",
+   "dark disco",
+   "dark wave",
+   "darksynth",
+   "progressive pop",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Amanda Lear": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "Amii Stewart": {
+  "country": "US",
+  "genres": [
+   "disco",
+   "pop",
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ana Belén": {
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Ana Curra": {
+  "country": "ES",
+  "genres": [
+   "punk rock",
+   "post-punk",
+   "punk",
+   "rock",
+   "new wave",
+   "gothic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Ana María Drack": {
+  "country": null,
+  "genres": [
+   "folk",
+   "nueva canción"
+  ],
+  "via": "discogs"
+ },
+ "Ana Y Johnny": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Andrew Lloyd Webber": {
+  "country": "GB",
+  "genres": [
+   "classical",
+   "musical"
+  ],
+  "via": "musicbrainz"
+ },
+ "Andy Gibb": {
+  "country": null,
+  "genres": [
+   "pop",
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "Andy Russell": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Andy Williams": {
+  "country": null,
+  "genres": [
+   "jazz",
+   "easy listening",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Aneka": {
+  "country": "GB",
+  "genres": [
+   "disco",
+   "synth-pop",
+   "europop",
+   "italo-disco",
+   "pop rock",
+   "reggae-pop"
+  ],
+  "via": "discogs"
+ },
+ "Angel": {
+  "country": null,
+  "genres": [
+   "hard rock",
+   "glam",
+   "progressive",
+   "rock",
+   "glam rock",
+   "progressive rock"
+  ],
+  "via": "diccionario"
+ },
+ "Angela Carrasco": {
+  "country": null,
+  "genres": [
+   "canción melódica",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Angela Molina": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "copla",
+   "pop rock",
+   "musical"
+  ],
+  "via": "discogs"
+ },
+ "Anita Ward": {
+  "country": "US",
+  "genres": [
+   "disco",
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Antoine": {
+  "country": "FR",
+  "genres": [
+   "chanson française",
+   "beat music"
+  ],
+  "via": "musicbrainz"
+ },
+ "Antonio Flores": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "soft rock",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Antonio Morales Junior": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Antonio Prieto": {
+  "country": "CL",
+  "genres": [
+   "bolero",
+   "guajira",
+   "mambo",
+   "tango"
+  ],
+  "via": "discogs"
+ },
+ "Aretha Franklin": {
+  "country": null,
+  "genres": [
+   "soul",
+   "gospel",
+   "deep soul",
+   "southern soul",
+   "jazz",
+   "quiet storm",
+   "r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Art Garfunkel": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Arturo Millan": {
+  "country": null,
+  "genres": [
+   "bolero",
+   "ballad",
+   "porro"
+  ],
+  "via": "discogs"
+ },
+ "Arturo Pareja Obregón": {
+  "country": "ES",
+  "genres": [
+   "folk",
+   "flamenco"
+  ],
+  "via": "discogs"
+ },
+ "Ashford & Simpson": {
+  "country": "US",
+  "genres": [
+   "funk",
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Asia": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "progressive rock",
+   "hard rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Astrud Gilberto": {
+  "country": null,
+  "genres": [
+   "bossa nova",
+   "jazz"
+  ],
+  "via": "diccionario"
+ },
+ "Azul Y Negro": {
+  "country": "ES",
+  "genres": [
+   "synth-pop",
+   "electro",
+   "disco",
+   "euro-disco"
+  ],
+  "via": "diccionario"
+ },
+ "B-Movie": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave",
+   "post-punk"
+  ],
+  "via": "discogs"
+ },
+ "Baby Bell": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Babys Gang": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Baccara": {
+  "country": "ES",
+  "genres": [
+   "disco",
+   "europop"
+  ],
+  "via": "discogs"
+ },
+ "Bacchelli": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Baltimora": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Bananarama": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "dance",
+   "electronic",
+   "hi-nrg",
+   "electropop",
+   "new wave",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Band Aid": {
+  "country": null,
+  "genres": [
+   "synth-pop"
+  ],
+  "via": "discogs"
+ },
+ "Bandolero": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "disco",
+   "euro-disco",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Barbra Streisand": {
+  "country": null,
+  "genres": [
+   "pop",
+   "easy listening",
+   "disco",
+   "ballad",
+   "soft rock",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Barrabas": {
+  "country": "ES",
+  "genres": [
+   "disco",
+   "funk",
+   "latin rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Barry Manilow": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "easy listening",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Barry Mann": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "musicbrainz"
+ },
+ "Barry White": {
+  "country": null,
+  "genres": [
+   "soul",
+   "disco",
+   "funk",
+   "smooth soul",
+   "easy listening",
+   "pop",
+   "pop soul",
+   "quiet storm",
+   "r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Basilio": {
+  "country": "PA",
+  "genres": [],
+  "via": "nada"
+ },
+ "Bebu Silvetti": {
+  "country": "MX",
+  "genres": [
+   "ballad",
+   "funk",
+   "soul",
+   "pop rock",
+   "schlager"
+  ],
+  "via": "discogs"
+ },
+ "Bee Gees": {
+  "country": null,
+  "genres": [
+   "disco",
+   "pop",
+   "baroque pop",
+   "soft rock",
+   "blue-eyed soul",
+   "dance",
+   "pop rock",
+   "psychedelic pop",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Belle Epoque": {
+  "country": "FR",
+  "genres": [
+   "disco",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ben E. King": {
+  "country": null,
+  "genres": [
+   "soul",
+   "funk",
+   "jazz pop",
+   "pop",
+   "pop soul",
+   "r&b",
+   "traditional pop",
+   "vocal jazz"
+  ],
+  "via": "diccionario"
+ },
+ "Benito Di Paula": {
+  "country": "BR",
+  "genres": [
+   "singer-songwriter",
+   "samba",
+   "samba-joia"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bertice Reading": {
+  "country": "US",
+  "genres": [
+   "rock and roll",
+   "cool jazz"
+  ],
+  "via": "discogs"
+ },
+ "Bertin Osborne": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Betty Missiego": {
+  "country": "PE",
+  "genres": [
+   "pop",
+   "europop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Betty Troupe": {
+  "country": "ES",
+  "genres": [
+   "synth-pop",
+   "pop rock",
+   "new wave"
+  ],
+  "via": "discogs"
+ },
+ "Bill Conti": {
+  "country": "US",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Billy Cafaro": {
+  "country": "AR",
+  "genres": [
+   "pop rock",
+   "rockabilly",
+   "rock and roll",
+   "surf",
+   "jazz rock"
+  ],
+  "via": "discogs"
+ },
+ "Billy Joel": {
+  "country": null,
+  "genres": [
+   "piano rock",
+   "pop",
+   "rock",
+   "pop rock",
+   "soft rock",
+   "classic rock",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Billy Ocean": {
+  "country": null,
+  "genres": [
+   "pop",
+   "soul",
+   "disco",
+   "dance-pop",
+   "pop soul",
+   "r&b",
+   "contemporary r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Billy Swan": {
+  "country": null,
+  "genres": [
+   "pop",
+   "country",
+   "country pop",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Bimbo Jet": {
+  "country": "FR",
+  "genres": [
+   "disco",
+   "synth-pop"
+  ],
+  "via": "discogs"
+ },
+ "Blondie": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "disco",
+   "rock",
+   "pop",
+   "power pop",
+   "punk",
+   "pop rock",
+   "punk rock"
+  ],
+  "via": "diccionario"
+ },
+ "Bob Azzam": {
+  "country": "EG",
+  "genres": [
+   "schlager",
+   "folk"
+  ],
+  "via": "discogs"
+ },
+ "Bob Dylan": {
+  "country": null,
+  "genres": [
+   "folk rock",
+   "folk",
+   "rock",
+   "blues rock",
+   "singer-songwriter",
+   "contemporary folk",
+   "country rock",
+   "blues",
+   "pop rock",
+   "country",
+   "classic rock",
+   "gospel",
+   "jazz",
+   "roots rock",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Bob Marley & The Wailers": {
+  "country": "JM",
+  "genres": [
+   "ska",
+   "reggae",
+   "dub",
+   "roots reggae",
+   "rocksteady",
+   "jamaican ska"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bobby Darin": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "folk",
+   "swing",
+   "rock and roll",
+   "teen pop",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bobby Solo": {
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "country"
+  ],
+  "via": "discogs"
+ },
+ "Bobby Vinton": {
+  "country": "US",
+  "genres": [
+   "traditional pop",
+   "pop",
+   "blue-eyed soul",
+   "christmas music"
+  ],
+  "via": "musicbrainz"
+ },
+ "Boney M.": {
+  "country": null,
+  "genres": [
+   "disco",
+   "europop",
+   "pop",
+   "dance-pop",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Bonnie Tyler": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "pop",
+   "country rock",
+   "soft rock",
+   "pop rock",
+   "arena rock",
+   "country pop",
+   "aor"
+  ],
+  "via": "musicbrainz"
+ },
+ "Boston": {
+  "country": null,
+  "genres": [
+   "rock",
+   "progressive rock",
+   "heavy metal",
+   "hard rock",
+   "art rock",
+   "classic rock",
+   "soft rock",
+   "pop rock",
+   "arena rock",
+   "rock and roll",
+   "aor"
+  ],
+  "via": "musicbrainz"
+ },
+ "Boys Town Gang": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "disco",
+   "hi-nrg"
+  ],
+  "via": "diccionario"
+ },
+ "Braulio": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Bravo": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Break Machine": {
+  "country": "US",
+  "genres": [
+   "electro",
+   "hip hop",
+   "pop soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Brenda Lee": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "rockabilly",
+   "country",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Brian Hyland": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "pop rock",
+   "sunshine pop",
+   "teen pop",
+   "brill building",
+   "bubblegum pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bronski Beat": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "synth-pop",
+   "dance-pop",
+   "hi-nrg",
+   "jazz pop",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Brotherhood of Man": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "soul",
+   "disco",
+   "europop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bruce": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Bruce & Bongo": {
+  "country": "GB",
+  "genres": [
+   "synth-pop",
+   "euro-disco",
+   "disco",
+   "dance-pop",
+   "salsa",
+   "samba",
+   "europop",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Bruce Channel": {
+  "country": "US",
+  "genres": [
+   "rock and roll",
+   "rockabilly",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Bruce Hornsby and the Range": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "soft rock",
+   "synth-pop"
+  ],
+  "via": "discogs"
+ },
+ "Bruce Springsteen": {
+  "country": null,
+  "genres": [
+   "rock",
+   "heartland rock",
+   "americana",
+   "singer-songwriter",
+   "folk",
+   "pop rock",
+   "aor",
+   "contemporary folk",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Bruno Filippini": {
+  "country": "IT",
+  "genres": [
+   "schlager",
+   "ballad",
+   "rock and roll",
+   "pop rock",
+   "canzone napoletana",
+   "beat music"
+  ],
+  "via": "discogs"
+ },
+ "Bruno Lomas": {
+  "country": "ES",
+  "genres": [
+   "rock and roll",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Bryan Adams": {
+  "country": null,
+  "genres": [
+   "rock",
+   "soft rock",
+   "pop rock",
+   "aor",
+   "hard rock",
+   "power pop",
+   "classic rock",
+   "heartland rock",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Bucks Fizz": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "britpop",
+   "europop",
+   "sunshine pop",
+   "teen pop",
+   "bubblegum pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "C.C. Catch": {
+  "country": null,
+  "genres": [
+   "euro-disco",
+   "synth-pop",
+   "disco",
+   "europop",
+   "schlager"
+  ],
+  "via": "discogs"
+ },
+ "CHIC": {
+  "country": null,
+  "genres": [
+   "disco",
+   "funk",
+   "contemporary r&b",
+   "dance-pop",
+   "electronic",
+   "r&b",
+   "synth funk"
+  ],
+  "via": "diccionario"
+ },
+ "COZ": {
+  "country": "ES",
+  "genres": [
+   "rock urbano",
+   "hard rock",
+   "rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Cadillac": {
+  "country": "NO",
+  "genres": [],
+  "via": "nada"
+ },
+ "Camillo Felgen": {
+  "country": "LU",
+  "genres": [
+   "schlager",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Camilo Sesto": {
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin",
+   "latin ballad",
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Canovas, Rodrigo, Adolfo Y Guzman": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "flamenco",
+   "rumba",
+   "soft rock",
+   "folk rock"
+  ],
+  "via": "discogs"
+ },
+ "Captain & Tennille": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Carl Anderson": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "quiet storm",
+   "ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Carl Douglas": {
+  "country": "JM",
+  "genres": [
+   "disco",
+   "soul",
+   "pop soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Carlos Mejia Godoy": {
+  "country": "NI",
+  "genres": [
+   "gospel",
+   "trova",
+   "nueva canción",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Carol Douglas": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "disco",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Caterina Caselli": {
+  "country": "IT",
+  "genres": [
+   "beat music",
+   "ballad",
+   "yé-yé",
+   "europop",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Caterina Valente": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "jazz",
+   "schlager",
+   "vocal jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Cecilia": {
+  "country": "ES",
+  "genres": [
+   "folk rock",
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Cerrone": {
+  "country": "FR",
+  "genres": [
+   "electronic",
+   "disco",
+   "vocal house",
+   "electro-disco",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Charles Aznavour": {
+  "country": null,
+  "genres": [
+   "chanson à texte",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Cherry Laine": {
+  "country": "JM",
+  "genres": [
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Chicago": {
+  "country": null,
+  "genres": [
+   "rock",
+   "soft rock",
+   "aor",
+   "pop rock",
+   "jazz",
+   "jazz rock",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Chris Andrews": {
+  "country": "GB",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Chris Montez": {
+  "country": "US",
+  "genres": [
+   "jazz pop",
+   "rock and roll",
+   "sunshine pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Chris Rea": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "pop",
+   "blues",
+   "blues rock",
+   "soft rock",
+   "pop rock",
+   "electric blues",
+   "british blues"
+  ],
+  "via": "musicbrainz"
+ },
+ "Chris de Burgh": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Christophe": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Christopher Cross": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "singer-songwriter",
+   "ballad",
+   "soft rock",
+   "aor",
+   "yacht rock"
+  ],
+  "via": "diccionario"
+ },
+ "Chubby Checker": {
+  "country": null,
+  "genres": [
+   "pop",
+   "rock and roll",
+   "calypso",
+   "psychedelic soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Cilla Black": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "merseybeat"
+  ],
+  "via": "musicbrainz"
+ },
+ "Claude François": {
+  "country": null,
+  "genres": [
+   "pop",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Claudia Mori": {
+  "country": null,
+  "genres": [
+   "beat music",
+   "funk"
+  ],
+  "via": "diccionario"
+ },
+ "Claudio Baglioni": {
+  "country": null,
+  "genres": [
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Cliff Richard": {
+  "country": null,
+  "genres": [
+   "pop",
+   "rock and roll",
+   "rock",
+   "baroque pop",
+   "christmas music",
+   "pop rock",
+   "schlager",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Cliff Richard & The Shadows": {
+  "country": null,
+  "genres": [
+   "rock and roll",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Clubhouse": {
+  "country": null,
+  "genres": [
+   "indie pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Cock Robin": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Collage": {
+  "country": "IT",
+  "genres": [],
+  "via": "nada"
+ },
+ "Connie Francis": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "vocal jazz",
+   "traditional pop",
+   "brill building"
+  ],
+  "via": "musicbrainz"
+ },
+ "Culture Club": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "pop",
+   "blue-eyed soul",
+   "dance-pop",
+   "new romantic",
+   "pop soul"
+  ],
+  "via": "diccionario"
+ },
+ "Dalida": {
+  "country": null,
+  "genres": [
+   "pop",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Daniel Magal": {
+  "country": null,
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Daniela Romo": {
+  "country": "MX",
+  "genres": [
+   "pop",
+   "latin ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Danny Daniel": {
+  "country": null,
+  "genres": [
+   "latin",
+   "salsa"
+  ],
+  "via": "diccionario"
+ },
+ "Dario Baldan Bembo": {
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "instrumental",
+   "easy listening",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Daryl Hall & John Oates": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "new wave",
+   "soft rock",
+   "pop rock",
+   "blue-eyed soul",
+   "pop soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dave": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Dave Dee, Dozy, Beaky, Mick & Tich": {
+  "country": "GB",
+  "genres": [
+   "beat music"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dave Stewart": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "pop rock",
+   "jazz pop",
+   "smooth jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "David Bowie": {
+  "country": null,
+  "genres": [
+   "art rock",
+   "glam rock",
+   "alternative rock",
+   "pop",
+   "rock",
+   "art pop",
+   "new wave",
+   "pop rock",
+   "classic rock"
+  ],
+  "via": "diccionario"
+ },
+ "David Marx": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "David Rose": {
+  "country": "US",
+  "genres": [
+   "easy listening",
+   "dixieland",
+   "big band",
+   "musical",
+   "swing"
+  ],
+  "via": "discogs"
+ },
+ "David Soul": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "ballad",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "DeBarge": {
+  "country": "US",
+  "genres": [
+   "disco",
+   "soul",
+   "synth-pop",
+   "pop rock",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Dean Martin": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "easy listening",
+   "country pop",
+   "big band",
+   "vocal jazz",
+   "traditional pop",
+   "christmas music"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dee D. Jackson": {
+  "country": "GB",
+  "genres": [
+   "disco",
+   "space rock",
+   "synth-pop"
+  ],
+  "via": "discogs"
+ },
+ "Del Shannon": {
+  "country": "US",
+  "genres": [
+   "rock and roll",
+   "teen pop",
+   "country",
+   "pop",
+   "psychedelic pop",
+   "pop rock",
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Demis Roussos": {
+  "country": null,
+  "genres": [
+   "pop",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Deodato": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Depeche Mode": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "synth-pop",
+   "new wave",
+   "alternative rock",
+   "dark wave",
+   "alternative dance",
+   "electronic rock",
+   "electronica",
+   "new romantic",
+   "industrial",
+   "post-punk"
+  ],
+  "via": "diccionario"
+ },
+ "Desmadre 75": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "punk",
+   "pub rock",
+   "hard rock"
+  ],
+  "via": "diccionario"
+ },
+ "Dexys Midnight Runners": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "celtic rock",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Diana Ross": {
+  "country": null,
+  "genres": [
+   "pop",
+   "jazz",
+   "soul",
+   "disco",
+   "motown",
+   "pop soul",
+   "contemporary r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Dick Van Dyke": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Dion": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "folk rock",
+   "baroque pop",
+   "pop rock",
+   "doo-wop",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dioni Velazquez": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "disco",
+   "instrumental"
+  ],
+  "via": "discogs"
+ },
+ "Dionne Warwick": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "smooth soul",
+   "soul",
+   "rock",
+   "soft rock",
+   "quiet storm",
+   "pop soul",
+   "easy listening"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dire Straits": {
+  "country": null,
+  "genres": [
+   "rock",
+   "soft rock",
+   "classic rock",
+   "pop rock",
+   "roots rock",
+   "blues rock",
+   "pub rock",
+   "rock and roll",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Disco Tex & His Sex-O-Lettes": {
+  "country": null,
+  "genres": [
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Diseño": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "techno",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Dolly Parton": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "bluegrass",
+   "country",
+   "country pop",
+   "nashville sound"
+  ],
+  "via": "musicbrainz"
+ },
+ "Domenico Modugno": {
+  "country": null,
+  "genres": [
+   "canzone napoletana",
+   "pop",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Don McLean": {
+  "country": null,
+  "genres": [
+   "rock",
+   "folk",
+   "singer-songwriter",
+   "folk rock",
+   "pop rock",
+   "contemporary folk",
+   "folk pop"
+  ],
+  "via": "diccionario"
+ },
+ "Donna Hightower": {
+  "country": "US",
+  "genres": [
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Donna Summer": {
+  "country": null,
+  "genres": [
+   "disco",
+   "dance",
+   "soul",
+   "dance-pop",
+   "electronic",
+   "hi-nrg",
+   "pop",
+   "pop soul",
+   "rock",
+   "smooth soul"
+  ],
+  "via": "diccionario"
+ },
+ "Donovan": {
+  "country": null,
+  "genres": [
+   "folk rock",
+   "psychedelic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Doris Day": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Double": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave",
+   "downtempo",
+   "disco",
+   "easy listening"
+  ],
+  "via": "diccionario"
+ },
+ "Dr. Hook": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "country rock",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Drupi": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Duane Eddy": {
+  "country": "US",
+  "genres": [
+   "instrumental rock",
+   "easy listening",
+   "surf",
+   "rock and roll",
+   "country",
+   "pop rock",
+   "surf rock",
+   "rockabilly"
+  ],
+  "via": "musicbrainz"
+ },
+ "Duo Dinamico": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "rock and roll",
+   "surf",
+   "pop rock",
+   "yé-yé"
+  ],
+  "via": "diccionario"
+ },
+ "Duran Duran": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "pop",
+   "new romantic",
+   "rock",
+   "synth-pop",
+   "alternative rock",
+   "dance",
+   "electro",
+   "electronic",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Dusty Springfield": {
+  "country": null,
+  "genres": [
+   "pop",
+   "blue-eyed soul",
+   "pop soul",
+   "soul",
+   "baroque pop",
+   "philly soul",
+   "r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Dyango": {
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Eagles": {
+  "country": null,
+  "genres": [
+   "rock",
+   "country rock",
+   "classic rock",
+   "folk rock",
+   "soft rock",
+   "pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Earth, Wind & Fire": {
+  "country": null,
+  "genres": [
+   "funk",
+   "soul",
+   "disco",
+   "r&b",
+   "big band",
+   "dance",
+   "jazz",
+   "progressive soul",
+   "psychedelic soul",
+   "quiet storm",
+   "smooth soul"
+  ],
+  "via": "diccionario"
+ },
+ "Eartha Kitt": {
+  "country": null,
+  "genres": [
+   "jazz",
+   "easy listening",
+   "vocal jazz",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Eddie Hodges": {
+  "country": "US",
+  "genres": [
+   "rock and roll"
+  ],
+  "via": "discogs"
+ },
+ "Eddy Grant": {
+  "country": null,
+  "genres": [
+   "pop",
+   "reggae"
+  ],
+  "via": "diccionario"
+ },
+ "Edoardo Vianello": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Elder Barber": {
+  "country": "ES",
+  "genres": [
+   "canción melódica"
+  ],
+  "via": "musicbrainz"
+ },
+ "Electric Light Orchestra": {
+  "country": null,
+  "genres": [
+   "progressive rock",
+   "art rock",
+   "pop rock",
+   "symphonic prog",
+   "symphonic rock",
+   "crossover prog",
+   "pop",
+   "progressive",
+   "progressive pop",
+   "rock",
+   "classic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Elsa Baeza": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Elton John": {
+  "country": null,
+  "genres": [
+   "pop",
+   "piano rock",
+   "pop rock",
+   "rock",
+   "singer-songwriter",
+   "rock and roll",
+   "soft rock",
+   "classic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Elvis Presley": {
+  "country": null,
+  "genres": [
+   "rock and roll",
+   "rockabilly",
+   "rock",
+   "country",
+   "pop",
+   "blues",
+   "blue-eyed soul",
+   "gospel",
+   "pop rock",
+   "r&b",
+   "christmas music",
+   "country rock",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Emilio José": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Emilio Pericoli": {
+  "country": "IT",
+  "genres": [
+   "musical",
+   "ballad",
+   "mambo"
+  ],
+  "via": "discogs"
+ },
+ "Emmanuel": {
+  "country": null,
+  "genres": [
+   "latin pop",
+   "canción melódica",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Ennio Morricone": {
+  "country": null,
+  "genres": [
+   "rock",
+   "classical",
+   "pop",
+   "jazz",
+   "avant-garde",
+   "modern classical",
+   "cinematic classical"
+  ],
+  "via": "diccionario"
+ },
+ "Ennio Sangiusto": {
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "samba"
+  ],
+  "via": "discogs"
+ },
+ "Enrique Guzman": {
+  "country": "MX",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Eric Carmen": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "ballad",
+   "soft rock",
+   "pop rock",
+   "aor"
+  ],
+  "via": "musicbrainz"
+ },
+ "Eric Clapton": {
+  "country": null,
+  "genres": [
+   "blues",
+   "blues rock",
+   "rock",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Eros Ramazzotti": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "ballad",
+   "soft rock",
+   "latin pop",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Eruption": {
+  "country": "GB",
+  "genres": [
+   "happy hardcore",
+   "breakbeat",
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Esther Phillips": {
+  "country": "US",
+  "genres": [
+   "funk",
+   "soul",
+   "disco",
+   "vocal jazz",
+   "r&b",
+   "country soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Europe": {
+  "country": null,
+  "genres": [
+   "hard rock",
+   "glam metal",
+   "heavy metal",
+   "rock",
+   "aor",
+   "arena rock",
+   "pop metal"
+  ],
+  "via": "diccionario"
+ },
+ "Eurythmics": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "synth-pop",
+   "pop",
+   "pop rock",
+   "art pop"
+  ],
+  "via": "diccionario"
+ },
+ "Evelyn Thomas": {
+  "country": "US",
+  "genres": [
+   "hi-nrg",
+   "disco",
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Eydie Gormé": {
+  "country": "US",
+  "genres": [
+   "swing",
+   "pop",
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "F.R. David": {
+  "country": "FR",
+  "genres": [
+   "house",
+   "dance-pop",
+   "europop",
+   "latin pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Falco": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "neue deutsche welle",
+   "new wave",
+   "pop rock",
+   "pop rap",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Fancy": {
+  "country": "DE",
+  "genres": [
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Fausto Leali": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Felipe Campuzano": {
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "latin jazz",
+   "rumba"
+  ],
+  "via": "discogs"
+ },
+ "Ferrante & Teicher": {
+  "country": null,
+  "genres": [
+   "easy listening"
+  ],
+  "via": "discogs"
+ },
+ "Fiordaliso": {
+  "country": "IT",
+  "genres": [
+   "europop",
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Foreigner": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "hard rock",
+   "classic rock",
+   "soft rock",
+   "acoustic rock",
+   "pop rock",
+   "arena rock",
+   "aor"
+  ],
+  "via": "musicbrainz"
+ },
+ "Formula V": {
+  "country": "ES",
+  "genres": [
+   "disco",
+   "electro",
+   "funk",
+   "pop",
+   "pop rock",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Francis Cabrel": {
+  "country": "FR",
+  "genres": [
+   "singer-songwriter",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Francisco": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Franck Pourcel": {
+  "country": "FR",
+  "genres": [
+   "latin pop",
+   "easy listening"
+  ],
+  "via": "musicbrainz"
+ },
+ "Franco Battiato": {
+  "country": "IT",
+  "genres": [
+   "rock",
+   "classical",
+   "pop",
+   "progressive rock",
+   "experimental",
+   "singer-songwriter",
+   "new wave",
+   "electro",
+   "opera",
+   "new age",
+   "experimental rock",
+   "pop rock",
+   "classical crossover",
+   "progressive electronic"
+  ],
+  "via": "musicbrainz"
+ },
+ "Frank Ifield": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "country",
+   "country pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Frank Sinatra": {
+  "country": null,
+  "genres": [
+   "jazz",
+   "swing",
+   "traditional pop",
+   "vocal jazz",
+   "big band",
+   "christmas music",
+   "easy listening",
+   "lounge",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Frank Stallone": {
+  "country": "US",
+  "genres": [
+   "pop rock",
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Frankie Avalon": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "swing",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Frankie Goes To Hollywood": {
+  "country": null,
+  "genres": [
+   "hi-nrg",
+   "synth-pop",
+   "dance-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Frankie Laine": {
+  "country": "US",
+  "genres": [
+   "western",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Frankie Valli": {
+  "country": null,
+  "genres": [
+   "pop",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Frankie Valli & The Four Seasons": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Françoise Hardy": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "chanson française",
+   "schlager",
+   "baroque pop",
+   "ballad",
+   "yé-yé"
+  ],
+  "via": "musicbrainz"
+ },
+ "Freddie Mercury": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "classical",
+   "pop",
+   "progressive rock",
+   "hard rock",
+   "synth-pop",
+   "disco",
+   "glam rock",
+   "classic rock",
+   "dance-pop",
+   "pop rock",
+   "rock and roll",
+   "classical crossover",
+   "neoclassicism"
+  ],
+  "via": "musicbrainz"
+ },
+ "Freeez": {
+  "country": "GB",
+  "genres": [
+   "funk",
+   "jazz-funk",
+   "brit funk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Frida": {
+  "country": "SE",
+  "genres": [
+   "pop",
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Future World Orchestra": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "disco",
+   "ambient"
+  ],
+  "via": "diccionario"
+ },
+ "Gabinete Caligari": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Gary Glitter": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "glam rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gary Low": {
+  "country": null,
+  "genres": [
+   "italo-disco"
+  ],
+  "via": "discogs"
+ },
+ "Gary's Gang": {
+  "country": "US",
+  "genres": [
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gazebo": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Gelu": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Gene Chandler": {
+  "country": "US",
+  "genres": [
+   "funk",
+   "soul",
+   "disco",
+   "doo-wop",
+   "r&b",
+   "chicago soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gene McDaniels": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "psychedelic soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gene Pitney": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "George Baker": {
+  "country": "NL",
+  "genres": [
+   "pop rock",
+   "schlager"
+  ],
+  "via": "discogs"
+ },
+ "George Chakiris": {
+  "country": "US",
+  "genres": [
+   "ballad",
+   "swing",
+   "big band",
+   "easy listening"
+  ],
+  "via": "discogs"
+ },
+ "George McCrae": {
+  "country": "US",
+  "genres": [
+   "pop soul",
+   "smooth soul",
+   "soul",
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "George Michael": {
+  "country": null,
+  "genres": [
+   "pop",
+   "blue-eyed soul",
+   "pop rock",
+   "pop soul",
+   "r&b",
+   "soul",
+   "ballad",
+   "contemporary r&b",
+   "dance-pop",
+   "dance-rock",
+   "jazz",
+   "smooth jazz",
+   "smooth soul",
+   "soft rock",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Georges Jouvin et son orchestre": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Georgie Dann": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "yé-yé",
+   "beat music",
+   "rock and roll",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Gerry & The Pacemakers": {
+  "country": null,
+  "genres": [
+   "beat music",
+   "pop rock",
+   "rock and roll",
+   "soft rock"
+  ],
+  "via": "discogs"
+ },
+ "Gianni Bella": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "ballad",
+   "soul",
+   "disco",
+   "europop"
+  ],
+  "via": "diccionario"
+ },
+ "Gianni Morandi": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gibson Brothers": {
+  "country": "FR",
+  "genres": [
+   "disco",
+   "rock and roll",
+   "soul"
+  ],
+  "via": "discogs"
+ },
+ "Gigliola Cinquetti": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Gilbert Bécaud": {
+  "country": "FR",
+  "genres": [
+   "singer-songwriter"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gilbert O'Sullivan": {
+  "country": null,
+  "genres": [
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Gino Paoli": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "musicbrainz"
+ },
+ "Glenn Frey": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gloria Gaynor": {
+  "country": null,
+  "genres": [
+   "disco",
+   "soul",
+   "dance-pop",
+   "philly soul",
+   "pop soul"
+  ],
+  "via": "diccionario"
+ },
+ "Gloria Lasso": {
+  "country": "ES",
+  "genres": [
+   "chanson française",
+   "canción melódica"
+  ],
+  "via": "musicbrainz"
+ },
+ "Golden Earring": {
+  "country": "NL",
+  "genres": [
+   "rock",
+   "progressive rock",
+   "new wave",
+   "hard rock",
+   "pop rock",
+   "nederbeat"
+  ],
+  "via": "musicbrainz"
+ },
+ "Golpes Bajos": {
+  "country": "ES",
+  "genres": [
+   "synth-pop",
+   "indie rock",
+   "pop rock",
+   "new wave",
+   "salsa",
+   "art rock"
+  ],
+  "via": "diccionario"
+ },
+ "Gonzalo": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Goombay Dance Band": {
+  "country": "DE",
+  "genres": [
+   "pop",
+   "europop",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Grace Jones": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "new wave",
+   "funk",
+   "soul",
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Green Windows": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "hard rock",
+   "folk rock",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Grover Washington, Jr.": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "jazz fusion",
+   "jazz-funk",
+   "contemporary jazz",
+   "soul jazz",
+   "smooth jazz",
+   "smooth soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Gérard Lenorman": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Haircut 100": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Harry Nilsson": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "singer-songwriter",
+   "baroque pop",
+   "psychedelic pop",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Helen Shapiro": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Herb Alpert & The Tijuana Brass": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "easy listening",
+   "lounge",
+   "jazz pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Hermanos Rigual": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Hervé Vilard": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Hombres G": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Hot Blood": {
+  "country": "DE",
+  "genres": [
+   "disco",
+   "latin"
+  ],
+  "via": "discogs"
+ },
+ "Hues Corporation": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Huey Lewis & The News": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "classic rock",
+   "aor",
+   "soft rock"
+  ],
+  "via": "discogs"
+ },
+ "Hugo Blanco": {
+  "country": "VE",
+  "genres": [
+   "latin"
+  ],
+  "via": "musicbrainz"
+ },
+ "I Santo California": {
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "disco",
+   "soft rock",
+   "symphonic rock",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Ike & Tina Turner": {
+  "country": null,
+  "genres": [
+   "soul",
+   "pop soul",
+   "blues",
+   "funk"
+  ],
+  "via": "diccionario"
+ },
+ "Imagination": {
+  "country": null,
+  "genres": [
+   "synth funk",
+   "pop soul",
+   "contemporary r&b",
+   "disco",
+   "funk"
+  ],
+  "via": "diccionario"
+ },
+ "Indeep": {
+  "country": null,
+  "genres": [
+   "funk",
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "Irene Cara": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "disco",
+   "dance-pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Iva Zanicchi": {
+  "country": "IT",
+  "genres": [
+   "tango",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Ivan": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Ivana Spagna": {
+  "country": "IT",
+  "genres": [
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Izhar Cohan": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Jackson Browne": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "folk",
+   "singer-songwriter"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jacqueline Boyer": {
+  "country": "FR",
+  "genres": [
+   "beat music"
+  ],
+  "via": "discogs"
+ },
+ "Jairo": {
+  "country": null,
+  "genres": [
+   "latin",
+   "folk",
+   "chacarera",
+   "chamamé"
+  ],
+  "via": "diccionario"
+ },
+ "Jakab Gyorgy": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "James Brown": {
+  "country": null,
+  "genres": [
+   "soul",
+   "funk",
+   "disco",
+   "blues",
+   "christmas music"
+  ],
+  "via": "diccionario"
+ },
+ "Jarcha": {
+  "country": "ES",
+  "genres": [
+   "folk",
+   "ballad",
+   "flamenco",
+   "poetry",
+   "copla"
+  ],
+  "via": "diccionario"
+ },
+ "Javier Krahe": {
+  "country": "ES",
+  "genres": [
+   "folk",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Jayme Marques": {
+  "country": null,
+  "genres": [
+   "mpb",
+   "latin jazz",
+   "jazz-funk",
+   "bossa nova",
+   "funk",
+   "swing"
+  ],
+  "via": "discogs"
+ },
+ "Jean-Claude Pascal": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Jean-Michel Jarre": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "ambient",
+   "berlin school"
+  ],
+  "via": "diccionario"
+ },
+ "Jeanette": {
+  "country": "ES",
+  "genres": [
+   "latin",
+   "latin ballad",
+   "latin pop"
+  ],
+  "via": "diccionario"
+ },
+ "Jeff Wayne": {
+  "country": "GB",
+  "genres": [
+   "progressive rock",
+   "symphonic rock",
+   "rock opera"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jennifer Rush": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jesse Green": {
+  "country": "JM",
+  "genres": [
+   "reggae",
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jim Diamond": {
+  "country": "GB",
+  "genres": [
+   "pop rock",
+   "ballad",
+   "synth-pop",
+   "reggae-pop",
+   "soft rock"
+  ],
+  "via": "discogs"
+ },
+ "Jimmy \"Bo\" Horne": {
+  "country": null,
+  "genres": [
+   "soul",
+   "funk",
+   "classic rock",
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Jimmy Fontana": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Joan Baez": {
+  "country": null,
+  "genres": [
+   "folk",
+   "americana",
+   "singer-songwriter",
+   "country",
+   "gospel",
+   "pop",
+   "rock",
+   "roots rock"
+  ],
+  "via": "diccionario"
+ },
+ "Joan Baptista Humet": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "poetry",
+   "folk",
+   "jazz-funk"
+  ],
+  "via": "diccionario"
+ },
+ "Joan Manuel Serrat": {
+  "country": "ES",
+  "genres": [
+   "contemporary folk",
+   "nova cançó",
+   "nueva canción",
+   "nueva canción española",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Joaquín Sabina": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "latin ballad",
+   "pop",
+   "pop rock",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Joe Bataan": {
+  "country": "US",
+  "genres": [
+   "salsa",
+   "latin",
+   "latin soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Joe Cocker": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Joe Dassin": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Joe Dolan": {
+  "country": "IE",
+  "genres": [
+   "ballad",
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "John Denver": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "folk",
+   "singer-songwriter",
+   "country",
+   "folk rock",
+   "country folk"
+  ],
+  "via": "musicbrainz"
+ },
+ "John Lennon": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "experimental",
+   "singer-songwriter",
+   "classic rock",
+   "pop rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "John Miles": {
+  "country": "GB",
+  "genres": [
+   "pop rock",
+   "soul"
+  ],
+  "via": "discogs"
+ },
+ "John Paul Young": {
+  "country": "AU",
+  "genres": [
+   "pop rock",
+   "disco",
+   "funk metal"
+  ],
+  "via": "discogs"
+ },
+ "John Travolta": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "disco",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "John Waite": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "John Williams": {
+  "country": "US",
+  "genres": [
+   "classical",
+   "jazz",
+   "orchestral",
+   "contemporary classical",
+   "modern classical",
+   "western classical",
+   "cinematic classical"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny & The Hurricanes": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Johnny Burnette": {
+  "country": "US",
+  "genres": [
+   "rockabilly",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny Hallyday": {
+  "country": null,
+  "genres": [
+   "rock and roll",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Johnny Horton": {
+  "country": "US",
+  "genres": [
+   "singer-songwriter",
+   "rockabilly",
+   "country",
+   "honky tonk",
+   "traditional country"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny Logan": {
+  "country": "IE",
+  "genres": [
+   "pop",
+   "ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny Thunder": {
+  "country": "US",
+  "genres": [
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny Tillotson": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "country",
+   "ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jorge Veiga": {
+  "country": "BR",
+  "genres": [
+   "samba"
+  ],
+  "via": "musicbrainz"
+ },
+ "José Augusto": {
+  "country": "BR",
+  "genres": [
+   "singer-songwriter",
+   "latin ballad",
+   "brega",
+   "mpb"
+  ],
+  "via": "musicbrainz"
+ },
+ "José Feliciano": {
+  "country": null,
+  "genres": [
+   "pop",
+   "latin pop",
+   "latin",
+   "folk pop",
+   "bolero",
+   "christmas music",
+   "latin soul"
+  ],
+  "via": "diccionario"
+ },
+ "José Guardiola": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "bolero",
+   "soft rock"
+  ],
+  "via": "discogs"
+ },
+ "José Luis Perales": {
+  "country": "ES",
+  "genres": [
+   "jazz",
+   "latin ballad",
+   "latin pop",
+   "trova"
+  ],
+  "via": "diccionario"
+ },
+ "José Luis Rodríguez": {
+  "country": "VE",
+  "genres": [
+   "pop",
+   "ballad",
+   "latin pop",
+   "latin",
+   "canción melódica",
+   "latin ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "José Velez": {
+  "country": "ES",
+  "genres": [
+   "latin",
+   "pop",
+   "latin pop",
+   "ballad",
+   "canción melódica",
+   "latin ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "João Gilberto": {
+  "country": null,
+  "genres": [
+   "bossa nova"
+  ],
+  "via": "diccionario"
+ },
+ "Juan Bau": {
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Juan Camacho": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "europop",
+   "soul",
+   "schlager"
+  ],
+  "via": "diccionario"
+ },
+ "Juan Carlos Calderón": {
+  "country": "ES",
+  "genres": [
+   "instrumental",
+   "easy listening",
+   "europop",
+   "disco",
+   "flamenco"
+  ],
+  "via": "discogs"
+ },
+ "Juan Erasmo Mochi": {
+  "country": "ES",
+  "genres": [
+   "beat music"
+  ],
+  "via": "discogs"
+ },
+ "Juan Pardo": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Julie Andrews": {
+  "country": "GB",
+  "genres": [
+   "christmas music"
+  ],
+  "via": "musicbrainz"
+ },
+ "Julio Iglesias": {
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "ballad",
+   "latin",
+   "latin ballad",
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Junior": {
+  "country": null,
+  "genres": [
+   "happy hardcore",
+   "uk garage",
+   "sertanejo",
+   "house",
+   "big beat"
+  ],
+  "via": "discogs"
+ },
+ "Jørgen Ingmann": {
+  "country": "DK",
+  "genres": [
+   "pop",
+   "jazz",
+   "easy listening",
+   "space age pop",
+   "dansktop"
+  ],
+  "via": "musicbrainz"
+ },
+ "KC & The Sunshine Band": {
+  "country": null,
+  "genres": [
+   "disco",
+   "funk",
+   "country rock"
+  ],
+  "via": "discogs"
+ },
+ "KISS": {
+  "country": null,
+  "genres": [
+   "hard rock",
+   "glam rock",
+   "glam metal",
+   "rock",
+   "classic rock",
+   "heavy metal",
+   "aor",
+   "arena rock",
+   "glam",
+   "pop rock",
+   "alternative metal",
+   "disco",
+   "grunge",
+   "metal"
+  ],
+  "via": "diccionario"
+ },
+ "Kajagoogoo": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "new wave",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Kansas": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "progressive rock",
+   "hard rock",
+   "folk rock",
+   "progressive",
+   "classic rock",
+   "soft rock",
+   "symphonic rock",
+   "aor",
+   "symphonic prog"
+  ],
+  "via": "musicbrainz"
+ },
+ "Karina": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "pop rock",
+   "yé-yé"
+  ],
+  "via": "diccionario"
+ },
+ "Kate Bush": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "new wave",
+   "art rock",
+   "baroque pop",
+   "pop rock",
+   "alternative pop",
+   "progressive pop",
+   "ambient pop",
+   "art pop",
+   "alternative rock",
+   "progressive rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Katrina & The Waves": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Kenny Ball": {
+  "country": "GB",
+  "genres": [
+   "dixieland",
+   "big band",
+   "swing"
+  ],
+  "via": "discogs"
+ },
+ "Kenny Loggins": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "singer-songwriter",
+   "soft rock",
+   "yacht rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Kenny Rogers": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "country"
+  ],
+  "via": "musicbrainz"
+ },
+ "Kent, Peter": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Kim Carnes": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "soft rock",
+   "pop rock",
+   "country pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Kool & The Gang": {
+  "country": null,
+  "genres": [
+   "funk",
+   "disco",
+   "jazz-funk",
+   "contemporary r&b",
+   "electronic",
+   "jazz",
+   "pop soul",
+   "soul",
+   "synth funk"
+  ],
+  "via": "diccionario"
+ },
+ "Kristian Conde": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "euro-disco"
+  ],
+  "via": "discogs"
+ },
+ "Kuldip": {
+  "country": null,
+  "genres": [
+   "soul jazz",
+   "bolero",
+   "ballad",
+   "musical",
+   "schlager"
+  ],
+  "via": "discogs"
+ },
+ "Kurtis Blow": {
+  "country": "US",
+  "genres": [
+   "electro",
+   "hip hop",
+   "pop rap",
+   "east coast hip hop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Kyu Sakamoto": {
+  "country": null,
+  "genres": [
+   "kayōkyoku"
+  ],
+  "via": "discogs"
+ },
+ "LOS NIKIS": {
+  "country": "ES",
+  "genres": [
+   "punk",
+   "pop rock",
+   "pop punk",
+   "rock and roll",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "La Bionda": {
+  "country": "IT",
+  "genres": [
+   "disco",
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "La Charanga Del Tío Honorio": {
+  "country": "ES",
+  "genres": [],
+  "via": "nada"
+ },
+ "La Decada Prodigiosa": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "ballad",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "La Trinca": {
+  "country": "ES",
+  "genres": [
+   "comedy"
+  ],
+  "via": "diccionario"
+ },
+ "La Unión": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "LaBelle": {
+  "country": "US",
+  "genres": [
+   "funk",
+   "soul",
+   "disco",
+   "pop soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lain": {
+  "country": "GB",
+  "genres": [],
+  "via": "nada"
+ },
+ "Laredo": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Las Grecas": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "flamenco",
+   "rumba",
+   "pop rock",
+   "funk",
+   "glam",
+   "psychedelic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Laura Branigan": {
+  "country": null,
+  "genres": [
+   "pop",
+   "ballad",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Laurent Voulzy": {
+  "country": null,
+  "genres": [
+   "chanson française",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Leif Garrett": {
+  "country": "US",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Leo Dan": {
+  "country": "AR",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "ballad",
+   "latin pop",
+   "latin",
+   "ranchera",
+   "latin ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Leo Sayer": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "disco",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Leonard Bernstein": {
+  "country": "US",
+  "genres": [
+   "classical"
+  ],
+  "via": "musicbrainz"
+ },
+ "Leonard Cohen": {
+  "country": "CA",
+  "genres": [
+   "rock",
+   "pop",
+   "folk",
+   "singer-songwriter",
+   "blues rock",
+   "poetry",
+   "contemporary folk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Les Chaussettes Noires": {
+  "country": "FR",
+  "genres": [
+   "rock and roll"
+  ],
+  "via": "discogs"
+ },
+ "Les Surfs": {
+  "country": null,
+  "genres": [
+   "yé-yé"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lesley Gore": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "sunshine pop",
+   "teen pop",
+   "brill building",
+   "bubblegum pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Level 42": {
+  "country": null,
+  "genres": [
+   "pop",
+   "new wave",
+   "funk",
+   "jazz fusion",
+   "jazz-funk",
+   "sophisti-pop",
+   "dance-rock"
+  ],
+  "via": "diccionario"
+ },
+ "Limahl": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "synth-pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lime": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "disco",
+   "dance-pop",
+   "hi-nrg"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lio": {
+  "country": "BE",
+  "genres": [
+   "electronic",
+   "pop",
+   "dance",
+   "synth-pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lionel Richie": {
+  "country": null,
+  "genres": [
+   "soul",
+   "contemporary r&b",
+   "r&b",
+   "pop",
+   "pop soul",
+   "smooth soul",
+   "country pop",
+   "disco",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Lipps Inc.": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Little Eva": {
+  "country": "US",
+  "genres": [
+   "brill building"
+  ],
+  "via": "musicbrainz"
+ },
+ "Little Peggy March": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Little Tony": {
+  "country": "SM",
+  "genres": [
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lluis Llach": {
+  "country": "ES",
+  "genres": [
+   "nueva canción",
+   "ballad",
+   "folk"
+  ],
+  "via": "diccionario"
+ },
+ "Lolita": {
+  "country": "AT",
+  "genres": [],
+  "via": "nada"
+ },
+ "Lone Star": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Lorenzo Santamaría": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Loretta Goggi": {
+  "country": "IT",
+  "genres": [
+   "baroque",
+   "easy listening",
+   "rock and roll",
+   "soul",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Los 3 Sudamericanos": {
+  "country": "PY",
+  "genres": [
+   "polka",
+   "guarania",
+   "bolero",
+   "charanga"
+  ],
+  "via": "discogs"
+ },
+ "Los 5 Latinos": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Los Amaya": {
+  "country": "ES",
+  "genres": [
+   "rumba catalana"
+  ],
+  "via": "musicbrainz"
+ },
+ "Los Angeles": {
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "merseybeat"
+  ],
+  "via": "diccionario"
+ },
+ "Los Bravos": {
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los Brincos": {
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los Chicos De La Bahía": {
+  "country": null,
+  "genres": [
+   "flamenco"
+  ],
+  "via": "discogs"
+ },
+ "Los Cinco Latinos": {
+  "country": "AR",
+  "genres": [
+   "rock",
+   "pop",
+   "rock and roll",
+   "latin pop",
+   "latin rock",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Los De La Torre": {
+  "country": null,
+  "genres": [
+   "ska",
+   "beat music",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Los Diablos": {
+  "country": "ES",
+  "genres": [
+   "beat music",
+   "pop",
+   "pop rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los Elegantes": {
+  "country": "ES",
+  "genres": [
+   "mod",
+   "pop rock",
+   "power pop"
+  ],
+  "via": "diccionario"
+ },
+ "Los H.H.": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Los Indios Tabajaras": {
+  "country": "BR",
+  "genres": [
+   "folk",
+   "latin jazz",
+   "easy listening"
+  ],
+  "via": "discogs"
+ },
+ "Los Inhumanos": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Los Llopis": {
+  "country": "CU",
+  "genres": [
+   "rock and roll",
+   "bolero",
+   "rockabilly",
+   "guaracha",
+   "pachanga"
+  ],
+  "via": "discogs"
+ },
+ "Los Machucambos": {
+  "country": "FR",
+  "genres": [
+   "samba",
+   "rumba"
+  ],
+  "via": "discogs"
+ },
+ "Los Marcellos Ferial": {
+  "country": "IT",
+  "genres": [],
+  "via": "nada"
+ },
+ "Los Milos": {
+  "country": null,
+  "genres": [
+   "rock and roll"
+  ],
+  "via": "discogs"
+ },
+ "Los Mustang": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Los Pekenikes": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "baroque pop",
+   "instrumental"
+  ],
+  "via": "diccionario"
+ },
+ "Los Puntos": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "ballad",
+   "psychedelic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los Pájaros Locos": {
+  "country": "ES",
+  "genres": [
+   "rock and roll",
+   "ballad",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Los Relámpagos": {
+  "country": "ES",
+  "genres": [
+   "instrumental rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Los Salvajes": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Los Sirex": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "beat music",
+   "rock and roll",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los TNT": {
+  "country": "PE",
+  "genres": [
+   "yé-yé",
+   "doo-wop"
+  ],
+  "via": "discogs"
+ },
+ "Los Tamara": {
+  "country": "ES",
+  "genres": [
+   "rumba",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Los Teen Tops": {
+  "country": "MX",
+  "genres": [
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Los Top-Son": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Los Toreros Muertos": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "ska",
+   "funk",
+   "disco",
+   "punk"
+  ],
+  "via": "diccionario"
+ },
+ "Lucho Gatica": {
+  "country": "CL",
+  "genres": [
+   "latin",
+   "bolero"
+  ],
+  "via": "musicbrainz"
+ },
+ "Lucia": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "downtempo",
+   "pop rock",
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "Luciano Tajoli": {
+  "country": "IT",
+  "genres": [
+   "tango"
+  ],
+  "via": "discogs"
+ },
+ "Lucio Battisti": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Luis Aguile": {
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Luis Cobos": {
+  "country": "ES",
+  "genres": [
+   "folk",
+   "zarzuela",
+   "europop",
+   "ska",
+   "easy listening"
+  ],
+  "via": "diccionario"
+ },
+ "Luis Eduardo Aute": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "folk"
+  ],
+  "via": "diccionario"
+ },
+ "Luis Fierro": {
+  "country": null,
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Luis Gardey": {
+  "country": null,
+  "genres": [
+   "yé-yé"
+  ],
+  "via": "discogs"
+ },
+ "Luis Miguel": {
+  "country": null,
+  "genres": [
+   "pop",
+   "ballad",
+   "latin",
+   "bolero",
+   "ranchera",
+   "canción melódica",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Luna": {
+  "country": "US",
+  "genres": [
+   "indie rock",
+   "indie pop",
+   "dream pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Luz Casal": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Lynyrd Skynyrd": {
+  "country": null,
+  "genres": [
+   "southern rock",
+   "hard rock",
+   "rock",
+   "acoustic rock",
+   "blues rock",
+   "boogie rock",
+   "classic rock"
+  ],
+  "via": "diccionario"
+ },
+ "MC Miker G": {
+  "country": "NL",
+  "genres": [
+   "electro",
+   "house",
+   "pop rap",
+   "disco",
+   "euro house",
+   "boogie",
+   "contemporary r&b",
+   "hip house"
+  ],
+  "via": "discogs"
+ },
+ "MFSB": {
+  "country": "US",
+  "genres": [
+   "philly soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Mabel": {
+  "country": null,
+  "genres": [
+   "electropop",
+   "contemporary r&b",
+   "pop",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Madness": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "pop",
+   "punk",
+   "ska",
+   "new wave",
+   "psychedelic pop",
+   "pop rock",
+   "2 tone",
+   "sophisti-pop",
+   "zolo"
+  ],
+  "via": "musicbrainz"
+ },
+ "Madonna": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "art pop",
+   "electropop",
+   "contemporary r&b",
+   "synth-pop",
+   "electronic",
+   "electronica",
+   "jazz",
+   "pop rock",
+   "bubblegum pop",
+   "club",
+   "country pop",
+   "easy listening",
+   "edm",
+   "new wave",
+   "trip hop"
+  ],
+  "via": "diccionario"
+ },
+ "Manfred Mann": {
+  "country": null,
+  "genres": [
+   "beat music",
+   "pop",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Manolo Galvan": {
+  "country": "AR",
+  "genres": [
+   "latin ballad",
+   "latin",
+   "latin pop",
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Manolo Gas & The Tinto Band Bang": {
+  "country": null,
+  "genres": [
+   "disco",
+   "funk"
+  ],
+  "via": "discogs"
+ },
+ "Manolo Otero": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Manolo Sanlucar": {
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ],
+  "via": "diccionario"
+ },
+ "Manzanita": {
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ],
+  "via": "diccionario"
+ },
+ "Mari Cruz Soriano": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "instrumental"
+  ],
+  "via": "discogs"
+ },
+ "Mari Trini": {
+  "country": "ES",
+  "genres": [
+   "canción melódica",
+   "latin ballad",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Maria Ostiz": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Marie Laforêt": {
+  "country": "FR",
+  "genres": [],
+  "via": "nada"
+ },
+ "Marisol": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "flamenco",
+   "rumba",
+   "copla",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Martinho Da Vila": {
+  "country": "BR",
+  "genres": [
+   "samba",
+   "mpb",
+   "batucada"
+  ],
+  "via": "discogs"
+ },
+ "Marty Robbins": {
+  "country": "US",
+  "genres": [
+   "country"
+  ],
+  "via": "musicbrainz"
+ },
+ "Marvin Gaye": {
+  "country": null,
+  "genres": [
+   "soul",
+   "funk",
+   "smooth soul",
+   "motown",
+   "pop soul",
+   "contemporary r&b",
+   "progressive soul"
+  ],
+  "via": "diccionario"
+ },
+ "Mary MacGregor": {
+  "country": "US",
+  "genres": [
+   "ballad",
+   "folk rock",
+   "country rock",
+   "soft rock"
+  ],
+  "via": "discogs"
+ },
+ "Mary Wells": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "motown",
+   "pop soul",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "María Jiménez": {
+  "country": "ES",
+  "genres": [
+   "latin",
+   "rumba flamenca",
+   "flamenco"
+  ],
+  "via": "diccionario"
+ },
+ "Massiel": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "beat music"
+  ],
+  "via": "diccionario"
+ },
+ "Matia Bazar": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "disco",
+   "ballad",
+   "funk",
+   "synth-pop",
+   "europop",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Matt Bianco": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "jazz",
+   "soul",
+   "bossa nova",
+   "latin jazz",
+   "sophisti-pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Maurice Jarre": {
+  "country": "FR",
+  "genres": [
+   "comedy",
+   "musical"
+  ],
+  "via": "discogs"
+ },
+ "Mecano": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Meco": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Mel Brooks": {
+  "country": "US",
+  "genres": [
+   "musical",
+   "comedy",
+   "pop rap",
+   "funk"
+  ],
+  "via": "discogs"
+ },
+ "Miami Sound Machine": {
+  "country": "US",
+  "genres": [
+   "dance-pop",
+   "pop",
+   "latin pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Michael Jackson": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "disco",
+   "contemporary r&b",
+   "pop soul",
+   "soul",
+   "r&b",
+   "new jack swing",
+   "pop rock",
+   "boogie",
+   "dance",
+   "hip hop",
+   "pop rap"
+  ],
+  "via": "diccionario"
+ },
+ "Michael Sembello": {
+  "country": null,
+  "genres": [
+   "pop",
+   "synth-pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Michel Polnareff": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "chanson française",
+   "baroque pop",
+   "singer-songwriter",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Micky": {
+  "country": "ES",
+  "genres": [
+   "latin",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Miguel Angel": {
+  "country": "MX",
+  "genres": [
+   "pop",
+   "latin pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Miguel Bosé": {
+  "country": "ES",
+  "genres": [
+   "latin",
+   "pop",
+   "ballad",
+   "latin ballad",
+   "latin pop"
+  ],
+  "via": "diccionario"
+ },
+ "Miguel Gallardo": {
+  "country": "ES",
+  "genres": [
+   "singer-songwriter",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Miguel Ríos": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll",
+   "pop rock",
+   "rockabilly",
+   "beat music",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Mike Oldfield": {
+  "country": null,
+  "genres": [
+   "rock",
+   "electronic",
+   "classical",
+   "progressive rock",
+   "ambient",
+   "experimental",
+   "folk rock",
+   "new age",
+   "avant-garde",
+   "folk pop",
+   "crossover prog",
+   "experimental electronic",
+   "progressive pop"
+  ],
+  "via": "diccionario"
+ },
+ "Millie Small": {
+  "country": "JM",
+  "genres": [
+   "ska",
+   "reggae"
+  ],
+  "via": "discogs"
+ },
+ "Milva": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "jazz",
+   "chanson française",
+   "schlager",
+   "ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Mina": {
+  "country": null,
+  "genres": [
+   "pop",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Minnie Riperton": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Miquel Brown": {
+  "country": "CA",
+  "genres": [
+   "soul",
+   "disco",
+   "hi-nrg",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Missing Persons": {
+  "country": "US",
+  "genres": [
+   "new wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "Mitch Miller": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Mitch Miller & His Orchestra & Chorus": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Mocedades": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "canción melódica",
+   "folk",
+   "folk pop"
+  ],
+  "via": "diccionario"
+ },
+ "Modern Talking": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "eurodance",
+   "europop",
+   "electro-disco",
+   "euro-disco",
+   "hi-nrg",
+   "pop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Monna Bell": {
+  "country": "CL",
+  "genres": [
+   "bolero",
+   "rock and roll",
+   "samba",
+   "latin jazz",
+   "easy listening"
+  ],
+  "via": "discogs"
+ },
+ "Morris Albert": {
+  "country": null,
+  "genres": [
+   "pop",
+   "easy listening",
+   "smooth jazz"
+  ],
+  "via": "diccionario"
+ },
+ "Mr. Mister": {
+  "country": null,
+  "genres": [
+   "rock",
+   "new wave",
+   "synth-pop",
+   "soft rock",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Murray Head": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "singer-songwriter",
+   "new wave",
+   "baroque pop",
+   "dance-pop",
+   "pop rock",
+   "rock opera"
+  ],
+  "via": "musicbrainz"
+ },
+ "Musical Youth": {
+  "country": null,
+  "genres": [
+   "reggae-pop",
+   "reggae"
+  ],
+  "via": "diccionario"
+ },
+ "My Mine": {
+  "country": "IT",
+  "genres": [
+   "electro-disco",
+   "synth-pop",
+   "disco",
+   "pop",
+   "italo-disco",
+   "electronic"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nacha Guevara": {
+  "country": "AR",
+  "genres": [
+   "ballad",
+   "music hall",
+   "musical",
+   "vaudeville"
+  ],
+  "via": "discogs"
+ },
+ "Nana Mouskouri": {
+  "country": "GR",
+  "genres": [
+   "jazz",
+   "easy listening",
+   "folk",
+   "classical"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nancy Sinatra": {
+  "country": null,
+  "genres": [
+   "pop",
+   "classic rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Nat King Cole": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "easy listening",
+   "swing",
+   "vocal jazz",
+   "traditional pop",
+   "christmas music",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Neil Diamond": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "singer-songwriter",
+   "baroque pop",
+   "soft rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Neil Sedaka": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "soft rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nelson Ned": {
+  "country": "BR",
+  "genres": [
+   "singer-songwriter",
+   "brega",
+   "bolero",
+   "latin ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nena": {
+  "country": null,
+  "genres": [
+   "pop",
+   "neue deutsche welle",
+   "new wave",
+   "pop rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "New Trolls": {
+  "country": null,
+  "genres": [
+   "pop",
+   "progressive rock",
+   "psychedelic rock",
+   "pop rock",
+   "jazz fusion",
+   "symphonic prog"
+  ],
+  "via": "diccionario"
+ },
+ "Nico Fidenco": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nicola Di Bari": {
+  "country": "IT",
+  "genres": [
+   "ballad",
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nicole": {
+  "country": "DE",
+  "genres": [
+   "pop",
+   "folk",
+   "easy listening",
+   "schlager"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nik Kershaw": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "new wave",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nikka Costa": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Nina & Frederik": {
+  "country": "DK",
+  "genres": [
+   "pop",
+   "easy listening",
+   "dansktop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nino Bravo": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Nino de Angelo": {
+  "country": "DE",
+  "genres": [
+   "schlager",
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nydia Caro": {
+  "country": "US",
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Objetivo Birmania": {
+  "country": "ES",
+  "genres": [
+   "synth-pop",
+   "pop rock",
+   "latin",
+   "funk"
+  ],
+  "via": "diccionario"
+ },
+ "Ole Ole": {
+  "country": "ES",
+  "genres": [
+   "synth-pop",
+   "latin",
+   "disco",
+   "europop"
+  ],
+  "via": "diccionario"
+ },
+ "Oliver Onions": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Olivia Newton-John": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "folk",
+   "soul",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Ollie & Jerry": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Opus": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Orchestral Manoeuvres In The Dark": {
+  "country": "GB",
+  "genres": [
+   "electronic",
+   "pop",
+   "post-punk",
+   "new wave",
+   "synth-pop",
+   "dance-pop",
+   "alternative dance",
+   "minimal synth",
+   "art pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ornella Vanoni": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Orquesta Mondragon": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "synth-pop",
+   "new wave",
+   "post-punk"
+  ],
+  "via": "diccionario"
+ },
+ "Orquestra Plateria": {
+  "country": null,
+  "genres": [
+   "mambo",
+   "salsa",
+   "rock and roll",
+   "bolero"
+  ],
+  "via": "discogs"
+ },
+ "Otis Redding": {
+  "country": null,
+  "genres": [
+   "soul",
+   "deep soul",
+   "southern soul",
+   "r&b",
+   "blues",
+   "blues rock",
+   "psychedelic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Ottawan": {
+  "country": null,
+  "genres": [
+   "disco",
+   "heavy metal"
+  ],
+  "via": "diccionario"
+ },
+ "P. Lion": {
+  "country": "IT",
+  "genres": [
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pablo Abraira": {
+  "country": "ES",
+  "genres": [
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Pablo Milanés": {
+  "country": "CU",
+  "genres": [
+   "singer-songwriter",
+   "nueva trova"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paco Revuelta": {
+  "country": null,
+  "genres": [
+   "nueva canción"
+  ],
+  "via": "discogs"
+ },
+ "Paco de Lucía": {
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "flamenco jazz",
+   "jazz",
+   "latin jazz",
+   "modern classical"
+  ],
+  "via": "diccionario"
+ },
+ "Palito Ortega": {
+  "country": "AR",
+  "genres": [
+   "rock and roll",
+   "latin jazz",
+   "mambo",
+   "beat music",
+   "surf",
+   "ballad",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Paloma San Basilio": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "canción melódica",
+   "latin ballad",
+   "latin pop"
+  ],
+  "via": "diccionario"
+ },
+ "Pamala Stanley": {
+  "country": null,
+  "genres": [
+   "disco",
+   "hi-nrg",
+   "soul",
+   "ballad",
+   "electro",
+   "synth-pop"
+  ],
+  "via": "discogs"
+ },
+ "Pantalones Azules": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Paolo Salvatore": {
+  "country": null,
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Paper Lace": {
+  "country": "GB",
+  "genres": [
+   "power pop",
+   "folk rock",
+   "glam rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pat Boone": {
+  "country": "US",
+  "genres": [
+   "ballad",
+   "lounge",
+   "rock and roll",
+   "traditional pop",
+   "pop",
+   "easy listening"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pato De Goma": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Patrick Hernandez": {
+  "country": null,
+  "genres": [
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "Patrick Juvet": {
+  "country": "CH",
+  "genres": [],
+  "via": "nada"
+ },
+ "Patxi Andion": {
+  "country": "ES",
+  "genres": [
+   "folk",
+   "nueva canción"
+  ],
+  "via": "diccionario"
+ },
+ "Paul & Paula": {
+  "country": "US",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paul Anka": {
+  "country": "CA",
+  "genres": [
+   "pop",
+   "jazz",
+   "vocal jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paul Anka et son orchestre": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Paul Hardcastle": {
+  "country": "GB",
+  "genres": [
+   "electronic",
+   "electro",
+   "electronica",
+   "boogie",
+   "smooth jazz",
+   "electro-funk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paul McCartney": {
+  "country": null,
+  "genres": [
+   "rock",
+   "classical",
+   "pop",
+   "folk",
+   "singer-songwriter",
+   "soft rock",
+   "pop rock",
+   "rock and roll",
+   "pop soul",
+   "western classical"
+  ],
+  "via": "diccionario"
+ },
+ "Paul Simon": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "folk",
+   "singer-songwriter",
+   "folk rock",
+   "pop rock",
+   "contemporary folk",
+   "folk pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paul Young": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "pop",
+   "soul",
+   "soft rock",
+   "pop rock",
+   "blue-eyed soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Peaches & Herb": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Pecos": {
+  "country": "ES",
+  "genres": [
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Pedro Marin": {
+  "country": "ES",
+  "genres": [
+   "disco",
+   "ballad",
+   "synth-pop",
+   "europop"
+  ],
+  "via": "diccionario"
+ },
+ "Pepe Domingo Castaño": {
+  "country": "ES",
+  "genres": [],
+  "via": "nada"
+ },
+ "Peppino Di Capri": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "canzone napoletana"
+  ],
+  "via": "musicbrainz"
+ },
+ "Perry Como": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "jazz",
+   "easy listening",
+   "country",
+   "swing",
+   "rock and roll",
+   "big band",
+   "latin",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pet Shop Boys": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "pop",
+   "electronic",
+   "electropop",
+   "house",
+   "dance-pop",
+   "disco",
+   "art pop",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Peter And Gordon": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Peter Frampton": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "hard rock",
+   "pop rock",
+   "aor"
+  ],
+  "via": "musicbrainz"
+ },
+ "Petula Clark": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "sunshine pop",
+   "vocal jazz"
+  ],
+  "via": "diccionario"
+ },
+ "Phil Collins": {
+  "country": null,
+  "genres": [
+   "soft rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "aor",
+   "art pop",
+   "easy listening",
+   "pop soul",
+   "progressive pop",
+   "progressive rock",
+   "sophisti-pop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Phil Fearon": {
+  "country": "GB",
+  "genres": [
+   "synth-pop",
+   "disco",
+   "dance-pop",
+   "funk",
+   "euro house"
+  ],
+  "via": "discogs"
+ },
+ "Phil Trim": {
+  "country": null,
+  "genres": [
+   "disco",
+   "soul",
+   "ballad",
+   "funk",
+   "flamenco"
+  ],
+  "via": "discogs"
+ },
+ "Philip Bailey": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "gospel",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Phoebe Cates": {
+  "country": "US",
+  "genres": [
+   "ballad",
+   "pop rock",
+   "synth-pop"
+  ],
+  "via": "discogs"
+ },
+ "Pigbag": {
+  "country": null,
+  "genres": [
+   "instrumental",
+   "post-punk",
+   "new wave",
+   "instrumental rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pimpinela": {
+  "country": "AR",
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Pink Floyd": {
+  "country": null,
+  "genres": [
+   "progressive rock",
+   "psychedelic rock",
+   "rock",
+   "art rock",
+   "space rock",
+   "progressive",
+   "rock opera",
+   "classic rock",
+   "psychedelic",
+   "blues rock",
+   "acid rock",
+   "experimental rock",
+   "psychedelic pop",
+   "symphonic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Pink Project": {
+  "country": "IT",
+  "genres": [
+   "italo-disco",
+   "disco",
+   "synth-pop",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Pino D'Angiò": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "electro-disco",
+   "euro-disco"
+  ],
+  "via": "diccionario"
+ },
+ "Pino Donaggio": {
+  "country": "IT",
+  "genres": [],
+  "via": "nada"
+ },
+ "Pistones": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "power pop"
+  ],
+  "via": "diccionario"
+ },
+ "Plastic Bertrand": {
+  "country": "BE",
+  "genres": [
+   "rock",
+   "punk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Platino": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Pretenders": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "pop",
+   "punk",
+   "punk rock",
+   "new wave",
+   "hard rock",
+   "jangle pop",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Prince": {
+  "country": null,
+  "genres": [
+   "funk",
+   "pop",
+   "contemporary r&b",
+   "rock",
+   "funk rock",
+   "neo-psychedelia",
+   "r&b",
+   "soul",
+   "synth funk",
+   "dance-pop",
+   "minneapolis sound",
+   "pop rock",
+   "psychedelic soul",
+   "afro house",
+   "club",
+   "dance",
+   "dance-rock",
+   "deep house",
+   "disco",
+   "future bass",
+   "house",
+   "jazz",
+   "organic house",
+   "pop soul",
+   "psychedelic pop",
+   "trap"
+  ],
+  "via": "diccionario"
+ },
+ "Propaganda": {
+  "country": "DE",
+  "genres": [
+   "synth-pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pussycat": {
+  "country": "NL",
+  "genres": [
+   "pop",
+   "country pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Queen": {
+  "country": null,
+  "genres": [
+   "rock",
+   "glam rock",
+   "hard rock",
+   "art rock",
+   "pop rock",
+   "classic rock",
+   "symphonic rock",
+   "progressive rock",
+   "baroque pop",
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "Quilapayún": {
+  "country": "CL",
+  "genres": [
+   "contemporary folk",
+   "nueva canción",
+   "nueva canción chilena"
+  ],
+  "via": "musicbrainz"
+ },
+ "Quincy Jones": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "soul",
+   "swing",
+   "crossover jazz",
+   "big band",
+   "jazz pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Radio Futura": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "pop rock",
+   "new wave",
+   "alternative rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Raf": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "ballad",
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Raffaella Carrà": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "disco",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Raimon": {
+  "country": "ES",
+  "genres": [
+   "nova cançó"
+  ],
+  "via": "diccionario"
+ },
+ "Rainbow": {
+  "country": null,
+  "genres": [
+   "rock",
+   "progressive rock",
+   "heavy metal",
+   "metal",
+   "hard rock",
+   "classic rock",
+   "pop rock",
+   "aor"
+  ],
+  "via": "diccionario"
+ },
+ "Ramoncin": {
+  "country": "ES",
+  "genres": [
+   "punk",
+   "new wave",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Ramón Riva": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "classic rock",
+   "ranchera"
+  ],
+  "via": "discogs"
+ },
+ "Raphael": {
+  "country": "ES",
+  "genres": [
+   "latin ballad",
+   "canción melódica",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Ray Charles": {
+  "country": null,
+  "genres": [
+   "jazz",
+   "soul",
+   "blues",
+   "r&b",
+   "jazz blues"
+  ],
+  "via": "diccionario"
+ },
+ "Ray Conniff": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "easy listening"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ray Parker Jr.": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "pop soul",
+   "contemporary r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ray Peterson": {
+  "country": "US",
+  "genres": [
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Real Life": {
+  "country": null,
+  "genres": [
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Red de San Luis": {
+  "country": null,
+  "genres": [
+   "europop",
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Redbone": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "funk rock",
+   "pop rock",
+   "rock and roll",
+   "swamp rock",
+   "blues rock",
+   "pop soul"
+  ],
+  "via": "diccionario"
+ },
+ "Renée & Renato": {
+  "country": "GB",
+  "genres": [
+   "ballad",
+   "boogie",
+   "disco",
+   "funk"
+  ],
+  "via": "discogs"
+ },
+ "Ricardo Cocciante": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Riccardo Cocciante": {
+  "country": "IT",
+  "genres": [
+   "rock",
+   "pop",
+   "chanson française",
+   "soft rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ricchi E Poveri": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Richard Anthony": {
+  "country": null,
+  "genres": [
+   "chanson française",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Richard Clayderman": {
+  "country": "FR",
+  "genres": [
+   "instrumental",
+   "easy listening"
+  ],
+  "via": "musicbrainz"
+ },
+ "Richie Havens": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "folk",
+   "singer-songwriter",
+   "funk",
+   "folk rock",
+   "soul",
+   "contemporary folk",
+   "pop soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ricky Nelson": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Righeira": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Ringo Starr": {
+  "country": "GB",
+  "genres": [
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Rita Lee": {
+  "country": "BR",
+  "genres": [
+   "rock",
+   "pop rock",
+   "tropicália"
+  ],
+  "via": "musicbrainz"
+ },
+ "Rita Pavone": {
+  "country": null,
+  "genres": [
+   "yé-yé",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Robert Jeantal": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Robert Palmer": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "hard rock",
+   "blues rock",
+   "blue-eyed soul"
+  ],
+  "via": "diccionario"
+ },
+ "Roberta Flack": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "house",
+   "soul",
+   "quiet storm",
+   "pop soul",
+   "smooth soul",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Roberto Carlos": {
+  "country": null,
+  "genres": [
+   "jovem guarda"
+  ],
+  "via": "diccionario"
+ },
+ "Robin Gibb": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "pop rock",
+   "baroque pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Rocco Granata": {
+  "country": "BE",
+  "genres": [
+   "pop",
+   "schlager"
+  ],
+  "via": "musicbrainz"
+ },
+ "Rockwell": {
+  "country": "US",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Rocky Sharpe & The Replays": {
+  "country": "GB",
+  "genres": [
+   "rock and roll",
+   "doo-wop",
+   "pop rock",
+   "power pop"
+  ],
+  "via": "discogs"
+ },
+ "Rocío Dúrcal": {
+  "country": "ES",
+  "genres": [
+   "pop",
+   "ranchera",
+   "canción melódica",
+   "latin"
+  ],
+  "via": "diccionario"
+ },
+ "Rocío Jurado": {
+  "country": "ES",
+  "genres": [
+   "copla",
+   "flamenco",
+   "latin",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Rod Stewart": {
+  "country": null,
+  "genres": [
+   "rock",
+   "blues rock",
+   "pop rock",
+   "pop",
+   "soft rock",
+   "folk rock",
+   "roots rock"
+  ],
+  "via": "diccionario"
+ },
+ "Roger Hodgson": {
+  "country": "GB",
+  "genres": [
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Roque Narvaja": {
+  "country": "AR",
+  "genres": [
+   "folk rock",
+   "folk",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Rosa León": {
+  "country": null,
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Rosendo": {
+  "country": "ES",
+  "genres": [
+   "hard rock",
+   "blues rock",
+   "rock",
+   "rock and roll",
+   "rock urbano"
+  ],
+  "via": "diccionario"
+ },
+ "Roxy Music": {
+  "country": null,
+  "genres": [
+   "glam rock",
+   "art rock"
+  ],
+  "via": "diccionario"
+ },
+ "Roy Clark": {
+  "country": "US",
+  "genres": [
+   "country"
+  ],
+  "via": "musicbrainz"
+ },
+ "Roy Etzel": {
+  "country": "DE",
+  "genres": [
+   "easy listening",
+   "instrumental",
+   "schlager",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Roy Orbison": {
+  "country": null,
+  "genres": [
+   "rockabilly",
+   "pop",
+   "pop rock",
+   "rock and roll",
+   "rock",
+   "blue-eyed soul",
+   "classic rock",
+   "country",
+   "country pop",
+   "folk rock",
+   "singer-songwriter",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Royal Philharmonic Orchestra conducted by Louis Clark": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Rubi": {
+  "country": "DE",
+  "genres": [],
+  "via": "nada"
+ },
+ "Ruby And The Romantics": {
+  "country": null,
+  "genres": [
+   "soul",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Rudy Ventura": {
+  "country": "ES",
+  "genres": [
+   "easy listening",
+   "folk",
+   "ballad",
+   "instrumental"
+  ],
+  "via": "discogs"
+ },
+ "Rumba Tres": {
+  "country": "ES",
+  "genres": [
+   "rumba",
+   "flamenco"
+  ],
+  "via": "discogs"
+ },
+ "Ryan Paris": {
+  "country": null,
+  "genres": [
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sacha Distel": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "jazz",
+   "chanson française"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sade": {
+  "country": null,
+  "genres": [
+   "smooth jazz",
+   "contemporary r&b",
+   "jazz pop",
+   "soul",
+   "smooth soul",
+   "sophisti-pop",
+   "jazz",
+   "trip hop",
+   "downtempo",
+   "pop",
+   "quiet storm"
+  ],
+  "via": "diccionario"
+ },
+ "Sally Oldfield": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "folk",
+   "singer-songwriter",
+   "new age",
+   "pop rock",
+   "folk pop",
+   "art pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Salomé": {
+  "country": "ES",
+  "genres": [
+   "copla",
+   "pop",
+   "yé-yé"
+  ],
+  "via": "diccionario"
+ },
+ "Salvatore Adamo": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Sandie Shaw": {
+  "country": null,
+  "genres": [
+   "beat music",
+   "pop",
+   "yé-yé"
+  ],
+  "via": "diccionario"
+ },
+ "Sandra": {
+  "country": null,
+  "genres": [
+   "pop",
+   "euro-disco",
+   "eurodance",
+   "europop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Sandro Giacobbe": {
+  "country": null,
+  "genres": [
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Santa Esmeralda": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "funk",
+   "disco",
+   "latin disco",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Santabarbara": {
+  "country": "ES",
+  "genres": [
+   "soft rock",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Santana": {
+  "country": null,
+  "genres": [
+   "rock",
+   "jazz",
+   "hard rock",
+   "jazz rock",
+   "psychedelic rock",
+   "blues rock",
+   "classic rock",
+   "pop rock",
+   "jazz fusion",
+   "latin rock",
+   "latin"
+  ],
+  "via": "diccionario"
+ },
+ "Serge Gainsbourg": {
+  "country": null,
+  "genres": [
+   "yé-yé",
+   "pop",
+   "chanson à texte"
+  ],
+  "via": "diccionario"
+ },
+ "Sergio Mendes & Brasil '66": {
+  "country": "BR",
+  "genres": [
+   "jazz",
+   "easy listening",
+   "lounge",
+   "latin",
+   "latin jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sergio Y Estibaliz": {
+  "country": "ES",
+  "genres": [
+   "folk pop",
+   "latin ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Sgt. Barry Sadler": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Shakatak": {
+  "country": "GB",
+  "genres": [
+   "jazz fusion",
+   "jazz-funk",
+   "smooth jazz",
+   "brit funk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Shaun Cassidy": {
+  "country": "US",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Sheena Easton": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "dance",
+   "country",
+   "ballad",
+   "contemporary r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sheila": {
+  "country": "FR",
+  "genres": [
+   "disco",
+   "pop",
+   "yé-yé"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sheila & B. Devotion": {
+  "country": "FR",
+  "genres": [
+   "disco",
+   "space disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sidney Bechet": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "swing",
+   "dixieland",
+   "new orleans r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sigue Sigue Sputnik": {
+  "country": null,
+  "genres": [
+   "post-punk",
+   "new wave",
+   "electronica",
+   "glam punk"
+  ],
+  "via": "diccionario"
+ },
+ "Silver Convention": {
+  "country": "DE",
+  "genres": [
+   "disco",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Silver Pozzoli": {
+  "country": "IT",
+  "genres": [
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Silvie Vartan": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Simon & Garfunkel": {
+  "country": null,
+  "genres": [
+   "folk rock",
+   "folk",
+   "folk pop",
+   "rock",
+   "singer-songwriter",
+   "contemporary folk",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Simple Minds": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "rock",
+   "electronic",
+   "post-punk",
+   "art rock",
+   "pop rock",
+   "glam rock",
+   "pop",
+   "soft rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Sisa": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Smokie": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "pop",
+   "glam rock",
+   "soft rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sniff 'n' The Tears": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "power pop",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Soft Cell": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "electronic",
+   "minimal synth",
+   "new wave",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Space": {
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "techno",
+   "synth-pop",
+   "neo-psychedelia",
+   "alternative dance",
+   "trip hop",
+   "space age pop",
+   "sampledelia",
+   "cocktail nation"
+  ],
+  "via": "musicbrainz"
+ },
+ "Spandau Ballet": {
+  "country": null,
+  "genres": [
+   "pop",
+   "new wave",
+   "dance-pop",
+   "pop rock",
+   "blue-eyed soul",
+   "new romantic",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Spargo": {
+  "country": "NL",
+  "genres": [
+   "europop",
+   "disco",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Stan Getz": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "bossa nova",
+   "bebop",
+   "cool jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Stars On 45": {
+  "country": null,
+  "genres": [
+   "disco",
+   "pop rock",
+   "synth-pop",
+   "ballad",
+   "rock and roll",
+   "classic rock",
+   "hi-nrg",
+   "funk"
+  ],
+  "via": "diccionario"
+ },
+ "Status Quo": {
+  "country": null,
+  "genres": [
+   "rock",
+   "hard rock",
+   "psychedelic rock",
+   "classic rock",
+   "psychedelic pop",
+   "pop rock",
+   "boogie rock"
+  ],
+  "via": "diccionario"
+ },
+ "Stephanie": {
+  "country": "MC",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Steve Miller Band": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "new wave",
+   "psychedelic rock",
+   "blues rock",
+   "country rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Stevie Wonder": {
+  "country": null,
+  "genres": [
+   "soul",
+   "contemporary r&b",
+   "funk",
+   "pop",
+   "pop soul"
+  ],
+  "via": "diccionario"
+ },
+ "Street Boys": {
+  "country": null,
+  "genres": [
+   "polka",
+   "world fusion",
+   "country folk"
+  ],
+  "via": "diccionario"
+ },
+ "Supertramp": {
+  "country": null,
+  "genres": [
+   "progressive rock",
+   "rock",
+   "art rock",
+   "pop rock",
+   "art pop",
+   "classic rock",
+   "crossover prog",
+   "progressive pop",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Survivor": {
+  "country": null,
+  "genres": [
+   "hard rock",
+   "rock",
+   "aor",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Suzi Quatro": {
+  "country": null,
+  "genres": [
+   "glam rock",
+   "hard rock",
+   "pop rock",
+   "pop",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Sweet": {
+  "country": null,
+  "genres": [
+   "glam rock",
+   "hard rock"
+  ],
+  "via": "diccionario"
+ },
+ "Sylvie Vartan": {
+  "country": "FR",
+  "genres": [
+   "pop",
+   "yé-yé"
+  ],
+  "via": "musicbrainz"
+ },
+ "TOTO": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "rock",
+   "aor",
+   "hard rock",
+   "jazz fusion",
+   "soft rock",
+   "yacht rock",
+   "neo-progressive rock",
+   "pagan black metal",
+   "progressive rock"
+  ],
+  "via": "diccionario"
+ },
+ "Talk Talk": {
+  "country": null,
+  "genres": [
+   "post-rock",
+   "new wave",
+   "synth-pop",
+   "art rock",
+   "new romantic",
+   "chamber pop",
+   "modern classical",
+   "art pop"
+  ],
+  "via": "diccionario"
+ },
+ "Talking Heads": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "post-punk",
+   "art punk",
+   "art pop",
+   "funk rock",
+   "pop rock",
+   "rock",
+   "art rock"
+  ],
+  "via": "diccionario"
+ },
+ "Tavares": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "r&b",
+   "disco",
+   "funk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Teach In": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Tequila": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "latin",
+   "latin rock"
+  ],
+  "via": "diccionario"
+ },
+ "Terry Jacks": {
+  "country": "CA",
+  "genres": [
+   "singer-songwriter",
+   "pop rock",
+   "pop",
+   "folk pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The 5th Dimension": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "psychedelic pop",
+   "sunshine pop",
+   "pop soul",
+   "psychedelic soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Alan Parsons Project": {
+  "country": null,
+  "genres": [
+   "rock",
+   "electronic",
+   "progressive rock",
+   "art rock",
+   "classic rock",
+   "soft rock",
+   "pop rock",
+   "crossover prog",
+   "progressive pop"
+  ],
+  "via": "diccionario"
+ },
+ "The Animals": {
+  "country": null,
+  "genres": [
+   "blues rock",
+   "psychedelic rock",
+   "british blues",
+   "british rhythm & blues",
+   "mod",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Art Company": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "europop"
+  ],
+  "via": "discogs"
+ },
+ "The B. B. & Q. Band": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "The Beach Boys": {
+  "country": null,
+  "genres": [
+   "surf rock",
+   "pop",
+   "sunshine pop",
+   "pop rock",
+   "psychedelic pop",
+   "baroque pop",
+   "progressive pop",
+   "vocal surf",
+   "classic rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Beatles": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "merseybeat",
+   "psychedelic rock",
+   "classic rock",
+   "rock and roll",
+   "britpop",
+   "mainstream rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Blue Diamonds": {
+  "country": "NL",
+  "genres": [
+   "indorock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Boomtown Rats": {
+  "country": "IE",
+  "genres": [
+   "art punk",
+   "new wave",
+   "power pop",
+   "punk rock",
+   "pop rock",
+   "post-punk"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Brothers Four": {
+  "country": "US",
+  "genres": [
+   "folk"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Buggles": {
+  "country": "GB",
+  "genres": [
+   "new wave",
+   "synth-pop",
+   "progressive pop",
+   "art pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Cascades": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "The Communards": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "hi-nrg"
+  ],
+  "via": "diccionario"
+ },
+ "The Dave Clark Five": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "psychedelic pop",
+   "pop rock",
+   "merseybeat",
+   "rock and roll",
+   "beat music"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Dixie Cups": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "doo-wop",
+   "pop rock",
+   "rock and roll"
+  ],
+  "via": "discogs"
+ },
+ "The Doobie Brothers": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "classic rock",
+   "soft rock",
+   "pop rock",
+   "blue-eyed soul",
+   "soul",
+   "yacht rock",
+   "folk rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Everly Brothers": {
+  "country": null,
+  "genres": [
+   "pop",
+   "rockabilly",
+   "close harmony",
+   "country pop",
+   "pop rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "The Exciters": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "soul",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Golden Gate Quartet": {
+  "country": "US",
+  "genres": [
+   "gospel"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Harmony Group": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "The Highwaymen": {
+  "country": "US",
+  "genres": [
+   "country",
+   "country rock",
+   "outlaw country"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Hollies": {
+  "country": null,
+  "genres": [
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "rock",
+   "beat music",
+   "sunshine pop",
+   "baroque pop",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Human League": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave",
+   "electronic",
+   "minimal synth",
+   "new romantic",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "The Jacksons": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "funk",
+   "soul",
+   "disco",
+   "christmas music",
+   "quiet storm",
+   "motown",
+   "pop soul",
+   "r&b",
+   "contemporary r&b",
+   "philly soul",
+   "bubblegum pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Kinks": {
+  "country": null,
+  "genres": [
+   "rock",
+   "mod",
+   "beat music",
+   "rock and roll",
+   "classic rock",
+   "garage rock",
+   "pop",
+   "pop rock",
+   "proto-punk"
+  ],
+  "via": "diccionario"
+ },
+ "The Knack": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "new wave",
+   "power pop",
+   "classic rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Korgis": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "pop rock",
+   "soft rock",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "The Love Unlimited Orchestra": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "The Mamas & The Papas": {
+  "country": null,
+  "genres": [
+   "sunshine pop",
+   "folk pop",
+   "folk rock",
+   "pop",
+   "pop rock",
+   "psychedelic folk",
+   "psychedelic pop",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Manhattan Transfer": {
+  "country": "US",
+  "genres": [
+   "jazz fusion",
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Marcels": {
+  "country": "US",
+  "genres": [
+   "doo-wop",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Michael Zager Band": {
+  "country": "US",
+  "genres": [
+   "electronic",
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "The New Christy Minstrels": {
+  "country": "US",
+  "genres": [
+   "contemporary folk",
+   "folk pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Police": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "rock",
+   "pop rock",
+   "post-punk",
+   "reggae rock",
+   "indie rock",
+   "punk"
+  ],
+  "via": "diccionario"
+ },
+ "The Real Thing": {
+  "country": "GB",
+  "genres": [
+   "r&b",
+   "soul",
+   "disco",
+   "funk",
+   "brit funk"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Ritchie Family": {
+  "country": "US",
+  "genres": [
+   "disco",
+   "funk",
+   "synth-pop",
+   "salsa"
+  ],
+  "via": "discogs"
+ },
+ "The Rolling Stones": {
+  "country": null,
+  "genres": [
+   "rock",
+   "blues rock",
+   "classic rock",
+   "psychedelic rock",
+   "british rhythm & blues",
+   "pop rock",
+   "rock and roll",
+   "blues"
+  ],
+  "via": "diccionario"
+ },
+ "The Rooftop Singers": {
+  "country": "US",
+  "genres": [
+   "folk",
+   "country",
+   "folk rock",
+   "pop rock",
+   "soft rock"
+  ],
+  "via": "discogs"
+ },
+ "The Rubettes": {
+  "country": "GB",
+  "genres": [
+   "glam",
+   "pop rock",
+   "folk",
+   "disco",
+   "rock and roll",
+   "doo-wop",
+   "europop"
+  ],
+  "via": "discogs"
+ },
+ "The Sandpipers": {
+  "country": "US",
+  "genres": [
+   "bolero",
+   "easy listening",
+   "folk",
+   "folk rock",
+   "latin pop"
+  ],
+  "via": "discogs"
+ },
+ "The Searchers": {
+  "country": "GB",
+  "genres": [
+   "merseybeat",
+   "beat music"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Shadows": {
+  "country": null,
+  "genres": [
+   "rock",
+   "beat music",
+   "pop",
+   "pop rock",
+   "surf rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Shangri-Las": {
+  "country": null,
+  "genres": [
+   "pop rock",
+   "rock and roll",
+   "soul"
+  ],
+  "via": "discogs"
+ },
+ "The Shirelles": {
+  "country": "US",
+  "genres": [
+   "pop soul",
+   "brill building",
+   "pop",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Singing Nun (Soeur Sourire)": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "The Spencer Davis Group": {
+  "country": null,
+  "genres": [
+   "rock",
+   "blues rock",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "The Spotnicks": {
+  "country": "SE",
+  "genres": [
+   "instrumental",
+   "surf",
+   "rock and roll"
+  ],
+  "via": "discogs"
+ },
+ "The String-A-Longs": {
+  "country": null,
+  "genres": [
+   "rock and roll",
+   "instrumental",
+   "surf"
+  ],
+  "via": "discogs"
+ },
+ "The Sugarhill Gang": {
+  "country": "US",
+  "genres": [
+   "electro",
+   "hip hop",
+   "funk",
+   "pop rap",
+   "east coast hip hop",
+   "old school hip hop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Supremes": {
+  "country": null,
+  "genres": [
+   "soul",
+   "disco",
+   "motown",
+   "pop",
+   "pop soul",
+   "psychedelic soul",
+   "r&b"
+  ],
+  "via": "diccionario"
+ },
+ "The Temptations": {
+  "country": null,
+  "genres": [
+   "soul",
+   "contemporary r&b",
+   "funk",
+   "motown",
+   "pop soul",
+   "psychedelic soul",
+   "pop",
+   "r&b",
+   "smooth soul"
+  ],
+  "via": "diccionario"
+ },
+ "The Three Degrees": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "disco",
+   "smooth soul",
+   "philly soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Tokens": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "psychedelic pop",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Tornados": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "instrumental rock",
+   "pop rock",
+   "surf rock",
+   "beat music",
+   "space age pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Troggs": {
+  "country": null,
+  "genres": [
+   "garage rock",
+   "pop rock",
+   "rock",
+   "freakbeat",
+   "proto-punk"
+  ],
+  "via": "diccionario"
+ },
+ "The Tymes": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "doo-wop"
+  ],
+  "via": "discogs"
+ },
+ "The Ventures": {
+  "country": "US",
+  "genres": [
+   "pop rock",
+   "surf rock",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Walker Brothers": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "art rock",
+   "baroque pop",
+   "soft rock",
+   "experimental rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Who": {
+  "country": null,
+  "genres": [
+   "rock",
+   "hard rock",
+   "classic rock",
+   "mod",
+   "art rock",
+   "freakbeat",
+   "pop rock",
+   "rock opera",
+   "british rhythm & blues"
+  ],
+  "via": "diccionario"
+ },
+ "Thelma Houston": {
+  "country": "US",
+  "genres": [
+   "disco",
+   "pop soul",
+   "smooth soul",
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Third World": {
+  "country": "JM",
+  "genres": [
+   "reggae",
+   "roots reggae"
+  ],
+  "via": "musicbrainz"
+ },
+ "Thompson Twins": {
+  "country": null,
+  "genres": [
+   "pop",
+   "post-punk",
+   "new wave",
+   "synth-pop",
+   "dance-pop",
+   "new romantic"
+  ],
+  "via": "diccionario"
+ },
+ "Tina Charles": {
+  "country": "GB",
+  "genres": [
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Tina Turner": {
+  "country": null,
+  "genres": [
+   "soul",
+   "pop",
+   "pop rock",
+   "pop soul",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Tino Casal": {
+  "country": "ES",
+  "genres": [
+   "singer-songwriter",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Titanic": {
+  "country": "NO",
+  "genres": [
+   "progressive rock",
+   "hard rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Tito Mora": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "mambo"
+  ],
+  "via": "discogs"
+ },
+ "Tom Jones": {
+  "country": null,
+  "genres": [
+   "pop",
+   "pop soul",
+   "traditional pop",
+   "ballad",
+   "blue-eyed soul"
+  ],
+  "via": "diccionario"
+ },
+ "Tom Tom Club": {
+  "country": "US",
+  "genres": [
+   "synth-pop",
+   "disco",
+   "dub",
+   "pop rock",
+   "downtempo",
+   "new wave",
+   "pop rap"
+  ],
+  "via": "discogs"
+ },
+ "Tommy Roe": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "rock and roll",
+   "bubblegum pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Toni Artis": {
+  "country": null,
+  "genres": [
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Tony Dallara": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Tony Renis": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Topolino Radio Orquesta": {
+  "country": "ES",
+  "genres": [
+   "dixieland",
+   "swing",
+   "bolero",
+   "pachanga",
+   "ragtime",
+   "big band",
+   "pasodoble",
+   "corrido",
+   "copla"
+  ],
+  "via": "discogs"
+ },
+ "Toquinho": {
+  "country": "BR",
+  "genres": [
+   "mpb",
+   "samba",
+   "bossa nova"
+  ],
+  "via": "discogs"
+ },
+ "Torrebruno": {
+  "country": "IT",
+  "genres": [
+   "canzone napoletana",
+   "swing",
+   "rock and roll",
+   "bolero"
+  ],
+  "via": "discogs"
+ },
+ "Toto Cutugno": {
+  "country": "IT",
+  "genres": [
+   "pop",
+   "singer-songwriter"
+  ],
+  "via": "musicbrainz"
+ },
+ "Traks": {
+  "country": "IT",
+  "genres": [
+   "disco",
+   "italo-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Trans-X": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "hi-nrg",
+   "electro",
+   "disco",
+   "italo-disco"
+  ],
+  "via": "discogs"
+ },
+ "Triana": {
+  "country": "ES",
+  "genres": [
+   "progressive rock",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Trigo Limpio": {
+  "country": "ES",
+  "genres": [
+   "ballad",
+   "disco"
+  ],
+  "via": "discogs"
+ },
+ "Trini Lopez": {
+  "country": "US",
+  "genres": [
+   "rockabilly",
+   "rock and roll",
+   "doo-wop"
+  ],
+  "via": "discogs"
+ },
+ "Trio": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave",
+   "punk",
+   "lo-fi",
+   "classic rock",
+   "disco",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Two Man Sound": {
+  "country": "BE",
+  "genres": [
+   "europop",
+   "disco",
+   "euro-disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "U.S.A. For Africa": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Udo Jürgens": {
+  "country": "AT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Umberto Tozzi": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "singer-songwriter",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Van McCoy": {
+  "country": "US",
+  "genres": [
+   "soul",
+   "disco"
+  ],
+  "via": "musicbrainz"
+ },
+ "Vangelis": {
+  "country": null,
+  "genres": [
+   "new age",
+   "electronic",
+   "orchestral"
+  ],
+  "via": "diccionario"
+ },
+ "Vicente Fernández": {
+  "country": "MX",
+  "genres": [
+   "latin",
+   "ranchera"
+  ],
+  "via": "musicbrainz"
+ },
+ "Victor Jara": {
+  "country": "CL",
+  "genres": [
+   "singer-songwriter",
+   "contemporary folk",
+   "nueva canción",
+   "nueva canción chilena"
+  ],
+  "via": "musicbrainz"
+ },
+ "Victor y Diego": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Video": {
+  "country": null,
+  "genres": [
+   "italo-disco",
+   "electro",
+   "disco",
+   "euro house"
+  ],
+  "via": "diccionario"
+ },
+ "Videokids": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Village People": {
+  "country": null,
+  "genres": [
+   "disco",
+   "electronic"
+  ],
+  "via": "diccionario"
+ },
+ "Viola Wills": {
+  "country": "US",
+  "genres": [
+   "soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Visage": {
+  "country": "GB",
+  "genres": [
+   "synth-pop",
+   "new romantic",
+   "new wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "Víctor Manuel": {
+  "country": "ES",
+  "genres": [
+   "contemporary folk",
+   "latin ballad",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Waldo De Los Ríos": {
+  "country": "AR",
+  "genres": [
+   "folk",
+   "easy listening",
+   "tango",
+   "cumbia",
+   "flamenco",
+   "zamba",
+   "experimental"
+  ],
+  "via": "discogs"
+ },
+ "Wax": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Wham!": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "christmas music",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Wilfrido Vargas": {
+  "country": null,
+  "genres": [
+   "merengue"
+  ],
+  "via": "diccionario"
+ },
+ "Wilma Goich": {
+  "country": "IT",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Wilson Pickett": {
+  "country": null,
+  "genres": [
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Wings": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop rock",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Yazoo": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Yes": {
+  "country": null,
+  "genres": [
+   "progressive rock",
+   "symphonic prog",
+   "rock",
+   "art rock",
+   "progressive pop",
+   "classic rock",
+   "pop rock",
+   "aor",
+   "disco",
+   "electronic",
+   "garage rock",
+   "hard rock",
+   "progressive",
+   "psychedelic rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Yuri": {
+  "country": "MX",
+  "genres": [
+   "latin",
+   "latin pop",
+   "pop",
+   "ranchera"
+  ],
+  "via": "musicbrainz"
+ },
+ "Yvonne Elliman": {
+  "country": "US",
+  "genres": [
+   "pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "a-ha": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "pop",
+   "synth-pop",
+   "dance-pop",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Édith Piaf": {
+  "country": null,
+  "genres": [
+   "chanson réaliste",
+   "ballad"
+  ],
+  "via": "diccionario"
+ }
+}
