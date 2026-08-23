@@ -14,15 +14,18 @@ import android.os.Build
  * automáticamente picos y valles de volumen sobre la marcha, sin
  * tocar el catálogo ni analizar nada por adelantado.
  *
- * Se construye con el constructor de DOS argumentos
- * (`DynamicsProcessing(priority, audioSession)`), que internamente
- * delega en el de tres con `Config = null` -- verificado contra el
- * fuente real de AOSP (`DynamicsProcessing.java`): un `Config` nulo
- * hace que el sistema elija una configuración de bandas/compresor/
- * limitador por defecto, sensata para el caso general. Se evita a
- * propósito construir un `Config` a mano (bandas del MBC, umbrales,
- * ratios, ataque/release) -- esa API es notoriamente delicada
- * (`IllegalArgumentException` en tiempo de ejecución si los
+ * Se construye con el constructor de TRES argumentos
+ * (`DynamicsProcessing(priority, audioSession, Config)`) pasando
+ * `Config = null` explícitamente -- el overload de dos argumentos
+ * documentado en el fuente AOSP (`this(priority, audioSession, null)`)
+ * no resolvió al compilar contra el stub SDK público de `compileSdk
+ * 36` (build real, 2026-08-23: `Unresolved reference` en GitHub
+ * Actions), así que se usa la forma explícita de tres. Un `Config`
+ * nulo hace que el sistema elija una configuración de bandas/
+ * compresor/limitador por defecto, sensata para el caso general. Se
+ * evita a propósito construir un `Config` a mano (bandas del MBC,
+ * umbrales, ratios, ataque/release) -- esa API es notoriamente
+ * delicada (`IllegalArgumentException` en tiempo de ejecución si los
  * parámetros no encajan exactamente con la forma del `Config.Builder`)
  * y no hay manera de verificarla desde este entorno de trabajo sin
  * dispositivo real; la configuración por defecto ya resuelve el
@@ -43,10 +46,13 @@ import android.os.Build
  * the fly, without touching the catalog or analyzing anything ahead of
  * time.
  *
- * Built with the two-argument constructor
- * (`DynamicsProcessing(priority, audioSession)`), which internally
- * delegates to the three-argument one with `Config = null` -- verified
- * against real AOSP source (`DynamicsProcessing.java`): a null
+ * Built with the THREE-argument constructor
+ * (`DynamicsProcessing(priority, audioSession, Config)`), passing
+ * `Config = null` explicitly -- the two-argument overload documented
+ * in AOSP source (`this(priority, audioSession, null)`) failed to
+ * resolve when compiling against the public `compileSdk 36` SDK stub
+ * (real build, 2026-08-23: `Unresolved reference` on GitHub Actions),
+ * so the explicit three-argument form is used instead. A null
  * `Config` makes the system pick a sensible default band/compressor/
  * limiter configuration for the general case. Building a `Config` by
  * hand (MBC bands, thresholds, ratios, attack/release) is deliberately
@@ -81,7 +87,7 @@ class AudioNormalizer {
         if (dynamicsProcessing != null && attachedSessionId == audioSessionId) return
         release()
         try {
-            val effect = DynamicsProcessing(0, audioSessionId)
+            val effect = DynamicsProcessing(0, audioSessionId, null)
             effect.setEnabled(true)
             dynamicsProcessing = effect
             attachedSessionId = audioSessionId
