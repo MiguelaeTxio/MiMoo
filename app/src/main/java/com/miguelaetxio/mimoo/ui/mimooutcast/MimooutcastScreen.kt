@@ -165,9 +165,19 @@ fun MimooutcastScreen(
                         onPickRoot = { viewModel.startWithGenre(expanded.mbGenre, expanded.label) },
                         onPickSub = { sub -> viewModel.startWithGenre(sub.mbGenre, sub.label) },
                     )
+                    uiState.tab == MimooutcastTab.GENEROS && query.isNotBlank() -> SearchResultsGrid(
+                        results = viewModel.searchAllGenres(query),
+                        loadingLabel = uiState.loadingLabel,
+                        onPick = { match ->
+                            if (match.rootLabel == null) {
+                                viewModel.tapGenre(match.genre)
+                            } else {
+                                viewModel.startWithGenre(match.genre.mbGenre, match.genre.label)
+                            }
+                        },
+                    )
                     uiState.tab == MimooutcastTab.GENEROS -> GenreGrid(
-                        genres = viewModel.genres
-                            .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) },
+                        genres = viewModel.genres,
                         loadingLabel = uiState.loadingLabel,
                         onPick = viewModel::tapGenre,
                     )
@@ -210,6 +220,52 @@ fun MimooutcastScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Bug real (Miguel Ángel, 2026-08-23): "Big Beat" no se podía buscar
+ * ni elegir -- ver `MimooutcastViewModel.searchAllGenres()`. Cada
+ * chapita de un subgénero lleva su género raíz debajo, para que quede
+ * claro de dónde sale sin tener que navegar hasta ahí.
+ */
+@Composable
+private fun SearchResultsGrid(
+    results: List<MimooutcastViewModel.FlatGenreMatch>,
+    loadingLabel: String?,
+    onPick: (MimooutcastViewModel.FlatGenreMatch) -> Unit,
+) {
+    if (results.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Text(
+                "Ningún género coincide con la búsqueda.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        return
+    }
+    FlowRow(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        results.forEach { match ->
+            val label = if (match.rootLabel != null) {
+                "${match.genre.label} (${match.rootLabel})"
+            } else {
+                match.genre.label
+            }
+            AnchorChip(
+                label = label,
+                enabled = loadingLabel == null,
+                onClick = { onPick(match) },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
