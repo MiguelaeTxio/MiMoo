@@ -1,7 +1,41 @@
 {
- "error": "AuthenticationError: This feature requires authentication; build SpotifyClient(cookies=...) with an 'sp_dc' cookie.",
- "ok": false,
- "spotify_scraper_version": "3.9.2",
- "stage": "get_user",
- "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/MiMoo/MiMoo/tools/debug_spotify_probe.py\", line 29, in <module>\n    user = client.get_user(\"115935096\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/spotify_scraper/_sync/client.py\", line 957, in get_user\n    provider = self._cookie_provider()\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/spotify_scraper/_sync/client.py\", line 1016, in _cookie_provider\n    raise AuthenticationError(\nspotify_scraper.errors.AuthenticationError: This feature requires authentication; build SpotifyClient(cookies=...) with an 'sp_dc' cookie.\n"
+ "get_playlist": {
+  "dir": [
+   "description",
+   "followers",
+   "from_dict",
+   "id",
+   "images",
+   "name",
+   "owner",
+   "share_url",
+   "to_dict",
+   "total_tracks",
+   "tracks",
+   "uri",
+   "url"
+  ],
+  "ok": true,
+  "repr": "Playlist(id='450tJfoEUYVS2r6yRGmxr0', uri='spotify:playlist:450tJfoEUYVS2r6yRGmxr0', name='1960 - LAS 100 CANCIONES DEL AÑO EN ESPAÑA', description='', owner=UserRef(name='Jose Julian Marti Santiago', uri='spotify:user:115935096'), followers=18, images=(Image(url='https://mosaic.scdn.co/640/ab67616d00001e02668aaf1469dda129f76ab12fab67616d00001e02686c29818cd37e585c48e7efab67616d00001e02826d9f411768440dab15be06ab67616d00001e02ddd4407f7853d8d726c12051', width=640, height=640), Image(url='https://mosaic.scdn.co/300/ab67616d00001e02668aaf1469dda129f76ab12fab67616d00001e02686c29818cd37e585c48e7efab67616d00001e02826d9f411768440dab15be06ab67616d00001e02ddd4407f7853d8d726c12051', width=300, height=300), Image(url='https://mosaic.scdn.co/60/ab67616d00001e02668aaf1469dda129f76ab12fab67616d00001e02686c29818cd37e585c48e7efab67616d00001e02826d9f411768440dab15be06ab67616d00001e02ddd4407f7853d8d726c12051', width=60, height=60)), total_tracks=100, tracks=(PlaylistTrack(track=Track(id='4YmJXCXCkLorPkYiSPFUN3', uri='spotify:track:4YmJXCXCkLorPkYiSPFUN3', name='Adam And Eve', duration_ms=131293, explicit=False, playable=True, preview_url=None, artists=(ArtistRef(name='Paul Anka', uri='spotify:artist:7ceUfdWq2t5nbatS6ollHh', id=''),), images=(Image(url='https://i.scdn.co/image/ab67616d00001e02686c29818cd37e585c48e7ef', width=300, height=300), Image(url='https://i.scdn.co/image/ab67616d00004851686c29818cd37e585c48e7ef', width=64, height=64), Image(url='https://i.scdn.co/image/ab67616d0000b273686c29818cd37e585c48e7ef', width=640, height=640)), release_date=None, album=AlbumRef(id='75zBkbUSaFzpyPa1mBDjON', uri='spotify:album:75zBkbUSaFzpyPa1mBDjON', name='Put Your Head On My Shoulder: The Very Best Of Paul Anka', images=(Image(url='https://i.scdn.co/image/ab67616d00001e02686c29818cd37e585c48e7ef', width=300, height=300), Image(url='https://i.scdn.co/image/ab67616d00004851686c29818cd37e585c48e7ef', width=64, height=64), Image(url='https://i.scdn.co/image/ab67616d0000b273686c29818cd37e585c48e7ef', width=640, height=640))), track_number=8, play_count=2023894, share_url=None), added_at=datetime.datetime(2014, 9, 21, 9, 58, 10, tzinfo=datetime.timezone.utc), added_by=UserRef(name='Jose Julian Marti Santiago', uri='spotify:user:115935096')), PlaylistTrack(track=Track(id='7IFNe2pC2wcaqljI21OTQT', uri='spotify:track:7IFNe2pC2wcaqljI21OTQT', name='Estremécete', duration_ms=189960, explicit=False, playable=True, preview_url=None, artists=(ArtistRef(name='Los Llopis', uri='spotify:artist:35",
+  "stage": "get_playlist",
+  "type": "<class 'spotify_scraper.models.playlist.Playlist'>"
+ },
+ "search_playlist": {
+  "dir": [
+   "albums",
+   "artists",
+   "episodes",
+   "from_dict",
+   "playlists",
+   "query",
+   "shows",
+   "to_dict",
+   "total",
+   "tracks"
+  ],
+  "ok": true,
+  "repr": "SearchResults(query='LAS 100 CANCIONES DEL ANO EN ESPANA', tracks=(), artists=(), albums=(), playlists=(Playlist(id='0LjRgEHghCfCv9iFAipG1U', uri='spotify:playlist:0LjRgEHghCfCv9iFAipG1U', name='Las 100 Canciones en Español Más Escuchadas en Spotify', description='Dec 19, 2023', owner=UserRef(name='Luísa Nikki', uri='spotify:user:31arlbshbue4oki7y2wsafvkrb2i'), followers=None, images=(Image(url='https://mosaic.scdn.co/640/ab67616d00001e02005ee342f4eef2cc6e8436abab67616d00001e0249d694203245f241a1bcaa72ab67616d00001e02a75bd33684083600569dd3bfab67616d00001e02ef0d4234e1a645740f77d59c', width=640, height=640), Image(url='https://mosaic.scdn.co/300/ab67616d00001e02005ee342f4eef2cc6e8436abab67616d00001e0249d694203245f241a1bcaa72ab67616d00001e02a75bd33684083600569dd3bfab67616d00001e02ef0d4234e1a645740f77d59c', width=300, height=300), Image(url='https://mosaic.scdn.co/60/ab67616d00001e02005ee342f4eef2cc6e8436abab67616d00001e0249d694203245f241a1bcaa72ab67616d00001e02a75bd33684083600569dd3bfab67616d00001e02ef0d4234e1a645740f77d59c', width=60, height=60)), total_tracks=None, tracks=(), share_url=None), Playlist(id='3FL30zPJaggUIJYhPBWyL5', uri='spotify:playlist:3FL30zPJaggUIJYhPBWyL5', name='Las 100 Canciones Mas Escuchadas De La Historia', description='Las 100 canciones mas escuchadas hasta la fecha (Agosto 2026) en la historia de spotify.', owner=UserRef(name='LTMusic', uri='spotify:user:h6klaqlgtmxz3wc7pxj25z3zd'), followers=None, images=(Image(url='https://mosaic.scdn.co/640/ab67616d00001e024718e2b124f79258be7bc452ab67616d00001e028265a736a1eb838ad5a0b921ab67616d00001e028863bc11d2aa12b54f5aeb36ab67616d00001e02ba5db46f4b838ef6027e6f96', width=640, height=640), Image(url='https://mosaic.scdn.co/300/ab67616d00001e024718e2b124f79258be7bc452ab67616d00001e028265a736a1eb838ad5a0b921ab67616d00001e028863bc11d2aa12b54f5aeb36ab67616d00001e02ba5db46f4b838ef6027e6f96', width=300, height=300), Image(url='https://mosaic.scdn.co/60/ab67616d00001e024718e2b124f79258be7bc452ab67616d00001e028265a736a1eb838ad5a0b921ab67616d00001e028863bc11d2aa12b54f5aeb36ab67616d00001e02ba5db46f4b838ef6027e6f96', width=60, height=60)), total_tracks=None, tracks=(), share_url=None), Playlist(id='552bfiwG0jlJLtJnLtdN5X', uri='spotify:playlist:552bfiwG0jlJLtJnLtdN5X', name='1979 - LAS 100 CANCIONES DEL AÑO EN ESPAÑA', description='Faltan: FALCONS - Terciopelo y fuego &#x2F; BOBBY SOLO - Una lacrima sul viso (versión 78) &#x2F; ZOOM (Ballet)  - La bruja de Salem &#x2F;  GILLA - Bend me shape me &#x2F; NEW ",
+  "stage": "search_playlist",
+  "type": "<class 'spotify_scraper.models.search.SearchResults'>"
+ }
 }
