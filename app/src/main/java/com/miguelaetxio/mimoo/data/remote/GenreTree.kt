@@ -104,6 +104,31 @@ class GenreTree @Inject constructor(
     fun isKnown(genre: String): Boolean = genre.lowercase().trim() in nodes
 
     /**
+     * S034 -- géneros que Miguel Ángel descartó EN TODAS PARTES, no
+     * solo en miMooutCast: *"que no deben molestar en ningún sitio, ni
+     * en la radio."* Estos 41 nunca dan un tema real -- confirmado con
+     * dos pasadas completas del generador de miMooutCast y un log de
+     * 67 minutos (S034) mostrando tres causas distintas (escasez
+     * genuina de datos en MusicBrainz, red intermitente, o verificación
+     * final que rechaza siempre a los pocos candidatos que aparecen) --
+     * y como el ancla de la Radio automática se calcula del artista
+     * real que se está escuchando (no de un catálogo fijo), cualquiera
+     * de estos 41 puede colarse como género ancla igual que en
+     * miMooutCast si MusicBrainz lo etiqueta así. Único punto de
+     * verdad: se consulta desde `RadioRepository.findCandidates()` y
+     * `RadioRepository.suggestWorkForGenre()` (los dos puntos de
+     * entrada reales a MusicBrainz compartidos por Radio y
+     * miMooutCast) para cortar ANTES de gastar ninguna llamada de red,
+     * y desde `MimooutcastCatalog.subgenresOf()` para que tampoco se
+     * ofrezcan en el desplegable de subgéneros de la pantalla. NO
+     * afecta a `directChildren()`/`isDescendantOf()`/`isSpecific()` --
+     * la clasificación de qué género pertenece a qué carpeta sigue
+     * intacta; esto solo bloquea que se use como TÉRMINO DE BÚSQUEDA
+     * en vivo.
+     */
+    fun isBarren(genre: String): Boolean = genre.lowercase().trim() in BARREN_GENRES
+
+    /**
      * H15 (miMooutCast) -- hijos DIRECTOS (un solo nivel, no todos los
      * descendientes) de un género, para desplegar un segundo nivel de
      * subgéneros al pinchar uno de los géneros raíz de
@@ -182,5 +207,19 @@ class GenreTree @Inject constructor(
          * significa nada como criterio musical.
          */
         const val MAX_DESCENDANTS_TO_DESCEND = 25
+
+        /** Ver el kdoc de `isBarren()`. */
+        val BARREN_GENRES: Set<String> = setOf(
+            "arabesk rap", "bagad", "baguala", "balani show", "budots",
+            "bérite club", "doble paso", "falak", "fijiri", "genge",
+            "graphical sound", "hipco", "indo jazz", "isa", "jersey sound",
+            "kréyol djaz", "ländlermusik", "miejski folk", "mulatós",
+            "neo-bop", "nepali lok geet", "ori deck", "paramaribop",
+            "pop kreatif", "pop minang", "rabbit song", "rock urbano mexicano",
+            "rom kbach", "samba rap", "scrumpy and western", "seguidilla",
+            "stornello", "sufi rock", "sutartinės", "sweet jazz", "tajaraste",
+            "tonada asturiana", "trikitixa", "waulking song", "wong shadow",
+            "xuc",
+        )
     }
 }

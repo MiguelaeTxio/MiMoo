@@ -1982,6 +1982,14 @@ class RadioRepository @Inject constructor(
         offset: Int = 0,
         resultWindowLimit: Int? = null,
     ): DecadeCandidate? {
+        // S034 -- corte ANTES de cualquier llamada de red. Ver el kdoc
+        // de `GenreTree.isBarren()`: orden de Miguel Ángel ampliada a
+        // TODA la app, no solo miMooutCast -- "que no deben molestar
+        // en ningún sitio, ni en la radio".
+        if (genreTree.isBarren(genre)) {
+            log("suggestWorkForGenre('$genre') -- género en la lista negra (S034), se descarta sin llamada de red")
+            return null
+        }
         val excludeLower = excludeArtists.map { it.lowercase() }.toSet()
         val safeGenre = genre.replace("\"", "")
         val query = "tag:\"$safeGenre\""
@@ -2135,6 +2143,16 @@ class RadioRepository @Inject constructor(
         /** H15 (miMooutCast), S032 -- ver `findCandidatesForGenres()`. Por defecto `ANCHOR_SEARCH_LIMIT`, igual que siempre. */
         limit: Int = ANCHOR_SEARCH_LIMIT,
     ): List<String> = try {
+        // S034 -- mismo corte que `suggestWorkForGenre()`, ver el kdoc
+        // de `GenreTree.isBarren()`. Esta función es la que de verdad
+        // llama a MusicBrainz para CUALQUIER género del ancla (no solo
+        // el primero) -- cortar aquí cubre tanto el género principal
+        // como el resto de géneros de `anchor.genres` que
+        // `suggestRelatedArtist()` prueba en cascada.
+        if (genreTree.isBarren(genre)) {
+            log("findCandidates(género='$genre') -- género en la lista negra (S034), se descarta sin llamada de red")
+            return emptyList()
+        }
         val query = buildGenreQuery(genre, originGroup, decadeBegin, isClassical)
         // H15 (miMooutCast) -- ancla "década sola" (sin género ni
         // origen): no queda ningún término real que mandar a
