@@ -98,12 +98,44 @@ object MimooutcastCatalog {
      * único añadido a mano, no un cambio general de profundidad para
      * todos los géneros (eso metería cientos de subgéneros muy nicho
      * sin que se haya pedido).
+     *
+     * **Descarte de géneros que nunca dan resultado (S034).** Análisis
+     * real sobre database.json/database2.json/debug.txt de Miguel
+     * Ángel (2026-08-23): 41 subgéneros que llevaban a cero temas en
+     * dos pasadas completas del generador y seguían reabriéndose sin
+     * fin por el propio fix de S033 (arriba, `genresWithZeroTracks` en
+     * `MimooutcastDatabaseBuilder`) -- cada sesión los reintentaba desde
+     * cero y volvía a fallar por tres causas distintas medidas en el
+     * log real: escasez genuina de datos en MusicBrainz para el
+     * género, fallos de red repetidos sin llegar a ningún sitio, o
+     * -- el caso más revelador -- SÍ encontraba artista candidato pero
+     * `verifyTrackExists`/el filtro de YouTube lo descartaba siempre
+     * (géneros regionales/underground sin single "oficial" limpio en
+     * ninguna de las 4 fuentes de verificación). Orden explícita de
+     * Miguel Ángel: "Eliminamos estos géneros que no llevan a ningún
+     * sitio y que no los conocen ni en su casa a la hora de comer."
+     * Se descartan aquí, en la fuente única, para que desaparezcan
+     * tanto del generador como de la selección manual en pantalla.
      */
+    private val BARREN_GENRES: Set<String> = setOf(
+        "arabesk rap", "bagad", "baguala", "balani show", "budots",
+        "bérite club", "doble paso", "falak", "fijiri", "genge",
+        "graphical sound", "hipco", "indo jazz", "isa", "jersey sound",
+        "kréyol djaz", "ländlermusik", "miejski folk", "mulatós",
+        "neo-bop", "nepali lok geet", "ori deck", "paramaribop",
+        "pop kreatif", "pop minang", "rabbit song", "rock urbano mexicano",
+        "rom kbach", "samba rap", "scrumpy and western", "seguidilla",
+        "stornello", "sufi rock", "sutartinės", "sweet jazz", "tajaraste",
+        "tonada asturiana", "trikitixa", "waulking song", "wong shadow",
+        "xuc",
+    )
+
     fun subgenresOf(genre: MimooutcastGenre, genreTree: GenreTree): List<MimooutcastGenre> {
         val direct = genreTree.directChildren(genre.mbGenre).toMutableList()
         if (genre.mbGenre == "edm" && "big beat" !in direct) {
             direct += "big beat"
         }
+        direct.removeAll { it.lowercase().trim() in BARREN_GENRES }
         return direct.map { mb ->
             MimooutcastGenre(
                 label = mb.split(" ").joinToString(" ") { it.replaceFirstChar(Char::uppercase) },
