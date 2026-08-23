@@ -82,7 +82,7 @@ class AudioNormalizer {
         release()
         try {
             val effect = DynamicsProcessing(0, audioSessionId)
-            effect.enabled = true
+            effect.setEnabled(true)
             dynamicsProcessing = effect
             attachedSessionId = audioSessionId
         } catch (e: Exception) {
@@ -99,7 +99,7 @@ class AudioNormalizer {
     fun release() {
         dynamicsProcessing?.let {
             try {
-                it.enabled = false
+                it.setEnabled(false)
                 it.release()
             } catch (e: Exception) {
                 // Ya liberado o sesión inválida -- no hay nada más que hacer.
