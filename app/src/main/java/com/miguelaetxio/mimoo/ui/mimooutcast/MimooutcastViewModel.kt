@@ -126,6 +126,52 @@ class MimooutcastViewModel @Inject constructor(
     fun subgenresOf(genre: MimooutcastGenre): List<MimooutcastGenre> =
         com.miguelaetxio.mimoo.data.remote.MimooutcastCatalog.subgenresOf(genre, genreTree)
 
+    /**
+     * Coincidencia de búsqueda aplanada -- [rootLabel] es `null` cuando
+     * [genre] es un género raíz, o el nombre del raíz cuando es un
+     * subgénero (p.ej. "Big Beat" -> rootLabel = "EDM").
+     */
+    data class FlatGenreMatch(val genre: MimooutcastGenre, val rootLabel: String?)
+
+    /**
+     * Bug real reportado por Miguel Ángel (2026-08-23): "Big Beat" no
+     * se podía elegir ni buscar en ningún sitio. Causa real: la caja
+     * de búsqueda de la pantalla raíz solo filtraba `genres` (los 24
+     * géneros raíz de `MimooutcastCatalog`) -- "Big Beat" es un
+     * SUBGÉNERO de EDM (un nivel más abajo, forzado a mano en
+     * `MimooutcastCatalog.subgenresOf()` por orden explícita de Miguel
+     * Ángel en S032), así que nunca aparecía a menos que el usuario
+     * pinchase antes "EDM" para desplegar su segundo nivel y buscase
+     * ahí dentro -- nada en la pantalla indicaba que hiciera falta ese
+     * paso previo.
+     *
+     * Ahora, en cuanto hay texto de búsqueda en la pantalla raíz, se
+     * busca en TODOS los géneros y TODOS sus subgéneros a la vez
+     * (aplanado), sin que el usuario tenga que saber de antemano bajo
+     * qué género raíz cuelga el subgénero que busca. Clásica se
+     * excluye del aplanado de subgéneros -- mismo criterio ya cerrado
+     * con Miguel Ángel de que Clásica no expone su árbol de subgéneros
+     * en ningún sitio de esta pantalla (ver `tapGenre()`).
+     */
+    fun searchAllGenres(query: String): List<FlatGenreMatch> {
+        val q = query.trim()
+        if (q.isBlank()) return emptyList()
+        val results = mutableListOf<FlatGenreMatch>()
+        for (root in genres) {
+            if (root.label.contains(q, ignoreCase = true)) {
+                results += FlatGenreMatch(root, rootLabel = null)
+            }
+            if (root.mbGenre != "classical") {
+                for (sub in subgenresOf(root)) {
+                    if (sub.label.contains(q, ignoreCase = true)) {
+                        results += FlatGenreMatch(sub, rootLabel = root.label)
+                    }
+                }
+            }
+        }
+        return results
+    }
+
     fun startWithGenre(mbGenre: String, label: String) = start(mbGenre, decadeBegin = null, originGroup = null, label = label)
 
     fun startWithDecade(decadeBegin: Int, label: String) = start(genre = null, decadeBegin = decadeBegin, originGroup = null, label = label)

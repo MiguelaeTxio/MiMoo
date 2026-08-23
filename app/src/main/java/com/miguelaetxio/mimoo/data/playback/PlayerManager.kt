@@ -4258,22 +4258,6 @@ class PlayerManager @Inject constructor(
                 artistName = next.artist
                 knownTitle = next.title
                 knownYoutubeId = next.youtubeId
-            } else if (mimooutcastSeedGenre != null && mimooutcastSeedIndex < mimooutcastSeedOrder.size) {
-                // S034 -- mismo mecanismo que la rama de clásica de
-                // arriba, generalizado al resto de géneros desde
-                // `mimooutcast_seed.json`. En cuanto se agota
-                // (`mimooutcastSeedIndex >= mimooutcastSeedOrder.size`)
-                // esta condición deja de cumplirse y cae, sin código
-                // extra, en la búsqueda dinámica de género de más
-                // abajo -- exactamente el mismo "cien es el tamaño
-                // real, pero eso no significa rendirse ahí" que ya
-                // vale para clásica.
-                val next = mimooutcastSeedOrder[mimooutcastSeedIndex]
-                mimooutcastSeedIndex++
-                artistName = next.artist
-                knownTitle = next.title
-                knownYoutubeId = next.youtubeId
-                candidateSeedGenre = mimooutcastSeedGenre
             } else if (miMooutCastRequireKnownInSpain) {
                 // H15 (miMooutCast), S032 -- botón "Conocido en
                 // España" encendido: se busca DIRECTAMENTE dentro del
@@ -4289,6 +4273,24 @@ class PlayerManager @Inject constructor(
                 // diccionario como fuente directa, cada resultado YA
                 // es "conocido en España" por construcción -- sin
                 // ningún filtro posterior que hacer.
+                //
+                // BUG REAL, S035 (2026-08-23): esta rama vivía DESPUÉS
+                // de la de la semilla bundleada (S034,
+                // `mimooutcastSeedGenre != null`), así que con
+                // "Conocido en España" encendido Y semilla disponible
+                // para el género elegido, los primeros 100 temas
+                // salían de la semilla -- construida sin ningún filtro
+                // de éxitos en España, ver
+                // `PlayerManager.findValidatedTrackForGenre()` -- sin
+                // pasar nunca por el diccionario hasta agotarla.
+                // Reportado por Miguel Ángel: *"no estamos usando para
+                // nada que sean éxitos en España... ponemos mierda de
+                // música que la conocerán en Tailandia."* La semilla
+                // (S034) se diseñó pensando solo en "arranque
+                // instantáneo", sin tener en cuenta la interacción con
+                // este botón (S032) -- movida aquí, ANTES de la
+                // semilla, para que el filtro de éxitos mande siempre
+                // que esté encendido, sea cual sea el género.
                 val hit = knownHitsRepository.randomHit(
                     anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
                     excludeSongKeys = radioUsedSongs, avoidArtists = windowLower,
@@ -4299,6 +4301,25 @@ class PlayerManager @Inject constructor(
                 )
                 artistName = hit?.artist
                 knownTitle = hit?.song
+            } else if (mimooutcastSeedGenre != null && mimooutcastSeedIndex < mimooutcastSeedOrder.size) {
+                // S034 -- mismo mecanismo que la rama de clásica de
+                // arriba, generalizado al resto de géneros desde
+                // `mimooutcast_seed.json`. En cuanto se agota
+                // (`mimooutcastSeedIndex >= mimooutcastSeedOrder.size`)
+                // esta condición deja de cumplirse y cae, sin código
+                // extra, en la búsqueda dinámica de género de más
+                // abajo -- exactamente el mismo "cien es el tamaño
+                // real, pero eso no significa rendirse ahí" que ya
+                // vale para clásica.
+                //
+                // S035 -- movida DESPUÉS de `miMooutCastRequireKnownInSpain`,
+                // ver el comentario real del bug en esa rama, arriba.
+                val next = mimooutcastSeedOrder[mimooutcastSeedIndex]
+                mimooutcastSeedIndex++
+                artistName = next.artist
+                knownTitle = next.title
+                knownYoutubeId = next.youtubeId
+                candidateSeedGenre = mimooutcastSeedGenre
             } else if (isDecadeOnly) {
                 // "década sola" (sin género ni origen):
                 // `suggestRelatedArtist()` no tiene ningún término
