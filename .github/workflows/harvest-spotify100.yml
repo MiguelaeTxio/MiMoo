@@ -4,7 +4,9 @@ name: Cosechar listas de Spotify (Las 100 canciones del ano en Espana)
 # fases reutilizado sin tocar su codigo (variables de entorno apuntan a
 # los ficheros nuevos en vez de a los de Los 40):
 #
-#   fase 1  harvest_spotify100_charts.py         cosecha cruda
+#   fase 1  harvest_spotify100_charts.py         cosecha cruda (busca
+#           ano a ano con client.search(), NUNCA con get_user() -- esa
+#           llamada exige autenticacion, confirmado real en S035)
 #   fase 2  enrich_chart_artists.py               pais + genero
 #   fase 3  merge_charts_into_dictionary.py        -> bloque es
 #   fase 3b merge_intl_charts_into_dictionary.py   -> bloque intl
@@ -44,32 +46,11 @@ jobs:
       - name: Instalar spotifyscraper
         run: pip install spotifyscraper
 
-      - name: Sonda de aislamiento (S035, diagnostico de fallos silenciosos)
-        run: |
-          set -x
-          timeout --signal=KILL 60 python3 tools/debug_spotify_probe.py
-          echo "codigo de salida real de la sonda: $?"
-          ls -la tools/chart_spotify100_probe_debug.json || echo "NO SE CREO EL FICHERO DE LA SONDA"
-
-      - name: Commitear el resultado de la sonda (SIEMPRE, antes de la Fase 1)
-        if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tools/chart_spotify100_probe_debug.json 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "Sin resultado de sonda que commitear."
-            exit 0
-          fi
-          git commit -m "data: resultado de la sonda de aislamiento de Spotify -- $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git pull --rebase origin main
-          git push
-
       - name: Fase 1 -- Cosechar las listas de Spotify
         id: harvest
         run: |
           set -x
-          timeout --signal=KILL 300 python3 tools/harvest_spotify100_charts.py
+          timeout --signal=KILL 600 python3 tools/harvest_spotify100_charts.py
           exit $?
 
       - name: Commitear el diagnostico de la Fase 1 (SIEMPRE, exito o fallo)
@@ -131,7 +112,7 @@ jobs:
           sin tocar código -- solo variables de entorno apuntando a los
           ficheros nuevos. Fuente gemela e independiente de Los 40, con
           más profundidad por año (100 canciones representativas, no solo
-          el número 1 semanal) y cobertura desde 1960.
+          el número 1 semanal) y cobertura desde 1955.
           EOF
           git pull --rebase origin main
           git push
