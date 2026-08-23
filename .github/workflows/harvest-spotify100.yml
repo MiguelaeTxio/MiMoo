@@ -1,0 +1,97 @@
+name: Cosechar listas de Spotify (Las 100 canciones del ano en Espana)
+
+# Disparo MANUAL. Fuente nueva y gemela a Los 40, mismo pipeline de tres
+# fases reutilizado sin tocar su codigo (variables de entorno apuntan a
+# los ficheros nuevos en vez de a los de Los 40):
+#
+#   fase 1  harvest_spotify100_charts.py         cosecha cruda
+#   fase 2  enrich_chart_artists.py               pais + genero
+#   fase 3  merge_charts_into_dictionary.py        -> bloque es
+#   fase 3b merge_intl_charts_into_dictionary.py   -> bloque intl
+#
+# Las cuatro fases corren SEGUIDAS en esta misma ejecucion -- a
+# diferencia de Los 40 (donde cada fase se revisaba aparte antes de
+# seguir), aqui ya sabemos por la sesion de hoy que el pipeline
+# funciona de verdad, asi que se encadena entero.
+on:
+  workflow_dispatch:
+
+jobs:
+  harvest-and-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      CHART_RAW_PATH: tools/chart_spotify100_raw.json
+      CHART_ENRICHED_PATH: tools/chart_spotify100_enriched.json
+      CHART_REJECTED_PATH: tools/chart_spotify100_rejected.json
+      CHART_INTL_REJECTED_PATH: tools/chart_spotify100_intl_rejected.json
+      DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar spotifyscraper
+        run: pip install spotifyscraper
+
+      - name: Fase 1 -- Cosechar las listas de Spotify
+        run: python3 tools/harvest_spotify100_charts.py
+
+      - name: Fase 2 -- Enriquecer con pais y genero
+        run: python3 tools/enrich_chart_artists.py
+
+      - name: Fase 3 -- Fusionar bloque espanol
+        run: python3 tools/merge_charts_into_dictionary.py
+
+      - name: Fase 3b -- Fusionar bloque internacional
+        run: python3 tools/merge_intl_charts_into_dictionary.py
+
+      - name: Salvar todo como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-spotify100
+          path: |
+            tools/chart_spotify100_raw.json
+            tools/chart_spotify100_report.json
+            tools/chart_spotify100_enriched.json
+            tools/chart_spotify100_rejected.json
+            tools/chart_spotify100_intl_rejected.json
+            app/src/main/assets/known_hit_artists.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commitear si ha cambiado algo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_spotify100_raw.json \
+                  tools/chart_spotify100_report.json \
+                  tools/chart_spotify100_enriched.json \
+                  tools/chart_spotify100_rejected.json \
+                  tools/chart_spotify100_intl_rejected.json \
+                  app/src/main/assets/known_hit_artists.json
+          if git diff --cached --quiet; then
+            echo "Nada nuevo que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: fusión de "Las 100 canciones del año en España" (Spotify) en known_hit_artists.json
+
+          Pipeline completo de un solo tiro (harvest -> enrich -> merge es
+          -> merge intl), mismo mecanismo ya probado con Los 40 esta
+          sesión, reutilizado sin tocar código -- solo variables de
+          entorno apuntando a los ficheros nuevos. Fuente gemela e
+          independiente de Los 40, con más profundidad por año (100
+          canciones representativas, no solo el número 1 semanal) y
+          cobertura desde 1960.
+          EOF
+          git pull --rebase origin main
+          git push

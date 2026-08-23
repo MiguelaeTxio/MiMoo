@@ -30,6 +30,7 @@ de S023 que la Fase 3.
 """
 
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -37,9 +38,9 @@ from collections import Counter, defaultdict
 
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
 TREE_PATH = "app/src/main/assets/genre_tree.json"
-RAW_PATH = "tools/chart_los40_raw.json"
-ENRICHED_PATH = "tools/chart_los40_enriched.json"
-REJECTED_PATH = "tools/chart_los40_intl_rejected.json"
+RAW_PATH = os.environ.get("CHART_RAW_PATH", "tools/chart_los40_raw.json")
+ENRICHED_PATH = os.environ.get("CHART_ENRICHED_PATH", "tools/chart_los40_enriched.json")
+REJECTED_PATH = os.environ.get("CHART_INTL_REJECTED_PATH", "tools/chart_los40_intl_rejected.json")
 
 MAX_DESCENDANTS = 25
 FIRST_DECADE = 1960

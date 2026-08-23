@@ -43,10 +43,10 @@ import urllib.parse
 import urllib.request
 from collections import Counter
 
-RAW_PATH = "tools/chart_los40_raw.json"
+RAW_PATH = os.environ.get("CHART_RAW_PATH", "tools/chart_los40_raw.json")
 TREE_PATH = "app/src/main/assets/genre_tree.json"
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
-OUT_PATH = "tools/chart_los40_enriched.json"
+OUT_PATH = os.environ.get("CHART_ENRICHED_PATH", "tools/chart_los40_enriched.json")
 
 MB_API = "https://musicbrainz.org/ws/2"
 DISCOGS_API = "https://api.discogs.com"
