@@ -122,10 +122,16 @@ fun FavoritesScreen(
                 ) {
                     LinearProgressIndicator(modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = { viewModel.cancelBackgroundGeneration() }) {
+                    Row(
+                        modifier = Modifier
+                            .glassChip()
+                            .clickable { viewModel.cancelBackgroundGeneration() }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Icon(Icons.Filled.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Detener generación")
+                        Text("Detener generación", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
