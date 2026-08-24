@@ -1575,6 +1575,34 @@ class PlayerManager @Inject constructor(
     private var mimooutcastSeedGenre: String? = null
 
     /**
+     * S037 -- diseño definitivo confirmado por Miguel Ángel, aplicable
+     * a TODA sesión de miMooutCast por igual (no solo década): *"esto
+     * sirve para todo. Barajamos la lista que ya tenemos... se baraja
+     * y se ponen seguidos... y lo que se vaya descubriendo se pone al
+     * final de la lista."* Mismo mecanismo que ya usa la semilla de
+     * género (`mimooutcastSeedOrder`, arriba) -- este campo es su
+     * equivalente para "década sola" (sin género ni origen), que no
+     * tiene semilla bundleada propia: se pre-carga y BARAJA el
+     * diccionario de éxitos completo de esa década al arrancar la
+     * sesión (`KnownHitsRepository.allHitsForDecade()`), se agota
+     * antes de cualquier llamada de red -- lo que se descubra en vivo
+     * después (`suggestArtistFromDecade()`) se añade sin más al final
+     * de la MISMA cola ya en marcha, nunca antes.
+     *
+     * S036 -- esto ya había existido una vez esta sesión y se revirtió
+     * a petición de Miguel Ángel (fusión de dos ideas distintas:
+     * "usar el diccionario por defecto" + "prioridad sobre el botón de
+     * España"). Esta vez es distinto: es una petición explícita y
+     * general de diseño ("esto sirve para todo"), no un atajo
+     * puntual -- se reconstruye igual que entonces (bloque intl+es sin
+     * filtrar por género vía `KnownHitsRepository.allHitsForDecade()`)
+     * pero como pieza definitiva del diseño.
+     */
+    private var decadeHitsOrder: List<com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.KnownHit> =
+        emptyList()
+    private var decadeHitsIndex = 0
+
+    /**
      * H15 (miMooutCast), S032 -- objetivo de cola para ESTA sesión.
      * Orden explícita de Miguel Ángel para clásica: *"nunca se para de
      * buscar hasta tener 200 temas en cola."* `RADIO_QUEUE_SIZE` (10)
@@ -4026,6 +4054,26 @@ class PlayerManager @Inject constructor(
             mimooutcastSeedIndex = 0
             mimooutcastSeedGenre = null
         }
+        // S037 -- mismo método que la semilla de género de arriba,
+        // aplicado a "década sola" (sin género ni origen) desde el
+        // diccionario de éxitos local. Ver el kdoc real de
+        // `decadeHitsOrder` -- diseño definitivo confirmado por
+        // Miguel Ángel: "esto sirve para todo... se baraja y se ponen
+        // seguidos... lo que se vaya descubriendo se pone al final".
+        // Se pre-carga solo cuando de verdad aplica (misma condición
+        // exacta que `isDecadeOnly` en `fetchSimpleManualCandidate()`,
+        // más abajo) -- si el botón "Conocido en España" está
+        // encendido, `miMooutCastRequireKnownInSpain` ya cubre este
+        // caso con su propia lógica (mismo diccionario, filtrado por
+        // España), no hace falta duplicarla.
+        val anchorIsDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
+        if (anchorIsDecadeOnly && !requireKnownInSpain) {
+            decadeHitsOrder = knownHitsRepository.allHitsForDecade(anchor.decadeBegin!!).shuffled()
+            decadeHitsIndex = 0
+        } else {
+            decadeHitsOrder = emptyList()
+            decadeHitsIndex = 0
+        }
         // H15 (miMooutCast), S032 -- objetivo de cola. Para toda
         // sesión de miMooutCast en general ya no se usa (ver
         // `topUpRadioQueueIfNeeded()`, sin tope de tamaño desde la
@@ -4416,6 +4464,22 @@ class PlayerManager @Inject constructor(
                 knownTitle = next.title
                 knownYoutubeId = next.youtubeId
                 candidateSeedGenre = mimooutcastSeedGenre
+            } else if (decadeHitsIndex < decadeHitsOrder.size) {
+                // S037 -- mismo mecanismo que la rama de la semilla de
+                // género de arriba: fuente local pre-cargada y
+                // barajada al arrancar la sesión, se agota antes de
+                // tocar la red. Ver el kdoc real de `decadeHitsOrder`
+                // -- diseño definitivo confirmado por Miguel Ángel. En
+                // cuanto se agota (`decadeHitsIndex >=
+                // decadeHitsOrder.size`) esta condición deja de
+                // cumplirse y cae, sin código extra, en `isDecadeOnly`
+                // de más abajo (MusicBrainz en vivo) -- lo que se
+                // descubra ahí se añade sin más al final de la MISMA
+                // cola ya en marcha.
+                val next = decadeHitsOrder[decadeHitsIndex]
+                decadeHitsIndex++
+                artistName = next.artist
+                knownTitle = next.song
             } else if (isDecadeOnly) {
                 // "década sola" (sin género ni origen):
                 // `suggestRelatedArtist()` no tiene ningún término
