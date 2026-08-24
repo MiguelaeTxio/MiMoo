@@ -14,6 +14,11 @@ name: Validar diccionario de éxitos contra YouTube (semilla de década)
 # entradas, no cabe en una sola ejecucion).
 on:
   workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Limite de entradas a procesar (vacio = sin limite, todo el diccionario)'
+        required: false
+        default: ''
 
 jobs:
   validate:
@@ -21,6 +26,8 @@ jobs:
     timeout-minutes: 350
     permissions:
       contents: write
+    env:
+      DECADE_SEED_LIMIT: ${{ github.event.inputs.limit }}
 
     steps:
       - name: Checkout codigo
@@ -45,7 +52,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add app/src/main/assets/mimooutcast_decade_seed.json tools/decade_seed_report.json
+          git add app/src/main/assets/mimooutcast_decade_seed.json tools/decade_seed_report.json tools/decade_seed_errors.json
           if git diff --cached --quiet; then
             echo "Sin progreso nuevo que commitear."
             exit 0

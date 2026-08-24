@@ -53,10 +53,14 @@ except ImportError:
 DICT_PATH = "app/src/main/assets/known_hit_artists.json"
 OUT_SEED_PATH = "app/src/main/assets/mimooutcast_decade_seed.json"
 OUT_REPORT_PATH = "tools/decade_seed_report.json"
+OUT_ERROR_SAMPLE_PATH = "tools/decade_seed_errors.json"
 
 SEARCH_LIMIT = 6
 MAX_TRACK_SECONDS = 15 * 60
 SLEEP_BETWEEN_SEARCHES = 0.3
+# Límite opcional para pruebas rápidas de diagnóstico -- sin definir, sin límite (recorre todo el diccionario).
+import os
+MAX_ENTRIES_THIS_RUN = int(os.environ.get("DECADE_SEED_LIMIT", "0")) or None
 
 # Copiadas literalmente de PlayerManager.kt -- COMPILATION_TITLE_HINTS + NOT_MUSIC_TITLE_HINTS.
 COMPILATION_TITLE_HINTS = [
@@ -140,6 +144,7 @@ def main():
     validated = 0
     rejected = 0
     failed = 0
+    error_samples = []
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         for decade in sorted(dictionary.keys()):
@@ -154,9 +159,13 @@ def main():
                     total += 1
                     if key in decade_seed:
                         continue
+                    if MAX_ENTRIES_THIS_RUN and (validated + rejected + failed) >= MAX_ENTRIES_THIS_RUN:
+                        continue
                     video_id, error = search_and_validate(ydl, artist, song)
                     if error:
                         failed += 1
+                        if len(error_samples) < 20:
+                            error_samples.append({"artist": artist, "song": song, "error": error})
                         print("[%s] ERROR '%s' - '%s': %s" % (decade, artist, song, error), flush=True)
                     elif video_id:
                         decade_seed[key] = {"artist": artist, "song": song, "youtube_id": video_id}
@@ -181,6 +190,9 @@ def main():
             "fallos_esta_ejecucion": failed,
             "total_validadas_acumuladas": sum(len(v) for v in seed.values()),
         }, handle, ensure_ascii=False, indent=1, sort_keys=True)
+        handle.write("\n")
+    with open(OUT_ERROR_SAMPLE_PATH, "w", encoding="utf-8") as handle:
+        json.dump(error_samples, handle, ensure_ascii=False, indent=1)
         handle.write("\n")
 
     print("\n--- RESUMEN ---")
