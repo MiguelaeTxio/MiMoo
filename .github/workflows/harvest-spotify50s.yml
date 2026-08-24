@@ -41,9 +41,18 @@ jobs:
         run: python3 tools/enrich_chart_artists.py
 
       - name: Fase 3 -- Fusionar bloque espanol
+        # S035 -- 0 canciones anadidas al bloque ES no es un fallo real
+        # para esta fuente (playlists estadounidenses de los 50, la
+        # inmensa mayoria del contenido cae en intl) -- el script sale
+        # con error 1 cuando added==0, pensado como aviso para Los 40
+        # (donde SI deberia haber siempre contenido espanol). Se deja
+        # continuar para no cortar en cadena la Fase 3b, que es la que
+        # de verdad importa aqui.
+        continue-on-error: true
         run: python3 tools/merge_charts_into_dictionary.py
 
       - name: Fase 3b -- Fusionar bloque internacional
+        if: always()
         run: python3 tools/merge_intl_charts_into_dictionary.py
 
       - name: Salvar todo como artefacto
@@ -60,6 +69,7 @@ jobs:
           retention-days: 30
 
       - name: Commitear si ha cambiado algo
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
