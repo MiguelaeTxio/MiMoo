@@ -1330,6 +1330,25 @@ class PlayerManager @Inject constructor(
     private val radioUsedSongs = mutableSetOf<String>()
 
     /**
+     * S037 -- bug real encontrado en el propio log de Miguel Ángel:
+     * con "Conocido en España" encendido, un candidato del diccionario
+     * que falla la resolución de YouTube ("0 de 6 resultados pasaron
+     * el filtro") podía volver a salir sorteado por `randomHit()` una y
+     * otra vez dentro de la MISMA sesión -- "Platero y Tú", "Boikot",
+     * "Celtas Cortos", "La Frontera" se repitieron 3-4 veces cada una
+     * en un solo log, siempre fallando igual. `radioUsedSongs` solo
+     * excluye lo YA SERVIDO con éxito, nunca lo intentado y fallido --
+     * de ahí que `excludeSongKeys` no bastara.
+     *
+     * Este set marca "artista+canción que YA se intentó resolver esta
+     * sesión y no dio nada verificable" -- se pasa SUMADO a
+     * `radioUsedSongs` como `excludeSongKeys` de `randomHit()`, para
+     * que el mismo callejón sin salida no se vuelva a intentar nunca
+     * dentro de la misma sesión.
+     */
+    private val radioUnresolvableSongs = mutableSetOf<String>()
+
+    /**
      * H15 (miMooutCast) -- ventana DURA de no-repetición de artista,
      * EXCLUSIVA de este modo. Instrucción explícita y repetida de
      * Miguel Ángel (2026-08-07), tras un malentendido previo sobre
@@ -4437,7 +4456,9 @@ class PlayerManager @Inject constructor(
                 // que esté encendido, sea cual sea el género.
                 val hit = knownHitsRepository.randomHit(
                     anchor.genre.ifBlank { null }, anchor.decadeBegin, anchorOrigin(anchor),
-                    excludeSongKeys = radioUsedSongs, avoidArtists = windowLower,
+                    // S037 -- radioUnresolvableSongs suma lo YA
+                    // intentado y fallido esta sesión, ver su kdoc.
+                    excludeSongKeys = radioUsedSongs + radioUnresolvableSongs, avoidArtists = windowLower,
                     relaxGenre = anchor.genre.isBlank(),
                     anchorGenres = anchor.genres,
                     classical = anchor.isClassical,
@@ -4634,6 +4655,17 @@ class PlayerManager @Inject constructor(
                         title = broken.title,
                     )
                 }
+            }
+            // S037 -- ver el kdoc de `radioUnresolvableSongs`: un
+            // candidato del diccionario de éxitos que falla la
+            // resolución de YouTube no debe volver a salir sorteado
+            // esta sesión. `knownTitle != null` distingue este camino
+            // (diccionario/canción conocida) del de "solo artista" en
+            // vivo (`suggestWorkForGenre()`/`suggestRelatedArtist()`,
+            // sin canción concreta, donde reintentar el MISMO artista
+            // con otra canción sí tiene sentido).
+            if (item == null && knownTitle != null) {
+                radioUnresolvableSongs.add(knownHitsRepository.songKey(artistName, knownTitle))
             }
             if (item != null &&
                 knownHitsRepository.songKey(item.artist, item.title) !in radioUsedSongs &&
