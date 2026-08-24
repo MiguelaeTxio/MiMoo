@@ -1,0 +1,562 @@
+[
+ {
+  "song": "Jailhouse Rock",
+  "artist": "Elvis Presley",
+  "year": 1955
+ },
+ {
+  "song": "Banana Boat (Day-O)",
+  "artist": "Harry Belafonte",
+  "year": 1955
+ },
+ {
+  "song": "Hound Dog",
+  "artist": "Big Mama Thornton",
+  "year": 1955
+ },
+ {
+  "song": "I Only Have Eyes for You",
+  "artist": "The Flamingos",
+  "year": 1955
+ },
+ {
+  "song": "Fever",
+  "artist": "Peggy Lee",
+  "year": 1955
+ },
+ {
+  "song": "We Belong Together",
+  "artist": "Ritchie Valens",
+  "year": 1955
+ },
+ {
+  "song": "Put Your Head on My Shoulder",
+  "artist": "Paul Anka",
+  "year": 1955
+ },
+ {
+  "song": "Beyond the Sea",
+  "artist": "Bobby Darin",
+  "year": 1955
+ },
+ {
+  "song": "I've Got a Woman",
+  "artist": "Ray Charles",
+  "year": 1955
+ },
+ {
+  "song": "Unforgettable",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "La Bamba",
+  "artist": "Ritchie Valens",
+  "year": 1955
+ },
+ {
+  "song": "Hound Dog",
+  "artist": "Elvis Presley",
+  "year": 1955
+ },
+ {
+  "song": "I'll Be Seeing You",
+  "artist": "Billie Holiday",
+  "year": 1955
+ },
+ {
+  "song": "I've Got You Under My Skin",
+  "artist": "Frank Sinatra",
+  "year": 1955
+ },
+ {
+  "song": "Volare (Nel Blu Di Pinto Di Blu)",
+  "artist": "Dean Martin",
+  "year": 1955
+ },
+ {
+  "song": "I Fall In Love Too Easily",
+  "artist": "Chet Baker",
+  "year": 1955
+ },
+ {
+  "song": "Blue Suede Shoes",
+  "artist": "Elvis Presley",
+  "year": 1955
+ },
+ {
+  "song": "Tutti Frutti",
+  "artist": "Little Richard",
+  "year": 1955
+ },
+ {
+  "song": "Hallelujah, I Love Her So",
+  "artist": "Ray Charles",
+  "year": 1955
+ },
+ {
+  "song": "Cheek To Cheek",
+  "artist": "Ella Fitzgerald",
+  "year": 1955
+ },
+ {
+  "song": "You Make Me Feel So Young",
+  "artist": "Frank Sinatra",
+  "year": 1955
+ },
+ {
+  "song": "(We're Gonna) Rock Around The Clock",
+  "artist": "Bill Haley & His Comets",
+  "year": 1955
+ },
+ {
+  "song": "A Teenager In Love",
+  "artist": "Dion & The Belmonts",
+  "year": 1955
+ },
+ {
+  "song": "Everyday",
+  "artist": "Buddy Holly",
+  "year": 1955
+ },
+ {
+  "song": "Mack the Knife",
+  "artist": "Bobby Darin",
+  "year": 1955
+ },
+ {
+  "song": "Blue Moon",
+  "artist": "Billie Holiday",
+  "year": 1955
+ },
+ {
+  "song": "Mannish Boy",
+  "artist": "Muddy Waters",
+  "year": 1955
+ },
+ {
+  "song": "My Funny Valentine",
+  "artist": "Chet Baker",
+  "year": 1955
+ },
+ {
+  "song": "Long Tall Sally (The Thing)",
+  "artist": "Little Richard",
+  "year": 1955
+ },
+ {
+  "song": "Donna",
+  "artist": "Ritchie Valens",
+  "year": 1955
+ },
+ {
+  "song": "Put Your Head on My Shoulder",
+  "artist": "Paul Anka",
+  "year": 1955
+ },
+ {
+  "song": "Fever",
+  "artist": "Peggy Lee",
+  "year": 1955
+ },
+ {
+  "song": "Summertime",
+  "artist": "Ella Fitzgerald",
+  "year": 1955
+ },
+ {
+  "song": "Everyday",
+  "artist": "Buddy Holly",
+  "year": 1955
+ },
+ {
+  "song": "Donna",
+  "artist": "Ritchie Valens",
+  "year": 1955
+ },
+ {
+  "song": "What A Diff'rence A Day Made",
+  "artist": "Dinah Washington",
+  "year": 1955
+ },
+ {
+  "song": "Lonesome Town",
+  "artist": "Ricky Nelson",
+  "year": 1955
+ },
+ {
+  "song": "Dream A Little Dream Of Me",
+  "artist": "Ella Fitzgerald",
+  "year": 1955
+ },
+ {
+  "song": "Blueberry Hill",
+  "artist": "Fats Domino",
+  "year": 1955
+ },
+ {
+  "song": "Twilight Time",
+  "artist": "The Platters",
+  "year": 1955
+ },
+ {
+  "song": "Come Rain or Come Shine",
+  "artist": "Ray Charles",
+  "year": 1955
+ },
+ {
+  "song": "Smile",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "Cheek To Cheek",
+  "artist": "Ella Fitzgerald",
+  "year": 1955
+ },
+ {
+  "song": "Love Is Here To Stay",
+  "artist": "Frank Sinatra",
+  "year": 1955
+ },
+ {
+  "song": "Love Me Tender",
+  "artist": "Elvis Presley",
+  "year": 1955
+ },
+ {
+  "song": "I Get Along Without You Very Well",
+  "artist": "Chet Baker",
+  "year": 1955
+ },
+ {
+  "song": "Teach Me Tonight",
+  "artist": "Dinah Washington",
+  "year": 1955
+ },
+ {
+  "song": "Stardust",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "My Funny Valentine",
+  "artist": "Frank Sinatra",
+  "year": 1955
+ },
+ {
+  "song": "Poor Little Fool",
+  "artist": "Ricky Nelson",
+  "year": 1955
+ },
+ {
+  "song": "It's Only Make Believe",
+  "artist": "Conway Twitty",
+  "year": 1955
+ },
+ {
+  "song": "Mr. Lonely",
+  "artist": "Bobby Vinton",
+  "year": 1955
+ },
+ {
+  "song": "You Mean Everything to Me",
+  "artist": "Neil Sedaka",
+  "year": 1955
+ },
+ {
+  "song": "In The Wee Small Hours Of The Morning",
+  "artist": "Frank Sinatra",
+  "year": 1955
+ },
+ {
+  "song": "Devoted to You",
+  "artist": "The Everly Brothers",
+  "year": 1955
+ },
+ {
+  "song": "Don't",
+  "artist": "Elvis Presley",
+  "year": 1955
+ },
+ {
+  "song": "Time After Time",
+  "artist": "Margaret Whiting",
+  "year": 1955
+ },
+ {
+  "song": "They Can't Take That Away From Me",
+  "artist": "Ella Fitzgerald",
+  "year": 1955
+ },
+ {
+  "song": "Come Softly To Me",
+  "artist": "The Fleetwoods",
+  "year": 1955
+ },
+ {
+  "song": "Let It Be Me",
+  "artist": "The Everly Brothers",
+  "year": 1955
+ },
+ {
+  "song": "Just Walkin' in the Rain",
+  "artist": "Johnnie Ray",
+  "year": 1955
+ },
+ {
+  "song": "Tears on My Pillow",
+  "artist": "Little Anthony & The Imperials",
+  "year": 1955
+ },
+ {
+  "song": "Who's Sorry Now",
+  "artist": "Connie Francis",
+  "year": 1955
+ },
+ {
+  "song": "Mr. Blue",
+  "artist": "The Fleetwoods",
+  "year": 1955
+ },
+ {
+  "song": "To Be Loved",
+  "artist": "Jackie Wilson",
+  "year": 1955
+ },
+ {
+  "song": "Cry Me A River",
+  "artist": "Dinah Washington",
+  "year": 1955
+ },
+ {
+  "song": "Stay Beside Me",
+  "artist": "Ritchie Valens",
+  "year": 1955
+ },
+ {
+  "song": "You're Gonna Miss Me",
+  "artist": "Connie Francis",
+  "year": 1955
+ },
+ {
+  "song": "You Belong To Me",
+  "artist": "Jo Stafford",
+  "year": 1955
+ },
+ {
+  "song": "A Teenager's Romance",
+  "artist": "Ricky Nelson",
+  "year": 1955
+ },
+ {
+  "song": "Love Letters In The Sand",
+  "artist": "Pat Boone",
+  "year": 1955
+ },
+ {
+  "song": "Red Sails In The Sunset",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "Catch a Falling Star",
+  "artist": "Perry Como",
+  "year": 1955
+ },
+ {
+  "song": "Island In The Sun",
+  "artist": "Harry Belafonte",
+  "year": 1955
+ },
+ {
+  "song": "I Believe",
+  "artist": "Frankie Laine",
+  "year": 1955
+ },
+ {
+  "song": "I'll Never Smile Again",
+  "artist": "The Platters",
+  "year": 1955
+ },
+ {
+  "song": "Chances Are",
+  "artist": "Johnny Mathis",
+  "year": 1955
+ },
+ {
+  "song": "Born Too Late",
+  "artist": "The Poni-Tails",
+  "year": 1955
+ },
+ {
+  "song": "Mood Indigo",
+  "artist": "Frank Sinatra",
+  "year": 1955
+ },
+ {
+  "song": "Cry",
+  "artist": "Johnnie Ray",
+  "year": 1955
+ },
+ {
+  "song": "Prisoner Of Love",
+  "artist": "The Platters",
+  "year": 1955
+ },
+ {
+  "song": "A Certain Smile",
+  "artist": "Johnny Mathis",
+  "year": 1955
+ },
+ {
+  "song": "I've Got A Crush On You",
+  "artist": "Sarah Vaughan",
+  "year": 1955
+ },
+ {
+  "song": "April Love",
+  "artist": "Pat Boone",
+  "year": 1955
+ },
+ {
+  "song": "Why Do I Love You So",
+  "artist": "Johnny Tillotson",
+  "year": 1955
+ },
+ {
+  "song": "St Therese of the Roses",
+  "artist": "Malcolm Vaughan",
+  "year": 1955
+ },
+ {
+  "song": "The Black Hills of Dakota",
+  "artist": "Doris Day",
+  "year": 1955
+ },
+ {
+  "song": "River of No Return",
+  "artist": "Marilyn Monroe",
+  "year": 1955
+ },
+ {
+  "song": "Don't Forbid Me",
+  "artist": "Pat Boone",
+  "year": 1955
+ },
+ {
+  "song": "Hold My Hand",
+  "artist": "Don Cornell",
+  "year": 1955
+ },
+ {
+  "song": "Outside of Heaven",
+  "artist": "Eddie Fisher",
+  "year": 1955
+ },
+ {
+  "song": "My Special Angel",
+  "artist": "Malcolm Vaughan",
+  "year": 1955
+ },
+ {
+  "song": "Don't Laugh at Me ('Cause I'm a Fool)",
+  "artist": "Norman Wisdom",
+  "year": 1955
+ },
+ {
+  "song": "Venus",
+  "artist": "Frankie Avalon",
+  "year": 1955
+ },
+ {
+  "song": "The Great Pretender",
+  "artist": "The Platters",
+  "year": 1955
+ },
+ {
+  "song": "La vie en rose",
+  "artist": "Louis Armstrong",
+  "year": 1955
+ },
+ {
+  "song": "You Don't Know Me",
+  "artist": "Ray Charles",
+  "year": 1955
+ },
+ {
+  "song": "When I Fall In Love",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "Walkin' After Midnight",
+  "artist": "Patsy Cline",
+  "year": 1955
+ },
+ {
+  "song": "Sixteen Tons",
+  "artist": "The Platters",
+  "year": 1955
+ },
+ {
+  "song": "Down In The Willow Garden",
+  "artist": "The Everly Brothers",
+  "year": 1955
+ },
+ {
+  "song": "It's All In The Game",
+  "artist": "Tommy Edwards",
+  "year": 1955
+ },
+ {
+  "song": "Pretend",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "Goodnite, It's Time to Go",
+  "artist": "The Spaniels",
+  "year": 1955
+ },
+ {
+  "song": "The Theme From \"A Summer Place\"",
+  "artist": "Percy Faith & His Orchestra",
+  "year": 1955
+ },
+ {
+  "song": "Since I Don't Have You",
+  "artist": "The Skyliners",
+  "year": 1955
+ },
+ {
+  "song": "True Love Ways",
+  "artist": "Buddy Holly",
+  "year": 1955
+ },
+ {
+  "song": "Ev'ry Time We Say Goodbye",
+  "artist": "Carmen McRae",
+  "year": 1955
+ },
+ {
+  "song": "Smoke Gets In Your Eyes",
+  "artist": "The Platters",
+  "year": 1955
+ },
+ {
+  "song": "Mona Lisa",
+  "artist": "Nat King Cole",
+  "year": 1955
+ },
+ {
+  "song": "Sugar Moon",
+  "artist": "Pat Boone",
+  "year": 1955
+ },
+ {
+  "song": "Tennessee Waltz",
+  "artist": "Patti Page",
+  "year": 1955
+ }
+]

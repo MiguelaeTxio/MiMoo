@@ -1,0 +1,84 @@
+name: Fusionar listas oficiales de Spotify de los años 50
+
+# Disparo MANUAL. Cuarta fuente: dos playlists EDITORIALES OFICIALES de
+# Spotify ("All Out 50s", 150 temas, 1.9M guardados; "Soft 50s", 82
+# temas, 538K guardados) -- llena por fin el hueco real de la decada de
+# 1950, que ninguna fuente anterior (Los 40, Spotify100, MUZIKALIA)
+# cubria. Sin fase de cosecha automatica -- extraidas a mano via
+# web_fetch en la propia sesion (tools/chart_spotify50s_raw.json), solo
+# enriquecimiento + fusion, mismo pipeline reutilizado sin tocar
+# codigo. Una tercera playlist que Miguel Angel tambien paso
+# ("40s/50s/60s love/slow songs", playlist personal sin etiquetar
+# decada por cancion) se DESCARTO a proposito -- mezclar tres decadas
+# sin forma fiable de saber a cual pertenece cada tema no es dato
+# verificable.
+on:
+  workflow_dispatch:
+
+jobs:
+  enrich-and-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      CHART_RAW_PATH: tools/chart_spotify50s_raw.json
+      CHART_ENRICHED_PATH: tools/chart_spotify50s_enriched.json
+      CHART_REJECTED_PATH: tools/chart_spotify50s_rejected.json
+      CHART_INTL_REJECTED_PATH: tools/chart_spotify50s_intl_rejected.json
+      DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fase 2 -- Enriquecer con pais y genero
+        run: python3 tools/enrich_chart_artists.py
+
+      - name: Fase 3 -- Fusionar bloque espanol
+        run: python3 tools/merge_charts_into_dictionary.py
+
+      - name: Fase 3b -- Fusionar bloque internacional
+        run: python3 tools/merge_intl_charts_into_dictionary.py
+
+      - name: Salvar todo como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-spotify50s
+          path: |
+            tools/chart_spotify50s_enriched.json
+            tools/chart_spotify50s_rejected.json
+            tools/chart_spotify50s_intl_rejected.json
+            app/src/main/assets/known_hit_artists.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commitear si ha cambiado algo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_spotify50s_enriched.json \
+                  tools/chart_spotify50s_rejected.json \
+                  tools/chart_spotify50s_intl_rejected.json \
+                  app/src/main/assets/known_hit_artists.json
+          if git diff --cached --quiet; then
+            echo "Nada nuevo que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: fusión de "All Out 50s" + "Soft 50s" (Spotify oficial) en known_hit_artists.json — cierra el hueco de los años 50
+
+          112 canciones (con solapes entre las dos listas, deduplicadas
+          por el propio script de fusión), de las dos playlists
+          editoriales oficiales de Spotify para la década de 1950 --
+          primera fuente real que cubre esa década, que hasta ahora no
+          existía en absoluto en el diccionario.
+          EOF
+          git pull --rebase origin main
+          git push
