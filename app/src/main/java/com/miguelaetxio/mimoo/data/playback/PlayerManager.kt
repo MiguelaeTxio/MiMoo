@@ -365,6 +365,68 @@ data class PlaybackState(
  *   - The queue management screen (QueueScreen) can reorder, remove
  *     tracks, jump to a specific one, or clear it entirely.
  */
+/**
+ * Construye el ExoPlayer con foco de audio explícito y exclusivo
+ * (petición de Miguel Ángel, 2026-08-24: "el sonido de las demás
+ * aplicaciones... que no se oigan nada" -- USAGE_MEDIA +
+ * CONTENT_TYPE_MUSIC piden AUDIOFOCUS_GAIN, el foco más fuerte que
+ * existe, empuja a cualquier otra app bien comportada a pararse del
+ * todo en vez de solo bajar el volumen).
+ *
+ * SALVAGUARDA REAL, S036: un primer intento de esto (mismo día) dejó
+ * miMooutCast completamente roto -- ni una línea de log, la búsqueda
+ * ni siquiera arrancaba. Diagnóstico real con dos capturas de
+ * mimooutcast_debug.txt de Miguel Ángel: entre las 09:41 y las 10:12
+ * no había NINGUNA actividad para "Años 90", ni un solo intento --
+ * indicio fuerte de que `ExoPlayer.Builder(...).setAudioAttributes(...)`
+ * lanzaba una excepción real en tiempo de ejecución en su dispositivo
+ * (pese a compilar y pasar el build de GitHub Actions sin problema).
+ * Como `player: ExoPlayer` es una propiedad de PlayerManager
+ * (`@Singleton`, compartido por toda la app), si su construcción
+ * lanza, NADA de lo que dependa de PlayerManager vuelve a funcionar --
+ * exactamente lo que se vio. Este envoltorio nunca deja que eso vuelva
+ * a pasar: si el foco explícito falla por cualquier motivo, cae a un
+ * reproductor normal (comportamiento implícito de ExoPlayer, el que
+ * ya funcionaba antes) en vez de romper la construcción entera.
+ * ---
+ * Builds the ExoPlayer with explicit, exclusive audio focus (Miguel
+ * Ángel's request, 2026-08-24: "other apps' sound... it shouldn't be
+ * heard at all" -- USAGE_MEDIA + CONTENT_TYPE_MUSIC request
+ * AUDIOFOCUS_GAIN, the strongest focus that exists, pushing any other
+ * well-behaved app to fully stop instead of just lowering its volume).
+ *
+ * REAL SAFEGUARD, S036: a first attempt at this (same day) left
+ * miMooutCast completely broken -- not a single log line, the search
+ * didn't even start. Real diagnosis with two of Miguel Ángel's
+ * mimooutcast_debug.txt captures: between 09:41 and 10:12 there was
+ * NO activity at all for "Años 90", not a single attempt -- a strong
+ * sign that `ExoPlayer.Builder(...).setAudioAttributes(...)` threw a
+ * real runtime exception on his device (despite compiling and passing
+ * the GitHub Actions build fine). Since `player: ExoPlayer` is a
+ * property of PlayerManager (`@Singleton`, shared across the whole
+ * app), if its construction throws, NOTHING that depends on
+ * PlayerManager works again -- exactly what happened. This wrapper
+ * never lets that happen again: if the explicit focus request fails
+ * for any reason, it falls back to a plain player (ExoPlayer's
+ * implicit behavior, the one that already worked before) instead of
+ * breaking the entire construction.
+ */
+private fun buildExoPlayerWithExclusiveFocus(context: android.content.Context): ExoPlayer {
+    return try {
+        ExoPlayer.Builder(context)
+            .setAudioAttributes(
+                androidx.media3.common.AudioAttributes.Builder()
+                    .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                    .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .build(),
+                /* handleAudioFocus = */ true,
+            )
+            .build()
+    } catch (e: Exception) {
+        ExoPlayer.Builder(context).build()
+    }
+}
+
 @Singleton
 class PlayerManager @Inject constructor(
     @ApplicationContext private val appContext: Context,
@@ -439,7 +501,7 @@ class PlayerManager @Inject constructor(
      * ExoPlayer, so nothing else in the app needs to change: it's
      * still PlayerManager.play()/playQueue() exactly as before.
      */
-    val player: ExoPlayer = ExoPlayer.Builder(appContext).build()
+    val player: ExoPlayer = buildExoPlayerWithExclusiveFocus(appContext)
 
     /**
      * Nivelación de audio en tiempo real (Opción A cerrada con Miguel
