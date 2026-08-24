@@ -504,15 +504,24 @@ class PlayerManager @Inject constructor(
         // player (ver release notes de Media3); se engancha el efecto
         // en cuanto AnalyticsListener lo notifica, y se reengancha si
         // cambia (p.ej. tras un error de audio que fuerza un nuevo
-        // AudioTrack). Ver AudioNormalizer.kt.
+        // AudioTrack). Ver AudioNormalizer.kt. El refuerzo de volumen
+        // (2026-08-24, "podemos ponerlo como control en settings?")
+        // se lee de UiPreferencesManager en el momento del enganche, y
+        // se observa aparte (más abajo) para que un cambio en Ajustes
+        // se note en caliente sin reenganchar nada.
         player.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
             override fun onAudioSessionIdChanged(
                 eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
                 audioSessionId: Int,
             ) {
-                audioNormalizer.attach(audioSessionId)
+                audioNormalizer.attach(audioSessionId, uiPreferencesManager.volumeBoostMillibels.value)
             }
         })
+        managerScope.launch {
+            uiPreferencesManager.volumeBoostMillibels.collect { millibels ->
+                audioNormalizer.updateVolumeBoost(millibels)
+            }
+        }
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 // Bug real reportado por Miguel Ángel (2026-08-24):

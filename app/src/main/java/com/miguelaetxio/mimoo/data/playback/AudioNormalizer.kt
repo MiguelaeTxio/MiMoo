@@ -75,38 +75,48 @@ class AudioNormalizer {
     private var attachedSessionId: Int = 0
 
     /**
-     * Refuerzo de volumen (petición explícita de Miguel Ángel,
-     * 2026-08-23: "se puede dar más volumen a la aplicación"). +600mB
-     * = +6dB -- valor moderado y seguro (100mB = 1dB, ver
-     * `LoudnessEnhancer.setTargetGain()`), pensado para notarse sin
-     * distorsionar; el limitador de `DynamicsProcessing` de arriba
-     * sigue activo por encima de esto y absorbe los picos que este
-     * refuerzo pueda generar. Si Miguel Ángel pide más o menos,
-     * cambiar solo esta constante.
-     *
-     * `LoudnessEnhancer` exige API 19 -- muy por debajo del `minSdk
-     * 26` del proyecto, así que a diferencia de `DynamicsProcessing`
-     * (API 28) esto funciona en TODOS los dispositivos soportados por
-     * la app, sin excepción.
-     */
-    private val volumeBoostMillibels = 600
-
-    /**
      * Engancha (o reengancha) el efecto a la sesión de audio actual del
-     * player -- idempotente: si ya está enganchado a esta misma sesión,
-     * no hace nada. Se llama desde
+     * player -- idempotente: si ya está enganchado a esta misma sesión
+     * CON el mismo refuerzo de volumen, no hace nada. Se llama desde
      * `AnalyticsListener.onAudioSessionIdChanged()` de ExoPlayer (ver
      * PlayerManager), que Media3 1.10.1 dispara con el id real en
      * cuanto está disponible (ya no lo está de forma inmediata al crear
      * el player, ver release notes de Media3).
+     *
+     * `volumeBoostMillibels` -- petición explícita de Miguel Ángel
+     * (2026-08-24: "podemos ponerlo como control en settings?"), ya no
+     * es una constante fija en esta clase, la trae quien llama
+     * (`PlayerManager`, leyendo `UiPreferencesManager.volumeBoostMillibels`).
+     * En milibelios (100mB = 1dB, ver `LoudnessEnhancer.setTargetGain()`);
+     * 0 = sin refuerzo.
      */
-    fun attach(audioSessionId: Int) {
+    fun attach(audioSessionId: Int, volumeBoostMillibels: Int) {
         if (audioSessionId == 0) return
-        if (attachedSessionId == audioSessionId && (dynamicsProcessing != null || loudnessEnhancer != null)) return
+        if (attachedSessionId == audioSessionId && (dynamicsProcessing != null || loudnessEnhancer != null)) {
+            updateVolumeBoost(volumeBoostMillibels)
+            return
+        }
         release()
         attachedSessionId = audioSessionId
         attachDynamicsProcessing(audioSessionId)
-        attachLoudnessEnhancer(audioSessionId)
+        attachLoudnessEnhancer(audioSessionId, volumeBoostMillibels)
+    }
+
+    /**
+     * Cambia el refuerzo de volumen de la sesión YA enganchada, sin
+     * reenganchar nada -- lo que se nota al mover el control de
+     * Ajustes con la música sonando. Si por lo que sea no hay ningún
+     * `LoudnessEnhancer` activo todavía (sesión aún no disponible), no
+     * hace nada -- se aplicará el valor correcto en el próximo
+     * `attach()` real.
+     */
+    fun updateVolumeBoost(volumeBoostMillibels: Int) {
+        try {
+            loudnessEnhancer?.setTargetGain(volumeBoostMillibels)
+        } catch (e: Exception) {
+            // Efecto liberado entre medias u otro fallo del fabricante --
+            // se descarta en silencio, mismo criterio tolerante de siempre.
+        }
     }
 
     private fun attachDynamicsProcessing(audioSessionId: Int) {
@@ -125,7 +135,7 @@ class AudioNormalizer {
         }
     }
 
-    private fun attachLoudnessEnhancer(audioSessionId: Int) {
+    private fun attachLoudnessEnhancer(audioSessionId: Int, volumeBoostMillibels: Int) {
         try {
             val effect = LoudnessEnhancer(audioSessionId)
             effect.setTargetGain(volumeBoostMillibels)

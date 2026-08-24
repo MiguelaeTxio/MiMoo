@@ -84,6 +84,19 @@ class UiPreferencesManager @Inject constructor(
         const val KEY_RADIO_DISCO_QUOTA_PER_TEN = "radio_disco_quota_per_ten"
         const val DEFAULT_RADIO_KNOWN_QUOTA_PER_TEN = 6
         const val DEFAULT_RADIO_DISCO_QUOTA_PER_TEN = 2
+
+        // 2026-08-24 -- refuerzo de volumen (LoudnessEnhancer, ver
+        // AudioNormalizer.kt), petición explícita de Miguel Ángel:
+        // "podemos ponerlo como control en settings?" -- antes era una
+        // constante fija en código (+6dB). En milibelios (100mB = 1dB,
+        // ver LoudnessEnhancer.setTargetGain()); 0 = sin refuerzo.
+        // Recorte a 0..1200 (0-12dB) -- pasado ese punto la propia
+        // documentación de la API avisa de compresión/distorsión
+        // constante en casi cualquier tema, verificado antes de fijar
+        // el tope.
+        const val KEY_VOLUME_BOOST_MILLIBELS = "volume_boost_millibels"
+        const val DEFAULT_VOLUME_BOOST_MILLIBELS = 600
+        const val MAX_VOLUME_BOOST_MILLIBELS = 1200
     }
 
     private val prefs by lazy {
@@ -164,5 +177,24 @@ class UiPreferencesManager @Inject constructor(
         val clamped = quota.coerceIn(0, 10 - _radioKnownQuotaPerTen.value)
         prefs.edit { putInt(KEY_RADIO_DISCO_QUOTA_PER_TEN, clamped) }
         _radioDiscoQuotaPerTen.value = clamped
+    }
+
+    private val _volumeBoostMillibels = MutableStateFlow(
+        prefs.getInt(KEY_VOLUME_BOOST_MILLIBELS, DEFAULT_VOLUME_BOOST_MILLIBELS)
+    )
+
+    /**
+     * 2026-08-24 -- refuerzo de volumen (`LoudnessEnhancer`, ver
+     * `AudioNormalizer.kt`). En milibelios (100mB = 1dB); 0 = sin
+     * refuerzo. `PlayerManager` lo lee en vivo -- ajustarlo en Ajustes
+     * se nota en la reproducción en curso sin reiniciar nada.
+     */
+    val volumeBoostMillibels: StateFlow<Int> = _volumeBoostMillibels.asStateFlow()
+
+    /** Recorta a 0..MAX_VOLUME_BOOST_MILLIBELS (0-12dB). */
+    fun setVolumeBoostMillibels(millibels: Int) {
+        val clamped = millibels.coerceIn(0, MAX_VOLUME_BOOST_MILLIBELS)
+        prefs.edit { putInt(KEY_VOLUME_BOOST_MILLIBELS, clamped) }
+        _volumeBoostMillibels.value = clamped
     }
 }
