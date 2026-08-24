@@ -498,6 +498,39 @@ class PlayerManager @Inject constructor(
      */
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /**
+     * Foco de audio MANUAL, S036 -- petición de Miguel Ángel:
+     * "las llamadas mal, no ha cortado ni al recibir ni al descolgar".
+     * Confirmado por él mismo: la música seguía sonando MEZCLADA con la
+     * llamada -- sin ningún manejo de foco de audio (ni implícito ni
+     * explícito), ExoPlayer nunca reacciona a que llegue una llamada.
+     *
+     * Deliberadamente NO se toca `ExoPlayer.Builder` ni
+     * `setAudioAttributes()` esta vez -- eso fue justo lo que rompió
+     * miMooutCast por completo la vez anterior (misma sesión, ver el
+     * historial de commits sobre `buildExoPlayerWithExclusiveFocus` y
+     * su revert), sin que se llegara a encontrar la causa exacta pese
+     * a compilar y pasar el build de GitHub Actions sin problema.
+     *
+     * En su lugar: una `AudioFocusRequest` propia, pedida una sola vez
+     * (perezosa, la primera vez que algo empieza a sonar de verdad --
+     * nunca al arrancar la app, para no interferir con música de otra
+     * app que ya estuviera sonando antes de que el usuario tocara
+     * play), con reacción SELECTIVA a los cambios de foco:
+     *   - AUDIOFOCUS_LOSS_TRANSIENT (llamadas, éste es el que dispara
+     *     el sistema de telefonía de Android) -- se pausa.
+     *   - AUDIOFOCUS_GAIN, si se había pausado por lo anterior -- se
+     *     reanuda.
+     *   - AUDIOFOCUS_LOSS (permanente, otra app pide el foco para
+     *     sonar ella) y AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -- se
+     *     IGNORAN a propósito. Petición explícita de Miguel Ángel tras
+     *     probar el intento anterior: "cuando sale otra aplicación se
+     *     va la música... yo lo que quiero es que solo se siga oyendo
+     *     la música [de MiMoo]" -- abrir otra app NO debe pararla.
+     */
+    private var audioFocusRequest: android.media.AudioFocusRequest? = null
+    private var pausedByAudioFocusLoss = false
+
     init {
         // Nivelación de audio (2026-08-23) -- Media3 1.10.1 ya no
         // ofrece el audioSessionId real de forma inmediata al crear el
@@ -567,6 +600,7 @@ class PlayerManager @Inject constructor(
                 // paused again immediately, without even propagating
                 // isPlaying=true to the rest of the app.
                 if (isPlaying) {
+                    ensureAudioFocusRequested()
                     val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
                         as? android.media.AudioManager
                     val mode = audioManager?.mode
@@ -5386,9 +5420,68 @@ class PlayerManager @Inject constructor(
 
     fun durationMs(): Long = player.duration.coerceAtLeast(0L)
 
+    /**
+     * Pide el foco de audio manual UNA sola vez (perezoso -- nunca al
+     * arrancar la app, solo la primera vez que algo empieza a sonar de
+     * verdad). Ver el kdoc completo junto a `audioFocusRequest` más
+     * arriba. Envuelto en try/catch a propósito, mismo criterio que
+     * `AudioNormalizer` -- si esto falla por cualquier motivo en algún
+     * dispositivo, la reproducción debe seguir funcionando igual que
+     * sin foco de audio en absoluto, nunca romper nada.
+     */
+    private fun ensureAudioFocusRequested() {
+        if (audioFocusRequest != null) return
+        try {
+            val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
+                as? android.media.AudioManager ?: return
+            val attributes = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+            val request = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(attributes)
+                .setOnAudioFocusChangeListener { focusChange ->
+                    when (focusChange) {
+                        android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                            if (player.isPlaying) {
+                                pausedByAudioFocusLoss = true
+                                player.pause()
+                            }
+                        }
+                        android.media.AudioManager.AUDIOFOCUS_GAIN -> {
+                            if (pausedByAudioFocusLoss) {
+                                pausedByAudioFocusLoss = false
+                                player.play()
+                            }
+                        }
+                        // AUDIOFOCUS_LOSS (permanente) y
+                        // AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK se ignoran
+                        // a propósito -- ver el kdoc completo junto a
+                        // `audioFocusRequest`.
+                    }
+                }
+                .build()
+            audioManager.requestAudioFocus(request)
+            audioFocusRequest = request
+        } catch (e: Exception) {
+            // Nunca dejar que esto rompa la reproducción -- se queda
+            // sin foco de audio manual, pero sigue sonando igual.
+        }
+    }
+
     fun release() {
         managerScope.cancel()
         audioNormalizer.release()
+        try {
+            audioFocusRequest?.let {
+                val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
+                    as? android.media.AudioManager
+                audioManager?.abandonAudioFocusRequest(it)
+            }
+        } catch (e: Exception) {
+            // Ídem -- nunca dejar que la liberación del foco rompa el
+            // resto de release().
+        }
         player.release()
     }
 
