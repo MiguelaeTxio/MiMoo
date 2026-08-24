@@ -1,4 +1,673 @@
 {
+ "1950": {
+  "es": [],
+  "intl": [
+   {
+    "artist": "Big Mama Thornton",
+    "country": "US",
+    "genre": "electric blues",
+    "genres": [
+     "electric blues",
+     "r&b"
+    ],
+    "song": "Hound Dog"
+   },
+   {
+    "artist": "Billie Holiday",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "jazz",
+     "blues",
+     "swing",
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "Blue Moon"
+   },
+   {
+    "artist": "Billie Holiday",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "jazz",
+     "blues",
+     "swing",
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "I'll Be Seeing You"
+   },
+   {
+    "artist": "Buddy Holly",
+    "country": "US",
+    "genre": "rockabilly",
+    "genres": [
+     "rock",
+     "pop",
+     "rockabilly",
+     "pop rock",
+     "rock and roll"
+    ],
+    "song": "Everyday"
+   },
+   {
+    "artist": "Buddy Holly",
+    "country": "US",
+    "genre": "rockabilly",
+    "genres": [
+     "rock",
+     "pop",
+     "rockabilly",
+     "pop rock",
+     "rock and roll"
+    ],
+    "song": "True Love Ways"
+   },
+   {
+    "artist": "Carmen McRae",
+    "country": "US",
+    "genre": "bebop",
+    "genres": [
+     "pop",
+     "jazz",
+     "bebop",
+     "vocal jazz"
+    ],
+    "song": "Ev'ry Time We Say Goodbye"
+   },
+   {
+    "artist": "Conway Twitty",
+    "country": "US",
+    "genre": "singer-songwriter",
+    "genres": [
+     "singer-songwriter",
+     "rockabilly",
+     "country",
+     "nashville sound"
+    ],
+    "song": "It's Only Make Believe"
+   },
+   {
+    "artist": "Dinah Washington",
+    "country": "US",
+    "genre": "r&b",
+    "genres": [
+     "r&b",
+     "blues",
+     "jazz",
+     "traditional pop",
+     "vocal jazz"
+    ],
+    "song": "Cry Me A River"
+   },
+   {
+    "artist": "Dinah Washington",
+    "country": "US",
+    "genre": "r&b",
+    "genres": [
+     "r&b",
+     "blues",
+     "jazz",
+     "traditional pop",
+     "vocal jazz"
+    ],
+    "song": "Teach Me Tonight"
+   },
+   {
+    "artist": "Dinah Washington",
+    "country": "US",
+    "genre": "r&b",
+    "genres": [
+     "r&b",
+     "blues",
+     "jazz",
+     "traditional pop",
+     "vocal jazz"
+    ],
+    "song": "What A Diff'rence A Day Made"
+   },
+   {
+    "artist": "Dion & The Belmonts",
+    "country": "US",
+    "genre": "doo-wop",
+    "genres": [
+     "pop",
+     "doo-wop",
+     "rock and roll"
+    ],
+    "song": "A Teenager In Love"
+   },
+   {
+    "artist": "Eddie Fisher",
+    "country": "US",
+    "genre": "traditional pop",
+    "genres": [
+     "traditional pop"
+    ],
+    "song": "Outside of Heaven"
+   },
+   {
+    "artist": "Ella Fitzgerald",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "pop",
+     "jazz",
+     "blues",
+     "swing",
+     "big band",
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "Cheek To Cheek"
+   },
+   {
+    "artist": "Ella Fitzgerald",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "pop",
+     "jazz",
+     "blues",
+     "swing",
+     "big band",
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "Dream A Little Dream Of Me"
+   },
+   {
+    "artist": "Ella Fitzgerald",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "pop",
+     "jazz",
+     "blues",
+     "swing",
+     "big band",
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "Summertime"
+   },
+   {
+    "artist": "Ella Fitzgerald",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "pop",
+     "jazz",
+     "blues",
+     "swing",
+     "big band",
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "They Can't Take That Away From Me"
+   },
+   {
+    "artist": "Fats Domino",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "blues",
+     "rock and roll",
+     "piano blues",
+     "boogie-woogie",
+     "r&b",
+     "new orleans r&b"
+    ],
+    "song": "Blueberry Hill"
+   },
+   {
+    "artist": "Harry Belafonte",
+    "country": "US",
+    "genre": "contemporary folk",
+    "genres": [
+     "pop",
+     "folk",
+     "contemporary folk",
+     "folk pop",
+     "calypso",
+     "traditional pop",
+     "mento"
+    ],
+    "song": "Banana Boat (Day-O)"
+   },
+   {
+    "artist": "Harry Belafonte",
+    "country": "US",
+    "genre": "contemporary folk",
+    "genres": [
+     "pop",
+     "folk",
+     "contemporary folk",
+     "folk pop",
+     "calypso",
+     "traditional pop",
+     "mento"
+    ],
+    "song": "Island In The Sun"
+   },
+   {
+    "artist": "Jackie Wilson",
+    "country": "US",
+    "genre": "r&b",
+    "genres": [
+     "r&b",
+     "traditional pop",
+     "rock and roll",
+     "pop",
+     "doo-wop",
+     "northern soul",
+     "soul",
+     "chicago soul",
+     "pop soul"
+    ],
+    "song": "To Be Loved"
+   },
+   {
+    "artist": "Jo Stafford",
+    "country": "US",
+    "genre": "big band",
+    "genres": [
+     "big band",
+     "traditional pop",
+     "vocal jazz",
+     "christmas music",
+     "jazz"
+    ],
+    "song": "You Belong To Me"
+   },
+   {
+    "artist": "Johnnie Ray",
+    "country": "US",
+    "genre": "traditional pop",
+    "genres": [
+     "traditional pop",
+     "pop",
+     "rock and roll",
+     "vocal jazz",
+     "ballad"
+    ],
+    "song": "Cry"
+   },
+   {
+    "artist": "Johnnie Ray",
+    "country": "US",
+    "genre": "traditional pop",
+    "genres": [
+     "traditional pop",
+     "pop",
+     "rock and roll",
+     "vocal jazz",
+     "ballad"
+    ],
+    "song": "Just Walkin' in the Rain"
+   },
+   {
+    "artist": "Johnny Mathis",
+    "country": "US",
+    "genre": "easy listening",
+    "genres": [
+     "pop",
+     "jazz",
+     "easy listening",
+     "soul",
+     "disco",
+     "traditional pop",
+     "christmas music"
+    ],
+    "song": "A Certain Smile"
+   },
+   {
+    "artist": "Johnny Mathis",
+    "country": "US",
+    "genre": "easy listening",
+    "genres": [
+     "pop",
+     "jazz",
+     "easy listening",
+     "soul",
+     "disco",
+     "traditional pop",
+     "christmas music"
+    ],
+    "song": "Chances Are"
+   },
+   {
+    "artist": "Little Anthony & The Imperials",
+    "country": "US",
+    "genre": "doo-wop",
+    "genres": [
+     "doo-wop",
+     "rock and roll"
+    ],
+    "song": "Tears on My Pillow"
+   },
+   {
+    "artist": "Little Richard",
+    "country": "US",
+    "genre": "funk",
+    "genres": [
+     "rock",
+     "pop",
+     "funk",
+     "soul",
+     "rock and roll",
+     "r&b",
+     "new orleans r&b"
+    ],
+    "song": "Long Tall Sally (The Thing)"
+   },
+   {
+    "artist": "Little Richard",
+    "country": "US",
+    "genre": "funk",
+    "genres": [
+     "rock",
+     "pop",
+     "funk",
+     "soul",
+     "rock and roll",
+     "r&b",
+     "new orleans r&b"
+    ],
+    "song": "Tutti Frutti"
+   },
+   {
+    "artist": "Louis Armstrong",
+    "country": "US",
+    "genre": "swing",
+    "genres": [
+     "pop",
+     "jazz",
+     "swing",
+     "gospel",
+     "vocal jazz",
+     "dixieland",
+     "traditional pop"
+    ],
+    "song": "La vie en rose"
+   },
+   {
+    "artist": "Malcolm Vaughan",
+    "country": "GB",
+    "genre": "easy listening",
+    "genres": [
+     "easy listening"
+    ],
+    "song": "My Special Angel"
+   },
+   {
+    "artist": "Malcolm Vaughan",
+    "country": "GB",
+    "genre": "easy listening",
+    "genres": [
+     "easy listening"
+    ],
+    "song": "St Therese of the Roses"
+   },
+   {
+    "artist": "Margaret Whiting",
+    "country": "US",
+    "genre": "vocal jazz",
+    "genres": [
+     "vocal jazz",
+     "traditional pop"
+    ],
+    "song": "Time After Time"
+   },
+   {
+    "artist": "Muddy Waters",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "blues",
+     "psychedelic rock",
+     "blues rock",
+     "chicago blues",
+     "electric blues",
+     "delta blues"
+    ],
+    "song": "Mannish Boy"
+   },
+   {
+    "artist": "Norman Wisdom",
+    "country": "GB",
+    "genre": "comedy",
+    "genres": [
+     "comedy",
+     "easy listening"
+    ],
+    "song": "Don't Laugh at Me ('Cause I'm a Fool)"
+   },
+   {
+    "artist": "Patsy Cline",
+    "country": "US",
+    "genre": "gospel",
+    "genres": [
+     "country",
+     "gospel",
+     "honky tonk",
+     "nashville sound",
+     "traditional country"
+    ],
+    "song": "Walkin' After Midnight"
+   },
+   {
+    "artist": "Patti Page",
+    "country": "US",
+    "genre": "traditional pop",
+    "genres": [
+     "pop",
+     "country",
+     "traditional pop"
+    ],
+    "song": "Tennessee Waltz"
+   },
+   {
+    "artist": "Peggy Lee",
+    "country": "US",
+    "genre": "blues",
+    "genres": [
+     "pop",
+     "jazz",
+     "blues",
+     "swing",
+     "big band",
+     "vocal jazz",
+     "jazz pop",
+     "latin jazz",
+     "traditional pop"
+    ],
+    "song": "Fever"
+   },
+   {
+    "artist": "Ritchie Valens",
+    "country": "US",
+    "genre": "tex-mex",
+    "genres": [
+     "tex-mex",
+     "rock and roll"
+    ],
+    "song": "Donna"
+   },
+   {
+    "artist": "Ritchie Valens",
+    "country": "US",
+    "genre": "tex-mex",
+    "genres": [
+     "tex-mex",
+     "rock and roll"
+    ],
+    "song": "La Bamba"
+   },
+   {
+    "artist": "Ritchie Valens",
+    "country": "US",
+    "genre": "tex-mex",
+    "genres": [
+     "tex-mex",
+     "rock and roll"
+    ],
+    "song": "Stay Beside Me"
+   },
+   {
+    "artist": "Ritchie Valens",
+    "country": "US",
+    "genre": "tex-mex",
+    "genres": [
+     "tex-mex",
+     "rock and roll"
+    ],
+    "song": "We Belong Together"
+   },
+   {
+    "artist": "Sarah Vaughan",
+    "country": "US",
+    "genre": "bossa nova",
+    "genres": [
+     "jazz",
+     "bossa nova",
+     "bebop",
+     "vocal jazz",
+     "cool jazz",
+     "traditional pop"
+    ],
+    "song": "I've Got A Crush On You"
+   },
+   {
+    "artist": "The Flamingos",
+    "country": "US",
+    "genre": "pop soul",
+    "genres": [
+     "pop soul",
+     "doo-wop"
+    ],
+    "song": "I Only Have Eyes for You"
+   },
+   {
+    "artist": "The Fleetwoods",
+    "country": "US",
+    "genre": "traditional pop",
+    "genres": [
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "Come Softly To Me"
+   },
+   {
+    "artist": "The Fleetwoods",
+    "country": "US",
+    "genre": "traditional pop",
+    "genres": [
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "Mr. Blue"
+   },
+   {
+    "artist": "The Platters",
+    "country": "US",
+    "genre": "soul",
+    "genres": [
+     "pop",
+     "soul",
+     "pop soul",
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "I'll Never Smile Again"
+   },
+   {
+    "artist": "The Platters",
+    "country": "US",
+    "genre": "soul",
+    "genres": [
+     "pop",
+     "soul",
+     "pop soul",
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "Prisoner Of Love"
+   },
+   {
+    "artist": "The Platters",
+    "country": "US",
+    "genre": "soul",
+    "genres": [
+     "pop",
+     "soul",
+     "pop soul",
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "Sixteen Tons"
+   },
+   {
+    "artist": "The Platters",
+    "country": "US",
+    "genre": "soul",
+    "genres": [
+     "pop",
+     "soul",
+     "pop soul",
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "Smoke Gets In Your Eyes"
+   },
+   {
+    "artist": "The Platters",
+    "country": "US",
+    "genre": "soul",
+    "genres": [
+     "pop",
+     "soul",
+     "pop soul",
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "The Great Pretender"
+   },
+   {
+    "artist": "The Platters",
+    "country": "US",
+    "genre": "soul",
+    "genres": [
+     "pop",
+     "soul",
+     "pop soul",
+     "traditional pop",
+     "doo-wop"
+    ],
+    "song": "Twilight Time"
+   },
+   {
+    "artist": "The Skyliners",
+    "country": "US",
+    "genre": "doo-wop",
+    "genres": [
+     "doo-wop"
+    ],
+    "song": "Since I Don't Have You"
+   },
+   {
+    "artist": "The Spaniels",
+    "country": "US",
+    "genre": "r&b",
+    "genres": [
+     "r&b",
+     "doo-wop"
+    ],
+    "song": "Goodnite, It's Time to Go"
+   }
+  ]
+ },
  "1960": {
   "es": [
    {
@@ -1928,42 +2597,6 @@
     "song": "Stand by Me"
    },
    {
-    "artist": "Big Mama Thornton",
-    "country": "US",
-    "genre": "electric blues",
-    "genres": [
-     "electric blues",
-     "r&b"
-    ],
-    "song": "Hound Dog"
-   },
-   {
-    "artist": "Billie Holiday",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "jazz",
-     "blues",
-     "swing",
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "Blue Moon"
-   },
-   {
-    "artist": "Billie Holiday",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "jazz",
-     "blues",
-     "swing",
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "I'll Be Seeing You"
-   },
-   {
     "artist": "Billy Cafaro",
     "country": "AR",
     "genre": "pop rock",
@@ -2236,32 +2869,6 @@
     "song": "Sabato sera"
    },
    {
-    "artist": "Buddy Holly",
-    "country": "US",
-    "genre": "rockabilly",
-    "genres": [
-     "rock",
-     "pop",
-     "rockabilly",
-     "pop rock",
-     "rock and roll"
-    ],
-    "song": "Everyday"
-   },
-   {
-    "artist": "Buddy Holly",
-    "country": "US",
-    "genre": "rockabilly",
-    "genres": [
-     "rock",
-     "pop",
-     "rockabilly",
-     "pop rock",
-     "rock and roll"
-    ],
-    "song": "True Love Ways"
-   },
-   {
     "artist": "Camillo Felgen",
     "country": "LU",
     "genre": "schlager",
@@ -2270,18 +2877,6 @@
      "ballad"
     ],
     "song": "Sag warum"
-   },
-   {
-    "artist": "Carmen McRae",
-    "country": "US",
-    "genre": "bebop",
-    "genres": [
-     "pop",
-     "jazz",
-     "bebop",
-     "vocal jazz"
-    ],
-    "song": "Ev'ry Time We Say Goodbye"
    },
    {
     "artist": "Caterina Caselli",
@@ -2555,18 +3150,6 @@
     "song": "Where The Boys Are"
    },
    {
-    "artist": "Conway Twitty",
-    "country": "US",
-    "genre": "singer-songwriter",
-    "genres": [
-     "singer-songwriter",
-     "rockabilly",
-     "country",
-     "nashville sound"
-    ],
-    "song": "It's Only Make Believe"
-   },
-   {
     "artist": "Cream",
     "country": "GB",
     "genre": "rock",
@@ -2675,45 +3258,6 @@
     "song": "Runaway"
    },
    {
-    "artist": "Dinah Washington",
-    "country": "US",
-    "genre": "r&b",
-    "genres": [
-     "r&b",
-     "blues",
-     "jazz",
-     "traditional pop",
-     "vocal jazz"
-    ],
-    "song": "Cry Me A River"
-   },
-   {
-    "artist": "Dinah Washington",
-    "country": "US",
-    "genre": "r&b",
-    "genres": [
-     "r&b",
-     "blues",
-     "jazz",
-     "traditional pop",
-     "vocal jazz"
-    ],
-    "song": "Teach Me Tonight"
-   },
-   {
-    "artist": "Dinah Washington",
-    "country": "US",
-    "genre": "r&b",
-    "genres": [
-     "r&b",
-     "blues",
-     "jazz",
-     "traditional pop",
-     "vocal jazz"
-    ],
-    "song": "What A Diff'rence A Day Made"
-   },
-   {
     "artist": "Dion",
     "country": "US",
     "genre": "folk rock",
@@ -2726,17 +3270,6 @@
      "rock and roll"
     ],
     "song": "Runaround Sue"
-   },
-   {
-    "artist": "Dion & The Belmonts",
-    "country": "US",
-    "genre": "doo-wop",
-    "genres": [
-     "pop",
-     "doo-wop",
-     "rock and roll"
-    ],
-    "song": "A Teenager In Love"
    },
    {
     "artist": "Dionne Warwick",
@@ -2866,15 +3399,6 @@
     "song": "Son of a Preacher Man"
    },
    {
-    "artist": "Eddie Fisher",
-    "country": "US",
-    "genre": "traditional pop",
-    "genres": [
-     "traditional pop"
-    ],
-    "song": "Outside of Heaven"
-   },
-   {
     "artist": "Eddie Hodges",
     "country": "US",
     "genre": "rock and roll",
@@ -2892,66 +3416,6 @@
      "ballad"
     ],
     "song": "Non, je ne regrette rien"
-   },
-   {
-    "artist": "Ella Fitzgerald",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "pop",
-     "jazz",
-     "blues",
-     "swing",
-     "big band",
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "Cheek To Cheek"
-   },
-   {
-    "artist": "Ella Fitzgerald",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "pop",
-     "jazz",
-     "blues",
-     "swing",
-     "big band",
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "Dream A Little Dream Of Me"
-   },
-   {
-    "artist": "Ella Fitzgerald",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "pop",
-     "jazz",
-     "blues",
-     "swing",
-     "big band",
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "Summertime"
-   },
-   {
-    "artist": "Ella Fitzgerald",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "pop",
-     "jazz",
-     "blues",
-     "swing",
-     "big band",
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "They Can't Take That Away From Me"
    },
    {
     "artist": "Elvis Presley",
@@ -3176,20 +3640,6 @@
     "song": "Sabor a Mí"
    },
    {
-    "artist": "Fats Domino",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "blues",
-     "rock and roll",
-     "piano blues",
-     "boogie-woogie",
-     "r&b",
-     "new orleans r&b"
-    ],
-    "song": "Blueberry Hill"
-   },
-   {
     "artist": "Four Tops",
     "country": "US",
     "genre": "soul",
@@ -3396,36 +3846,6 @@
     "song": "Sapore di sale"
    },
    {
-    "artist": "Harry Belafonte",
-    "country": "US",
-    "genre": "contemporary folk",
-    "genres": [
-     "pop",
-     "folk",
-     "contemporary folk",
-     "folk pop",
-     "calypso",
-     "traditional pop",
-     "mento"
-    ],
-    "song": "Banana Boat (Day-O)"
-   },
-   {
-    "artist": "Harry Belafonte",
-    "country": "US",
-    "genre": "contemporary folk",
-    "genres": [
-     "pop",
-     "folk",
-     "contemporary folk",
-     "folk pop",
-     "calypso",
-     "traditional pop",
-     "mento"
-    ],
-    "song": "Island In The Sun"
-   },
-   {
     "artist": "Hervé Vilard",
     "country": "FR",
     "genre": "singer-songwriter",
@@ -3467,23 +3887,6 @@
      "funk"
     ],
     "song": "River Deep – Mountain High"
-   },
-   {
-    "artist": "Jackie Wilson",
-    "country": "US",
-    "genre": "r&b",
-    "genres": [
-     "r&b",
-     "traditional pop",
-     "rock and roll",
-     "pop",
-     "doo-wop",
-     "northern soul",
-     "soul",
-     "chicago soul",
-     "pop soul"
-    ],
-    "song": "To Be Loved"
    },
    {
     "artist": "Jacqueline Boyer",
@@ -3568,19 +3971,6 @@
     "song": "Purple Haze"
    },
    {
-    "artist": "Jo Stafford",
-    "country": "US",
-    "genre": "big band",
-    "genres": [
-     "big band",
-     "traditional pop",
-     "vocal jazz",
-     "christmas music",
-     "jazz"
-    ],
-    "song": "You Belong To Me"
-   },
-   {
     "artist": "Joan Baez",
     "country": "US",
     "genre": "folk",
@@ -3604,32 +3994,6 @@
      "bossa nova"
     ],
     "song": "Chega de Saudade"
-   },
-   {
-    "artist": "Johnnie Ray",
-    "country": "US",
-    "genre": "traditional pop",
-    "genres": [
-     "traditional pop",
-     "pop",
-     "rock and roll",
-     "vocal jazz",
-     "ballad"
-    ],
-    "song": "Cry"
-   },
-   {
-    "artist": "Johnnie Ray",
-    "country": "US",
-    "genre": "traditional pop",
-    "genres": [
-     "traditional pop",
-     "pop",
-     "rock and roll",
-     "vocal jazz",
-     "ballad"
-    ],
-    "song": "Just Walkin' in the Rain"
    },
    {
     "artist": "Johnny Burnette",
@@ -3691,36 +4055,6 @@
      "traditional country"
     ],
     "song": "North To Alaska"
-   },
-   {
-    "artist": "Johnny Mathis",
-    "country": "US",
-    "genre": "easy listening",
-    "genres": [
-     "pop",
-     "jazz",
-     "easy listening",
-     "soul",
-     "disco",
-     "traditional pop",
-     "christmas music"
-    ],
-    "song": "A Certain Smile"
-   },
-   {
-    "artist": "Johnny Mathis",
-    "country": "US",
-    "genre": "easy listening",
-    "genres": [
-     "pop",
-     "jazz",
-     "easy listening",
-     "soul",
-     "disco",
-     "traditional pop",
-     "christmas music"
-    ],
-    "song": "Chances Are"
    },
    {
     "artist": "Johnny Thunder",
@@ -3859,16 +4193,6 @@
     "song": "It's My Party"
    },
    {
-    "artist": "Little Anthony & The Imperials",
-    "country": "US",
-    "genre": "doo-wop",
-    "genres": [
-     "doo-wop",
-     "rock and roll"
-    ],
-    "song": "Tears on My Pillow"
-   },
-   {
     "artist": "Little Eva",
     "country": "US",
     "genre": "brill building",
@@ -3876,36 +4200,6 @@
      "brill building"
     ],
     "song": "The Locomotion"
-   },
-   {
-    "artist": "Little Richard",
-    "country": "US",
-    "genre": "funk",
-    "genres": [
-     "rock",
-     "pop",
-     "funk",
-     "soul",
-     "rock and roll",
-     "r&b",
-     "new orleans r&b"
-    ],
-    "song": "Long Tall Sally (The Thing)"
-   },
-   {
-    "artist": "Little Richard",
-    "country": "US",
-    "genre": "funk",
-    "genres": [
-     "rock",
-     "pop",
-     "funk",
-     "soul",
-     "rock and roll",
-     "r&b",
-     "new orleans r&b"
-    ],
-    "song": "Tutti Frutti"
    },
    {
     "artist": "Little Tony",
@@ -4166,21 +4460,6 @@
     "song": "Que tengas suerte - Remastered"
    },
    {
-    "artist": "Louis Armstrong",
-    "country": "US",
-    "genre": "swing",
-    "genres": [
-     "pop",
-     "jazz",
-     "swing",
-     "gospel",
-     "vocal jazz",
-     "dixieland",
-     "traditional pop"
-    ],
-    "song": "La vie en rose"
-   },
-   {
     "artist": "Lucho Gatica",
     "country": "CL",
     "genre": "latin",
@@ -4263,24 +4542,6 @@
     "song": "To Sir with Love"
    },
    {
-    "artist": "Malcolm Vaughan",
-    "country": "GB",
-    "genre": "easy listening",
-    "genres": [
-     "easy listening"
-    ],
-    "song": "My Special Angel"
-   },
-   {
-    "artist": "Malcolm Vaughan",
-    "country": "GB",
-    "genre": "easy listening",
-    "genres": [
-     "easy listening"
-    ],
-    "song": "St Therese of the Roses"
-   },
-   {
     "artist": "Manfred Mann",
     "country": "GB",
     "genre": "beat music",
@@ -4290,16 +4551,6 @@
      "rock"
     ],
     "song": "Do Wah Diddy Diddy"
-   },
-   {
-    "artist": "Margaret Whiting",
-    "country": "US",
-    "genre": "vocal jazz",
-    "genres": [
-     "vocal jazz",
-     "traditional pop"
-    ],
-    "song": "Time After Time"
    },
    {
     "artist": "Marianne Faithfull",
@@ -4437,20 +4688,6 @@
      "easy listening"
     ],
     "song": "El Dia de los Enamorados"
-   },
-   {
-    "artist": "Muddy Waters",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "blues",
-     "psychedelic rock",
-     "blues rock",
-     "chicago blues",
-     "electric blues",
-     "delta blues"
-    ],
-    "song": "Mannish Boy"
    },
    {
     "artist": "Nana Mouskouri",
@@ -4639,16 +4876,6 @@
     "song": "Feeling Good"
    },
    {
-    "artist": "Norman Wisdom",
-    "country": "GB",
-    "genre": "comedy",
-    "genres": [
-     "comedy",
-     "easy listening"
-    ],
-    "song": "Don't Laugh at Me ('Cause I'm a Fool)"
-   },
-   {
     "artist": "Otis Redding",
     "country": "US",
     "genre": "soul",
@@ -4720,30 +4947,6 @@
      "easy listening"
     ],
     "song": "The Exodus Song"
-   },
-   {
-    "artist": "Patsy Cline",
-    "country": "US",
-    "genre": "gospel",
-    "genres": [
-     "country",
-     "gospel",
-     "honky tonk",
-     "nashville sound",
-     "traditional country"
-    ],
-    "song": "Walkin' After Midnight"
-   },
-   {
-    "artist": "Patti Page",
-    "country": "US",
-    "genre": "traditional pop",
-    "genres": [
-     "pop",
-     "country",
-     "traditional pop"
-    ],
-    "song": "Tennessee Waltz"
    },
    {
     "artist": "Paul Anka",
@@ -4922,23 +5125,6 @@
     "song": "You Are My Destiny - 1963 Version"
    },
    {
-    "artist": "Peggy Lee",
-    "country": "US",
-    "genre": "blues",
-    "genres": [
-     "pop",
-     "jazz",
-     "blues",
-     "swing",
-     "big band",
-     "vocal jazz",
-     "jazz pop",
-     "latin jazz",
-     "traditional pop"
-    ],
-    "song": "Fever"
-   },
-   {
     "artist": "Peppino Di Capri",
     "country": "IT",
     "genre": "canzone napoletana",
@@ -5086,46 +5272,6 @@
     "song": "Cuore"
    },
    {
-    "artist": "Ritchie Valens",
-    "country": "US",
-    "genre": "tex-mex",
-    "genres": [
-     "tex-mex",
-     "rock and roll"
-    ],
-    "song": "Donna"
-   },
-   {
-    "artist": "Ritchie Valens",
-    "country": "US",
-    "genre": "tex-mex",
-    "genres": [
-     "tex-mex",
-     "rock and roll"
-    ],
-    "song": "La Bamba"
-   },
-   {
-    "artist": "Ritchie Valens",
-    "country": "US",
-    "genre": "tex-mex",
-    "genres": [
-     "tex-mex",
-     "rock and roll"
-    ],
-    "song": "Stay Beside Me"
-   },
-   {
-    "artist": "Ritchie Valens",
-    "country": "US",
-    "genre": "tex-mex",
-    "genres": [
-     "tex-mex",
-     "rock and roll"
-    ],
-    "song": "We Belong Together"
-   },
-   {
     "artist": "Rocco Granata",
     "country": "BE",
     "genre": "schlager",
@@ -5247,20 +5393,6 @@
      "yé-yé"
     ],
     "song": "Puppet on a String"
-   },
-   {
-    "artist": "Sarah Vaughan",
-    "country": "US",
-    "genre": "bossa nova",
-    "genres": [
-     "jazz",
-     "bossa nova",
-     "bebop",
-     "vocal jazz",
-     "cool jazz",
-     "traditional pop"
-    ],
-    "song": "I've Got A Crush On You"
    },
    {
     "artist": "Scott McKenzie",
@@ -5635,36 +5767,6 @@
     "song": "Tell Him - Single Version"
    },
    {
-    "artist": "The Flamingos",
-    "country": "US",
-    "genre": "pop soul",
-    "genres": [
-     "pop soul",
-     "doo-wop"
-    ],
-    "song": "I Only Have Eyes for You"
-   },
-   {
-    "artist": "The Fleetwoods",
-    "country": "US",
-    "genre": "traditional pop",
-    "genres": [
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "Come Softly To Me"
-   },
-   {
-    "artist": "The Fleetwoods",
-    "country": "US",
-    "genre": "traditional pop",
-    "genres": [
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "Mr. Blue"
-   },
-   {
     "artist": "The Golden Gate Quartet",
     "country": "US",
     "genre": "gospel",
@@ -5808,84 +5910,6 @@
     "song": "Winchester Cathedral"
    },
    {
-    "artist": "The Platters",
-    "country": "US",
-    "genre": "soul",
-    "genres": [
-     "pop",
-     "soul",
-     "pop soul",
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "I'll Never Smile Again"
-   },
-   {
-    "artist": "The Platters",
-    "country": "US",
-    "genre": "soul",
-    "genres": [
-     "pop",
-     "soul",
-     "pop soul",
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "Prisoner Of Love"
-   },
-   {
-    "artist": "The Platters",
-    "country": "US",
-    "genre": "soul",
-    "genres": [
-     "pop",
-     "soul",
-     "pop soul",
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "Sixteen Tons"
-   },
-   {
-    "artist": "The Platters",
-    "country": "US",
-    "genre": "soul",
-    "genres": [
-     "pop",
-     "soul",
-     "pop soul",
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "Smoke Gets In Your Eyes"
-   },
-   {
-    "artist": "The Platters",
-    "country": "US",
-    "genre": "soul",
-    "genres": [
-     "pop",
-     "soul",
-     "pop soul",
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "The Great Pretender"
-   },
-   {
-    "artist": "The Platters",
-    "country": "US",
-    "genre": "soul",
-    "genres": [
-     "pop",
-     "soul",
-     "pop soul",
-     "traditional pop",
-     "doo-wop"
-    ],
-    "song": "Twilight Time"
-   },
-   {
     "artist": "The Righteous Brothers",
     "country": "US",
     "genre": "soul",
@@ -6004,25 +6028,6 @@
      "doo-wop"
     ],
     "song": "Soldier Boy"
-   },
-   {
-    "artist": "The Skyliners",
-    "country": "US",
-    "genre": "doo-wop",
-    "genres": [
-     "doo-wop"
-    ],
-    "song": "Since I Don't Have You"
-   },
-   {
-    "artist": "The Spaniels",
-    "country": "US",
-    "genre": "r&b",
-    "genres": [
-     "r&b",
-     "doo-wop"
-    ],
-    "song": "Goodnite, It's Time to Go"
    },
    {
     "artist": "The Spencer Davis Group",

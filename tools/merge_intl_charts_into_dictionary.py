@@ -43,7 +43,7 @@ ENRICHED_PATH = os.environ.get("CHART_ENRICHED_PATH", "tools/chart_los40_enriche
 REJECTED_PATH = os.environ.get("CHART_INTL_REJECTED_PATH", "tools/chart_los40_intl_rejected.json")
 
 MAX_DESCENDANTS = 25
-FIRST_DECADE = 1960
+FIRST_DECADE = 1950
 LAST_DECADE = 2020
 
 
