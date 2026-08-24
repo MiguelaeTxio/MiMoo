@@ -1,0 +1,579 @@
+{
+ "Big Mama Thornton": {
+  "country": "US",
+  "genres": [
+   "electric blues",
+   "r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bill Haley & His Comets": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Billie Holiday": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "blues",
+   "swing",
+   "vocal jazz",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bobby Darin": {
+  "country": null,
+  "genres": [
+   "pop",
+   "folk",
+   "swing",
+   "rock and roll",
+   "teen pop",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Bobby Vinton": {
+  "country": null,
+  "genres": [
+   "traditional pop",
+   "pop",
+   "blue-eyed soul",
+   "christmas music"
+  ],
+  "via": "diccionario"
+ },
+ "Buddy Holly": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "rockabilly",
+   "pop rock",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Carmen McRae": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "bebop",
+   "vocal jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Chet Baker": {
+  "country": "US",
+  "genres": [
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Connie Francis": {
+  "country": null,
+  "genres": [
+   "pop",
+   "vocal jazz",
+   "traditional pop",
+   "brill building"
+  ],
+  "via": "diccionario"
+ },
+ "Conway Twitty": {
+  "country": "US",
+  "genres": [
+   "singer-songwriter",
+   "rockabilly",
+   "country",
+   "nashville sound"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dean Martin": {
+  "country": null,
+  "genres": [
+   "pop",
+   "easy listening",
+   "country pop",
+   "big band",
+   "vocal jazz",
+   "traditional pop",
+   "christmas music"
+  ],
+  "via": "diccionario"
+ },
+ "Dinah Washington": {
+  "country": "US",
+  "genres": [
+   "r&b",
+   "blues",
+   "jazz",
+   "traditional pop",
+   "vocal jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dion & The Belmonts": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "doo-wop",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Don Cornell": {
+  "country": "US",
+  "genres": [
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Doris Day": {
+  "country": null,
+  "genres": [
+   "pop",
+   "jazz",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Eddie Fisher": {
+  "country": "US",
+  "genres": [
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Ella Fitzgerald": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "blues",
+   "swing",
+   "big band",
+   "vocal jazz",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Elvis Presley": {
+  "country": null,
+  "genres": [
+   "rock and roll",
+   "rockabilly",
+   "rock",
+   "country",
+   "pop",
+   "blues",
+   "blue-eyed soul",
+   "gospel",
+   "pop rock",
+   "r&b",
+   "christmas music",
+   "country rock",
+   "soul"
+  ],
+  "via": "diccionario"
+ },
+ "Fats Domino": {
+  "country": "US",
+  "genres": [
+   "blues",
+   "rock and roll",
+   "piano blues",
+   "boogie-woogie",
+   "r&b",
+   "new orleans r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Frank Sinatra": {
+  "country": null,
+  "genres": [
+   "jazz",
+   "swing",
+   "traditional pop",
+   "vocal jazz",
+   "big band",
+   "christmas music",
+   "easy listening",
+   "lounge",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Frankie Avalon": {
+  "country": null,
+  "genres": [
+   "pop",
+   "swing",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Frankie Laine": {
+  "country": null,
+  "genres": [
+   "western",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Harry Belafonte": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "folk",
+   "contemporary folk",
+   "folk pop",
+   "calypso",
+   "traditional pop",
+   "mento"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jackie Wilson": {
+  "country": "US",
+  "genres": [
+   "r&b",
+   "traditional pop",
+   "rock and roll",
+   "pop",
+   "doo-wop",
+   "northern soul",
+   "soul",
+   "chicago soul",
+   "pop soul"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jo Stafford": {
+  "country": "US",
+  "genres": [
+   "big band",
+   "traditional pop",
+   "vocal jazz",
+   "christmas music",
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnnie Ray": {
+  "country": "US",
+  "genres": [
+   "traditional pop",
+   "pop",
+   "rock and roll",
+   "vocal jazz",
+   "ballad"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny Mathis": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "easy listening",
+   "soul",
+   "disco",
+   "traditional pop",
+   "christmas music"
+  ],
+  "via": "musicbrainz"
+ },
+ "Johnny Tillotson": {
+  "country": null,
+  "genres": [
+   "pop",
+   "singer-songwriter",
+   "country",
+   "ballad"
+  ],
+  "via": "diccionario"
+ },
+ "Little Anthony & The Imperials": {
+  "country": "US",
+  "genres": [
+   "doo-wop",
+   "rock and roll"
+  ],
+  "via": "discogs"
+ },
+ "Little Richard": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "pop",
+   "funk",
+   "soul",
+   "rock and roll",
+   "r&b",
+   "new orleans r&b"
+  ],
+  "via": "musicbrainz"
+ },
+ "Louis Armstrong": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "swing",
+   "gospel",
+   "vocal jazz",
+   "dixieland",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Malcolm Vaughan": {
+  "country": "GB",
+  "genres": [
+   "easy listening"
+  ],
+  "via": "discogs"
+ },
+ "Margaret Whiting": {
+  "country": "US",
+  "genres": [
+   "vocal jazz",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Marilyn Monroe": {
+  "country": "US",
+  "genres": [
+   "jazz"
+  ],
+  "via": "musicbrainz"
+ },
+ "Muddy Waters": {
+  "country": "US",
+  "genres": [
+   "blues",
+   "psychedelic rock",
+   "blues rock",
+   "chicago blues",
+   "electric blues",
+   "delta blues"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nat King Cole": {
+  "country": null,
+  "genres": [
+   "pop",
+   "jazz",
+   "easy listening",
+   "swing",
+   "vocal jazz",
+   "traditional pop",
+   "christmas music",
+   "r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Neil Sedaka": {
+  "country": null,
+  "genres": [
+   "pop",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "Norman Wisdom": {
+  "country": "GB",
+  "genres": [
+   "comedy",
+   "easy listening"
+  ],
+  "via": "discogs"
+ },
+ "Pat Boone": {
+  "country": null,
+  "genres": [
+   "ballad",
+   "lounge",
+   "rock and roll",
+   "traditional pop",
+   "pop",
+   "easy listening"
+  ],
+  "via": "diccionario"
+ },
+ "Patsy Cline": {
+  "country": "US",
+  "genres": [
+   "country",
+   "gospel",
+   "honky tonk",
+   "nashville sound",
+   "traditional country"
+  ],
+  "via": "musicbrainz"
+ },
+ "Patti Page": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "country",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paul Anka": {
+  "country": null,
+  "genres": [
+   "pop",
+   "jazz",
+   "vocal jazz"
+  ],
+  "via": "diccionario"
+ },
+ "Peggy Lee": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "jazz",
+   "blues",
+   "swing",
+   "big band",
+   "vocal jazz",
+   "jazz pop",
+   "latin jazz",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Percy Faith & His Orchestra": {
+  "country": null,
+  "genres": [
+   "big band",
+   "latin jazz"
+  ],
+  "via": "discogs"
+ },
+ "Perry Como": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "jazz",
+   "easy listening",
+   "country",
+   "swing",
+   "rock and roll",
+   "big band",
+   "latin",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Ray Charles": {
+  "country": null,
+  "genres": [
+   "jazz",
+   "soul",
+   "blues",
+   "r&b",
+   "jazz blues"
+  ],
+  "via": "diccionario"
+ },
+ "Ricky Nelson": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "Ritchie Valens": {
+  "country": "US",
+  "genres": [
+   "tex-mex",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sarah Vaughan": {
+  "country": "US",
+  "genres": [
+   "jazz",
+   "bossa nova",
+   "bebop",
+   "vocal jazz",
+   "cool jazz",
+   "traditional pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Everly Brothers": {
+  "country": null,
+  "genres": [
+   "pop",
+   "rockabilly",
+   "close harmony",
+   "country pop",
+   "pop rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "The Flamingos": {
+  "country": "US",
+  "genres": [
+   "pop soul",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Fleetwoods": {
+  "country": "US",
+  "genres": [
+   "traditional pop",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Platters": {
+  "country": "US",
+  "genres": [
+   "pop",
+   "soul",
+   "pop soul",
+   "traditional pop",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Poni-Tails": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ },
+ "The Skyliners": {
+  "country": "US",
+  "genres": [
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Spaniels": {
+  "country": "US",
+  "genres": [
+   "r&b",
+   "doo-wop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Tommy Edwards": {
+  "country": "US",
+  "genres": [],
+  "via": "nada"
+ }
+}
