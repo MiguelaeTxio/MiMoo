@@ -439,7 +439,38 @@ class PlayerManager @Inject constructor(
      * ExoPlayer, so nothing else in the app needs to change: it's
      * still PlayerManager.play()/playQueue() exactly as before.
      */
-    val player: ExoPlayer = ExoPlayer.Builder(appContext).build()
+    val player: ExoPlayer = ExoPlayer.Builder(appContext)
+        .setAudioAttributes(
+            // Petición explícita de Miguel Ángel (2026-08-24): "el
+            // sonido de las demás aplicaciones, necesito dejarlas a
+            // cero... que no se oigan nada". Antes esto dependía de
+            // los valores implícitos por defecto de ExoPlayer (nunca
+            // se llamaba a setAudioAttributes()) -- se hace explícito
+            // para que no quede ninguna duda: USAGE_MEDIA +
+            // CONTENT_TYPE_MUSIC piden foco de audio PERMANENTE
+            // (AUDIOFOCUS_GAIN), el más fuerte que existe -- empuja a
+            // cualquier otra app "bien comportada" (que de verdad
+            // escuche los cambios de foco) a pararse del todo, no solo
+            // a bajar el volumen ("ducking", que es lo que pasaría con
+            // CONTENT_TYPE_SPEECH o un foco transitorio).
+            //
+            // Límite real de Android, no de este código: el sistema
+            // operativo NO deja que una app silencie a la fuerza el
+            // volumen de otra -- el foco de audio es un sistema
+            // cooperativo, cada app decide por su cuenta qué hacer al
+            // perderlo. Una app que no pida/escuche el foco de audio
+            // en absoluto (habitual en juegos con efectos de sonido
+            // sueltos, o sonidos de sistema como notificaciones/tonos
+            // en streams de audio distintos al de música) seguirá
+            // sonando pase lo que pase -- esto no tiene arreglo desde
+            // el lado de MiMoo, es una limitación de la plataforma.
+            androidx.media3.common.AudioAttributes.Builder()
+                .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build(),
+            /* handleAudioFocus = */ true,
+        )
+        .build()
 
     /**
      * Nivelación de audio en tiempo real (Opción A cerrada con Miguel
