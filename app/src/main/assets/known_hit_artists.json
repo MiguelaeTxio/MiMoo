@@ -12243,6 +12243,14 @@
  "1980": {
   "es": [
    {
+    "artist": "091",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock"
+    ],
+    "song": "Que Fue del Siglo XX"
+   },
+   {
     "artist": "Agustín Pantoja",
     "country": "ES",
     "genre": "flamenco",
@@ -12895,6 +12903,16 @@
     "song": "Tiempo de amor"
    },
    {
+    "artist": "Decima Victima",
+    "genre": "coldwave",
+    "genres": [
+     "coldwave",
+     "post-punk",
+     "new wave"
+    ],
+    "song": "Tan Lejos"
+   },
+   {
     "artist": "Décima Víctima",
     "country": "ES",
     "genre": "new wave",
@@ -12913,6 +12931,14 @@
      "post-punk"
     ],
     "song": "A Flúor"
+   },
+   {
+    "artist": "Derribos Arias",
+    "genre": "post-punk",
+    "genres": [
+     "post-punk"
+    ],
+    "song": "Branquias bajo el agua"
    },
    {
     "artist": "Duncan Dhu",
@@ -13088,6 +13114,15 @@
     "song": "Un paso adelante"
    },
    {
+    "artist": "Esclarecidos",
+    "genre": "new wave",
+    "genres": [
+     "new wave",
+     "pop rock"
+    ],
+    "song": "Arponera"
+   },
+   {
     "artist": "Eskorbuto",
     "country": "ES",
     "genre": "punk",
@@ -13224,6 +13259,19 @@
     "song": "Malos Tiempos para la Lírica"
    },
    {
+    "artist": "Golpes Bajos",
+    "genre": "synth-pop",
+    "genres": [
+     "synth-pop",
+     "indie rock",
+     "pop rock",
+     "new wave",
+     "salsa",
+     "art rock"
+    ],
+    "song": "No Mires a los Ojos de la Gente"
+   },
+   {
     "artist": "Héroes del Silencio",
     "country": "ES",
     "genre": "pop rock",
@@ -13234,6 +13282,17 @@
      "hard rock"
     ],
     "song": "Flor venenosa"
+   },
+   {
+    "artist": "Heroes Del Silencio",
+    "genre": "pop rock",
+    "genres": [
+     "rock",
+     "pop rock",
+     "alternative rock",
+     "hard rock"
+    ],
+    "song": "Heroe de leyenda"
    },
    {
     "artist": "Hombres G",
@@ -13331,6 +13390,15 @@
      "pop rock"
     ],
     "song": "Venezia"
+   },
+   {
+    "artist": "Ilegales",
+    "genre": "rock and roll",
+    "genres": [
+     "rock",
+     "rock and roll"
+    ],
+    "song": "Agotados de Esperar el Fin"
    },
    {
     "artist": "Ilegales",
@@ -13902,6 +13970,16 @@
      "ska punk"
     ],
     "song": "Sarri, Sarri"
+   },
+   {
+    "artist": "La Dama Se Esconde",
+    "genre": "new wave",
+    "genres": [
+     "new wave",
+     "pop rock",
+     "indie pop"
+    ],
+    "song": "La tierra de los suenos"
    },
    {
     "artist": "La Década Prodigiosa",
@@ -15123,6 +15201,14 @@
     "song": "La Chica de Ayer"
    },
    {
+    "artist": "Nacha Pop",
+    "genre": "pop rock",
+    "genres": [
+     "pop rock"
+    ],
+    "song": "Relojes En La Oscuridad"
+   },
+   {
     "artist": "Objetivo Birmania",
     "country": "ES",
     "genre": "synth-pop",
@@ -15627,6 +15713,18 @@
     "song": "Escuela de Calor"
    },
    {
+    "artist": "Radio Futura",
+    "genre": "pop rock",
+    "genres": [
+     "rock",
+     "pop rock",
+     "new wave",
+     "alternative rock",
+     "synth-pop"
+    ],
+    "song": "La Estatua Del Jardin Botanico"
+   },
+   {
     "artist": "Ramoncín",
     "country": "ES",
     "genre": "new wave",
@@ -15827,6 +15925,27 @@
      "alternative rock"
     ],
     "song": "Bailaré Sobre Tu Tumba"
+   },
+   {
+    "artist": "Siniestro Total",
+    "genre": "new wave",
+    "genres": [
+     "punk",
+     "rock",
+     "new wave",
+     "pop rock",
+     "alternative rock"
+    ],
+    "song": "Quienes somos? De donde venimos? A donde vamos?"
+   },
+   {
+    "artist": "Surfin' Bichos",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "alternative rock"
+    ],
+    "song": "Gente Abollada"
    },
    {
     "artist": "Tam Tam Go!",
@@ -16057,6 +16176,14 @@
      "singer-songwriter"
     ],
     "song": "¿Quién puso más?"
+   },
+   {
+    "artist": "Zombies",
+    "genre": "new wave",
+    "genres": [
+     "new wave"
+    ],
+    "song": "Groenlandia"
    }
   ],
   "intl": [
@@ -16570,6 +16697,17 @@
     "song": "Construção"
    },
    {
+    "artist": "China Crisis",
+    "country": "GB",
+    "genre": "new wave",
+    "genres": [
+     "pop",
+     "new wave",
+     "synth-pop"
+    ],
+    "song": "Wishful Thinking"
+   },
+   {
     "artist": "Chris de Burgh",
     "country": "GB",
     "genre": "soft rock",
@@ -16579,6 +16717,19 @@
      "soft rock"
     ],
     "song": "The Lady in Red"
+   },
+   {
+    "artist": "Chris Isaak",
+    "country": "US",
+    "genre": "rockabilly",
+    "genres": [
+     "rock",
+     "rockabilly",
+     "pop rock",
+     "roots rock",
+     "rock and roll"
+    ],
+    "song": "Blue Hotel"
    },
    {
     "artist": "Chris Rea",
@@ -16776,6 +16927,24 @@
     "song": "Voyage Voyage"
    },
    {
+    "artist": "DEVO",
+    "country": "US",
+    "genre": "post-punk",
+    "genres": [
+     "rock",
+     "electronic",
+     "punk",
+     "post-punk",
+     "new wave",
+     "synth-pop",
+     "experimental rock",
+     "geek rock",
+     "art punk",
+     "zolo"
+    ],
+    "song": "Girl U Want"
+   },
+   {
     "artist": "Dexys Midnight Runners",
     "country": "GB",
     "genre": "new wave",
@@ -16800,6 +16969,19 @@
      "contemporary r&b"
     ],
     "song": "Julio Iglesias"
+   },
+   {
+    "artist": "Dinosaur Jr.",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "new wave",
+     "indie rock",
+     "noise rock"
+    ],
+    "song": "Freak Scene"
    },
    {
     "artist": "Dionne Warwick",
@@ -17614,6 +17796,20 @@
     "song": "Sweet Child o' Mine"
    },
    {
+    "artist": "Husker Du",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk",
+     "hardcore punk",
+     "post-hardcore",
+     "cowboy poetry"
+    ],
+    "song": "Don't Want to Know If You Are Lonely"
+   },
+   {
     "artist": "Imagination",
     "country": "GB",
     "genre": "synth funk",
@@ -17724,6 +17920,20 @@
      "italo-disco"
     ],
     "song": "Easy Lady"
+   },
+   {
+    "artist": "Jane's Addiction",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "hard rock",
+     "psychedelic rock",
+     "alternative metal",
+     "funk metal"
+    ],
+    "song": "Jane Says"
    },
    {
     "artist": "Jean-Michel Jarre",
@@ -18135,6 +18345,15 @@
     "song": "Hello"
    },
    {
+    "artist": "Lloyd Cole and the Commotions",
+    "country": "GB",
+    "genre": "new wave",
+    "genres": [
+     "new wave"
+    ],
+    "song": "Jennifer She Said"
+   },
+   {
     "artist": "Los Lobos",
     "country": "US",
     "genre": "latin rock",
@@ -18483,6 +18702,23 @@
     "song": "You're My Heart, You're My Soul"
    },
    {
+    "artist": "Morrissey",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "post-punk",
+     "indie rock",
+     "britpop",
+     "indie pop",
+     "jangle pop",
+     "art pop",
+     "post-britpop"
+    ],
+    "song": "Everyday Is Like Sunday"
+   },
+   {
     "artist": "Mory Kanté",
     "country": "GN",
     "genre": "blues",
@@ -18507,6 +18743,18 @@
      "pop rock"
     ],
     "song": "Broken Wings"
+   },
+   {
+    "artist": "Mudhoney",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "grunge",
+     "garage rock"
+    ],
+    "song": "Touch Me I'm Sick"
    },
    {
     "artist": "Murray Head",
@@ -18618,6 +18866,22 @@
      "rock"
     ],
     "song": "Blue Monday"
+   },
+   {
+    "artist": "Nick Cave & The Bad Seeds",
+    "country": "AU",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "singer-songwriter",
+     "post-punk",
+     "indie rock",
+     "art rock",
+     "gothic rock",
+     "punk blues"
+    ],
+    "song": "The Mercy Seat"
    },
    {
     "artist": "Nicole",
@@ -18918,6 +19182,21 @@
     "song": "West End Girls"
    },
    {
+    "artist": "Peter Murphy",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "post-punk",
+     "dub",
+     "gothic rock",
+     "art pop",
+     "avant-garde pop",
+     "turkish classical"
+    ],
+    "song": "All Night Long"
+   },
+   {
     "artist": "Phil Collins",
     "country": "GB",
     "genre": "pop",
@@ -19003,6 +19282,37 @@
      "euro-disco"
     ],
     "song": "Ma quale idea"
+   },
+   {
+    "artist": "Pixies",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk rock",
+     "indie rock",
+     "noise pop",
+     "surf rock"
+    ],
+    "song": "Where Is My Mind?"
+   },
+   {
+    "artist": "Prefab Sprout",
+    "country": "GB",
+    "genre": "new wave",
+    "genres": [
+     "pop",
+     "punk",
+     "new wave",
+     "synth-pop",
+     "jangle pop",
+     "pop rock",
+     "alternative pop",
+     "sophisti-pop",
+     "art pop"
+    ],
+    "song": "When Love Breaks Down"
    },
    {
     "artist": "Pretenders",
@@ -19651,6 +19961,24 @@
     "song": "Tainted Love"
    },
    {
+    "artist": "Sonic Youth",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk rock",
+     "grunge",
+     "post-punk",
+     "indie rock",
+     "art rock",
+     "experimental rock",
+     "no wave",
+     "noise rock"
+    ],
+    "song": "Teen Age Riot"
+   },
+   {
     "artist": "Spandau Ballet",
     "country": "GB",
     "genre": "new wave",
@@ -19936,6 +20264,18 @@
     "song": "Walk Like an Egyptian"
    },
    {
+    "artist": "The Blue Nile",
+    "country": "GB",
+    "genre": "new wave",
+    "genres": [
+     "new wave",
+     "art pop",
+     "sophisti-pop",
+     "dream pop"
+    ],
+    "song": "The Downtown Lights"
+   },
+   {
     "artist": "The Buggles",
     "country": "GB",
     "genre": "new wave",
@@ -19946,6 +20286,32 @@
      "art pop"
     ],
     "song": "Video Killed The Radio Star"
+   },
+   {
+    "artist": "The Chameleons",
+    "country": "GB",
+    "genre": "dream pop",
+    "genres": [
+     "dream pop",
+     "gothic rock",
+     "post-punk",
+     "new wave"
+    ],
+    "song": "Up the Down Escalator"
+   },
+   {
+    "artist": "The Church",
+    "country": "AU",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "post-punk",
+     "art rock",
+     "jangle pop",
+     "neo-psychedelia",
+     "dream pop"
+    ],
+    "song": "Under the Milky Way"
    },
    {
     "artist": "The Communards",
@@ -19970,6 +20336,19 @@
     "song": "The Multimix"
    },
    {
+    "artist": "The Cult",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "post-punk",
+     "hard rock",
+     "gothic rock"
+    ],
+    "song": "Rain"
+   },
+   {
     "artist": "The Cure",
     "country": "GB",
     "genre": "new wave",
@@ -19989,6 +20368,20 @@
      "pop rock"
     ],
     "song": "Just Like Heaven"
+   },
+   {
+    "artist": "The Go-Betweens",
+    "country": "US",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "indie pop",
+     "post-punk",
+     "alternative rock",
+     "experimental",
+     "new wave"
+    ],
+    "song": "Streets of Your Town"
    },
    {
     "artist": "The Housemartins",
@@ -20013,6 +20406,19 @@
      "pop"
     ],
     "song": "Don't You Want Me"
+   },
+   {
+    "artist": "The Jesus and Mary Chain",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "shoegaze",
+     "post-punk",
+     "indie rock",
+     "noise pop"
+    ],
+    "song": "Just Like Honey"
    },
    {
     "artist": "The Korgis",
@@ -20053,6 +20459,21 @@
      "punk"
     ],
     "song": "Every Breath You Take"
+   },
+   {
+    "artist": "The Psychedelic Furs",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "shoegaze",
+     "punk rock",
+     "post-punk",
+     "new wave",
+     "pop rock"
+    ],
+    "song": "Love My Way"
    },
    {
     "artist": "The Real Thing",
@@ -20102,6 +20523,52 @@
     "song": "This Charming Man"
    },
    {
+    "artist": "The Specials",
+    "country": "GB",
+    "genre": "reggae",
+    "genres": [
+     "reggae",
+     "2 tone",
+     "rocksteady",
+     "ska",
+     "new wave"
+    ],
+    "song": "Ghost Town"
+   },
+   {
+    "artist": "The Stone Roses",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "madchester",
+     "indie rock",
+     "jangle pop",
+     "neo-psychedelia",
+     "alternative dance"
+    ],
+    "song": "I Wanna Be Adored"
+   },
+   {
+    "artist": "The Stranglers",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk",
+     "punk rock",
+     "post-punk",
+     "new wave",
+     "baroque pop",
+     "pop rock",
+     "art punk",
+     "pub rock"
+    ],
+    "song": "Always the Sun"
+   },
+   {
     "artist": "The Sugarhill Gang",
     "country": "US",
     "genre": "electro",
@@ -20114,6 +20581,19 @@
      "old school hip hop"
     ],
     "song": "Rapper's Delight"
+   },
+   {
+    "artist": "The Waterboys",
+    "country": "GB",
+    "genre": "folk rock",
+    "genres": [
+     "rock",
+     "folk rock",
+     "celtic",
+     "pop rock",
+     "celtic rock"
+    ],
+    "song": "The Whole of the Moon"
    },
    {
     "artist": "Thompson Twins",
@@ -20324,6 +20804,20 @@
      "soul"
     ],
     "song": "If You Could Read My Mind"
+   },
+   {
+    "artist": "Violent Femmes",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "post-punk",
+     "folk rock",
+     "acoustic rock",
+     "cowpunk",
+     "folk punk"
+    ],
+    "song": "Blister In The Sun"
    },
    {
     "artist": "Visage",
@@ -20781,6 +21275,17 @@
    },
    {
     "artist": "Bunbury",
+    "genre": "latin",
+    "genres": [
+     "rock",
+     "pop",
+     "latin",
+     "latin rock"
+    ],
+    "song": "Infinito"
+   },
+   {
+    "artist": "Bunbury",
     "country": "ES",
     "genre": "rock",
     "genres": [
@@ -20943,6 +21448,16 @@
     "song": "Así Me Gusta a Mí"
    },
    {
+    "artist": "Chucho",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "indie pop",
+     "indie rock"
+    ],
+    "song": "Magic"
+   },
+   {
     "artist": "Cómplices",
     "country": "ES",
     "genre": "pop rock",
@@ -21051,6 +21566,16 @@
      "punk"
     ],
     "song": "Cherry Lee"
+   },
+   {
+    "artist": "Dover",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk"
+    ],
+    "song": "Devil Came to Me"
    },
    {
     "artist": "Dover",
@@ -21309,6 +21834,14 @@
     "song": "Rhythm Divine"
    },
    {
+    "artist": "Enrique Morente",
+    "genre": "flamenco",
+    "genres": [
+     "flamenco"
+    ],
+    "song": "Omega (Poema Para Los Muertos)"
+   },
+   {
     "artist": "Estopa",
     "country": "ES",
     "genre": "pop rock",
@@ -21332,6 +21865,15 @@
      "rock urbano"
     ],
     "song": "So Payaso"
+   },
+   {
+    "artist": "Fangoria",
+    "genre": "electropop",
+    "genres": [
+     "electropop",
+     "synth-pop"
+    ],
+    "song": "Me Odio Cuando Miento"
    },
    {
     "artist": "Fangoria",
@@ -21455,6 +21997,15 @@
      "pop rock"
     ],
     "song": "Voy a pasármelo bien"
+   },
+   {
+    "artist": "Ilegales",
+    "genre": "rock and roll",
+    "genres": [
+     "rock",
+     "rock and roll"
+    ],
+    "song": "Regreso al sexo quimicamente puro"
    },
    {
     "artist": "Jarabe de palo",
@@ -21630,6 +22181,16 @@
     "song": "Problema"
    },
    {
+    "artist": "Kiko Veneno",
+    "genre": "flamenco",
+    "genres": [
+     "flamenco",
+     "pop rock",
+     "rumba"
+    ],
+    "song": "En un Mercedes Blanco"
+   },
+   {
     "artist": "La Década Prodigiosa",
     "country": "ES",
     "genre": "pop rock",
@@ -21774,6 +22335,21 @@
     "song": "Negrita"
    },
    {
+    "artist": "Le Mans",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "downtempo",
+     "indie pop",
+     "synth-pop",
+     "lounge",
+     "folk rock",
+     "trip hop",
+     "ballad"
+    ],
+    "song": "Un Rayo De Sol"
+   },
+   {
     "artist": "Loco Mía",
     "country": "ES",
     "genre": "disco",
@@ -21810,6 +22386,30 @@
      "sevillanas"
     ],
     "song": "Macarena"
+   },
+   {
+    "artist": "Los Enemigos",
+    "genre": "rock and roll",
+    "genres": [
+     "rock and roll",
+     "blues rock",
+     "hard rock",
+     "garage rock",
+     "pop rock",
+     "classic rock"
+    ],
+    "song": "Desde el jergon"
+   },
+   {
+    "artist": "Los Fresones Rebeldes",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "alternative rock",
+     "pop rock",
+     "indie rock"
+    ],
+    "song": "Al Amanecer"
    },
    {
     "artist": "Los Inhumanos",
@@ -22219,6 +22819,17 @@
     "song": "Nacho Cano"
    },
    {
+    "artist": "Mercromina",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "alternative rock",
+     "shoegaze",
+     "indie pop"
+    ],
+    "song": "En un Mundo Tan Pequeno"
+   },
+   {
     "artist": "Miguel Bosé",
     "country": "ES",
     "genre": "latin",
@@ -22404,6 +23015,15 @@
      "alternative rock"
     ],
     "song": "El canario"
+   },
+   {
+    "artist": "Nosotrash",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "indie rock"
+    ],
+    "song": "Punk Rock City"
    },
    {
     "artist": "OBK",
@@ -22841,6 +23461,26 @@
     "song": "Sólo para ti"
    },
    {
+    "artist": "Silvania",
+    "genre": "ambient",
+    "genres": [
+     "ambient",
+     "experimental",
+     "idm",
+     "techno",
+     "shoegaze",
+     "indie rock",
+     "neofolk",
+     "house",
+     "synth-pop",
+     "alternative rock",
+     "dance-pop",
+     "indie pop",
+     "new wave"
+    ],
+    "song": "Trilce"
+   },
+   {
     "artist": "Ska-P",
     "country": "ES",
     "genre": "rock",
@@ -22849,6 +23489,23 @@
      "ska punk"
     ],
     "song": "El Vals del Obrero"
+   },
+   {
+    "artist": "Sr. Chinarro",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop"
+    ],
+    "song": "Quiromantico"
+   },
+   {
+    "artist": "Surfin' Bichos",
+    "genre": "indie rock",
+    "genres": [
+     "indie rock",
+     "alternative rock"
+    ],
+    "song": "Fuerte!"
    },
    {
     "artist": "Tam Tam Go!",
@@ -23178,6 +23835,21 @@
     "song": "Barbie Girl"
    },
    {
+    "artist": "Ash",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "indie rock",
+     "power pop",
+     "britpop",
+     "pop punk",
+     "post-britpop"
+    ],
+    "song": "Girl From Mars"
+   },
+   {
     "artist": "Babylon Zoo",
     "country": "GB",
     "genre": "alternative rock",
@@ -23201,6 +23873,62 @@
      "electropop"
     ],
     "song": "I Want It That Way"
+   },
+   {
+    "artist": "Bad Religion",
+    "country": "US",
+    "genre": "hardcore punk",
+    "genres": [
+     "punk",
+     "punk rock",
+     "hardcore punk",
+     "skate punk",
+     "melodic hardcore",
+     "christian hardcore"
+    ],
+    "song": "21st Century (Digital Boy)"
+   },
+   {
+    "artist": "Beck",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "electronic",
+     "pop",
+     "alternative rock",
+     "singer-songwriter",
+     "indie rock",
+     "folk rock",
+     "psychedelic pop",
+     "anti-folk",
+     "alternative dance",
+     "noise rock",
+     "trip hop",
+     "experimental hip hop",
+     "chamber folk",
+     "slacker rock"
+    ],
+    "song": "Devils Haircut"
+   },
+   {
+    "artist": "Belle and Sebastian",
+    "country": "GB",
+    "genre": "indie rock",
+    "genres": [
+     "rock",
+     "indie rock",
+     "synth-pop",
+     "baroque pop",
+     "indie pop",
+     "dance-pop",
+     "psychedelic pop",
+     "indie folk",
+     "twee pop",
+     "sunshine pop",
+     "chamber pop"
+    ],
+    "song": "Like Dylan in the Movies"
    },
    {
     "artist": "Big Fun",
@@ -23429,6 +24157,15 @@
     "song": "Gangsta's Paradise"
    },
    {
+    "artist": "Cornershop",
+    "country": "GB",
+    "genre": "dance",
+    "genres": [
+     "dance"
+    ],
+    "song": "Brimful of Asha"
+   },
+   {
     "artist": "Corona",
     "country": "IT",
     "genre": "eurodance",
@@ -23570,6 +24307,39 @@
     "song": "Nuthin' but a \"G\" Thang"
    },
    {
+    "artist": "Edwyn Collins",
+    "country": "GB",
+    "genre": "indie pop",
+    "genres": [
+     "indie pop",
+     "pop",
+     "indie rock",
+     "pop rock",
+     "rock",
+     "singer-songwriter",
+     "alternative rock"
+    ],
+    "song": "A Girl Like You"
+   },
+   {
+    "artist": "Eels",
+    "country": "US",
+    "genre": "downtempo",
+    "genres": [
+     "rock",
+     "downtempo",
+     "alternative rock",
+     "singer-songwriter",
+     "indie rock",
+     "indie pop",
+     "indie folk",
+     "chamber pop",
+     "slowcore",
+     "trip hop"
+    ],
+    "song": "Novocaine For The Soul"
+   },
+   {
     "artist": "Eiffel 65",
     "country": "IT",
     "genre": "electronic",
@@ -23586,6 +24356,32 @@
      "synth-pop"
     ],
     "song": "Blue (Da Ba Dee)"
+   },
+   {
+    "artist": "Elastica",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "indie rock",
+     "britpop",
+     "pop punk"
+    ],
+    "song": "Connection"
+   },
+   {
+    "artist": "Elliott Smith",
+    "country": "US",
+    "genre": "singer-songwriter",
+    "genres": [
+     "singer-songwriter",
+     "indie rock",
+     "folk rock",
+     "indie pop",
+     "indie folk",
+     "acoustic rock"
+    ],
+    "song": "Between The Bars"
    },
    {
     "artist": "Elvis Crespo",
@@ -23783,6 +24579,17 @@
      "techno"
     ],
     "song": "Insomnia"
+   },
+   {
+    "artist": "Family",
+    "country": "GB",
+    "genre": "progressive rock",
+    "genres": [
+     "progressive rock",
+     "psychedelic rock",
+     "art rock"
+    ],
+    "song": "La Noche Inventada"
    },
    {
     "artist": "Fatboy Slim",
@@ -24100,6 +24907,21 @@
      "contemporary r&b"
     ],
     "song": "Together Again"
+   },
+   {
+    "artist": "Jeff Buckley",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "blues",
+     "singer-songwriter",
+     "folk rock",
+     "soul",
+     "acoustic rock"
+    ],
+    "song": "Lover, You Should've Come Over"
    },
    {
     "artist": "Jennifer Lopez",
@@ -24485,6 +25307,26 @@
     "song": "Rayando el sol"
    },
    {
+    "artist": "Manic Street Preachers",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk rock",
+     "grunge",
+     "post-punk",
+     "hard rock",
+     "britpop",
+     "glam rock",
+     "post-grunge",
+     "pop rock",
+     "glam punk",
+     "post-britpop"
+    ],
+    "song": "If You Tolerate This Your Children Will Be Next"
+   },
+   {
     "artist": "Mano Negra",
     "country": "FR",
     "genre": "alternative rock",
@@ -24571,6 +25413,26 @@
     "song": "Unfinished Sympathy"
    },
    {
+    "artist": "Mazzy Star",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "shoegaze",
+     "indie rock",
+     "americana",
+     "indie pop",
+     "neo-psychedelia",
+     "dream pop",
+     "alternative country",
+     "psychedelic folk",
+     "slowcore",
+     "paisley underground"
+    ],
+    "song": "Fade Into You"
+   },
+   {
     "artist": "MC Hammer",
     "country": "US",
     "genre": "pop rap",
@@ -24599,6 +25461,25 @@
      "pop rap"
     ],
     "song": "U Can't Touch This"
+   },
+   {
+    "artist": "Mercury Rev",
+    "country": "US",
+    "genre": "space rock revival",
+    "genres": [
+     "space rock revival",
+     "post-rock",
+     "shoegaze",
+     "noise rock",
+     "indie rock",
+     "noise pop",
+     "indie pop",
+     "dream pop",
+     "chamber pop",
+     "experimental rock",
+     "neo-psychedelia"
+    ],
+    "song": "Holes"
    },
    {
     "artist": "Meredith Brooks",
@@ -24658,6 +25539,27 @@
     "song": "Girl I'm Gonna Miss You"
    },
    {
+    "artist": "Mogwai",
+    "country": "GB",
+    "genre": "post-rock",
+    "genres": [
+     "rock",
+     "electronic",
+     "post-rock",
+     "alternative rock",
+     "instrumental",
+     "shoegaze",
+     "dance",
+     "house",
+     "experimental",
+     "math rock",
+     "deep house",
+     "experimental rock",
+     "edm"
+    ],
+    "song": "Helicon 1"
+   },
+   {
     "artist": "Molotov",
     "country": "MX",
     "genre": "alternative rock",
@@ -24684,6 +25586,42 @@
      "alternative rock"
     ],
     "song": "La buena onda"
+   },
+   {
+    "artist": "Morrissey",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "post-punk",
+     "indie rock",
+     "britpop",
+     "indie pop",
+     "jangle pop",
+     "art pop",
+     "post-britpop"
+    ],
+    "song": "Glamorous Glue"
+   },
+   {
+    "artist": "my bloody valentine",
+    "country": "IE",
+    "genre": "shoegaze",
+    "genres": [
+     "rock",
+     "shoegaze",
+     "post-punk",
+     "indie rock",
+     "noise pop",
+     "neo-psychedelia",
+     "dream pop",
+     "twee pop",
+     "noise rock",
+     "c86",
+     "slacker rock"
+    ],
+    "song": "Only Shallow"
    },
    {
     "artist": "Natalie Imbruglia",
@@ -24768,6 +25706,22 @@
      "teen pop"
     ],
     "song": "You Got It (The Right Stuff)"
+   },
+   {
+    "artist": "Nick Cave & The Bad Seeds",
+    "country": "AU",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "singer-songwriter",
+     "post-punk",
+     "indie rock",
+     "art rock",
+     "gothic rock",
+     "punk blues"
+    ],
+    "song": "Into My Arms"
    },
    {
     "artist": "Nine Inch Nails",
@@ -24865,6 +25819,19 @@
     "song": "Hope of Deliverance"
    },
    {
+    "artist": "Pavement",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "indie rock",
+     "lo-fi",
+     "slacker rock"
+    ],
+    "song": "Summer Babe"
+   },
+   {
     "artist": "Pearl Jam",
     "country": "US",
     "genre": "rock",
@@ -24885,6 +25852,20 @@
     "song": "Alive"
    },
    {
+    "artist": "Pixies",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk rock",
+     "indie rock",
+     "noise pop",
+     "surf rock"
+    ],
+    "song": "Velouria"
+   },
+   {
     "artist": "Portishead",
     "country": "GB",
     "genre": "trip hop",
@@ -24893,6 +25874,40 @@
      "downtempo"
     ],
     "song": "Glory Box"
+   },
+   {
+    "artist": "Prefab Sprout",
+    "country": "GB",
+    "genre": "new wave",
+    "genres": [
+     "pop",
+     "punk",
+     "new wave",
+     "synth-pop",
+     "jangle pop",
+     "pop rock",
+     "alternative pop",
+     "sophisti-pop",
+     "art pop"
+    ],
+    "song": "A Prisoner of the Past"
+   },
+   {
+    "artist": "Primal Scream",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "electronic",
+     "alternative rock",
+     "indie rock",
+     "blues rock",
+     "jangle pop",
+     "neo-psychedelia",
+     "alternative dance",
+     "c86"
+    ],
+    "song": "Movin' on Up"
    },
    {
     "artist": "Pulp",
@@ -25209,6 +26224,20 @@
     "song": "Garota nacional"
    },
    {
+    "artist": "Slowdive",
+    "country": "GB",
+    "genre": "post-rock",
+    "genres": [
+     "rock",
+     "post-rock",
+     "shoegaze",
+     "noise pop",
+     "dream pop",
+     "ambient pop"
+    ],
+    "song": "When the Sun Hits"
+   },
+   {
     "artist": "Smash Mouth",
     "country": "US",
     "genre": "alternative rock",
@@ -25255,6 +26284,24 @@
     "song": "Informer"
    },
    {
+    "artist": "Sonic Youth",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk rock",
+     "grunge",
+     "post-punk",
+     "indie rock",
+     "art rock",
+     "experimental rock",
+     "no wave",
+     "noise rock"
+    ],
+    "song": "Sugar Kane"
+   },
+   {
     "artist": "Soundgarden",
     "country": "US",
     "genre": "rock",
@@ -25279,6 +26326,24 @@
      "contemporary r&b"
     ],
     "song": "Wannabe"
+   },
+   {
+    "artist": "Spiritualized",
+    "country": "GB",
+    "genre": "shoegaze",
+    "genres": [
+     "rock",
+     "shoegaze",
+     "art rock",
+     "noise pop",
+     "space rock",
+     "symphonic rock",
+     "neo-psychedelia",
+     "dream pop",
+     "chamber pop",
+     "space rock revival"
+    ],
+    "song": "Ladies and gentlemen we are floating in space"
    },
    {
     "artist": "Stone Temple Pilots",
@@ -25321,6 +26386,23 @@
      "noise pop"
     ],
     "song": "Happy Birthday"
+   },
+   {
+    "artist": "Supergrass",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "indie rock",
+     "power pop",
+     "britpop",
+     "glam rock",
+     "pop punk",
+     "neo-psychedelia",
+     "post-britpop"
+    ],
+    "song": "Alright"
    },
    {
     "artist": "Sweetbox",
@@ -25366,6 +26448,20 @@
      "new beat"
     ],
     "song": "Get Up! (Before the Night Is Over)"
+   },
+   {
+    "artist": "Teenage Fanclub",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "indie rock",
+     "power pop",
+     "jangle pop",
+     "folk pop"
+    ],
+    "song": "Neil Jung"
    },
    {
     "artist": "Texas",
@@ -25424,6 +26520,17 @@
     "song": "A Conspirancy"
    },
    {
+    "artist": "The Breeders",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "indie rock",
+     "noise pop"
+    ],
+    "song": "Cannonball"
+   },
+   {
     "artist": "The Cardigans",
     "country": "SE",
     "genre": "indie pop",
@@ -25432,6 +26539,22 @@
      "pop rock"
     ],
     "song": "Lovefool"
+   },
+   {
+    "artist": "The Charlatans",
+    "country": "GB",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "madchester",
+     "indie rock",
+     "britpop",
+     "indie pop",
+     "neo-psychedelia",
+     "roots rock"
+    ],
+    "song": "The Only One I Know"
    },
    {
     "artist": "The Chemical Brothers",
@@ -25557,6 +26680,63 @@
     "song": "All Together Now"
    },
    {
+    "artist": "The Flaming Lips",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "alternative rock",
+     "indie rock",
+     "psychedelic rock",
+     "psychedelic pop",
+     "experimental rock",
+     "noise pop",
+     "neo-psychedelia",
+     "noise rock",
+     "rock"
+    ],
+    "song": "Race for the Prize"
+   },
+   {
+    "artist": "The Jayhawks",
+    "country": "US",
+    "genre": "americana",
+    "genres": [
+     "americana"
+    ],
+    "song": "Blue"
+   },
+   {
+    "artist": "The La's",
+    "country": "GB",
+    "genre": "indie rock",
+    "genres": [
+     "rock",
+     "indie rock",
+     "britpop",
+     "indie pop",
+     "jangle pop",
+     "merseybeat",
+     "skiffle"
+    ],
+    "song": "There She Goes"
+   },
+   {
+    "artist": "The Lemonheads",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "punk rock",
+     "indie rock",
+     "power pop",
+     "jangle pop",
+     "pop punk",
+     "pigfuck"
+    ],
+    "song": "It's A Shame About Ray"
+   },
+   {
     "artist": "The Notorious B.I.G.",
     "country": "US",
     "genre": "hip hop",
@@ -25605,6 +26785,23 @@
      "electronica"
     ],
     "song": "Firestarter"
+   },
+   {
+    "artist": "The Smashing Pumpkins",
+    "country": "US",
+    "genre": "alternative rock",
+    "genres": [
+     "rock",
+     "alternative rock",
+     "progressive rock",
+     "shoegaze",
+     "grunge",
+     "synth-pop",
+     "symphonic rock",
+     "neo-psychedelia",
+     "dream pop"
+    ],
+    "song": "Tonight, Tonight"
    },
    {
     "artist": "The Verve",
@@ -25675,6 +26872,17 @@
      "soft rock"
     ],
     "song": "Landslide of Love"
+   },
+   {
+    "artist": "Tricky",
+    "country": "GB",
+    "genre": "trip hop",
+    "genres": [
+     "electronic",
+     "hip hop",
+     "trip hop"
+    ],
+    "song": "Black Steel"
    },
    {
     "artist": "Twenty 4 Seven",

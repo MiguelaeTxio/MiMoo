@@ -1,0 +1,2270 @@
+{
+ "091": {
+  "country": "ES",
+  "genres": [
+   "indie rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "AC/DC": {
+  "country": null,
+  "genres": [
+   "hard rock",
+   "rock",
+   "blues rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Air": {
+  "country": null,
+  "genres": [
+   "downtempo",
+   "electronic",
+   "dream pop"
+  ],
+  "via": "diccionario"
+ },
+ "Alaska Y Dinarama": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Alice In Chains": {
+  "country": null,
+  "genres": [
+   "grunge",
+   "alternative rock",
+   "alternative metal",
+   "acoustic rock",
+   "heavy metal",
+   "sludge metal",
+   "hard rock",
+   "rock",
+   "doom metal",
+   "stoner metal",
+   "glam metal"
+  ],
+  "via": "diccionario"
+ },
+ "Andres Calamaro": {
+  "country": "AR",
+  "genres": [
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Antonio Vega": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Ash": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "indie rock",
+   "power pop",
+   "britpop",
+   "pop punk",
+   "post-britpop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Australian Blonde": {
+  "country": "ES",
+  "genres": [
+   "indie rock"
+  ],
+  "via": "diccionario"
+ },
+ "Bad Religion": {
+  "country": "US",
+  "genres": [
+   "punk",
+   "punk rock",
+   "hardcore punk",
+   "skate punk",
+   "melodic hardcore",
+   "christian hardcore"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bauhaus": {
+  "country": null,
+  "genres": [
+   "gothic rock",
+   "post-punk"
+  ],
+  "via": "diccionario"
+ },
+ "Beastie Boys": {
+  "country": null,
+  "genres": [
+   "hip hop",
+   "rap rock",
+   "east coast hip hop",
+   "experimental hip hop",
+   "hardcore punk",
+   "rock",
+   "alternative hip hop",
+   "alternative rock",
+   "funk",
+   "hardcore hip hop"
+  ],
+  "via": "diccionario"
+ },
+ "Beck": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "electronic",
+   "pop",
+   "alternative rock",
+   "singer-songwriter",
+   "indie rock",
+   "folk rock",
+   "psychedelic pop",
+   "anti-folk",
+   "alternative dance",
+   "noise rock",
+   "trip hop",
+   "experimental hip hop",
+   "chamber folk",
+   "slacker rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Belle and Sebastian": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "indie rock",
+   "synth-pop",
+   "baroque pop",
+   "indie pop",
+   "dance-pop",
+   "psychedelic pop",
+   "indie folk",
+   "twee pop",
+   "sunshine pop",
+   "chamber pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Bjork": {
+  "country": null,
+  "genres": [
+   "art pop",
+   "electronic",
+   "trip hop"
+  ],
+  "via": "diccionario"
+ },
+ "Blur": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "indie rock",
+   "art rock",
+   "experimental rock",
+   "neo-psychedelia",
+   "noise rock",
+   "post-grunge",
+   "shoegaze",
+   "grunge",
+   "madchester",
+   "rock",
+   "slacker rock"
+  ],
+  "via": "diccionario"
+ },
+ "Bob Dylan": {
+  "country": null,
+  "genres": [
+   "folk rock",
+   "folk",
+   "rock",
+   "blues rock",
+   "singer-songwriter",
+   "contemporary folk",
+   "country rock",
+   "blues",
+   "pop rock",
+   "country",
+   "classic rock",
+   "gospel",
+   "jazz",
+   "roots rock",
+   "traditional pop"
+  ],
+  "via": "diccionario"
+ },
+ "Bruce Springsteen": {
+  "country": null,
+  "genres": [
+   "rock",
+   "heartland rock",
+   "americana",
+   "singer-songwriter",
+   "folk",
+   "pop rock",
+   "aor",
+   "contemporary folk",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Bunbury": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "pop",
+   "latin",
+   "latin rock"
+  ],
+  "via": "diccionario"
+ },
+ "Carlos Berlanga": {
+  "country": "ES",
+  "genres": [
+   "house"
+  ],
+  "via": "discogs"
+ },
+ "China Crisis": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "new wave",
+   "synth-pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Chris Isaak": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "rockabilly",
+   "pop rock",
+   "roots rock",
+   "rock and roll"
+  ],
+  "via": "musicbrainz"
+ },
+ "Chucho": {
+  "country": "ES",
+  "genres": [
+   "alternative rock",
+   "indie pop",
+   "indie rock"
+  ],
+  "via": "discogs"
+ },
+ "Cocteau Twins": {
+  "country": null,
+  "genres": [
+   "shoegaze",
+   "post-punk",
+   "dark wave",
+   "ambient techno",
+   "dream pop",
+   "gothic rock",
+   "ethereal wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "Cornershop": {
+  "country": "GB",
+  "genres": [
+   "dance"
+  ],
+  "via": "musicbrainz"
+ },
+ "Cyndi Lauper": {
+  "country": null,
+  "genres": [
+   "pop",
+   "blues",
+   "dance-pop",
+   "new wave",
+   "pop rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "DEVO": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "electronic",
+   "punk",
+   "post-punk",
+   "new wave",
+   "synth-pop",
+   "experimental rock",
+   "geek rock",
+   "art punk",
+   "zolo"
+  ],
+  "via": "musicbrainz"
+ },
+ "Daft Punk": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "house",
+   "french house",
+   "dance",
+   "disco",
+   "club",
+   "electro",
+   "electro house",
+   "electronic rock",
+   "electronica",
+   "french electro",
+   "funk",
+   "nu disco",
+   "synth-pop",
+   "edm",
+   "electroclash",
+   "jackin house",
+   "organic house",
+   "pop",
+   "r&b",
+   "techno",
+   "trap"
+  ],
+  "via": "diccionario"
+ },
+ "David Bowie": {
+  "country": null,
+  "genres": [
+   "art rock",
+   "glam rock",
+   "alternative rock",
+   "pop",
+   "rock",
+   "art pop",
+   "new wave",
+   "pop rock",
+   "classic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Decima Victima": {
+  "country": "ES",
+  "genres": [
+   "coldwave",
+   "post-punk",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Deee-Lite": {
+  "country": null,
+  "genres": [
+   "house",
+   "deep house",
+   "alternative rock",
+   "garage house",
+   "disco",
+   "funk"
+  ],
+  "via": "discogs"
+ },
+ "Depeche Mode": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "synth-pop",
+   "new wave",
+   "alternative rock",
+   "dark wave",
+   "alternative dance",
+   "electronic rock",
+   "electronica",
+   "new romantic",
+   "industrial",
+   "post-punk"
+  ],
+  "via": "diccionario"
+ },
+ "Derribos Arias": {
+  "country": "ES",
+  "genres": [
+   "post-punk"
+  ],
+  "via": "diccionario"
+ },
+ "Dinosaur Jr.": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "new wave",
+   "indie rock",
+   "noise rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Dire Straits": {
+  "country": null,
+  "genres": [
+   "rock",
+   "soft rock",
+   "classic rock",
+   "pop rock",
+   "roots rock",
+   "blues rock",
+   "pub rock",
+   "rock and roll",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Dover": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk"
+  ],
+  "via": "diccionario"
+ },
+ "Echo & the Bunnymen": {
+  "country": null,
+  "genres": [
+   "post-punk",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Edwyn Collins": {
+  "country": "GB",
+  "genres": [
+   "indie pop",
+   "pop",
+   "indie rock",
+   "pop rock",
+   "rock",
+   "singer-songwriter",
+   "alternative rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Eels": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "downtempo",
+   "alternative rock",
+   "singer-songwriter",
+   "indie rock",
+   "indie pop",
+   "indie folk",
+   "chamber pop",
+   "slowcore",
+   "trip hop"
+  ],
+  "via": "musicbrainz"
+ },
+ "El Nino Gusano": {
+  "country": null,
+  "genres": [
+   "indie rock",
+   "indie pop",
+   "psychedelic pop",
+   "experimental rock",
+   "noise pop",
+   "jangle pop",
+   "neo-psychedelia",
+   "twee pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "El Ultimo De La Fila": {
+  "country": "ES",
+  "genres": [
+   "pop rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Elastica": {
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "britpop",
+   "pop punk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Elliott Smith": {
+  "country": "US",
+  "genres": [
+   "singer-songwriter",
+   "indie rock",
+   "folk rock",
+   "indie pop",
+   "indie folk",
+   "acoustic rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Enrique Morente": {
+  "country": "ES",
+  "genres": [
+   "flamenco"
+  ],
+  "via": "discogs"
+ },
+ "Esclarecidos": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "Family": {
+  "country": "GB",
+  "genres": [
+   "progressive rock",
+   "psychedelic rock",
+   "art rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Fangoria": {
+  "country": "ES",
+  "genres": [
+   "electropop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Fine Young Cannibals": {
+  "country": null,
+  "genres": [
+   "rock",
+   "electronic",
+   "pop",
+   "new wave",
+   "synth-pop",
+   "dance-pop",
+   "pop rock",
+   "pop soul",
+   "sophisti-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Franco Battiato": {
+  "country": null,
+  "genres": [
+   "rock",
+   "classical",
+   "pop",
+   "progressive rock",
+   "experimental",
+   "singer-songwriter",
+   "new wave",
+   "electro",
+   "opera",
+   "new age",
+   "experimental rock",
+   "pop rock",
+   "classical crossover",
+   "progressive electronic"
+  ],
+  "via": "diccionario"
+ },
+ "Gabinete Caligari": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Garbage": {
+  "country": null,
+  "genres": [
+   "rock",
+   "alternative rock",
+   "industrial rock",
+   "post-grunge",
+   "alternative dance",
+   "trip hop"
+  ],
+  "via": "diccionario"
+ },
+ "Golpes Bajos": {
+  "country": "ES",
+  "genres": [
+   "synth-pop",
+   "indie rock",
+   "pop rock",
+   "new wave",
+   "salsa",
+   "art rock"
+  ],
+  "via": "diccionario"
+ },
+ "Green Day": {
+  "country": null,
+  "genres": [
+   "punk rock",
+   "pop punk",
+   "alternative rock",
+   "rock",
+   "punk",
+   "power pop"
+  ],
+  "via": "diccionario"
+ },
+ "Guns N' Roses": {
+  "country": null,
+  "genres": [
+   "hard rock",
+   "glam metal",
+   "heavy metal",
+   "rock",
+   "art rock",
+   "aor",
+   "arena rock",
+   "punk rock"
+  ],
+  "via": "diccionario"
+ },
+ "Heroes Del Silencio": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "pop rock",
+   "alternative rock",
+   "hard rock"
+  ],
+  "via": "diccionario"
+ },
+ "Husker Du": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk",
+   "hardcore punk",
+   "post-hardcore",
+   "cowboy poetry"
+  ],
+  "via": "musicbrainz"
+ },
+ "INXS": {
+  "country": null,
+  "genres": [
+   "rock",
+   "new wave",
+   "alternative rock",
+   "pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Ilegales": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll"
+  ],
+  "via": "diccionario"
+ },
+ "Jamiroquai": {
+  "country": null,
+  "genres": [
+   "house",
+   "funk",
+   "disco",
+   "acid jazz",
+   "rock",
+   "r&b"
+  ],
+  "via": "diccionario"
+ },
+ "Jane's Addiction": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "hard rock",
+   "psychedelic rock",
+   "alternative metal",
+   "funk metal"
+  ],
+  "via": "musicbrainz"
+ },
+ "Jeff Buckley": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "blues",
+   "singer-songwriter",
+   "folk rock",
+   "soul",
+   "acoustic rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Joy Division": {
+  "country": null,
+  "genres": [
+   "post-punk",
+   "new wave",
+   "gothic rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Kate Bush": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "new wave",
+   "art rock",
+   "baroque pop",
+   "pop rock",
+   "alternative pop",
+   "progressive pop",
+   "ambient pop",
+   "art pop",
+   "alternative rock",
+   "progressive rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Kiko Veneno": {
+  "country": "ES",
+  "genres": [
+   "flamenco",
+   "pop rock",
+   "rumba"
+  ],
+  "via": "diccionario"
+ },
+ "Kraftwerk": {
+  "country": null,
+  "genres": [
+   "electro",
+   "electronic",
+   "krautrock",
+   "progressive electronic",
+   "synth-pop",
+   "techno"
+  ],
+  "via": "diccionario"
+ },
+ "La Dama Se Esconde": {
+  "country": "ES",
+  "genres": [
+   "new wave",
+   "pop rock",
+   "indie pop"
+  ],
+  "via": "discogs"
+ },
+ "Le Mans": {
+  "country": "ES",
+  "genres": [
+   "indie rock",
+   "downtempo",
+   "indie pop",
+   "synth-pop",
+   "lounge",
+   "folk rock",
+   "trip hop",
+   "ballad"
+  ],
+  "via": "discogs"
+ },
+ "Lenny Kravitz": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "alternative rock",
+   "hard rock",
+   "funk",
+   "funk rock",
+   "soul",
+   "psychedelic rock",
+   "soft rock",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Leonard Cohen": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "folk",
+   "singer-songwriter",
+   "blues rock",
+   "poetry",
+   "contemporary folk"
+  ],
+  "via": "diccionario"
+ },
+ "Lloyd Cole and the Commotions": {
+  "country": "GB",
+  "genres": [
+   "new wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "Loquillo": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "rock and roll",
+   "rockabilly",
+   "folk rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los Bengala": {
+  "country": "ES",
+  "genres": [],
+  "via": "nada"
+ },
+ "Los Enemigos": {
+  "country": "ES",
+  "genres": [
+   "rock and roll",
+   "blues rock",
+   "hard rock",
+   "garage rock",
+   "pop rock",
+   "classic rock"
+  ],
+  "via": "diccionario"
+ },
+ "Los Fresones Rebeldes": {
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "alternative rock",
+   "pop rock",
+   "indie rock"
+  ],
+  "via": "discogs"
+ },
+ "Los Planetas": {
+  "country": "ES",
+  "genres": [
+   "indie rock",
+   "shoegaze"
+  ],
+  "via": "diccionario"
+ },
+ "Los Ronaldos": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Lou Reed": {
+  "country": null,
+  "genres": [
+   "art rock",
+   "rock",
+   "glam rock",
+   "hard rock",
+   "noise",
+   "pop rock",
+   "singer-songwriter"
+  ],
+  "via": "diccionario"
+ },
+ "Madness": {
+  "country": null,
+  "genres": [
+   "rock",
+   "pop",
+   "punk",
+   "ska",
+   "new wave",
+   "psychedelic pop",
+   "pop rock",
+   "2 tone",
+   "sophisti-pop",
+   "zolo"
+  ],
+  "via": "diccionario"
+ },
+ "Madonna": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "art pop",
+   "electropop",
+   "contemporary r&b",
+   "synth-pop",
+   "electronic",
+   "electronica",
+   "jazz",
+   "pop rock",
+   "bubblegum pop",
+   "club",
+   "country pop",
+   "easy listening",
+   "edm",
+   "new wave",
+   "trip hop"
+  ],
+  "via": "diccionario"
+ },
+ "Manic Street Preachers": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk rock",
+   "grunge",
+   "post-punk",
+   "hard rock",
+   "britpop",
+   "glam rock",
+   "post-grunge",
+   "pop rock",
+   "glam punk",
+   "post-britpop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Marvin Gaye": {
+  "country": null,
+  "genres": [
+   "soul",
+   "funk",
+   "smooth soul",
+   "motown",
+   "pop soul",
+   "contemporary r&b",
+   "progressive soul"
+  ],
+  "via": "diccionario"
+ },
+ "Massive Attack": {
+  "country": null,
+  "genres": [
+   "trip hop",
+   "electronic",
+   "downtempo"
+  ],
+  "via": "diccionario"
+ },
+ "Mazzy Star": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "shoegaze",
+   "indie rock",
+   "americana",
+   "indie pop",
+   "neo-psychedelia",
+   "dream pop",
+   "alternative country",
+   "psychedelic folk",
+   "slowcore",
+   "paisley underground"
+  ],
+  "via": "musicbrainz"
+ },
+ "Mercromina": {
+  "country": "ES",
+  "genres": [
+   "indie rock",
+   "alternative rock",
+   "shoegaze",
+   "indie pop"
+  ],
+  "via": "discogs"
+ },
+ "Mercury Rev": {
+  "country": "US",
+  "genres": [
+   "space rock revival",
+   "post-rock",
+   "shoegaze",
+   "noise rock",
+   "indie rock",
+   "noise pop",
+   "indie pop",
+   "dream pop",
+   "chamber pop",
+   "experimental rock",
+   "neo-psychedelia"
+  ],
+  "via": "musicbrainz"
+ },
+ "Michael Jackson": {
+  "country": null,
+  "genres": [
+   "pop",
+   "dance-pop",
+   "disco",
+   "contemporary r&b",
+   "pop soul",
+   "soul",
+   "r&b",
+   "new jack swing",
+   "pop rock",
+   "boogie",
+   "dance",
+   "hip hop",
+   "pop rap"
+  ],
+  "via": "diccionario"
+ },
+ "Mogwai": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "electronic",
+   "post-rock",
+   "alternative rock",
+   "instrumental",
+   "shoegaze",
+   "dance",
+   "house",
+   "experimental",
+   "math rock",
+   "deep house",
+   "experimental rock",
+   "edm"
+  ],
+  "via": "musicbrainz"
+ },
+ "Morrissey": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "post-punk",
+   "indie rock",
+   "britpop",
+   "indie pop",
+   "jangle pop",
+   "art pop",
+   "post-britpop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Motorhead": {
+  "country": null,
+  "genres": [
+   "heavy metal",
+   "hard rock",
+   "punk rock"
+  ],
+  "via": "diccionario"
+ },
+ "Mudhoney": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "grunge",
+   "garage rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nacha Pop": {
+  "country": "ES",
+  "genres": [
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Neil Young": {
+  "country": null,
+  "genres": [
+   "rock",
+   "folk rock",
+   "country rock",
+   "folk",
+   "classic rock",
+   "hard rock",
+   "contemporary folk",
+   "country"
+  ],
+  "via": "diccionario"
+ },
+ "New Order": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "post-punk",
+   "electronic",
+   "alternative dance",
+   "synth-pop",
+   "alternative rock",
+   "dance",
+   "dance-rock",
+   "house",
+   "pop",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Nick Cave & The Bad Seeds": {
+  "country": "AU",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "singer-songwriter",
+   "post-punk",
+   "indie rock",
+   "art rock",
+   "gothic rock",
+   "punk blues"
+  ],
+  "via": "musicbrainz"
+ },
+ "Nine Inch Nails": {
+  "country": null,
+  "genres": [
+   "industrial rock",
+   "industrial",
+   "alternative rock",
+   "electronic",
+   "industrial metal",
+   "electro-industrial",
+   "rock",
+   "post-industrial",
+   "dance",
+   "dark ambient",
+   "electronic rock",
+   "hip hop",
+   "nu metal",
+   "pop",
+   "techno"
+  ],
+  "via": "diccionario"
+ },
+ "Nirvana": {
+  "country": null,
+  "genres": [
+   "grunge",
+   "alternative rock",
+   "rock",
+   "noise rock",
+   "acoustic rock",
+   "sludge metal",
+   "alternative metal",
+   "pigfuck",
+   "post-hardcore",
+   "punk",
+   "punk rock"
+  ],
+  "via": "diccionario"
+ },
+ "Nosotrash": {
+  "country": "ES",
+  "genres": [
+   "indie pop",
+   "indie rock"
+  ],
+  "via": "discogs"
+ },
+ "Oasis": {
+  "country": null,
+  "genres": [
+   "britpop",
+   "alternative rock",
+   "rock",
+   "neo-psychedelia",
+   "indie rock",
+   "psychedelic rock",
+   "acoustic rock",
+   "hard rock",
+   "madchester",
+   "noise pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "Orchestral Manoeuvres In The Dark": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "pop",
+   "post-punk",
+   "new wave",
+   "synth-pop",
+   "dance-pop",
+   "alternative dance",
+   "minimal synth",
+   "art pop"
+  ],
+  "via": "diccionario"
+ },
+ "PJ Harvey": {
+  "country": null,
+  "genres": [
+   "rock",
+   "alternative rock",
+   "singer-songwriter",
+   "indie rock",
+   "folk rock",
+   "art rock",
+   "chamber folk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Paralisis Permanente": {
+  "country": "ES",
+  "genres": [
+   "punk",
+   "new wave",
+   "alternative rock"
+  ],
+  "via": "diccionario"
+ },
+ "Pavement": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "indie rock",
+   "lo-fi",
+   "slacker rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Pearl Jam": {
+  "country": null,
+  "genres": [
+   "grunge",
+   "alternative rock",
+   "rock",
+   "hard rock",
+   "classic rock",
+   "experimental rock",
+   "funk rock",
+   "indie rock",
+   "pop rock",
+   "acoustic rock",
+   "art rock",
+   "post-grunge"
+  ],
+  "via": "diccionario"
+ },
+ "Pet Shop Boys": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "pop",
+   "electronic",
+   "electropop",
+   "house",
+   "dance-pop",
+   "disco",
+   "art pop",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Peter Murphy": {
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "post-punk",
+   "dub",
+   "gothic rock",
+   "art pop",
+   "avant-garde pop",
+   "turkish classical"
+  ],
+  "via": "musicbrainz"
+ },
+ "Phil Collins": {
+  "country": null,
+  "genres": [
+   "soft rock",
+   "pop",
+   "pop rock",
+   "rock",
+   "aor",
+   "art pop",
+   "easy listening",
+   "pop soul",
+   "progressive pop",
+   "progressive rock",
+   "sophisti-pop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Pixies": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk rock",
+   "indie rock",
+   "noise pop",
+   "surf rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Placebo": {
+  "country": null,
+  "genres": [
+   "rock",
+   "alternative rock",
+   "indie rock",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Portishead": {
+  "country": null,
+  "genres": [
+   "trip hop",
+   "downtempo"
+  ],
+  "via": "diccionario"
+ },
+ "Prefab Sprout": {
+  "country": "GB",
+  "genres": [
+   "pop",
+   "punk",
+   "new wave",
+   "synth-pop",
+   "jangle pop",
+   "pop rock",
+   "alternative pop",
+   "sophisti-pop",
+   "art pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Primal Scream": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "electronic",
+   "alternative rock",
+   "indie rock",
+   "blues rock",
+   "jangle pop",
+   "neo-psychedelia",
+   "alternative dance",
+   "c86"
+  ],
+  "via": "musicbrainz"
+ },
+ "Prince": {
+  "country": null,
+  "genres": [
+   "funk",
+   "pop",
+   "contemporary r&b",
+   "rock",
+   "funk rock",
+   "neo-psychedelia",
+   "r&b",
+   "soul",
+   "synth funk",
+   "dance-pop",
+   "minneapolis sound",
+   "pop rock",
+   "psychedelic soul",
+   "afro house",
+   "club",
+   "dance",
+   "dance-rock",
+   "deep house",
+   "disco",
+   "future bass",
+   "house",
+   "jazz",
+   "organic house",
+   "pop soul",
+   "psychedelic pop",
+   "trap"
+  ],
+  "via": "diccionario"
+ },
+ "Public Enemy": {
+  "country": null,
+  "genres": [
+   "east coast hip hop",
+   "hip hop",
+   "conscious hip hop",
+   "hardcore hip hop",
+   "political hip hop"
+  ],
+  "via": "diccionario"
+ },
+ "Pulp": {
+  "country": null,
+  "genres": [
+   "britpop",
+   "alternative rock",
+   "art rock",
+   "indie pop",
+   "glam rock",
+   "post-punk",
+   "chamber pop",
+   "rock",
+   "alternative pop",
+   "indie rock",
+   "madchester",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Queen": {
+  "country": null,
+  "genres": [
+   "rock",
+   "glam rock",
+   "hard rock",
+   "art rock",
+   "pop rock",
+   "classic rock",
+   "symphonic rock",
+   "progressive rock",
+   "baroque pop",
+   "disco"
+  ],
+  "via": "diccionario"
+ },
+ "R.E.M.": {
+  "country": null,
+  "genres": [
+   "acoustic rock",
+   "alternative country",
+   "alternative rock",
+   "chamber pop",
+   "electronic rock",
+   "folk rock",
+   "glam rock",
+   "grunge",
+   "indie rock",
+   "jangle pop",
+   "neo-psychedelia",
+   "pop rock",
+   "power pop",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Radio Futura": {
+  "country": "ES",
+  "genres": [
+   "rock",
+   "pop rock",
+   "new wave",
+   "alternative rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Radiohead": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "art rock",
+   "rock",
+   "experimental rock",
+   "electronic",
+   "indie rock",
+   "art pop",
+   "electronica",
+   "experimental",
+   "post-britpop",
+   "ambient pop",
+   "britpop",
+   "chamber pop",
+   "crossover prog",
+   "electronic rock",
+   "idm",
+   "indietronica",
+   "post-grunge"
+  ],
+  "via": "diccionario"
+ },
+ "Rage Against The Machine": {
+  "country": null,
+  "genres": [
+   "alternative metal",
+   "rap metal",
+   "funk metal",
+   "rap rock",
+   "alternative rock",
+   "nu metal",
+   "heavy metal",
+   "metal"
+  ],
+  "via": "diccionario"
+ },
+ "Ramones": {
+  "country": null,
+  "genres": [
+   "punk rock",
+   "pop punk",
+   "punk",
+   "power pop"
+  ],
+  "via": "diccionario"
+ },
+ "Red Hot Chili Peppers": {
+  "country": null,
+  "genres": [
+   "funk rock",
+   "alternative rock",
+   "rock",
+   "rap rock",
+   "pop rock",
+   "funk metal",
+   "funk"
+  ],
+  "via": "diccionario"
+ },
+ "Roxy Music": {
+  "country": null,
+  "genres": [
+   "glam rock",
+   "art rock"
+  ],
+  "via": "diccionario"
+ },
+ "Sigur Ros": {
+  "country": null,
+  "genres": [
+   "post-rock",
+   "ambient",
+   "dream pop"
+  ],
+  "via": "diccionario"
+ },
+ "Silvania": {
+  "country": "ES",
+  "genres": [
+   "ambient",
+   "experimental",
+   "idm",
+   "techno",
+   "shoegaze",
+   "indie rock",
+   "neofolk",
+   "house",
+   "synth-pop",
+   "alternative rock",
+   "dance-pop",
+   "indie pop",
+   "new wave"
+  ],
+  "via": "discogs"
+ },
+ "Simple Minds": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "rock",
+   "electronic",
+   "post-punk",
+   "art rock",
+   "pop rock",
+   "glam rock",
+   "pop",
+   "soft rock",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Siniestro Total": {
+  "country": "ES",
+  "genres": [
+   "punk",
+   "rock",
+   "new wave",
+   "pop rock",
+   "alternative rock"
+  ],
+  "via": "diccionario"
+ },
+ "Siouxsie and the Banshees": {
+  "country": null,
+  "genres": [
+   "post-punk",
+   "gothic rock",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Sisters of Mercy": {
+  "country": null,
+  "genres": [],
+  "via": "nada"
+ },
+ "Slowdive": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "post-rock",
+   "shoegaze",
+   "noise pop",
+   "dream pop",
+   "ambient pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Soft Cell": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "electronic",
+   "minimal synth",
+   "new wave",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "Sonic Youth": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk rock",
+   "grunge",
+   "post-punk",
+   "indie rock",
+   "art rock",
+   "experimental rock",
+   "no wave",
+   "noise rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Soundgarden": {
+  "country": null,
+  "genres": [
+   "grunge",
+   "alternative rock",
+   "alternative metal",
+   "hard rock",
+   "psychedelic rock",
+   "sludge metal"
+  ],
+  "via": "diccionario"
+ },
+ "Spiritualized": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "shoegaze",
+   "art rock",
+   "noise pop",
+   "space rock",
+   "symphonic rock",
+   "neo-psychedelia",
+   "dream pop",
+   "chamber pop",
+   "space rock revival"
+  ],
+  "via": "musicbrainz"
+ },
+ "Sr. Chinarro": {
+  "country": "ES",
+  "genres": [
+   "indie pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Suede": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "glam rock",
+   "art rock",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "Supergrass": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "indie rock",
+   "power pop",
+   "britpop",
+   "glam rock",
+   "pop punk",
+   "neo-psychedelia",
+   "post-britpop"
+  ],
+  "via": "musicbrainz"
+ },
+ "Surfin' Bichos": {
+  "country": "ES",
+  "genres": [
+   "indie rock",
+   "alternative rock"
+  ],
+  "via": "discogs"
+ },
+ "Talk Talk": {
+  "country": null,
+  "genres": [
+   "post-rock",
+   "new wave",
+   "synth-pop",
+   "art rock",
+   "new romantic",
+   "chamber pop",
+   "modern classical",
+   "art pop"
+  ],
+  "via": "diccionario"
+ },
+ "Talking Heads": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "post-punk",
+   "art punk",
+   "art pop",
+   "funk rock",
+   "pop rock",
+   "rock",
+   "art rock"
+  ],
+  "via": "diccionario"
+ },
+ "Tears For Fears": {
+  "country": null,
+  "genres": [
+   "art pop",
+   "new wave",
+   "pop",
+   "pop rock",
+   "psychedelic pop",
+   "sophisti-pop",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Teenage Fanclub": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "indie rock",
+   "power pop",
+   "jangle pop",
+   "folk pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The B-52's": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "synth-pop",
+   "alternative rock",
+   "post-punk",
+   "pop rock"
+  ],
+  "via": "discogs"
+ },
+ "The Blue Nile": {
+  "country": "GB",
+  "genres": [
+   "new wave",
+   "art pop",
+   "sophisti-pop",
+   "dream pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Breeders": {
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "noise pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Chameleons": {
+  "country": "GB",
+  "genres": [
+   "dream pop",
+   "gothic rock",
+   "post-punk",
+   "new wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Charlatans": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "madchester",
+   "indie rock",
+   "britpop",
+   "indie pop",
+   "neo-psychedelia",
+   "roots rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Chemical Brothers": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "big beat",
+   "breakbeat",
+   "neo-psychedelia",
+   "progressive house",
+   "techno"
+  ],
+  "via": "diccionario"
+ },
+ "The Church": {
+  "country": "AU",
+  "genres": [
+   "alternative rock",
+   "post-punk",
+   "art rock",
+   "jangle pop",
+   "neo-psychedelia",
+   "dream pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Clash": {
+  "country": null,
+  "genres": [
+   "punk rock",
+   "dance-punk",
+   "new wave",
+   "post-punk",
+   "punk",
+   "reggae rock",
+   "funk",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Cranberries": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "rock",
+   "pop rock",
+   "dream pop",
+   "jangle pop",
+   "acoustic rock",
+   "celtic rock",
+   "chamber pop",
+   "ethereal wave",
+   "soft rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Cult": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "post-punk",
+   "hard rock",
+   "gothic rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Cure": {
+  "country": null,
+  "genres": [
+   "gothic rock",
+   "new wave",
+   "post-punk",
+   "alternative rock",
+   "rock",
+   "punk",
+   "synth-pop",
+   "dance-rock",
+   "gothic",
+   "indie rock",
+   "jangle pop",
+   "pop",
+   "pop rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Flaming Lips": {
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "indie rock",
+   "psychedelic rock",
+   "psychedelic pop",
+   "experimental rock",
+   "noise pop",
+   "neo-psychedelia",
+   "noise rock",
+   "rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Go-Betweens": {
+  "country": "US",
+  "genres": [
+   "indie rock",
+   "indie pop",
+   "post-punk",
+   "alternative rock",
+   "experimental",
+   "new wave"
+  ],
+  "via": "discogs"
+ },
+ "The Housemartins": {
+  "country": null,
+  "genres": [
+   "indie pop",
+   "jangle pop"
+  ],
+  "via": "diccionario"
+ },
+ "The Human League": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave",
+   "electronic",
+   "minimal synth",
+   "new romantic",
+   "pop"
+  ],
+  "via": "diccionario"
+ },
+ "The Jam": {
+  "country": null,
+  "genres": [
+   "punk rock",
+   "new wave",
+   "mod revival"
+  ],
+  "via": "diccionario"
+ },
+ "The Jayhawks": {
+  "country": "US",
+  "genres": [
+   "americana"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Jesus and Mary Chain": {
+  "country": "GB",
+  "genres": [
+   "alternative rock",
+   "shoegaze",
+   "post-punk",
+   "indie rock",
+   "noise pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The La's": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "indie rock",
+   "britpop",
+   "indie pop",
+   "jangle pop",
+   "merseybeat",
+   "skiffle"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Lemonheads": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk rock",
+   "indie rock",
+   "power pop",
+   "jangle pop",
+   "pop punk",
+   "pigfuck"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Police": {
+  "country": null,
+  "genres": [
+   "new wave",
+   "rock",
+   "pop rock",
+   "post-punk",
+   "reggae rock",
+   "indie rock",
+   "punk"
+  ],
+  "via": "diccionario"
+ },
+ "The Prodigy": {
+  "country": null,
+  "genres": [
+   "big beat",
+   "electronic",
+   "breakbeat",
+   "breakbeat hardcore",
+   "dance",
+   "rave",
+   "hardcore breaks",
+   "techno",
+   "alternative dance",
+   "electronic rock",
+   "electronica"
+  ],
+  "via": "diccionario"
+ },
+ "The Psychedelic Furs": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "shoegaze",
+   "punk rock",
+   "post-punk",
+   "new wave",
+   "pop rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Smashing Pumpkins": {
+  "country": "US",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "progressive rock",
+   "shoegaze",
+   "grunge",
+   "synth-pop",
+   "symphonic rock",
+   "neo-psychedelia",
+   "dream pop"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Smiths": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "indie pop",
+   "indie rock",
+   "jangle pop",
+   "new wave",
+   "pop",
+   "post-punk",
+   "rock"
+  ],
+  "via": "diccionario"
+ },
+ "The Specials": {
+  "country": "GB",
+  "genres": [
+   "reggae",
+   "2 tone",
+   "rocksteady",
+   "ska",
+   "new wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Stone Roses": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "madchester",
+   "indie rock",
+   "jangle pop",
+   "neo-psychedelia",
+   "alternative dance"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Stranglers": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "alternative rock",
+   "punk",
+   "punk rock",
+   "post-punk",
+   "new wave",
+   "baroque pop",
+   "pop rock",
+   "art punk",
+   "pub rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "The Verve": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "britpop",
+   "neo-psychedelia",
+   "post-britpop",
+   "shoegaze",
+   "rock",
+   "space rock revival"
+  ],
+  "via": "diccionario"
+ },
+ "The Waterboys": {
+  "country": "GB",
+  "genres": [
+   "rock",
+   "folk rock",
+   "celtic",
+   "pop rock",
+   "celtic rock"
+  ],
+  "via": "musicbrainz"
+ },
+ "Tricky": {
+  "country": "GB",
+  "genres": [
+   "electronic",
+   "hip hop",
+   "trip hop"
+  ],
+  "via": "musicbrainz"
+ },
+ "U2": {
+  "country": null,
+  "genres": [
+   "alternative rock",
+   "rock",
+   "post-punk",
+   "pop rock",
+   "alternative dance",
+   "arena rock",
+   "electronic",
+   "alternative pop",
+   "dance-rock",
+   "indie rock",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Underworld": {
+  "country": null,
+  "genres": [
+   "electronic",
+   "progressive house",
+   "techno",
+   "alternative dance",
+   "ambient",
+   "electronica",
+   "new wave",
+   "downtempo",
+   "experimental",
+   "house",
+   "psychedelic",
+   "synth-pop"
+  ],
+  "via": "diccionario"
+ },
+ "Violent Femmes": {
+  "country": "US",
+  "genres": [
+   "alternative rock",
+   "post-punk",
+   "folk rock",
+   "acoustic rock",
+   "cowpunk",
+   "folk punk"
+  ],
+  "via": "musicbrainz"
+ },
+ "Visage": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new romantic",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Weezer": {
+  "country": null,
+  "genres": [
+   "power pop",
+   "alternative rock"
+  ],
+  "via": "diccionario"
+ },
+ "Yazoo": {
+  "country": null,
+  "genres": [
+   "synth-pop",
+   "new wave"
+  ],
+  "via": "diccionario"
+ },
+ "Zombies": {
+  "country": "ES",
+  "genres": [
+   "new wave"
+  ],
+  "via": "musicbrainz"
+ },
+ "my bloody valentine": {
+  "country": "IE",
+  "genres": [
+   "rock",
+   "shoegaze",
+   "post-punk",
+   "indie rock",
+   "noise pop",
+   "neo-psychedelia",
+   "dream pop",
+   "twee pop",
+   "noise rock",
+   "c86",
+   "slacker rock"
+  ],
+  "via": "musicbrainz"
+ }
+}
