@@ -394,6 +394,7 @@ class PlayerManager @Inject constructor(
     // S034 -- semilla bundleada de miMooutCast para TODOS los
     // géneros (no solo clásica), ver su kdoc completo.
     private val mimooutcastSeedRepository: com.miguelaetxio.mimoo.data.remote.MimooutcastSeedRepository,
+    private val mimooutcastDecadeSeedRepository: com.miguelaetxio.mimoo.data.remote.MimooutcastDecadeSeedRepository,
     private val mimooutcastBrokenLinksLogger: MimooutcastBrokenLinksLogger,
     // S013/S014 -- fuente de "disco" del cupo 80/10/10 (10%, ver
     // ANNEX_H08.md sección "S013" punto 8): lista los artistas ya
@@ -1620,6 +1621,22 @@ class PlayerManager @Inject constructor(
     private var decadeHitsOrder: List<com.miguelaetxio.mimoo.data.remote.KnownHitsRepository.KnownHit> =
         emptyList()
     private var decadeHitsIndex = 0
+
+    /**
+     * S037 -- semilla de década VALIDADA (con `youtubeId` real, ver
+     * `MimooutcastDecadeSeedRepository`). Cuando existe para la década
+     * elegida, tiene PRIORIDAD sobre `decadeHitsOrder` (el diccionario
+     * sin validar, arriba) -- arranca al instante igual que la semilla
+     * de género, sin necesidad de buscar/verificar nada en vivo. Lo que
+     * NO esté todavía validado (la semilla se construye
+     * incrementalmente vía `tools/validate_decade_hits.py`) cae, sin
+     * código extra, en `decadeHitsOrder` primero y en la búsqueda en
+     * vivo después -- exactamente la misma cascada de tres niveles que
+     * ya usan clásica y género.
+     */
+    private var decadeSeedOrder: List<com.miguelaetxio.mimoo.data.remote.MimooutcastDecadeSeedRepository.SeedTrack> =
+        emptyList()
+    private var decadeSeedIndex = 0
 
     /**
      * H15 (miMooutCast), S032 -- objetivo de cola para ESTA sesión.
@@ -4089,9 +4106,16 @@ class PlayerManager @Inject constructor(
         if (anchorIsDecadeOnly && !requireKnownInSpain) {
             decadeHitsOrder = knownHitsRepository.allHitsForDecade(anchor.decadeBegin!!).shuffled()
             decadeHitsIndex = 0
+            // S037 -- semilla validada, ver su kdoc real. Se baraja
+            // igual que el resto, y se agota ANTES que decadeHitsOrder
+            // (arriba) en fetchSimpleManualCandidate().
+            decadeSeedOrder = mimooutcastDecadeSeedRepository.tracksForDecade(anchor.decadeBegin).shuffled()
+            decadeSeedIndex = 0
         } else {
             decadeHitsOrder = emptyList()
             decadeHitsIndex = 0
+            decadeSeedOrder = emptyList()
+            decadeSeedIndex = 0
         }
         // H15 (miMooutCast), S032 -- objetivo de cola. Para toda
         // sesión de miMooutCast en general ya no se usa (ver
@@ -4485,6 +4509,17 @@ class PlayerManager @Inject constructor(
                 knownTitle = next.title
                 knownYoutubeId = next.youtubeId
                 candidateSeedGenre = mimooutcastSeedGenre
+            } else if (decadeSeedIndex < decadeSeedOrder.size) {
+                // S037 -- semilla de década VALIDADA (con youtubeId
+                // real), ver su kdoc completo junto a
+                // `decadeSeedOrder`. Arranca al instante, igual que la
+                // semilla de género -- solo hay que resolver la URL de
+                // streaming, nunca buscar ni verificar nada en vivo.
+                val next = decadeSeedOrder[decadeSeedIndex]
+                decadeSeedIndex++
+                artistName = next.artist
+                knownTitle = next.title
+                knownYoutubeId = next.youtubeId
             } else if (decadeHitsIndex < decadeHitsOrder.size) {
                 // S037 -- mismo mecanismo que la rama de la semilla de
                 // género de arriba: fuente local pre-cargada y
