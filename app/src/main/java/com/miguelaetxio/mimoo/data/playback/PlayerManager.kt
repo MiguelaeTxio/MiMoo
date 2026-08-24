@@ -439,38 +439,7 @@ class PlayerManager @Inject constructor(
      * ExoPlayer, so nothing else in the app needs to change: it's
      * still PlayerManager.play()/playQueue() exactly as before.
      */
-    val player: ExoPlayer = ExoPlayer.Builder(appContext)
-        .setAudioAttributes(
-            // Petición explícita de Miguel Ángel (2026-08-24): "el
-            // sonido de las demás aplicaciones, necesito dejarlas a
-            // cero... que no se oigan nada". Antes esto dependía de
-            // los valores implícitos por defecto de ExoPlayer (nunca
-            // se llamaba a setAudioAttributes()) -- se hace explícito
-            // para que no quede ninguna duda: USAGE_MEDIA +
-            // CONTENT_TYPE_MUSIC piden foco de audio PERMANENTE
-            // (AUDIOFOCUS_GAIN), el más fuerte que existe -- empuja a
-            // cualquier otra app "bien comportada" (que de verdad
-            // escuche los cambios de foco) a pararse del todo, no solo
-            // a bajar el volumen ("ducking", que es lo que pasaría con
-            // CONTENT_TYPE_SPEECH o un foco transitorio).
-            //
-            // Límite real de Android, no de este código: el sistema
-            // operativo NO deja que una app silencie a la fuerza el
-            // volumen de otra -- el foco de audio es un sistema
-            // cooperativo, cada app decide por su cuenta qué hacer al
-            // perderlo. Una app que no pida/escuche el foco de audio
-            // en absoluto (habitual en juegos con efectos de sonido
-            // sueltos, o sonidos de sistema como notificaciones/tonos
-            // en streams de audio distintos al de música) seguirá
-            // sonando pase lo que pase -- esto no tiene arreglo desde
-            // el lado de MiMoo, es una limitación de la plataforma.
-            androidx.media3.common.AudioAttributes.Builder()
-                .setUsage(androidx.media3.common.C.USAGE_MEDIA)
-                .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
-                .build(),
-            /* handleAudioFocus = */ true,
-        )
-        .build()
+    val player: ExoPlayer = ExoPlayer.Builder(appContext).build()
 
     /**
      * Nivelación de audio en tiempo real (Opción A cerrada con Miguel
@@ -588,26 +557,13 @@ class PlayerManager @Inject constructor(
                 // resumes while the mode indicates an active call, it's
                 // paused again immediately, without even propagating
                 // isPlaying=true to the rest of the app.
-                //
-                // CORRECCIÓN REAL (2026-08-24, mismo día): Miguel Ángel
-                // reportó "miMooutCast inservible" justo tras este
-                // cambio -- causa muy probable: `MODE_IN_COMMUNICATION`
-                // no es exclusivo de llamadas reales, se queda activo
-                // con auriculares Bluetooth conectados o con
-                // aplicaciones de VoIP en segundo plano, sin que haya
-                // ninguna llamada en curso -- esta guarda podía estar
-                // pausando la reproducción constantemente sin motivo
-                // real. Se restringe a `MODE_IN_CALL` (llamada
-                // telefónica tradicional), mucho más fiable y sin ese
-                // riesgo de falso positivo. Se añade también el log que
-                // faltaba -- sin él, este bloqueo habría sido invisible
-                // en cualquier debug real.
                 if (isPlaying) {
                     val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
                         as? android.media.AudioManager
                     val mode = audioManager?.mode
-                    if (mode == android.media.AudioManager.MODE_IN_CALL) {
-                        sharedResolveLog("onIsPlayingChanged() -- reanudó con AudioManager.mode=MODE_IN_CALL, se vuelve a pausar (red de seguridad de llamadas)")
+                    if (mode == android.media.AudioManager.MODE_IN_CALL ||
+                        mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+                    ) {
                         player.pause()
                         return
                     }
