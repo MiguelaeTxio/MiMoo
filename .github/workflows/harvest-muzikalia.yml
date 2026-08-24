@@ -1,0 +1,81 @@
+name: Fusionar listas de MUZIKALIA (100 mejores por decada)
+
+# Disparo MANUAL. Tercera fuente (gemela e independiente de Los 40 y
+# Spotify100): "Las 100 mejores canciones de la decada de los X" de
+# MUZIKALIA (revista musical espanola real, seleccion editorial de su
+# redaccion por su 20 aniversario -- 80s y 90s confirmadas y ya
+# extraidas a mano en tools/chart_muzikalia_raw.json). Sin fase de
+# cosecha automatica (solo 2 decadas, 200 canciones, extraidas
+# directamente de las playlists reales via web_fetch en la propia
+# sesion) -- solo enriquecimiento + fusion, reutilizando el mismo
+# pipeline sin tocar su codigo.
+on:
+  workflow_dispatch:
+
+jobs:
+  enrich-and-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      CHART_RAW_PATH: tools/chart_muzikalia_raw.json
+      CHART_ENRICHED_PATH: tools/chart_muzikalia_enriched.json
+      CHART_REJECTED_PATH: tools/chart_muzikalia_rejected.json
+      CHART_INTL_REJECTED_PATH: tools/chart_muzikalia_intl_rejected.json
+      DISCOGS_TOKEN: ${{ secrets.DISCOGS_TOKEN }}
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fase 2 -- Enriquecer con pais y genero
+        run: python3 tools/enrich_chart_artists.py
+
+      - name: Fase 3 -- Fusionar bloque espanol
+        run: python3 tools/merge_charts_into_dictionary.py
+
+      - name: Fase 3b -- Fusionar bloque internacional
+        run: python3 tools/merge_intl_charts_into_dictionary.py
+
+      - name: Salvar todo como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-muzikalia
+          path: |
+            tools/chart_muzikalia_enriched.json
+            tools/chart_muzikalia_rejected.json
+            tools/chart_muzikalia_intl_rejected.json
+            app/src/main/assets/known_hit_artists.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Commitear si ha cambiado algo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tools/chart_muzikalia_enriched.json \
+                  tools/chart_muzikalia_rejected.json \
+                  tools/chart_muzikalia_intl_rejected.json \
+                  app/src/main/assets/known_hit_artists.json
+          if git diff --cached --quiet; then
+            echo "Nada nuevo que commitear."
+            exit 0
+          fi
+          git commit -F - <<'EOF'
+          data: fusión de "Las 100 mejores canciones de la década" (MUZIKALIA, 80s+90s) en known_hit_artists.json
+
+          200 canciones (100 por década), selección editorial real de la
+          redacción de MUZIKALIA por su 20 aniversario -- extraídas a mano
+          de las dos playlists reales de Spotify en la propia sesión (sin
+          cosecha automatizada, solo 2 décadas). Mismo pipeline de
+          enriquecimiento + fusión reutilizado sin tocar código.
+          EOF
+          git pull --rebase origin main
+          git push
