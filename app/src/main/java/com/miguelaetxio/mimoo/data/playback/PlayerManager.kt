@@ -4350,6 +4350,26 @@ class PlayerManager @Inject constructor(
         return ValidatedGenreTrack(item.artist ?: artistName, item.title, item.youtubeId ?: return null)
     }
 
+    /**
+     * S037 -- validador de UN candidato YA CONOCIDO del diccionario de
+     * éxitos (`KnownHitsRepository`), para el generador en dispositivo
+     * de la semilla de década. Más simple que
+     * `findValidatedTrackForGenre()`: aquí ya se tiene artista+canción
+     * exactos del diccionario, no hace falta descubrir nada primero --
+     * se llama directamente a `resolveYoutubeCandidate()` con
+     * `songTitle` informado, que además salta la comprobación de
+     * década (dato ya curado, ver el kdoc real de `expectedDecadeBegin`
+     * ahí mismo).
+     */
+    suspend fun findValidatedTrackForDecadeHit(artist: String, song: String): ValidatedGenreTrack? {
+        val item = resolveYoutubeCandidate(
+            anchorArtistName = "generador-bd-decada",
+            artist = artist,
+            songTitle = song,
+        ) ?: return null
+        return ValidatedGenreTrack(item.artist ?: artist, item.title, item.youtubeId ?: return null)
+    }
+
     private suspend fun fetchSimpleManualCandidate(anchor: RadioAnchor, anchorLabel: String): QueueItem? {
         refreshDislikedSnapshots()
         val baseWindowLower = miMooutCastRecentArtists.map { it.lowercase() }.toSet() + dislikedArtistNamesLower

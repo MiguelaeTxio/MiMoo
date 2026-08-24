@@ -94,6 +94,10 @@ class SettingsViewModel @Inject constructor(
     // (sin las rutinas ni las cookies reales del teléfono): montarlo
     // en la propia app, mismo patrón que `anchorDictionaryBuilder`.
     private val mimooutcastDatabaseBuilder: com.miguelaetxio.mimoo.data.playback.MimooutcastDatabaseBuilder,
+    // S037 -- gemelo exacto de mimooutcastDatabaseBuilder, para la
+    // semilla de década (mismo motivo real: GitHub Actions bloqueado
+    // por YouTube, "Sign in to confirm you're not a bot").
+    private val mimooutcastDecadeDatabaseBuilder: com.miguelaetxio.mimoo.data.playback.MimooutcastDecadeDatabaseBuilder,
     // S034 -- registro de enlaces rotos de la semilla bundleada, ver su kdoc completo.
     private val mimooutcastBrokenLinksLogger: com.miguelaetxio.mimoo.data.playback.MimooutcastBrokenLinksLogger,
 ) : ViewModel() {
@@ -255,6 +259,31 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun mimooutcastDatabaseFilePath(): String = mimooutcastDatabaseBuilder.outputFilePath()
+
+    // -----------------------------------------------------------------
+    // S037 -- Generar semilla de década de miMooutCast (diccionario de
+    // éxitos completo, enlaces ya validados) -- gemelo exacto del
+    // bloque de género de arriba.
+    // -----------------------------------------------------------------
+
+    val mimooutcastDecadeBuildProgress: StateFlow<com.miguelaetxio.mimoo.data.playback.MimooutcastDecadeDatabaseBuilder.BuildProgress> =
+        mimooutcastDecadeDatabaseBuilder.progress
+
+    private var mimooutcastDecadeBuildJob: kotlinx.coroutines.Job? = null
+
+    fun startBuildingMimooutcastDecadeDatabase() {
+        if (mimooutcastDecadeBuildJob?.isActive == true) return
+        mimooutcastDecadeBuildJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            mimooutcastDecadeDatabaseBuilder.build()
+        }
+    }
+
+    /** Mismo mecanismo de parada real que stopBuildingMimooutcastDatabase() -- ver su kdoc. */
+    fun stopBuildingMimooutcastDecadeDatabase() {
+        mimooutcastDecadeDatabaseBuilder.cancel()
+    }
+
+    fun mimooutcastDecadeDatabaseFilePath(): String = mimooutcastDecadeDatabaseBuilder.outputFilePath()
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
@@ -540,6 +569,15 @@ class SettingsViewModel @Inject constructor(
      */
     fun onShareMimooutcastDatabaseClicked() {
         _generatedShareFileUri.value = mimooutcastDatabaseBuilder.shareableUri()
+    }
+
+    /**
+     * S037 -- comparte `mimooutcast_decade_database.json` (el
+     * resultado de "Generar semilla de década de miMooutCast") --
+     * mismo mecanismo exacto que `onShareMimooutcastDatabaseClicked()`.
+     */
+    fun onShareMimooutcastDecadeDatabaseClicked() {
+        _generatedShareFileUri.value = mimooutcastDecadeDatabaseBuilder.shareableUri()
     }
 
     /**

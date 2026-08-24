@@ -85,6 +85,7 @@ fun SettingsScreen(
     val dictionaryState by viewModel.dictionaryState.collectAsState()
     androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshDictionaryCounts() }
     val mimooutcastBuildProgress by viewModel.mimooutcastBuildProgress.collectAsState()
+    val mimooutcastDecadeBuildProgress by viewModel.mimooutcastDecadeBuildProgress.collectAsState()
     val pendingConsent by viewModel.pendingConsent.collectAsState()
     val generatedShareFileUri by viewModel.generatedShareFileUri.collectAsState()
     val context = LocalContext.current
@@ -564,6 +565,104 @@ fun SettingsScreen(
                             Icon(Icons.Filled.CloudDownload, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text("Generar base de datos de miMooutCast")
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    "Generar semilla de década de miMooutCast",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Recorre el diccionario de éxitos entero (8 décadas, España + " +
+                        "internacional) y valida cada tema contra YouTube -- con esto, " +
+                        "elegir una década sola en miMooutCast arranca al instante, " +
+                        "igual que ya lo hace un género. Tarda un buen rato (horas) y " +
+                        "se puede parar: al volver a pulsar sigue donde lo dejó. Cuando " +
+                        "termines, pulsa \"Compartir\" y envíame el archivo.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+
+                val mdbp = mimooutcastDecadeBuildProgress
+                when {
+                    mdbp.isRunning -> {
+                        LinearProgressIndicator(
+                            progress = {
+                                if (mdbp.totalDecades > 0) mdbp.decadesCompleted.toFloat() / mdbp.totalDecades else 0f
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "${mdbp.decadesCompleted} de ${mdbp.totalDecades} décadas completadas -- " +
+                                "${mdbp.totalEntriesFound} temas validados en total",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Text(
+                            "Mirando ahora: años ${mdbp.currentDecadeLabel} (posición " +
+                                "${mdbp.currentDecadeIndex + 1} del recorrido) -- " +
+                                "${mdbp.entriesFoundThisDecade} temas de esta década",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (mdbp.lastError != null) {
+                            Text(
+                                "Último fallo (sigue intentando): ${mdbp.lastError}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(
+                            onClick = viewModel::stopBuildingMimooutcastDecadeDatabase,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Text("Parar")
+                        }
+                    }
+
+                    mdbp.finished || mdbp.totalEntriesFound > 0 -> {
+                        Text(
+                            if (mdbp.finished) {
+                                "Terminado. ${mdbp.totalEntriesFound} temas guardados en total."
+                            } else {
+                                "Parado. ${mdbp.totalEntriesFound} temas guardados antes de parar; " +
+                                    "al volver a pulsar sigue donde lo dejó."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row {
+                            TextButton(
+                                onClick = viewModel::startBuildingMimooutcastDecadeDatabase,
+                                modifier = Modifier.glassChip(),
+                            ) {
+                                Text(if (mdbp.finished) "Volver a generar" else "Continuar")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(
+                                onClick = viewModel::onShareMimooutcastDecadeDatabaseClicked,
+                                modifier = Modifier.glassChip(),
+                            ) {
+                                Icon(Icons.Filled.Share, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Compartir")
+                            }
+                        }
+                    }
+
+                    else -> {
+                        TextButton(
+                            onClick = viewModel::startBuildingMimooutcastDecadeDatabase,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Icon(Icons.Filled.CloudDownload, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Generar semilla de década de miMooutCast")
                         }
                     }
                 }
