@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -47,6 +48,12 @@ fun FavoritesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Petición explícita de Miguel Ángel (2026-08-24): filtro en
+    // Favoritos. Búsqueda de texto local (sin tocar el ViewModel/Room
+    // -- las listas ya están cargadas en memoria), compartida entre
+    // las cuatro pestañas, mismo patrón exacto que la búsqueda de
+    // géneros de miMooutCast (contains(query, ignoreCase = true)).
+    var query by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
@@ -104,6 +111,19 @@ fun FavoritesScreen(
                 )
             }
 
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                placeholder = { Text("Filtrar...") },
+                singleLine = true,
+                trailingIcon = if (query.isNotBlank()) {
+                    { IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Close, contentDescription = "Borrar filtro") } }
+                } else {
+                    null
+                },
+            )
+
             if (uiState.isGeneratingPopurri) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
@@ -137,10 +157,10 @@ fun FavoritesScreen(
             }
 
             when (uiState.tab) {
-                FavoritesTab.ARTISTS -> ArtistsTab(uiState, viewModel)
-                FavoritesTab.ALBUMS -> AlbumsTab(uiState, viewModel)
-                FavoritesTab.TRACKS -> TracksTab(uiState, viewModel)
-                FavoritesTab.PLAYLISTS -> PlaylistsTab(uiState, viewModel, onOpenPlaylist)
+                FavoritesTab.ARTISTS -> ArtistsTab(uiState, viewModel, query)
+                FavoritesTab.ALBUMS -> AlbumsTab(uiState, viewModel, query)
+                FavoritesTab.TRACKS -> TracksTab(uiState, viewModel, query)
+                FavoritesTab.PLAYLISTS -> PlaylistsTab(uiState, viewModel, onOpenPlaylist, query)
             }
         }
     }
@@ -210,10 +230,13 @@ private fun SelectionHeader(
 }
 
 @Composable
-private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) {
+private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel, query: String) {
     if (uiState.artists.isEmpty()) {
         EmptyTabMessage("Todavía no tienes artistas favoritos.")
         return
+    }
+    val filteredArtists = uiState.artists.filter {
+        query.isBlank() || it.artist.contains(query, ignoreCase = true)
     }
     Column(modifier = Modifier.fillMaxSize()) {
         SelectionHeader(
@@ -231,9 +254,13 @@ private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel)
             onToggleDirection = viewModel::toggleSortDirection,
         )
         val sortedArtists = sortedByCriterion(
-            uiState.artists, uiState.sortCriterion, uiState.sortDirection,
+            filteredArtists, uiState.sortCriterion, uiState.sortDirection,
             nameOf = { it.artist }, addedAtOf = { it.addedAt },
         )
+        if (sortedArtists.isEmpty()) {
+            EmptyTabMessage("Ningún artista favorito coincide con el filtro.")
+            return
+        }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(sortedArtists, key = { it.artist }) { favorite ->
                 FavoriteRow(
@@ -253,10 +280,13 @@ private fun ArtistsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel)
 }
 
 @Composable
-private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) {
+private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel, query: String) {
     if (uiState.albums.isEmpty()) {
         EmptyTabMessage("Todavía no tienes álbumes favoritos.")
         return
+    }
+    val filteredAlbums = uiState.albums.filter {
+        query.isBlank() || it.album.contains(query, ignoreCase = true) || it.artist.contains(query, ignoreCase = true)
     }
     Column(modifier = Modifier.fillMaxSize()) {
         SelectionHeader(
@@ -274,9 +304,13 @@ private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
             onToggleDirection = viewModel::toggleSortDirection,
         )
         val sortedAlbums = sortedByCriterion(
-            uiState.albums, uiState.sortCriterion, uiState.sortDirection,
+            filteredAlbums, uiState.sortCriterion, uiState.sortDirection,
             nameOf = { it.album }, addedAtOf = { it.addedAt },
         )
+        if (sortedAlbums.isEmpty()) {
+            EmptyTabMessage("Ningún álbum favorito coincide con el filtro.")
+            return
+        }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(sortedAlbums, key = { "${it.artist}|${it.album}" }) { favorite ->
                 val key = AlbumKey(favorite.artist, favorite.album)
@@ -297,10 +331,13 @@ private fun AlbumsTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
 }
 
 @Composable
-private fun TracksTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) {
+private fun TracksTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel, query: String) {
     if (uiState.tracks.isEmpty()) {
         EmptyTabMessage("Todavía no tienes sencillos favoritos.")
         return
+    }
+    val filteredTracks = uiState.tracks.filter {
+        query.isBlank() || it.title.contains(query, ignoreCase = true) || it.artist.contains(query, ignoreCase = true)
     }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -332,9 +369,13 @@ private fun TracksTab(uiState: FavoritesUiState, viewModel: FavoritesViewModel) 
             onToggleDirection = viewModel::toggleSortDirection,
         )
         val sortedTracks = sortedByCriterion(
-            uiState.tracks, uiState.sortCriterion, uiState.sortDirection,
+            filteredTracks, uiState.sortCriterion, uiState.sortDirection,
             nameOf = { it.title }, addedAtOf = { it.addedAt },
         )
+        if (sortedTracks.isEmpty()) {
+            EmptyTabMessage("Ningún sencillo favorito coincide con el filtro.")
+            return
+        }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(sortedTracks, key = { it.youtubeId }) { row: FavoriteTrackRow ->
                 Row(
@@ -375,6 +416,7 @@ private fun PlaylistsTab(
     uiState: FavoritesUiState,
     viewModel: FavoritesViewModel,
     onOpenPlaylist: (playlistId: Long) -> Unit,
+    query: String,
 ) {
     if (uiState.playlists.isEmpty()) {
         EmptyTabMessage(
@@ -382,6 +424,9 @@ private fun PlaylistsTab(
                 "Márcalas desde \"Listas\" en el menú.",
         )
         return
+    }
+    val filteredPlaylists = uiState.playlists.filter {
+        query.isBlank() || it.playlist.name.contains(query, ignoreCase = true)
     }
     Column(modifier = Modifier.fillMaxSize()) {
         SortControl(
@@ -391,9 +436,13 @@ private fun PlaylistsTab(
             onToggleDirection = viewModel::toggleSortDirection,
         )
         val sortedPlaylists = sortedByCriterion(
-            uiState.playlists, uiState.sortCriterion, uiState.sortDirection,
+            filteredPlaylists, uiState.sortCriterion, uiState.sortDirection,
             nameOf = { it.playlist.name }, addedAtOf = { it.addedAt },
         )
+        if (sortedPlaylists.isEmpty()) {
+            EmptyTabMessage("Ninguna lista favorita coincide con el filtro.")
+            return
+        }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(sortedPlaylists, key = { it.playlist.id }) { row: FavoritePlaylistRow ->
                 Row(
