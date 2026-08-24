@@ -588,13 +588,26 @@ class PlayerManager @Inject constructor(
                 // resumes while the mode indicates an active call, it's
                 // paused again immediately, without even propagating
                 // isPlaying=true to the rest of the app.
+                //
+                // CORRECCIÓN REAL (2026-08-24, mismo día): Miguel Ángel
+                // reportó "miMooutCast inservible" justo tras este
+                // cambio -- causa muy probable: `MODE_IN_COMMUNICATION`
+                // no es exclusivo de llamadas reales, se queda activo
+                // con auriculares Bluetooth conectados o con
+                // aplicaciones de VoIP en segundo plano, sin que haya
+                // ninguna llamada en curso -- esta guarda podía estar
+                // pausando la reproducción constantemente sin motivo
+                // real. Se restringe a `MODE_IN_CALL` (llamada
+                // telefónica tradicional), mucho más fiable y sin ese
+                // riesgo de falso positivo. Se añade también el log que
+                // faltaba -- sin él, este bloqueo habría sido invisible
+                // en cualquier debug real.
                 if (isPlaying) {
                     val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
                         as? android.media.AudioManager
                     val mode = audioManager?.mode
-                    if (mode == android.media.AudioManager.MODE_IN_CALL ||
-                        mode == android.media.AudioManager.MODE_IN_COMMUNICATION
-                    ) {
+                    if (mode == android.media.AudioManager.MODE_IN_CALL) {
+                        log("onIsPlayingChanged() -- reanudó con AudioManager.mode=MODE_IN_CALL, se vuelve a pausar (red de seguridad de llamadas)")
                         player.pause()
                         return
                     }
