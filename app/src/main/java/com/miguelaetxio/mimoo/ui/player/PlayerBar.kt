@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.remote.LyricsResult
+import com.miguelaetxio.mimoo.ui.playlist.AddToPlaylistDialog
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 import com.miguelaetxio.mimoo.util.LrcLine
 import com.miguelaetxio.mimoo.util.LrcParser
@@ -338,6 +340,12 @@ fun PlayerBar(
     val title = state.currentTitle ?: return
     val artSize = LocalConfiguration.current.screenWidthDp.dp / 2
     var isExpanded by remember { mutableStateOf(true) }
+    // Petición explícita de Miguel Ángel (2026-08-24): botón "+" para
+    // añadir el tema actual a una lista (nueva o existente) sin tener
+    // que ir a Biblioteca/Búsqueda -- reutiliza tal cual el mismo
+    // AddToPlaylistDialog que ya usan LibraryScreen y SearchScreen,
+    // con una sola pista (youtubeIds = listOf(...)).
+    var showAddToPlaylist by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         // H17 (S031, bloque 2) -- panel de karaoke, "justo encima del
@@ -461,6 +469,16 @@ fun PlayerBar(
                             } else {
                                 LocalContentColor.current
                             },
+                        )
+                    }
+                    // Petición explícita de Miguel Ángel (2026-08-24):
+                    // botón "+" para añadir el tema actual a una lista
+                    // (nueva o existente) directamente desde el
+                    // reproductor.
+                    GlassIconButton(onClick = { showAddToPlaylist = true }) {
+                        Icon(
+                            Icons.Filled.PlaylistAdd,
+                            contentDescription = "Añadir a lista",
                         )
                     }
                 }
@@ -755,6 +773,15 @@ fun PlayerBar(
             Spacer(Modifier.height(24.dp))
         }
     }
+    }
+
+    if (showAddToPlaylist) {
+        state.currentYoutubeId?.let { youtubeId ->
+            AddToPlaylistDialog(
+                youtubeIds = listOf(youtubeId),
+                onDismiss = { showAddToPlaylist = false },
+            )
+        }
     }
 }
 
