@@ -1,6 +1,7 @@
 package com.miguelaetxio.mimoo.data.playback
 
 import android.media.audiofx.DynamicsProcessing
+import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 
 /**
@@ -70,7 +71,25 @@ import android.os.Build
 class AudioNormalizer {
 
     private var dynamicsProcessing: DynamicsProcessing? = null
+    private var loudnessEnhancer: LoudnessEnhancer? = null
     private var attachedSessionId: Int = 0
+
+    /**
+     * Refuerzo de volumen (petición explícita de Miguel Ángel,
+     * 2026-08-23: "se puede dar más volumen a la aplicación"). +600mB
+     * = +6dB -- valor moderado y seguro (100mB = 1dB, ver
+     * `LoudnessEnhancer.setTargetGain()`), pensado para notarse sin
+     * distorsionar; el limitador de `DynamicsProcessing` de arriba
+     * sigue activo por encima de esto y absorbe los picos que este
+     * refuerzo pueda generar. Si Miguel Ángel pide más o menos,
+     * cambiar solo esta constante.
+     *
+     * `LoudnessEnhancer` exige API 19 -- muy por debajo del `minSdk
+     * 26` del proyecto, así que a diferencia de `DynamicsProcessing`
+     * (API 28) esto funciona en TODOS los dispositivos soportados por
+     * la app, sin excepción.
+     */
+    private val volumeBoostMillibels = 600
 
     /**
      * Engancha (o reengancha) el efecto a la sesión de audio actual del
@@ -82,15 +101,20 @@ class AudioNormalizer {
      * el player, ver release notes de Media3).
      */
     fun attach(audioSessionId: Int) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         if (audioSessionId == 0) return
-        if (dynamicsProcessing != null && attachedSessionId == audioSessionId) return
+        if (attachedSessionId == audioSessionId && (dynamicsProcessing != null || loudnessEnhancer != null)) return
         release()
+        attachedSessionId = audioSessionId
+        attachDynamicsProcessing(audioSessionId)
+        attachLoudnessEnhancer(audioSessionId)
+    }
+
+    private fun attachDynamicsProcessing(audioSessionId: Int) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         try {
             val effect = DynamicsProcessing(0, audioSessionId, null)
             effect.setEnabled(true)
             dynamicsProcessing = effect
-            attachedSessionId = audioSessionId
         } catch (e: Exception) {
             // Dispositivo que declara API 28+ pero sin soporte real del
             // efecto, o sesión no disponible todavía -- se descarta en
@@ -101,7 +125,20 @@ class AudioNormalizer {
         }
     }
 
-    /** Libera el efecto actual, si hay alguno -- se llama al reenganchar a una sesión distinta y en PlayerManager.release(). */
+    private fun attachLoudnessEnhancer(audioSessionId: Int) {
+        try {
+            val effect = LoudnessEnhancer(audioSessionId)
+            effect.setTargetGain(volumeBoostMillibels)
+            effect.setEnabled(true)
+            loudnessEnhancer = effect
+        } catch (e: Exception) {
+            // Mismo criterio tolerante -- sesión no disponible todavía u
+            // otro fallo del fabricante, se descarta en silencio.
+            loudnessEnhancer = null
+        }
+    }
+
+    /** Libera los efectos actuales, si hay alguno -- se llama al reenganchar a una sesión distinta y en PlayerManager.release(). */
     fun release() {
         dynamicsProcessing?.let {
             try {
@@ -112,5 +149,14 @@ class AudioNormalizer {
             }
         }
         dynamicsProcessing = null
+        loudnessEnhancer?.let {
+            try {
+                it.setEnabled(false)
+                it.release()
+            } catch (e: Exception) {
+                // Ya liberado o sesión inválida -- no hay nada más que hacer.
+            }
+        }
+        loudnessEnhancer = null
     }
 }

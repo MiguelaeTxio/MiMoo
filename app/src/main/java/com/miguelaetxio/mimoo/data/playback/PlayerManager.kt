@@ -515,6 +515,59 @@ class PlayerManager @Inject constructor(
         })
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
+                // Bug real reportado por Miguel Ángel (2026-08-24):
+                // "a veces reanuda antes [de que acabe la llamada] y lo
+                // hace durante la llamada". Causa real: no hay ningún
+                // código propio de foco de audio en todo el proyecto --
+                // se depende enteramente del manejo automático de
+                // ExoPlayer (`ExoPlayer.Builder(appContext).build()`,
+                // sin `setAudioAttributes()` explícito). Caso conocido
+                // de Android: al contestar una llamada, puede haber un
+                // hueco muy breve entre que el tono deja el foco y la
+                // llamada en sí lo reclama -- ExoPlayer, en modo
+                // automático, puede reanudar justo en ese hueco.
+                //
+                // Red de seguridad, sin pedir ningún permiso nuevo
+                // (nada de READ_PHONE_STATE): `AudioManager.getMode()`
+                // es de lectura libre, y devuelve MODE_IN_CALL /
+                // MODE_IN_COMMUNICATION mientras hay una llamada
+                // (normal o VoIP) en curso -- verificado contra la API
+                // real antes de usarla. Si ExoPlayer reanuda mientras
+                // el modo indica llamada activa, se vuelve a pausar al
+                // instante, sin propagar siquiera el isPlaying=true al
+                // resto de la app.
+                // ---
+                // Real bug reported by Miguel Ángel (2026-08-24):
+                // "sometimes resumes early [before the call ends] and
+                // does it during the call". Real cause: there's no
+                // custom audio focus code anywhere in the project --
+                // it relies entirely on ExoPlayer's automatic handling
+                // (`ExoPlayer.Builder(appContext).build()`, no explicit
+                // `setAudioAttributes()`). Known Android edge case:
+                // when answering a call, there can be a very brief gap
+                // between the ringtone releasing focus and the call
+                // itself claiming it -- ExoPlayer, in automatic mode,
+                // can resume right in that gap.
+                //
+                // Safety net, no new permission needed (no
+                // READ_PHONE_STATE): `AudioManager.getMode()` is freely
+                // readable, and returns MODE_IN_CALL / MODE_IN_COMMUNICATION
+                // while a call (regular or VoIP) is ongoing -- verified
+                // against the real API before using it. If ExoPlayer
+                // resumes while the mode indicates an active call, it's
+                // paused again immediately, without even propagating
+                // isPlaying=true to the rest of the app.
+                if (isPlaying) {
+                    val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
+                        as? android.media.AudioManager
+                    val mode = audioManager?.mode
+                    if (mode == android.media.AudioManager.MODE_IN_CALL ||
+                        mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+                    ) {
+                        player.pause()
+                        return
+                    }
+                }
                 _state.value = _state.value.copy(isPlaying = isPlaying)
                 // Arranca (o promociona a primer plano) el servicio de
                 // reproducción en cuanto empieza a sonar algo -- bug
