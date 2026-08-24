@@ -607,7 +607,7 @@ class PlayerManager @Inject constructor(
                         as? android.media.AudioManager
                     val mode = audioManager?.mode
                     if (mode == android.media.AudioManager.MODE_IN_CALL) {
-                        log("onIsPlayingChanged() -- reanudó con AudioManager.mode=MODE_IN_CALL, se vuelve a pausar (red de seguridad de llamadas)")
+                        sharedResolveLog("onIsPlayingChanged() -- reanudó con AudioManager.mode=MODE_IN_CALL, se vuelve a pausar (red de seguridad de llamadas)")
                         player.pause()
                         return
                     }
