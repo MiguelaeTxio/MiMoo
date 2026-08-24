@@ -1,0 +1,52 @@
+[
+ {
+  "artist": "Big Mama Thornton",
+  "song": "Hound Dog",
+  "error": "DownloadError: ERROR: [youtube] yoHDrzw-RPg: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Billie Holiday",
+  "song": "Blue Moon",
+  "error": "DownloadError: ERROR: [youtube] y4bZu56EylA: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Billie Holiday",
+  "song": "I'll Be Seeing You",
+  "error": "DownloadError: ERROR: [youtube] 3C5zYKIuoxg: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Buddy Holly",
+  "song": "Everyday",
+  "error": "DownloadError: ERROR: [youtube] GMezwtB1oCU: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Buddy Holly",
+  "song": "True Love Ways",
+  "error": "DownloadError: ERROR: [youtube] fc006bmNF-M: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Carmen McRae",
+  "song": "Ev'ry Time We Say Goodbye",
+  "error": "DownloadError: ERROR: [youtube] dG3quOZ_m-0: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Conway Twitty",
+  "song": "It's Only Make Believe",
+  "error": "DownloadError: ERROR: [youtube] zIlVAnoNabY: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Dinah Washington",
+  "song": "Cry Me A River",
+  "error": "DownloadError: ERROR: [youtube] tx6MQ7tmgSc: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Dinah Washington",
+  "song": "Teach Me Tonight",
+  "error": "DownloadError: ERROR: [youtube] emkqc3PIw8E: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ },
+ {
+  "artist": "Dinah Washington",
+  "song": "What A Diff'rence A Day Made",
+  "error": "DownloadError: ERROR: [youtube] upJ3OgMRiUA: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies"
+ }
+]

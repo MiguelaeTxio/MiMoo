@@ -1,6 +1,6 @@
 {
- "fallos_esta_ejecucion": 3188,
- "rechazadas_esta_ejecucion": 5,
+ "fallos_esta_ejecucion": 10,
+ "rechazadas_esta_ejecucion": 0,
  "total_diccionario": 3193,
  "total_validadas_acumuladas": 0,
  "validadas_esta_ejecucion": 0
