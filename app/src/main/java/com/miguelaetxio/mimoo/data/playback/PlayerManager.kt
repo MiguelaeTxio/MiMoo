@@ -4440,26 +4440,37 @@ class PlayerManager @Inject constructor(
             val decadeYearWindow = 5
             val decadeCentralYear = anchor.decadeBegin?.let { it + 5 }
             if (anchor.isClassical && classicalValidatedIndex < classicalValidatedOrder.size) {
-                // H15 (miMooutCast), S032 -- método completo de Miguel
-                // Ángel: *"tienes esos links [validados por el script
-                // de GitHub], se resuelven todos sin principio [sin
-                // buscar]... se encolan estos 100 links funcionales y
-                // conocidos de forma aleatoria [y] se van buscando los
-                // otros [cien] intercalándose."* `classicalValidatedOrder`
-                // ya viene barajado desde `startRadioFromManualAnchor()`
-                // -- aquí solo se avanza el índice. `knownYoutubeId`
-                // hace que la llamada de más abajo se salte la
-                // búsqueda entera, solo resuelva la URL de streaming
-                // (que sí caduca) de un vídeo YA comprobado.
+                // H15 (miMooutCast), S032 -- petición original de
+                // Miguel Ángel: *"tienes esos links [validados por el
+                // script de GitHub], se resuelven todos sin buscar...
+                // se encolan estos 100 links funcionales y conocidos de
+                // forma aleatoria [y luego] se van buscando los
+                // otros."* `classicalValidatedOrder` ya viene barajado
+                // desde `startRadioFromManualAnchor()` -- aquí solo se
+                // avanza el índice. `knownYoutubeId` hace que la
+                // llamada de más abajo se salte la búsqueda entera,
+                // solo resuelva la URL de streaming (que sí caduca) de
+                // un vídeo YA comprobado.
                 //
-                // Igual que antes: en cuanto se agotan los validados,
-                // esta condición deja de cumplirse y el flujo cae, sin
-                // código extra, en la rama de género de más abajo
+                // NOTA REAL, S037 (aclarado con Miguel Ángel tras
+                // dudar si esto seguía intercalando lo antiguo con lo
+                // nuevo): el comportamiento real NUNCA intercala.
+                // `topUpRadioQueueIfNeeded()` llama a esta función una
+                // vez por tema y AÑADE cada resultado al final real de
+                // la cola (`queueItems.add(...)`, nunca en mitad) --
+                // así que los ~100 validados salen TODOS primero, en
+                // orden, y solo cuando `classicalValidatedIndex >=
+                // classicalValidatedOrder.size` la condición de esta
+                // rama deja de cumplirse y el flujo cae, sin código
+                // extra, en la rama de género de más abajo
                 // (`anchor.genre.isNotBlank()`, cierto para clásica
                 // igual que cualquier otro género), que sigue buscando
                 // por MusicBrainz de verdad sin límite -- orden de
                 // Miguel Ángel: *"cien es el tamaño real, pero eso no
-                // significa rendirse ahí."*
+                // significa rendirse ahí."* Mismo patrón "baraja,
+                // encola todo, lo descubierto va al final" ya
+                // confirmado y generalizado en S037 para género y
+                // década.
                 val next = classicalValidatedOrder[classicalValidatedIndex]
                 classicalValidatedIndex++
                 artistName = next.artist
