@@ -191,6 +191,24 @@ data class QueueItem(
      * waiting for the Library to resolve the real cover art.
      */
     val artworkUri: String? = null,
+    /**
+     * S038 -- bug real con dos logs cruzados de Miguel Ángel
+     * (mimooutcast_debug.txt + notification_debug.txt): la cola se
+     * construyó a las 06:51-06:56, pero no se intentó reproducir hasta
+     * las 12:48 -- SEIS HORAS después. Las URLs de streaming de
+     * YouTube caducan a las pocas horas; al arrancar, la cola ENTERA
+     * falló en cadena con `ERROR_CODE_IO_BAD_HTTP_STATUS`, una pista
+     * tras otra, cada ~5 segundos -- `onPlayerError()` se limitaba a
+     * saltar a la siguiente sin más, consumiendo la cola completa en
+     * minutos ("ha puesto una lista que no son ni cien temas... se ha
+     * parado").
+     *
+     * `true` marca que YA se intentó refrescar la URL de streaming de
+     * esta pista una vez (ver `onPlayerError()`) -- evita un bucle de
+     * reintento infinito si el vídeo está genuinamente roto (no solo
+     * con la URL caducada) y el refresco también falla.
+     */
+    val refreshAttempted: Boolean = false,
 )
 
 data class PlaybackState(
@@ -1066,38 +1084,82 @@ class PlayerManager @Inject constructor(
              * just continues with the next track on its own.
              */
             override fun onPlayerError(error: PlaybackException) {
-                val failedItem = queueItems.getOrNull(player.currentMediaItemIndex)
+                val failedIndex = player.currentMediaItemIndex
+                val failedItem = queueItems.getOrNull(failedIndex)
                 NotificationDebugLogger.log(
                     appContext, storageManager,
                     "onPlayerError() -- pista='${failedItem?.title}' " +
                         "isFromRadio=${failedItem?.isFromRadio} -- " +
                         "${error.errorCodeName}: ${error.message}",
                 )
-                // S034 -- la pista que acaba de fallar EN REPRODUCCIÓN
-                // (no al resolver, ver el otro punto de anotación en
-                // `fetchSimpleManualCandidate()`) venía de
-                // `mimooutcast_seed.json` -- se anota como enlace roto
-                // de ese género. El sustituto se rellena aparte, en
-                // `onMediaItemTransition()`, cuando la siguiente pista
-                // que suena de verdad es una encontrada en vivo para
-                // esa misma sesión.
-                val seedGenre = failedItem?.mimooutcastSeedGenre
-                val brokenYoutubeId = failedItem?.youtubeId
-                if (seedGenre != null && brokenYoutubeId != null) {
-                    mimooutcastBrokenLinksLogger.recordBroken(
-                        genre = seedGenre,
-                        youtubeId = brokenYoutubeId,
-                        artist = failedItem.artist ?: "",
-                        title = failedItem.title,
-                    )
+                // S038 -- ver el kdoc real de `QueueItem.refreshAttempted`.
+                // ERROR_CODE_IO_BAD_HTTP_STATUS con un youtubeId conocido
+                // es la señal de una URL de streaming caducada (cola
+                // dejada horas sin reproducir), no necesariamente de un
+                // vídeo roto de verdad -- se reintenta UNA vez con una
+                // URL fresca antes de darlo por perdido y anotarlo como
+                // enlace roto.
+                if (error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS &&
+                    failedItem != null && failedItem.youtubeId != null &&
+                    !failedItem.refreshAttempted && failedIndex >= 0
+                ) {
+                    managerScope.launch {
+                        val refreshedUri = try {
+                            streamResolver.resolveAudioStreamUrl("https://youtu.be/${failedItem.youtubeId}")
+                        } catch (e: Exception) {
+                            null
+                        }
+                        withContext(Dispatchers.Main) {
+                            // La cola pudo cambiar mientras se resolvía
+                            // (el usuario borró/reordenó) -- se comprueba
+                            // que la pista siga siendo la misma en ese
+                            // índice antes de tocar nada.
+                            if (refreshedUri != null && queueItems.getOrNull(failedIndex)?.uri == failedItem.uri) {
+                                val refreshed = failedItem.copy(uri = refreshedUri, refreshAttempted = true)
+                                queueItems[failedIndex] = refreshed
+                                player.replaceMediaItem(failedIndex, toMediaItem(refreshed))
+                                sharedResolveLog(
+                                    "onPlayerError() -- URL caducada, refrescada con éxito: '${failedItem.title}'",
+                                )
+                                player.prepare()
+                                player.play()
+                            } else {
+                                sharedResolveLog(
+                                    "onPlayerError() -- refresco de URL falló también: '${failedItem.title}', se descarta",
+                                )
+                                skipPastError(failedItem)
+                            }
+                        }
+                    }
+                    return
                 }
-                if (player.hasNextMediaItem()) {
-                    player.seekToNextMediaItem()
-                    player.prepare()
-                    player.play()
-                }
+                skipPastError(failedItem)
             }
         })
+    }
+
+    /**
+     * S038 -- extraído de `onPlayerError()` para poder llamarse tanto
+     * directamente (error que no es de URL caducada) como tras un
+     * intento de refresco fallido. Anota el enlace roto de la semilla
+     * si aplica (S034) y avanza a la siguiente pista.
+     */
+    private fun skipPastError(failedItem: QueueItem?) {
+        val seedGenre = failedItem?.mimooutcastSeedGenre
+        val brokenYoutubeId = failedItem?.youtubeId
+        if (seedGenre != null && brokenYoutubeId != null) {
+            mimooutcastBrokenLinksLogger.recordBroken(
+                genre = seedGenre,
+                youtubeId = brokenYoutubeId,
+                artist = failedItem.artist ?: "",
+                title = failedItem.title,
+            )
+        }
+        if (player.hasNextMediaItem()) {
+            player.seekToNextMediaItem()
+            player.prepare()
+            player.play()
+        }
     }
 
     /**
