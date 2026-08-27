@@ -1070,6 +1070,14 @@ private fun GlassIconButton(
 
 /** S010 -- icono genérico cuando no hay carátula real (pistas transitorias de Radio sin favoritar, emisoras...). */
 @Composable
+/**
+ * Petición explícita de Miguel Ángel (2026-08-26): "cuando no haya
+ * carátula, por ejemplo emisoras de radio online, metemos el logo
+ * como carátula" -- antes mostraba un icono genérico de nota musical
+ * (Icons.Filled.MusicNote), sin identidad de marca. Ahora el propio
+ * icono de la app (mismo recurso que el lanzador, `ic_launcher`).
+ */
+@Composable
 private fun PlayerBarArtPlaceholder() {
     Box(
         modifier = Modifier
@@ -1077,10 +1085,10 @@ private fun PlayerBarArtPlaceholder() {
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            Icons.Filled.MusicNote,
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(id = com.miguelaetxio.mimoo.R.mipmap.ic_launcher),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

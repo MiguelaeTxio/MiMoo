@@ -3987,9 +3987,25 @@ class PlayerManager @Inject constructor(
                     .setDisplayTitle(item.title)
                     .apply {
                         if (!item.artist.isNullOrBlank()) setArtist(item.artist)
-                        if (!item.artworkUri.isNullOrBlank()) {
-                            setArtworkUri(android.net.Uri.parse(item.artworkUri))
+                        // Petición explícita de Miguel Ángel (2026-08-26):
+                        // "cuando no haya carátula, por ejemplo emisoras
+                        // de radio online, metemos el logo como
+                        // carátula" -- antes, sin carátula real, este
+                        // campo se quedaba sin poner del todo, así que
+                        // la notificación/pantalla de bloqueo se
+                        // quedaban sin ninguna imagen. `android.resource://`
+                        // es el esquema estándar de Android para
+                        // referenciar un recurso empaquetado (aquí,
+                        // `R.mipmap.ic_launcher`, el mismo icono del
+                        // lanzador) como si fuera una URI cualquiera --
+                        // MediaSession/las notificaciones ya saben
+                        // resolverlo.
+                        val artworkUri = if (!item.artworkUri.isNullOrBlank()) {
+                            item.artworkUri
+                        } else {
+                            "android.resource://${appContext.packageName}/${com.miguelaetxio.mimoo.R.mipmap.ic_launcher}"
                         }
+                        setArtworkUri(android.net.Uri.parse(artworkUri))
                     }
                     .build()
             )
