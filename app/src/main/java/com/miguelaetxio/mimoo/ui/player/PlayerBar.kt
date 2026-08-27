@@ -1068,8 +1068,6 @@ private fun GlassIconButton(
     }
 }
 
-/** S010 -- icono genérico cuando no hay carátula real (pistas transitorias de Radio sin favoritar, emisoras...). */
-@Composable
 /**
  * Petición explícita de Miguel Ángel (2026-08-26): "cuando no haya
  * carátula, por ejemplo emisoras de radio online, metemos el logo
