@@ -1497,6 +1497,37 @@ class PlayerManager @Inject constructor(
         dislikedTrackKeysSnapshot = dislikedTrackRepository.normalizedKeysSnapshot()
     }
 
+    /**
+     * H16, S039 -- bug real reportado por Miguel Ángel con texto exacto:
+     * *"si ya estamos buscando una cadena y tienen que coincidir
+     * completa, ahí está el error... cuando coincida que el nombre se
+     * encuentra dentro del título, no tiene por qué coincidir entero."*
+     * Sergio Dalma, en su Lista Negra, seguía sonando -- causa real:
+     * todas las comprobaciones de artista vetado en esta clase usaban
+     * pertenencia a un `Set` (`artist.lowercase() in
+     * dislikedArtistNamesLower`), que exige coincidencia EXACTA. Si el
+     * nombre de artista que de verdad llega a estas funciones trae
+     * texto de más (colaboraciones, "feat.", variaciones del propio
+     * parseo del título del vídeo), la coincidencia exacta nunca se
+     * produce aunque el artista vetado esté ahí dentro.
+     *
+     * Comprueba CONTENCIÓN en vez de igualdad, con límite de palabra
+     * (`\b`, vía frontera `\W`) para no dar falsos positivos -- "Dalma"
+     * no debe colar dentro de un nombre que solo lo contenga como
+     * fragmento de otra palabra. Se usa ADEMÁS de (no en sustitución
+     * de) las comprobaciones exactas ya existentes contra `windowLower`
+     * y equivalentes, que siguen cubriendo el caso normal de forma más
+     * barata.
+     */
+    private fun containsDislikedArtist(name: String?): Boolean {
+        if (name.isNullOrBlank() || dislikedArtistNamesLower.isEmpty()) return false
+        val normalized = name.lowercase()
+        return dislikedArtistNamesLower.any { disliked ->
+            disliked.isNotBlank() &&
+                Regex("(^|\\W)" + Regex.escape(disliked) + "(\\W|$)").containsMatchIn(normalized)
+        }
+    }
+
     /** H16 -- ¿este tema concreto está en la Lista Negra? Cualquier versión (directo/remasterizado/estudio), ver `DislikedTrackRepository.key()`. */
     private fun isTrackDisliked(artist: String?, title: String?): Boolean {
         if (artist.isNullOrBlank() || title.isNullOrBlank()) return false
@@ -2527,7 +2558,7 @@ class PlayerManager @Inject constructor(
             // esa exclusión (el diccionario de éxitos y el disco local
             // tienen sus propios caminos), así que se comprueba también
             // aquí, sin excepción.
-            if (artist.lowercase() in dislikedArtistNamesLower) {
+            if (artist.lowercase() in dislikedArtistNamesLower || containsDislikedArtist(artist)) {
                 RadioDebugLogger.log(
                     appContext, storageManager,
                     "fetchRoundCandidate(ancla='$anchorArtistName') -- candidato '$artist' descartado: artista en la Lista Negra",
@@ -2795,6 +2826,7 @@ class PlayerManager @Inject constructor(
                 // un "no me gusta" puede llegar después de que este item
                 // se guardara en la cola de espera.
                 item.artist?.lowercase() in dislikedArtistNamesLower ||
+                containsDislikedArtist(item.artist) ||
                 isTrackDisliked(item.artist, item.title)
             ) {
                 continue
@@ -2869,6 +2901,7 @@ class PlayerManager @Inject constructor(
                 // anterior. Se descarta aquí igual que un tema ya
                 // sonado, en vez de servirlo.
                 item.artist?.lowercase() in dislikedArtistNamesLower ||
+                containsDislikedArtist(item.artist) ||
                 isTrackDisliked(item.artist, item.title)
             ) {
                 iterator.remove()
@@ -3191,7 +3224,9 @@ class PlayerManager @Inject constructor(
         // (solo `avoidArtists`, preferencia blanda), así que el filtro
         // de Lista Negra se aplica aquí, sobre el resultado, antes de
         // aceptarlo -- igual que ya se hacía con `radioRoundArtists`.
-        if (hit != null && hit.artist.lowercase() !in radioRoundArtists && hit.artist.lowercase() !in dislikedArtistNamesLower) {
+        if (hit != null && hit.artist.lowercase() !in radioRoundArtists &&
+            hit.artist.lowercase() !in dislikedArtistNamesLower && !containsDislikedArtist(hit.artist)
+        ) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null && !isTrackDisliked(item.artist, item.title)) {
                 RadioDebugLogger.log(
@@ -4775,7 +4810,10 @@ class PlayerManager @Inject constructor(
             // Veto DURO de la ventana -- las funciones de arriba solo
             // la tratan como preferencia blanda internamente, así que
             // se repite la comprobación aquí antes de aceptar nada.
-            if (artistName.lowercase() in windowLower) continue
+            // S039 -- containsDislikedArtist() añadida aparte, ver su
+            // kdoc: la Lista Negra necesita contención, no solo
+            // igualdad exacta contra `windowLower`.
+            if (artistName.lowercase() in windowLower || containsDislikedArtist(artistName)) continue
             val item = resolveYoutubeCandidate(
                 anchorLabel, artistName, songTitle = knownTitle,
                 expectedDecadeBegin = if (isDecadeOnly || anchor.isClassical) null else anchor.decadeBegin,
