@@ -5762,6 +5762,88 @@ class PlayerManager @Inject constructor(
      */
     private var pollingForCallEnd = false
 
+    /** S043 -- referencia al callback/listener real registrado, para no registrar dos veces. `Any?` porque el tipo real difiere según la versión de Android (ver `onPhoneStatePermissionGranted()`). */
+    private var telephonyCallStateListener: Any? = null
+
+    /**
+     * S043 -- petición explícita de Miguel Ángel tras tres intentos
+     * fallidos con `AudioManager.mode`/eventos de foco de audio
+     * (ninguno bastante fiable en la práctica): *"la música se activa
+     * sola, en mitad de la llamada."* Se pasa al mecanismo estándar y
+     * robusto -- `TelephonyManager`, con el estado REAL de la llamada
+     * telefónica, en vez de inferirlo indirectamente.
+     *
+     * Llamado desde `MainActivity` en cuanto `READ_PHONE_STATE` está
+     * concedido (ya al arrancar si ya lo estaba de antes, o justo tras
+     * aceptarlo en el diálogo). `TelephonyCallback` (API 31+, la API
+     * moderna, no deprecada) o `PhoneStateListener` por debajo (el
+     * proyecto tiene `minSdk 26`) -- verificados ambos contra
+     * documentación y ejemplos reales antes de escribir esto.
+     *
+     * Reacciona a CALL_STATE_RINGING/OFFHOOK pausando (mismo
+     * `pausedByAudioFocusLoss` que ya usa el mecanismo de
+     * `AudioFocusRequest` de arriba -- cooperan sin conflicto: cada
+     * uno puede pausar/reanudar sin pisarse, idempotente si los dos
+     * reaccionan al mismo evento real) y a CALL_STATE_IDLE
+     * reanudando. Se queda como capa AÑADIDA, no sustituye al
+     * `AudioFocusRequest` manual -- ese sigue cubriendo otras
+     * interrupciones transitorias que no son llamadas (notificaciones
+     * sonoras de otras apps, etc.) y el caso de que el usuario deniegue
+     * este permiso nuevo.
+     */
+    fun onPhoneStatePermissionGranted() {
+        if (telephonyCallStateListener != null) return
+        try {
+            val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
+                as? android.telephony.TelephonyManager ?: return
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                val callback = object : android.telephony.TelephonyCallback(),
+                    android.telephony.TelephonyCallback.CallStateListener {
+                    override fun onCallStateChanged(state: Int) {
+                        handleTelephonyCallStateChanged(state)
+                    }
+                }
+                telephonyManager.registerTelephonyCallback(appContext.mainExecutor, callback)
+                telephonyCallStateListener = callback
+            } else {
+                @Suppress("DEPRECATION")
+                val listener = object : android.telephony.PhoneStateListener() {
+                    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+                    override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                        handleTelephonyCallStateChanged(state)
+                    }
+                }
+                @Suppress("DEPRECATION")
+                telephonyManager.listen(listener, android.telephony.PhoneStateListener.LISTEN_CALL_STATE)
+                telephonyCallStateListener = listener
+            }
+        } catch (e: Exception) {
+            // Nunca dejar que esto rompa nada -- sin este mecanismo,
+            // sigue funcionando el AudioFocusRequest manual como única
+            // red de seguridad, igual que si el permiso no se hubiera
+            // concedido nunca.
+            telephonyCallStateListener = null
+        }
+    }
+
+    private fun handleTelephonyCallStateChanged(state: Int) {
+        when (state) {
+            android.telephony.TelephonyManager.CALL_STATE_RINGING,
+            android.telephony.TelephonyManager.CALL_STATE_OFFHOOK -> {
+                if (player.isPlaying) {
+                    pausedByAudioFocusLoss = true
+                    player.pause()
+                }
+            }
+            android.telephony.TelephonyManager.CALL_STATE_IDLE -> {
+                if (pausedByAudioFocusLoss) {
+                    pausedByAudioFocusLoss = false
+                    player.play()
+                }
+            }
+        }
+    }
+
     private fun pollForCallEndAndResume(audioManager: android.media.AudioManager) {
         if (pollingForCallEnd) return
         pollingForCallEnd = true
@@ -5867,6 +5949,22 @@ class PlayerManager @Inject constructor(
         } catch (e: Exception) {
             // Ídem -- nunca dejar que la liberación del foco rompa el
             // resto de release().
+        }
+        try {
+            telephonyCallStateListener?.let { listener ->
+                val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
+                    as? android.telephony.TelephonyManager
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+                    listener is android.telephony.TelephonyCallback
+                ) {
+                    telephonyManager?.unregisterTelephonyCallback(listener)
+                } else if (listener is android.telephony.PhoneStateListener) {
+                    @Suppress("DEPRECATION")
+                    telephonyManager?.listen(listener, android.telephony.PhoneStateListener.LISTEN_NONE)
+                }
+            }
+        } catch (e: Exception) {
+            // Ídem.
         }
         player.release()
     }

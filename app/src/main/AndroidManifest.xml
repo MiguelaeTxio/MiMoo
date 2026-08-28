@@ -35,6 +35,20 @@
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--
+        S043 — petición explícita de Miguel Ángel tras tres intentos
+        fallidos de arreglar "la música se activa sola en mitad de una
+        llamada" sin este permiso (AudioManager.mode/eventos de foco
+        de audio no eran lo bastante fiables). Con READ_PHONE_STATE,
+        PlayerManager usa TelephonyManager (TelephonyCallback en
+        API 31+, PhoneStateListener por debajo) para detectar el
+        estado real de la llamada, en vez de inferirlo indirectamente.
+        Declarado aquí; la solicitud en tiempo de ejecución vive en
+        MainActivity. Si el usuario lo deniega, la app sigue
+        funcionando igual — solo se queda con el mecanismo anterior
+        (foco de audio manual) como única red de seguridad.
+    -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!--
         H07 PARTE 2: obligatorio desde Android 7.1 (API 25) para que
         el sistema reconozca la petición de instalar un APK vía
         Intent(ACTION_VIEW) + FileProvider. Sin este permiso

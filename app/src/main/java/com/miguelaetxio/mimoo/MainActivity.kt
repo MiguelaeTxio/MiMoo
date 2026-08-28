@@ -243,6 +243,22 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     /**
+     * S043 -- petición explícita de Miguel Ángel tras tres intentos
+     * fallidos sin permiso ("cuando estoy en una llamada la música se
+     * activa sola, en mitad de la llamada, y la tengo que parar a
+     * mano"): AudioManager.mode/los eventos de foco de audio no son
+     * lo bastante fiables para esto -- se pasa al mecanismo estándar y
+     * robusto, `TelephonyManager`, que exige `READ_PHONE_STATE`. Sin
+     * este permiso, PlayerManager sigue usando el mecanismo anterior
+     * (AudioFocusRequest manual) como única red de seguridad -- pedirlo
+     * mejora la fiabilidad, no es obligatorio para que la app funcione.
+     */
+    private val requestPhoneStatePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) playerManager.onPhoneStatePermissionGranted()
+        }
+
+    /**
      * Routes an incoming ACTION_VIEW intent (PASO 9, H03) — the user
      * opened an audio file from the system file explorer and picked
      * MiMoo as the app to play it with. Independent of
@@ -321,6 +337,17 @@ class MainActivity : ComponentActivity() {
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        // S043 -- ver el kdoc real junto a requestPhoneStatePermission.
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_PHONE_STATE,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPhoneStatePermission.launch(Manifest.permission.READ_PHONE_STATE)
+        } else {
+            playerManager.onPhoneStatePermissionGranted()
         }
 
         enableEdgeToEdge()
