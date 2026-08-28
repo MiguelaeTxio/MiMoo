@@ -1518,10 +1518,28 @@ class PlayerManager @Inject constructor(
      * de) las comprobaciones exactas ya existentes contra `windowLower`
      * y equivalentes, que siguen cubriendo el caso normal de forma más
      * barata.
+     *
+     * S042 -- ampliada con `title`, con dos capturas reales de Miguel
+     * Ángel delante: "Julio Iglesias, Diana Ross - All Of You" seguía
+     * sonando con Julio Iglesias vetado -- el campo `artist` guardado
+     * para ese tema era solo "Diana Ross" (el dueto se resolvió a un
+     * único artista, perdiendo el segundo nombre), así que
+     * `containsDislikedArtist("Diana Ross")` nunca iba a encontrar a
+     * Julio Iglesias ahí, por mucho que comprobara contención en vez
+     * de igualdad -- el problema no era CÓMO se comparaba, era que el
+     * nombre vetado ni siquiera estaba en la cadena que se comparaba.
+     * El TÍTULO del vídeo, en cambio, sí suele traer ambos nombres en
+     * una colaboración -- se comprueba también, opcionalmente.
      */
-    private fun containsDislikedArtist(name: String?): Boolean {
-        if (name.isNullOrBlank() || dislikedArtistNamesLower.isEmpty()) return false
-        val normalized = name.lowercase()
+    private fun containsDislikedArtist(name: String?, title: String? = null): Boolean {
+        if (dislikedArtistNamesLower.isEmpty()) return false
+        if (containsAnyDislikedArtist(name)) return true
+        return containsAnyDislikedArtist(title)
+    }
+
+    private fun containsAnyDislikedArtist(text: String?): Boolean {
+        if (text.isNullOrBlank()) return false
+        val normalized = text.lowercase()
         return dislikedArtistNamesLower.any { disliked ->
             disliked.isNotBlank() &&
                 Regex("(^|\\W)" + Regex.escape(disliked) + "(\\W|$)").containsMatchIn(normalized)
@@ -2590,6 +2608,20 @@ class PlayerManager @Inject constructor(
                 genreHint = anchor.genre.ifBlank { null },
             ) ?: return null
 
+            // S042 -- segunda comprobación, ahora con el título real ya
+            // resuelto: un dueto/colaboración puede tener el artista
+            // vetado en el título del vídeo aunque el campo `artist`
+            // guardado sea solo el otro artista (ver el kdoc real de
+            // `containsDislikedArtist`).
+            if (containsDislikedArtist(item.artist, item.title)) {
+                RadioDebugLogger.log(
+                    appContext, storageManager,
+                    "fetchRoundCandidate(ancla='$anchorArtistName') -- descartado tras resolver: " +
+                        "'${item.title}' contiene un artista de la Lista Negra en el título",
+                )
+                return null
+            }
+
             if (knownHitsRepository.songKey(item.artist, item.title) in radioUsedSongs ||
                 titleKey(item.title) in radioUsedTitles
             ) {
@@ -2826,7 +2858,7 @@ class PlayerManager @Inject constructor(
                 // un "no me gusta" puede llegar después de que este item
                 // se guardara en la cola de espera.
                 item.artist?.lowercase() in dislikedArtistNamesLower ||
-                containsDislikedArtist(item.artist) ||
+                containsDislikedArtist(item.artist, item.title) ||
                 isTrackDisliked(item.artist, item.title)
             ) {
                 continue
@@ -2901,7 +2933,7 @@ class PlayerManager @Inject constructor(
                 // anterior. Se descarta aquí igual que un tema ya
                 // sonado, en vez de servirlo.
                 item.artist?.lowercase() in dislikedArtistNamesLower ||
-                containsDislikedArtist(item.artist) ||
+                containsDislikedArtist(item.artist, item.title) ||
                 isTrackDisliked(item.artist, item.title)
             ) {
                 iterator.remove()
@@ -3225,7 +3257,7 @@ class PlayerManager @Inject constructor(
         // de Lista Negra se aplica aquí, sobre el resultado, antes de
         // aceptarlo -- igual que ya se hacía con `radioRoundArtists`.
         if (hit != null && hit.artist.lowercase() !in radioRoundArtists &&
-            hit.artist.lowercase() !in dislikedArtistNamesLower && !containsDislikedArtist(hit.artist)
+            hit.artist.lowercase() !in dislikedArtistNamesLower && !containsDislikedArtist(hit.artist, hit.song)
         ) {
             val item = resolveYoutubeCandidate(anchorArtistName, hit.artist, hit.song)
             if (item != null && !isTrackDisliked(item.artist, item.title)) {
@@ -4813,7 +4845,7 @@ class PlayerManager @Inject constructor(
             // S039 -- containsDislikedArtist() añadida aparte, ver su
             // kdoc: la Lista Negra necesita contención, no solo
             // igualdad exacta contra `windowLower`.
-            if (artistName.lowercase() in windowLower || containsDislikedArtist(artistName)) continue
+            if (artistName.lowercase() in windowLower || containsDislikedArtist(artistName, knownTitle)) continue
             val item = resolveYoutubeCandidate(
                 anchorLabel, artistName, songTitle = knownTitle,
                 expectedDecadeBegin = if (isDecadeOnly || anchor.isClassical) null else anchor.decadeBegin,
@@ -4822,6 +4854,17 @@ class PlayerManager @Inject constructor(
                 genreHint = anchor.genre.ifBlank { null },
                 knownYoutubeId = knownYoutubeId,
             )
+            // S042 -- segunda comprobación, ahora con el título real ya
+            // resuelto (puede traer un dueto con el artista vetado que
+            // `knownTitle`/`artistName` por sí solos no revelaban) --
+            // ver el kdoc real de `containsDislikedArtist`.
+            if (item != null && containsDislikedArtist(item.artist, item.title)) {
+                sharedResolveLog(
+                    "fetchSimpleManualCandidate() -- descartado tras resolver: '${item.title}' " +
+                        "contiene un artista de la Lista Negra en el título",
+                )
+                continue
+            }
             // S034 -- el candidato de la semilla no resolvió (vídeo
             // caído/retirado, `resolveAudioStreamUrl()` falló dentro
             // de `resolveYoutubeCandidate()`) -- se anota como roto
