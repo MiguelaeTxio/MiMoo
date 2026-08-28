@@ -5707,6 +5707,41 @@ class PlayerManager @Inject constructor(
      * dispositivo, la reproducción debe seguir funcionando igual que
      * sin foco de audio en absoluto, nunca romper nada.
      */
+    /**
+     * S041 -- ver el comentario real junto a `AUDIOFOCUS_GAIN` en
+     * `ensureAudioFocusRequested()`. Sondea `AudioManager.mode` cada
+     * segundo, hasta 90 segundos, y reanuda en cuanto vuelve a
+     * `MODE_NORMAL` -- red de seguridad para el caso en que el
+     * `AUDIOFOCUS_GAIN` real de colgar llegue mientras el modo del
+     * sistema todavía no se ha actualizado. `pollingForCallEnd` evita
+     * lanzar sondeos duplicados solapados si llegan varios
+     * `AUDIOFOCUS_GAIN` seguidos mientras el sondeo ya está en marcha.
+     */
+    private var pollingForCallEnd = false
+
+    private fun pollForCallEndAndResume(audioManager: android.media.AudioManager) {
+        if (pollingForCallEnd) return
+        pollingForCallEnd = true
+        managerScope.launch {
+            try {
+                repeat(90) {
+                    kotlinx.coroutines.delay(1000)
+                    if (!pausedByAudioFocusLoss) return@launch
+                    val mode = audioManager.mode
+                    if (mode != android.media.AudioManager.MODE_IN_CALL &&
+                        mode != android.media.AudioManager.MODE_IN_COMMUNICATION
+                    ) {
+                        pausedByAudioFocusLoss = false
+                        withContext(Dispatchers.Main) { player.play() }
+                        return@launch
+                    }
+                }
+            } finally {
+                pollingForCallEnd = false
+            }
+        }
+    }
+
     private fun ensureAudioFocusRequested() {
         if (audioFocusRequest != null) return
         try {
@@ -5727,9 +5762,39 @@ class PlayerManager @Inject constructor(
                             }
                         }
                         android.media.AudioManager.AUDIOFOCUS_GAIN -> {
-                            if (pausedByAudioFocusLoss) {
+                            // S041 -- bug real reportado por Miguel
+                            // Ángel: "en mitad de la llamada la música
+                            // se activa sola". Causa probable: Android
+                            // puede mandar un AUDIOFOCUS_GAIN puntual
+                            // A MITAD de una llamada todavía activa
+                            // (cambios de ruta de audio -- altavoz,
+                            // Bluetooth, auriculares -- disparan una
+                            // reevaluación de foco sin que la llamada
+                            // haya colgado). Antes se reanudaba aquí
+                            // sin más, confiando en que
+                            // onIsPlayingChanged() lo repescara
+                            // DESPUÉS -- con esta comprobación previa,
+                            // ni siquiera se llega a llamar a
+                            // player.play() si el modo sigue
+                            // indicando llamada activa en este mismo
+                            // instante, doble capa de protección en
+                            // vez de una sola reactiva.
+                            val mode = audioManager.mode
+                            val stillInCall = mode == android.media.AudioManager.MODE_IN_CALL ||
+                                mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+                            if (pausedByAudioFocusLoss && !stillInCall) {
                                 pausedByAudioFocusLoss = false
                                 player.play()
+                            } else if (pausedByAudioFocusLoss && stillInCall) {
+                                // S041 -- si este GAIN era el de verdad
+                                // (colgar), pero el modo del sistema
+                                // aún no se ha actualizado a NORMAL en
+                                // este mismo instante, no hay que
+                                // perder la reanudación para siempre --
+                                // se sondea unos segundos más hasta que
+                                // el modo confirme que la llamada
+                                // terminó de verdad.
+                                pollForCallEndAndResume(audioManager)
                             }
                         }
                         // AUDIOFOCUS_LOSS (permanente) y
