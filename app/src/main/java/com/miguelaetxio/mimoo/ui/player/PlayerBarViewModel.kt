@@ -318,7 +318,27 @@ class PlayerBarViewModel @Inject constructor(
                 }
                 .collect { track ->
                     _isCurrentFavorite.value = track?.isFavorite == true
+                    // S040 -- bug real señalado por Miguel Ángel con dos
+                    // capturas de pantalla: la notificación (que lee
+                    // QueueItem.artworkUri vía toMediaItem()) mostraba
+                    // la carátula real de Esther Phillips, pero el
+                    // reproductor dentro de la app mostraba el logo de
+                    // respaldo -- pese a que la carátula real SÍ
+                    // existía y SÍ se había resuelto. Causa real: este
+                    // `_coverArtUrl` solo miraba `track?.coverArtUrl`
+                    // (tabla `search_result_track`, resuelto vía
+                    // MusicBrainz) -- si esa fila aún no tenía carátula
+                    // (`requestCoverArtIfMissing()` es asíncrono, puede
+                    // no haber terminado), se quedaba en `null` sin
+                    // mirar la carátula que la propia pista YA traía
+                    // consigo desde que se resolvió para sonar
+                    // (`QueueItem.artworkUri`, la miniatura de
+                    // YouTube). Ahora cae a esa antes de quedarse sin
+                    // nada -- el logo de `PlayerBarArtPlaceholder()`
+                    // debe verse SOLO cuando de verdad no hay ninguna
+                    // carátula en ningún sitio.
                     _coverArtUrl.value = track?.coverArtUrl
+                        ?: queueItemArtworkFallback(state.value.currentYoutubeId)
                     _downloadStatus.value = track?.downloadStatus
                     _localFilePath.value = track?.filePath
                     _menuArtist.value = resolveMenuArtist(track)
@@ -340,7 +360,7 @@ class PlayerBarViewModel @Inject constructor(
     private suspend fun refreshFavoriteState(youtubeId: String?) {
         val track = youtubeId?.let { searchResultTrackRepository.getById(it) }
         _isCurrentFavorite.value = track?.isFavorite == true
-        _coverArtUrl.value = track?.coverArtUrl
+        _coverArtUrl.value = track?.coverArtUrl ?: queueItemArtworkFallback(youtubeId)
         _downloadStatus.value = track?.downloadStatus
         _localFilePath.value = track?.filePath
         _menuArtist.value = resolveMenuArtist(track)
@@ -348,6 +368,21 @@ class PlayerBarViewModel @Inject constructor(
         if (track != null && track.coverArtUrl == null) {
             requestCoverArtIfMissing(track.artist, track.album)
         }
+    }
+
+    /**
+     * S040 -- ver el comentario real junto a `_coverArtUrl.value` en el
+     * `collect` de `init`. Busca en la cola actual del reproductor
+     * (`PlayerManager.queue`, StateFlow público) la pista con este
+     * `youtubeId` exacto, y devuelve su `artworkUri` propia -- la
+     * miniatura de YouTube que ya trae consigo desde que se resolvió
+     * para sonar, sin depender de que Biblioteca haya terminado de
+     * resolver la carátula "de verdad" (MusicBrainz) en
+     * `search_result_track`.
+     */
+    private fun queueItemArtworkFallback(youtubeId: String?): String? {
+        if (youtubeId == null) return null
+        return playerManager.queue.value.firstOrNull { it.youtubeId == youtubeId }?.artworkUri
     }
 
     fun toggleCurrentFavorite() {
