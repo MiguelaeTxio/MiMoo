@@ -620,12 +620,12 @@ class PlayerManager @Inject constructor(
                 // isPlaying=true to the rest of the app.
                 if (isPlaying) {
                     ensureAudioFocusRequested()
+                    // S044 -- misma fuente consistente que el resto:
+                    // isPhoneCallActive() (TelephonyManager si está
+                    // disponible, AudioManager.mode como respaldo).
                     val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
                         as? android.media.AudioManager
-                    val mode = audioManager?.mode
-                    if (mode == android.media.AudioManager.MODE_IN_CALL ||
-                        mode == android.media.AudioManager.MODE_IN_COMMUNICATION
-                    ) {
+                    if (audioManager != null && isPhoneCallActive(audioManager)) {
                         player.pause()
                         return
                     }
@@ -5589,9 +5589,35 @@ class PlayerManager @Inject constructor(
                 )
             }
         }
-        queueItems.clear()
-        player.clearMediaItems()
-        player.stop()
+        // S045 -- petición explícita de Miguel Ángel: "cuando se borra
+        // la cola la canción que hay puesta se corta" -- no debería.
+        // Antes: `queueItems.clear(); player.clearMediaItems();
+        // player.stop()` vaciaba TODO, incluida la pista en curso,
+        // cortándola de raíz. Ahora: si hay una pista sonando/pausada
+        // en este momento, se conserva -- solo se quita el RESTO de la
+        // cola (`player.removeMediaItems()` por rango, nunca toca la
+        // posición de reproducción de lo que no se elimina). Se quita
+        // primero lo de DESPUÉS del índice actual y luego lo de ANTES
+        // -- si se hiciera al revés, los índices de después se
+        // desplazarían y el primer removeMediaItems() apuntaría a la
+        // pista equivocada.
+        val currentIndex = player.currentMediaItemIndex
+        val keepCurrent = currentIndex in queueItems.indices
+        if (keepCurrent) {
+            if (currentIndex + 1 < player.mediaItemCount) {
+                player.removeMediaItems(currentIndex + 1, player.mediaItemCount)
+            }
+            if (currentIndex > 0) {
+                player.removeMediaItems(0, currentIndex)
+            }
+            val current = queueItems[currentIndex]
+            queueItems.clear()
+            queueItems.add(current)
+        } else {
+            queueItems.clear()
+            player.clearMediaItems()
+            player.stop()
+        }
         radioAnchorArtist = null
         radioAnchorArtistFallback = null
         radioAnchorTrackTitle = null
@@ -5766,6 +5792,38 @@ class PlayerManager @Inject constructor(
     private var telephonyCallStateListener: Any? = null
 
     /**
+     * S044 -- guardado aparte del listener para poder CONSULTAR el
+     * estado real de la llamada en cualquier momento (no solo
+     * reaccionar a sus eventos) -- ver `isPhoneCallActive()`, usado
+     * dentro de `ensureAudioFocusRequested()` para que el mecanismo de
+     * foco de audio consulte la fuente de verdad real en vez de
+     * `AudioManager.mode`, menos fiable.
+     */
+    private var telephonyManagerRef: android.telephony.TelephonyManager? = null
+
+    /**
+     * S044 -- fuente de verdad real del estado de la llamada, para
+     * quien necesite CONSULTARLO en un instante dado (no solo
+     * reaccionar a un evento) -- `TelephonyManager.callState` si
+     * `READ_PHONE_STATE` está concedido (`telephonyManagerRef` no
+     * nulo), con `AudioManager.mode` como respaldo si no lo está.
+     */
+    private fun isPhoneCallActive(audioManager: android.media.AudioManager): Boolean {
+        val telephonyManager = telephonyManagerRef
+        if (telephonyManager != null) {
+            return try {
+                @Suppress("DEPRECATION")
+                telephonyManager.callState != android.telephony.TelephonyManager.CALL_STATE_IDLE
+            } catch (e: Exception) {
+                false
+            }
+        }
+        val mode = audioManager.mode
+        return mode == android.media.AudioManager.MODE_IN_CALL ||
+            mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+    }
+
+    /**
      * S043 -- petición explícita de Miguel Ángel tras tres intentos
      * fallidos con `AudioManager.mode`/eventos de foco de audio
      * (ninguno bastante fiable en la práctica): *"la música se activa
@@ -5796,6 +5854,7 @@ class PlayerManager @Inject constructor(
         try {
             val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
                 as? android.telephony.TelephonyManager ?: return
+            telephonyManagerRef = telephonyManager
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 val callback = object : android.telephony.TelephonyCallback(),
                     android.telephony.TelephonyCallback.CallStateListener {
@@ -5830,10 +5889,23 @@ class PlayerManager @Inject constructor(
         when (state) {
             android.telephony.TelephonyManager.CALL_STATE_RINGING,
             android.telephony.TelephonyManager.CALL_STATE_OFFHOOK -> {
-                if (player.isPlaying) {
-                    pausedByAudioFocusLoss = true
-                    player.pause()
-                }
+                // S044 -- bug real reportado por Miguel Ángel:
+                // "cuando termina la llamada, la música ya no vuelve a
+                // sonar". Causa real: si el AUDIOFOCUS_GAIN espurio de
+                // mitad de llamada (el bug de S041) llegaba a reanudar
+                // la música un instante, `pausedByAudioFocusLoss`
+                // volvía a `false` -- si él la paraba a mano justo
+                // después, esa bandera se quedaba en `false` para
+                // siempre, así que al colgar de verdad NINGÚN
+                // mecanismo creía que tenía que reanudar nada. Ahora
+                // se marca SIEMPRE que el sistema de telefonía
+                // confirma que hay una llamada -- da igual si en ese
+                // instante estaba sonando, pausada por error, o parada
+                // a mano -- para que el estado quede consistente pase
+                // lo que pase con el mecanismo de foco de audio.
+                val wasPlaying = player.isPlaying
+                pausedByAudioFocusLoss = true
+                if (wasPlaying) player.pause()
             }
             android.telephony.TelephonyManager.CALL_STATE_IDLE -> {
                 if (pausedByAudioFocusLoss) {
@@ -5852,10 +5924,7 @@ class PlayerManager @Inject constructor(
                 repeat(90) {
                     kotlinx.coroutines.delay(1000)
                     if (!pausedByAudioFocusLoss) return@launch
-                    val mode = audioManager.mode
-                    if (mode != android.media.AudioManager.MODE_IN_CALL &&
-                        mode != android.media.AudioManager.MODE_IN_COMMUNICATION
-                    ) {
+                    if (!isPhoneCallActive(audioManager)) {
                         pausedByAudioFocusLoss = false
                         withContext(Dispatchers.Main) { player.play() }
                         return@launch
@@ -5904,9 +5973,12 @@ class PlayerManager @Inject constructor(
                             // indicando llamada activa en este mismo
                             // instante, doble capa de protección en
                             // vez de una sola reactiva.
-                            val mode = audioManager.mode
-                            val stillInCall = mode == android.media.AudioManager.MODE_IN_CALL ||
-                                mode == android.media.AudioManager.MODE_IN_COMMUNICATION
+                            // S044 -- `stillInCall` pasa a consultar
+                            // isPhoneCallActive(), que usa
+                            // TelephonyManager.callState (fuente de
+                            // verdad real) en vez de AudioManager.mode
+                            // en solitario -- ver su kdoc real.
+                            val stillInCall = isPhoneCallActive(audioManager)
                             if (pausedByAudioFocusLoss && !stillInCall) {
                                 pausedByAudioFocusLoss = false
                                 player.play()

@@ -123,9 +123,9 @@ fun QueueScreen(
             title = { Text("Vaciar cola") },
             text = {
                 Text(
-                    "Se vaciará toda la cola de reproducción y se " +
-                        "parará la música. Esto no afecta a tus listas " +
-                        "de reproducción guardadas."
+                    "Se vaciará el resto de la cola. La canción que está " +
+                        "sonando ahora mismo sigue -- esto no afecta a tus " +
+                        "listas de reproducción guardadas."
                 )
             },
             confirmButton = {

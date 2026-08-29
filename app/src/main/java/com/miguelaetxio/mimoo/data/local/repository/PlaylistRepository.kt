@@ -37,6 +37,12 @@ data class PlaylistPlayResult(
 @Singleton
 class PlaylistRepository @Inject constructor(
     private val dao: PlaylistDao,
+    // S045 -- petición explícita de Miguel Ángel: "obvio un
+    // recopilatorio, marco un tema, vuelvo a poner el recopilatorio y
+    // suena el tema marcado." Causa real: esta clase nunca comprobaba
+    // "no me gusta" a nivel de TEMA en absoluto -- ver el kdoc real
+    // junto a playPlaylistById().
+    private val dislikedTrackRepository: DislikedTrackRepository,
 ) {
     fun getAllPlaylists(): Flow<List<Playlist>> = dao.getAllPlaylists()
 
@@ -119,13 +125,28 @@ class PlaylistRepository @Inject constructor(
      * queueing, same criterion as the rest of the app's popurrís
      * (SelectionHeader/playAllFavoriteTracks).
      */
+    /**
+     * S045 -- bug real reportado por Miguel Ángel con texto exacto:
+     * *"obvio un recopilatorio, marco un tema. Vuelvo a poner el
+     * recopilatorio y suena el tema marcado... el mismo tema
+     * exactamente el mismo, suena lo pongas en la lista negra o en la
+     * verde."* No era un problema de coincidencia de texto (el fix de
+     * S039/S042 para el veto de ARTISTA no aplica aquí) -- era que
+     * esta función, al reproducir una playlist/recopilatorio propio,
+     * nunca comprobaba en absoluto el "no me gusta" a nivel de TEMA
+     * (`DislikedTrackRepository`) -- se limitaba a poner en cola todas
+     * las pistas guardadas, sin filtrar nada.
+     */
     suspend fun playPlaylistById(
         playlistId: Long,
         shuffle: Boolean,
         playerManager: PlayerManager,
         streamResolver: StreamResolver,
     ): PlaylistPlayResult {
-        val tracks = dao.getTracksForPlaylistOnce(playlistId)
+        val dislikedKeys = dislikedTrackRepository.normalizedKeysSnapshot()
+        val tracks = dao.getTracksForPlaylistOnce(playlistId).filterNot { track ->
+            DislikedTrackRepository.key(track.artist ?: track.channelTitle ?: "", track.title) in dislikedKeys
+        }
         if (tracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
 
         var resolutionFailures = 0
