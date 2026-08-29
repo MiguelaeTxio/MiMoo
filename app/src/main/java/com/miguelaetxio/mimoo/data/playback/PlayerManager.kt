@@ -518,37 +518,29 @@ class PlayerManager @Inject constructor(
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
-     * Foco de audio MANUAL, S036 -- petición de Miguel Ángel:
-     * "las llamadas mal, no ha cortado ni al recibir ni al descolgar".
-     * Confirmado por él mismo: la música seguía sonando MEZCLADA con la
-     * llamada -- sin ningún manejo de foco de audio (ni implícito ni
-     * explícito), ExoPlayer nunca reacciona a que llegue una llamada.
+     * S046 -- petición explícita de Miguel Ángel: *"quiero volver a
+     * ponerlo como antes, quiero quitar lo del foco de la música...
+     * cuando empezamos con el tema del foco, eso lo hemos roto por
+     * completo. Antes, cuando sonaba una notificación, la música
+     * seguía sonando igual. No se cortaba, no bajaba el volumen."*
      *
-     * Deliberadamente NO se toca `ExoPlayer.Builder` ni
-     * `setAudioAttributes()` esta vez -- eso fue justo lo que rompió
-     * miMooutCast por completo la vez anterior (misma sesión, ver el
-     * historial de commits sobre `buildExoPlayerWithExclusiveFocus` y
-     * su revert), sin que se llegara a encontrar la causa exacta pese
-     * a compilar y pasar el build de GitHub Actions sin problema.
+     * El mecanismo de `AudioFocusRequest` manual (S036-S041) se ha
+     * quitado por completo -- pedir el foco de audio hacía que
+     * CUALQUIER sonido transitorio de otra app (una notificación
+     * cualquiera, no solo una llamada) disparase
+     * `AUDIOFOCUS_LOSS_TRANSIENT` y pausara MiMoo, exactamente lo que
+     * él no quería. Se vuelve al comportamiento original: ExoPlayer
+     * sin ningún manejo de foco de audio, sigue sonando pase lo que
+     * pase con otras apps.
      *
-     * En su lugar: una `AudioFocusRequest` propia, pedida una sola vez
-     * (perezosa, la primera vez que algo empieza a sonar de verdad --
-     * nunca al arrancar la app, para no interferir con música de otra
-     * app que ya estuviera sonando antes de que el usuario tocara
-     * play), con reacción SELECTIVA a los cambios de foco:
-     *   - AUDIOFOCUS_LOSS_TRANSIENT (llamadas, éste es el que dispara
-     *     el sistema de telefonía de Android) -- se pausa.
-     *   - AUDIOFOCUS_GAIN, si se había pausado por lo anterior -- se
-     *     reanuda.
-     *   - AUDIOFOCUS_LOSS (permanente, otra app pide el foco para
-     *     sonar ella) y AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -- se
-     *     IGNORAN a propósito. Petición explícita de Miguel Ángel tras
-     *     probar el intento anterior: "cuando sale otra aplicación se
-     *     va la música... yo lo que quiero es que solo se siga oyendo
-     *     la música [de MiMoo]" -- abrir otra app NO debe pararla.
+     * Lo único que se conserva es la detección de llamadas reales vía
+     * `TelephonyManager` (S043-S044, ver `handleTelephonyCallStateChanged()`
+     * más abajo) -- esa NO pide foco de audio en ningún momento, solo
+     * escucha el estado real de la llamada telefónica, así que una
+     * notificación de otra app nunca la dispara. `pausedByCallState`
+     * es la bandera que usa, solo esa.
      */
-    private var audioFocusRequest: android.media.AudioFocusRequest? = null
-    private var pausedByAudioFocusLoss = false
+    private var pausedByCallState = false
 
     init {
         // Nivelación de audio (2026-08-23) -- Media3 1.10.1 ya no
@@ -619,7 +611,10 @@ class PlayerManager @Inject constructor(
                 // paused again immediately, without even propagating
                 // isPlaying=true to the rest of the app.
                 if (isPlaying) {
-                    ensureAudioFocusRequested()
+                    // S046 -- ensureAudioFocusRequested() quitada por
+                    // completo, ver el kdoc real junto a
+                    // `pausedByCallState` -- ya no se pide foco de
+                    // audio en ningún momento.
                     // S044 -- misma fuente consistente que el resto:
                     // isPhoneCallActive() (TelephonyManager si está
                     // disponible, AudioManager.mode como respaldo).
@@ -5767,27 +5762,6 @@ class PlayerManager @Inject constructor(
 
     fun durationMs(): Long = player.duration.coerceAtLeast(0L)
 
-    /**
-     * Pide el foco de audio manual UNA sola vez (perezoso -- nunca al
-     * arrancar la app, solo la primera vez que algo empieza a sonar de
-     * verdad). Ver el kdoc completo junto a `audioFocusRequest` más
-     * arriba. Envuelto en try/catch a propósito, mismo criterio que
-     * `AudioNormalizer` -- si esto falla por cualquier motivo en algún
-     * dispositivo, la reproducción debe seguir funcionando igual que
-     * sin foco de audio en absoluto, nunca romper nada.
-     */
-    /**
-     * S041 -- ver el comentario real junto a `AUDIOFOCUS_GAIN` en
-     * `ensureAudioFocusRequested()`. Sondea `AudioManager.mode` cada
-     * segundo, hasta 90 segundos, y reanuda en cuanto vuelve a
-     * `MODE_NORMAL` -- red de seguridad para el caso en que el
-     * `AUDIOFOCUS_GAIN` real de colgar llegue mientras el modo del
-     * sistema todavía no se ha actualizado. `pollingForCallEnd` evita
-     * lanzar sondeos duplicados solapados si llegan varios
-     * `AUDIOFOCUS_GAIN` seguidos mientras el sondeo ya está en marcha.
-     */
-    private var pollingForCallEnd = false
-
     /** S043 -- referencia al callback/listener real registrado, para no registrar dos veces. `Any?` porque el tipo real difiere según la versión de Android (ver `onPhoneStatePermissionGranted()`). */
     private var telephonyCallStateListener: Any? = null
 
@@ -5795,9 +5769,7 @@ class PlayerManager @Inject constructor(
      * S044 -- guardado aparte del listener para poder CONSULTAR el
      * estado real de la llamada en cualquier momento (no solo
      * reaccionar a sus eventos) -- ver `isPhoneCallActive()`, usado
-     * dentro de `ensureAudioFocusRequested()` para que el mecanismo de
-     * foco de audio consulte la fuente de verdad real en vez de
-     * `AudioManager.mode`, menos fiable.
+     * en la red de seguridad de `onIsPlayingChanged()`.
      */
     private var telephonyManagerRef: android.telephony.TelephonyManager? = null
 
@@ -5838,16 +5810,16 @@ class PlayerManager @Inject constructor(
      * proyecto tiene `minSdk 26`) -- verificados ambos contra
      * documentación y ejemplos reales antes de escribir esto.
      *
-     * Reacciona a CALL_STATE_RINGING/OFFHOOK pausando (mismo
-     * `pausedByAudioFocusLoss` que ya usa el mecanismo de
-     * `AudioFocusRequest` de arriba -- cooperan sin conflicto: cada
-     * uno puede pausar/reanudar sin pisarse, idempotente si los dos
-     * reaccionan al mismo evento real) y a CALL_STATE_IDLE
-     * reanudando. Se queda como capa AÑADIDA, no sustituye al
-     * `AudioFocusRequest` manual -- ese sigue cubriendo otras
-     * interrupciones transitorias que no son llamadas (notificaciones
-     * sonoras de otras apps, etc.) y el caso de que el usuario deniegue
-     * este permiso nuevo.
+     * Reacciona a CALL_STATE_RINGING/OFFHOOK pausando y a
+     * CALL_STATE_IDLE reanudando (ver `handleTelephonyCallStateChanged()`,
+     * `pausedByCallState`). S046 -- este es ahora el ÚNICO mecanismo de
+     * pausa/reanudación automática de toda la app; el de
+     * `AudioFocusRequest` (S036-S041) se quitó por completo a petición
+     * de Miguel Ángel, porque pedir el foco de audio hacía que
+     * cualquier sonido transitorio de OTRA app (una notificación
+     * cualquiera, no solo una llamada) pausara MiMoo -- este mecanismo
+     * NO pide foco en ningún momento, solo escucha el estado real de
+     * la llamada telefónica, así que no le pasa lo mismo.
      */
     fun onPhoneStatePermissionGranted() {
         if (telephonyCallStateListener != null) return
@@ -5877,10 +5849,12 @@ class PlayerManager @Inject constructor(
                 telephonyCallStateListener = listener
             }
         } catch (e: Exception) {
-            // Nunca dejar que esto rompa nada -- sin este mecanismo,
-            // sigue funcionando el AudioFocusRequest manual como única
-            // red de seguridad, igual que si el permiso no se hubiera
-            // concedido nunca.
+            // Nunca dejar que esto rompa nada -- S046, ya no hay
+            // ningún mecanismo de respaldo (el AudioFocusRequest se
+            // quitó por completo): si esto falla, MiMoo simplemente
+            // no pausa/reanuda para llamadas, igual que si el permiso
+            // no se hubiera concedido nunca -- nunca rompe la
+            // reproducción en sí.
             telephonyCallStateListener = null
         }
     }
@@ -5889,139 +5863,29 @@ class PlayerManager @Inject constructor(
         when (state) {
             android.telephony.TelephonyManager.CALL_STATE_RINGING,
             android.telephony.TelephonyManager.CALL_STATE_OFFHOOK -> {
-                // S044 -- bug real reportado por Miguel Ángel:
-                // "cuando termina la llamada, la música ya no vuelve a
-                // sonar". Causa real: si el AUDIOFOCUS_GAIN espurio de
-                // mitad de llamada (el bug de S041) llegaba a reanudar
-                // la música un instante, `pausedByAudioFocusLoss`
-                // volvía a `false` -- si él la paraba a mano justo
-                // después, esa bandera se quedaba en `false` para
-                // siempre, así que al colgar de verdad NINGÚN
-                // mecanismo creía que tenía que reanudar nada. Ahora
-                // se marca SIEMPRE que el sistema de telefonía
-                // confirma que hay una llamada -- da igual si en ese
-                // instante estaba sonando, pausada por error, o parada
-                // a mano -- para que el estado quede consistente pase
-                // lo que pase con el mecanismo de foco de audio.
+                // S046 -- el mecanismo de AudioFocusRequest que
+                // motivaba este comentario (el "GAIN espurio de mitad
+                // de llamada") se ha quitado por completo -- ver el
+                // kdoc real junto a `pausedByCallState`. Se sigue
+                // marcando siempre, sin depender de si en ese instante
+                // estaba sonando, por la misma robustez de fondo (que
+                // el estado quede consistente pase lo que pase).
                 val wasPlaying = player.isPlaying
-                pausedByAudioFocusLoss = true
+                pausedByCallState = true
                 if (wasPlaying) player.pause()
             }
             android.telephony.TelephonyManager.CALL_STATE_IDLE -> {
-                if (pausedByAudioFocusLoss) {
-                    pausedByAudioFocusLoss = false
+                if (pausedByCallState) {
+                    pausedByCallState = false
                     player.play()
                 }
             }
         }
     }
 
-    private fun pollForCallEndAndResume(audioManager: android.media.AudioManager) {
-        if (pollingForCallEnd) return
-        pollingForCallEnd = true
-        managerScope.launch {
-            try {
-                repeat(90) {
-                    kotlinx.coroutines.delay(1000)
-                    if (!pausedByAudioFocusLoss) return@launch
-                    if (!isPhoneCallActive(audioManager)) {
-                        pausedByAudioFocusLoss = false
-                        withContext(Dispatchers.Main) { player.play() }
-                        return@launch
-                    }
-                }
-            } finally {
-                pollingForCallEnd = false
-            }
-        }
-    }
-
-    private fun ensureAudioFocusRequested() {
-        if (audioFocusRequest != null) return
-        try {
-            val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
-                as? android.media.AudioManager ?: return
-            val attributes = android.media.AudioAttributes.Builder()
-                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build()
-            val request = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
-                .setAudioAttributes(attributes)
-                .setOnAudioFocusChangeListener { focusChange ->
-                    when (focusChange) {
-                        android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                            if (player.isPlaying) {
-                                pausedByAudioFocusLoss = true
-                                player.pause()
-                            }
-                        }
-                        android.media.AudioManager.AUDIOFOCUS_GAIN -> {
-                            // S041 -- bug real reportado por Miguel
-                            // Ángel: "en mitad de la llamada la música
-                            // se activa sola". Causa probable: Android
-                            // puede mandar un AUDIOFOCUS_GAIN puntual
-                            // A MITAD de una llamada todavía activa
-                            // (cambios de ruta de audio -- altavoz,
-                            // Bluetooth, auriculares -- disparan una
-                            // reevaluación de foco sin que la llamada
-                            // haya colgado). Antes se reanudaba aquí
-                            // sin más, confiando en que
-                            // onIsPlayingChanged() lo repescara
-                            // DESPUÉS -- con esta comprobación previa,
-                            // ni siquiera se llega a llamar a
-                            // player.play() si el modo sigue
-                            // indicando llamada activa en este mismo
-                            // instante, doble capa de protección en
-                            // vez de una sola reactiva.
-                            // S044 -- `stillInCall` pasa a consultar
-                            // isPhoneCallActive(), que usa
-                            // TelephonyManager.callState (fuente de
-                            // verdad real) en vez de AudioManager.mode
-                            // en solitario -- ver su kdoc real.
-                            val stillInCall = isPhoneCallActive(audioManager)
-                            if (pausedByAudioFocusLoss && !stillInCall) {
-                                pausedByAudioFocusLoss = false
-                                player.play()
-                            } else if (pausedByAudioFocusLoss && stillInCall) {
-                                // S041 -- si este GAIN era el de verdad
-                                // (colgar), pero el modo del sistema
-                                // aún no se ha actualizado a NORMAL en
-                                // este mismo instante, no hay que
-                                // perder la reanudación para siempre --
-                                // se sondea unos segundos más hasta que
-                                // el modo confirme que la llamada
-                                // terminó de verdad.
-                                pollForCallEndAndResume(audioManager)
-                            }
-                        }
-                        // AUDIOFOCUS_LOSS (permanente) y
-                        // AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK se ignoran
-                        // a propósito -- ver el kdoc completo junto a
-                        // `audioFocusRequest`.
-                    }
-                }
-                .build()
-            audioManager.requestAudioFocus(request)
-            audioFocusRequest = request
-        } catch (e: Exception) {
-            // Nunca dejar que esto rompa la reproducción -- se queda
-            // sin foco de audio manual, pero sigue sonando igual.
-        }
-    }
-
     fun release() {
         managerScope.cancel()
         audioNormalizer.release()
-        try {
-            audioFocusRequest?.let {
-                val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
-                    as? android.media.AudioManager
-                audioManager?.abandonAudioFocusRequest(it)
-            }
-        } catch (e: Exception) {
-            // Ídem -- nunca dejar que la liberación del foco rompa el
-            // resto de release().
-        }
         try {
             telephonyCallStateListener?.let { listener ->
                 val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
