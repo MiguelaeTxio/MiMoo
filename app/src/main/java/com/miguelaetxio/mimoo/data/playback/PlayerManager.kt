@@ -592,39 +592,27 @@ class PlayerManager @Inject constructor(
                 // ---
                 // Real bug reported by Miguel Ángel (2026-08-24):
                 // "sometimes resumes early [before the call ends] and
-                // does it during the call". Real cause: there's no
-                // custom audio focus code anywhere in the project --
-                // it relies entirely on ExoPlayer's automatic handling
-                // (`ExoPlayer.Builder(appContext).build()`, no explicit
-                // `setAudioAttributes()`). Known Android edge case:
-                // when answering a call, there can be a very brief gap
-                // between the ringtone releasing focus and the call
-                // itself claiming it -- ExoPlayer, in automatic mode,
-                // can resume right in that gap.
+                // does it during the call" -- ver el historial de
+                // commits S036-S047 para la evolución completa de este
+                // mecanismo. Estado actual: handleTelephonyCallStateChanged()
+                // es el ÚNICO mecanismo de pausa/reanudación de
+                // llamadas de toda la app (S046) -- ver su kdoc real.
                 //
-                // Safety net, no new permission needed (no
-                // READ_PHONE_STATE): `AudioManager.getMode()` is freely
-                // readable, and returns MODE_IN_CALL / MODE_IN_COMMUNICATION
-                // while a call (regular or VoIP) is ongoing -- verified
-                // against the real API before using it. If ExoPlayer
-                // resumes while the mode indicates an active call, it's
-                // paused again immediately, without even propagating
-                // isPlaying=true to the rest of the app.
-                if (isPlaying) {
-                    // S046 -- ensureAudioFocusRequested() quitada por
-                    // completo, ver el kdoc real junto a
-                    // `pausedByCallState` -- ya no se pide foco de
-                    // audio en ningún momento.
-                    // S044 -- misma fuente consistente que el resto:
-                    // isPhoneCallActive() (TelephonyManager si está
-                    // disponible, AudioManager.mode como respaldo).
-                    val audioManager = appContext.getSystemService(android.content.Context.AUDIO_SERVICE)
-                        as? android.media.AudioManager
-                    if (audioManager != null && isPhoneCallActive(audioManager)) {
-                        player.pause()
-                        return
-                    }
-                }
+                // S047 -- bug real reportado por Miguel Ángel: "cuando
+                // cuelgo, la música no vuelve a sonar". Causa real:
+                // aquí mismo vivía una red de seguridad vieja (de la
+                // época del mecanismo de AudioFocusRequest, ya
+                // eliminado en S046) que se quedó por error -- cuando
+                // handleTelephonyCallStateChanged() reanuda de verdad
+                // al colgar (CALL_STATE_IDLE), llama a player.play(),
+                // que dispara ESTE mismo onIsPlayingChanged(true) -- si
+                // en ese instante exacto TelephonyManager.callState
+                // todavía no se había actualizado a IDLE (aunque el
+                // EVENTO ya hubiera llegado), esa red volvía a pausar,
+                // DESHACIENDO la reanudación real -- y como no tocaba
+                // `pausedByCallState`, esa bandera se quedaba en
+                // `false` para siempre, así que nadie volvía a
+                // intentar reanudar nunca más. Quitada por completo.
                 _state.value = _state.value.copy(isPlaying = isPlaying)
                 // Arranca (o promociona a primer plano) el servicio de
                 // reproducción en cuanto empieza a sonar algo -- bug
@@ -5766,36 +5754,6 @@ class PlayerManager @Inject constructor(
     private var telephonyCallStateListener: Any? = null
 
     /**
-     * S044 -- guardado aparte del listener para poder CONSULTAR el
-     * estado real de la llamada en cualquier momento (no solo
-     * reaccionar a sus eventos) -- ver `isPhoneCallActive()`, usado
-     * en la red de seguridad de `onIsPlayingChanged()`.
-     */
-    private var telephonyManagerRef: android.telephony.TelephonyManager? = null
-
-    /**
-     * S044 -- fuente de verdad real del estado de la llamada, para
-     * quien necesite CONSULTARLO en un instante dado (no solo
-     * reaccionar a un evento) -- `TelephonyManager.callState` si
-     * `READ_PHONE_STATE` está concedido (`telephonyManagerRef` no
-     * nulo), con `AudioManager.mode` como respaldo si no lo está.
-     */
-    private fun isPhoneCallActive(audioManager: android.media.AudioManager): Boolean {
-        val telephonyManager = telephonyManagerRef
-        if (telephonyManager != null) {
-            return try {
-                @Suppress("DEPRECATION")
-                telephonyManager.callState != android.telephony.TelephonyManager.CALL_STATE_IDLE
-            } catch (e: Exception) {
-                false
-            }
-        }
-        val mode = audioManager.mode
-        return mode == android.media.AudioManager.MODE_IN_CALL ||
-            mode == android.media.AudioManager.MODE_IN_COMMUNICATION
-    }
-
-    /**
      * S043 -- petición explícita de Miguel Ángel tras tres intentos
      * fallidos con `AudioManager.mode`/eventos de foco de audio
      * (ninguno bastante fiable en la práctica): *"la música se activa
@@ -5826,7 +5784,6 @@ class PlayerManager @Inject constructor(
         try {
             val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
                 as? android.telephony.TelephonyManager ?: return
-            telephonyManagerRef = telephonyManager
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 val callback = object : android.telephony.TelephonyCallback(),
                     android.telephony.TelephonyCallback.CallStateListener {
