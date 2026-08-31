@@ -189,18 +189,35 @@ private fun DraggableQueueList(
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
     val listState = rememberLazyListState()
+    var hasScrolledOnEntry by remember { mutableStateOf(false) }
 
-    // Petición explícita de Miguel Ángel (2026-08-27): "sería
-    // conveniente al entrar en la cola de reproducción poner el foco
-    // en la canción que se está reproduciendo actualmente" --
-    // LaunchedEffect(Unit) para que dispare UNA sola vez, al entrar en
-    // la pantalla (no cada vez que cambie playbackState.queueIndex
-    // mientras ya está abierta, que sería un salto molesto si el
-    // usuario se ha desplazado a otro punto de la cola a mano).
-    LaunchedEffect(Unit) {
+    // Petición explícita de Miguel Ángel: "sería conveniente al entrar
+    // en la cola de reproducción poner el foco en la canción que se
+    // está reproduciendo actualmente" -- y ampliado después, palabras
+    // textuales: "además de ir al foco cuando entramos, si no nos
+    // salimos de la vista de la cola de reproducción, el tema actual
+    // debe de estar siempre visible."
+    //
+    // LaunchedEffect(playbackState.queueIndex) -- dispara al entrar Y
+    // cada vez que el tema en curso cambie mientras la pantalla sigue
+    // abierta (el reproductor avanza solo al siguiente, por ejemplo).
+    // Al ENTRAR (`!hasScrolledOnEntry`), salto instantáneo sin
+    // animación -- se siente como que ya estaba ahí. Después, solo se
+    // desplaza si el tema actual ha dejado de estar visible en la
+    // pantalla -- no interrumpe si el usuario ya lo tiene a la vista,
+    // y usa una animación suave (no salto brusco) para los cambios
+    // mientras ya está mirando la lista.
+    LaunchedEffect(playbackState.queueIndex) {
         val index = playbackState.queueIndex
-        if (index in queue.indices) {
+        if (index !in queue.indices) return@LaunchedEffect
+        if (!hasScrolledOnEntry) {
             listState.scrollToItem(index)
+            hasScrolledOnEntry = true
+            return@LaunchedEffect
+        }
+        val alreadyVisible = listState.layoutInfo.visibleItemsInfo.any { it.index == index }
+        if (!alreadyVisible) {
+            listState.animateScrollToItem(index)
         }
     }
 
