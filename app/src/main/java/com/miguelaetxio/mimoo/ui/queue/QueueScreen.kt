@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -187,8 +188,23 @@ private fun DraggableQueueList(
     var rowHeightPx by remember { mutableStateOf(0f) }
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
+    val listState = rememberLazyListState()
 
-    LazyColumn(modifier = modifier.fillMaxSize()) {
+    // Petición explícita de Miguel Ángel (2026-08-27): "sería
+    // conveniente al entrar en la cola de reproducción poner el foco
+    // en la canción que se está reproduciendo actualmente" --
+    // LaunchedEffect(Unit) para que dispare UNA sola vez, al entrar en
+    // la pantalla (no cada vez que cambie playbackState.queueIndex
+    // mientras ya está abierta, que sería un salto molesto si el
+    // usuario se ha desplazado a otro punto de la cola a mano).
+    LaunchedEffect(Unit) {
+        val index = playbackState.queueIndex
+        if (index in queue.indices) {
+            listState.scrollToItem(index)
+        }
+    }
+
+    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
         // S010 -- crash real (IllegalArgumentException: Key "1" was
         // already used), mismo tipo de fallo ya visto y arreglado en
         // los chips de país de RadioBrowserScreen: el índice puro como
