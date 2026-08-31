@@ -187,11 +187,36 @@ class MimooutcastViewModel @Inject constructor(
      */
     private var searchCancelledByUser = false
 
+    private var searchJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * Petición explícita de Miguel Ángel: "cuando se reinicia la
+     * aplicación y le das a los botones... siempre hay que darle dos
+     * veces pq la primera falla... cuando se le da al botón hay que
+     * matar todo proceso de lista y reiniciar sin cortar la canción
+     * que esté sonando si la hay."
+     *
+     * Antes: `if (_uiState.value.loadingLabel != null) return` --
+     * si por lo que sea ya había una búsqueda "en marcha" (colgada, o
+     * el usuario pulsando otro botón mientras tanto), el toque nuevo
+     * se ignoraba en silencio, sin arrancar nada -- coincide con "hay
+     * que darle dos veces": el primer toque, si encuentra el estado
+     * ya "cargando" por cualquier motivo, no hacía literalmente nada.
+     *
+     * Ahora: se cancela primero cualquier búsqueda anterior de verdad
+     * (tanto el job de este ViewModel como el interno de
+     * `PlayerManager`, `cancelMimooutcastSearch()` -- mismo mecanismo
+     * que ya usa el botón "Dejar de buscar") y se arranca limpio,
+     * siempre. No corta la canción en curso -- `clearQueue()`
+     * (llamada dentro de `startRadioFromManualAnchor()`) ya conserva
+     * la pista actual desde S045, sin tocar nada de eso aquí.
+     */
     private fun start(genre: String?, decadeBegin: Int?, originGroup: OriginGroup?, label: String) {
-        if (_uiState.value.loadingLabel != null) return
+        searchJob?.cancel()
+        playerManager.cancelMimooutcastSearch()
         searchCancelledByUser = false
         _uiState.value = _uiState.value.copy(loadingLabel = label, noResultsFor = null)
-        viewModelScope.launch {
+        searchJob = viewModelScope.launch {
             val anchor = radioRepository.manualAnchor(genre, decadeBegin, originGroup)
             val started = playerManager.startRadioFromManualAnchor(
                 anchor, "miMooutCast: $label",
@@ -212,6 +237,7 @@ class MimooutcastViewModel @Inject constructor(
      */
     fun cancelSearch() {
         searchCancelledByUser = true
+        searchJob?.cancel()
         playerManager.cancelMimooutcastSearch()
         _uiState.value = _uiState.value.copy(loadingLabel = null)
     }
