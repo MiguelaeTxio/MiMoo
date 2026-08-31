@@ -902,16 +902,27 @@ private fun KaraokeTeleprompter(lines: List<LrcLine>, positionMs: Long, screenHe
     LaunchedEffect(currentIndex) {
         if (lines.isEmpty()) return@LaunchedEffect
         val targetIndex = currentIndex.coerceIn(0, lines.size - 1)
-        listState.animateScrollToItem(targetIndex)
+        // Petición explícita de Miguel Ángel (2026-08-27): "tiene
+        // movimientos muy bruscos, la frase resaltada sube hasta
+        // arriba y luego baja al medio. No hace un smooth scrolling y
+        // cansa." Causa real: dos animaciones seguidas --
+        // `animateScrollToItem(targetIndex)` sube el tema al principio
+        // del hueco (comportamiento por defecto de LazyColumn), y solo
+        // DESPUÉS se medía el hueco real y se corregía al centro con
+        // una SEGUNDA animación -- de ahí el "sube y luego baja".
+        //
+        // Ahora, una sola animación directa al centro. La altura de
+        // línea se estima ANTES de moverse, a partir de cualquier
+        // línea que ya esté visible en este mismo instante (todas
+        // comparten `maxLines = 1`, así que la altura real apenas
+        // varía entre la resaltada y el resto) -- no hace falta
+        // esperar a que la pista destino esté renderizada para saber
+        // cuánto mide.
         val info = listState.layoutInfo
-        val itemInfo = info.visibleItemsInfo.firstOrNull { it.index == targetIndex }
-        if (itemInfo != null) {
-            val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
-            val centerOffset = (viewportHeight - itemInfo.size) / 2
-            if (centerOffset > 0) {
-                listState.animateScrollToItem(targetIndex, -centerOffset)
-            }
-        }
+        val estimatedItemHeight = info.visibleItemsInfo.firstOrNull()?.size ?: 0
+        val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
+        val centerOffset = ((viewportHeight - estimatedItemHeight) / 2).coerceAtLeast(0)
+        listState.animateScrollToItem(targetIndex, -centerOffset)
     }
     Box(
         modifier = Modifier
