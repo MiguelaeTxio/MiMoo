@@ -3774,6 +3774,30 @@ class PlayerManager @Inject constructor(
                 artist = artist,
                 isFromRadio = true,
                 youtubeId = knownYoutubeId,
+                // S049 -- bug real reportado por Miguel Ángel: "desde
+                // este último build no se ven ni las imágenes en la
+                // notificación, ahora todo es logo". Causa real (no
+                // era del último commit, ya existía) -- lo que pasó es
+                // que el fix de prioridad de la semilla de década
+                // (S048, justo antes) hizo que ESTE camino
+                // (`knownYoutubeId != null`, semillas de género/década/
+                // clásica) pasara a ser el dominante para década sola,
+                // sacando a la luz un hueco que llevaba tiempo ahí:
+                // este QueueItem nunca fijaba `artworkUri` en absoluto,
+                // así que el respaldo del logo (S040) se activaba
+                // SIEMPRE para cualquier pista de una semilla, no solo
+                // cuando de verdad no había carátula. Miniatura de
+                // YouTube real, sin API key ni llamada de red extra --
+                // ya se tiene el youtubeId, solo hace falta construir
+                // la URL (patrón público estable, verificado antes de
+                // usarlo: i.ytimg.com/vi/{id}/hqdefault.jpg, la
+                // variante que "siempre existe" a diferencia de
+                // maxresdefault). No es tan rica como la carátula real
+                // de MusicBrainz (que sigue teniendo prioridad en
+                // PlayerBarViewModel, ver S040), pero es infinitamente
+                // mejor que el logo genérico para el 100% de estas
+                // pistas.
+                artworkUri = "https://i.ytimg.com/vi/$knownYoutubeId/hqdefault.jpg",
             )
         }
         val query = when {
