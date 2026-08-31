@@ -789,19 +789,23 @@ fun PlayerBar(
  * H17 (S031, bloque 2) -- panel de karaoke sobre el ExoPlayer, ver
  * "Puntos de diseño -- CERRADOS EN S031" de DOCS/ANNEX_H17.md, puntos
  * 2 y 4. Altura variable según el caso:
- * - `lyrics.syncedLyrics != null` -> 1/9 de pantalla, teleprompter con
- *   la línea actual resaltada CENTRADA en el hueco del panel (H17,
- *   bug real, 2026-08-07 -- antes quedaba pegada arriba) y las líneas
+ * - `lyrics.syncedLyrics != null` -> 1/3 de pantalla (S049, antes 1/9
+ *   -- corregido a petición explícita de Miguel Ángel: "debería de ser
+ *   del mismo tamaño que cuando no lo están"), teleprompter con la
+ *   línea actual resaltada CENTRADA en el hueco del panel (H17, bug
+ *   real, 2026-08-07 -- antes quedaba pegada arriba) y las líneas
  *   siguientes visibles debajo -- se auto-desplaza con `positionMs`,
  *   sin scroll manual.
  * - `lyrics.syncedLyrics == null && lyrics.plainLyrics != null` -> 1/3
  *   de pantalla, letra completa scrolleable, SIN ningún aviso.
  * - Sin ninguna letra (o mientras `loading`) -> 1/9 de pantalla,
- *   mensaje informativo mínimo.
+ *   mensaje informativo mínimo -- este caso SÍ se queda pequeño a
+ *   propósito, no es contenido real que leer.
  * ---
  * H17 (S031, block 2) -- karaoke panel over the ExoPlayer. Variable
- * height: 1/9 screen for synced karaoke or the "no lyrics" message,
- * 1/3 for scrollable plain lyrics with no warning at all.
+ * height: 1/3 screen for either synced karaoke or scrollable plain
+ * lyrics (S049, same size for both), 1/9 for the "no lyrics"/loading
+ * message only.
  */
 @Composable
 private fun KaraokeLyricsPanel(
@@ -912,7 +916,15 @@ private fun KaraokeTeleprompter(lines: List<LrcLine>, positionMs: Long, screenHe
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(screenHeight / 9)
+            // Petición explícita de Miguel Ángel (2026-08-27): "el
+            // karaoke me equivoqué al poner pequeña la 'pantalla' de
+            // salida de las letras cuando están sincronizadas, debería
+            // de ser del mismo tamaño que cuando no lo están" -- antes
+            // 1/9 de pantalla aquí frente a 1/3 en la letra plana (ver
+            // KaraokeLyricsPanel más arriba), decisión original de
+            // S031 ahora corregida a petición suya: mismo tamaño en
+            // los dos casos.
+            .height(screenHeight / 3)
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .glassChip(interactive = false)
             .padding(horizontal = 12.dp),
