@@ -4220,28 +4220,43 @@ class PlayerManager @Inject constructor(
         }
         // S037 -- mismo método que la semilla de género de arriba,
         // aplicado a "década sola" (sin género ni origen) desde el
-        // diccionario de éxitos local. Ver el kdoc real de
-        // `decadeHitsOrder` -- diseño definitivo confirmado por
-        // Miguel Ángel: "esto sirve para todo... se baraja y se ponen
-        // seguidos... lo que se vaya descubriendo se pone al final".
-        // Se pre-carga solo cuando de verdad aplica (misma condición
-        // exacta que `isDecadeOnly` en `fetchSimpleManualCandidate()`,
-        // más abajo) -- si el botón "Conocido en España" está
-        // encendido, `miMooutCastRequireKnownInSpain` ya cubre este
-        // caso con su propia lógica (mismo diccionario, filtrado por
-        // España), no hace falta duplicarla.
+        // diccionario de éxitos local SIN VALIDAR. Se pre-carga solo
+        // cuando "Conocido en España" está apagado -- si está
+        // encendido, `miMooutCastRequireKnownInSpain` ya cubre ese
+        // caso con su propia lógica en vivo.
         val anchorIsDecadeOnly = anchor.genre.isBlank() && anchor.originGroup == null && anchor.decadeBegin != null
         if (anchorIsDecadeOnly && !requireKnownInSpain) {
             decadeHitsOrder = knownHitsRepository.allHitsForDecade(anchor.decadeBegin!!).shuffled()
             decadeHitsIndex = 0
-            // S037 -- semilla validada, ver su kdoc real. Se baraja
-            // igual que el resto, y se agota ANTES que decadeHitsOrder
-            // (arriba) en fetchSimpleManualCandidate().
-            decadeSeedOrder = mimooutcastDecadeSeedRepository.tracksForDecade(anchor.decadeBegin).shuffled()
-            decadeSeedIndex = 0
         } else {
             decadeHitsOrder = emptyList()
             decadeHitsIndex = 0
+        }
+        // S048 -- bug real encontrado tras una captura de pantalla de
+        // Miguel Ángel: "Años 90" con "Conocido en España" ENCENDIDO
+        // daba "no se ha encontrado ningún tema" -- tras semanas
+        // cosechando la semilla de década VALIDADA (2.815 canciones
+        // reales, S037-S038) para que esto arrancara al instante. Causa
+        // real: `decadeSeedOrder` (la semilla validada) solo se
+        // precargaba `if (anchorIsDecadeOnly && !requireKnownInSpain)`
+        // -- con el interruptor ENCENDIDO, la semilla ni se tocaba, la
+        // búsqueda caía entera en `miMooutCastRequireKnownInSpain`
+        // (randomHit() en vivo, el camino lento y con fallos que
+        // llevamos toda la sesión arreglando). Sin sentido: la semilla
+        // se construyó validando el MISMO diccionario `known_hit_artists.json`
+        // (bloques es + intl, ver `tools/validate_decade_hits.py`) --
+        // no es "menos conocida en España" que el diccionario sin
+        // validar, es la versión VALIDADA de exactamente ese mismo
+        // dato. Se precarga ahora para CUALQUIER década sola, sin
+        // depender del interruptor -- y se comprueba ANTES que
+        // `miMooutCastRequireKnownInSpain` en la cascada de
+        // `fetchSimpleManualCandidate()` (ver más abajo), así que
+        // manda ella primero siempre, arranque instantáneo real, sea
+        // cual sea la posición del interruptor.
+        if (anchorIsDecadeOnly) {
+            decadeSeedOrder = mimooutcastDecadeSeedRepository.tracksForDecade(anchor.decadeBegin).shuffled()
+            decadeSeedIndex = 0
+        } else {
             decadeSeedOrder = emptyList()
             decadeSeedIndex = 0
         }
@@ -4604,6 +4619,25 @@ class PlayerManager @Inject constructor(
                 artistName = next.artist
                 knownTitle = next.title
                 knownYoutubeId = next.youtubeId
+            } else if (decadeSeedIndex < decadeSeedOrder.size) {
+                // S048 -- semilla de década VALIDADA (con youtubeId
+                // real, ver su kdoc completo junto a `decadeSeedOrder`
+                // más arriba), movida AQUÍ, ANTES de
+                // `miMooutCastRequireKnownInSpain` -- a diferencia de la
+                // semilla de género (mimooutcastSeedGenre, más abajo,
+                // sin validar contra España), esta semilla SÍ se
+                // construyó validando el diccionario de éxitos completo
+                // (es + intl), así que no hay ningún motivo para que el
+                // interruptor "Conocido en España" la deje de lado --
+                // manda siempre para década sola, sea cual sea su
+                // posición. Arranca al instante -- solo hay que
+                // resolver la URL de streaming, nunca buscar ni
+                // verificar nada en vivo.
+                val next = decadeSeedOrder[decadeSeedIndex]
+                decadeSeedIndex++
+                artistName = next.artist
+                knownTitle = next.title
+                knownYoutubeId = next.youtubeId
             } else if (miMooutCastRequireKnownInSpain) {
                 // H15 (miMooutCast), S032 -- botón "Conocido en
                 // España" encendido: se busca DIRECTAMENTE dentro del
@@ -4668,17 +4702,6 @@ class PlayerManager @Inject constructor(
                 knownTitle = next.title
                 knownYoutubeId = next.youtubeId
                 candidateSeedGenre = mimooutcastSeedGenre
-            } else if (decadeSeedIndex < decadeSeedOrder.size) {
-                // S037 -- semilla de década VALIDADA (con youtubeId
-                // real), ver su kdoc completo junto a
-                // `decadeSeedOrder`. Arranca al instante, igual que la
-                // semilla de género -- solo hay que resolver la URL de
-                // streaming, nunca buscar ni verificar nada en vivo.
-                val next = decadeSeedOrder[decadeSeedIndex]
-                decadeSeedIndex++
-                artistName = next.artist
-                knownTitle = next.title
-                knownYoutubeId = next.youtubeId
             } else if (decadeHitsIndex < decadeHitsOrder.size) {
                 // S037 -- mismo mecanismo que la rama de la semilla de
                 // género de arriba: fuente local pre-cargada y
