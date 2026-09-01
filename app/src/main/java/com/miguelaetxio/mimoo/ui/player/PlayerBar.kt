@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
@@ -96,6 +97,24 @@ import com.miguelaetxio.mimoo.util.LrcParser
  * composición al cambiar de pantalla (vive en el nivel de
  * MainActivity, fuera del NavHost).
  */
+/**
+ * S048 -- "compartir el tema que se está tocando" (petición explícita
+ * de Miguel Ángel al cerrar S035). Mismo patrón Intent.ACTION_SEND que
+ * `shareLink()` de LibraryScreen.kt, sin depender de esa pantalla ni
+ * duplicar su función privada. Construye el enlace de YouTube estándar
+ * a partir del youtubeId de la pista actual -- decisión propia (no
+ * usa el sistema de hash de H10, pensado para compartir bloques
+ * completos de biblioteca dentro de la propia app).
+ */
+private fun shareCurrentTrack(context: android.content.Context, youtubeId: String) {
+    val url = "https://www.youtube.com/watch?v=$youtubeId"
+    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(android.content.Intent.EXTRA_TEXT, url)
+    }
+    context.startActivity(android.content.Intent.createChooser(intent, null))
+}
+
 @Composable
 fun PlayerBar(
     viewModel: PlayerBarViewModel = hiltViewModel(),
@@ -411,6 +430,17 @@ fun PlayerBar(
             // it looks the same as before (SpaceBetween distributes the
             // leftover space), with many it can be scrolled instead of
             // overflowing off-screen.
+            // S048 -- rediseño explícito de Miguel Ángel al cerrar S035:
+            // "tenemos muchos controles... habría que poner una fila con
+            // lo que son los controles de reproducción y otra fila con
+            // los like/dislike/add2list/download/share." Fila 1 (esta):
+            // SOLO controles de transporte -- aleatorio, anterior,
+            // play/pausa, siguiente, cíclico -- exactamente lo que había
+            // antes, sin tocar orden ni tamaños, menos los botones que
+            // bajan a la Fila 2. El botón de contraer se queda FIJO al
+            // final, fuera de la sub-fila scrollable, mismo fix de
+            // S011/2026-07-24 (con menos botones ya no debería
+            // desbordar, pero se conserva el mecanismo por seguridad).
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -448,53 +478,6 @@ fun PlayerBar(
                             } else {
                                 LocalContentColor.current
                             },
-                        )
-                    }
-                }
-
-                if (state.currentYoutubeId != null) {
-                    // Favorito conserva su patrón propio (glifo relleno
-                    // vs contorno + amarillo), que ya se lee de un
-                    // vistazo sin necesidad de placa encendida.
-                    GlassIconButton(onClick = viewModel::toggleCurrentFavorite) {
-                        Icon(
-                            if (isCurrentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            contentDescription = if (isCurrentFavorite) {
-                                "Quitar de favoritos"
-                            } else {
-                                "Añadir a favoritos"
-                            },
-                            tint = if (isCurrentFavorite) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                LocalContentColor.current
-                            },
-                        )
-                    }
-                    // Petición explícita de Miguel Ángel (2026-08-24):
-                    // botón "+" para añadir el tema actual a una lista
-                    // (nueva o existente) directamente desde el
-                    // reproductor.
-                    GlassIconButton(onClick = { showAddToPlaylist = true }) {
-                        Icon(
-                            Icons.Filled.PlaylistAdd,
-                            contentDescription = "Añadir a lista",
-                        )
-                    }
-                }
-
-                // H16 -- botón "no me gusta", mismo criterio de
-                // visibilidad que Favorito (solo si la pista actual
-                // tiene equivalente real en la biblioteca). Sin estado
-                // ON/OFF propio -- es una acción que abre el diálogo
-                // "¿artista o tema?", no un chequeo del estado actual
-                // (la gestión de lo ya marcado vive en la pantalla
-                // CRUD, "Lista negra").
-                if (state.currentYoutubeId != null) {
-                    GlassIconButton(onClick = viewModel::requestDislikeChoice) {
-                        Icon(
-                            Icons.Filled.ThumbDown,
-                            contentDescription = "No me gusta",
                         )
                     }
                 }
@@ -543,6 +526,83 @@ fun PlayerBar(
                         )
                     }
                 }
+                } // fin de la sub-fila scrollable de controles de transporte
+
+                // S011 -- botón para colapsar el reproductor a la
+                // mini-barra, ver comentario de cabecera. Fix real
+                // (2026-07-24): FUERA de la sub-fila scrollable de
+                // arriba, así queda fijo y siempre visible aunque los
+                // demás controles necesiten desplazarse.
+                GlassIconButton(onClick = { isExpanded = false }) {
+                    Icon(Icons.Filled.ExpandMore, contentDescription = "Contraer reproductor")
+                }
+            }
+
+            // S048 -- Fila 2 del rediseño: like/dislike/add2list/
+            // download/share, orden EXACTO dado por Miguel Ángel.
+            // "Ver álbum/artista" (menú de tres puntos, H12) no estaba
+            // en esa lista textual -- decisión propia, sin volver a
+            // preguntar (S048, incidente de proceso): se queda al final
+            // de esta misma fila, porque es una acción secundaria del
+            // mismo tipo (no es transporte), no porque encaje en el
+            // orden dado.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (state.currentYoutubeId != null) {
+                    // Favorito ("like") conserva su patrón propio (glifo
+                    // relleno vs contorno + amarillo), que ya se lee de
+                    // un vistazo sin necesidad de placa encendida.
+                    GlassIconButton(onClick = viewModel::toggleCurrentFavorite) {
+                        Icon(
+                            if (isCurrentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = if (isCurrentFavorite) {
+                                "Quitar de favoritos"
+                            } else {
+                                "Añadir a favoritos"
+                            },
+                            tint = if (isCurrentFavorite) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                LocalContentColor.current
+                            },
+                        )
+                    }
+                }
+
+                // H16 -- botón "no me gusta", mismo criterio de
+                // visibilidad que Favorito (solo si la pista actual
+                // tiene equivalente real en la biblioteca). Sin estado
+                // ON/OFF propio -- es una acción que abre el diálogo
+                // "¿artista o tema?", no un chequeo del estado actual
+                // (la gestión de lo ya marcado vive en la pantalla
+                // CRUD, "Lista negra").
+                if (state.currentYoutubeId != null) {
+                    GlassIconButton(onClick = viewModel::requestDislikeChoice) {
+                        Icon(
+                            Icons.Filled.ThumbDown,
+                            contentDescription = "No me gusta",
+                        )
+                    }
+                }
+
+                if (state.currentYoutubeId != null) {
+                    // Petición explícita de Miguel Ángel (2026-08-24):
+                    // botón "+" para añadir el tema actual a una lista
+                    // (nueva o existente) directamente desde el
+                    // reproductor.
+                    GlassIconButton(onClick = { showAddToPlaylist = true }) {
+                        Icon(
+                            Icons.Filled.PlaylistAdd,
+                            contentDescription = "Añadir a lista",
+                        )
+                    }
+                }
 
                 // S011 -- botón de descarga (petición explícita de
                 // Miguel Ángel, junto con el de la notificación -- ver
@@ -559,6 +619,28 @@ fun PlayerBar(
                 ) {
                     GlassIconButton(onClick = viewModel::downloadCurrentTrack) {
                         Icon(Icons.Filled.Download, contentDescription = "Descargar")
+                    }
+                }
+
+                // S048 -- "compartir el tema que se está tocando"
+                // (petición explícita de Miguel Ángel al cerrar S035).
+                // Comparte el enlace de YouTube del tema (decisión
+                // propia, sin volver a preguntar): es el mecanismo más
+                // simple, no depende del sistema de hash de H10 (pensado
+                // para compartir bloques completos de biblioteca dentro
+                // de la propia app, no un tema suelto sonando). Mismo
+                // patrón Intent.ACTION_SEND que ya usa LibraryScreen
+                // (shareLink()) -- ver PlayerShare.kt. Solo visible con
+                // youtubeId real, igual criterio que el resto de esta
+                // fila.
+                if (state.currentYoutubeId != null) {
+                    val shareContext = androidx.compose.ui.platform.LocalContext.current
+                    GlassIconButton(
+                        onClick = {
+                            shareCurrentTrack(shareContext, state.currentYoutubeId!!)
+                        },
+                    ) {
+                        Icon(Icons.Filled.Share, contentDescription = "Compartir")
                     }
                 }
 
@@ -629,16 +711,6 @@ fun PlayerBar(
                             }
                         }
                     }
-                }
-                } // fin de la sub-fila scrollable de controles variables
-
-                // S011 -- botón para colapsar el reproductor a la
-                // mini-barra, ver comentario de cabecera. Fix real
-                // (2026-07-24): FUERA de la sub-fila scrollable de
-                // arriba, así queda fijo y siempre visible aunque los
-                // demás controles necesiten desplazarse.
-                GlassIconButton(onClick = { isExpanded = false }) {
-                    Icon(Icons.Filled.ExpandMore, contentDescription = "Contraer reproductor")
                 }
             }
 
