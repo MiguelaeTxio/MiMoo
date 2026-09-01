@@ -458,7 +458,34 @@ class PlayerManager @Inject constructor(
      * ExoPlayer, so nothing else in the app needs to change: it's
      * still PlayerManager.play()/playQueue() exactly as before.
      */
-    val player: ExoPlayer = ExoPlayer.Builder(appContext).build()
+    /**
+     * S048 -- bug real reportado por Miguel Ángel al cierre de S035: "el
+     * volumen se baja solo y hay que estar subiendo el volumen cada vez
+     * que otra aplicación toca el volumen". Causa real, sin diagnosticar
+     * hasta ahora pese a los comentarios de S046/S047 que ya apuntaban a
+     * ella: `ExoPlayer.Builder(appContext).build()` sin
+     * `setAudioAttributes()` explícito deja el manejo automático de foco
+     * de audio de ExoPlayer ENCENDIDO por defecto (`handleAudioFocus =
+     * true` es el valor por defecto de la librería, no algo que este
+     * proyecto pidiera). Con eso activo, cualquier sonido transitorio
+     * "duckeable" de otra app (notificación, etc.) dispara
+     * `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`, y ExoPlayer baja el volumen
+     * internamente al 20% en vez de pausar -- exactamente el síntoma
+     * descrito, distinto de las pausas que causaba el `AudioFocusRequest`
+     * manual ya eliminado en S046.
+     *
+     * Se desactiva aquí, explícitamente, con `setHandleAudioFocus =
+     * false`: MiMoo vuelve a sonar igual pase lo que pase con el foco de
+     * cualquier otra app, sin pausas ni bajadas de volumen -- mismo
+     * criterio ya aplicado en S046 para las notificaciones, ahora
+     * también para el ducking.
+     */
+    val player: ExoPlayer = ExoPlayer.Builder(appContext)
+        .setAudioAttributes(
+            androidx.media3.common.AudioAttributes.DEFAULT,
+            /* handleAudioFocus = */ false,
+        )
+        .build()
 
     /**
      * Nivelación de audio en tiempo real (Opción A cerrada con Miguel
