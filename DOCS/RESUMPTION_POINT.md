@@ -1,6 +1,6 @@
 # PUNTO DE REANUDACIÓN — MiMoo
 
-**Última sesión cerrada:** S034 (2026-08-23)
+**Última sesión cerrada:** S035 (2026-08-23/28)
 **Hito con la hoja de ruta activa:** ver `DOCS/ANNEX_ROUTER.md`
 
 > El estado de los hitos vive **exclusivamente** en
@@ -8,166 +8,163 @@
 
 ---
 
-## Qué hacer en la siguiente sesión
+## Qué hacer en la siguiente sesión — EMPEZAR POR AQUÍ
+
+Miguel Ángel dio dos peticiones explícitas al cerrar S035, palabras
+suyas, sin diagnosticar ni diseñar todavía en esta sesión:
+
+1. **El volumen se baja solo.** *"El volumen de audio... se baja solo
+   y hay que estar subiendo el volumen cada vez que otra aplicación
+   toca el volumen. Antes estaba mejor pq no había que tocar nada.
+   Volvemos a dejarlo como estaba originalmente."* Contexto real: en
+   la propia S035 se quitó por completo el `AudioFocusRequest` que
+   causaba PAUSAS ante notificaciones de otras apps (ver cascada de
+   llamadas más abajo) -- pero este síntoma es distinto ("ducking",
+   bajada de volumen, no pausa) y sigue reportado DESPUÉS de ese
+   revert. Empezar leyendo si queda algún mecanismo de audio en
+   `PlayerManager.kt` (aparte de `TelephonyManager`, que no debería
+   tocar volumen en ningún caso) que pueda estar causando esto --
+   nunca asumir la causa sin leer el código real primero.
+2. **Rediseño de la interfaz del ExoPlayer.** *"Tenemos muchos
+   controles, hay que añadir compartir el tema que se está tocando,
+   habría que poner una fila con lo que son los controles de
+   reproducción y otra fila con los like/dislike/add2list/download/
+   share."* Sin diseño cerrado -- sesión de diseño antes de tocar
+   código, mismo criterio que el resto del proyecto para cambios de
+   alcance abierto (confirmar con Miguel Ángel qué iconos exactos van
+   en cada fila, si "share" comparte el enlace de YouTube o algo
+   propio de la app, etc.).
 
 **H12 (Directorio de Música + Favoritos sin Descarga) EN PROGRESO** --
-las dos hipótesis de S033 quedaron diagnosticadas y corregidas esta
-sesión (S034): campo de búsqueda embebido en el Explorador, y fix
-real de persistencia de favoritos (`AutoSyncPusher` usaba el chequeo
-de conectividad con falsos negativos ya corregido en `RadioRepository`
-para el bug de "Radio detenida"). **Sin diagnóstico nuevo pendiente**
--- solo queda **verificación en dispositivo real** de los tres puntos
-cerrados esta sesión (búsqueda embebida, persistencia de favoritos,
-sidebar a tamaño normal + scrollable). Hoja de ruta ejecutable
-completa en `DOCS/ANNEX_H12.md`, sección "Hoja de Ruta para la
-Siguiente Sesión que retome H12".
+sin tocar en S035 (sesión entera de incidencias sobre otros hitos, ver
+más abajo). Sigue exactamente como quedó en S034: **sin diagnóstico
+nuevo pendiente**, solo **verificación en dispositivo real** de los
+tres puntos cerrados en S034 (búsqueda embebida en el Explorador,
+persistencia de favoritos de artista/álbum, sidebar a tamaño normal +
+scrollable). Hoja de ruta ejecutable completa en
+`DOCS/ANNEX_H12.md`, sección "Hoja de Ruta para la Siguiente Sesión
+que retome H12".
 
-## H15 (miMooutCast) -- PAUSADO, cascada larga de incidencias reales sobre el generador y la reproducción en S034
+## Cascada larguísima de incidencias reales en S035 (H15/H16/H17/H18 + varios)
 
-Mismo criterio que S031/S033: incidencia puntual sobre código de un
-hito pausado, sin PCH -- H12 fue el hito EN PROGRESO durante toda la
-sesión. Detalle técnico completo en `DOCS/ANNEX_H15.md`, sección
-"COMPLETADAS EN S034". Resumen:
+Mismo criterio que S033/S034: incidencias puntuales sobre código de
+hitos pausados, sin PCH -- H12 fue el hito EN PROGRESO durante toda la
+sesión, sin tocarse. **Detalle técnico completo en
+`DOCS/ANNEX_H12.md`, sección "Cascada de incidencias reales sobre
+H15/H16/H17/H18 -- S035"** -- resumen muy breve aquí:
 
-1. **41 subgéneros descartados en TODA la app** (miMooutCast Y Radio
-   automática) -- llevaban atascados a 0 temas desde la pasada
-   anterior del generador, confirmado con análisis real (dos
-   exportaciones + 67 minutos de log) antes de tocar código. Fuente
-   única: `GenreTree.isBarren()`, cortando ANTES de cualquier llamada
-   de red en `RadioRepository.suggestWorkForGenre()`/`findCandidates()`.
-   Hubo una corrección real a mitad de camino (primer intento tocó
-   `genre_tree.json` en vez del catálogo propio de miMooutCast,
-   afectando sin necesidad a la Radio -- descubierto y corregido en la
-   misma sesión, restaurando el árbol byte a byte).
-2. **`mimooutcast_seed.json` bundleado en `assets/`** -- copia exacta
-   del export real de Miguel Ángel (22.220 temas/536 géneros). Cierra
-   el objetivo de fondo de todo el hito, aclarado por él con fuerza:
-   la lista tenía que viajar empaquetada en el APK, no regenerarse en
-   cada dispositivo.
-3. **Motor de cola instantánea + búsqueda en paralelo + curación de
-   enlaces rotos por reinstalación** -- método completo dictado por
-   Miguel Ángel: al elegir género se encolan al instante hasta 100
-   pistas de la semilla, la búsqueda en vivo sigue de fondo, los
-   enlaces rotos se anotan con su sustituto (`MimooutcastBrokenLinksLogger`,
-   `mimooutcast_broken_links.json`), y a partir de 10 rotos en un
-   género aparece un aviso en Ajustes. Generaliza a todos los géneros
-   un mecanismo que ya existía, probado, solo para Clásica.
+- **H15 (miMooutCast)**: tres fuentes de datos nuevas cosechadas y
+  fusionadas en el diccionario de éxitos (Spotify100, MUZIKALIA,
+  Spotify años 50 -- cierra el hueco que faltaba). Semilla de década
+  VALIDADA contra YouTube (2.815 canciones, generada en dispositivo
+  tras fallar vía GitHub Actions, mismo motivo que la de género en su
+  día -- bloqueo de IP de centro de datos). Varios bugs reales
+  encontrados y corregidos por el camino: prioridad de la semilla
+  ignorada con "Conocido en España" encendido, semillas sin carátula,
+  candidatos fallidos repitiéndose sin fin, botones que ignoraban un
+  segundo toque en silencio, URLs de streaming caducadas sin
+  reintento.
+- **H16 (Lista Negra)**: dos bugs reales de fondo -- comparación
+  exacta en vez de por contención (un artista vetado con texto de más
+  no coincidía), y duetos donde el campo `artist` guardado solo tenía
+  uno de los dos nombres. Además, los recopilatorios propios nunca
+  comprobaban "no me gusta" a nivel de tema.
+- **Llamadas telefónicas**: evolución completa en tres intentos (foco
+  de audio explícito -> rompió miMooutCast, revertido; foco manual con
+  `AudioFocusRequest` -> mejoró pero fallaba a mitad de llamada;
+  `TelephonyManager` real con `READ_PHONE_STATE` -> fiable de verdad
+  para llamadas). Decisión final de Miguel Ángel: quitar el
+  `AudioFocusRequest` por completo, porque pausaba ante CUALQUIER
+  notificación de cualquier app, no solo llamadas -- se conserva solo
+  `TelephonyManager`, que no le afecta ese problema.
+- **H17 (Karaoke)**: panel de letras sincronizadas igualado en tamaño
+  al de letra plana, y desplazamiento de la línea resaltada corregido
+  a una sola animación (antes subía arriba y luego bajaba, dos
+  animaciones seguidas).
+- **Otros sin hito claro**: refuerzo de volumen configurable en
+  Ajustes (`LoudnessEnhancer`, 0-12dB); cola de reproducción (H18) se
+  desplaza sola al tema actual y lo mantiene visible, y ya no corta la
+  pista en curso al vaciarse; botón "+" para añadir a lista desde el
+  reproductor; filtro de texto en Favoritos; logo de la app como
+  carátula de respaldo cuando de verdad no hay ninguna.
 
-**Nada de esta cascada se ha verificado en dispositivo real
-todavía.** Hoja de ruta de verificación completa (orden concreto de
-qué probar primero) en `DOCS/ANNEX_H15.md`, sección "Hoja de Ruta
-para la Siguiente Sesión que retome H15".
-
-**Ciclo de curación pendiente, sin fecha:** cuando Miguel Ángel
-comparta un `mimooutcast_broken_links.json` real (botón "Compartir
-enlaces rotos" de Ajustes) tras uso real del dispositivo, sustituir
-cada enlace roto por su sustituto dentro de `mimooutcast_seed.json`
-antes de la siguiente build.
-
-## Peticiones de producto nuevas, sin hito asignado todavía (S034, cierre de sesión)
-
-Miguel Ángel las dio al cierre, palabras suyas: *"la siguiente sesión
-tardará dos temas, no sé qué hitos tocará"* -- no encajan en la hoja
-de ruta técnica de H12 ni de H15, quedan aquí hasta que él decida a
-qué hito pertenecen (o si hace falta uno nuevo):
-
-1. **Reproducción de favoritos (artistas/álbumes) se muere esperando
-   el primer tema.** Cita textual: *"al seleccionar artistas favoritos
-   o álbumes favoritos lo primero es poner un tema local, hoy he
-   intentado escuchar una selección de artistas y se muere uno
-   esperando el primer tema, no hay espera, se pone uno local y luego
-   se genera el resto de la cola de reproducción."* Sin diagnosticar
-   -- leer primero el código real de la reproducción de
-   favoritos/selección de artistas (candidato: `FavoritesViewModel`/
-   `LibraryViewModel`-adjacent, comprobar si hay alguna espera
-   bloqueante al primer tema en vez de arrancar con algo local
-   inmediato y generar el resto después) antes de suponer la causa.
-2. **Normalización de la salida de audio.** Sin más detalle todavía
-   -- a concretar con Miguel Ángel qué está pidiendo exactamente
-   (¿ganancia por pista, compresión de rango dinámico, algo del
-   propio ExoPlayer/AudioProcessor?) antes de diseñar nada.
+**Gran parte de esta cascada SÍ fue confirmada por Miguel Ángel
+durante la propia sesión** (Lista Negra, llamadas tras el ajuste
+final, semilla de década, carátulas, karaoke) -- pero no hay
+verificación exhaustiva de todo. Si algo de esta lista vuelve a
+fallar, pedir SIEMPRE evidencia real (log/captura) antes de tocar
+nada, nunca reabrir el diagnóstico a ciegas.
 
 ## H18 (Play y Ordenación de Listas de Items) -- PAUSADO, sin incidencia propia esta sesión
 
-Sin cambios desde S033. Sigue exactamente como quedó en S032: diseño
-y los cinco bloques de código cerrados, build verde, **sin código
-pendiente -- solo verificación en dispositivo real** (las cuatro
-combinaciones de orden en cada pantalla, la matriz de play/aleatorio,
-la migración sin pérdida de datos). Detalle completo en
-`DOCS/ANNEX_H18.md`, "COMPLETADAS EN S032".
+Sin cambios desde S033/S034 en su propio alcance (aparte de las
+mejoras de la cola documentadas en la cascada de arriba, que son
+ampliaciones, no parte del hito original). Diseño y los cinco bloques
+de código originales siguen cerrados, build verde, sin código
+pendiente -- solo verificación en dispositivo real. Detalle completo
+en `DOCS/ANNEX_H18.md`, "COMPLETADAS EN S032".
 
-## H17 (Karaoke & Lyrics) -- PAUSADO, diseño y construcción completos, sin verificar en dispositivo
-
-Sin cambios desde S033. Sigue exactamente como quedó en S031/S032:
-sin código pendiente, solo verificación en dispositivo real, con foco
-especial en los tres temas que en `letras_debug.txt` fallaban con 404
-antes del fix de `cleanSongTitle()`. Detalle completo en
-`DOCS/ANNEX_H17.md`, "COMPLETADAS EN S031".
-
-## H16 (Lista Negra) -- PAUSADO, cinco puntos de código completos, sin fallos conocidos
-
-Sin cambios desde S033. Sigue sin verificación exhaustiva en
-dispositivo de todos los casos, pero nada reportado como roto.
-
-## Trabajo pendiente de otras sesiones, sin tocar en S034
+## Trabajo pendiente de otras sesiones, sin tocar en S035
 
 1. **Auditoría pendiente de la semilla de 1.161 artistas**
    (`anchor_artists.json`) -- sigue sin tocar, no se puede verificar
    contra MusicBrainz en vivo desde este entorno de trabajo.
-2. **Fallo de streaming ajeno a la Radio**: `notification_debug.txt`
-   mostraba errores `ERROR_CODE_IO_BAD_HTTP_STATUS`/
-   `NETWORK_CONNECTION_FAILED`. Se corrigió un caso concreto en S027,
-   sin confirmar si cubre el resto.
+2. **Reproducción de favoritos (artistas/álbumes) se muere esperando
+   el primer tema** -- petición de S034, sin diagnosticar todavía.
+   Cita textual: *"al seleccionar artistas favoritos o álbumes
+   favoritos... hoy he intentado escuchar una selección de artistas y
+   se muere uno esperando el primer tema."*
 3. **Bug sin localizar**: el `.txt` de log compartido desde el móvil
    llegaba a veces con contenido viejo. Mitigado indirectamente
    bajando `MAX_LINES`, causa real sin diagnosticar.
 4. **H08, dos hallazgos de S028 sin confirmar con log real**: umbral
-   de coincidencia al 40% (Loquillo y Los Trogloditas, "se quedó
-   parada totalmente"), y Émilie Simon "falló estrepitosamente" antes
-   del arreglo de la sonda de conectividad -- sin reprobar desde
-   entonces.
+   de coincidencia al 40% (Loquillo y Los Trogloditas), y Émilie Simon
+   -- sin reprobar desde entonces.
 
 ## Incidencias de proceso a tener en cuenta
 
-- **S034, nueva**: al construir un mensaje de commit con heredoc en
-  varios pasos, verificar SIEMPRE el mensaje final con
-  `git log -1 --format="%B"` antes de darlo por bueno -- una plantilla
-  reutilizada de forma descuidada dejó basura literal (`EOF`, la
-  siguiente línea de comando) dentro del cuerpo de un commit ya
-  pusheado en esta sesión. Preferir heredocs limpios de un solo bloque,
-  sin anidar un segundo `EOF`/comando dentro del mismo heredoc.
-- **S034, nueva**: tras cualquier fix que module qué géneros/etiquetas
-  se excluyen o incluyen en un motor compartido por varias
-  funcionalidades (Radio + miMooutCast, ambas sobre `GenreTree`),
-  verificar el estado real del archivo tocado con `git diff`/lectura
-  directa antes de reportarlo a Miguel Ángel como hecho -- un primer
-  intento en esta sesión modificó un archivo distinto al que se
-  describió verbalmente, y no se detectó hasta una verificación
-  posterior no pedida explícitamente.
+- **S035, nueva -- la más cara de toda la sesión**: cuando dos
+  mecanismos comparten una misma bandera de estado (`pausedByAudioFocusLoss`/
+  `pausedByCallState`), cualquier cambio en UNO de los dos puede dejar
+  la bandera en un estado que el OTRO no espera -- pasó dos veces
+  seguidas en la cascada de llamadas de esta sesión (una red de
+  seguridad vieja deshaciendo la reanudación del mecanismo nuevo).
+  Antes de eliminar o simplificar un mecanismo, buscar TODOS los
+  puntos que leen/escriben la misma bandera, no solo los que se están
+  tocando a propósito.
+- **S035, nueva**: GitHub Actions no es viable para tareas que
+  necesiten "parecer un usuario real" ante servicios como YouTube --
+  las IPs de centro de datos se bloquean con verificación anti-bot
+  ("Sign in to confirm you're not a bot"), confirmado dos veces esta
+  sesión (cosecha de Spotify inicial, validación de la semilla de
+  década). La alternativa real y ya probada en este proyecto es
+  generar en el propio dispositivo de Miguel Ángel.
+- **S035, nueva**: nunca poner `--` dentro de un comentario XML --
+  sigue rompiendo el build cuando se olvida (pasó otra vez esta
+  sesión, en `AndroidManifest.xml`, pese a estar ya documentado desde
+  S028). Usar siempre `—` (guion largo).
+- **S035, nueva**: tras cualquier `str_replace` en un bloque grande,
+  verificar el balance de llaves/paréntesis del archivo ENTERO
+  inmediatamente, no solo mirar el fragmento editado -- varias
+  ediciones de esta sesión dejaron llaves o paréntesis huérfanos que
+  el propio recuento numérico detectó antes de comitear, evitando
+  builds rotos.
+- **Al construir un mensaje de commit con heredoc en varios pasos,
+  verificar SIEMPRE el mensaje final con `git log -1 --format="%B"`**
+  antes de darlo por bueno (lección de S034, sigue vigente).
 - **Antes de dar una tanda por representativa del comportamiento
   real, comprobar si los géneros/casos que interesan ya están
-  marcados como "hechos" en algún mecanismo de resume/skip.** Bug de
-  proceso real de S033: se pidió un log de prueba para diagnosticar
-  jazz/blues/etc., pero esos géneros ya estaban marcados agotados por
-  el propio fix de la sesión, así que el log nuevo nunca podía
-  llegar a mostrarlos -- el propio mecanismo de "no reintentar lo ya
-  hecho" bloqueaba la evidencia que hacía falta para verificarlo.
+  marcados como "hechos" en algún mecanismo de resume/skip** (lección
+  de S033, sigue vigente).
 - **Limpieza de título que quita un segmento por posición debe
   comprobar SIEMPRE que ese segmento coincide de verdad con lo que se
-  cree que es**, nunca asumirlo solo por estar en esa posición. Dos
-  bugs reales de la misma familia en S031 (`PlayerBarViewModel` +
-  `RadioRepository.stripTitleNoise()`), ambos arreglados comparando el
-  segmento candidato contra el artista normalizado antes de darlo por
-  bueno.
-- **Nunca poner `--` dentro de un comentario XML.** Rompió el build
-  una vez en S028 (`AndroidManifest.xml`) -- la especificación XML lo
-  prohíbe en cualquier punto de un comentario. El resto del proyecto
-  usa `—` (guion largo) por este motivo.
+  cree que es**, nunca asumirlo solo por estar en esa posición
+  (lección de S031, sigue vigente).
 - **Antes de añadir un composable nuevo, comprobar sus imports reales
-  del archivo, no darlos por hechos.** Bug real de S030 en
-  `MainActivity.kt` (imports de `Row`/`fillMaxWidth`/etc. ausentes).
-- **Patrón muy repetido S027-S034**: la inmensa mayoría de los bugs
-  reales de estas sesiones se encontraron SOLO al probar el arreglo
+  del archivo, no darlos por hechos** (lección de S030, sigue
+  vigente).
+- **Patrón muy repetido, todas las sesiones recientes**: la inmensa
+  mayoría de los bugs reales se encontraron SOLO al probar el arreglo
   anterior con datos/logs/capturas reales de Miguel Ángel -- nunca
   darlos por buenos sin esa confirmación, por razonable que parezca el
   arreglo sobre el papel.
@@ -176,14 +173,13 @@ dispositivo de todos los casos, pero nada reportado como roto.
   Favoritos.
 - **El zip de logs de GitHub Actions sigue sin ser accesible por red**
   desde el entorno del modelo -- usar la API de anotaciones del check
-  (`/check-runs/{job_id}/annotations`), no el zip.
+  (`/check-runs/{job_id}/annotations`); si el fallo no deja anotación
+  legible, hacer que el propio script/workflow escriba su diagnóstico
+  a un archivo y lo commitee siempre (`if: always()`), patrón usado
+  varias veces con éxito en S035.
 - **`isFromRadio = true` es obligatorio en CUALQUIER `QueueItem` que
-  añada un motor de reproducción automática** (Radio, miMooutCast, lo
-  que venga después) -- sin él, `onMediaItemTransition` resetea el
-  ancla de la sesión en marcha. Bug real en H15/S030, con el síntoma
-  apareciendo solo tras minutos de reproducción real.
+  añada un motor de reproducción automática** -- sin él,
+  `onMediaItemTransition` resetea el ancla de la sesión en marcha.
 - **MusicBrainz está bloqueado por robots.txt para el modelo en este
-  entorno de trabajo** (confirmado repetidamente en S033, `web_fetch`
-  rechaza `musicbrainz.org/ws/2/...`) -- cualquier verificación en vivo
-  de una consulta a la API tiene que hacerse con logs reales del
-  dispositivo, nunca reproduciendo la llamada desde aquí.
+  entorno de trabajo** -- cualquier verificación en vivo tiene que
+  hacerse con logs reales del dispositivo.

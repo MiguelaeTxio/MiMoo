@@ -395,3 +395,145 @@ Sustituye a la hoja de ruta anterior (ya ejecutada en S034).
    proyecto -- no reabrir el diagnóstico sin evidencia nueva.
 3. **Sin más síntomas pendientes de H12** más allá de la verificación
    -- ambas hipótesis de S033 quedaron confirmadas y corregidas.
+
+## Cascada de incidencias reales sobre H15/H16/H17/H18 -- S035 (2026-08-23/28)
+
+Mismo patrón que S034: incidencias puntuales sobre código de otros
+hitos, sin PCH (H12 sigue EN PROGRESO durante toda la sesión, sin
+tocarse). Sesión larguísima -- resumen organizado por área, detalle
+completo en el historial real de commits (`git log` entre
+`8dd156b3e2e94aef8059193ad3c902c3291ed7bb` y el commit de cierre).
+
+**H15 (miMooutCast) -- fuentes de datos nuevas para el diccionario de
+éxitos:**
+1. Cosecha de LOS40 (número uno semanal, 1966-2025, ya existente de
+   antes) fusionada por fin en el bloque `intl` (antes solo `es`) --
+   1990 pasa de 71%/29% es/intl a ~51%/49%.
+2. Tres fuentes nuevas cosechadas y fusionadas: Spotify100 ("Las 100
+   canciones del año en España", 1960-1986, 2.815 canciones tras
+   validar), MUZIKALIA ("Las 100 mejores de la década", 80s+90s, 200
+   canciones, cosecha manual sin pipeline), y Spotify oficial para los
+   años 50 ("All Out 50s"/"Soft 50s", cierra un hueco que no existía
+   en ninguna fuente).
+3. **Bug real de arquitectura, encontrado tarde**: `FIRST_DECADE=1960`
+   en los scripts de fusión metía cualquier canción de los 50 dentro
+   del bloque "1960" en vez de crear su propio bloque -- corregido a
+   1950.
+4. **Semilla de década VALIDADA contra YouTube** (mismo mecanismo ya
+   probado para género): primer intento vía GitHub Actions falló casi
+   entero (YouTube bloquea las IPs de centro de datos, "Sign in to
+   confirm you're not a bot") -- igual que la semilla de género en su
+   día, tuvo que generarse EN EL DISPOSITIVO
+   (`MimooutcastDecadeDatabaseBuilder`, nuevo). Resultado real: 2.815
+   canciones validadas, 8 décadas completas.
+5. **Bug real de prioridad, encontrado el mismo día de terminar la
+   validación**: la semilla validada solo se usaba con "Conocido en
+   España" APAGADO -- con el interruptor encendido (el caso más común)
+   la búsqueda ni la tocaba, cayendo entera en el camino lento de
+   siempre. Corregido: la semilla manda siempre para década sola, sea
+   cual sea el interruptor.
+6. **Bug real, encontrado después**: las tres semillas (género/década/
+   clásica) nunca fijaban `artworkUri` en el atajo de `knownYoutubeId`
+   -- con la semilla de década ahora dominante, esto se convirtió en
+   "todo es el logo genérico". Corregido con la miniatura real de
+   YouTube (`i.ytimg.com/vi/{id}/hqdefault.jpg`).
+7. Candidatos del diccionario que fallaban la resolución se repetían
+   sin fin en la misma sesión (nunca se marcaban como descartados) --
+   corregido con un set de exclusión nuevo por sesión.
+8. Diseño de "barajar y encolar todo lo conocido, lo descubierto va al
+   final" generalizado a década sola (ya existía para género/clásica).
+9. Botones de miMooutCast: `if (loadingLabel != null) return` ignoraba
+   en silencio un segundo toque si el estado ya estaba "cargando" por
+   cualquier motivo -- corregido para cancelar y reiniciar limpio en
+   cada toque, sin cortar la pista en curso.
+10. URLs de streaming caducadas (cola construida hace horas): antes se
+    saltaba la pista sin más; ahora se reintenta una vez con una URL
+    fresca antes de darla por perdida.
+
+**H16 (Lista Negra) -- dos bugs reales de fondo:**
+1. La comprobación exigía coincidencia EXACTA de nombre (pertenencia a
+   un `Set`) -- si el artista vetado venía con texto de más
+   (colaboraciones, variaciones de parseo), nunca coincidía. Corregido
+   con `containsDislikedArtist()`, contención con límite de palabra.
+2. Duetos (ej. "Julio Iglesias, Diana Ross"): el campo `artist`
+   guardado a veces es solo UNO de los dos nombres -- el vetado podía
+   no estar ni en el campo comparado. Corregido comprobando también el
+   título completo.
+3. Recopilatorios propios (listas de Miguel Ángel): `PlaylistRepository.
+   playPlaylistById()` nunca comprobaba "no me gusta" a nivel de TEMA
+   en absoluto -- un tema marcado seguía sonando al reproducir la
+   lista. Corregido con `DislikedTrackRepository.normalizedKeysSnapshot()`.
+
+**Llamadas telefónicas -- evolución completa, varios intentos:**
+1º intento: foco de audio explícito (`AudioAttributes` +
+`handleAudioFocus=true`) -- rompió miMooutCast por completo (la
+construcción de `ExoPlayer` lanzaba una excepción real en dispositivo,
+pese a compilar bien), revertido.
+2º intento: `AudioFocusRequest` manual, reaccionando solo a
+`AUDIOFOCUS_LOSS_TRANSIENT`/`GAIN` -- mejoró pero seguía fallando (se
+activaba a mitad de llamada por eventos espurios de Android en cambios
+de ruta de audio).
+3º intento (el bueno para llamadas, pero con un efecto secundario
+grave): `TelephonyManager` real (`READ_PHONE_STATE`, nuevo permiso) --
+detección fiable de llamada, PERO seguía coexistiendo con el
+`AudioFocusRequest` de arriba, que pausaba ante CUALQUIER notificación
+de cualquier app, no solo llamadas.
+**Decisión final de Miguel Ángel**: quitar el `AudioFocusRequest` por
+completo -- "antes, cuando sonaba una notificación, la música seguía
+sonando igual... con el tema del foco eso lo hemos roto". Se conserva
+únicamente `TelephonyManager` (no pide foco, no le afecta el problema
+de las notificaciones) para llamadas reales. Tras quitar el
+`AudioFocusRequest`, quedó viva por error una red de seguridad vieja
+que deshacía la reanudación al colgar -- corregida.
+**Pendiente para la siguiente sesión** (Miguel Ángel, en el cierre):
+el volumen de audio se sigue bajando solo cuando otra app usa el
+sonido y hay que subirlo a mano -- comportamiento distinto del descrito
+arriba (no es pausa, es "ducking"), sin diagnosticar todavía en esta
+sesión.
+
+**H17 (Karaoke) -- dos fixes de UI reales:**
+1. Panel de letras sincronizadas más pequeño (1/9 de pantalla) que el
+   de letra plana (1/3) -- decisión original de S031 revertida a
+   petición de Miguel Ángel, mismo tamaño en los dos casos.
+2. Desplazamiento brusco de la línea resaltada (subía arriba del todo
+   y luego bajaba al centro, dos animaciones seguidas) -- corregido a
+   una sola animación directa, estimando la altura de línea de
+   antemano en vez de medir tras el primer salto.
+
+**Otros, sin hito claro asignado:**
+- Refuerzo de volumen (`LoudnessEnhancer`, 0-12dB) configurable en
+  Ajustes, cambia en caliente.
+- Cola de reproducción (H18): se desplaza sola al tema actual al
+  abrirla, y lo mantiene siempre visible mientras avanza sola con la
+  pantalla abierta. Vaciar la cola ya no corta la pista en curso, solo
+  el resto.
+- Botón "+" en el reproductor para añadir el tema actual a una lista.
+- Filtro de texto en Favoritos (las cuatro pestañas).
+- Logo de la app como carátula de respaldo cuando de verdad no hay
+  ninguna (emisoras de radio online, etc.) -- en el reproductor, mini-
+  reproductor y notificación.
+
+**Nada de esta cascada se ha verificado en dispositivo real de forma
+exhaustiva todavía** -- varios puntos SÍ fueron confirmados por Miguel
+Ángel durante la propia sesión (Lista Negra, llamadas tras el último
+ajuste, semilla de década, carátulas, karaoke), otros quedan
+pendientes de una pasada de verificación completa.
+
+## Pendiente para abrir la siguiente sesión (palabras de Miguel Ángel al cierre)
+
+1. **Volumen que se baja solo**: "se baja solo y hay que estar
+   subiendo el volumen cada vez que otra aplicación toca el volumen.
+   Antes estaba mejor pq no había que tocar nada. Volvemos a dejarlo
+   como estaba originalmente." Sin diagnosticar -- el `AudioFocusRequest`
+   que causaba pausas ya se quitó esta sesión (ver cascada de
+   llamadas, arriba), pero este síntoma de "ducking" (bajada de
+   volumen, no pausa) parece distinto y sigue reportado tras ese
+   revert. Empezar leyendo si queda algún mecanismo de audio (aparte
+   de `TelephonyManager`, que no debería tocar volumen) que pueda
+   estar causando esto.
+2. **Rediseño de la interfaz del ExoPlayer**: "tenemos muchos
+   controles, hay que añadir compartir el tema que se está tocando,
+   habría que poner una fila con los controles de reproducción y otra
+   fila con like/dislike/add2list/download/share." Sin diseño cerrado
+   todavía -- sesión de diseño antes de tocar código, mismo criterio
+   que el resto del proyecto para cambios de alcance abierto.
