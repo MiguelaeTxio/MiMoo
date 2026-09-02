@@ -135,11 +135,27 @@ class AudioNormalizer {
         }
     }
 
+    /**
+     * S048 -- bug real reportado por Miguel Ángel: con el slider de
+     * Ajustes ya a tope (1200mB/12dB) desde una sesión anterior, el
+     * refuerzo real suena por debajo de eso, y solo sube "considerablemente"
+     * si se mueve el control a menos y se vuelve a poner a tope. Causa
+     * real: el orden de las llamadas estaba invertido respecto al que
+     * documenta Android para `AudioEffect`/`LoudnessEnhancer` --
+     * `setTargetGain()` se llamaba ANTES de `setEnabled(true)`. En
+     * bastantes fabricantes el motor de efectos no aplica el gain a
+     * plena resolución hasta que el efecto ya está habilitado; el
+     * primer `setTargetGain()` (con el efecto aún deshabilitado) se
+     * queda corto, y solo una llamada POSTERIOR con el efecto ya
+     * habilitado -- justo lo que hace `updateVolumeBoost()` al mover el
+     * slider -- aplica el valor real. Se corrige invirtiendo el orden:
+     * habilitar primero, fijar el gain después.
+     */
     private fun attachLoudnessEnhancer(audioSessionId: Int, volumeBoostMillibels: Int) {
         try {
             val effect = LoudnessEnhancer(audioSessionId)
-            effect.setTargetGain(volumeBoostMillibels)
             effect.setEnabled(true)
+            effect.setTargetGain(volumeBoostMillibels)
             loudnessEnhancer = effect
         } catch (e: Exception) {
             // Mismo criterio tolerante -- sesión no disponible todavía u
