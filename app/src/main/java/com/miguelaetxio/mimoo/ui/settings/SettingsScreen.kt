@@ -1122,50 +1122,6 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // 2026-08-24 -- refuerzo de volumen (LoudnessEnhancer, ver
-            // AudioNormalizer.kt). Petición explícita de Miguel Ángel:
-            // "podemos ponerlo como control en settings?" -- antes era
-            // una constante fija en código (+6dB). En decibelios para
-            // el usuario (más intuitivo que milibelios); internamente
-            // se guarda/aplica en milibelios (100mB = 1dB). Tope de 12dB
-            // -- pasado ese punto la propia documentación de la API
-            // avisa de compresión/distorsión constante en casi
-            // cualquier tema, verificado antes de fijar el tope. Se
-            // aplica en caliente, con la música sonando, sin
-            // reiniciar nada.
-            val volumeBoostMillibels by viewModel.volumeBoostMillibels.collectAsState()
-            SettingsAccordionSection(
-                title = "Audio",
-                expanded = expandedSection == "audio",
-                onToggle = {
-                    expandedSection = if (expandedSection == "audio") null else "audio"
-                },
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .glassChip()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                ) {
-                    Text(
-                        "Refuerzo de volumen: ${if (volumeBoostMillibels == 0) "sin refuerzo" else "+${volumeBoostMillibels / 100}dB"}",
-                    )
-                    Slider(
-                        value = volumeBoostMillibels.toFloat(),
-                        onValueChange = { viewModel.setVolumeBoostMillibels(it.toInt()) },
-                        valueRange = 0f..1200f,
-                        steps = 11,
-                    )
-                    Text(
-                        "Pasado unos 10-12dB puede notarse comprimido o forzado en algunos temas.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
             // Fix real (2026-07-24, debug_error.txt de Miguel Ángel):
             // cookies de YouTube para que yt-dlp pueda descargar
             // vídeos restringidos por edad ("Sign in to confirm your

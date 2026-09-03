@@ -1,7 +1,6 @@
 package com.miguelaetxio.mimoo.data.playback
 
 import android.media.audiofx.DynamicsProcessing
-import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 
 /**
@@ -36,87 +35,40 @@ import android.os.Build
  * `DynamicsProcessing` exige API 28 -- el proyecto tiene `minSdk 26`
  * (ver `app/build.gradle.kts`), así que por debajo de API 28 esta
  * clase es un no-op seguro (nunca lanza, simplemente no nivela).
- * ---
- * Real-time audio leveling (Option A closed with Miguel Ángel,
- * 2026-08-23): "no highs and lows from song to song, all playing at
- * the same volume". This is NOT true per-track normalization (that
- * would require analyzing each track and storing its gain -- see
- * Option B, discarded in the design session); it's a broadband
- * compressor/limiter (`DynamicsProcessing`) attached to ExoPlayer's
- * audio session, automatically smoothing volume peaks and valleys on
- * the fly, without touching the catalog or analyzing anything ahead of
- * time.
  *
- * Built with the THREE-argument constructor
- * (`DynamicsProcessing(priority, audioSession, Config)`), passing
- * `Config = null` explicitly -- the two-argument overload documented
- * in AOSP source (`this(priority, audioSession, null)`) failed to
- * resolve when compiling against the public `compileSdk 36` SDK stub
- * (real build, 2026-08-23: `Unresolved reference` on GitHub Actions),
- * so the explicit three-argument form is used instead. A null
- * `Config` makes the system pick a sensible default band/compressor/
- * limiter configuration for the general case. Building a `Config` by
- * hand (MBC bands, thresholds, ratios, attack/release) is deliberately
- * avoided -- that API is notoriously fragile (runtime
- * `IllegalArgumentException` if the parameters don't exactly match the
- * `Config.Builder`'s shape) and there's no way to verify it from this
- * work environment without a real device; the default configuration
- * already solves the real reported problem (highs and lows between
- * songs) without that risk.
- *
- * `DynamicsProcessing` requires API 28 -- the project has `minSdk 26`
- * (see `app/build.gradle.kts`), so below API 28 this class is a safe
- * no-op (never throws, simply doesn't level).
+ * S048 -- el refuerzo de volumen (`LoudnessEnhancer`, +0-12dB
+ * configurable en Ajustes) se ha eliminado por completo, decisión
+ * explícita de Miguel Ángel: el bug real reportado (el refuerzo no
+ * aplicaba a tope hasta tocar el control) persistía en dispositivo
+ * real incluso tras el intento de arreglo de esta misma sesión
+ * (invertir `setEnabled`/`setTargetGain`). Sin ganas de seguir
+ * diagnosticando un efecto de audio notoriamente inconsistente entre
+ * fabricantes, se retira entero -- `DynamicsProcessing` (nivelación de
+ * altos y bajos entre canciones) no se toca, es una función distinta
+ * y sin ningún problema reportado.
  */
 class AudioNormalizer {
 
     private var dynamicsProcessing: DynamicsProcessing? = null
-    private var loudnessEnhancer: LoudnessEnhancer? = null
     private var attachedSessionId: Int = 0
 
     /**
      * Engancha (o reengancha) el efecto a la sesión de audio actual del
-     * player -- idempotente: si ya está enganchado a esta misma sesión
-     * CON el mismo refuerzo de volumen, no hace nada. Se llama desde
+     * player -- idempotente: si ya está enganchado a esta misma sesión,
+     * no hace nada. Se llama desde
      * `AnalyticsListener.onAudioSessionIdChanged()` de ExoPlayer (ver
      * PlayerManager), que Media3 1.10.1 dispara con el id real en
      * cuanto está disponible (ya no lo está de forma inmediata al crear
      * el player, ver release notes de Media3).
-     *
-     * `volumeBoostMillibels` -- petición explícita de Miguel Ángel
-     * (2026-08-24: "podemos ponerlo como control en settings?"), ya no
-     * es una constante fija en esta clase, la trae quien llama
-     * (`PlayerManager`, leyendo `UiPreferencesManager.volumeBoostMillibels`).
-     * En milibelios (100mB = 1dB, ver `LoudnessEnhancer.setTargetGain()`);
-     * 0 = sin refuerzo.
      */
-    fun attach(audioSessionId: Int, volumeBoostMillibels: Int) {
+    fun attach(audioSessionId: Int) {
         if (audioSessionId == 0) return
-        if (attachedSessionId == audioSessionId && (dynamicsProcessing != null || loudnessEnhancer != null)) {
-            updateVolumeBoost(volumeBoostMillibels)
+        if (attachedSessionId == audioSessionId && dynamicsProcessing != null) {
             return
         }
         release()
         attachedSessionId = audioSessionId
         attachDynamicsProcessing(audioSessionId)
-        attachLoudnessEnhancer(audioSessionId, volumeBoostMillibels)
-    }
-
-    /**
-     * Cambia el refuerzo de volumen de la sesión YA enganchada, sin
-     * reenganchar nada -- lo que se nota al mover el control de
-     * Ajustes con la música sonando. Si por lo que sea no hay ningún
-     * `LoudnessEnhancer` activo todavía (sesión aún no disponible), no
-     * hace nada -- se aplicará el valor correcto en el próximo
-     * `attach()` real.
-     */
-    fun updateVolumeBoost(volumeBoostMillibels: Int) {
-        try {
-            loudnessEnhancer?.setTargetGain(volumeBoostMillibels)
-        } catch (e: Exception) {
-            // Efecto liberado entre medias u otro fallo del fabricante --
-            // se descarta en silencio, mismo criterio tolerante de siempre.
-        }
     }
 
     private fun attachDynamicsProcessing(audioSessionId: Int) {
@@ -135,36 +87,7 @@ class AudioNormalizer {
         }
     }
 
-    /**
-     * S048 -- bug real reportado por Miguel Ángel: con el slider de
-     * Ajustes ya a tope (1200mB/12dB) desde una sesión anterior, el
-     * refuerzo real suena por debajo de eso, y solo sube "considerablemente"
-     * si se mueve el control a menos y se vuelve a poner a tope. Causa
-     * real: el orden de las llamadas estaba invertido respecto al que
-     * documenta Android para `AudioEffect`/`LoudnessEnhancer` --
-     * `setTargetGain()` se llamaba ANTES de `setEnabled(true)`. En
-     * bastantes fabricantes el motor de efectos no aplica el gain a
-     * plena resolución hasta que el efecto ya está habilitado; el
-     * primer `setTargetGain()` (con el efecto aún deshabilitado) se
-     * queda corto, y solo una llamada POSTERIOR con el efecto ya
-     * habilitado -- justo lo que hace `updateVolumeBoost()` al mover el
-     * slider -- aplica el valor real. Se corrige invirtiendo el orden:
-     * habilitar primero, fijar el gain después.
-     */
-    private fun attachLoudnessEnhancer(audioSessionId: Int, volumeBoostMillibels: Int) {
-        try {
-            val effect = LoudnessEnhancer(audioSessionId)
-            effect.setEnabled(true)
-            effect.setTargetGain(volumeBoostMillibels)
-            loudnessEnhancer = effect
-        } catch (e: Exception) {
-            // Mismo criterio tolerante -- sesión no disponible todavía u
-            // otro fallo del fabricante, se descarta en silencio.
-            loudnessEnhancer = null
-        }
-    }
-
-    /** Libera los efectos actuales, si hay alguno -- se llama al reenganchar a una sesión distinta y en PlayerManager.release(). */
+    /** Libera el efecto actual, si hay alguno -- se llama al reenganchar a una sesión distinta y en PlayerManager.release(). */
     fun release() {
         dynamicsProcessing?.let {
             try {
@@ -175,14 +98,5 @@ class AudioNormalizer {
             }
         }
         dynamicsProcessing = null
-        loudnessEnhancer?.let {
-            try {
-                it.setEnabled(false)
-                it.release()
-            } catch (e: Exception) {
-                // Ya liberado o sesión inválida -- no hay nada más que hacer.
-            }
-        }
-        loudnessEnhancer = null
     }
 }

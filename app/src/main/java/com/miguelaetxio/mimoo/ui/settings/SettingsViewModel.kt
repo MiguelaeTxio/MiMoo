@@ -469,19 +469,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
-     * 2026-08-24 -- refuerzo de volumen (`LoudnessEnhancer`, ver
-     * `AudioNormalizer.kt`). Petición explícita de Miguel Ángel:
-     * "podemos ponerlo como control en settings?". En milibelios
-     * (100mB = 1dB); se cambia en caliente, sin reiniciar la
-     * reproducción.
-     */
-    val volumeBoostMillibels: StateFlow<Int> = uiPreferencesManager.volumeBoostMillibels
-
-    fun setVolumeBoostMillibels(millibels: Int) {
-        uiPreferencesManager.setVolumeBoostMillibels(millibels)
-    }
-
-    /**
      * Fix real (2026-07-24, `debug_error.txt` de Miguel Ángel):
      * cookies de YouTube para que yt-dlp pueda descargar vídeos
      * restringidos por edad ("Sign in to confirm your age") -- ver
