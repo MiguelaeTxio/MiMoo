@@ -9,7 +9,9 @@ import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -105,7 +107,32 @@ class DownloadWorker @AssistedInject constructor(
         const val MAX_DOWNLOAD_ATTEMPTS = 3
     }
 
-    override suspend fun doWork(): Result {
+    /**
+     * S049 -- causa real del bug reportado por Miguel Ángel: mientras
+     * hay descargas en marcha, la Biblioteca aparece vacía (el fix
+     * anterior, distinctUntilChanged() en LibraryViewModel, no lo
+     * arregló -- se queda, es correcto en sí mismo, pero no era la
+     * causa de fondo). `CoroutineWorker.doWork()` corre por defecto en
+     * `Dispatchers.Default` -- un pool de hilos limitado, pensado para
+     * trabajo de CPU, NUNCA para E/S bloqueante. Todo este método hace
+     * trabajo bloqueante real y prolongado ahí dentro: `runYtDlp()`
+     * (Chaquopy/Python, red), `copyTo()` (E/S de archivo). Con varias
+     * descargas en marcha (una importación de álbum encola varias a la
+     * vez), ese pool compartido y limitado se satura de hilos
+     * bloqueados en E/S -- y `LibraryViewModel.recompute()`, que
+     * también corre en `Dispatchers.Default`, se queda sin turno de
+     * CPU mientras dura la descarga: no es que se cancele, es que
+     * nunca llega a ejecutarse.
+     *
+     * Se envuelve TODO el cuerpo en `withContext(Dispatchers.IO)`
+     * -- el dispatcher correcto para E/S bloqueante, con un pool mucho
+     * más amplio (pensado para justo este caso) y separado del que usa
+     * la UI para cálculos de CPU. `withContext` es una función inline,
+     * así que los `return Result.xxx` ya existentes dentro del cuerpo
+     * siguen funcionando igual (retorno no local de `doWork()`), sin
+     * tocar ni una línea más de la lógica.
+     */
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
             ?: return Result.failure()
         val title = inputData.getString(KEY_TITLE)
