@@ -132,7 +132,8 @@ class DownloadWorker @AssistedInject constructor(
      * siguen funcionando igual (retorno no local de `doWork()`), sin
      * tocar ni una línea más de la lógica.
      */
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result {
+        return withContext(Dispatchers.IO) {
         val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
             ?: return Result.failure()
         val title = inputData.getString(KEY_TITLE)
@@ -487,6 +488,7 @@ class DownloadWorker @AssistedInject constructor(
                 repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
                 Result.failure()
             }
+        }
         }
     }
 
