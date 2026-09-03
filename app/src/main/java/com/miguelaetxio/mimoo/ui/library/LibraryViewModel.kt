@@ -31,6 +31,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.Normalizer
@@ -347,7 +348,23 @@ class LibraryViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.getByStatus(DownloadStatus.DONE).collect { tracks ->
+            // S049 -- bug real reportado por Miguel Ángel: mientras hay
+            // una descarga en curso, la Biblioteca aparece vacía.
+            // Causa real: Room invalida esta consulta (getByStatus
+            // DONE) a nivel de TABLA, no de fila -- cada escritura de
+            // progreso de descarga (DownloadWorker.onProgress(),
+            // docenas por segundo, ver el progressListener de más
+            // abajo en ese archivo) reemite este Flow aunque las filas
+            // DONE no hayan cambiado. Cada reemisión relanza
+            // recompute(), que CANCELA el job anterior
+            // (recomputeJob?.cancel()) -- con progreso llegando más
+            // rápido de lo que ese job tarda en terminar, ningún
+            // recompute() llega nunca a actualizar _uiState.value
+            // mientras dura la descarga. distinctUntilChanged() corta
+            // las reemisiones sin cambio real de contenido (SearchResultTrack
+            // es data class, comparación estructural) antes de que
+            // lleguen a recompute().
+            repository.getByStatus(DownloadStatus.DONE).distinctUntilChanged().collect { tracks ->
                 allDownloaded = tracks
                 recompute()
             }

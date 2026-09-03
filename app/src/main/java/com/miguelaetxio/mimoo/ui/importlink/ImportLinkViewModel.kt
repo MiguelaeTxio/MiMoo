@@ -106,6 +106,18 @@ class ImportLinkViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(url = url)
     }
 
+    /**
+     * S049 -- petición explícita de Miguel Ángel: falta un aspa para
+     * borrar el enlace anterior y pegar uno nuevo. Resetea TODO el
+     * estado a `ImportLinkUiState()` en blanco -- no solo la url, sino
+     * también las pistas/selección/carátula ya resueltas del enlace
+     * anterior, para que la pantalla quede exactamente como al entrar
+     * por primera vez.
+     */
+    fun clearUrl() {
+        _uiState.value = ImportLinkUiState()
+    }
+
     fun resolveLink() {
         val url = _uiState.value.url.trim()
         if (url.isBlank()) return

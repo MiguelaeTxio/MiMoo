@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
@@ -102,17 +103,30 @@ fun ImportLinkScreen(
                     Icon(Icons.Filled.Link, contentDescription = null)
                 },
                 trailingIcon = {
-                    // Compartir el enlace pegado -- petición explícita
-                    // de Miguel Ángel (2026-07-04), para poder
-                    // pasárselo a su pareja por WhatsApp antes/después
-                    // de importarlo.
-                    // ---
-                    // Share the pasted link -- explicit request from
-                    // Miguel Ángel (2026-07-04), to send it to his
-                    // partner via WhatsApp before/after importing it.
+                    // S049 -- petición explícita de Miguel Ángel: falta
+                    // el aspa para borrar el enlace anterior y pegar
+                    // uno nuevo. Va PRIMERO (a la izquierda del de
+                    // compartir), mismo orden que cualquier campo de
+                    // texto con "borrar" -- limpia TODO el estado
+                    // (ver ImportLinkViewModel.clearUrl()), no solo el
+                    // texto.
                     if (uiState.url.isNotBlank()) {
-                        IconButton(onClick = { shareText(context, uiState.url) }) {
-                            Icon(Icons.Filled.Share, contentDescription = "Compartir enlace")
+                        Row {
+                            IconButton(onClick = viewModel::clearUrl) {
+                                Icon(Icons.Filled.Close, contentDescription = "Borrar enlace")
+                            }
+                            // Compartir el enlace pegado -- petición
+                            // explícita de Miguel Ángel (2026-07-04),
+                            // para poder pasárselo a su pareja por
+                            // WhatsApp antes/después de importarlo.
+                            // ---
+                            // Share the pasted link -- explicit request
+                            // from Miguel Ángel (2026-07-04), to send it
+                            // to his partner via WhatsApp before/after
+                            // importing it.
+                            IconButton(onClick = { shareText(context, uiState.url) }) {
+                                Icon(Icons.Filled.Share, contentDescription = "Compartir enlace")
+                            }
                         }
                     }
                 },
