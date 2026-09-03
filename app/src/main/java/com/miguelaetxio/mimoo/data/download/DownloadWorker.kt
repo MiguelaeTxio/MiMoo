@@ -127,19 +127,22 @@ class DownloadWorker @AssistedInject constructor(
      * Se envuelve TODO el cuerpo en `withContext(Dispatchers.IO)`
      * -- el dispatcher correcto para E/S bloqueante, con un pool mucho
      * más amplio (pensado para justo este caso) y separado del que usa
-     * la UI para cálculos de CPU. `withContext` es una función inline,
-     * así que los `return Result.xxx` ya existentes dentro del cuerpo
-     * siguen funcionando igual (retorno no local de `doWork()`), sin
-     * tocar ni una línea más de la lógica.
+     * la UI para cálculos de CPU. Kotlin prohíbe el retorno no local
+     * (`return` a secas) dentro del lambda suspendido de
+     * `withContext` -- los ocho `return Result.xxx` que ya había en
+     * el cuerpo pasan a `return@withContext Result.xxx`, retorno
+     * LOCAL del lambda (que es lo que `withContext()` devuelve, y por
+     * tanto lo que devuelve `doWork()`), sin tocar ni una línea más de
+     * la lógica.
      */
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
         val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
-            ?: return Result.failure()
+            ?: return@withContext Result.failure()
         val title = inputData.getString(KEY_TITLE)
-            ?: return Result.failure()
+            ?: return@withContext Result.failure()
         val artist = inputData.getString(KEY_ARTIST)
-            ?: return Result.failure()
+            ?: return@withContext Result.failure()
         // Ausente == sencillo (comportamiento normal) -- a diferencia
         // de youtubeId/title/artist, la ausencia de album NO es un
         // fallo, así que no aborta con Result.failure().
@@ -157,7 +160,7 @@ class DownloadWorker @AssistedInject constructor(
         val youtubeUrl = "https://youtu.be/$youtubeId"
 
         val rootUri = storageManager.getRootUri()
-            ?: return Result.failure()
+            ?: return@withContext Result.failure()
 
         // Álbum real, no siempre null -- antes de este fix, TODO lo
         // descargado (incluso álbumes completos con su campo album
@@ -170,7 +173,7 @@ class DownloadWorker @AssistedInject constructor(
             rootUri = rootUri,
             artist = artist,
             album = album,
-        ) ?: return Result.failure()
+        ) ?: return@withContext Result.failure()
 
         val safeTitle = DownloadDirManager.sanitize(title)
         // "NN - Título.opus" cuando se conoce la posición -- ver
@@ -237,7 +240,7 @@ class DownloadWorker @AssistedInject constructor(
                     status = DownloadStatus.DONE,
                 )
             }
-            return if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.Success) {
+            return@withContext if (outcome is com.miguelaetxio.mimoo.data.backup.MutationOutcome.Success) {
                 Result.success()
             } else {
                 Result.retry()
@@ -267,7 +270,7 @@ class DownloadWorker @AssistedInject constructor(
         val ffmpegDir = prepareFfmpeg(ffmpegPath)
             ?: run {
                 repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
-                return Result.failure()
+                return@withContext Result.failure()
             }
 
         repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
@@ -300,7 +303,7 @@ class DownloadWorker @AssistedInject constructor(
         // vector reported by Miguel Ángel, 2026-07-04).
         var outputDoc: androidx.documentfile.provider.DocumentFile? = null
 
-        return try {
+        return@withContext try {
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
             runYtDlp(
