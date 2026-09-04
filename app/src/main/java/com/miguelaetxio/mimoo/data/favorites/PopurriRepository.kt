@@ -112,6 +112,23 @@ class PopurriRepository @Inject constructor(
          * suficiente sin dejar de sonar de fondo casi de inmediato.
          */
         private const val INITIAL_BATCH_SIZE = 1
+
+        /**
+         * S050 -- bug real reportado por Miguel Ángel: con varios
+         * álbumes favoritos "Various Artists" seleccionados, uno de
+         * ellos (una recopilación de cerca de 100 pistas por sí solo)
+         * agotaba el tope de TRACK_CAP entero antes de que los demás
+         * álbumes de la ronda tuvieran su turno -- el "reparto por
+         * turnos" no era tal, era vaciar el primer álbum, luego el
+         * segundo, luego el tercero. Causa real: `resolveUnit()`
+         * devuelve el álbum COMPLETO de golpe, y se consumía sin
+         * límite por ronda. Se corrige tomando como mucho
+         * ROUND_ROBIN_BATCH_SIZE pistas de cada álbum POR RONDA,
+         * guardando el resto en un búfer por álbum para la ronda
+         * siguiente -- así ningún álbum, por grande que sea, puede
+         * acaparar el tope antes de que los demás tengan su turno.
+         */
+        private const val ROUND_ROBIN_BATCH_SIZE = 5
     }
 
     /**
@@ -472,12 +489,19 @@ class PopurriRepository @Inject constructor(
         seenKeys: MutableSet<Pair<String, String>>,
         totalCollected: IntArray,
     ) {
-        continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected)
+        // S050 -- mismo búfer de reparto por turnos para las DOS
+        // llamadas a continueCollecting() de aquí abajo -- si cada una
+        // creara el suyo (el parámetro tiene valor por defecto), se
+        // perdería lo que quedó a medias del álbum/sencillo de la
+        // primera llamada al procesar el siguiente artista. Ver el
+        // comentario de ROUND_ROBIN_BATCH_SIZE.
+        val carryover = mutableMapOf<ArrayDeque<AlbumUnit>, ArrayDeque<PendingTrack>>()
+        continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected, carryover)
         for (fav in remainingCandidates) {
             if (totalCollected[0] >= TRACK_CAP) break
             val queue = resolveArtistQueue(fav) ?: continue
             queues += queue
-            continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected)
+            continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected, carryover)
         }
         log("continueArtistsInBackground() -- terminado, ${totalCollected[0]}/$TRACK_CAP pistas reunidas en total")
     }
@@ -582,20 +606,35 @@ class PopurriRepository @Inject constructor(
         if (queues.isEmpty()) return false
         val seenKeys = mutableSetOf<Pair<String, String>>()
         val totalCollected = intArrayOf(0)
+        // S050 -- búfer por álbum, ver el comentario de
+        // ROUND_ROBIN_BATCH_SIZE. Se crea aquí y se le pasa a
+        // continueCollecting() para que el reparto por turnos siga
+        // siendo real en la Fase 2 (segundo plano), no solo en esta
+        // primera ronda síncrona.
+        val carryover = mutableMapOf<ArrayDeque<AlbumUnit>, ArrayDeque<PendingTrack>>()
         var anyLeft = true
         while (totalCollected[0] < TRACK_CAP && anyLeft) {
             anyLeft = false
             for (queue in queues) {
                 if (totalCollected[0] >= TRACK_CAP) break
-                val unit = queue.removeFirstOrNull() ?: continue
-                anyLeft = true
-                val tracks = try {
-                    resolveUnit(unit, localIndex)
-                } catch (e: Exception) {
-                    log("playRoundRobinProgressively() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
-                    emptyList()
+                val buffer = carryover.getOrPut(queue) { ArrayDeque() }
+                if (buffer.isEmpty()) {
+                    val unit = queue.removeFirstOrNull() ?: continue
+                    anyLeft = true
+                    val resolved = try {
+                        resolveUnit(unit, localIndex)
+                    } catch (e: Exception) {
+                        log("playRoundRobinProgressively() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
+                        emptyList()
+                    }
+                    buffer.addAll(resolved)
+                    if (buffer.isEmpty()) continue
+                } else {
+                    anyLeft = true
                 }
-                val fresh = collectFresh(tracks, seenKeys, totalCollected)
+                val batch = mutableListOf<PendingTrack>()
+                repeat(ROUND_ROBIN_BATCH_SIZE) { buffer.removeFirstOrNull()?.let { batch += it } }
+                val fresh = collectFresh(batch, seenKeys, totalCollected)
                 if (fresh.isEmpty()) continue
                 val items = fresh.map { toQueueItem(it, localIndex) }
                 val resolvedFirst = resolveStreamUrlsConcurrently(items.take(1))
@@ -613,7 +652,7 @@ class PopurriRepository @Inject constructor(
                             withContext(Dispatchers.Main) { playerManager.addToQueue(resolvedRest) }
                         }
                     }
-                    continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected)
+                    continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected, carryover)
                 }
                 return true
             }
@@ -632,21 +671,31 @@ class PopurriRepository @Inject constructor(
         localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
         seenKeys: MutableSet<Pair<String, String>>,
         totalCollected: IntArray,
+        carryover: MutableMap<ArrayDeque<AlbumUnit>, ArrayDeque<PendingTrack>> = mutableMapOf(),
     ) {
         var anyLeft = true
         while (totalCollected[0] < TRACK_CAP && anyLeft) {
             anyLeft = false
             for (queue in queues) {
                 if (totalCollected[0] >= TRACK_CAP) break
-                val unit = queue.removeFirstOrNull() ?: continue
-                anyLeft = true
-                val tracks = try {
-                    resolveUnit(unit, localIndex)
-                } catch (e: Exception) {
-                    log("continueCollecting() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
-                    emptyList()
+                val buffer = carryover.getOrPut(queue) { ArrayDeque() }
+                if (buffer.isEmpty()) {
+                    val unit = queue.removeFirstOrNull() ?: continue
+                    anyLeft = true
+                    val resolved = try {
+                        resolveUnit(unit, localIndex)
+                    } catch (e: Exception) {
+                        log("continueCollecting() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
+                        emptyList()
+                    }
+                    buffer.addAll(resolved)
+                    if (buffer.isEmpty()) continue
+                } else {
+                    anyLeft = true
                 }
-                val fresh = collectFresh(tracks, seenKeys, totalCollected)
+                val batch = mutableListOf<PendingTrack>()
+                repeat(ROUND_ROBIN_BATCH_SIZE) { buffer.removeFirstOrNull()?.let { batch += it } }
+                val fresh = collectFresh(batch, seenKeys, totalCollected)
                 if (fresh.isEmpty()) continue
                 val items = fresh.map { toQueueItem(it, localIndex) }
                 val resolved = resolveStreamUrlsConcurrently(items)
