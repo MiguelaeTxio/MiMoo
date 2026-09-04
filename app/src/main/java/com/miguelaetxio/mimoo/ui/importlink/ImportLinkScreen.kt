@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Menu
@@ -21,6 +22,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,6 +60,19 @@ fun ImportLinkScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showMetadataDialog by remember { mutableStateOf(false) }
+    // S050 -- petición explícita de Miguel Ángel: al posicionarse en
+    // el campo de enlace, inspeccionar el portapapeles y ofrecer la
+    // opción de pegar desde él. Se comprueba SOLO al ganar el foco
+    // (no en cada recomposición) -- leer el portapapeles en Android
+    // 12+ dispara un aviso visual del sistema cada vez, así que se
+    // hace lo mínimo posible. `clipboardSuggestion` es null cuando no
+    // hay nada que ofrecer (portapapeles vacío, o ya coincide con lo
+    // que hay escrito). Se oculta también en cuanto el usuario escribe
+    // algo (ver onUrlChangeAndDismissClipboardSuggestion más abajo),
+    // para no dejar una sugerencia obsoleta pegada a un campo que el
+    // usuario ya está editando a mano.
+    var clipboardSuggestion by remember { mutableStateOf<String?>(null) }
+    val clipboardManager = LocalClipboardManager.current
     var metadataArtist by remember { mutableStateOf("") }
     var metadataAlbum by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -96,8 +112,24 @@ fun ImportLinkScreen(
 
             OutlinedTextField(
                 value = uiState.url,
-                onValueChange = viewModel::onUrlChange,
-                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    viewModel.onUrlChange(it)
+                    clipboardSuggestion = null
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            val clipped = clipboardManager.getText()?.text?.trim()
+                            clipboardSuggestion = if (
+                                !clipped.isNullOrBlank() && clipped != uiState.url
+                            ) {
+                                clipped
+                            } else {
+                                null
+                            }
+                        }
+                    },
                 label = { Text("Enlace de YouTube / YouTube Music") },
                 leadingIcon = {
                     Icon(Icons.Filled.Link, contentDescription = null)
@@ -112,7 +144,10 @@ fun ImportLinkScreen(
                     // texto.
                     if (uiState.url.isNotBlank()) {
                         Row {
-                            IconButton(onClick = viewModel::clearUrl) {
+                            IconButton(onClick = {
+                                viewModel.clearUrl()
+                                clipboardSuggestion = null
+                            }) {
                                 Icon(Icons.Filled.Close, contentDescription = "Borrar enlace")
                             }
                             // Compartir el enlace pegado -- petición
@@ -132,6 +167,38 @@ fun ImportLinkScreen(
                 },
                 singleLine = true,
             )
+
+            // S050 -- chip de sugerencia "Pegar desde el portapapeles"
+            // -- solo visible si hay algo distinto de lo ya escrito.
+            // AssistChip con icono de pegar + una vista previa recortada
+            // del contenido, para que quede claro qué se va a pegar
+            // antes de tocarlo.
+            clipboardSuggestion?.let { suggestion ->
+                Spacer(Modifier.height(4.dp))
+                AssistChip(
+                    onClick = {
+                        viewModel.onUrlChange(suggestion)
+                        clipboardSuggestion = null
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Filled.ContentPaste,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    label = {
+                        Text(
+                            "Pegar: " + if (suggestion.length > 40) {
+                                suggestion.take(40) + "…"
+                            } else {
+                                suggestion
+                            },
+                        )
+                    },
+                )
+            }
+
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick = viewModel::resolveLink,

@@ -497,7 +497,14 @@ class ImportLinkViewModel @Inject constructor(
                     searchResultTrackRepository.updateCoverArtForAlbum(artist, album, url)
                 }
             }
-            _uiState.value = _uiState.value.copy(importedCount = tracks.size)
+            // S050 -- petición explícita de Miguel Ángel: tras
+            // importar, quitar de la vista lo descargado y vaciar el
+            // campo de enlace, para evitar descargar dos veces lo
+            // mismo por despiste. Se resetea TODO el estado a un
+            // ImportLinkUiState() en blanco salvo importedCount (así
+            // el diálogo "Importado" se sigue mostrando encima de una
+            // pantalla ya limpia, no de la lista recién importada).
+            _uiState.value = ImportLinkUiState(importedCount = tracks.size)
         }
     }
 
