@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,50 +36,71 @@ import javax.inject.Singleton
 
 /**
  * Genera colas de reproducción efímeras ("popurrís") a partir de una
- * selección de favoritos -- sesión de diseño de Favoritos
- * (2026-08-02). Decisiones cerradas explícitamente con Miguel Ángel:
+ * selección de favoritos.
+ *
+ * S050 -- rediseño explícito de Miguel Ángel, que sustituye por
+ * completo el diseño anterior (sesión de Favoritos, 2026-08-02: tope
+ * de 100 pistas + reparto por turnos entre álbumes/artistas). Motivo:
+ * el reparto por turnos, pensado para que ningún catálogo enorme
+ * dominara el popurrí, causó un bug real (un álbum "Various Artists"
+ * de ~100 pistas agotaba el tope él solo, dejando a 0 pistas los
+ * demás álbumes seleccionados -- ver popurri_favoritos_debug.txt,
+ * 2026-09-04) y, aun corrigiéndolo con lotes por ronda, seguía sin
+ * convencer a Miguel Ángel como diseño: "no entiendo por qué tenemos
+ * que tener una tanda de X temas [...] selecciono 5 álbumes con 100
+ * temas cada uno, pues es una lista con 500 temas". Decisión final,
+ * sin term medio: SIN tope, SIN reparto por turnos. Se añaden TODAS
+ * las pistas de TODOS los álbumes/artistas seleccionados -- el modo
+ * aleatorio, si está activo, ya reparte de forma proporcional y justa
+ * por sí solo (ver PlayerManager, usa `shuffleModeEnabled` nativo de
+ * ExoPlayer), sin necesitar ninguna lógica de cuotas por encima.
+ *
+ * Decisiones que SÍ se mantienen de la sesión original:
  *
  * - Cola EFÍMERA, nunca se guarda como playlist (se reproduce y
  *   desaparece al terminar, "son fáciles de crear").
- * - Tope de 100 pistas SIN REPETIR (deduplicación por artista+título
- *   normalizados).
+ * - Deduplicación por artista+título normalizados (sin eso, un mismo
+ *   tema presente en dos álbumes seleccionados sonaría dos veces).
  * - Streaming siempre; si una pista coincide exactamente con una fila
  *   local ya descargada, se reproduce desde ahí (barato: el cruce por
  *   nombre normalizado ya existe en el resto de la app, no añade
  *   complejidad real).
- * - Reparto POR TURNOS entre los artistas/álbumes elegidos (una tanda
- *   -- un álbum entero -- de cada uno por ronda, redistribuyendo
- *   cuando uno se agota): ningún artista con catálogo enorme (Rolling
- *   Stones) domina el popurrí solo por tener más discografía que otro
- *   (Presuntos Implicados). Esto TAMBIÉN resuelve el coste: solo se
- *   resuelve contra MusicBrainz+YouTube el álbum que hace falta en
- *   cada ronda, nunca la discografía entera de golpe -- el tope de 100
- *   acota cuántos álbumes se llegan a tocar.
  * - Nunca se mezcla el modo "artistas" con el modo "álbumes" en la
  *   misma tanda -- son dos flujos separados, tal como se seleccionan
  *   en la pantalla de Favoritos.
  * ---
- * Builds ephemeral playback queues ("popurrís") from a favorites
- * selection -- Favorites design session (2026-08-02). Decisions
- * explicitly closed with Miguel Ángel:
+ * Generates ephemeral playback queues ("popurrís") from a favorites
+ * selection.
+ *
+ * S050 -- explicit redesign from Miguel Ángel, fully replacing the
+ * previous design (Favorites design session, 2026-08-02: 100-track
+ * cap + round-robin distribution between albums/artists). Reason: the
+ * round-robin, meant so no huge catalog would dominate the popurrí,
+ * caused a real bug (a ~100-track "Various Artists" album alone
+ * exhausted the cap, leaving the other selected albums at 0 tracks --
+ * see popurri_favoritos_debug.txt, 2026-09-04) and, even after fixing
+ * it with per-round batches, still didn't convince Miguel Ángel as a
+ * design: "I don't understand why we need a batch of X tracks [...]
+ * I select 5 albums with 100 tracks each, that's a list of 500
+ * tracks." Final decision, no half-measures: NO cap, NO round-robin.
+ * ALL tracks from ALL selected albums/artists get added -- shuffle
+ * mode, if enabled, already distributes proportionally and fairly on
+ * its own (see PlayerManager, uses ExoPlayer's native
+ * `shuffleModeEnabled`), no quota logic needed on top.
+ *
+ * Decisions kept from the original session:
  *
  * - EPHEMERAL queue, never saved as a playlist (plays and disappears
- *   when it ends, "they're easy to create").
- * - Cap of 100 tracks, NO REPEATS (dedup by normalized artist+title).
- * - Always streaming; if a track exactly matches an already-downloaded
- *   local row, it plays from there (cheap: the normalized-name
- *   cross-reference already exists elsewhere in the app, adds no real
- *   complexity).
- * - ROUND-ROBIN distribution across the chosen artists/albums (one
- *   whole album's worth from each per round, redistributing once one
- *   runs out): no artist with a huge catalog (Rolling Stones) can
- *   dominate the popurrí just by having more discography than another
- *   (Presuntos Implicados). This ALSO solves the cost problem: only
- *   the album actually needed for that round gets resolved against
- *   MusicBrainz+YouTube, never a whole discography at once -- the cap
- *   of 100 bounds how many albums ever get touched.
+ *   once done, "they're easy to create").
+ * - Deduplication by normalized artist+title (without it, the same
+ *   song present in two selected albums would play twice).
+ * - Always streaming; if a track exactly matches an already
+ *   downloaded local row, it plays from there (cheap: the normalized
+ *   name cross-reference already exists elsewhere in the app, adds no
+ *   real complexity).
  * - "Artists" mode and "albums" mode are never mixed in the same
- *   batch -- two separate flows, as selected on the Favorites screen.
+ *   batch -- they're two separate flows, exactly as selected on the
+ *   Favorites screen.
  */
 @Singleton
 class PopurriRepository @Inject constructor(
@@ -112,23 +134,6 @@ class PopurriRepository @Inject constructor(
          * suficiente sin dejar de sonar de fondo casi de inmediato.
          */
         private const val INITIAL_BATCH_SIZE = 1
-
-        /**
-         * S050 -- bug real reportado por Miguel Ángel: con varios
-         * álbumes favoritos "Various Artists" seleccionados, uno de
-         * ellos (una recopilación de cerca de 100 pistas por sí solo)
-         * agotaba el tope de TRACK_CAP entero antes de que los demás
-         * álbumes de la ronda tuvieran su turno -- el "reparto por
-         * turnos" no era tal, era vaciar el primer álbum, luego el
-         * segundo, luego el tercero. Causa real: `resolveUnit()`
-         * devuelve el álbum COMPLETO de golpe, y se consumía sin
-         * límite por ronda. Se corrige tomando como mucho
-         * ROUND_ROBIN_BATCH_SIZE pistas de cada álbum POR RONDA,
-         * guardando el resto en un búfer por álbum para la ronda
-         * siguiente -- así ningún álbum, por grande que sea, puede
-         * acaparar el tope antes de que los demás tengan su turno.
-         */
-        private const val ROUND_ROBIN_BATCH_SIZE = 5
     }
 
     /**
@@ -230,121 +235,71 @@ class PopurriRepository @Inject constructor(
         val position: Int,
     )
 
-    /** Una unidad de trabajo por ronda del reparto por turnos -- resolverla cuesta una llamada de red real. */
+    /** Una unidad de trabajo -- resolverla cuesta una llamada de red real. */
     private sealed class AlbumUnit {
         data class ReleaseGroupUnit(val artist: String, val releaseGroup: MusicBrainzReleaseGroup) : AlbumUnit()
         data class FavoriteAlbumUnit(val favorite: FavoriteAlbum) : AlbumUnit()
     }
 
     /**
-     * Bug real reportado por Miguel Ángel (2026-08-02): seleccionó
-     * varios artistas favoritos y pulsó aleatorio a las 7:34; a las
-     * 7:42 (8 minutos) no había sonado nada todavía. Causa: el
-     * arreglo anterior de esta misma sesión (`playProgressively()`)
-     * solo hacía progresiva la RESOLUCIÓN de streaming -- pero
-     * construir el PLAN en sí (recorrer discografías completas,
-     * álbum a álbum, con `resolveUnit()` -> red real contra
-     * MusicBrainz/YouTube por cada álbum) seguía siendo bloqueante
-     * ANTES de poder arrancar nada. Con MusicBrainz degradado (ver
-     * los fallos de Radio reportados en el mismo mensaje), cada álbum
-     * podía tardar varios segundos con reintentos, multiplicado por
-     * decenas de álbumes antes de reunir 100 pistas.
+     * Historia de por qué esto arranca la reproducción progresivamente
+     * en vez de esperar a tenerlo todo resuelto (S050 quitó el tope de
+     * 100 y el reparto por turnos que describían estas dos entradas
+     * originalmente, pero el motivo de fondo -- no bloquear el arranque
+     * mientras se resuelve contra MusicBrainz/YouTube -- sigue
+     * aplicando igual):
      *
-     * Ahora el reparto por turnos en sí es progresivo: en cuanto el
-     * PRIMER álbum de CUALQUIER cola produce al menos una pista
-     * resoluble, arranca la reproducción con ella -- el resto del
-     * reparto (más álbumes, más artistas, hasta el tope de 100)
-     * continúa en `resolveScope`, en segundo plano, exactamente igual
-     * que ya hacía la resolución de streaming.
+     * - Bug real (2026-08-02): seleccionó varios artistas favoritos y
+     *   pulsó aleatorio a las 7:34; a las 7:42 (8 minutos) no había
+     *   sonado nada. Causa: construir el plan en sí (recorrer
+     *   discografías álbum a álbum, red real por cada uno) era
+     *   bloqueante ANTES de poder arrancar nada. Arreglo: en cuanto el
+     *   PRIMER álbum/artista produce una pista resoluble, arranca la
+     *   reproducción con ella -- el resto se sigue resolviendo en
+     *   `resolveScope`, en segundo plano.
+     * - Bug real (2026-08-23): seleccionar varios artistas tardaba
+     *   MINUTOS, no los 5-7s esperados. Causa: el bloque que construía
+     *   las colas por artista resolvía TODOS los artistas seleccionados
+     *   de forma síncrona y secuencial -- `resolveArtist()` +
+     *   `getAlbums()` + `getSingles()`, hasta 3 llamadas de red por
+     *   artista -- antes de que nada progresivo pudiera arrancar. Con
+     *   el interceptor de MusicBrainz limitando a 1 petición cada 1,1s
+     *   de forma GLOBAL (`NetworkModule`,
+     *   `MusicBrainzRateLimitInterceptor`), 7 artistas podían ser hasta
+     *   21 llamadas encadenadas. Arreglo: los artistas se resuelven UNO
+     *   A LA VEZ, nunca en paralelo (el limitador global los serializa
+     *   igual, resolverlos concurrentemente no ahorra tiempo real y solo
+     *   complica el código) -- se prueba el primero, si da una pista
+     *   reproducible arranca YA, y el resto de la selección se resuelve
+     *   en segundo plano, también uno a uno.
      * ---
-     * Real bug reported by Miguel Ángel (2026-08-02): selected several
-     * favorite artists and hit shuffle at 7:34; by 7:42 (8 minutes)
-     * nothing had played yet. Cause: this same session's earlier fix
-     * (`playProgressively()`) only made stream RESOLUTION progressive
-     * -- but building the PLAN itself (walking full discographies,
-     * album by album, with `resolveUnit()` -> real network against
-     * MusicBrainz/YouTube per album) was still blocking BEFORE
-     * anything could start. With MusicBrainz degraded (see the Radio
-     * failures reported in the same message), each album could take
-     * several seconds with retries, multiplied by dozens of albums
-     * before gathering 100 tracks.
+     * History of why this starts playback progressively instead of
+     * waiting until everything is resolved (S050 removed the 100-track
+     * cap and round-robin distribution these two entries originally
+     * described, but the underlying reason -- don't block startup while
+     * resolving against MusicBrainz/YouTube -- still applies the same):
      *
-     * Now the round-robin distribution itself is progressive: as soon
-     * as the FIRST album from ANY queue produces at least one
-     * resolvable track, playback starts with it -- the rest of the
-     * distribution (more albums, more artists, up to the cap of 100)
-     * continues on `resolveScope`, in the background, exactly like
-     * stream resolution already did.
-     */
-    /**
-     * Bug real reportado por Miguel Ángel (2026-08-23): seleccionar
-     * varios artistas favoritos tardaba MINUTOS en arrancar, en vez de
-     * los 5-7 segundos esperados. Causa real, distinta del bug de
-     * 2026-08-02 de más abajo (ese arreglaba que la CONSTRUCCIÓN del
-     * plan bloquease tras tener ya las colas por artista): el bloque
-     * que CONSTRUÍA esas colas resolvía TODOS los artistas
-     * seleccionados de forma síncrona y secuencial -- `resolveArtist()`
-     * + `getAlbums()` + `getSingles()`, hasta 3 llamadas de red por
-     * artista -- ANTES de que la Fase 1 progresiva pudiera arrancar
-     * nada. Con el interceptor de MusicBrainz limitando a 1 petición
-     * cada 1,1s de forma GLOBAL (ver `NetworkModule`,
-     * `MusicBrainzRateLimitInterceptor`) y `readTimeout`/
-     * `connectTimeout` de 10s cada uno, seleccionar 7 artistas podía
-     * significar hasta 21 llamadas encadenadas -- minutos reales si
-     * alguna se degradaba, nunca menos de ~20s incluso en el caso
-     * perfecto.
-     *
-     * Ahora se resuelve un artista a la vez: se prueba el primero: si
-     * da una pista reproducible, arranca YA (coste real: un solo
-     * artista, ~3 llamadas). Si no da nada, se prueba el siguiente,
-     * sin volver atrás. El resto de la selección se resuelve EN
-     * SEGUNDO PLANO, también uno a uno, sumándose al reparto por turnos
-     * ya en marcha (`continueArtistsInBackground()`).
-     *
-     * Compromiso consciente, documentado para quien retome esto: el
-     * reparto por turnos entre artistas (que ningún catálogo enorme
-     * domine sobre otro) sigue aplicando DENTRO de las colas ya
-     * incorporadas en cada momento, pero un artista que se suma tarde
-     * a la generación en segundo plano ya no compite en pie de
-     * igualdad con uno que llegó antes -- cada `continueCollecting()`
-     * agota lo que tiene delante antes de que se sume el siguiente
-     * artista. Aceptable: ocurre solo en segundo plano, con la música
-     * ya sonando, y resuelve el problema real reportado hoy (arranque
-     * lento). Si en el futuro se nota que unos artistas dominan sobre
-     * otros en el popurrí de fondo, hay que revisar este punto.
-     * ---
-     * Real bug reported by Miguel Ángel (2026-08-23): selecting several
-     * favorite artists took MINUTES to start, instead of the expected
-     * 5-7 seconds. Real cause, distinct from the 2026-08-02 bug further
-     * below (that one fixed the PLAN CONSTRUCTION blocking once the
-     * per-artist queues already existed): the block that BUILT those
-     * queues resolved ALL selected artists synchronously and
-     * sequentially -- `resolveArtist()` + `getAlbums()` +
-     * `getSingles()`, up to 3 network calls per artist -- BEFORE the
-     * progressive Phase 1 could start anything. With MusicBrainz's
-     * interceptor limiting to 1 request every 1.1s GLOBALLY (see
-     * `NetworkModule`, `MusicBrainzRateLimitInterceptor`) and 10s
-     * `readTimeout`/`connectTimeout` each, selecting 7 artists could
-     * mean up to 21 chained calls -- real minutes if any degraded,
-     * never less than ~20s even in the perfect case.
-     *
-     * Now artists resolve one at a time: try the first one; if it
-     * yields a playable track, start NOW (real cost: a single artist,
-     * ~3 calls). If it yields nothing, try the next, never going back.
-     * The rest of the selection resolves IN THE BACKGROUND, also one at
-     * a time, joining the round-robin already under way
-     * (`continueArtistsInBackground()`).
-     *
-     * Conscious trade-off, documented for whoever picks this up next:
-     * round-robin fairness among artists (no huge catalog dominating
-     * another) still applies WITHIN the queues already incorporated at
-     * any given moment, but an artist that joins background generation
-     * late no longer competes on equal footing with one that arrived
-     * earlier -- each `continueCollecting()` call drains what's ahead
-     * of it before the next artist joins. Acceptable: it only happens
-     * in the background, with music already playing, and it fixes
-     * today's real complaint (slow start). If skewed distribution
-     * toward earlier artists is ever noticed, revisit this.
+     * - Real bug (2026-08-02): selected several favorite artists and
+     *   hit shuffle at 7:34; by 7:42 (8 minutes) nothing had played.
+     *   Cause: building the plan itself (walking full discographies
+     *   album by album, real network per album) was blocking BEFORE
+     *   anything could start. Fix: as soon as the FIRST album/artist
+     *   produces a resolvable track, playback starts with it -- the
+     *   rest keeps resolving on `resolveScope`, in the background.
+     * - Real bug (2026-08-23): selecting several artists took MINUTES,
+     *   not the expected 5-7s. Cause: the block building per-artist
+     *   queues resolved ALL selected artists synchronously and
+     *   sequentially -- `resolveArtist()` + `getAlbums()` +
+     *   `getSingles()`, up to 3 network calls per artist -- before
+     *   anything progressive could start. With MusicBrainz's
+     *   interceptor limiting to 1 request every 1.1s GLOBALLY
+     *   (`NetworkModule`, `MusicBrainzRateLimitInterceptor`), 7 artists
+     *   could mean up to 21 chained calls. Fix: artists resolve ONE AT
+     *   A TIME, never in parallel (the global limiter serializes them
+     *   anyway, resolving concurrently saves no real time and only adds
+     *   complexity) -- try the first one, start immediately if it
+     *   yields a playable track, and resolve the rest of the selection
+     *   in the background, also one at a time.
      */
     suspend fun playArtistsProgressively(
         playerManager: PlayerManager,
@@ -367,27 +322,51 @@ class PopurriRepository @Inject constructor(
         }
 
         val seenKeys = mutableSetOf<Pair<String, String>>()
-        val totalCollected = intArrayOf(0)
-        val queues = mutableListOf<ArrayDeque<AlbumUnit>>()
-
         var index = 0
         var started = false
         while (!started && index < candidates.size) {
             val queue = resolveArtistQueue(candidates[index])
             index++
-            if (queue != null) queues += queue
-            started = playOneRoundOverQueues(playerManager, queues, localIndex, seenKeys, totalCollected, shuffle)
+            if (queue == null) continue
+            val tracks = drainQueue(queue, localIndex, "playArtistsProgressively")
+            val fresh = collectFresh(tracks, seenKeys)
+            if (fresh.isEmpty()) continue
+            val items = fresh.map { toQueueItem(it, localIndex) }
+            val resolvedFirst = resolveStreamUrlsConcurrently(items.take(1))
+            if (resolvedFirst.isEmpty()) continue
+            if (shuffle) playerManager.playQueueShuffled(resolvedFirst) else playerManager.playQueue(resolvedFirst)
+            val restOfBatch = items.drop(1)
+            started = true
+            val remaining = candidates.drop(index)
+            launchBackgroundGeneration {
+                if (restOfBatch.isNotEmpty()) {
+                    val resolvedRest = resolveStreamUrlsConcurrently(restOfBatch)
+                    if (resolvedRest.isNotEmpty()) {
+                        withContext(Dispatchers.Main) { playerManager.addToQueue(resolvedRest) }
+                    }
+                }
+                // S050 -- sin tope, sin reparto por turnos: cada
+                // artista restante aporta TODAS sus pistas, una vez
+                // resuelto (uno a uno, ver el kdoc de arriba sobre el
+                // límite global de MusicBrainz).
+                for (fav in remaining) {
+                    val q = resolveArtistQueue(fav) ?: continue
+                    val moreTracks = drainQueue(q, localIndex, "playArtistsProgressively")
+                    val moreFresh = collectFresh(moreTracks, seenKeys)
+                    if (moreFresh.isEmpty()) continue
+                    val moreItems = moreFresh.map { toQueueItem(it, localIndex) }
+                    val resolved = resolveStreamUrlsConcurrently(moreItems)
+                    if (resolved.isNotEmpty()) {
+                        withContext(Dispatchers.Main) { playerManager.addToQueue(resolved) }
+                    }
+                }
+                log("playArtistsProgressively() -- terminado, ${seenKeys.size} pistas reunidas en total")
+            }
         }
         if (!started) {
             log("playArtistsProgressively() -- NINGÚN artista dio ni una sola pista reproducible, popurrí vacío")
-            return false
         }
-
-        val remaining = candidates.drop(index)
-        launchBackgroundGeneration {
-            continueArtistsInBackground(playerManager, queues, remaining, localIndex, seenKeys, totalCollected)
-        }
-        return true
+        return started
     }
 
     /**
@@ -428,85 +407,7 @@ class PopurriRepository @Inject constructor(
         return ArrayDeque(units)
     }
 
-    /**
-     * Recorre UNA ronda de las colas actuales (una unidad por cola)
-     * buscando la primera pista reproducible; si la encuentra, arranca
-     * la reproducción con ella y añade el resto de esa unidad a la cola
-     * ya sonando -- nunca bloquea más de lo que tarda resolver una
-     * única unidad por cola. Usado solo por `playArtistsProgressively()`
-     * en su Fase 1 -- `playAlbumsProgressively()` sigue usando
-     * `playRoundRobinProgressively()` sin cambios, porque no tiene el
-     * problema de resolución por artista que motiva esta función.
-     */
-    private suspend fun playOneRoundOverQueues(
-        playerManager: PlayerManager,
-        queues: MutableList<ArrayDeque<AlbumUnit>>,
-        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
-        seenKeys: MutableSet<Pair<String, String>>,
-        totalCollected: IntArray,
-        shuffle: Boolean,
-    ): Boolean {
-        for (queue in queues) {
-            if (totalCollected[0] >= TRACK_CAP) break
-            val unit = queue.removeFirstOrNull() ?: continue
-            val tracks = try {
-                resolveUnit(unit, localIndex)
-            } catch (e: Exception) {
-                log("playOneRoundOverQueues() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
-                emptyList()
-            }
-            val fresh = collectFresh(tracks, seenKeys, totalCollected)
-            if (fresh.isEmpty()) continue
-            val items = fresh.map { toQueueItem(it, localIndex) }
-            val resolvedFirst = resolveStreamUrlsConcurrently(items.take(1))
-            if (resolvedFirst.isEmpty()) continue
-            if (shuffle) playerManager.playQueueShuffled(resolvedFirst) else playerManager.playQueue(resolvedFirst)
-            val restOfBatch = items.drop(1)
-            if (restOfBatch.isNotEmpty()) {
-                val resolvedRest = resolveStreamUrlsConcurrently(restOfBatch)
-                if (resolvedRest.isNotEmpty()) {
-                    withContext(Dispatchers.Main) { playerManager.addToQueue(resolvedRest) }
-                }
-            }
-            return true
-        }
-        return false
-    }
-
-    /**
-     * Fase 2 de `playArtistsProgressively()`, en segundo plano: agota
-     * primero lo que quede en las colas ya incorporadas (mismo
-     * mecanismo que `continueCollecting()`), y cuando se acaban,
-     * resuelve el SIGUIENTE artista pendiente de la selección (uno a
-     * uno, nunca todos de golpe) y lo suma al reparto -- hasta agotar
-     * la selección completa o llegar al tope de 100.
-     */
-    private suspend fun continueArtistsInBackground(
-        playerManager: PlayerManager,
-        queues: MutableList<ArrayDeque<AlbumUnit>>,
-        remainingCandidates: List<FavoriteArtist>,
-        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
-        seenKeys: MutableSet<Pair<String, String>>,
-        totalCollected: IntArray,
-    ) {
-        // S050 -- mismo búfer de reparto por turnos para las DOS
-        // llamadas a continueCollecting() de aquí abajo -- si cada una
-        // creara el suyo (el parámetro tiene valor por defecto), se
-        // perdería lo que quedó a medias del álbum/sencillo de la
-        // primera llamada al procesar el siguiente artista. Ver el
-        // comentario de ROUND_ROBIN_BATCH_SIZE.
-        val carryover = mutableMapOf<ArrayDeque<AlbumUnit>, ArrayDeque<PendingTrack>>()
-        continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected, carryover)
-        for (fav in remainingCandidates) {
-            if (totalCollected[0] >= TRACK_CAP) break
-            val queue = resolveArtistQueue(fav) ?: continue
-            queues += queue
-            continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected, carryover)
-        }
-        log("continueArtistsInBackground() -- terminado, ${totalCollected[0]}/$TRACK_CAP pistas reunidas en total")
-    }
-
-    /** Mismo arreglo que playArtistsProgressively() -- ver su comentario. */
+    /** Mismo criterio que playArtistsProgressively() -- ver su kdoc. Los álbumes (a diferencia de los artistas) no encadenan varias llamadas de red cada uno, así que no hay el mismo riesgo de arranque lento por resolución. */
     suspend fun playAlbumsProgressively(
         playerManager: PlayerManager,
         albums: List<FavoriteAlbum>,
@@ -517,14 +418,80 @@ class PopurriRepository @Inject constructor(
         log("playAlbumsProgressively() -- ${albums.size} álbum(es) seleccionados: ${albums.joinToString { "${it.artist} - ${it.album}" }}")
         val localIndex = buildLocalIndex()
         // H16 -- ver el comentario equivalente en playArtistsProgressively().
-        val queues = albums.filterNot { isArtistDisliked(it.artist) }.map { fav ->
-            ArrayDeque(listOf(AlbumUnit.FavoriteAlbumUnit(fav) as AlbumUnit))
+        val candidates = albums.filterNot { isArtistDisliked(it.artist) }
+        val seenKeys = mutableSetOf<Pair<String, String>>()
+
+        var index = 0
+        var started = false
+        while (!started && index < candidates.size) {
+            val queue = ArrayDeque(listOf(AlbumUnit.FavoriteAlbumUnit(candidates[index]) as AlbumUnit))
+            index++
+            val tracks = drainQueue(queue, localIndex, "playAlbumsProgressively")
+            val fresh = collectFresh(tracks, seenKeys)
+            if (fresh.isEmpty()) continue
+            val items = fresh.map { toQueueItem(it, localIndex) }
+            val resolvedFirst = resolveStreamUrlsConcurrently(items.take(1))
+            // Este álbum en concreto no dio ninguna pista reproducible
+            // (p.ej. todas sus URLs fallaron al resolver) -- se prueba
+            // con el siguiente álbum de la selección en vez de rendirse.
+            if (resolvedFirst.isEmpty()) continue
+            if (shuffle) playerManager.playQueueShuffled(resolvedFirst) else playerManager.playQueue(resolvedFirst)
+            val restOfBatch = items.drop(1)
+            started = true
+            val remaining = candidates.drop(index)
+            launchBackgroundGeneration {
+                if (restOfBatch.isNotEmpty()) {
+                    val resolvedRest = resolveStreamUrlsConcurrently(restOfBatch)
+                    if (resolvedRest.isNotEmpty()) {
+                        withContext(Dispatchers.Main) { playerManager.addToQueue(resolvedRest) }
+                    }
+                }
+                // S050 -- sin tope, sin reparto por turnos: cada álbum
+                // restante aporta TODAS sus pistas, sin límite.
+                for (fav in remaining) {
+                    val q = ArrayDeque(listOf(AlbumUnit.FavoriteAlbumUnit(fav) as AlbumUnit))
+                    val moreTracks = drainQueue(q, localIndex, "playAlbumsProgressively")
+                    val moreFresh = collectFresh(moreTracks, seenKeys)
+                    if (moreFresh.isEmpty()) continue
+                    val moreItems = moreFresh.map { toQueueItem(it, localIndex) }
+                    val resolved = resolveStreamUrlsConcurrently(moreItems)
+                    if (resolved.isNotEmpty()) {
+                        withContext(Dispatchers.Main) { playerManager.addToQueue(resolved) }
+                    }
+                }
+                log("playAlbumsProgressively() -- terminado, ${seenKeys.size} pistas reunidas en total")
+            }
         }
-        val started = playRoundRobinProgressively(playerManager, queues, localIndex, shuffle)
         if (!started) {
             log("playAlbumsProgressively() -- NINGÚN álbum dio ni una sola pista reproducible, popurrí vacío")
         }
         return started
+    }
+
+    /**
+     * Resuelve TODAS las unidades de una cola de golpe y las deja como
+     * lista plana -- sin tope ni límite por ronda (S050, ver el kdoc de
+     * cabecera de la clase). Cada unidad sigue siendo una llamada de
+     * red real si no está ya en local; si una falla, se registra y se
+     * sigue con las demás en vez de perder la cola entera.
+     */
+    private suspend fun drainQueue(
+        queue: ArrayDeque<AlbumUnit>,
+        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
+        callerLabel: String,
+    ): List<PendingTrack> {
+        val all = mutableListOf<PendingTrack>()
+        while (true) {
+            val unit = queue.removeFirstOrNull() ?: break
+            val resolved = try {
+                resolveUnit(unit, localIndex)
+            } catch (e: Exception) {
+                log("$callerLabel() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
+                emptyList()
+            }
+            all += resolved
+        }
+        return all
     }
 
     /**
@@ -584,129 +551,6 @@ class PopurriRepository @Inject constructor(
         return items
     }
 
-    /**
-     * Fase 1: busca el PRIMER álbum, de cualquier cola, que produzca
-     * al menos una pista resoluble -- arranca la reproducción con
-     * ella y delega el resto del reparto (Fase 2, `continueCollecting()`)
-     * en `resolveScope`. Nunca bloquea más allá de lo que tarda un
-     * único álbum en resolverse.
-     * ---
-     * Phase 1: looks for the FIRST album, from any queue, that
-     * produces at least one resolvable track -- starts playback with
-     * it and hands off the rest of the distribution (Phase 2,
-     * `continueCollecting()`) to `resolveScope`. Never blocks longer
-     * than it takes to resolve a single album.
-     */
-    private suspend fun playRoundRobinProgressively(
-        playerManager: PlayerManager,
-        queues: List<ArrayDeque<AlbumUnit>>,
-        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
-        shuffle: Boolean,
-    ): Boolean {
-        if (queues.isEmpty()) return false
-        val seenKeys = mutableSetOf<Pair<String, String>>()
-        val totalCollected = intArrayOf(0)
-        // S050 -- búfer por álbum, ver el comentario de
-        // ROUND_ROBIN_BATCH_SIZE. Se crea aquí y se le pasa a
-        // continueCollecting() para que el reparto por turnos siga
-        // siendo real en la Fase 2 (segundo plano), no solo en esta
-        // primera ronda síncrona.
-        val carryover = mutableMapOf<ArrayDeque<AlbumUnit>, ArrayDeque<PendingTrack>>()
-        var anyLeft = true
-        while (totalCollected[0] < TRACK_CAP && anyLeft) {
-            anyLeft = false
-            for (queue in queues) {
-                if (totalCollected[0] >= TRACK_CAP) break
-                val buffer = carryover.getOrPut(queue) { ArrayDeque() }
-                if (buffer.isEmpty()) {
-                    val unit = queue.removeFirstOrNull() ?: continue
-                    anyLeft = true
-                    val resolved = try {
-                        resolveUnit(unit, localIndex)
-                    } catch (e: Exception) {
-                        log("playRoundRobinProgressively() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
-                        emptyList()
-                    }
-                    buffer.addAll(resolved)
-                    if (buffer.isEmpty()) continue
-                } else {
-                    anyLeft = true
-                }
-                val batch = mutableListOf<PendingTrack>()
-                repeat(ROUND_ROBIN_BATCH_SIZE) { buffer.removeFirstOrNull()?.let { batch += it } }
-                val fresh = collectFresh(batch, seenKeys, totalCollected)
-                if (fresh.isEmpty()) continue
-                val items = fresh.map { toQueueItem(it, localIndex) }
-                val resolvedFirst = resolveStreamUrlsConcurrently(items.take(1))
-                // Este álbum en concreto no dio ninguna pista
-                // reproducible (p.ej. todas sus URLs fallaron al
-                // resolver) -- se prueba con el siguiente álbum de la
-                // ronda en vez de rendirse.
-                if (resolvedFirst.isEmpty()) continue
-                if (shuffle) playerManager.playQueueShuffled(resolvedFirst) else playerManager.playQueue(resolvedFirst)
-                val restOfBatch = items.drop(1)
-                launchBackgroundGeneration {
-                    if (restOfBatch.isNotEmpty()) {
-                        val resolvedRest = resolveStreamUrlsConcurrently(restOfBatch)
-                        if (resolvedRest.isNotEmpty()) {
-                            withContext(Dispatchers.Main) { playerManager.addToQueue(resolvedRest) }
-                        }
-                    }
-                    continueCollecting(playerManager, queues, localIndex, seenKeys, totalCollected, carryover)
-                }
-                return true
-            }
-        }
-        log(
-            "playRoundRobinProgressively() -- Fase 1 agotada sin encontrar ni una sola pista " +
-                "reproducible en ${queues.size} cola(s) (tope=$TRACK_CAP, recogidas=${totalCollected[0]})",
-        )
-        return false
-    }
-
-    /** Fase 2, en segundo plano (`resolveScope`): sigue el reparto por turnos donde lo dejó la Fase 1. */
-    private suspend fun continueCollecting(
-        playerManager: PlayerManager,
-        queues: List<ArrayDeque<AlbumUnit>>,
-        localIndex: Map<Pair<String, String>, Map<Int, SearchResultTrack>>,
-        seenKeys: MutableSet<Pair<String, String>>,
-        totalCollected: IntArray,
-        carryover: MutableMap<ArrayDeque<AlbumUnit>, ArrayDeque<PendingTrack>> = mutableMapOf(),
-    ) {
-        var anyLeft = true
-        while (totalCollected[0] < TRACK_CAP && anyLeft) {
-            anyLeft = false
-            for (queue in queues) {
-                if (totalCollected[0] >= TRACK_CAP) break
-                val buffer = carryover.getOrPut(queue) { ArrayDeque() }
-                if (buffer.isEmpty()) {
-                    val unit = queue.removeFirstOrNull() ?: continue
-                    anyLeft = true
-                    val resolved = try {
-                        resolveUnit(unit, localIndex)
-                    } catch (e: Exception) {
-                        log("continueCollecting() -- resolveUnit() lanzó excepción para '${unitLabel(unit)}': ${e.javaClass.simpleName}: ${e.message}")
-                        emptyList()
-                    }
-                    buffer.addAll(resolved)
-                    if (buffer.isEmpty()) continue
-                } else {
-                    anyLeft = true
-                }
-                val batch = mutableListOf<PendingTrack>()
-                repeat(ROUND_ROBIN_BATCH_SIZE) { buffer.removeFirstOrNull()?.let { batch += it } }
-                val fresh = collectFresh(batch, seenKeys, totalCollected)
-                if (fresh.isEmpty()) continue
-                val items = fresh.map { toQueueItem(it, localIndex) }
-                val resolved = resolveStreamUrlsConcurrently(items)
-                if (resolved.isNotEmpty()) {
-                    withContext(Dispatchers.Main) { playerManager.addToQueue(resolved) }
-                }
-            }
-        }
-        log("continueCollecting() -- terminado, ${totalCollected[0]}/$TRACK_CAP pistas reunidas en total")
-    }
-
     /** Nombre corto de una unidad de trabajo, solo para los mensajes de depuración. */
     private fun unitLabel(unit: AlbumUnit): String = when (unit) {
         is AlbumUnit.ReleaseGroupUnit -> "${unit.artist} - ${unit.releaseGroup.title}"
@@ -715,26 +559,23 @@ class PopurriRepository @Inject constructor(
 
     private fun log(line: String) = PopurriDebugLogger.log(appContext, storageManager, line)
 
-    /** Filtra por deduplicación global (artista+título normalizados) y respeta el tope de 100, compartido por las dos fases. */
+    /**
+     * Filtra por deduplicación global (artista+título normalizados) y
+     * por la Lista Negra ("no me gusta"). S050 -- ya SIN tope: se
+     * ofrecen todas las pistas frescas, el modo aleatorio reparte.
+     */
     private fun collectFresh(
         tracks: List<PendingTrack>,
         seenKeys: MutableSet<Pair<String, String>>,
-        totalCollected: IntArray,
     ): List<PendingTrack> {
         val fresh = mutableListOf<PendingTrack>()
         for (track in tracks) {
-            if (totalCollected[0] >= TRACK_CAP) break
             val key = SearchNormalizer.normalizeArtistName(track.artist) to
                 SearchNormalizer.normalize(track.title)
             if (!seenKeys.add(key)) continue
-            // H16 -- exclusión dura de la Lista Negra, mismo punto
-            // único de paso que ya usan las dos fases del reparto por
-            // turnos (Fase 1 en playRoundRobinProgressively(), Fase 2
-            // en continueCollecting()) para deduplicar. No cuenta para
-            // el tope de 100 -- simplemente no se ofrece.
+            // H16 -- exclusión dura de la Lista Negra.
             if (isArtistDisliked(track.artist) || isTrackDisliked(track.artist, track.title)) continue
             fresh += track
-            totalCollected[0]++
         }
         return fresh
     }
@@ -873,14 +714,15 @@ class PopurriRepository @Inject constructor(
 
     /**
      * Decide local-vs-streaming para UNA pista -- misma lógica que
-     * antes tenía `finish()`, ahora por pista suelta porque el
-     * reparto por turnos ya no construye la lista entera de golpe
-     * antes de reproducir nada (ver playRoundRobinProgressively()).
+     * antes tenía `finish()`, ahora por pista suelta porque la
+     * reproducción progresiva arranca con la primera pista resoluble
+     * en vez de construir la lista entera de golpe antes de reproducir
+     * nada.
      * ---
-     * Decides local-vs-streaming for ONE track -- same logic
-     * `finish()` used to have, now per single track because the
-     * round-robin distribution no longer builds the whole list at
-     * once before playing anything (see playRoundRobinProgressively()).
+     * Decides local-vs-streaming for ONE track -- same logic `finish()`
+     * used to have, now per single track because progressive playback
+     * starts with the first resolvable track instead of building the
+     * whole list at once before playing anything.
      */
     private fun toQueueItem(
         track: PendingTrack,
