@@ -971,8 +971,19 @@ class PlayerManager @Inject constructor(
                 }
                 // Mismo motivo que el bloque de arriba: una emisora en
                 // directo nunca dispara "qué suena después".
+                //
+                // S050 -- isLastItem se excluye en modo aleatorio
+                // (mismo criterio que el STATE_ENDED de más abajo,
+                // ver ese comentario para la causa real): la última
+                // pista de una cola mezclada es arbitraria, no tiene
+                // sentido disparar Radio de forma anticipada al
+                // llegar a ella. isFromRadio NO se toca -- si ya
+                // estamos DENTRO de una sesión de Radio en marcha,
+                // seguir sirviéndola no es "disparar" Radio, es
+                // continuarla.
                 if (currentItem?.isRadioStation != true &&
-                    (currentItem?.isFromRadio == true || isLastItem)
+                    (currentItem?.isFromRadio == true ||
+                        (isLastItem && !player.shuffleModeEnabled))
                 ) {
                     topUpRadioQueueIfNeeded()
                 }
@@ -1014,8 +1025,24 @@ class PlayerManager @Inject constructor(
              * Decisión explícita de Miguel Ángel: se dispara al acabar
              * la última canción, sin cíclico, sin ningún control
              * aparte que activar/desactivar.
+             *
+             * S050 -- excepción explícita añadida: en modo aleatorio
+             * NUNCA se dispara Radio al terminar, sea cual sea el
+             * tamaño de la cola ("da igual, no debe dispararse").
+             * Causa real que llevó a esta decisión
+             * (radio_relacionados_debug.txt, 2026-09-04): una cola
+             * grande en aleatorio terminó en una pista acreditada a
+             * 'Various Artists' -- resolveAnchor() la descarta a
+             * propósito (no ancla Radio en un origen basura), el
+             * fallback chocó con fallos de red reales, y
+             * topUpRadioQueueIfNeeded() se rindió con backlog 0 -- la
+             * reproducción se paró sin nada que sonar después. En vez
+             * de arreglar la resolución de ancla para ESE caso
+             * concreto, se corta el disparo entero en aleatorio: la
+             * última pista de una cola mezclada es arbitraria por
+             * diseño, no tiene sentido anclar Radio en ella.
              * ---
-             * H08 PARTE 2 (S009) -- Radio trigger: when the queue
+             * H08 PART 2 (S009) -- Radio trigger: when the queue
              * truly ends (Player.STATE_ENDED, which ExoPlayer only
              * reaches after the last track finishes WITHOUT cyclic
              * enabled -- with REPEAT_MODE_ALL this state is never
@@ -1023,10 +1050,24 @@ class PlayerManager @Inject constructor(
              * Explicit decision from Miguel Ángel: fires when the last
              * song ends, no cyclic, no separate control to turn it on
              * or off.
+             *
+             * S050 -- explicit exception added: in shuffle mode Radio
+             * NEVER fires on queue end, regardless of queue size.
+             * Real cause behind this decision
+             * (radio_relacionados_debug.txt, 2026-09-04): a large
+             * shuffled queue ended on a track credited to 'Various
+             * Artists' -- resolveAnchor() deliberately discards it,
+             * the fallback hit real network failures, and
+             * topUpRadioQueueIfNeeded() gave up with backlog 0 --
+             * playback just stopped with nothing queued next. Rather
+             * than fixing anchor resolution for that one case, the
+             * trigger itself is cut entirely in shuffle: the last
+             * track of a shuffled queue is arbitrary by design.
              */
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED &&
-                    player.repeatMode == Player.REPEAT_MODE_OFF
+                    player.repeatMode == Player.REPEAT_MODE_OFF &&
+                    !player.shuffleModeEnabled
                 ) {
                     topUpRadioQueueIfNeeded()
                 }
