@@ -58,6 +58,14 @@ class PlaylistRepository @Inject constructor(
     fun getTracksForPlaylist(playlistId: Long): Flow<List<SearchResultTrack>> =
         dao.getTracksForPlaylist(playlistId)
 
+    /**
+     * S051 -- variante de una sola lectura, usada para comprobar
+     * duplicados ANTES de añadir (ver AddToPlaylistDialogViewModel):
+     * hace falta un valor puntual, no un Flow que siga observando.
+     */
+    suspend fun getTracksForPlaylistOnce(playlistId: Long): List<SearchResultTrack> =
+        dao.getTracksForPlaylistOnce(playlistId)
+
     fun getTrackCountForPlaylist(playlistId: Long): Flow<Int> =
         dao.getTrackCountForPlaylist(playlistId)
 

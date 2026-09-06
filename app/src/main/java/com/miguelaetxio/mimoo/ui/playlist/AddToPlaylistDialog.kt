@@ -86,6 +86,7 @@ fun AddToPlaylistDialog(
                                     viewModel.addToExistingPlaylist(
                                         activity,
                                         playlist.id,
+                                        playlist.name,
                                         youtubeIds,
                                         onSuccess = onDismiss,
                                     )
@@ -134,4 +135,34 @@ fun AddToPlaylistDialog(
             TextButton(onClick = onDismiss) { Text("Cerrar") }
         },
     )
+
+    // S051 -- petición explícita de Miguel Ángel: avisar y preguntar
+    // antes de añadir una pista que ya está en la lista destino, en
+    // vez de moverla al final en silencio. Diálogo aparte, por encima
+    // del principal (no lo sustituye), para no perder el contexto de
+    // qué se estaba añadiendo.
+    uiState.duplicateConfirmation?.let { confirmation ->
+        val message = if (confirmation.duplicateCount == 1 && confirmation.youtubeIds.size == 1) {
+            "Este tema ya está en \"${confirmation.playlistName}\". ¿Lo añadimos de todas formas? (se moverá al final de la lista)"
+        } else if (confirmation.duplicateCount == confirmation.youtubeIds.size) {
+            "Todas estas pistas ya están en \"${confirmation.playlistName}\". ¿Las añadimos de todas formas? (se moverán al final de la lista)"
+        } else {
+            "${confirmation.duplicateCount} de estas pistas ya están en \"${confirmation.playlistName}\". ¿Las añadimos de todas formas? (las que ya estaban se moverán al final de la lista)"
+        }
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDuplicateConfirmation,
+            title = { Text("Tema ya en la lista") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.confirmAddDuplicates(activity, onSuccess = onDismiss) },
+                ) {
+                    Text("Añadir de todas formas")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissDuplicateConfirmation) { Text("Cancelar") }
+            },
+        )
+    }
 }

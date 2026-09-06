@@ -21,6 +21,24 @@ data class AddToPlaylistUiState(
     // que la operación termine, para poder mostrar esto en vez de
     // cerrarse en silencio sin haber añadido nada.
     val syncBlockedMessage: String? = null,
+    // S051 -- petición explícita de Miguel Ángel: si al añadir alguna
+    // de las pistas ya está en la lista destino, no se añade en
+    // silencio (antes REEMPLAZABA la posición existente moviendo el
+    // tema al final, sin avisar) -- se pregunta primero. Guarda todo
+    // lo necesario para reintentar si el usuario confirma.
+    val duplicateConfirmation: DuplicateConfirmation? = null,
+)
+
+/**
+ * S051 -- datos para reintentar addToExistingPlaylist() si el usuario
+ * confirma que quiere añadir de todas formas pistas ya presentes en
+ * la lista.
+ */
+data class DuplicateConfirmation(
+    val playlistId: Long,
+    val playlistName: String,
+    val youtubeIds: List<String>,
+    val duplicateCount: Int,
 )
 
 /**
@@ -64,6 +82,17 @@ class AddToPlaylistDialogViewModel @Inject constructor(
      * `onSuccess` -- el diálogo lo usa para cerrarse solo si la
      * operación realmente se aplicó (H07 PARTE 1); si no hay
      * conexión, el diálogo se queda abierto mostrando el aviso.
+     *
+     * S051 -- petición explícita de Miguel Ángel: antes de añadir,
+     * comprueba si alguna de las pistas YA está en la lista destino.
+     * Antes no se comprobaba nada -- como la clave primaria es
+     * (playlistId, youtubeId) con `OnConflictStrategy.REPLACE`, añadir
+     * un tema repetido no lo duplicaba, pero SÍ lo movía en silencio
+     * al final de la lista (nueva posición = max+1), sin avisar de
+     * nada. Ahora, si hay algún duplicado, se corta aquí y se deja el
+     * aviso en `duplicateConfirmation` para que el diálogo pregunte;
+     * solo se añade de verdad si `forceAddDuplicates` es true
+     * (confirmAddDuplicates()) o si no había ningún duplicado.
      * ---
      * youtubeIds instead of a single youtubeId -- explicit request
      * from Miguel Ángel (2026-07-04): being able to add a whole album
@@ -73,14 +102,43 @@ class AddToPlaylistDialogViewModel @Inject constructor(
      * `onSuccess` -- the dialog uses this to close itself only if the
      * operation actually applied (H07 PART 1); if there's no
      * connection, the dialog stays open showing the notice.
+     *
+     * S051 -- explicit request from Miguel Ángel: before adding, check
+     * whether any of the tracks are ALREADY in the target playlist.
+     * Previously nothing was checked -- since the primary key is
+     * (playlistId, youtubeId) with `OnConflictStrategy.REPLACE`, adding
+     * a repeated track didn't duplicate it, but it DID silently move it
+     * to the end of the list (new position = max+1), with no warning.
+     * Now, if there's any duplicate, this stops here and leaves the
+     * notice in `duplicateConfirmation` for the dialog to ask; it only
+     * actually adds if `forceAddDuplicates` is true
+     * (confirmAddDuplicates()) or if there was no duplicate at all.
      */
     fun addToExistingPlaylist(
         activity: Activity,
         playlistId: Long,
+        playlistName: String,
         youtubeIds: List<String>,
         onSuccess: () -> Unit,
+        forceAddDuplicates: Boolean = false,
     ) {
         viewModelScope.launch {
+            if (!forceAddDuplicates) {
+                val existingIds = repository.getTracksForPlaylistOnce(playlistId)
+                    .map { it.youtubeId }.toSet()
+                val duplicateCount = youtubeIds.count { it in existingIds }
+                if (duplicateCount > 0) {
+                    _uiState.value = _uiState.value.copy(
+                        duplicateConfirmation = DuplicateConfirmation(
+                            playlistId = playlistId,
+                            playlistName = playlistName,
+                            youtubeIds = youtubeIds,
+                            duplicateCount = duplicateCount,
+                        ),
+                    )
+                    return@launch
+                }
+            }
             val outcome = autoSyncPusher.executeIfConnected(activity) {
                 repository.addTracksToPlaylist(playlistId, youtubeIds)
             }
@@ -92,6 +150,25 @@ class AddToPlaylistDialogViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /** S051 -- el usuario confirmó "añadir de todas formas" en el aviso de duplicados. */
+    fun confirmAddDuplicates(activity: Activity, onSuccess: () -> Unit) {
+        val confirmation = _uiState.value.duplicateConfirmation ?: return
+        _uiState.value = _uiState.value.copy(duplicateConfirmation = null)
+        addToExistingPlaylist(
+            activity,
+            confirmation.playlistId,
+            confirmation.playlistName,
+            confirmation.youtubeIds,
+            onSuccess,
+            forceAddDuplicates = true,
+        )
+    }
+
+    /** S051 -- el usuario canceló el aviso de duplicados, no se añade nada. */
+    fun dismissDuplicateConfirmation() {
+        _uiState.value = _uiState.value.copy(duplicateConfirmation = null)
     }
 
     fun createPlaylistAndAdd(
