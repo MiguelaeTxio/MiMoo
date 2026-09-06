@@ -36,6 +36,7 @@ import com.miguelaetxio.mimoo.ui.theme.GlassTokens
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -1110,35 +1111,63 @@ private fun AlbumHeaderRow(
     val context = LocalContext.current
     var showOverflowMenu by remember { mutableStateOf(false) }
 
-    Row(
+    // S052 -- petición explícita de Miguel Ángel tras ver "Todos los
+    // álbumes" (S051): miniatura mucho más grande (10-20% del alto de
+    // pantalla, aquí 15% como término medio) y mejor distribución del
+    // título/artista. Con una miniatura tan grande no cabe todo en una
+    // sola fila sin volver a apretar el texto (el problema original) --
+    // se reestructura en DOS filas: arriba miniatura+texto a todo lo
+    // ancho, debajo los iconos de acción en su propia fila.
+    // ---
+    // S052 -- explicit request from Miguel Ángel after seeing "Todos
+    // los álbumes" (S051): much bigger thumbnail (10-20% of screen
+    // height, 15% here as a middle ground) and better title/artist
+    // layout. With a thumbnail that big everything doesn't fit in one
+    // row without squeezing the text again (the original problem) --
+    // restructured into TWO rows: thumbnail+text at full width on top,
+    // action icons in their own row below.
+    val thumbnailSize = (LocalConfiguration.current.screenHeightDp * 0.15f).dp
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .glassChip()
             .clickable { onClick() }
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 8.dp, vertical = 8.dp),
     ) {
-        if (onToggleSelect != null) {
-            Checkbox(
-                checked = isSelected == true,
-                onCheckedChange = { onToggleSelect() },
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (onToggleSelect != null) {
+                Checkbox(
+                    checked = isSelected == true,
+                    onCheckedChange = { onToggleSelect() },
+                )
+            }
+            AlbumCoverThumbnail(coverArtUrl, fallbackThumbnailUrl, size = thumbnailSize)
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    album,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (showArtistSubtitle) {
+                        "${displayArtistName(artist)} · ${tracks.size} pistas"
+                    } else {
+                        "${tracks.size} pistas"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
-        AlbumCoverThumbnail(coverArtUrl, fallbackThumbnailUrl)
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(album, style = MaterialTheme.typography.titleSmall)
-            Text(
-                if (showArtistSubtitle) {
-                    "${displayArtistName(artist)} · ${tracks.size} pistas"
-                } else {
-                    "${tracks.size} pistas"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
         IconButton(onClick = onPlayAlbum) {
             Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir álbum")
         }
@@ -1273,6 +1302,7 @@ private fun AlbumHeaderRow(
                 tint = MaterialTheme.colorScheme.error,
             )
         }
+        }
     }
     HorizontalDivider()
 }
@@ -1291,8 +1321,8 @@ private fun AlbumHeaderRow(
 private fun AlbumCoverThumbnail(
     coverArtUrl: String?,
     fallbackThumbnailUrl: String?,
+    size: androidx.compose.ui.unit.Dp = 40.dp,
 ) {
-    val size = 40.dp
     val shape = RoundedCornerShape(4.dp)
 
     if (coverArtUrl == null && fallbackThumbnailUrl == null) {
@@ -1307,7 +1337,7 @@ private fun AlbumCoverThumbnail(
                 Icons.Filled.Album,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(size / 2),
             )
         }
         return
@@ -1323,10 +1353,10 @@ private fun AlbumCoverThumbnail(
                     model = fallbackThumbnailUrl,
                     contentDescription = "Carátula del álbum",
                     modifier = Modifier.size(size).clip(shape),
-                    error = { AlbumCoverThumbnail(null, null) },
+                    error = { AlbumCoverThumbnail(null, null, size) },
                 )
             } else {
-                AlbumCoverThumbnail(null, null)
+                AlbumCoverThumbnail(null, null, size)
             }
         },
     )
