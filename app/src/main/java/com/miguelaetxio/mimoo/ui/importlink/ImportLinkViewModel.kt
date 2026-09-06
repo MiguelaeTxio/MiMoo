@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
+import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
+import com.miguelaetxio.mimoo.data.local.repository.PlaylistTrackInput
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.data.remote.CoverArtRepository
@@ -89,6 +91,13 @@ class ImportLinkViewModel @Inject constructor(
     private val streamResolver: StreamResolver,
     private val playerManager: PlayerManager,
     private val coverArtRepository: CoverArtRepository,
+    // S056 -- petición explícita de Miguel Ángel tras S055: al
+    // importar una playlist NORMAL (no un álbum oficial), sus pistas
+    // ya no se agrupan bajo un álbum falso -- pero tampoco deben
+    // quedar sueltas sin ninguna relación entre sí. Se crea una lista
+    // de MiMoo de verdad con el título de la playlist, ver
+    // importSelected().
+    private val playlistRepository: PlaylistRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImportLinkUiState())
@@ -427,9 +436,14 @@ class ImportLinkViewModel @Inject constructor(
      * the resolved link is an OFFICIAL YouTube Music album
      * (isOfficialAlbum, S055) — a single-video link is a sencillo, and
      * a regular multi-track playlist (even a curated single-channel
-     * one) is NOT an album just because it has several tracks; its
-     * tracks import as loose singles instead of a fake shared album
-     * named after the playlist.
+     * one) is NOT an album just because it has several tracks.
+     *
+     * S056 -- a regular playlist's tracks are NOT left as unrelated
+     * loose singles either: a real MiMoo Playlist gets created (named
+     * after the resolved title) and every imported track is added to
+     * it, unless the user explicitly typed an album name
+     * (albumOverride) — in that case they chose to treat it as an
+     * album instead, so no playlist is created.
      *
      * artistOverride/albumOverride (Miguel Ángel, 2026-07-03): when
      * the screen detected no real artist could be determined
@@ -451,8 +465,14 @@ class ImportLinkViewModel @Inject constructor(
      * (isOfficialAlbum, S055) — un enlace de un solo vídeo es un
      * sencillo, y una playlist normal con varias pistas (aunque sea
      * curada de un solo canal) NO es un álbum solo por tener varias
-     * pistas; sus pistas se importan como sencillos sueltos en vez de
-     * un álbum falso compartido con el título de la lista.
+     * pistas.
+     *
+     * S056 -- las pistas de una playlist normal TAMPOCO se dejan
+     * sueltas sin ninguna relación entre sí: se crea una Lista de
+     * MiMoo de verdad (con el título resuelto) y se añaden a ella
+     * todas las pistas importadas, salvo que el usuario haya escrito
+     * a mano un nombre de álbum (albumOverride) -- en ese caso eligió
+     * tratarlo como álbum en su lugar, y no se crea ninguna lista.
      *
      * artistOverride/albumOverride (Miguel Ángel, 2026-07-03): cuando
      * la pantalla detecta que no se pudo determinar un artista real
@@ -519,6 +539,30 @@ class ImportLinkViewModel @Inject constructor(
                     artist = track.artist ?: track.channelTitle,
                     album = track.album,
                     trackPosition = track.trackPosition,
+                )
+            }
+            // S056 -- petición explícita de Miguel Ángel tras S055: una
+            // playlist normal (no álbum oficial) no debe quedar como
+            // pistas sueltas sin relación entre sí solo porque ya no se
+            // agrupan bajo un álbum falso. Se crea una Lista de MiMoo
+            // de verdad con el título resuelto, y se añaden las pistas
+            // importadas en el mismo orden en que llegaron. No se crea
+            // si el usuario escribió a mano un álbum (albumOverride) --
+            // eso significa que prefirió tratarlo como álbum.
+            val userChoseAlbumOverride = !albumOverride?.trim().isNullOrBlank()
+            if (state.isPlaylist && !state.isOfficialAlbum && !userChoseAlbumOverride) {
+                val playlistName = state.resolvedTitle?.takeIf { it.isNotBlank() }
+                    ?: "Lista importada"
+                val playlistId = playlistRepository.createPlaylist(playlistName)
+                playlistRepository.addTracksToPlaylist(
+                    playlistId,
+                    tracks.map { track ->
+                        PlaylistTrackInput(
+                            youtubeId = track.youtubeId,
+                            title = track.title,
+                            artist = track.artist,
+                        )
+                    },
                 )
             }
             // Ya resuelta en resolveCoverArt() -- se persiste aqui
