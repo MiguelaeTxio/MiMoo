@@ -5,6 +5,7 @@ import com.miguelaetxio.mimoo.data.remote.DiscogsApiService
 import com.miguelaetxio.mimoo.data.remote.DriveApiService
 import com.miguelaetxio.mimoo.data.remote.DriveUploadApiService
 import com.miguelaetxio.mimoo.data.remote.ItunesApiService
+import com.miguelaetxio.mimoo.data.remote.DeezerApiService
 import com.miguelaetxio.mimoo.data.remote.LrcLibApiService
 import com.miguelaetxio.mimoo.data.remote.MusicBrainzApiService
 import com.miguelaetxio.mimoo.data.remote.RadioBrowserApiService
@@ -57,6 +58,9 @@ object NetworkModule {
     // cuando MusicBrainz/Cover Art Archive no tiene coincidencia. Sin
     // API key, ver ItunesApiService.
     private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
+
+    // S059 -- API pública de Deezer, sin clave, ver DeezerApiService.
+    private const val DEEZER_BASE_URL = "https://api.deezer.com/"
 
     // lrclib.net (H17, S031) -- fuente de letras de Karaoke & Lyrics,
     // ver DOCS/ANNEX_H17.md punto 1. Confirmado en línea esta sesión:
@@ -371,6 +375,24 @@ object NetworkModule {
     fun provideItunesApiService(
         @Named("itunesRetrofit") retrofit: Retrofit,
     ): ItunesApiService = retrofit.create(ItunesApiService::class.java)
+
+    // Deezer (S059) -- misma razón que iTunes: sin interceptor propio,
+    // sin User-Agent ni rate-limiting exigido documentado.
+    @Provides
+    @Singleton
+    @Named("deezerRetrofit")
+    fun provideDeezerRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(DEEZER_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideDeezerApiService(
+        @Named("deezerRetrofit") retrofit: Retrofit,
+    ): DeezerApiService = retrofit.create(DeezerApiService::class.java)
 
     // lrclib.net (H17, S031). Cliente propio solo por el interceptor
     // de User-Agent recomendado -- sin rate limiting, no lo exige el

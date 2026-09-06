@@ -17,6 +17,7 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.LyricsCacheDao
+import com.miguelaetxio.mimoo.data.local.dao.ArtistImageDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
@@ -30,6 +31,7 @@ import com.miguelaetxio.mimoo.data.local.entity.FavoritePlaylist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
 import com.miguelaetxio.mimoo.data.local.entity.LyricsCache
+import com.miguelaetxio.mimoo.data.local.entity.ArtistImage
 
 @Database(
     entities = [
@@ -46,8 +48,9 @@ import com.miguelaetxio.mimoo.data.local.entity.LyricsCache
         DislikedArtist::class,
         DislikedTrack::class,
         LyricsCache::class,
+        ArtistImage::class,
     ],
-    version = 16,
+    version = 17,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -64,6 +67,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dislikedArtistDao(): DislikedArtistDao
     abstract fun dislikedTrackDao(): DislikedTrackDao
     abstract fun lyricsCacheDao(): LyricsCacheDao
+    abstract fun artistImageDao(): ArtistImageDao
 
     companion object {
         /**
@@ -546,6 +550,33 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 db.execSQL(
                     "ALTER TABLE favorite_playlists ADD COLUMN addedAt INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
+        /**
+         * Crea artist_images (S059) -- petición explícita de Miguel
+         * Ángel: "¿podemos sacar la imagen de los artistas de algún
+         * sitio?". Caché permanente de la foto de artista resuelta vía
+         * Deezer (ver ArtistImageRepository). imageUrl nullable a
+         * propósito -- ver el kdoc de la entidad ArtistImage. Tabla
+         * nueva, no toca ninguna tabla existente.
+         * ---
+         * Creates artist_images (S059) -- explicit request from Miguel
+         * Ángel: "can we get artist images from somewhere?". Permanent
+         * cache of an artist's photo resolved via Deezer (see
+         * ArtistImageRepository). imageUrl nullable on purpose -- see
+         * the ArtistImage entity's kdoc. New table, doesn't touch any
+         * existing table.
+         */
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `artist_images` (" +
+                        "`artist` TEXT NOT NULL, " +
+                        "`imageUrl` TEXT, " +
+                        "`resolvedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`artist`))"
                 )
             }
         }

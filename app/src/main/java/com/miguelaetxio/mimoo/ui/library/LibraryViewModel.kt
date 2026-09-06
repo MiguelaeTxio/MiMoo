@@ -297,6 +297,11 @@ class LibraryViewModel @Inject constructor(
     private val autoSyncPusher: AutoSyncPusher,
     private val streamResolver: StreamResolver,
     private val shareCodeRepository: com.miguelaetxio.mimoo.data.share.ShareCodeRepository,
+    // S059 -- petición explícita de Miguel Ángel: "¿podemos sacar la
+    // imagen de los artistas de algún sitio?". Ver
+    // ArtistImageRepository -- resuelve vía Deezer, con caché
+    // permanente en Room.
+    private val artistImageRepository: com.miguelaetxio.mimoo.data.remote.ArtistImageRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -312,6 +317,10 @@ class LibraryViewModel @Inject constructor(
      */
     private val _generatedShareFileUri = MutableStateFlow<android.net.Uri?>(null)
     val generatedShareFileUri: StateFlow<android.net.Uri?> = _generatedShareFileUri.asStateFlow()
+
+    /** S059 -- ver el kdoc real en ArtistImageRepository.resolveArtistImageUrl(). */
+    suspend fun resolveArtistImage(artist: String): String? =
+        artistImageRepository.resolveArtistImageUrl(artist)
 
     fun shareAlbumReplica(artist: String, album: String) {
         viewModelScope.launch {

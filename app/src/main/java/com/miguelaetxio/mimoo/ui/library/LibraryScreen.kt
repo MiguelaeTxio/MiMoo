@@ -590,6 +590,7 @@ private fun ColumnScope.AlbumsTabContent(
                 onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                 onDelete = onDeleteArtist,
                 onShare = { artist -> viewModel.shareArtistReplica(artist) },
+                resolveArtistImage = viewModel::resolveArtistImage,
             )
         }
         is AlbumsDrillLevel.ArtistsFlat -> {
@@ -631,6 +632,7 @@ private fun ColumnScope.AlbumsTabContent(
                     onShare = { artist -> viewModel.shareArtistReplica(artist) },
                     selectedArtists = uiState.selectedArtistsFlat,
                     onToggleSelect = viewModel::toggleArtistFlatSelection,
+                    resolveArtistImage = viewModel::resolveArtistImage,
                 )
             }
         }
@@ -787,6 +789,7 @@ private fun ColumnScope.SinglesTabContent(
                 onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                 onDelete = onDeleteArtist,
                 onShare = { artist -> viewModel.shareArtistReplica(artist) },
+                resolveArtistImage = viewModel::resolveArtistImage,
             )
         }
         is SinglesDrillLevel.ArtistsFlat -> {
@@ -813,6 +816,7 @@ private fun ColumnScope.SinglesTabContent(
                     onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                     onDelete = onDeleteArtist,
                     onShare = { artist -> viewModel.shareArtistReplica(artist) },
+                    resolveArtistImage = viewModel::resolveArtistImage,
                 )
             }
         }
@@ -890,6 +894,45 @@ internal fun ColumnScope.LetterGrid(
     }
 }
 
+/**
+ * S059 -- petición explícita de Miguel Ángel: "¿podemos sacar la
+ * imagen de los artistas de algún sitio?". Foto real (Deezer, vía
+ * ArtistImageRepository) si se resolvió; si no (todavía resolviendo,
+ * o Deezer no tiene ningún artista con ese nombre, o falla la carga),
+ * el mismo avatar genérico (icono de persona) que había antes -- nunca
+ * un hueco vacío.
+ */
+@Composable
+private fun ArtistAvatar(imageUrl: String?, size: androidx.compose.ui.unit.Dp) {
+    val shape = androidx.compose.foundation.shape.CircleShape
+
+    if (imageUrl == null) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Person,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(size / 2),
+            )
+        }
+        return
+    }
+
+    SubcomposeAsyncImage(
+        model = imageUrl,
+        contentDescription = "Foto del artista",
+        modifier = Modifier.size(size).clip(shape),
+        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+        error = { ArtistAvatar(null, size) },
+    )
+}
+
 @Composable
 private fun ColumnScope.ArtistList(
     artists: List<String>,
@@ -905,6 +948,12 @@ private fun ColumnScope.ArtistList(
     // null = sin casilla, comportamiento idéntico al de antes.
     selectedArtists: Set<String>? = null,
     onToggleSelect: ((String) -> Unit)? = null,
+    // S059 -- petición explícita de Miguel Ángel: "¿podemos sacar la
+    // imagen de los artistas de algún sitio?". Suspend fun en vez de
+    // un Map ya resuelto -- se pide perezosamente por fila (una vez
+    // por artista visible, cacheada en Room por
+    // ArtistImageRepository), no de golpe para toda la lista.
+    resolveArtistImage: suspend (String) -> String? = { null },
 ) {
     // S058 -- mismo tamaño que la miniatura de AlbumHeaderRow (S052,
     // 15% del alto de pantalla) para que las dos vistas ("Todos los
@@ -937,25 +986,16 @@ private fun ColumnScope.ArtistList(
                             onCheckedChange = { onToggleSelect(artist) },
                         )
                     }
-                    // Sin foto real de artista en ningún sitio de la
-                    // app -- un avatar genérico (mismo tamaño que la
-                    // miniatura de álbum) da consistencia visual entre
-                    // las dos vistas planas, en vez de dejar la fila de
-                    // artista más baja que la de álbum.
-                    Box(
-                        modifier = Modifier
-                            .size(avatarSize)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            Icons.Filled.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(avatarSize / 2),
-                        )
+                    // S059 -- foto real de artista (Deezer) si se
+                    // consigue resolver; si no, el mismo avatar
+                    // genérico de antes (icono de persona), mismo
+                    // tamaño que la miniatura de álbum para mantener
+                    // la altura de fila consistente entre vistas.
+                    var artistImageUrl by remember(artist) { mutableStateOf<String?>(null) }
+                    LaunchedEffect(artist) {
+                        artistImageUrl = resolveArtistImage(artist)
                     }
+                    ArtistAvatar(artistImageUrl, avatarSize)
                     Spacer(Modifier.width(12.dp))
                     Text(
                         text = displayArtistName(artist),
