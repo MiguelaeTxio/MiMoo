@@ -17,6 +17,13 @@ import com.google.gson.annotations.SerializedName
 data class ExternalLinkResult(
     val title: String,
     val tracks: List<ExternalLinkTrack>,
+    // S055 -- true solo cuando el enlace resuelto es un álbum OFICIAL
+    // de YouTube Music (id de playlist autogenerado con prefijo
+    // "OLAK5uy", ver _is_official_album() en link_resolver.py). false
+    // para una playlist normal, aunque tenga varias pistas -- ver
+    // ImportLinkViewModel.importSelected(), que ya no agrupa esas
+    // pistas bajo un álbum falso con el título de la lista.
+    @SerializedName("is_album") val isAlbum: Boolean = false,
 )
 
 data class ExternalLinkTrack(

@@ -27,10 +27,23 @@ data class ImportLinkUiState(
     val errorMessage: String? = null,
     val resolvedTitle: String? = null,
     // Si el enlace resuelto trae mas de una pista, se trata como
-    // album/playlist (album = resolvedTitle al importar); un enlace
-    // de un solo video se trata como sencillo (album = null) -- ver
-    // importSelected().
+    // álbum/playlist a efectos de UI (multi-selección, carátula) --
+    // ver resolveLink(). NO decide por sí solo si se agrupan bajo un
+    // álbum al importar -- eso lo decide isOfficialAlbum (S055).
     val isPlaylist: Boolean = false,
+    // S055 -- bug real reportado por Miguel Ángel: una PLAYLIST normal
+    // de YouTube Music (personal/curada, puede mezclar artistas y
+    // álbumes distintos) se trataba igual que un álbum real -- todas
+    // sus pistas quedaban agrupadas bajo un álbum falso con el título
+    // de la lista. true solo cuando el enlace resuelto es un álbum
+    // OFICIAL (ver ExternalLinkResult.isAlbum / _is_official_album()
+    // en link_resolver.py) -- solo entonces importSelected() agrupa
+    // las pistas bajo `album = resolvedTitle`. Para una playlist
+    // normal (aunque tenga varias pistas y aunque todas compartan un
+    // único artista real) las pistas se importan como sencillos
+    // sueltos, salvo que el usuario fije un álbum a mano en el diálogo
+    // de confirmación.
+    val isOfficialAlbum: Boolean = false,
     val tracks: List<ExternalLinkTrack> = emptyList(),
     val selectedYoutubeIds: Set<String> = emptySet(),
     val importedCount: Int? = null,
@@ -148,6 +161,10 @@ class ImportLinkViewModel @Inject constructor(
                     isResolving = false,
                     resolvedTitle = cleanedTitle,
                     isPlaylist = isPlaylist,
+                    // S055 -- solo tiene sentido cuando isPlaylist ya
+                    // es true (un vídeo suelto siempre trae isAlbum en
+                    // false desde el propio resolver).
+                    isOfficialAlbum = result.isAlbum,
                     tracks = result.tracks,
                     // Todas seleccionadas por defecto -- el usuario
                     // desmarca las que no quiere en vez de tener que
@@ -299,7 +316,10 @@ class ImportLinkViewModel @Inject constructor(
         val selected = state.tracks.filter { it.youtubeId in state.selectedYoutubeIds }
         val artist = dominantArtist(selected.map { it.channelTitle })
             ?: fallbackArtistCredit(selected.map { it.channelTitle })
-        val album = if (state.isPlaylist) state.resolvedTitle.orEmpty() else ""
+        // S055 -- solo se prellena un álbum cuando el enlace es un
+        // álbum OFICIAL de YouTube Music, no cualquier playlist
+        // multi-pista -- ver el comentario de isOfficialAlbum.
+        val album = if (state.isPlaylist && state.isOfficialAlbum) state.resolvedTitle.orEmpty() else ""
         return artist to album
     }
 
@@ -404,8 +424,12 @@ class ImportLinkViewModel @Inject constructor(
      * they group together under "Varios" in Biblioteca (PASO 6d/H05 +
      * reorganización de Biblioteca), instead of scattering across
      * unrelated per-channel artist buckets. album is only set when
-     * the resolved link was a playlist (isPlaylist) — a single-video
-     * link is a sencillo, not a one-track "album".
+     * the resolved link is an OFFICIAL YouTube Music album
+     * (isOfficialAlbum, S055) — a single-video link is a sencillo, and
+     * a regular multi-track playlist (even a curated single-channel
+     * one) is NOT an album just because it has several tracks; its
+     * tracks import as loose singles instead of a fake shared album
+     * named after the playlist.
      *
      * artistOverride/albumOverride (Miguel Ángel, 2026-07-03): when
      * the screen detected no real artist could be determined
@@ -423,9 +447,12 @@ class ImportLinkViewModel @Inject constructor(
      * agrupen juntas bajo "Varios" en Biblioteca (PASO 6d/H05 +
      * reorganización de Biblioteca), en vez de repartirse en cubos de
      * artista por canal sin relación entre sí. album solo se fija
-     * cuando el enlace resuelto era una playlist (isPlaylist) — un
-     * enlace de un solo vídeo es un sencillo, no un "álbum" de una
-     * pista.
+     * cuando el enlace resuelto es un álbum OFICIAL de YouTube Music
+     * (isOfficialAlbum, S055) — un enlace de un solo vídeo es un
+     * sencillo, y una playlist normal con varias pistas (aunque sea
+     * curada de un solo canal) NO es un álbum solo por tener varias
+     * pistas; sus pistas se importan como sencillos sueltos en vez de
+     * un álbum falso compartido con el título de la lista.
      *
      * artistOverride/albumOverride (Miguel Ángel, 2026-07-03): cuando
      * la pantalla detecta que no se pudo determinar un artista real
@@ -443,7 +470,13 @@ class ImportLinkViewModel @Inject constructor(
             ?: dominantArtist(selected.map { it.channelTitle })
             ?: fallbackArtistCredit(selected.map { it.channelTitle })
         val album = albumOverride?.trim()?.takeIf { it.isNotBlank() }
-            ?: if (state.isPlaylist) state.resolvedTitle else null
+            // S055 -- solo se agrupa bajo un álbum cuando el enlace es
+            // un álbum OFICIAL de YouTube Music, no cualquier playlist
+            // multi-pista -- ver el comentario de isOfficialAlbum. Una
+            // playlist normal (aunque comparta un único canal real)
+            // importa sus pistas como sencillos sueltos, salvo
+            // albumOverride explícito del usuario.
+            ?: if (state.isPlaylist && state.isOfficialAlbum) state.resolvedTitle else null
         // Enlace pegado por el usuario, guardado tal cual para poder
         // compartirlo después por WhatsApp -- petición explícita de
         // Miguel Ángel (2026-07-04). Mismo enlace para todas las
