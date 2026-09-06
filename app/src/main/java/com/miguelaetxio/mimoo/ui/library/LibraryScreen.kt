@@ -529,7 +529,13 @@ fun LibraryScreen(
 
     tracksPendingAddToPlaylist?.let { tracks ->
         AddToPlaylistDialog(
-            youtubeIds = tracks.map { it.youtubeId },
+            tracks = tracks.map {
+                com.miguelaetxio.mimoo.data.local.repository.PlaylistTrackInput(
+                    youtubeId = it.youtubeId,
+                    title = it.title,
+                    artist = it.artist,
+                )
+            },
             onDismiss = { tracksPendingAddToPlaylist = null },
         )
     }

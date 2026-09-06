@@ -12,6 +12,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * S053 -- datos mínimos para poder crear la fila de
+ * `search_result_tracks` si hace falta al añadir a una lista (ver
+ * `addTrackToPlaylist()`). `artist` puede ser null -- pistas
+ * streaming-only a veces no tienen artista estructurado resuelto.
+ */
+data class PlaylistTrackInput(val youtubeId: String, val title: String, val artist: String?)
+
+/**
  * Resultado de intentar reproducir una playlist completa por id (H18,
  * S032) -- ver playPlaylistById(), extraída de
  * PlaylistDetailViewModel.playAll() para poder reutilizarla también
@@ -43,6 +51,12 @@ class PlaylistRepository @Inject constructor(
     // "no me gusta" a nivel de TEMA en absoluto -- ver el kdoc real
     // junto a playPlaylistById().
     private val dislikedTrackRepository: DislikedTrackRepository,
+    // S053 -- petición explícita de Miguel Ángel tras un crash real
+    // (FOREIGN KEY constraint failed): la fila de search_result_tracks
+    // tiene que existir ANTES de insertar el cross-ref (la clave
+    // foránea de PlaylistTrackCrossRef.youtubeId apunta ahí) -- ver
+    // addTrackToPlaylist() más abajo.
+    private val searchResultTrackRepository: SearchResultTrackRepository,
 ) {
     fun getAllPlaylists(): Flow<List<Playlist>> = dao.getAllPlaylists()
 
@@ -76,12 +90,31 @@ class PlaylistRepository @Inject constructor(
      * Añade una pista al final de la playlist (posición máxima + 1, o
      * 0 para la primera pista).
      */
-    suspend fun addTrackToPlaylist(playlistId: Long, youtubeId: String) {
+    /**
+     * S053 -- crash real reportado por Miguel Ángel:
+     * SQLiteConstraintException FOREIGN KEY constraint failed al
+     * añadir a una lista. Causa real: `PlaylistTrackCrossRef` tiene
+     * una FOREIGN KEY real sobre `youtubeId` hacia
+     * `search_result_tracks` (a diferencia de `updateFavorite()`, que
+     * es un UPDATE silencioso -- ver `setFavoriteEnsuringRow()`, S010,
+     * mismo problema de fondo). Una pista de un popurrí de favoritos
+     * (streaming puro, nunca buscada ni descargada) no tiene fila en
+     * `search_result_tracks` -- el INSERT del cross-ref petaba en vez
+     * de fallar en silencio. Se asegura la fila ANTES de insertar el
+     * cross-ref, mismo patrón que `setFavoriteEnsuringRow()`.
+     */
+    suspend fun addTrackToPlaylist(playlistId: Long, track: PlaylistTrackInput) {
+        searchResultTrackRepository.ensureRowExists(
+            youtubeId = track.youtubeId,
+            title = track.title,
+            channelTitle = track.artist ?: track.title,
+            artist = track.artist,
+        )
         val nextPosition = (dao.getMaxPosition(playlistId) ?: -1) + 1
         dao.addTrackToPlaylist(
             PlaylistTrackCrossRef(
                 playlistId = playlistId,
-                youtubeId = youtubeId,
+                youtubeId = track.youtubeId,
                 position = nextPosition,
             )
         )
@@ -100,9 +133,9 @@ class PlaylistRepository @Inject constructor(
      * addTrackToPlaylist() in a loop: each call appends at the end, so
      * the album's order is preserved in the playlist.
      */
-    suspend fun addTracksToPlaylist(playlistId: Long, youtubeIds: List<String>) {
-        youtubeIds.forEach { youtubeId ->
-            addTrackToPlaylist(playlistId, youtubeId)
+    suspend fun addTracksToPlaylist(playlistId: Long, tracks: List<PlaylistTrackInput>) {
+        tracks.forEach { track ->
+            addTrackToPlaylist(playlistId, track)
         }
     }
 

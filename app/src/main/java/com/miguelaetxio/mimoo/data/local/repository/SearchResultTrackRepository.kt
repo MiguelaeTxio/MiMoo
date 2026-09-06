@@ -275,6 +275,49 @@ class SearchResultTrackRepository @Inject constructor(
     }
 
     /**
+     * S053 -- mismo problema de fondo que `setFavoriteEnsuringRow()`
+     * (S010), esta vez para "añadir a lista": crash real reportado por
+     * Miguel Ángel (`SQLiteConstraintException: FOREIGN KEY constraint
+     * failed` en `PlaylistDao.addTrackToPlaylist`). A diferencia de
+     * `updateFavorite()` (un UPDATE silencioso que no hace nada si la
+     * fila no existe), `PlaylistTrackCrossRef` tiene una FOREIGN KEY
+     * real sobre `youtubeId` -- sin fila, el INSERT del cross-ref
+     * PETA directamente en vez de fallar en silencio. Se usa desde
+     * `PlaylistRepository.addTrackToPlaylist()`, siempre ANTES de
+     * insertar el cross-ref.
+     * ---
+     * S053 -- same underlying problem as `setFavoriteEnsuringRow()`
+     * (S010), this time for "add to playlist": real crash reported by
+     * Miguel Ángel (`SQLiteConstraintException: FOREIGN KEY constraint
+     * failed` in `PlaylistDao.addTrackToPlaylist`). Unlike
+     * `updateFavorite()` (a silent UPDATE that does nothing if the row
+     * doesn't exist), `PlaylistTrackCrossRef` has a real FOREIGN KEY on
+     * `youtubeId` -- without a row, the cross-ref INSERT crashes
+     * outright instead of failing silently. Used from
+     * `PlaylistRepository.addTrackToPlaylist()`, always BEFORE
+     * inserting the cross-ref.
+     */
+    suspend fun ensureRowExists(
+        youtubeId: String,
+        title: String,
+        channelTitle: String,
+        artist: String?,
+    ) {
+        if (dao.getById(youtubeId) == null) {
+            dao.insert(
+                SearchResultTrack(
+                    youtubeId = youtubeId,
+                    title = title,
+                    channelTitle = channelTitle,
+                    durationSeconds = 0,
+                    thumbnailUrl = null,
+                    artist = artist,
+                ),
+            )
+        }
+    }
+
+    /**
      * Persists a resolved cover art URL for every track of the given
      * artist+album (PASO 6, H03).
      * ---

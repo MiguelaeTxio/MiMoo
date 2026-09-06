@@ -7,6 +7,7 @@ import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
+import com.miguelaetxio.mimoo.data.local.repository.PlaylistTrackInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +38,7 @@ data class AddToPlaylistUiState(
 data class DuplicateConfirmation(
     val playlistId: Long,
     val playlistName: String,
-    val youtubeIds: List<String>,
+    val tracks: List<PlaylistTrackInput>,
     val duplicateCount: Int,
 )
 
@@ -118,7 +119,7 @@ class AddToPlaylistDialogViewModel @Inject constructor(
         activity: Activity,
         playlistId: Long,
         playlistName: String,
-        youtubeIds: List<String>,
+        tracks: List<PlaylistTrackInput>,
         onSuccess: () -> Unit,
         forceAddDuplicates: Boolean = false,
     ) {
@@ -126,13 +127,13 @@ class AddToPlaylistDialogViewModel @Inject constructor(
             if (!forceAddDuplicates) {
                 val existingIds = repository.getTracksForPlaylistOnce(playlistId)
                     .map { it.youtubeId }.toSet()
-                val duplicateCount = youtubeIds.count { it in existingIds }
+                val duplicateCount = tracks.count { it.youtubeId in existingIds }
                 if (duplicateCount > 0) {
                     _uiState.value = _uiState.value.copy(
                         duplicateConfirmation = DuplicateConfirmation(
                             playlistId = playlistId,
                             playlistName = playlistName,
-                            youtubeIds = youtubeIds,
+                            tracks = tracks,
                             duplicateCount = duplicateCount,
                         ),
                     )
@@ -140,7 +141,7 @@ class AddToPlaylistDialogViewModel @Inject constructor(
                 }
             }
             val outcome = autoSyncPusher.executeIfConnected(activity) {
-                repository.addTracksToPlaylist(playlistId, youtubeIds)
+                repository.addTracksToPlaylist(playlistId, tracks)
             }
             if (outcome is MutationOutcome.Success) {
                 onSuccess()
@@ -160,7 +161,7 @@ class AddToPlaylistDialogViewModel @Inject constructor(
             activity,
             confirmation.playlistId,
             confirmation.playlistName,
-            confirmation.youtubeIds,
+            confirmation.tracks,
             onSuccess,
             forceAddDuplicates = true,
         )
@@ -174,7 +175,7 @@ class AddToPlaylistDialogViewModel @Inject constructor(
     fun createPlaylistAndAdd(
         activity: Activity,
         name: String,
-        youtubeIds: List<String>,
+        tracks: List<PlaylistTrackInput>,
         onSuccess: () -> Unit,
     ) {
         val trimmed = name.trim()
@@ -182,7 +183,7 @@ class AddToPlaylistDialogViewModel @Inject constructor(
         viewModelScope.launch {
             val outcome = autoSyncPusher.executeIfConnected(activity) {
                 val playlistId = repository.createPlaylist(trimmed)
-                repository.addTracksToPlaylist(playlistId, youtubeIds)
+                repository.addTracksToPlaylist(playlistId, tracks)
             }
             if (outcome is MutationOutcome.Success) {
                 onSuccess()

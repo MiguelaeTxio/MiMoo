@@ -850,7 +850,20 @@ fun PlayerBar(
     if (showAddToPlaylist) {
         state.currentYoutubeId?.let { youtubeId ->
             AddToPlaylistDialog(
-                youtubeIds = listOf(youtubeId),
+                // S053 -- causa real de un crash real reportado por
+                // Miguel Ángel: aquí solo se pasaba el youtubeId, sin
+                // título ni artista. Una pista de un popurrí de
+                // favoritos (streaming puro) puede no tener fila en
+                // search_result_tracks -- sin título/artista no había
+                // forma de crear esa fila si hacía falta al añadir. Ver
+                // PlaylistRepository.addTrackToPlaylist().
+                tracks = listOf(
+                    com.miguelaetxio.mimoo.data.local.repository.PlaylistTrackInput(
+                        youtubeId = youtubeId,
+                        title = state.currentTitle ?: youtubeId,
+                        artist = state.currentArtist,
+                    ),
+                ),
                 onDismiss = { showAddToPlaylist = false },
             )
         }

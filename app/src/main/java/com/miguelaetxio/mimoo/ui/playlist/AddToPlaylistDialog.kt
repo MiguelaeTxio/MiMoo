@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.miguelaetxio.mimoo.data.local.repository.PlaylistTrackInput
 
 /**
  * Shared "add to playlist" dialog (Hito 04, PASO 4): lists existing
@@ -20,6 +21,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
  * igual para añadir una pista suelta (listOf(track.youtubeId)) o un
  * álbum entero (tracks.map { it.youtubeId }), petición explícita de
  * Miguel Ángel.
+ *
+ * S053 -- `tracks: List<PlaylistTrackInput>` en vez de
+ * `youtubeIds: List<String>`: hace falta título/artista, no solo el
+ * id, para poder crear la fila de `search_result_tracks` si hiciera
+ * falta al añadir (ver `PlaylistRepository.addTrackToPlaylist()`,
+ * causa real de un crash real -- FOREIGN KEY constraint failed).
  * ---
  * Diálogo compartido de "añadir a playlist" (Hito 04, PASO 4): lista
  * las playlists existentes para añadir la(s) pista(s), más un campo en
@@ -30,18 +37,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
  * serves both adding a single track (listOf(track.youtubeId)) and a
  * whole album (tracks.map { it.youtubeId }), explicit request from
  * Miguel Ángel.
+ *
+ * S053 -- `tracks: List<PlaylistTrackInput>` instead of
+ * `youtubeIds: List<String>`: title/artist are needed, not just the
+ * id, to be able to create the `search_result_tracks` row if needed
+ * when adding (see `PlaylistRepository.addTrackToPlaylist()`, real
+ * cause of a real crash -- FOREIGN KEY constraint failed).
  */
 @Composable
 fun AddToPlaylistDialog(
-    youtubeIds: List<String>,
+    tracks: List<PlaylistTrackInput>,
     onDismiss: () -> Unit,
     viewModel: AddToPlaylistDialogViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val activity = LocalContext.current as Activity
     var newPlaylistName by remember { mutableStateOf("") }
-    val title = if (youtubeIds.size > 1) {
-        "Añadir ${youtubeIds.size} pistas a lista"
+    val title = if (tracks.size > 1) {
+        "Añadir ${tracks.size} pistas a lista"
     } else {
         "Añadir a lista"
     }
@@ -87,7 +100,7 @@ fun AddToPlaylistDialog(
                                         activity,
                                         playlist.id,
                                         playlist.name,
-                                        youtubeIds,
+                                        tracks,
                                         onSuccess = onDismiss,
                                     )
                                 },
@@ -122,7 +135,7 @@ fun AddToPlaylistDialog(
                     viewModel.createPlaylistAndAdd(
                         activity,
                         newPlaylistName,
-                        youtubeIds,
+                        tracks,
                         onSuccess = onDismiss,
                     )
                 },
@@ -142,9 +155,9 @@ fun AddToPlaylistDialog(
     // del principal (no lo sustituye), para no perder el contexto de
     // qué se estaba añadiendo.
     uiState.duplicateConfirmation?.let { confirmation ->
-        val message = if (confirmation.duplicateCount == 1 && confirmation.youtubeIds.size == 1) {
+        val message = if (confirmation.duplicateCount == 1 && confirmation.tracks.size == 1) {
             "Este tema ya está en \"${confirmation.playlistName}\". ¿Lo añadimos de todas formas? (se moverá al final de la lista)"
-        } else if (confirmation.duplicateCount == confirmation.youtubeIds.size) {
+        } else if (confirmation.duplicateCount == confirmation.tracks.size) {
             "Todas estas pistas ya están en \"${confirmation.playlistName}\". ¿Las añadimos de todas formas? (se moverán al final de la lista)"
         } else {
             "${confirmation.duplicateCount} de estas pistas ya están en \"${confirmation.playlistName}\". ¿Las añadimos de todas formas? (las que ya estaban se moverán al final de la lista)"
