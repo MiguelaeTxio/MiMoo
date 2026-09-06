@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
@@ -905,29 +906,69 @@ private fun ColumnScope.ArtistList(
     selectedArtists: Set<String>? = null,
     onToggleSelect: ((String) -> Unit)? = null,
 ) {
+    // S058 -- mismo tamaño que la miniatura de AlbumHeaderRow (S052,
+    // 15% del alto de pantalla) para que las dos vistas ("Todos los
+    // artistas" y "Todos los álbumes") queden con una altura de fila
+    // consistente entre sí -- petición explícita de Miguel Ángel:
+    // "fijar una altura como hicimos en la otra vista".
+    val avatarSize = (LocalConfiguration.current.screenHeightDp * 0.15f).dp
     LazyColumn(modifier = Modifier.weight(1f)) {
         items(artists, key = { "artist:$it" }) { artist ->
             val isFavorite = artist in favoriteArtists
-            Row(
+            // S058 -- petición explícita de Miguel Ángel tras ver
+            // "Todos los artistas" con nombres largos ("Future Sound
+            // of London", "Fleetwood Mac"): 5 iconos apretados junto al
+            // nombre partían el texto letra a letra. Mismo arreglo que
+            // AlbumHeaderRow (S052): dos filas en vez de una -- arriba
+            // el avatar+nombre a todo lo ancho, debajo los iconos
+            // alineados a la derecha.
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .glassChip()
                     .clickable { onArtistClick(artist) }
                     .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (onToggleSelect != null) {
-                    Checkbox(
-                        checked = selectedArtists?.contains(artist) == true,
-                        onCheckedChange = { onToggleSelect(artist) },
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onToggleSelect != null) {
+                        Checkbox(
+                            checked = selectedArtists?.contains(artist) == true,
+                            onCheckedChange = { onToggleSelect(artist) },
+                        )
+                    }
+                    // Sin foto real de artista en ningún sitio de la
+                    // app -- un avatar genérico (mismo tamaño que la
+                    // miniatura de álbum) da consistencia visual entre
+                    // las dos vistas planas, en vez de dejar la fila de
+                    // artista más baja que la de álbum.
+                    Box(
+                        modifier = Modifier
+                            .size(avatarSize)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Filled.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(avatarSize / 2),
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = displayArtistName(artist),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
                     )
                 }
-                Text(
-                    text = displayArtistName(artist),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                 IconButton(onClick = { onPlayAll(artist) }) {
                     Icon(
                         Icons.Filled.PlayArrow,
@@ -957,6 +998,7 @@ private fun ColumnScope.ArtistList(
                         contentDescription = "Borrar artista",
                         tint = MaterialTheme.colorScheme.error,
                     )
+                }
                 }
             }
         }
