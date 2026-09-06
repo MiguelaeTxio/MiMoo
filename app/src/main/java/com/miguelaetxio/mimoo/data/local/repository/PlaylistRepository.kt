@@ -60,6 +60,10 @@ class PlaylistRepository @Inject constructor(
 ) {
     fun getAllPlaylists(): Flow<List<Playlist>> = dao.getAllPlaylists()
 
+    /** S057 -- ver el kdoc real en PlaylistDao.getFirstTrackCoverArtPerPlaylist(). */
+    fun getFirstTrackCoverArtPerPlaylist(): Flow<List<com.miguelaetxio.mimoo.data.local.dao.PlaylistCoverArt>> =
+        dao.getFirstTrackCoverArtPerPlaylist()
+
     suspend fun createPlaylist(name: String): Long =
         dao.insertPlaylist(Playlist(name = name))
 

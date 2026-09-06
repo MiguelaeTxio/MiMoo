@@ -40,6 +40,10 @@ data class PlaylistsUiState(
     // H18 (S032) -- ordenación reutilizando Playlist.createdAt, ya existente, sin migración.
     val sortCriterion: SortCriterion = SortCriterion.ALPHABETICAL,
     val sortDirection: SortDirection = SortDirection.ASCENDING,
+    // S057 -- carátula (o miniatura de YouTube) del primer tema de
+    // cada lista, para no dejarlas con un icono genérico -- ver
+    // PlaylistDao.getFirstTrackCoverArtPerPlaylist().
+    val coverArtByPlaylist: Map<Long, com.miguelaetxio.mimoo.data.local.dao.PlaylistCoverArt> = emptyMap(),
 )
 
 /**
@@ -72,6 +76,13 @@ class PlaylistsViewModel @Inject constructor(
             favoritePlaylistRepository.getAll().collect { favorites ->
                 _uiState.value = _uiState.value.copy(
                     favoritePlaylistIds = favorites.map { it.playlistId }.toSet(),
+                )
+            }
+        }
+        viewModelScope.launch {
+            repository.getFirstTrackCoverArtPerPlaylist().collect { rows ->
+                _uiState.value = _uiState.value.copy(
+                    coverArtByPlaylist = rows.associateBy { it.playlistId },
                 )
             }
         }

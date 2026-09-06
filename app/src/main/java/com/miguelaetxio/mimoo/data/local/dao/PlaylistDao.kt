@@ -151,4 +151,42 @@ interface PlaylistDao {
      */
     @Query("SELECT * FROM playlist_track_cross_refs WHERE youtubeId = :youtubeId")
     suspend fun getCrossRefsForTrack(youtubeId: String): List<PlaylistTrackCrossRef>
+
+    /**
+     * S057 -- petición explícita de Miguel Ángel: "Listas se quedan sin
+     * carátula! O meter una o la carátula por defecto." Devuelve la
+     * carátula (o miniatura de YouTube) del PRIMER tema de cada lista
+     * (posición mínima), una fila por playlist -- usado en
+     * PlaylistsScreen para mostrar algo más que un icono genérico.
+     * `MIN(x.position)` acotado por playlistId vía la subconsulta
+     * correlacionada -- Room no tiene una forma más directa de
+     * "primera fila de cada grupo" en SQLite sin ventanas.
+     * ---
+     * S057 -- explicit request from Miguel Ángel: "Playlists are left
+     * without a cover! Either add one or a default cover." Returns the
+     * cover art (or YouTube thumbnail) of the FIRST track of each
+     * playlist (lowest position), one row per playlist -- used in
+     * PlaylistsScreen to show more than a generic icon. `MIN(x.position)`
+     * scoped by playlistId via the correlated subquery -- Room has no
+     * more direct way to express "first row of each group" in SQLite
+     * without window functions.
+     */
+    @Query(
+        "SELECT x.playlistId AS playlistId, t.coverArtUrl AS coverArtUrl, " +
+        "t.thumbnailUrl AS thumbnailUrl " +
+        "FROM playlist_track_cross_refs x " +
+        "INNER JOIN search_result_tracks t ON t.youtubeId = x.youtubeId " +
+        "WHERE x.position = (" +
+        "  SELECT MIN(x2.position) FROM playlist_track_cross_refs x2 " +
+        "  WHERE x2.playlistId = x.playlistId" +
+        ")"
+    )
+    fun getFirstTrackCoverArtPerPlaylist(): Flow<List<PlaylistCoverArt>>
 }
+
+/** S057 -- ver getFirstTrackCoverArtPerPlaylist(). */
+data class PlaylistCoverArt(
+    val playlistId: Long,
+    val coverArtUrl: String?,
+    val thumbnailUrl: String?,
+)

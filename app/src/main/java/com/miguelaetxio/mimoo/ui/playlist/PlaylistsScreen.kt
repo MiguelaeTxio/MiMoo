@@ -1,10 +1,12 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
 import android.app.Activity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -18,9 +20,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.SubcomposeAsyncImage
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.ui.common.SortControl
 import com.miguelaetxio.mimoo.ui.theme.glassChip
@@ -142,6 +146,7 @@ fun PlaylistsScreen(
                             PlaylistRow(
                                 playlist = playlist,
                                 isFavorite = playlist.id in uiState.favoritePlaylistIds,
+                                coverArt = uiState.coverArtByPlaylist[playlist.id],
                                 onOpen = { onOpenPlaylist(playlist.id) },
                                 onToggleFavorite = { viewModel.toggleFavoritePlaylist(activity, playlist.id) },
                                 onRename = { playlistPendingRename = playlist },
@@ -210,6 +215,7 @@ fun PlaylistsScreen(
 private fun PlaylistRow(
     playlist: Playlist,
     isFavorite: Boolean,
+    coverArt: com.miguelaetxio.mimoo.data.local.dao.PlaylistCoverArt?,
     onOpen: () -> Unit,
     onToggleFavorite: () -> Unit,
     onRename: () -> Unit,
@@ -224,11 +230,7 @@ private fun PlaylistRow(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            Icons.Filled.QueueMusic,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        PlaylistCoverThumbnail(coverArt?.coverArtUrl, coverArt?.thumbnailUrl)
         Spacer(Modifier.width(12.dp))
         Text(
             text = playlist.name,
@@ -253,6 +255,56 @@ private fun PlaylistRow(
             )
         }
     }
+}
+
+/**
+ * S057 -- petición explícita de Miguel Ángel: "Listas se quedan sin
+ * carátula! O meter una o la carátula por defecto." Muestra la
+ * carátula real (MusicBrainz+Cover Art Archive) del primer tema de la
+ * lista si existe; si no, la miniatura de YouTube de ese tema; si
+ * tampoco hay eso, un icono de nota musical genérico dentro de una
+ * placa del mismo tamaño -- nunca deja el hueco vacío que reportó.
+ */
+@Composable
+private fun PlaylistCoverThumbnail(coverArtUrl: String?, fallbackThumbnailUrl: String?) {
+    val size = 44.dp
+    val shape = RoundedCornerShape(6.dp)
+
+    if (coverArtUrl == null && fallbackThumbnailUrl == null) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.QueueMusic,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(size / 2),
+            )
+        }
+        return
+    }
+
+    SubcomposeAsyncImage(
+        model = coverArtUrl ?: fallbackThumbnailUrl,
+        contentDescription = "Carátula de la lista",
+        modifier = Modifier.size(size).clip(shape),
+        error = {
+            if (coverArtUrl != null && fallbackThumbnailUrl != null) {
+                SubcomposeAsyncImage(
+                    model = fallbackThumbnailUrl,
+                    contentDescription = "Carátula de la lista",
+                    modifier = Modifier.size(size).clip(shape),
+                    error = { PlaylistCoverThumbnail(null, null) },
+                )
+            } else {
+                PlaylistCoverThumbnail(null, null)
+            }
+        },
+    )
 }
 
 @Composable
