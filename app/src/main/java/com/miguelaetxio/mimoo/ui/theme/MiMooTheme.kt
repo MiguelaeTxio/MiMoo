@@ -113,6 +113,20 @@ val MsxColorScheme = darkColorScheme(
  * `darkColorScheme` como el de MSX -- es la diferencia real entre las
  * dos pieles, no solo los colores.
  *
+ * S054 -- `background` pasa a `Color.Transparent` tras recibir una
+ * textura real de aluminio cepillado (foto, no degradado calculado).
+ * Cada pantalla de la app pinta su propio fondo por separado (18
+ * `Scaffold()` distintos, cada uno con su `containerColor` por
+ * defecto en `colorScheme.background`) -- tocar los 18 uno a uno para
+ * añadir la imagen habría sido un cambio enorme y frágil. En vez de
+ * eso, `MainActivity` pinta la textura UNA sola vez, en la raíz visual
+ * de toda la app, detrás de `ModalNavigationDrawer`; con
+ * `background = Transparent`, los 18 `Scaffold()` dejan de tapar esa
+ * imagen y se ve a través de todos ellos sin tocar ni un archivo de
+ * pantalla. `colorScheme.surface` (tarjetas, diálogos, menús) se
+ * queda opaco, sin tocar -- solo el fondo raíz de cada pantalla es
+ * transparente.
+ *
  * `error` vuelve a un rojo normal (a diferencia de MSX, donde el rojo
  * se sustituyó por amarillo porque no resaltaba sobre el azul) -- aquí
  * sí resalta bien sobre gris claro, así que no hace falta el mismo
@@ -124,6 +138,19 @@ val MsxColorScheme = darkColorScheme(
  * light background). It's a `lightColorScheme`, not a
  * `darkColorScheme` like MSX's -- that's the real difference between
  * the two skins, not just the colors.
+ *
+ * S054 -- `background` becomes `Color.Transparent` after receiving a
+ * real brushed-aluminum texture (a photo, not a computed gradient).
+ * Every screen in the app paints its own background separately (18
+ * different `Scaffold()` calls, each defaulting `containerColor` to
+ * `colorScheme.background`) -- touching all 18 one by one to add the
+ * image would have been a huge, fragile change. Instead, MainActivity
+ * paints the texture ONCE, at the app's true visual root, behind
+ * `ModalNavigationDrawer`; with `background = Transparent`, the 18
+ * `Scaffold()` calls stop covering that image and it shows through
+ * all of them without touching a single screen file.
+ * `colorScheme.surface` (cards, dialogs, menus) stays opaque,
+ * untouched -- only each screen's root background is transparent.
  *
  * `error` goes back to a normal red (unlike MSX, where red was
  * replaced with yellow because it didn't stand out against blue) --
@@ -150,7 +177,10 @@ val AluminioColorScheme = lightColorScheme(
     tertiary = AluminioRed,
     onTertiary = Color.White,
 
-    background = AluminioBase,
+    // S054 -- transparente a propósito, ver el kdoc de arriba: deja
+    // ver la textura real de aluminio que pinta MainActivity detrás de
+    // cada Scaffold().
+    background = Color.Transparent,
     onBackground = AluminioText,
 
     surface = AluminioBase,

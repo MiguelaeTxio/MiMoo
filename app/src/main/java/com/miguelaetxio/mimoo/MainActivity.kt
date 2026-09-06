@@ -651,6 +651,24 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                // S054 -- textura real de aluminio cepillado (foto
+                // enviada por Miguel Ángel), pintada UNA sola vez aquí,
+                // en la raíz visual de toda la app, detrás de
+                // ModalNavigationDrawer. Ver el kdoc de
+                // AluminioColorScheme.background en MiMooTheme.kt para
+                // el porqué completo (evita tocar los 18 Scaffold()
+                // distintos de cada pantalla).
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (appSkin == com.miguelaetxio.mimoo.ui.theme.AppSkin.ALUMINIO) {
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(
+                                com.miguelaetxio.mimoo.R.drawable.bg_aluminio_brushed,
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        )
+                    }
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
@@ -880,6 +898,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                }
                 }
             }
             }
