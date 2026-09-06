@@ -2,6 +2,7 @@ package com.miguelaetxio.mimoo.data.access
 
 import android.content.Context
 import androidx.core.content.edit
+import com.miguelaetxio.mimoo.ui.theme.AppSkin
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +43,15 @@ class UiPreferencesManager @Inject constructor(
     private companion object {
         const val PREFS_NAME = "mimoo_ui_prefs"
         const val KEY_GLASS_BORDER_ENABLED = "glass_border_enabled"
+
+        /**
+         * S052 -- petición explícita de Miguel Ángel: poder cambiar la
+         * "piel" de la app desde Ajustes > Apariencia. Se guarda el
+         * `name()` del enum `AppSkin` como String -- si en el futuro se
+         * renombra o se borra un valor del enum, `getAppSkin()` cae a
+         * MSX en vez de petar, ver más abajo.
+         */
+        const val KEY_APP_SKIN = "app_skin"
 
         // S016 -- cupo 80/10/10 de Radio (H08). QUITADO en S027 --
         // sustituido por completo por el recuento fijo por bloque de
@@ -107,6 +117,25 @@ class UiPreferencesManager @Inject constructor(
     fun setGlassBorderEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_GLASS_BORDER_ENABLED, enabled) }
         _glassBorderEnabled.value = enabled
+    }
+
+    private val _appSkin = MutableStateFlow(readAppSkin())
+    val appSkin: StateFlow<AppSkin> = _appSkin.asStateFlow()
+
+    private fun readAppSkin(): AppSkin {
+        val stored = prefs.getString(KEY_APP_SKIN, null) ?: return AppSkin.MSX
+        return try {
+            AppSkin.valueOf(stored)
+        } catch (e: IllegalArgumentException) {
+            // Valor guardado de una versión con un enum distinto --
+            // vuelve a MSX en vez de petar.
+            AppSkin.MSX
+        }
+    }
+
+    fun setAppSkin(skin: AppSkin) {
+        prefs.edit { putString(KEY_APP_SKIN, skin.name) }
+        _appSkin.value = skin
     }
 
     private val _radioGenreMatchThresholdPercent = MutableStateFlow(

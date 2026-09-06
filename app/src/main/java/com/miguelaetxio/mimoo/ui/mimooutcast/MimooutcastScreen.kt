@@ -21,7 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.remote.MimooutcastDecade
 import com.miguelaetxio.mimoo.data.remote.MimooutcastGenre
 import com.miguelaetxio.mimoo.data.remote.MimooutcastOrigin
-import com.miguelaetxio.mimoo.ui.theme.GlassTokens
+import com.miguelaetxio.mimoo.ui.theme.LocalGlassTokens
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 
 /**
@@ -381,7 +381,7 @@ private fun OriginGrid(
 private fun AnchorChip(label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .glassChip(shape = RoundedCornerShape(GlassTokens.cornerRadius))
+            .glassChip(shape = RoundedCornerShape(LocalGlassTokens.current.cornerRadius))
             .let { if (enabled) it.clickable(onClick = onClick) else it }
             .padding(horizontal = 18.dp, vertical = 12.dp),
     ) {

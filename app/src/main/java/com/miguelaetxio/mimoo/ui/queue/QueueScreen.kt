@@ -30,7 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.miguelaetxio.mimoo.ui.theme.glassChip
-import com.miguelaetxio.mimoo.ui.theme.GlassTokens
+import com.miguelaetxio.mimoo.ui.theme.LocalGlassTokens
 import kotlin.math.roundToInt
 
 /**
@@ -318,7 +318,7 @@ private fun QueueTrackRow(
                 if (isCurrent) {
                     base.background(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                        RoundedCornerShape(GlassTokens.cornerRadius),
+                        RoundedCornerShape(LocalGlassTokens.current.cornerRadius),
                     )
                 } else {
                     base

@@ -365,11 +365,20 @@ class MainActivity : ComponentActivity() {
             val currentRoute = currentBackStackEntry?.destination?.route
 
             val glassBorderEnabled by uiPreferencesManager.glassBorderEnabled.collectAsState()
+            // S052 -- petición explícita de Miguel Ángel: piel
+            // seleccionable desde Ajustes > Apariencia. Se lee aquí,
+            // en la raíz de la composición, y se provee tanto al
+            // MaterialTheme (colores) como a LocalGlassTokens (efecto
+            // cristal) -- el cambio se aplica a toda la app al
+            // instante, sin reiniciar nada, igual que glassBorderEnabled.
+            val appSkin by uiPreferencesManager.appSkin.collectAsState()
 
             androidx.compose.runtime.CompositionLocalProvider(
                 com.miguelaetxio.mimoo.ui.theme.LocalGlassBorderEnabled provides glassBorderEnabled,
+                com.miguelaetxio.mimoo.ui.theme.LocalGlassTokens provides
+                    com.miguelaetxio.mimoo.ui.theme.glassTokensFor(appSkin),
             ) {
-            MaterialTheme(colorScheme = com.miguelaetxio.mimoo.ui.theme.MiMooColorScheme) {
+            MaterialTheme(colorScheme = com.miguelaetxio.mimoo.ui.theme.colorSchemeFor(appSkin)) {
                 // H07 PARTE 2, PASO 2.7 -- bloquea TODO lo demás
                 // (incluida la explicación de almacenamiento y el
                 // escaneo inicial) hasta que se introduce el PIN
@@ -906,7 +915,7 @@ private fun CompactDrawerItem(
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .glassChip(
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                    com.miguelaetxio.mimoo.ui.theme.GlassTokens.cornerRadius,
+                    com.miguelaetxio.mimoo.ui.theme.LocalGlassTokens.current.cornerRadius,
                 ),
                 active = selected,
             )

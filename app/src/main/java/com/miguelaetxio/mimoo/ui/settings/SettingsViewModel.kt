@@ -13,6 +13,7 @@ import com.miguelaetxio.mimoo.data.backup.BackupImportRepository
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationHelper
 import com.miguelaetxio.mimoo.data.backup.DriveAuthorizationOutcome
+import com.miguelaetxio.mimoo.ui.theme.AppSkin
 import com.miguelaetxio.mimoo.data.backup.DriveBackupFile
 import com.miguelaetxio.mimoo.data.download.CookiesManager
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
@@ -291,6 +292,9 @@ class SettingsViewModel @Inject constructor(
     /** S011 -- interruptor de borde del cristal ("añade un toggle en ajustes para cambiar de borde a sin borde"). */
     val glassBorderEnabled: StateFlow<Boolean> = uiPreferencesManager.glassBorderEnabled
 
+    /** S052 -- piel activa de la app ("añadir un acabado en aluminio y tener en Ajustes, en Apariencia, para poder cambiar la skin"). */
+    val appSkin: StateFlow<AppSkin> = uiPreferencesManager.appSkin
+
     // ─────────────────────────────────────────────────────────────
     // S021 -- Carpeta de la biblioteca configurable
     // ─────────────────────────────────────────────────────────────
@@ -427,6 +431,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setGlassBorderEnabled(enabled: Boolean) {
         uiPreferencesManager.setGlassBorderEnabled(enabled)
+    }
+
+    fun setAppSkin(skin: AppSkin) {
+        uiPreferencesManager.setAppSkin(skin)
     }
 
     /**

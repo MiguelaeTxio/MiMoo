@@ -59,10 +59,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miguelaetxio.mimoo.data.backup.DriveBackupFile
 import com.miguelaetxio.mimoo.ui.theme.glassChip
+import com.miguelaetxio.mimoo.ui.theme.AppSkin
 
 /**
  * Pantalla "Ajustes" (H06 PASO 3 exportar + PASO 4 importar). Punto
@@ -761,6 +763,50 @@ fun SettingsScreen(
                     expandedSection = if (expandedSection == "apariencia") null else "apariencia"
                 },
             ) {
+                // S052 -- petición explícita de Miguel Ángel: "añadir
+                // un acabado en aluminio y tener en Ajustes, en
+                // Apariencia, para poder cambiar la skin". appSkin es
+                // un StateFlow reactivo -- el cambio se ve en toda la
+                // app al instante, sin reiniciar (ver LocalGlassTokens
+                // + MaterialTheme en MainActivity).
+                val appSkin by viewModel.appSkin.collectAsState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .glassChip()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                ) {
+                    Text("Piel de la aplicación")
+                    Text(
+                        "Cambia el color y el acabado de toda la app.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        AppSkin.entries.forEach { skin ->
+                            val selected = skin == appSkin
+                            val label = when (skin) {
+                                AppSkin.MSX -> "MSX (azul)"
+                                AppSkin.ALUMINIO -> "Aluminio"
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(4.dp)
+                                    .glassChip(active = selected)
+                                    .clickable { viewModel.setAppSkin(skin) }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

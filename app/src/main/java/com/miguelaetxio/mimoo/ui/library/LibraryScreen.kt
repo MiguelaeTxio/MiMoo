@@ -32,7 +32,7 @@ import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.miguelaetxio.mimoo.ui.theme.glassChip
-import com.miguelaetxio.mimoo.ui.theme.GlassTokens
+import com.miguelaetxio.mimoo.ui.theme.LocalGlassTokens
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -1018,7 +1018,7 @@ private fun LibraryTabButton(
                 if (isSelected) {
                     base.background(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                        RoundedCornerShape(GlassTokens.cornerRadius),
+                        RoundedCornerShape(LocalGlassTokens.current.cornerRadius),
                     )
                 } else {
                     base
