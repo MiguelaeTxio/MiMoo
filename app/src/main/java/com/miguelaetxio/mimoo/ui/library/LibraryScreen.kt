@@ -174,7 +174,8 @@ fun LibraryScreen(
     // of that tab, nothing to go back to).
     val canGoBack = when (uiState.tab) {
         LibraryTab.ALBUMS -> uiState.albumsDrill !is AlbumsDrillLevel.Letters &&
-            uiState.albumsDrill !is AlbumsDrillLevel.ArtistsFlat
+            uiState.albumsDrill !is AlbumsDrillLevel.ArtistsFlat &&
+            uiState.albumsDrill !is AlbumsDrillLevel.AllAlbumsFlat
         LibraryTab.SINGLES -> uiState.singlesDrill !is SinglesDrillLevel.Letters &&
             uiState.singlesDrill !is SinglesDrillLevel.ArtistsFlat
     }
@@ -195,6 +196,7 @@ fun LibraryScreen(
         LibraryTab.ALBUMS -> when (val drill = uiState.albumsDrill) {
             is AlbumsDrillLevel.Letters -> "Artistas por letra"
             is AlbumsDrillLevel.ArtistsFlat -> "Todos los artistas"
+            is AlbumsDrillLevel.AllAlbumsFlat -> "Todos los álbumes"
             is AlbumsDrillLevel.Artists -> "Artistas · ${drill.letter}"
             is AlbumsDrillLevel.Albums -> displayArtistName(drill.artist)
             is AlbumsDrillLevel.Tracks -> drill.album
@@ -247,20 +249,29 @@ fun LibraryScreen(
                     } else {
                         val showAlbumsToggle = uiState.tab == LibraryTab.ALBUMS &&
                             (uiState.albumsDrill is AlbumsDrillLevel.Letters ||
-                                uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat)
+                                uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat ||
+                                uiState.albumsDrill is AlbumsDrillLevel.AllAlbumsFlat)
                         val showSinglesToggle = uiState.tab == LibraryTab.SINGLES &&
                             (uiState.singlesDrill is SinglesDrillLevel.Letters ||
                                 uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat)
                         if (showAlbumsToggle) {
                             Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
                                 IconButton(onClick = viewModel::toggleAlbumsViewMode) {
-                                    if (uiState.albumsViewMode == AlbumsViewMode.BY_LETTER) {
-                                        Icon(
+                                    // S051 -- tres estados en el mismo
+                                    // botón (ver toggleAlbumsViewMode):
+                                    // el icono siempre representa a
+                                    // dónde se pasará al pulsar, no el
+                                    // estado actual.
+                                    when (uiState.albumsViewMode) {
+                                        AlbumsViewMode.BY_LETTER -> Icon(
                                             Icons.Filled.FormatListBulleted,
                                             contentDescription = "Ver todos los artistas en una lista",
                                         )
-                                    } else {
-                                        Icon(
+                                        AlbumsViewMode.ARTISTS_FLAT -> Icon(
+                                            Icons.Filled.Album,
+                                            contentDescription = "Ver todos los álbumes en una lista",
+                                        )
+                                        AlbumsViewMode.ALBUMS_FLAT -> Icon(
                                             Icons.Filled.SortByAlpha,
                                             contentDescription = "Ver artistas agrupados por letra",
                                         )
@@ -335,6 +346,7 @@ fun LibraryScreen(
             val showFilter = when (uiState.tab) {
                 LibraryTab.ALBUMS -> uiState.albumsDrill is AlbumsDrillLevel.Letters ||
                     uiState.albumsDrill is AlbumsDrillLevel.ArtistsFlat ||
+                    uiState.albumsDrill is AlbumsDrillLevel.AllAlbumsFlat ||
                     uiState.albumsDrill is AlbumsDrillLevel.Artists
                 LibraryTab.SINGLES -> uiState.singlesDrill is SinglesDrillLevel.Letters ||
                     uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat ||
@@ -587,6 +599,19 @@ private fun ColumnScope.AlbumsTabContent(
                     onPlayAll = viewModel::playAllAlbums,
                     onShuffle = viewModel::playAllAlbumsShuffled,
                 )
+                // S051 -- petición explícita de Miguel Ángel: lo mismo
+                // que Favoritos (selección múltiple + popurrí
+                // secuencial/aleatorio), pero SOLO en "todos los
+                // artistas" -- "cuando estén por letra no, cuando se
+                // vean todos" sí. Por eso esta cabecera NO está en la
+                // rama Artists(letra) de arriba.
+                LibrarySelectionHeader(
+                    selectedCount = uiState.selectedArtistsFlat.size,
+                    totalCount = artists.size,
+                    onToggleSelectAll = viewModel::toggleSelectAllArtistsFlat,
+                    onPlaySequential = { viewModel.playSelectedArtistsFlat(shuffle = false) },
+                    onPlayShuffled = { viewModel.playSelectedArtistsFlat(shuffle = true) },
+                )
                 ArtistList(
                     artists = artists,
                     favoriteArtists = uiState.favoriteArtistKeys,
@@ -596,7 +621,66 @@ private fun ColumnScope.AlbumsTabContent(
                     onToggleFavorite = { artist -> viewModel.toggleFavoriteArtist(activity, artist) },
                     onDelete = onDeleteArtist,
                     onShare = { artist -> viewModel.shareArtistReplica(artist) },
+                    selectedArtists = uiState.selectedArtistsFlat,
+                    onToggleSelect = viewModel::toggleArtistFlatSelection,
                 )
+            }
+        }
+        is AlbumsDrillLevel.AllAlbumsFlat -> {
+            // S051 -- petición explícita de Miguel Ángel: extender "ver
+            // todos los álbumes" a la Biblioteca con selección múltiple
+            // + popurrí, mismo mecanismo que Favoritos pero sobre TODOS
+            // los álbumes descargados, no solo favoritos.
+            val allAlbumKeys = uiState.albumsByArtist.flatMap { (artist, albums) ->
+                albums.keys.map { album -> artist to album }
+            }.sortedWith(compareBy({ it.second }, { it.first }))
+            if (allAlbumKeys.isEmpty()) {
+                Text(
+                    "Todavía no hay álbumes descargados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 16.dp),
+                )
+            } else {
+                PlayAllRow(
+                    label = "Biblioteca completa",
+                    onPlayAll = viewModel::playAllAlbums,
+                    onShuffle = viewModel::playAllAlbumsShuffled,
+                )
+                LibrarySelectionHeader(
+                    selectedCount = uiState.selectedAlbumsFlat.size,
+                    totalCount = allAlbumKeys.size,
+                    onToggleSelectAll = viewModel::toggleSelectAllAlbumsFlat,
+                    onPlaySequential = { viewModel.playSelectedAlbumsFlat(shuffle = false) },
+                    onPlayShuffled = { viewModel.playSelectedAlbumsFlat(shuffle = true) },
+                )
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(allAlbumKeys, key = { (artist, album) -> "flatalbum:$artist:$album" }) { (artist, album) ->
+                        val albumTracks = uiState.albumsByArtist[artist]?.get(album) ?: emptyList()
+                        AlbumHeaderRow(
+                            artist = artist,
+                            album = album,
+                            tracks = albumTracks,
+                            isFavorite = (artist to album) in uiState.favoriteAlbumKeys,
+                            onClick = { viewModel.selectAlbumsAlbum(artist, album) },
+                            onPlayAlbum = { viewModel.playAlbum(artist, album) },
+                            onDelete = { onDeleteAlbum(artist, album) },
+                            onEditAlbum = { onEditAlbum(artist, album) },
+                            onAddToPlaylist = { onAddAlbumToPlaylist(albumTracks) },
+                            onAddToQueue = { viewModel.addAlbumToQueue(artist, album) },
+                            onInsertNext = { viewModel.insertAlbumNext(artist, album) },
+                            onToggleFavorite = {
+                                viewModel.toggleFavoriteAlbum(activity, artist, album)
+                            },
+                            onRequestCoverArt = viewModel::requestCoverArtIfMissing,
+                            onRetryCoverArt = viewModel::retryCoverArt,
+                            onShareReplica = { viewModel.shareAlbumReplica(artist, album) },
+                            showArtistSubtitle = true,
+                            isSelected = (artist to album) in uiState.selectedAlbumsFlat,
+                            onToggleSelect = { viewModel.toggleAlbumFlatSelection(artist, album) },
+                        )
+                    }
+                }
             }
         }
         is AlbumsDrillLevel.Albums -> {
@@ -808,6 +892,11 @@ private fun ColumnScope.ArtistList(
     onToggleFavorite: (String) -> Unit,
     onDelete: (String) -> Unit,
     onShare: (String) -> Unit,
+    // S051 -- selección múltiple opcional (solo se usa desde
+    // ArtistsFlat, ver el comentario de esa rama en AlbumsTabContent).
+    // null = sin casilla, comportamiento idéntico al de antes.
+    selectedArtists: Set<String>? = null,
+    onToggleSelect: ((String) -> Unit)? = null,
 ) {
     LazyColumn(modifier = Modifier.weight(1f)) {
         items(artists, key = { "artist:$it" }) { artist ->
@@ -821,6 +910,12 @@ private fun ColumnScope.ArtistList(
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (onToggleSelect != null) {
+                    Checkbox(
+                        checked = selectedArtists?.contains(artist) == true,
+                        onCheckedChange = { onToggleSelect(artist) },
+                    )
+                }
                 Text(
                     text = displayArtistName(artist),
                     style = MaterialTheme.typography.titleMedium,
@@ -857,6 +952,45 @@ private fun ColumnScope.ArtistList(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * S051 -- mismo patrón que `SelectionHeader` de FavoritesScreen.kt
+ * (petición explícita de Miguel Ángel: aplicar a la Biblioteca lo
+ * mismo que ya hay en Favoritos para popurrí secuencial/aleatorio a
+ * partir de una selección múltiple). No se reutiliza el composable de
+ * Favoritos directamente -- es `private` en su archivo, y duplicar
+ * esta cabecera pequeña es más simple que cruzar el paquete
+ * `ui.favorites` desde `ui.library` para algo tan chico.
+ */
+@Composable
+private fun LibrarySelectionHeader(
+    selectedCount: Int,
+    totalCount: Int,
+    onToggleSelectAll: () -> Unit,
+    onPlaySequential: () -> Unit,
+    onPlayShuffled: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = totalCount > 0 && selectedCount == totalCount,
+            onCheckedChange = { onToggleSelectAll() },
+        )
+        Text(
+            if (selectedCount == 0) "Marcar todos" else "$selectedCount seleccionados",
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        IconButton(onClick = onPlaySequential, enabled = selectedCount > 0) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir popurrí secuencial")
+        }
+        IconButton(onClick = onPlayShuffled, enabled = selectedCount > 0) {
+            Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir popurrí aleatorio")
         }
     }
 }
@@ -952,6 +1086,12 @@ private fun AlbumHeaderRow(
     onRetryCoverArt: (artist: String, album: String) -> Unit,
     onShareReplica: () -> Unit,
     showArtistSubtitle: Boolean = false,
+    // S051 -- selección múltiple opcional (solo se usa desde
+    // AllAlbumsFlat, ver el comentario de esa rama en
+    // AlbumsTabContent). null = sin casilla, comportamiento idéntico
+    // al de antes.
+    isSelected: Boolean? = null,
+    onToggleSelect: (() -> Unit)? = null,
 ) {
     LaunchedEffect(artist, album) {
         onRequestCoverArt(artist, album)
@@ -979,6 +1119,12 @@ private fun AlbumHeaderRow(
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (onToggleSelect != null) {
+            Checkbox(
+                checked = isSelected == true,
+                onCheckedChange = { onToggleSelect() },
+            )
+        }
         AlbumCoverThumbnail(coverArtUrl, fallbackThumbnailUrl)
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {

@@ -137,6 +137,23 @@ sealed class AlbumsDrillLevel {
      * active. Nothing changes below this (Albums, Tracks).
      */
     object ArtistsFlat : AlbumsDrillLevel()
+    /**
+     * S051 -- petición explícita de Miguel Ángel: extender "ver todos
+     * los álbumes" a la Biblioteca, con selección múltiple + popurrí
+     * secuencial/aleatorio (lo mismo que ya existe en Favoritos, pero
+     * ahí sobre álbumes favoritos -- aquí sobre TODOS los álbumes
+     * descargados). Tercera vista raíz, hermana de Letters y
+     * ArtistsFlat: todos los álbumes de todos los artistas, en una
+     * sola lista plana, sin agrupar por artista.
+     * ---
+     * S051 -- explicit request from Miguel Ángel: extend "view all
+     * albums" to the Library, with multi-select + sequential/shuffle
+     * popurrí (the same thing Favorites already has, but there it's
+     * over favorite albums -- here it's over ALL downloaded albums).
+     * Third root view, sibling of Letters and ArtistsFlat: every album
+     * from every artist, in a single flat list, not grouped by artist.
+     */
+    object AllAlbumsFlat : AlbumsDrillLevel()
     data class Artists(val letter: Char) : AlbumsDrillLevel()
     data class Albums(val artist: String) : AlbumsDrillLevel()
     data class Tracks(
@@ -165,16 +182,16 @@ enum class SinglesViewMode { BY_LETTER, FLAT }
 
 /**
  * Qué vista raíz de la pestaña Álbumes está activa -- toggle pedido
- * por Miguel Ángel (2026-07-07). Solo afecta a qué nivel raíz se
- * usa (Letters vs ArtistsFlat); Albums y Tracks son idénticos en
- * ambos modos.
+ * por Miguel Ángel (2026-07-07, ampliado en S051 con ALBUMS_FLAT).
+ * Solo afecta a qué nivel raíz se usa (Letters vs ArtistsFlat vs
+ * AllAlbumsFlat); Albums y Tracks son idénticos en los tres modos.
  * ---
- * Which root view of the Álbumes tab is active -- toggle requested
- * by Miguel Ángel (2026-07-07). Only affects which root level is
- * used (Letters vs ArtistsFlat); Albums and Tracks are identical in
- * both modes.
+ * Which root view of the Álbumes tab is active -- toggle requested by
+ * Miguel Ángel (2026-07-07, extended in S051 with ALBUMS_FLAT). Only
+ * affects which root level is used (Letters vs ArtistsFlat vs
+ * AllAlbumsFlat); Albums and Tracks are identical in all three modes.
  */
-enum class AlbumsViewMode { BY_LETTER, FLAT }
+enum class AlbumsViewMode { BY_LETTER, ARTISTS_FLAT, ALBUMS_FLAT }
 
 data class LibraryUiState(
     val tab: LibraryTab = LibraryTab.ALBUMS,
@@ -200,6 +217,14 @@ data class LibraryUiState(
     val albumsViewMode: AlbumsViewMode = AlbumsViewMode.BY_LETTER,
     val singlesDrill: SinglesDrillLevel = SinglesDrillLevel.Letters,
     val singlesViewMode: SinglesViewMode = SinglesViewMode.BY_LETTER,
+    // S051 -- selección múltiple para el popurrí secuencial/aleatorio,
+    // mismo mecanismo que FavoritesViewModel pero aplicado a TODOS los
+    // artistas/álbumes descargados (no solo favoritos). Solo tiene
+    // sentido en las vistas planas (ArtistsFlat / AllAlbumsFlat) --
+    // petición explícita de Miguel Ángel: "cuando estén por letra no,
+    // cuando se vean todos" sí.
+    val selectedArtistsFlat: Set<String> = emptySet(),
+    val selectedAlbumsFlat: Set<Pair<String, String>> = emptySet(),
     val isRefreshing: Boolean = false,
     val editMetadataError: String? = null,
     // Resumen de mergeDuplicateFolders() para mostrar como Snackbar en
@@ -618,7 +643,8 @@ class LibraryViewModel @Inject constructor(
     /** Nivel raíz de la pestaña Álbumes según el modo de vista activo. */
     private fun rootAlbumsLevel(): AlbumsDrillLevel = when (_uiState.value.albumsViewMode) {
         AlbumsViewMode.BY_LETTER -> AlbumsDrillLevel.Letters
-        AlbumsViewMode.FLAT -> AlbumsDrillLevel.ArtistsFlat
+        AlbumsViewMode.ARTISTS_FLAT -> AlbumsDrillLevel.ArtistsFlat
+        AlbumsViewMode.ALBUMS_FLAT -> AlbumsDrillLevel.AllAlbumsFlat
     }
 
     fun selectAlbumsLetter(letter: Char) {
@@ -628,30 +654,37 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
-     * Alterna la vista raíz de Álbumes entre Letters y ArtistsFlat.
-     * Solo tiene efecto visible si el usuario está en uno de esos dos
-     * niveles raíz en ese momento; si está más adentro (Artists,
-     * Albums, Tracks) igualmente cambia el modo memorizado, para que
-     * el siguiente "atrás" hasta la raíz respete el nuevo modo.
+     * Alterna la vista raíz de Álbumes entre las TRES vistas -- Letras
+     * -> Todos los artistas -> Todos los álbumes -> Letras... (S051
+     * amplía el toggle de dos a tres estados con el mismo botón único,
+     * ver el icono en LibraryScreen). Solo tiene efecto visible si el
+     * usuario está en uno de esos tres niveles raíz en ese momento; si
+     * está más adentro (Artists, Albums, Tracks) igualmente cambia el
+     * modo memorizado, para que el siguiente "atrás" hasta la raíz
+     * respete el nuevo modo.
      * ---
-     * Toggles the Álbumes root view between Letters and ArtistsFlat.
-     * Only has a visible effect if the user is currently at one of
-     * those two root levels; if they're deeper in (Artists, Albums,
-     * Tracks) it still changes the remembered mode, so the next
-     * "back" up to the root respects the new mode.
+     * Toggles the Álbumes root view across the THREE views -- Letters
+     * -> All artists -> All albums -> Letters... (S051 extends the
+     * toggle from two to three states with the same single button, see
+     * the icon in LibraryScreen). Only has a visible effect if the
+     * user is currently at one of those three root levels; if they're
+     * deeper in (Artists, Albums, Tracks) it still changes the
+     * remembered mode, so the next "back" up to the root respects the
+     * new mode.
      */
     fun toggleAlbumsViewMode() {
         val newMode = when (_uiState.value.albumsViewMode) {
-            AlbumsViewMode.BY_LETTER -> AlbumsViewMode.FLAT
-            AlbumsViewMode.FLAT -> AlbumsViewMode.BY_LETTER
+            AlbumsViewMode.BY_LETTER -> AlbumsViewMode.ARTISTS_FLAT
+            AlbumsViewMode.ARTISTS_FLAT -> AlbumsViewMode.ALBUMS_FLAT
+            AlbumsViewMode.ALBUMS_FLAT -> AlbumsViewMode.BY_LETTER
         }
         val current = _uiState.value.albumsDrill
         val newDrill = when (current) {
-            is AlbumsDrillLevel.Letters, is AlbumsDrillLevel.ArtistsFlat ->
-                if (newMode == AlbumsViewMode.FLAT) {
-                    AlbumsDrillLevel.ArtistsFlat
-                } else {
-                    AlbumsDrillLevel.Letters
+            is AlbumsDrillLevel.Letters, is AlbumsDrillLevel.ArtistsFlat, is AlbumsDrillLevel.AllAlbumsFlat ->
+                when (newMode) {
+                    AlbumsViewMode.BY_LETTER -> AlbumsDrillLevel.Letters
+                    AlbumsViewMode.ARTISTS_FLAT -> AlbumsDrillLevel.ArtistsFlat
+                    AlbumsViewMode.ALBUMS_FLAT -> AlbumsDrillLevel.AllAlbumsFlat
                 }
             else -> current
         }
@@ -673,19 +706,29 @@ class LibraryViewModel @Inject constructor(
         )
     }
 
-    /** Sube un nivel en la navegación de Álbumes; en Letras no hace nada. */
+    /** Sube un nivel en la navegación de Álbumes; en Letras/ArtistsFlat/AllAlbumsFlat no hace nada. */
     fun backAlbumsDrill(): Boolean {
         val current = _uiState.value.albumsDrill
         val newLevel = when (current) {
             is AlbumsDrillLevel.Letters -> return false
             is AlbumsDrillLevel.ArtistsFlat -> return false
+            is AlbumsDrillLevel.AllAlbumsFlat -> return false
             is AlbumsDrillLevel.Artists -> AlbumsDrillLevel.Letters
-            is AlbumsDrillLevel.Albums -> if (_uiState.value.albumsViewMode == AlbumsViewMode.FLAT) {
+            is AlbumsDrillLevel.Albums -> if (_uiState.value.albumsViewMode == AlbumsViewMode.ARTISTS_FLAT) {
                 AlbumsDrillLevel.ArtistsFlat
             } else {
                 AlbumsDrillLevel.Artists(sortLetterFor(current.artist))
             }
-            is AlbumsDrillLevel.Tracks -> AlbumsDrillLevel.Albums(current.artist)
+            // S051 -- si se llegó aquí directamente desde AllAlbumsFlat
+            // (sin pasar por Albums(artist), la selección de álbumes no
+            // agrupa por artista), "atrás" vuelve a AllAlbumsFlat, no a
+            // Albums(artist) -- mismo criterio ya usado arriba para
+            // ArtistsFlat/Artists.
+            is AlbumsDrillLevel.Tracks -> if (_uiState.value.albumsViewMode == AlbumsViewMode.ALBUMS_FLAT) {
+                AlbumsDrillLevel.AllAlbumsFlat
+            } else {
+                AlbumsDrillLevel.Albums(current.artist)
+            }
         }
         _uiState.value = _uiState.value.copy(albumsDrill = newLevel)
         return true
@@ -1405,6 +1448,68 @@ class LibraryViewModel @Inject constructor(
     fun playAlbum(artist: String, album: String) {
         val tracks = _uiState.value.albumsByArtist[artist]?.get(album) ?: return
         playerManager.playQueue(tracks.toQueueItems())
+    }
+
+    // --- S051 -- Selección múltiple en vistas planas (ArtistsFlat / AllAlbumsFlat) ---
+    // Mismo mecanismo que FavoritesViewModel (ver toggleArtistSelection/
+    // toggleSelectAllArtists/toggleAlbumSelection/toggleSelectAllAlbums
+    // ahí), pero sobre TODOS los artistas/álbumes descargados -- ya
+    // están todos en memoria (albumsByArtist), no hace falta ningún
+    // PopurriRepository ni resolución de red: la reproducción es
+    // inmediata y síncrona, igual que playArtistAlbums()/playAlbum() de
+    // aquí arriba.
+
+    fun toggleArtistFlatSelection(artist: String) {
+        val current = _uiState.value.selectedArtistsFlat
+        _uiState.value = _uiState.value.copy(
+            selectedArtistsFlat = if (artist in current) current - artist else current + artist,
+        )
+    }
+
+    fun toggleSelectAllArtistsFlat() {
+        val state = _uiState.value
+        val allNames = state.albumsByArtist.keys
+        _uiState.value = state.copy(
+            selectedArtistsFlat = if (state.selectedArtistsFlat.size == allNames.size) emptySet() else allNames.toSet(),
+        )
+    }
+
+    fun toggleAlbumFlatSelection(artist: String, album: String) {
+        val key = artist to album
+        val current = _uiState.value.selectedAlbumsFlat
+        _uiState.value = _uiState.value.copy(
+            selectedAlbumsFlat = if (key in current) current - key else current + key,
+        )
+    }
+
+    fun toggleSelectAllAlbumsFlat() {
+        val state = _uiState.value
+        val allKeys = state.albumsByArtist.flatMap { (artist, albums) ->
+            albums.keys.map { album -> artist to album }
+        }.toSet()
+        _uiState.value = state.copy(
+            selectedAlbumsFlat = if (state.selectedAlbumsFlat.size == allKeys.size) emptySet() else allKeys,
+        )
+    }
+
+    /** Popurrí de los artistas marcados en ArtistsFlat -- discografía de álbum de cada uno (mismo alcance que playArtistAlbums()). */
+    fun playSelectedArtistsFlat(shuffle: Boolean) {
+        val state = _uiState.value
+        val tracks = state.selectedArtistsFlat.flatMap { artist ->
+            state.albumsByArtist[artist]?.values?.flatten() ?: emptyList()
+        }
+        if (tracks.isEmpty()) return
+        if (shuffle) playerManager.playQueueShuffled(tracks.toQueueItems()) else playerManager.playQueue(tracks.toQueueItems())
+    }
+
+    /** Popurrí de los álbumes marcados en AllAlbumsFlat. */
+    fun playSelectedAlbumsFlat(shuffle: Boolean) {
+        val state = _uiState.value
+        val tracks = state.selectedAlbumsFlat.flatMap { (artist, album) ->
+            state.albumsByArtist[artist]?.get(album).orEmpty()
+        }
+        if (tracks.isEmpty()) return
+        if (shuffle) playerManager.playQueueShuffled(tracks.toQueueItems()) else playerManager.playQueue(tracks.toQueueItems())
     }
 
     /**
