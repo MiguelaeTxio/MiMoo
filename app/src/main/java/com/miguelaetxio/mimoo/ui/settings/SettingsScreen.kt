@@ -795,13 +795,18 @@ fun SettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .padding(4.dp)
+                                    .padding(2.dp)
                                     .glassChip(active = selected)
                                     .clickable { viewModel.setAppSkin(skin) }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    .padding(horizontal = 4.dp, vertical = 10.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                )
                             }
                         }
                     }
