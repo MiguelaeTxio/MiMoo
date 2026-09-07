@@ -154,7 +154,16 @@ class UnifiedSearchViewModel @Inject constructor(
 
     private suspend fun searchSongs(query: String): List<TrackDto> =
         try {
-            externalLinkResolver.searchYoutube(query, limit = 10).tracks.map { entry ->
+            // S061 -- bug real reportado por Miguel Ángel: buscó
+            // "Tiësto" (artista con catálogo enorme) y apenas salieron
+            // resultados -- exactamente 10 sencillos, 15 listas, 15
+            // canales, coincidiendo al milímetro con los topes fijos
+            // de aquí abajo y de searchByType()/searchAlbumCandidates.
+            // No es un fallo puntual de esa búsqueda -- el tope es bajo
+            // para cualquier artista con mucho catálogo. Sin coste
+            // real de subirlo: es scraping (ytsearchN:, coste de cuota
+            // CERO), no la API oficial de YouTube con cupo diario.
+            externalLinkResolver.searchYoutube(query, limit = 25).tracks.map { entry ->
                 TrackDto(
                     youtubeId = entry.youtubeId,
                     title = YoutubeTitleCleaner.clean(entry.title),
@@ -169,7 +178,8 @@ class UnifiedSearchViewModel @Inject constructor(
 
     private suspend fun searchAlbums(query: String): List<AlbumCandidate> =
         try {
-            albumMatchRepository.searchAlbumCandidates(artist = null, album = query).take(10)
+            // S061 -- mismo motivo que searchSongs() de arriba.
+            albumMatchRepository.searchAlbumCandidates(artist = null, album = query).take(25)
         } catch (e: Exception) {
             emptyList()
         }
@@ -183,7 +193,11 @@ class UnifiedSearchViewModel @Inject constructor(
 
     private suspend fun searchType(query: String, type: SearchResultType): List<SearchTypeResult> =
         try {
-            externalLinkResolver.searchByType(query, type)
+            // S061 -- mismo motivo que searchSongs() de arriba; sube el
+            // límite por defecto de searchByType() (15 -> 25) solo
+            // para esta llamada, sin tocar otros llamantes de
+            // ExternalLinkResolver.searchByType() que pudiera haber.
+            externalLinkResolver.searchByType(query, type, limit = 25)
         } catch (e: Exception) {
             emptyList()
         }
