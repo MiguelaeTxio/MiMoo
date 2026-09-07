@@ -154,30 +154,22 @@ class UnifiedSearchViewModel @Inject constructor(
 
     private suspend fun searchSongs(query: String): List<TrackDto> =
         try {
-            // S061 -- petición explícita de Miguel Ángel, matiz
-            // importante sobre el arreglo anterior de esta misma
-            // sesión (que solo subía el tope bruto de 10 a 25): "igual
-            // si salen 200 temas pero son 2 o 3 con nombres
-            // diferentes, no sirve [...] si son 50 temas y cada uno
-            // diferente, entonces la búsqueda es de mucha más
-            // calidad." Un artista con catálogo enorme (Tiësto) tiene
-            // muchísimos reuploads casi idénticos del MISMO tema
-            // ("(Official Video)", "(Lyrics)", "(Radio Edit)" de
-            // canales distintos) -- pedir más resultados brutos no
-            // ayudaba si la mayoría son el mismo tema repetido.
-            //
-            // Se pide un PISCINA más amplia (50, no solo para
-            // mostrar) y se deduplica por songTitleKey() -- la misma
-            // función que ya usa el resto de la app (popurrí,
-            // favoritos, Lista Negra) para colapsar justo este tipo de
-            // reuploads casi idénticos en una sola clave real de
-            // canción, no un tope bruto de resultados. `channelTitle`
-            // como pista de artista para songTitleKey() -- ayuda a
-            // despegar el nombre de artista del título cuando viene
-            // pegado ("Tiësto - Adagio For Strings"), sin problema si
-            // no coincide (la función simplemente no quita nada en
-            // ese caso).
-            val rawTracks = externalLinkResolver.searchYoutube(query, limit = 50).tracks
+            // S061 -- petición explícita de Miguel Ángel, corrección
+            // sobre los dos arreglos anteriores de esta misma sesión
+            // (que solo subían el tope bruto, primero a 25 y luego a
+            // 50): "he dicho 50 por decir un número. Realmente el
+            // límite coarta la búsqueda [...] limitar a 50 los temas
+            // de los Rolling o del propio DJ Tiësto, es dejar la
+            // búsqueda como una función que no vas a usar." Cualquier
+            // número fijo que se elija aquí se queda corto para un
+            // catálogo grande -- se usa searchYoutubeAll()
+            // (ytsearchall:), que pagina de verdad contra YouTube
+            // hasta agotar los resultados reales, sin ningún tope
+            // inventado. La deduplicación por songTitleKey() sigue
+            // igual de necesaria (o más, con un pool mucho mayor) --
+            // sigue siendo lo que separa "muchos resultados" de
+            // "muchos temas realmente distintos".
+            val rawTracks = externalLinkResolver.searchYoutubeAll(query).tracks
             val seenKeys = mutableSetOf<String>()
             rawTracks.mapNotNull { entry ->
                 val cleanedTitle = YoutubeTitleCleaner.clean(entry.title)
@@ -193,7 +185,7 @@ class UnifiedSearchViewModel @Inject constructor(
                     thumbnailUrl = entry.thumbnailUrl,
                     channelTitle = entry.channelTitle,
                 )
-            }.take(25)
+            }
         } catch (e: Exception) {
             emptyList()
         }

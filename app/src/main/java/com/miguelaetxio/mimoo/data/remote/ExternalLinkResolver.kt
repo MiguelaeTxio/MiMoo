@@ -104,6 +104,37 @@ class ExternalLinkResolver @Inject constructor() {
         resolveLink("ytsearch$limit:$query")
 
     /**
+     * S061 -- petición explícita de Miguel Ángel: cualquier tope fijo
+     * (10, 25, 50...) "coarta la búsqueda" para un catálogo grande
+     * (Rolling Stones, Tiësto) -- "limitar a 50 [...] es dejar la
+     * búsqueda como una función que no vas a usar pq terminas buscando
+     * en YouTube en vez de en la aplicación". `ytsearchall:` es el
+     * modo real de yt-dlp para esto: pagina de verdad contra YouTube
+     * hasta agotar los resultados de la búsqueda, no es un número
+     * grande disfrazado -- el propio buscador de YouTube es el que
+     * decide cuándo se acaban los resultados, no un límite inventado
+     * aquí. Coste de cuota sigue siendo CERO (mismo scraping que
+     * `ytsearchN:`); el coste real es tiempo -- una búsqueda de un
+     * artista enorme puede tardar más en volver, aceptado a cambio de
+     * no perder temas reales por un tope arbitrario.
+     * ---
+     * S061 -- explicit request from Miguel Ángel: any fixed cap (10,
+     * 25, 50...) "constrains the search" for a large catalog (Rolling
+     * Stones, Tiësto) -- "capping at 50 [...] turns search into a
+     * feature you won't use because you end up searching on YouTube
+     * instead of in the app". `ytsearchall:` is yt-dlp's real mechanism
+     * for this: it genuinely paginates against YouTube until the
+     * search results run out, it's not a disguised big number --
+     * YouTube's own search decides when results end, not an invented
+     * limit here. Quota cost stays ZERO (same scraping as
+     * `ytsearchN:`); the real cost is time -- a search for a huge
+     * artist may take longer to come back, accepted in exchange for
+     * not losing real tracks to an arbitrary cap.
+     */
+    suspend fun searchYoutubeAll(query: String): ExternalLinkResult =
+        resolveLink("ytsearchall:$query")
+
+    /**
      * H08 PARTE 1 (S009) -- busca listas o canales por texto libre,
      * a coste de cuota CERO (mismo mecanismo de scraping que
      * searchYoutube(), requisito explícito de Miguel Ángel). Cada
