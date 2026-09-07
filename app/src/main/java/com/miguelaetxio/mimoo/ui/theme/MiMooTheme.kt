@@ -30,13 +30,32 @@ enum class AppSkin {
     /** Piel por defecto -- fondo azul tipo pantalla de arranque del MSX2, letra blanca. Ver MsxColorScheme. */
     MSX,
 
-    /** Acabado en aluminio cepillado -- fondo gris claro, letra en gris oscuro. Ver AluminioColorScheme. */
+    /** Acabado en aluminio cepillado -- textura real (foto), letra en gris oscuro. Ver AluminioColorScheme. */
     ALUMINIO,
+
+    /**
+     * S060 -- petición explícita de Miguel Ángel, con textura real
+     * (foto de granito moteado) tras señalar que las pieles anteriores
+     * usaban colores calculados en vez de texturas de verdad ("¿cómo
+     * podemos enfocarlo para hacerlo así?"). Fondo gris claro moteado,
+     * letra en gris muy oscuro/negro. Ver GranitoColorScheme.
+     */
+    GRANITO,
+
+    /**
+     * S060 -- textura real (foto de veta de madera), mismo motivo que
+     * GRANITO. Fondo marrón cálido, letra en crema/blanco roto (el
+     * negro no se lee bien sobre un marrón medio-oscuro). Ver
+     * MaderaColorScheme.
+     */
+    MADERA,
 }
 
 fun colorSchemeFor(skin: AppSkin): ColorScheme = when (skin) {
     AppSkin.MSX -> MsxColorScheme
     AppSkin.ALUMINIO -> AluminioColorScheme
+    AppSkin.GRANITO -> GranitoColorScheme
+    AppSkin.MADERA -> MaderaColorScheme
 }
 
 /**
@@ -194,4 +213,113 @@ val AluminioColorScheme = lightColorScheme(
     onErrorContainer = Color.White,
 
     outline = AluminioDark,
+)
+
+/**
+ * S060 -- esquema de color de la piel Granito, con textura real (foto
+ * de granito moteado, ver `bg_granito.jpg` y el kdoc de `background`
+ * de más abajo). Igual que Aluminio en estructura (`lightColorScheme`,
+ * fondo transparente para dejar ver la textura, letra oscura) pero con
+ * su propia paleta muestreada de la foto real: gris algo más frío y
+ * moteado que el aluminio.
+ * ---
+ * S060 -- Granito skin color scheme, with a real texture (a photo of
+ * speckled granite, see `bg_granito.jpg` and the `background` kdoc
+ * below). Same structure as Aluminio (`lightColorScheme`, transparent
+ * background to let the texture show through, dark text) but with its
+ * own palette sampled from the real photo: a slightly cooler, more
+ * speckled gray than aluminum.
+ */
+private val GranitoLight = Color(0xFFE4E4E6)
+private val GranitoBase = Color(0xFFBFC0C3)
+private val GranitoDark = Color(0xFF8F9093)
+private val GranitoText = Color(0xFF1C1C1E)
+private val GranitoRed = Color(0xFFB3261E)
+
+val GranitoColorScheme = lightColorScheme(
+    primary = GranitoText,
+    onPrimary = GranitoLight,
+    primaryContainer = GranitoDark,
+    onPrimaryContainer = GranitoText,
+
+    secondary = GranitoText,
+    onSecondary = GranitoLight,
+    secondaryContainer = GranitoBase,
+    onSecondaryContainer = GranitoText,
+
+    tertiary = GranitoRed,
+    onTertiary = Color.White,
+
+    // S060 -- transparente a propósito, ver el kdoc de
+    // AluminioColorScheme.background: deja ver la textura real que
+    // pinta MainActivity detrás de cada Scaffold().
+    background = Color.Transparent,
+    onBackground = GranitoText,
+
+    surface = GranitoBase,
+    onSurface = GranitoText,
+    surfaceVariant = GranitoLight,
+    onSurfaceVariant = GranitoText.copy(alpha = 0.72f),
+
+    error = GranitoRed,
+    onError = Color.White,
+    errorContainer = GranitoRed,
+    onErrorContainer = Color.White,
+
+    outline = GranitoDark,
+)
+
+/**
+ * S060 -- esquema de color de la piel Madera, con textura real (foto
+ * de veta de madera, ver `bg_madera.jpg`). A diferencia de Aluminio y
+ * Granito, la madera es un fondo MEDIO-OSCURO -- por eso es un
+ * `darkColorScheme` con letra clara (crema, no blanco puro -- un blanco
+ * frío desentona sobre un marrón cálido), igual que MSX en estructura
+ * pero con paleta cálida en vez de azul.
+ * ---
+ * S060 -- Madera (Wood) skin color scheme, with a real texture (a
+ * photo of wood grain, see `bg_madera.jpg`). Unlike Aluminio and
+ * Granito, wood is a MEDIUM-DARK background -- so it's a
+ * `darkColorScheme` with light text (cream, not pure white -- a cold
+ * white clashes against a warm brown), same structure as MSX but with
+ * a warm palette instead of blue.
+ */
+private val MaderaCream = Color(0xFFF3E9D8)
+private val MaderaMid = Color(0xFF8A5A34)
+private val MaderaDark = Color(0xFF6B4423)
+private val MaderaAccent = Color(0xFFE0B84A)
+
+val MaderaColorScheme = darkColorScheme(
+    primary = MaderaCream,
+    onPrimary = MaderaDark,
+    primaryContainer = MaderaMid,
+    onPrimaryContainer = MaderaCream,
+
+    secondary = MaderaCream,
+    onSecondary = MaderaDark,
+    secondaryContainer = MaderaMid,
+    onSecondaryContainer = MaderaCream,
+
+    tertiary = MaderaAccent,
+    onTertiary = MaderaDark,
+
+    // S060 -- transparente a propósito, ver el kdoc de
+    // AluminioColorScheme.background: deja ver la textura real que
+    // pinta MainActivity detrás de cada Scaffold().
+    background = Color.Transparent,
+    onBackground = MaderaCream,
+
+    surface = MaderaMid,
+    onSurface = MaderaCream,
+    surfaceVariant = MaderaDark,
+    onSurfaceVariant = MaderaCream.copy(alpha = 0.75f),
+
+    // Rojo normal -- sobre un marrón cálido un rojo se lee bien, no
+    // hace falta el apaño del amarillo de MSX.
+    error = Color(0xFFE05A4E),
+    onError = MaderaDark,
+    errorContainer = Color(0xFFE05A4E),
+    onErrorContainer = MaderaDark,
+
+    outline = MaderaMid,
 )

@@ -126,7 +126,27 @@ val AluminioGlassTokens = GlassTokenSet(
 fun glassTokensFor(skin: AppSkin): GlassTokenSet = when (skin) {
     AppSkin.MSX -> MsxGlassTokens
     AppSkin.ALUMINIO -> AluminioGlassTokens
+    AppSkin.GRANITO -> GranitoGlassTokens
+    AppSkin.MADERA -> MaderaGlassTokens
 }
+
+/**
+ * S060 -- mismo criterio que AluminioGlassTokens (fondo claro -> placa
+ * blanca casi opaca, placa "encendida" invertida a oscura), con
+ * exactamente los mismos valores -- Granito y Aluminio comparten el
+ * mismo tipo de fondo (claro, con textura real), así que el mismo
+ * cristal funciona igual de bien sobre los dos.
+ */
+val GranitoGlassTokens = AluminioGlassTokens.copy()
+
+/**
+ * S060 -- fondo MEDIO-OSCURO (madera), como MSX -- mismo criterio que
+ * MsxGlassTokens (placa blanca translúcida tenue, placa "encendida"
+ * casi opaca en blanco con icono oscuro) funciona igual de bien aquí,
+ * el marrón de fondo no necesita un cristal distinto del azul de MSX
+ * para que se note la placa.
+ */
+val MaderaGlassTokens = MsxGlassTokens.copy()
 
 /**
  * Qué piel está activa ahora mismo -- `MainActivity` lo provee a

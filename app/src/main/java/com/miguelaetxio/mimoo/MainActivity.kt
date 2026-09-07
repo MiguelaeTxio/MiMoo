@@ -651,19 +651,29 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // S054 -- textura real de aluminio cepillado (foto
-                // enviada por Miguel Ángel), pintada UNA sola vez aquí,
-                // en la raíz visual de toda la app, detrás de
+                // S054/S060 -- textura real (foto) de cada piel con
+                // fondo transparente, pintada UNA sola vez aquí, en la
+                // raíz visual de toda la app, detrás de
                 // ModalNavigationDrawer. Ver el kdoc de
                 // AluminioColorScheme.background en MiMooTheme.kt para
                 // el porqué completo (evita tocar los 18 Scaffold()
-                // distintos de cada pantalla).
+                // distintos de cada pantalla). MSX no tiene textura --
+                // su fondo (background = MsxBlue) sigue siendo opaco,
+                // así que el Box de aquí no pintaría nada visible de
+                // todas formas.
                 Box(modifier = Modifier.fillMaxSize()) {
-                    if (appSkin == com.miguelaetxio.mimoo.ui.theme.AppSkin.ALUMINIO) {
+                    val backgroundDrawableRes = when (appSkin) {
+                        com.miguelaetxio.mimoo.ui.theme.AppSkin.ALUMINIO ->
+                            com.miguelaetxio.mimoo.R.drawable.bg_aluminio_brushed
+                        com.miguelaetxio.mimoo.ui.theme.AppSkin.GRANITO ->
+                            com.miguelaetxio.mimoo.R.drawable.bg_granito
+                        com.miguelaetxio.mimoo.ui.theme.AppSkin.MADERA ->
+                            com.miguelaetxio.mimoo.R.drawable.bg_madera
+                        com.miguelaetxio.mimoo.ui.theme.AppSkin.MSX -> null
+                    }
+                    if (backgroundDrawableRes != null) {
                         androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(
-                                com.miguelaetxio.mimoo.R.drawable.bg_aluminio_brushed,
-                            ),
+                            painter = androidx.compose.ui.res.painterResource(backgroundDrawableRes),
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = androidx.compose.ui.layout.ContentScale.Crop,

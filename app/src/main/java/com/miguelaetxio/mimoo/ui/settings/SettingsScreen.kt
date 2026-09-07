@@ -789,6 +789,8 @@ fun SettingsScreen(
                             val label = when (skin) {
                                 AppSkin.MSX -> "MSX (azul)"
                                 AppSkin.ALUMINIO -> "Aluminio"
+                                AppSkin.GRANITO -> "Granito"
+                                AppSkin.MADERA -> "Madera"
                             }
                             Box(
                                 modifier = Modifier
