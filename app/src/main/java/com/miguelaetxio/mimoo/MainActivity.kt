@@ -853,7 +853,25 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                 ) {
-                    Surface {
+                    // S060 -- bug real reportado por Miguel Ángel: en
+                    // las pieles con textura (Aluminio/Granito/Madera)
+                    // no se veía ninguna foto, solo colores planos.
+                    // Causa real: este Surface no fijaba `color`
+                    // explícitamente, así que usaba el valor por
+                    // defecto -- `colorScheme.surface`, que es OPACO A
+                    // PROPÓSITO en esas pieles (para que tarjetas y
+                    // menús se sigan viendo bien) y DISTINTO de
+                    // `colorScheme.background` (transparente a
+                    // propósito, para dejar ver la textura). Ese
+                    // relleno opaco tapaba la imagen entera de
+                    // MainActivity sin que se notara en MSX, donde
+                    // `surface` y `background` son el mismo azul.
+                    // Arreglo: fijar aquí `colorScheme.background`
+                    // explícitamente, que es el color semánticamente
+                    // correcto para el fondo raíz de toda la app (no
+                    // `surface`, pensado para superficies elevadas
+                    // como tarjetas).
+                    Surface(color = MaterialTheme.colorScheme.background) {
                         Column(modifier = Modifier.fillMaxSize()) {
                             Column(modifier = Modifier.weight(1f)) {
                                 MiMooNavGraph(
