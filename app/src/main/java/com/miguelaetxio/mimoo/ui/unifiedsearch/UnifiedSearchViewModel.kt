@@ -154,24 +154,46 @@ class UnifiedSearchViewModel @Inject constructor(
 
     private suspend fun searchSongs(query: String): List<TrackDto> =
         try {
-            // S061 -- bug real reportado por Miguel Ángel: buscó
-            // "Tiësto" (artista con catálogo enorme) y apenas salieron
-            // resultados -- exactamente 10 sencillos, 15 listas, 15
-            // canales, coincidiendo al milímetro con los topes fijos
-            // de aquí abajo y de searchByType()/searchAlbumCandidates.
-            // No es un fallo puntual de esa búsqueda -- el tope es bajo
-            // para cualquier artista con mucho catálogo. Sin coste
-            // real de subirlo: es scraping (ytsearchN:, coste de cuota
-            // CERO), no la API oficial de YouTube con cupo diario.
-            externalLinkResolver.searchYoutube(query, limit = 25).tracks.map { entry ->
+            // S061 -- petición explícita de Miguel Ángel, matiz
+            // importante sobre el arreglo anterior de esta misma
+            // sesión (que solo subía el tope bruto de 10 a 25): "igual
+            // si salen 200 temas pero son 2 o 3 con nombres
+            // diferentes, no sirve [...] si son 50 temas y cada uno
+            // diferente, entonces la búsqueda es de mucha más
+            // calidad." Un artista con catálogo enorme (Tiësto) tiene
+            // muchísimos reuploads casi idénticos del MISMO tema
+            // ("(Official Video)", "(Lyrics)", "(Radio Edit)" de
+            // canales distintos) -- pedir más resultados brutos no
+            // ayudaba si la mayoría son el mismo tema repetido.
+            //
+            // Se pide un PISCINA más amplia (50, no solo para
+            // mostrar) y se deduplica por songTitleKey() -- la misma
+            // función que ya usa el resto de la app (popurrí,
+            // favoritos, Lista Negra) para colapsar justo este tipo de
+            // reuploads casi idénticos en una sola clave real de
+            // canción, no un tope bruto de resultados. `channelTitle`
+            // como pista de artista para songTitleKey() -- ayuda a
+            // despegar el nombre de artista del título cuando viene
+            // pegado ("Tiësto - Adagio For Strings"), sin problema si
+            // no coincide (la función simplemente no quita nada en
+            // ese caso).
+            val rawTracks = externalLinkResolver.searchYoutube(query, limit = 50).tracks
+            val seenKeys = mutableSetOf<String>()
+            rawTracks.mapNotNull { entry ->
+                val cleanedTitle = YoutubeTitleCleaner.clean(entry.title)
+                val key = com.miguelaetxio.mimoo.util.SearchNormalizer.songTitleKey(
+                    cleanedTitle,
+                    entry.channelTitle,
+                )
+                if (!seenKeys.add(key)) return@mapNotNull null
                 TrackDto(
                     youtubeId = entry.youtubeId,
-                    title = YoutubeTitleCleaner.clean(entry.title),
+                    title = cleanedTitle,
                     durationSeconds = entry.durationSeconds,
                     thumbnailUrl = entry.thumbnailUrl,
                     channelTitle = entry.channelTitle,
                 )
-            }
+            }.take(25)
         } catch (e: Exception) {
             emptyList()
         }
