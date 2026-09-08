@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -454,33 +453,37 @@ class MainActivity : ComponentActivity() {
                 // interrumpe con un diálogo si hace falta confirmar
                 // un borrado.
                 // ---
-                // H07 PART 1 -- automatic sync check, once per app
-                // startup, only if a SAF folder is already chosen (if
-                // not, the folder-picking flow below takes priority
-                // -- no point syncing before knowing where to save
-                // anything). Runs in the background, without blocking
-                // the normal screen -- only interrupts with a dialog
-                // if a deletion needs confirming.
-                val autoSyncViewModel: com.miguelaetxio.mimoo.ui.sync.AutoSyncViewModel =
-                    androidx.hilt.navigation.compose.hiltViewModel()
-                val autoSyncState by autoSyncViewModel.uiState.collectAsState()
-                val autoSyncPendingConsent by autoSyncViewModel.pendingConsent.collectAsState()
-
-                val autoSyncConsentLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.StartIntentSenderForResult(),
-                ) { result ->
-                    autoSyncViewModel.onConsentResolved(this@MainActivity, result.data)
-                }
-
-                LaunchedEffect(Unit) {
-                    if (storageManager.hasRootUri()) {
-                        autoSyncViewModel.startAutoSync(this@MainActivity)
-                    }
-                }
-
-                LaunchedEffect(autoSyncPendingConsent) {
-                    autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
-                }
+                // S066 -- petición explícita y directa de Miguel Ángel
+                // tras una pérdida real de datos ("se han borrado
+                // todas las canciones... me salió el modal... creo
+                // que ahí se borraron"): el chequeo automático de
+                // sincronización al arrancar (con su posible
+                // restauración completa desde Drive, sin preguntar en
+                // el Caso 2, o preguntando en el Caso 3 pero
+                // sustituyendo una copia ENTERA por otra) queda
+                // eliminado por completo -- "te he dicho que eso lo
+                // quites. Independientemente de si ha sido o no el
+                // causante de este desajuste." No se investiga más
+                // ni se intenta arreglar: se retira el disparo y los
+                // diálogos, sin excepción. El backup/restauración
+                // MANUAL de Ajustes (`BackupImportRepository.
+                // importDestructively()`, H06) es un mecanismo
+                // distinto y no se ha tocado.
+                // ---
+                // S066 -- explicit, direct request from Miguel Ángel
+                // after real data loss ("all the songs got deleted...
+                // I got the modal... I think that's where they got
+                // deleted"): the automatic sync check on startup (with
+                // its possible full restore from Drive, without asking
+                // in Case 2, or asking in Case 3 but replacing one
+                // ENTIRE copy with another) is removed completely --
+                // "I told you to remove that. Regardless of whether it
+                // was or wasn't the cause of this mismatch." No further
+                // investigation or fixing attempted: the trigger and
+                // dialogs are removed, no exceptions. Settings'
+                // MANUAL backup/restore (`BackupImportRepository.
+                // importDestructively()`, H06) is a separate mechanism
+                // and hasn't been touched.
 
                 // H10 (S011) -- archivo .txt recibido vía ACTION_VIEW
                 // (handleShareFileIntent). LaunchedEffect reacciona en
@@ -554,102 +557,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                // Caso 3 (regla de negocio S008): copia de OTRO
-                // dispositivo -- se pregunta explícitamente antes de
-                // tocar nada, con la pregunta tal cual la formuló
-                // Miguel Ángel.
-                // ---
-                // Case 3 (S008 business rule): ANOTHER device's copy
-                // -- explicitly asks before touching anything, with
-                // the question phrased exactly as Miguel Ángel
-                // stated it.
-                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.ConflictOtherDevice)
-                    ?.let { conflictState ->
-                        val c = conflictState.comparison
-                        AlertDialog(
-                            onDismissRequest = {},
-                            title = { Text("Copia de otro dispositivo") },
-                            text = {
-                                Text(
-                                    "La última copia de respaldo en Drive la hizo " +
-                                        "${conflictState.envelope.deviceLabel}, y no coincide " +
-                                        "con lo que tienes aquí (tú: ${c.localTrackCount} " +
-                                        "pistas / Drive: ${c.remoteTrackCount} pistas -- " +
-                                        "favoritos, tú: ${c.localAllFavoritesCount} / " +
-                                        "Drive: ${c.remoteAllFavoritesCount}). " +
-                                        "¿Se han añadido o eliminado pistas desde ese otro " +
-                                        "dispositivo?"
-                                )
-                            },
-                            confirmButton = {
-                                TextButton(onClick = autoSyncViewModel::confirmCloudWins) {
-                                    Text("Sí -- usar la copia de Drive")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = autoSyncViewModel::confirmLocalWins) {
-                                    Text("No -- usar lo que tengo aquí")
-                                }
-                            },
-                        )
-                    }
-
-                // Caso 2 (regla de negocio S008): este MISMO
-                // dispositivo estaba desincronizado -- la nube ya se
-                // restauró sola, aquí solo se informa, sin preguntar
-                // nada (nunca se pregunta cuando el desfase es contra
-                // la propia copia del dispositivo).
-                // ---
-                // Case 2 (S008 business rule): this SAME device was
-                // out of sync -- the cloud copy was already restored
-                // on its own, this only informs, without asking
-                // anything (never asks when the gap is against the
-                // device's own copy).
-                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.RestoredFromCloud)
-                    ?.let { restoredState ->
-                        val c = restoredState.comparison
-                        AlertDialog(
-                            onDismissRequest = autoSyncViewModel::dismiss,
-                            title = { Text("Restaurado desde Drive") },
-                            text = {
-                                Text(
-                                    "Este dispositivo no coincidía con su propia copia de " +
-                                        "respaldo en Drive (tenías ${c.localTrackCount} pistas, " +
-                                        "la copia tenía ${c.remoteTrackCount} -- favoritos, " +
-                                        "tenías ${c.localAllFavoritesCount}, la copia tenía " +
-                                        "${c.remoteAllFavoritesCount}) -- probablemente " +
-                                        "algo se tocó fuera de la app. Se ha restaurado desde " +
-                                        "Drive."
-                                )
-                            },
-                            confirmButton = {
-                                TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
-                            },
-                        )
-                    }
-
-                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Done)
-                    ?.message?.let { message ->
-                        AlertDialog(
-                            onDismissRequest = autoSyncViewModel::dismiss,
-                            title = { Text("Sincronizado con Drive") },
-                            text = { Text(message) },
-                            confirmButton = {
-                                TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
-                            },
-                        )
-                    }
-
-                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Error)?.let { errorState ->
-                    AlertDialog(
-                        onDismissRequest = autoSyncViewModel::dismiss,
-                        title = { Text("No se pudo sincronizar con Drive") },
-                        text = { Text(errorState.message) },
-                        confirmButton = {
-                            TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
-                        },
-                    )
-                }
+                // S066 -- diálogos de auto-sync (Casos 2/3, "Sincronizado
+                // con Drive", errores) eliminados junto con su disparo --
+                // ver el comentario de arriba.
 
                 // S054/S060 -- textura real (foto) de cada piel con
                 // fondo transparente, pintada UNA sola vez aquí, en la
