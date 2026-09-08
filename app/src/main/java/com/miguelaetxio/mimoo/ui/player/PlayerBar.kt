@@ -379,7 +379,15 @@ fun PlayerBar(
                 positionMs = positionMs,
             )
         }
-    Surface(tonalElevation = 4.dp) {
+    // S064 -- bug real reportado por Miguel Ángel: "el exoplayer, no
+    // mostramos la textura y aparece como color plano." Mismo patrón
+    // exacto que el Surface raíz de MainActivity (S060): este
+    // Surface no fijaba `color` explícitamente, así que usaba el
+    // valor por defecto -- `colorScheme.surface`, opaco a propósito
+    // en las pieles con textura, en vez de `colorScheme.background`
+    // (transparente a propósito, para dejar ver la foto real). Sin
+    // cambio visual en MSX (mismo azul en los dos).
+    Surface(color = MaterialTheme.colorScheme.background, tonalElevation = 4.dp) {
         if (!isExpanded) {
             PlayerBarCollapsed(
                 title = title,
