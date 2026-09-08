@@ -561,6 +561,8 @@ class LibraryReconciler @Inject constructor(
     }
 
 
+    /**
+     * Borra recursivamente cualquier archivo que NO sea de audio
      * (extensión fuera de AUDIO_EXTENSIONS) dentro de una subcarpeta
      * -- nunca en `dir` cuando `isRoot=true` (ahí viven a propósito
      * crash_log.txt/debug_error.txt). Petición explícita de Miguel
