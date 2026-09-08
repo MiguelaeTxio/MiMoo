@@ -509,7 +509,58 @@ class LibraryReconciler @Inject constructor(
     }
 
     /**
-     * Borra recursivamente cualquier archivo que NO sea de audio
+     * S071 -- petición explícita de Miguel Ángel tras investigar la
+     * pérdida real de S067: quiere saber EXACTAMENTE qué pistas se
+     * quedaron sin archivo real, no solo un número -- tiene otro
+     * dispositivo con una copia local más reciente y quiere ir a
+     * buscarlas a mano allí. A diferencia de `verifyDiskState()` (que
+     * SÍ reclasifica DONE->PENDING y puede abortar en silencio si la
+     * fracción es sospechosa), esta función es de SOLO LECTURA -- nunca
+     * toca Room, nunca reencola nada, solo devuelve la lista para
+     * mostrarla en pantalla. Pensada para diagnóstico manual, no para
+     * que la dispare la sincronización automática.
+     * ---
+     * S071 -- explicit request from Miguel Ángel after investigating
+     * the real loss from S067: he wants to know EXACTLY which tracks
+     * ended up without a real file, not just a count -- he has another
+     * device with a more recent local copy and wants to manually
+     * retrieve them from there. Unlike `verifyDiskState()` (which DOES
+     * reclassify DONE->PENDING and can silently abort if the fraction
+     * looks suspicious), this function is READ-ONLY -- it never
+     * touches Room, never re-queues anything, it just returns the list
+     * to show on screen. Meant for manual diagnosis, not for automatic
+     * sync to trigger.
+     */
+    suspend fun findTracksWithMissingFiles(): List<SearchResultTrack> = withContext(Dispatchers.IO) {
+        val rootUri = storageManager.getRootUri()
+        if (rootUri != null) {
+            val rootAvailable = try {
+                val root = DocumentFile.fromTreeUri(context, rootUri)
+                root != null && root.exists() && root.canRead()
+            } catch (e: Exception) {
+                false
+            }
+            if (!rootAvailable) {
+                Log.w(TAG, "findTracksWithMissingFiles() omitido: la carpeta no responde")
+                return@withContext emptyList()
+            }
+        }
+
+        val doneTracks = repository.getAll().first().filter {
+            it.downloadStatus == DownloadStatus.DONE && it.filePath != null
+        }
+
+        doneTracks.filter { track ->
+            val exists = try {
+                DocumentFile.fromSingleUri(context, Uri.parse(track.filePath))?.exists() == true
+            } catch (e: Exception) {
+                false
+            }
+            !exists
+        }
+    }
+
+
      * (extensión fuera de AUDIO_EXTENSIONS) dentro de una subcarpeta
      * -- nunca en `dir` cuando `isRoot=true` (ahí viven a propósito
      * crash_log.txt/debug_error.txt). Petición explícita de Miguel

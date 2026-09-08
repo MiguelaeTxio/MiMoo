@@ -37,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -745,6 +746,85 @@ fun SettingsScreen(
                     Icon(Icons.Filled.FileOpen, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Importar código recibido (elegir archivo)")
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // S071 -- petición explícita de Miguel Ángel tras la
+            // pérdida real de archivos investigada en S067: quiere ver
+            // con nombre, no solo un número, qué pistas se quedaron
+            // marcadas como descargadas sin tener ya un archivo real,
+            // para poder recuperarlas a mano desde otro dispositivo con
+            // una copia local más reciente.
+            val missingFileTracks by viewModel.missingFileTracks.collectAsState()
+            val isCheckingMissingFiles by viewModel.isCheckingMissingFiles.collectAsState()
+            SettingsAccordionSection(
+                title = "Diagnóstico de descargas",
+                expanded = expandedSection == "diagnostico_descargas",
+                onToggle = {
+                    expandedSection = if (expandedSection == "diagnostico_descargas") null else "diagnostico_descargas"
+                },
+            ) {
+                Text(
+                    "Comprueba si alguna pista marcada como descargada se ha quedado " +
+                        "sin archivo real (p.ej. tras un problema con la tarjeta SD). " +
+                        "No borra ni toca ninguna lista de reproducción -- solo lee.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = viewModel::checkMissingFiles,
+                    enabled = !isCheckingMissingFiles,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (isCheckingMissingFiles) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Comprobar descargas")
+                }
+                missingFileTracks?.let { tracks ->
+                    Spacer(Modifier.height(12.dp))
+                    if (tracks.isEmpty()) {
+                        Text(
+                            "Ninguna pista descargada se ha quedado sin archivo.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    } else {
+                        Text(
+                            "${tracks.size} pista(s) marcadas como descargadas, sin archivo real:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 240.dp)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            tracks.forEach { track ->
+                                Text(
+                                    "• ${track.title}" +
+                                        (track.artist ?: track.channelTitle)?.let { " -- $it" }.orEmpty(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(vertical = 2.dp),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row {
+                            Button(onClick = viewModel::requeueMissingFiles) {
+                                Text("Volver a descargar todas")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(onClick = viewModel::dismissMissingFilesCheck) {
+                                Text("Cerrar")
+                            }
+                        }
+                    }
                 }
             }
 

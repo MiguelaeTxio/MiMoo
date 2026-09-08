@@ -84,6 +84,12 @@ class SettingsViewModel @Inject constructor(
     private val cookiesManager: CookiesManager,
     private val autoSyncPusher: AutoSyncPusher,
     private val libraryMigrator: com.miguelaetxio.mimoo.data.library.LibraryMigrator,
+    // S071 -- petición explícita de Miguel Ángel tras S067: quiere ver
+    // con nombre, no solo un número, qué pistas se quedaron sin
+    // archivo real, para poder recuperarlas a mano desde otro
+    // dispositivo con una copia local más reciente.
+    private val libraryReconciler: com.miguelaetxio.mimoo.data.library.LibraryReconciler,
+    private val searchResultTrackRepository: com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
     // S025 -- constructor del diccionario del ancla (H08), lanzado
     // desde el botón "Crear base de datos".
     private val anchorDictionaryBuilder: com.miguelaetxio.mimoo.data.remote.AnchorDictionaryBuilder,
@@ -288,6 +294,62 @@ class SettingsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<BackupUiState>(BackupUiState.Idle)
     val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
+
+    /**
+     * S071 -- diagnóstico manual de "descargados pero sin archivo
+     * real". null = todavía no se ha comprobado; lista vacía = se
+     * comprobó y no hay ninguna; lista con elementos = con nombre real
+     * (título/artista), para poder buscarlas a mano en otro
+     * dispositivo. `isCheckingMissingFiles` para el spinner del botón
+     * mientras dura la comprobación (puede tardar con una biblioteca
+     * grande).
+     */
+    private val _missingFileTracks =
+        MutableStateFlow<List<com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack>?>(null)
+    val missingFileTracks: StateFlow<List<com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack>?> =
+        _missingFileTracks.asStateFlow()
+
+    private val _isCheckingMissingFiles = MutableStateFlow(false)
+    val isCheckingMissingFiles: StateFlow<Boolean> = _isCheckingMissingFiles.asStateFlow()
+
+    /** S071 -- lanza la comprobación de solo lectura, ver LibraryReconciler.findTracksWithMissingFiles(). */
+    fun checkMissingFiles() {
+        viewModelScope.launch {
+            _isCheckingMissingFiles.value = true
+            _missingFileTracks.value = libraryReconciler.findTracksWithMissingFiles()
+            _isCheckingMissingFiles.value = false
+        }
+    }
+
+    /**
+     * S071 -- vuelve a poner PENDING las pistas de la última
+     * comprobación (`clearDownload()`, mismo mecanismo que
+     * `verifyDiskState()`) y las encola para descarga -- se vuelven a
+     * bajar de YouTube con el youtubeId que ya tenían guardado. No
+     * borra nada de ninguna lista de reproducción: el enlace nunca se
+     * tocó, solo faltaba el archivo.
+     */
+    fun requeueMissingFiles() {
+        val tracks = _missingFileTracks.value ?: return
+        viewModelScope.launch {
+            tracks.forEach { track ->
+                searchResultTrackRepository.clearDownload(track.youtubeId)
+                downloadQueueManager.enqueue(
+                    youtubeId = track.youtubeId,
+                    title = track.title,
+                    artist = track.artist ?: track.channelTitle,
+                    album = track.album,
+                    trackPosition = track.trackPosition,
+                )
+            }
+            _missingFileTracks.value = null
+        }
+    }
+
+    /** S071 -- descarta el resultado de la comprobación sin hacer nada. */
+    fun dismissMissingFilesCheck() {
+        _missingFileTracks.value = null
+    }
 
     /** S011 -- interruptor de borde del cristal ("añade un toggle en ajustes para cambiar de borde a sin borde"). */
     val glassBorderEnabled: StateFlow<Boolean> = uiPreferencesManager.glassBorderEnabled
