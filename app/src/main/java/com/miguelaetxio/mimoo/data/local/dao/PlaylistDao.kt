@@ -166,19 +166,48 @@ interface PlaylistDao {
      * without a cover! Either add one or a default cover." Returns the
      * cover art (or YouTube thumbnail) of the FIRST track of each
      * playlist (lowest position), one row per playlist -- used in
-     * PlaylistsScreen to show more than a generic icon. `MIN(x.position)`
-     * scoped by playlistId via the correlated subquery -- Room has no
-     * more direct way to express "first row of each group" in SQLite
-     * without window functions.
+     * PlaylistsScreen to show more than a generic icon.
+     *
+     * S065 -- bug real reportado por Miguel Ángel: en listas grandes
+     * importadas de YouTube (varias decenas/cientos de pistas), la
+     * pista en la posición 0 a veces no tiene NI carátula NI miniatura
+     * (vídeo con metadatos incompletos, extracción parcial de la
+     * página de la playlist, etc.) -- se mostraba el icono genérico
+     * aunque OTRAS pistas de esa misma lista sí tuvieran imagen real.
+     * Corregido: se prefiere la primera pista (por posición) que
+     * tenga coverArtUrl O thumbnailUrl reales; solo si NINGUNA pista
+     * de la lista tiene ninguna imagen se cae de verdad al icono
+     * genérico (`COALESCE` con la subconsulta original de "primera
+     * posición a secas" como red de seguridad -- sin ella, una lista
+     * sin ninguna imagen en absoluto no devolvería fila alguna, ya que
+     * `x.position = NULL` no coincide con nada en SQL).
+     * ---
+     * S065 -- real bug reported by Miguel Ángel: in large playlists
+     * imported from YouTube (several dozen/hundred tracks), the track
+     * at position 0 sometimes has NEITHER cover art NOR a thumbnail
+     * (a video with incomplete metadata, partial extraction of the
+     * playlist page, etc.) -- the generic icon showed up even when
+     * OTHER tracks in that same playlist did have a real image. Fixed:
+     * the first track (by position) that actually has a real
+     * coverArtUrl OR thumbnailUrl is preferred; only if NO track in
+     * the playlist has any image at all does it genuinely fall back to
+     * the generic icon (`COALESCE` with the original plain "first
+     * position" subquery as a safety net -- without it, a playlist
+     * with no image at all would return no row, since
+     * `x.position = NULL` matches nothing in SQL).
      */
     @Query(
         "SELECT x.playlistId AS playlistId, t.coverArtUrl AS coverArtUrl, " +
         "t.thumbnailUrl AS thumbnailUrl " +
         "FROM playlist_track_cross_refs x " +
         "INNER JOIN search_result_tracks t ON t.youtubeId = x.youtubeId " +
-        "WHERE x.position = (" +
-        "  SELECT MIN(x2.position) FROM playlist_track_cross_refs x2 " +
-        "  WHERE x2.playlistId = x.playlistId" +
+        "WHERE x.position = COALESCE(" +
+        "  (SELECT MIN(x2.position) FROM playlist_track_cross_refs x2 " +
+        "   INNER JOIN search_result_tracks t2 ON t2.youtubeId = x2.youtubeId " +
+        "   WHERE x2.playlistId = x.playlistId " +
+        "   AND (t2.coverArtUrl IS NOT NULL OR t2.thumbnailUrl IS NOT NULL))," +
+        "  (SELECT MIN(x3.position) FROM playlist_track_cross_refs x3 " +
+        "   WHERE x3.playlistId = x.playlistId)" +
         ")"
     )
     fun getFirstTrackCoverArtPerPlaylist(): Flow<List<PlaylistCoverArt>>
