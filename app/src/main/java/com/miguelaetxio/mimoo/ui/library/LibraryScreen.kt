@@ -831,6 +831,44 @@ private fun ColumnScope.SinglesTabContent(
                 )
             }
         }
+        // S063 -- petición explícita de Miguel Ángel: "el nivel máximo
+        // de lista es por artista y no hay posibilidad de ver la
+        // lista completa de sencillos". Lista plana de TODOS los
+        // sencillos de TODOS los artistas -- mismo LibraryTrackRow que
+        // ya usa la vista por artista, sin agrupar.
+        is SinglesDrillLevel.AllSinglesFlat -> {
+            val allSingles = uiState.singlesByArtist.values.flatten()
+                .sortedBy { it.title.lowercase() }
+            if (allSingles.isEmpty()) {
+                Text(
+                    "Todavía no hay sencillos descargados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 16.dp),
+                )
+            } else {
+                PlayAllRow(
+                    label = "Todos los sencillos",
+                    onPlayAll = viewModel::playAllSingles,
+                    onShuffle = viewModel::playAllSinglesShuffled,
+                )
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(allSingles, key = { "flatsingle:${it.youtubeId}" }) { track ->
+                        LibraryTrackRow(
+                            track = track,
+                            onPlay = { viewModel.playTrack(track) },
+                            onToggleFavorite = { viewModel.toggleFavorite(activity, track) },
+                            onDelete = { onDeleteTrack(track) },
+                            onEdit = { onEditTrack(track) },
+                            onAddToPlaylist = { onAddToPlaylist(track) },
+                            onAddToQueue = { viewModel.addTrackToQueue(track) },
+                            onInsertNext = { viewModel.insertTrackNext(track) },
+                            onShareReplica = { viewModel.shareTrackReplica(track.youtubeId) },
+                        )
+                    }
+                }
+            }
+        }
         is SinglesDrillLevel.Tracks -> {
             val tracks = uiState.singlesByArtist[drill.artist] ?: emptyList()
             LazyColumn(modifier = Modifier.weight(1f)) {
