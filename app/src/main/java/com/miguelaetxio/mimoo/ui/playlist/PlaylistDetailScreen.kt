@@ -134,7 +134,18 @@ fun PlaylistDetailScreen(
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
                 itemsIndexed(
                     uiState.tracks,
-                    key = { _, track -> track.youtubeId },
+                    // S072 -- bug real reportado por Miguel Ángel:
+                    // IllegalArgumentException "Key ... was already
+                    // used" al desplazar una lista. Causa real: desde
+                    // S051 se puede añadir el mismo tema dos veces a
+                    // una lista ("¿añadir de todas formas?"), pero esta
+                    // key solo usaba track.youtubeId, descartando el
+                    // índice que itemsIndexed() ya da -- dos filas con
+                    // el mismo tema acababan con la misma key, algo que
+                    // Compose no permite. Se añade el índice a la key
+                    // para que cada FILA sea única, aunque el tema se
+                    // repita.
+                    key = { index, track -> "${track.youtubeId}_$index" },
                 ) { index, track ->
                     PlaylistDetailTrackRow(
                         track = track,
