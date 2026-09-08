@@ -32,6 +32,26 @@ private const val PUSH_DEBOUNCE_MS = 5_000L
 private const val MAX_PUSH_INTERVAL_MS = 60_000L
 
 /**
+ * S069 -- petición explícita de Miguel Ángel tras investigar S067: "¿por
+ * qué no teníamos esos 1.300 enlaces guardados en Drive?". Respuesta
+ * real encontrada: sí los teníamos (Drive coincidía con local a las
+ * 04:24) -- pero `pushCurrentState()` sube SIEMPRE el estado local tal
+ * cual esté en ese momento, sin comparar nada contra lo que ya hay en
+ * Drive. En cuanto el estado local se corrompió (S067,
+ * `pruneEmptyFolders()` sin salvaguarda), el primer cambio local
+ * cualquiera disparó un push que sobrescribió la copia buena de Drive
+ * con la copia ya mala -- la propia app se comió su red de seguridad.
+ * Mismo espíritu que `LibraryReconciler.BULK_MISSING_FLOOR`/
+ * `BULK_MISSING_FRACTION`: una bajada de unas pocas pistas es
+ * perfectamente normal (el usuario acaba de borrar un tema); una
+ * bajada de una cuarta parte o más del catálogo entre dos pushes no lo
+ * es -- se aborta ese push en concreto y se avisa, dejando la copia
+ * anterior de Drive intacta.
+ */
+private const val PUSH_DROP_FLOOR = 10
+private const val PUSH_DROP_FRACTION = 0.25
+
+/**
  * Resultado de intentar ejecutar una mutación (añadir/borrar pista,
  * favorito o playlist) a través de [AutoSyncPusher.executeIfConnected].
  * ---
@@ -234,6 +254,34 @@ class AutoSyncPusher @Inject constructor(
                 return
             }
             val bundle = backupRepository.buildCurrentBundle()
+
+            // S069 -- ver el kdoc de PUSH_DROP_FLOOR/PUSH_DROP_FRACTION
+            // más arriba. Se compara contra lo que YA hay en Drive
+            // ANTES de sobrescribirlo -- si no se puede leer la copia
+            // actual (primera vez, red, formato antiguo...) se sigue
+            // adelante igual que antes, no se bloquea el caso normal
+            // por no poder comparar.
+            val currentRemoteTrackCount = try {
+                driveRepository.pullSyncState(outcome.accessToken)
+                    ?.let { json -> backupRepository.fromSyncJson(json) }
+                    ?.bundle?.tracks?.size
+            } catch (e: Exception) {
+                null
+            }
+            if (currentRemoteTrackCount != null) {
+                val drop = currentRemoteTrackCount - bundle.tracks.size
+                val suspicious = drop >= PUSH_DROP_FLOOR &&
+                    drop > currentRemoteTrackCount * PUSH_DROP_FRACTION
+                if (suspicious) {
+                    val warn = "pushCurrentState() -- ABORTADO: pasaría de $currentRemoteTrackCount " +
+                        "a ${bundle.tracks.size} pistas en Drive (bajada sospechosa), se deja la " +
+                        "copia anterior de Drive intacta"
+                    Log.w(TAG, warn)
+                    BackupDebugLogger.log(context, storageManager, warn)
+                    return
+                }
+            }
+
             val envelope = SyncEnvelope(
                 deviceId = deviceIdentityManager.deviceId,
                 deviceLabel = deviceIdentityManager.deviceLabel,
