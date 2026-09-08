@@ -179,6 +179,36 @@ class LibraryReconciler @Inject constructor(
         private const val BULK_MISSING_FRACTION = 0.25
 
         /**
+         * S067 -- bug real reportado por Miguel Ángel: pérdida real de
+         * archivos de música (confirmada con capturas del explorador
+         * de archivos -- carpetas de sencillos con un único tema
+         * superviviente) durante una noche con la tarjeta SD
+         * evidentemente inestable (aluvión de `Source error` en
+         * notification_debug.txt en la misma franja horaria). Causa
+         * real: `pruneEmptyFolders()` solo comprobaba
+         * `sub.exists() && sub.canRead()` antes de fiarse de
+         * `sub.listFiles().isEmpty()` -- pero esas son llamadas SAF
+         * independientes; un fallo puntual del proveedor puede dejar
+         * pasar exists()/canRead() y aun así hacer que la llamada
+         * REAL a listFiles() devuelva un array vacío (el mismo fallo
+         * que ya describía el comentario de S022 justo ahí, pero sin
+         * cubrir este caso en concreto). A diferencia de
+         * `verifyDiskState()`, esta función no tenía NINGÚN límite de
+         * "esto es sospechosamente masivo, no toco nada" -- cada
+         * carpeta se decidía sola, así que un episodio de
+         * inestabilidad podía borrar decenas de carpetas con música
+         * real, una a una, sin que ninguna salvaguarda lo notara.
+         *
+         * Tope duro de carpetas que `pruneEmptyFolders()` puede
+         * borrar en una sola llamada a `rescan()`. Por debajo de esto,
+         * unas pocas carpetas vacías de verdad (el caso que motivó la
+         * función, H03) es perfectamente plausible. Por encima, se
+         * para de borrar y se avisa -- perderse una limpieza cosmética
+         * no cuesta nada; seguir borrando carpetas con música real sí.
+         */
+        private const val MAX_FOLDERS_DELETED_PER_RESCAN = 5
+
+        /**
          * Public so callers (e.g. LibraryViewModel.deleteDownload)
          * can tell synthetic rows apart from real, search-originated
          * ones without duplicating this literal.
@@ -274,7 +304,7 @@ class LibraryReconciler @Inject constructor(
         }
 
         val junkFilesRemoved = if (safeToPrune) pruneJunkFiles(root, isRoot = true) else 0
-        val emptyFoldersRemoved = if (safeToPrune) pruneEmptyFolders(root) else 0
+        val emptyFoldersRemoved = if (safeToPrune) pruneEmptyFolders(root, intArrayOf(0)) else 0
 
         // Carpetas vacías primero (petición explícita de Miguel Ángel,
         // 2026-07-04, tras encontrar carpetas de artista completamente
@@ -546,7 +576,7 @@ class LibraryReconciler @Inject constructor(
      * folders on disk forever after their content was merged/moved,
      * and he had to delete them by hand from the file explorer.
      */
-    private fun pruneEmptyFolders(dir: DocumentFile): Int {
+    private fun pruneEmptyFolders(dir: DocumentFile, deletedCounter: IntArray): Int {
         var removed = 0
         val children = try {
             dir.listFiles()
@@ -556,7 +586,15 @@ class LibraryReconciler @Inject constructor(
         children
             .filter { it.isDirectory }
             .forEach { sub ->
-                removed += pruneEmptyFolders(sub)
+                removed += pruneEmptyFolders(sub, deletedCounter)
+                // S067 -- tope duro alcanzado: se deja de borrar
+                // carpetas en el resto de este rescan(), pero se sigue
+                // recorriendo el árbol (por si hay más pistas huérfanas
+                // que recuperar en collectAudioFiles(), eso no es
+                // destructivo y no tiene por qué pararse).
+                if (deletedCounter[0] >= MAX_FOLDERS_DELETED_PER_RESCAN) {
+                    return@forEach
+                }
                 try {
                     // S022 -- segunda capa de la misma salvaguarda que
                     // la puerta de `rescan()`. listFiles() devuelve un
@@ -566,9 +604,34 @@ class LibraryReconciler @Inject constructor(
                     // la carpeta responda de verdad antes de creerse
                     // que está vacía.
                     val readable = sub.exists() && sub.canRead()
+                    // S067 -- bug real reportado por Miguel Ángel:
+                    // exists()/canRead() y listFiles() son llamadas SAF
+                    // INDEPENDIENTES -- un fallo puntual del proveedor
+                    // podía dejar pasar las dos primeras y aun así hacer
+                    // que la llamada real a listFiles() devolviera un
+                    // array vacío por error, no porque la carpeta
+                    // estuviera vacía de verdad. Se comprueba DOS veces
+                    // con una pequeña espera entre medias -- solo se
+                    // borra si las dos veces coinciden en que está
+                    // vacía. Un hueco de milisegundos no cuesta nada;
+                    // fiarse de una única lectura que pudo ser un
+                    // parpadeo del proveedor sí.
                     if (readable && sub.listFiles().isEmpty()) {
-                        sub.delete()
-                        removed++
+                        Thread.sleep(50)
+                        val stillReadable = sub.exists() && sub.canRead()
+                        if (stillReadable && sub.listFiles().isEmpty()) {
+                            sub.delete()
+                            removed++
+                            deletedCounter[0]++
+                            if (deletedCounter[0] >= MAX_FOLDERS_DELETED_PER_RESCAN) {
+                                Log.w(
+                                    TAG,
+                                    "pruneEmptyFolders() -- tope de $MAX_FOLDERS_DELETED_PER_RESCAN " +
+                                        "carpeta(s) borrada(s) alcanzado en este rescan(), se deja " +
+                                        "de borrar por seguridad (¿tarjeta inestable?)",
+                                )
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     // Un fallo puntual al comprobar/borrar una carpeta
