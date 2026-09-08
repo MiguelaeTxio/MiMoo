@@ -7,6 +7,8 @@ import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.repository.FavoritePlaylistRepository
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
+import com.miguelaetxio.mimoo.data.playback.PlayerManager
+import com.miguelaetxio.mimoo.data.playback.StreamResolver
 import com.miguelaetxio.mimoo.ui.common.SortCriterion
 import com.miguelaetxio.mimoo.ui.common.SortDirection
 import com.miguelaetxio.mimoo.ui.common.sortedByCriterion
@@ -44,6 +46,10 @@ data class PlaylistsUiState(
     // cada lista, para no dejarlas con un icono genérico -- ver
     // PlaylistDao.getFirstTrackCoverArtPerPlaylist().
     val coverArtByPlaylist: Map<Long, com.miguelaetxio.mimoo.data.local.dao.PlaylistCoverArt> = emptyMap(),
+    // S062 -- id de la lista que se está resolviendo ahora mismo desde
+    // este listado (spinner breve por fila, ver playInternal()). null
+    // cuando no hay ninguna en curso.
+    val resolvingPlaylistId: Long? = null,
 )
 
 /**
@@ -60,6 +66,12 @@ class PlaylistsViewModel @Inject constructor(
     private val repository: PlaylistRepository,
     private val favoritePlaylistRepository: FavoritePlaylistRepository,
     private val autoSyncPusher: AutoSyncPusher,
+    // S062 -- petición explícita de Miguel Ángel: "no se puede tocar
+    // una lista desde el listado de listas". Hace falta PlayerManager/
+    // StreamResolver para poder reproducir directamente desde aquí,
+    // igual que ya hace PlaylistDetailViewModel.
+    private val playerManager: PlayerManager,
+    private val streamResolver: StreamResolver,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlaylistsUiState())
@@ -93,6 +105,32 @@ class PlaylistsViewModel @Inject constructor(
      * ArtistViewModel.toggleFavorite()): esta mutación tampoco pasaba
      * por AutoSyncPusher.
      */
+    /**
+     * S062 -- petición explícita de Miguel Ángel: "no se puede tocar
+     * una lista desde el listado de listas" -- antes solo se podía
+     * reproducir entrando primero al detalle de la lista.
+     * `resolvingPlaylistId` refleja qué fila muestra el spinner
+     * mientras se resuelve la primera pista reproducible (breve, ver
+     * el arranque progresivo de PlaylistRepository.playPlaylistById(),
+     * S062) -- no bloquea el resto de la pantalla.
+     */
+    fun playPlaylist(playlistId: Long) = playInternal(playlistId, shuffle = false)
+
+    fun playPlaylistShuffled(playlistId: Long) = playInternal(playlistId, shuffle = true)
+
+    private fun playInternal(playlistId: Long, shuffle: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(resolvingPlaylistId = playlistId)
+            repository.playPlaylistById(
+                playlistId = playlistId,
+                shuffle = shuffle,
+                playerManager = playerManager,
+                streamResolver = streamResolver,
+            )
+            _uiState.value = _uiState.value.copy(resolvingPlaylistId = null)
+        }
+    }
+
     fun toggleFavoritePlaylist(activity: Activity, playlistId: Long) {
         viewModelScope.launch {
             autoSyncPusher.executeIfConnected(activity) {

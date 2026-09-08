@@ -142,6 +142,15 @@ class PlaylistDetailViewModel @Inject constructor(
      * isResolving/resolveError en la UI.
      */
     fun playAll() {
+        playInternal(shuffle = false)
+    }
+
+    /** S062 -- petición explícita de Miguel Ángel: "no tenemos posibilidad de reproducir en aleatorio". */
+    fun playAllShuffled() {
+        playInternal(shuffle = true)
+    }
+
+    private fun playInternal(shuffle: Boolean) {
         val tracks = _uiState.value.tracks
         if (tracks.isEmpty()) return
 
@@ -152,7 +161,7 @@ class PlaylistDetailViewModel @Inject constructor(
             )
             val result = repository.playPlaylistById(
                 playlistId = playlistId,
-                shuffle = false,
+                shuffle = shuffle,
                 playerManager = playerManager,
                 streamResolver = streamResolver,
             )

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
@@ -147,7 +149,10 @@ fun PlaylistsScreen(
                                 playlist = playlist,
                                 isFavorite = playlist.id in uiState.favoritePlaylistIds,
                                 coverArt = uiState.coverArtByPlaylist[playlist.id],
+                                isResolving = uiState.resolvingPlaylistId == playlist.id,
                                 onOpen = { onOpenPlaylist(playlist.id) },
+                                onPlay = { viewModel.playPlaylist(playlist.id) },
+                                onPlayShuffled = { viewModel.playPlaylistShuffled(playlist.id) },
                                 onToggleFavorite = { viewModel.toggleFavoritePlaylist(activity, playlist.id) },
                                 onRename = { playlistPendingRename = playlist },
                                 onDelete = { playlistPendingDelete = playlist },
@@ -216,43 +221,78 @@ private fun PlaylistRow(
     playlist: Playlist,
     isFavorite: Boolean,
     coverArt: com.miguelaetxio.mimoo.data.local.dao.PlaylistCoverArt?,
+    isResolving: Boolean,
     onOpen: () -> Unit,
+    onPlay: () -> Unit,
+    onPlayShuffled: () -> Unit,
     onToggleFavorite: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Row(
+    // S062 -- mismo arreglo que álbumes (S052) y artistas (S058): con
+    // play+aleatorio añadidos, son 5 iconos -- una sola fila junto al
+    // nombre vuelve a apretar el texto. Dos filas: arriba
+    // carátula+nombre a todo lo ancho, debajo los iconos alineados a
+    // la derecha.
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .glassChip()
             .clickable(onClick = onOpen)
             .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        PlaylistCoverThumbnail(coverArt?.coverArtUrl, coverArt?.thumbnailUrl)
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = playlist.name,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = onToggleFavorite) {
-            Icon(
-                if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-                contentDescription = if (isFavorite) "Quitar de favoritos" else "Marcar como favorita",
-                tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PlaylistCoverThumbnail(coverArt?.coverArtUrl, coverArt?.thumbnailUrl)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = playlist.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
             )
         }
-        IconButton(onClick = onRename) {
-            Icon(Icons.Filled.Edit, contentDescription = "Renombrar")
-        }
-        IconButton(onClick = onDelete) {
-            Icon(
-                Icons.Filled.Delete,
-                contentDescription = "Borrar lista",
-                tint = MaterialTheme.colorScheme.error,
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // S062 -- petición explícita de Miguel Ángel: "no se puede
+            // tocar una lista desde el listado de listas". Spinner
+            // breve en vez del icono de play mientras se resuelve la
+            // primera pista reproducible (arranque progresivo, ver
+            // PlaylistRepository.playPlaylistById()) -- nunca la lista
+            // entera, solo el tiempo de encontrar la primera pista que
+            // suene.
+            if (isResolving) {
+                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                }
+            } else {
+                IconButton(onClick = onPlay) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir lista")
+                }
+                IconButton(onClick = onPlayShuffled) {
+                    Icon(Icons.Filled.Shuffle, contentDescription = "Reproducir lista aleatoria")
+                }
+            }
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = if (isFavorite) "Quitar de favoritos" else "Marcar como favorita",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                )
+            }
+            IconButton(onClick = onRename) {
+                Icon(Icons.Filled.Edit, contentDescription = "Renombrar")
+            }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Borrar lista",
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            }
         }
     }
 }

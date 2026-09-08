@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.QueueMusic
@@ -179,7 +180,8 @@ fun LibraryScreen(
             uiState.albumsDrill !is AlbumsDrillLevel.ArtistsFlat &&
             uiState.albumsDrill !is AlbumsDrillLevel.AllAlbumsFlat
         LibraryTab.SINGLES -> uiState.singlesDrill !is SinglesDrillLevel.Letters &&
-            uiState.singlesDrill !is SinglesDrillLevel.ArtistsFlat
+            uiState.singlesDrill !is SinglesDrillLevel.ArtistsFlat &&
+            uiState.singlesDrill !is SinglesDrillLevel.AllSinglesFlat
     }
 
     // El botón atrás del sistema sube un nivel en vez de salir de la
@@ -206,6 +208,7 @@ fun LibraryScreen(
         LibraryTab.SINGLES -> when (val drill = uiState.singlesDrill) {
             is SinglesDrillLevel.Letters -> "Artistas por letra"
             is SinglesDrillLevel.ArtistsFlat -> "Todos los artistas"
+            is SinglesDrillLevel.AllSinglesFlat -> "Todos los sencillos"
             is SinglesDrillLevel.Artists -> "Artistas · ${drill.letter}"
             is SinglesDrillLevel.Tracks -> displayArtistName(drill.artist)
         }
@@ -255,7 +258,8 @@ fun LibraryScreen(
                                 uiState.albumsDrill is AlbumsDrillLevel.AllAlbumsFlat)
                         val showSinglesToggle = uiState.tab == LibraryTab.SINGLES &&
                             (uiState.singlesDrill is SinglesDrillLevel.Letters ||
-                                uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat)
+                                uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat ||
+                                uiState.singlesDrill is SinglesDrillLevel.AllSinglesFlat)
                         if (showAlbumsToggle) {
                             Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
                                 IconButton(onClick = viewModel::toggleAlbumsViewMode) {
@@ -284,13 +288,19 @@ fun LibraryScreen(
                         if (showSinglesToggle) {
                             Box(modifier = Modifier.padding(2.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
                                 IconButton(onClick = viewModel::toggleSinglesViewMode) {
-                                    if (uiState.singlesViewMode == SinglesViewMode.BY_LETTER) {
-                                        Icon(
+                                    // S063 -- tres estados en el mismo
+                                    // botón, mismo criterio que
+                                    // toggleAlbumsViewMode (S051).
+                                    when (uiState.singlesViewMode) {
+                                        SinglesViewMode.BY_LETTER -> Icon(
                                             Icons.Filled.FormatListBulleted,
                                             contentDescription = "Ver todos los artistas en una lista",
                                         )
-                                    } else {
-                                        Icon(
+                                        SinglesViewMode.ARTISTS_FLAT -> Icon(
+                                            Icons.Filled.MusicNote,
+                                            contentDescription = "Ver todos los sencillos en una lista",
+                                        )
+                                        SinglesViewMode.SINGLES_FLAT -> Icon(
                                             Icons.Filled.SortByAlpha,
                                             contentDescription = "Ver artistas agrupados por letra",
                                         )
@@ -352,6 +362,7 @@ fun LibraryScreen(
                     uiState.albumsDrill is AlbumsDrillLevel.Artists
                 LibraryTab.SINGLES -> uiState.singlesDrill is SinglesDrillLevel.Letters ||
                     uiState.singlesDrill is SinglesDrillLevel.ArtistsFlat ||
+                    uiState.singlesDrill is SinglesDrillLevel.AllSinglesFlat ||
                     uiState.singlesDrill is SinglesDrillLevel.Artists
             }
             if (showFilter) {

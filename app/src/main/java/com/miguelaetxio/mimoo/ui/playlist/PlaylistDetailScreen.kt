@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -90,6 +91,18 @@ fun PlaylistDetailScreen(
                             Icon(
                                 Icons.Filled.PlayArrow,
                                 contentDescription = "Reproducir todo",
+                            )
+                        }
+                        // S062 -- petición explícita de Miguel Ángel:
+                        // "no tenemos posibilidad de reproducir en
+                        // aleatorio".
+                        IconButton(
+                            onClick = viewModel::playAllShuffled,
+                            enabled = uiState.tracks.isNotEmpty(),
+                        ) {
+                            Icon(
+                                Icons.Filled.Shuffle,
+                                contentDescription = "Reproducir aleatorio",
                             )
                         }
                         IconButton(

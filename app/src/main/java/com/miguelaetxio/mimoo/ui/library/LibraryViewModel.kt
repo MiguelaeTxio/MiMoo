@@ -173,12 +173,20 @@ sealed class SinglesDrillLevel {
     object Letters : SinglesDrillLevel()
     /** Vista plana equivalente a AlbumsDrillLevel.ArtistsFlat, misma petición (2026-07-07). */
     object ArtistsFlat : SinglesDrillLevel()
+    /**
+     * S063 -- petición explícita de Miguel Ángel: "el nivel máximo de
+     * lista es por artista y no hay posibilidad de ver la lista
+     * completa de sencillos". Equivalente a
+     * AlbumsDrillLevel.AllAlbumsFlat (S051): todos los sencillos de
+     * todos los artistas, en una sola lista plana.
+     */
+    object AllSinglesFlat : SinglesDrillLevel()
     data class Artists(val letter: Char) : SinglesDrillLevel()
     data class Tracks(val artist: String) : SinglesDrillLevel()
 }
 
-/** Equivalente a AlbumsViewMode pero para la pestaña Sencillos. */
-enum class SinglesViewMode { BY_LETTER, FLAT }
+/** Equivalente a AlbumsViewMode pero para la pestaña Sencillos -- ampliado en S063 con SINGLES_FLAT. */
+enum class SinglesViewMode { BY_LETTER, ARTISTS_FLAT, SINGLES_FLAT }
 
 /**
  * Qué vista raíz de la pestaña Álbumes está activa -- toggle pedido
@@ -748,7 +756,8 @@ class LibraryViewModel @Inject constructor(
     /** Nivel raíz de Sencillos según el modo de vista activo. */
     private fun rootSinglesLevel(): SinglesDrillLevel = when (_uiState.value.singlesViewMode) {
         SinglesViewMode.BY_LETTER -> SinglesDrillLevel.Letters
-        SinglesViewMode.FLAT -> SinglesDrillLevel.ArtistsFlat
+        SinglesViewMode.ARTISTS_FLAT -> SinglesDrillLevel.ArtistsFlat
+        SinglesViewMode.SINGLES_FLAT -> SinglesDrillLevel.AllSinglesFlat
     }
 
     fun selectSinglesLetter(letter: Char) {
@@ -757,19 +766,20 @@ class LibraryViewModel @Inject constructor(
         )
     }
 
-    /** Alterna la vista raíz de Sencillos entre Letters y ArtistsFlat -- ver toggleAlbumsViewMode. */
+    /** Alterna la vista raíz de Sencillos entre las TRES vistas -- ver toggleAlbumsViewMode (S051/S063). */
     fun toggleSinglesViewMode() {
         val newMode = when (_uiState.value.singlesViewMode) {
-            SinglesViewMode.BY_LETTER -> SinglesViewMode.FLAT
-            SinglesViewMode.FLAT -> SinglesViewMode.BY_LETTER
+            SinglesViewMode.BY_LETTER -> SinglesViewMode.ARTISTS_FLAT
+            SinglesViewMode.ARTISTS_FLAT -> SinglesViewMode.SINGLES_FLAT
+            SinglesViewMode.SINGLES_FLAT -> SinglesViewMode.BY_LETTER
         }
         val current = _uiState.value.singlesDrill
         val newDrill = when (current) {
-            is SinglesDrillLevel.Letters, is SinglesDrillLevel.ArtistsFlat ->
-                if (newMode == SinglesViewMode.FLAT) {
-                    SinglesDrillLevel.ArtistsFlat
-                } else {
-                    SinglesDrillLevel.Letters
+            is SinglesDrillLevel.Letters, is SinglesDrillLevel.ArtistsFlat, is SinglesDrillLevel.AllSinglesFlat ->
+                when (newMode) {
+                    SinglesViewMode.BY_LETTER -> SinglesDrillLevel.Letters
+                    SinglesViewMode.ARTISTS_FLAT -> SinglesDrillLevel.ArtistsFlat
+                    SinglesViewMode.SINGLES_FLAT -> SinglesDrillLevel.AllSinglesFlat
                 }
             else -> current
         }
@@ -791,8 +801,9 @@ class LibraryViewModel @Inject constructor(
         val newLevel = when (current) {
             is SinglesDrillLevel.Letters -> return false
             is SinglesDrillLevel.ArtistsFlat -> return false
+            is SinglesDrillLevel.AllSinglesFlat -> return false
             is SinglesDrillLevel.Artists -> SinglesDrillLevel.Letters
-            is SinglesDrillLevel.Tracks -> if (_uiState.value.singlesViewMode == SinglesViewMode.FLAT) {
+            is SinglesDrillLevel.Tracks -> if (_uiState.value.singlesViewMode == SinglesViewMode.ARTISTS_FLAT) {
                 SinglesDrillLevel.ArtistsFlat
             } else {
                 SinglesDrillLevel.Artists(sortLetterFor(current.artist))

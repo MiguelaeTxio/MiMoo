@@ -7,6 +7,11 @@ import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.QueueItem
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -182,6 +187,63 @@ class PlaylistRepository @Inject constructor(
      * (`DislikedTrackRepository`) -- se limitaba a poner en cola todas
      * las pistas guardadas, sin filtrar nada.
      */
+    // S062 -- petición explícita de Miguel Ángel: mismo criterio que
+    // PopurriRepository.resolveScope -- si el usuario navega fuera de
+    // la pantalla mientras se resuelve el resto de la lista, esa
+    // resolución no debe cancelarse junto con la pantalla.
+    private val resolveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * S062 -- bug real reportado por Miguel Ángel: "le das al play y
+     * se pega un montón de rato el spinner dando vueltas antes de que
+     * empiece a sonar la música." Causa real: esta función resolvía
+     * la URL de streaming de TODAS las pistas de la lista, una a una y
+     * en orden, ANTES de reproducir nada -- para una lista con muchas
+     * pistas sin descargar (el caso normal desde S056, que importa
+     * playlists como sencillos sueltos) eso podía ser media lista de
+     * llamadas de red seguidas antes de que sonara el primer segundo.
+     *
+     * Arreglo: mismo patrón progresivo que ya usa
+     * PopurriRepository -- se prueba pista a pista hasta encontrar la
+     * PRIMERA reproducible, se arranca la reproducción con ella YA, y
+     * el resto se resuelve en segundo plano (`resolveScope`),
+     * añadiéndose a la cola ya sonando en cuanto está listo.
+     *
+     * S062 -- petición explícita de Miguel Ángel, en el mismo mensaje:
+     * "no tenemos posibilidad de reproducir en aleatorio". Con el
+     * arranque progresivo no basta con pedirle a ExoPlayer que mezcle
+     * la cola (`playQueueShuffled()`) -- solo tendríamos un elemento
+     * cuando arranca. Se mezcla el ORDEN de las pistas aquí mismo,
+     * antes de resolver nada (`tracks.shuffled()`), y se aplica el
+     * mismo arranque progresivo sobre ese orden ya mezclado -- el
+     * resultado es una reproducción realmente aleatoria, no solo el
+     * primer tema al azar seguido del resto en orden de lista.
+     * ---
+     * S062 -- real bug reported by Miguel Ángel: "you hit play and the
+     * spinner spins for a long while before the music starts." Real
+     * cause: this function resolved the streaming URL of EVERY track
+     * in the playlist, one by one in order, BEFORE playing anything --
+     * for a playlist with many non-downloaded tracks (the normal case
+     * since S056, which imports playlists as loose singles) that could
+     * mean half the playlist's worth of network calls in a row before
+     * a single second of audio played.
+     *
+     * Fix: same progressive pattern PopurriRepository already uses --
+     * try tracks one by one until the FIRST playable one is found,
+     * start playback with it RIGHT AWAY, and resolve the rest in the
+     * background (`resolveScope`), appending to the already-playing
+     * queue as each one becomes ready.
+     *
+     * S062 -- explicit request from Miguel Ángel, same message: "we
+     * don't have the option to play in shuffle." With progressive
+     * startup, just asking ExoPlayer to shuffle the queue
+     * (`playQueueShuffled()`) isn't enough -- there'd only be one
+     * element when it starts. The track ORDER is shuffled right here,
+     * before resolving anything (`tracks.shuffled()`), and the same
+     * progressive startup runs on that already-shuffled order -- the
+     * result is genuinely random playback, not just a random first
+     * track followed by the rest in playlist order.
+     */
     suspend fun playPlaylistById(
         playlistId: Long,
         shuffle: Boolean,
@@ -189,55 +251,82 @@ class PlaylistRepository @Inject constructor(
         streamResolver: StreamResolver,
     ): PlaylistPlayResult {
         val dislikedKeys = dislikedTrackRepository.normalizedKeysSnapshot()
-        val tracks = dao.getTracksForPlaylistOnce(playlistId).filterNot { track ->
+        val filteredTracks = dao.getTracksForPlaylistOnce(playlistId).filterNot { track ->
             DislikedTrackRepository.key(track.artist ?: track.channelTitle ?: "", track.title) in dislikedKeys
         }
-        if (tracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
+        if (filteredTracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
+        val orderedTracks = if (shuffle) filteredTracks.shuffled() else filteredTracks
 
         var resolutionFailures = 0
-        val items = tracks.mapNotNull { track ->
-            val localPath = track.filePath
-            val remoteUrl = track.youtubeUrl
-            if (localPath != null) {
-                QueueItem(
-                    uri = localPath,
-                    title = track.title,
-                    isLocal = true,
-                    artist = track.artist ?: track.channelTitle,
-                    youtubeId = track.youtubeId,
-                    channelTitle = track.channelTitle,
-                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                )
-            } else if (remoteUrl == null) {
-                resolutionFailures++
-                null
-            } else {
-                try {
-                    val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
-                    playerManager.resolveStreamItem(
-                        streamUrl = streamUrl,
-                        videoTitle = track.title,
-                        structuredArtist = track.artist,
-                        youtubeId = track.youtubeId,
-                        artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
-                    ) ?: run {
-                        resolutionFailures++
-                        null
-                    }
-                } catch (e: Exception) {
-                    resolutionFailures++
-                    null
+        var firstItem: QueueItem? = null
+        var firstIndex = -1
+        for ((index, track) in orderedTracks.withIndex()) {
+            val item = resolveTrackToQueueItem(track, playerManager, streamResolver)
+            if (item != null) {
+                firstItem = item
+                firstIndex = index
+                break
+            }
+            resolutionFailures++
+        }
+        if (firstItem == null) {
+            return PlaylistPlayResult(started = false, resolutionFailures = resolutionFailures)
+        }
+
+        playerManager.playQueue(listOf(firstItem))
+
+        val remaining = orderedTracks.subList(firstIndex + 1, orderedTracks.size)
+        if (remaining.isNotEmpty()) {
+            resolveScope.launch {
+                val items = remaining.mapNotNull { track ->
+                    resolveTrackToQueueItem(track, playerManager, streamResolver)
+                }
+                if (items.isNotEmpty()) {
+                    withContext(Dispatchers.Main) { playerManager.addToQueue(items) }
                 }
             }
         }
-
-        if (items.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = resolutionFailures)
-
-        if (shuffle) {
-            playerManager.playQueueShuffled(items)
-        } else {
-            playerManager.playQueue(items)
-        }
+        // Nota: resolutionFailures aquí solo cuenta los fallos ANTES
+        // de la primera pista reproducible -- los que pudieran ocurrir
+        // después, ya en segundo plano, no llegan a reflejarse en la
+        // UI en el momento (mismo límite aceptado que la generación
+        // progresiva de PopurriRepository).
         return PlaylistPlayResult(started = true, resolutionFailures = resolutionFailures)
+    }
+
+    /** S062 -- decide local-vs-streaming para UNA pista; extraído de playPlaylistById() para poder resolver pista a pista en vez de la lista entera de golpe. */
+    private suspend fun resolveTrackToQueueItem(
+        track: SearchResultTrack,
+        playerManager: PlayerManager,
+        streamResolver: StreamResolver,
+    ): QueueItem? {
+        val localPath = track.filePath
+        val remoteUrl = track.youtubeUrl
+        return if (localPath != null) {
+            QueueItem(
+                uri = localPath,
+                title = track.title,
+                isLocal = true,
+                artist = track.artist ?: track.channelTitle,
+                youtubeId = track.youtubeId,
+                channelTitle = track.channelTitle,
+                artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
+            )
+        } else if (remoteUrl == null) {
+            null
+        } else {
+            try {
+                val streamUrl = streamResolver.resolveAudioStreamUrl(remoteUrl)
+                playerManager.resolveStreamItem(
+                    streamUrl = streamUrl,
+                    videoTitle = track.title,
+                    structuredArtist = track.artist,
+                    youtubeId = track.youtubeId,
+                    artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
+                )
+            } catch (e: Exception) {
+                null
+            }
+        }
     }
 }
