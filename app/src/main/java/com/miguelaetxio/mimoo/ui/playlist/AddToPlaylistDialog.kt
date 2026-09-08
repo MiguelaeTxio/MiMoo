@@ -149,32 +149,42 @@ fun AddToPlaylistDialog(
         },
     )
 
-    // S051 -- petición explícita de Miguel Ángel: avisar y preguntar
-    // antes de añadir una pista que ya está en la lista destino, en
-    // vez de moverla al final en silencio. Diálogo aparte, por encima
-    // del principal (no lo sustituye), para no perder el contexto de
-    // qué se estaba añadiendo.
+    // S073 -- petición explícita de Miguel Ángel: simplificado tras
+    // ver el flujo de S051 en uso -- "no nos compliquemos la vida".
+    // Ya no se pregunta "¿lo añadimos de todas formas?" -- se avisa
+    // sin más de que no se añade porque ya está en la lista, con un
+    // único botón. Y el fallo real que señaló de paso: al cerrar este
+    // aviso volvía al selector de listas de debajo, había que cerrar
+    // ESE también -- ahora "Aceptar" cierra los dos diálogos de golpe
+    // (este aviso Y el selector de listas). Si quiere añadirlo a otra
+    // lista distinta, vuelve a pulsar "Añadir a lista" desde cero.
     uiState.duplicateConfirmation?.let { confirmation ->
-        val message = if (confirmation.duplicateCount == 1 && confirmation.tracks.size == 1) {
-            "Este tema ya está en \"${confirmation.playlistName}\". ¿Lo añadimos de todas formas? (se moverá al final de la lista)"
-        } else if (confirmation.duplicateCount == confirmation.tracks.size) {
-            "Todas estas pistas ya están en \"${confirmation.playlistName}\". ¿Las añadimos de todas formas? (se moverán al final de la lista)"
+        val message = if (confirmation.duplicateCount == confirmation.tracks.size) {
+            if (confirmation.tracks.size == 1) {
+                "Este tema ya está en \"${confirmation.playlistName}\", no se añade."
+            } else {
+                "Todas estas pistas ya están en \"${confirmation.playlistName}\", no se añaden."
+            }
         } else {
-            "${confirmation.duplicateCount} de estas pistas ya están en \"${confirmation.playlistName}\". ¿Las añadimos de todas formas? (las que ya estaban se moverán al final de la lista)"
+            "${confirmation.duplicateCount} de estas pistas ya están en " +
+                "\"${confirmation.playlistName}\", no se añaden."
         }
         AlertDialog(
-            onDismissRequest = viewModel::dismissDuplicateConfirmation,
-            title = { Text("Tema ya en la lista") },
+            onDismissRequest = {
+                viewModel.dismissDuplicateConfirmation()
+                onDismiss()
+            },
+            title = { Text("Ya está en la lista") },
             text = { Text(message) },
             confirmButton = {
                 TextButton(
-                    onClick = { viewModel.confirmAddDuplicates(activity, onSuccess = onDismiss) },
+                    onClick = {
+                        viewModel.dismissDuplicateConfirmation()
+                        onDismiss()
+                    },
                 ) {
-                    Text("Añadir de todas formas")
+                    Text("Aceptar")
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::dismissDuplicateConfirmation) { Text("Cancelar") }
             },
         )
     }

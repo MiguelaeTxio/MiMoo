@@ -92,28 +92,20 @@ class AddToPlaylistDialogViewModel @Inject constructor(
      * al final de la lista (nueva posición = max+1), sin avisar de
      * nada. Ahora, si hay algún duplicado, se corta aquí y se deja el
      * aviso en `duplicateConfirmation` para que el diálogo pregunte;
-     * solo se añade de verdad si `forceAddDuplicates` es true
-     * (confirmAddDuplicates()) o si no había ningún duplicado.
+     * S073 -- simplificado a petición explícita de Miguel Ángel ("no
+     * nos compliquemos la vida"): ya no hay forma de forzar el añadido
+     * si hay duplicados -- si se encuentra alguno, se detiene aquí y
+     * deja `duplicateConfirmation` para que el diálogo avise sin más
+     * (ver AddToPlaylistDialog.kt). Si el usuario quiere añadirlo a
+     * otra lista, vuelve a pulsar "Añadir a lista" desde cero.
      * ---
-     * youtubeIds instead of a single youtubeId -- explicit request
-     * from Miguel Ángel (2026-07-04): being able to add a whole album
-     * (several tracks at once) to a playlist, not just a single track.
-     * Existing callers (one track) pass listOf(youtubeId).
-     *
-     * `onSuccess` -- the dialog uses this to close itself only if the
-     * operation actually applied (H07 PART 1); if there's no
-     * connection, the dialog stays open showing the notice.
-     *
-     * S051 -- explicit request from Miguel Ángel: before adding, check
-     * whether any of the tracks are ALREADY in the target playlist.
-     * Previously nothing was checked -- since the primary key is
-     * (playlistId, youtubeId) with `OnConflictStrategy.REPLACE`, adding
-     * a repeated track didn't duplicate it, but it DID silently move it
-     * to the end of the list (new position = max+1), with no warning.
-     * Now, if there's any duplicate, this stops here and leaves the
-     * notice in `duplicateConfirmation` for the dialog to ask; it only
-     * actually adds if `forceAddDuplicates` is true
-     * (confirmAddDuplicates()) or if there was no duplicate at all.
+     * S073 -- simplified per Miguel Ángel's explicit request ("let's
+     * not overcomplicate this"): there's no longer a way to force the
+     * add when duplicates exist -- if any are found, this stops here
+     * and sets `duplicateConfirmation` so the dialog can simply notify
+     * (see AddToPlaylistDialog.kt). If the user wants to add it to a
+     * different playlist, they tap "Add to playlist" again from
+     * scratch.
      */
     fun addToExistingPlaylist(
         activity: Activity,
@@ -121,24 +113,21 @@ class AddToPlaylistDialogViewModel @Inject constructor(
         playlistName: String,
         tracks: List<PlaylistTrackInput>,
         onSuccess: () -> Unit,
-        forceAddDuplicates: Boolean = false,
     ) {
         viewModelScope.launch {
-            if (!forceAddDuplicates) {
-                val existingIds = repository.getTracksForPlaylistOnce(playlistId)
-                    .map { it.youtubeId }.toSet()
-                val duplicateCount = tracks.count { it.youtubeId in existingIds }
-                if (duplicateCount > 0) {
-                    _uiState.value = _uiState.value.copy(
-                        duplicateConfirmation = DuplicateConfirmation(
-                            playlistId = playlistId,
-                            playlistName = playlistName,
-                            tracks = tracks,
-                            duplicateCount = duplicateCount,
-                        ),
-                    )
-                    return@launch
-                }
+            val existingIds = repository.getTracksForPlaylistOnce(playlistId)
+                .map { it.youtubeId }.toSet()
+            val duplicateCount = tracks.count { it.youtubeId in existingIds }
+            if (duplicateCount > 0) {
+                _uiState.value = _uiState.value.copy(
+                    duplicateConfirmation = DuplicateConfirmation(
+                        playlistId = playlistId,
+                        playlistName = playlistName,
+                        tracks = tracks,
+                        duplicateCount = duplicateCount,
+                    ),
+                )
+                return@launch
             }
             val outcome = autoSyncPusher.executeIfConnected(activity) {
                 repository.addTracksToPlaylist(playlistId, tracks)
@@ -153,21 +142,7 @@ class AddToPlaylistDialogViewModel @Inject constructor(
         }
     }
 
-    /** S051 -- el usuario confirmó "añadir de todas formas" en el aviso de duplicados. */
-    fun confirmAddDuplicates(activity: Activity, onSuccess: () -> Unit) {
-        val confirmation = _uiState.value.duplicateConfirmation ?: return
-        _uiState.value = _uiState.value.copy(duplicateConfirmation = null)
-        addToExistingPlaylist(
-            activity,
-            confirmation.playlistId,
-            confirmation.playlistName,
-            confirmation.tracks,
-            onSuccess,
-            forceAddDuplicates = true,
-        )
-    }
-
-    /** S051 -- el usuario canceló el aviso de duplicados, no se añade nada. */
+    /** S073 -- el usuario descartó el aviso de "ya está en la lista" -- no se añade nada. */
     fun dismissDuplicateConfirmation() {
         _uiState.value = _uiState.value.copy(duplicateConfirmation = null)
     }
