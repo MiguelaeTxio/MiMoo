@@ -9,6 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -32,24 +35,34 @@ private const val PUSH_DEBOUNCE_MS = 5_000L
 private const val MAX_PUSH_INTERVAL_MS = 60_000L
 
 /**
- * S069 -- petición explícita de Miguel Ángel tras investigar S067: "¿por
- * qué no teníamos esos 1.300 enlaces guardados en Drive?". Respuesta
- * real encontrada: sí los teníamos (Drive coincidía con local a las
- * 04:24) -- pero `pushCurrentState()` sube SIEMPRE el estado local tal
- * cual esté en ese momento, sin comparar nada contra lo que ya hay en
- * Drive. En cuanto el estado local se corrompió (S067,
- * `pruneEmptyFolders()` sin salvaguarda), el primer cambio local
- * cualquiera disparó un push que sobrescribió la copia buena de Drive
- * con la copia ya mala -- la propia app se comió su red de seguridad.
- * Mismo espíritu que `LibraryReconciler.BULK_MISSING_FLOOR`/
- * `BULK_MISSING_FRACTION`: una bajada de unas pocas pistas es
- * perfectamente normal (el usuario acaba de borrar un tema); una
- * bajada de una cuarta parte o más del catálogo entre dos pushes no lo
- * es -- se aborta ese push en concreto y se avisa, dejando la copia
- * anterior de Drive intacta.
+ * S070 -- petición explícita de Miguel Ángel, matiz sobre S069 (que
+ * usaba un umbral de "bajada sospechosamente masiva", igual que
+ * `LibraryReconciler`): "lo malo sobre todo es perder temas. Si
+ * añadimos, y la copia de Drive tiene menos, es pq hemos añadido
+ * temas en local, es perfecto [se sube sin preguntar]. Si borramos
+ * adrede entonces preguntamos [...] si me pilla dormido, no se
+ * machaca nada." Regla final, sin umbral ninguno: **subir nunca
+ * pregunta, borrar siempre pregunta** -- "si se añade un archivo se
+ * sube y si se borra se pregunta". No hace falta ningún porcentaje:
+ * cualquier bajada, por pequeña que sea, es la dirección peligrosa
+ * (perder algo) y exige confirmación; cualquier subida es la
+ * dirección segura (ganar algo) y no la necesita.
  */
-private const val PUSH_DROP_FLOOR = 10
-private const val PUSH_DROP_FRACTION = 0.25
+sealed class PushConfirmationState {
+    object None : PushConfirmationState()
+
+    /**
+     * Pendiente de que Miguel Ángel confirme un borrado antes de
+     * reflejarlo en Drive. Mientras esto esté así, Drive se queda
+     * TAL CUAL estaba -- "si me pilla dormido, no se machaca nada".
+     */
+    data class PendingDeletionConfirm(
+        val envelope: SyncEnvelope,
+        val accessToken: String,
+        val currentRemoteTrackCount: Int,
+        val newTrackCount: Int,
+    ) : PushConfirmationState()
+}
 
 /**
  * Resultado de intentar ejecutar una mutación (añadir/borrar pista,
@@ -155,6 +168,14 @@ class AutoSyncPusher @Inject constructor(
     private var lastPushAt: Long = 0L
 
     /**
+     * S070 -- ver el kdoc de `PushConfirmationState`. `MainActivity`
+     * observa esto para mostrar el diálogo de confirmación de borrado;
+     * `null`/`None` mientras no haya nada pendiente.
+     */
+    private val _pendingConfirmation = MutableStateFlow<PushConfirmationState>(PushConfirmationState.None)
+    val pendingConfirmation: StateFlow<PushConfirmationState> = _pendingConfirmation.asStateFlow()
+
+    /**
      * Fix real (S034, MiMoo-S34H12): esta comprobación usaba
      * `networkChecker.isConnected()` (basado en
      * `NET_CAPABILITY_VALIDATED`), el mismo indicador ya documentado
@@ -255,31 +276,17 @@ class AutoSyncPusher @Inject constructor(
             }
             val bundle = backupRepository.buildCurrentBundle()
 
-            // S069 -- ver el kdoc de PUSH_DROP_FLOOR/PUSH_DROP_FRACTION
-            // más arriba. Se compara contra lo que YA hay en Drive
-            // ANTES de sobrescribirlo -- si no se puede leer la copia
-            // actual (primera vez, red, formato antiguo...) se sigue
-            // adelante igual que antes, no se bloquea el caso normal
-            // por no poder comparar.
+            // S070 -- ver el kdoc de PushConfirmationState. Se compara
+            // contra lo que YA hay en Drive ANTES de sobrescribirlo --
+            // si no se puede leer la copia actual (primera vez, red,
+            // formato antiguo...) se sigue adelante igual que antes,
+            // no se bloquea el caso normal por no poder comparar.
             val currentRemoteTrackCount = try {
                 driveRepository.pullSyncState(outcome.accessToken)
                     ?.let { json -> backupRepository.fromSyncJson(json) }
                     ?.bundle?.tracks?.size
             } catch (e: Exception) {
                 null
-            }
-            if (currentRemoteTrackCount != null) {
-                val drop = currentRemoteTrackCount - bundle.tracks.size
-                val suspicious = drop >= PUSH_DROP_FLOOR &&
-                    drop > currentRemoteTrackCount * PUSH_DROP_FRACTION
-                if (suspicious) {
-                    val warn = "pushCurrentState() -- ABORTADO: pasaría de $currentRemoteTrackCount " +
-                        "a ${bundle.tracks.size} pistas en Drive (bajada sospechosa), se deja la " +
-                        "copia anterior de Drive intacta"
-                    Log.w(TAG, warn)
-                    BackupDebugLogger.log(context, storageManager, warn)
-                    return
-                }
             }
 
             val envelope = SyncEnvelope(
@@ -291,6 +298,28 @@ class AutoSyncPusher @Inject constructor(
                 // SyncEnvelope.cookiesTxtContent en BackupDto.kt.
                 cookiesTxtContent = cookiesManager.currentContentOrNull(),
             )
+
+            // S070 -- petición explícita de Miguel Ángel: "subir nunca
+            // pregunta, borrar siempre pregunta". Sin umbral: CUALQUIER
+            // bajada (currentRemoteTrackCount > bundle.tracks.size)
+            // deja Drive TAL CUAL está y espera confirmación -- "si me
+            // pilla dormido, no se machaca nada". Una subida, o que no
+            // se haya podido comparar, se sube directa, como siempre.
+            if (currentRemoteTrackCount != null && bundle.tracks.size < currentRemoteTrackCount) {
+                _pendingConfirmation.value = PushConfirmationState.PendingDeletionConfirm(
+                    envelope = envelope,
+                    accessToken = outcome.accessToken,
+                    currentRemoteTrackCount = currentRemoteTrackCount,
+                    newTrackCount = bundle.tracks.size,
+                )
+                val warn = "pushCurrentState() -- PENDIENTE DE CONFIRMAR: pasaría de " +
+                    "$currentRemoteTrackCount a ${bundle.tracks.size} pistas en Drive, se deja " +
+                    "la copia actual intacta hasta que Miguel Ángel confirme"
+                Log.w(TAG, warn)
+                BackupDebugLogger.log(context, storageManager, warn)
+                return
+            }
+
             driveRepository.pushSyncState(outcome.accessToken, backupRepository.toSyncJson(envelope))
             val msg = "pushCurrentState() -- copia de respaldo automática actualizada tras cambio local"
             Log.d(TAG, msg)
@@ -298,5 +327,43 @@ class AutoSyncPusher @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "pushCurrentState() -- fallo silencioso, no interrumpe la acción del usuario", e)
         }
+    }
+
+    /**
+     * S070 -- Miguel Ángel confirma que el borrado fue suyo, adrede --
+     * "he borrado yo, digo sí y borra". Sube ahora mismo el sobre que
+     * se había dejado en espera, reflejando el borrado también en
+     * Drive.
+     */
+    fun confirmPushDeletion(context: Context) {
+        val state = _pendingConfirmation.value as? PushConfirmationState.PendingDeletionConfirm ?: return
+        _pendingConfirmation.value = PushConfirmationState.None
+        val appContext = context.applicationContext
+        pushScope.launch {
+            pushMutex.withLock {
+                try {
+                    driveRepository.pushSyncState(state.accessToken, backupRepository.toSyncJson(state.envelope))
+                    val msg = "confirmPushDeletion() -- borrado confirmado, Drive actualizado a " +
+                        "${state.newTrackCount} pista(s)"
+                    Log.d(TAG, msg)
+                    BackupDebugLogger.log(appContext, storageManager, msg)
+                } catch (e: Exception) {
+                    Log.w(TAG, "confirmPushDeletion() -- fallo subiendo el borrado confirmado", e)
+                }
+            }
+        }
+    }
+
+    /**
+     * S070 -- Miguel Ángel descarta el aviso sin confirmar el borrado
+     * -- Drive se queda tal cual estaba, sin tocar nada. Si el borrado
+     * fue de verdad accidental (una tarjeta inestable, no una acción
+     * suya), la próxima sincronización de arranque
+     * (`AutoSyncViewModel`) lo detectará como discrepancia y
+     * preguntará de nuevo, con la copia buena de Drive todavía intacta
+     * para poder restaurarla.
+     */
+    fun dismissPushDeletion() {
+        _pendingConfirmation.value = PushConfirmationState.None
     }
 }

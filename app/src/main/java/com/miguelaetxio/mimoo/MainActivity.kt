@@ -84,6 +84,9 @@ class MainActivity : ComponentActivity() {
     lateinit var storageManager: StorageManager
 
     @Inject
+    lateinit var autoSyncPusher: com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+
+    @Inject
     lateinit var libraryReconciler: LibraryReconciler
 
     @Inject
@@ -537,6 +540,45 @@ class MainActivity : ComponentActivity() {
                         },
                     )
                 }
+
+                // S070 -- petición explícita de Miguel Ángel: "subir
+                // nunca pregunta, borrar siempre pregunta [...] si me
+                // pilla dormido, no se machaca nada". Este diálogo NO
+                // viene de AutoSyncViewModel (ese es solo la
+                // comprobación de arranque) -- viene de AutoSyncPusher,
+                // que dispara esto en CUALQUIER momento que una
+                // mutación local (borrar pista/álbum/artista/lista,
+                // etc.) deje el recuento por debajo de lo que ya hay en
+                // Drive. Mientras no se responda, Drive se queda tal
+                // cual estaba.
+                val pushPendingConfirmation by autoSyncPusher.pendingConfirmation.collectAsState()
+                (pushPendingConfirmation as? com.miguelaetxio.mimoo.data.backup.PushConfirmationState.PendingDeletionConfirm)
+                    ?.let { pending ->
+                        AlertDialog(
+                            onDismissRequest = {},
+                            title = { Text("¿Borrar también en Drive?") },
+                            text = {
+                                Text(
+                                    "Tu copia de Drive tiene ${pending.currentRemoteTrackCount} " +
+                                        "pistas; en este dispositivo ahora hay " +
+                                        "${pending.newTrackCount}. ¿Confirmas que has borrado tú " +
+                                        "y quieres que se refleje también en Drive?"
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = { autoSyncPusher.confirmPushDeletion(this@MainActivity) },
+                                ) {
+                                    Text("Sí, borrar en Drive")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = autoSyncPusher::dismissPushDeletion) {
+                                    Text("No, dejar Drive como está")
+                                }
+                            },
+                        )
+                    }
 
                 // H10 (S011) -- archivo .txt recibido vía ACTION_VIEW
                 // (handleShareFileIntent). LaunchedEffect reacciona en
