@@ -453,37 +453,90 @@ class MainActivity : ComponentActivity() {
                 // interrumpe con un diálogo si hace falta confirmar
                 // un borrado.
                 // ---
-                // S066 -- petición explícita y directa de Miguel Ángel
-                // tras una pérdida real de datos ("se han borrado
-                // todas las canciones... me salió el modal... creo
-                // que ahí se borraron"): el chequeo automático de
-                // sincronización al arrancar (con su posible
-                // restauración completa desde Drive, sin preguntar en
-                // el Caso 2, o preguntando en el Caso 3 pero
-                // sustituyendo una copia ENTERA por otra) queda
-                // eliminado por completo -- "te he dicho que eso lo
-                // quites. Independientemente de si ha sido o no el
-                // causante de este desajuste." No se investiga más
-                // ni se intenta arreglar: se retira el disparo y los
-                // diálogos, sin excepción. El backup/restauración
-                // MANUAL de Ajustes (`BackupImportRepository.
-                // importDestructively()`, H06) es un mecanismo
-                // distinto y no se ha tocado.
-                // ---
-                // S066 -- explicit, direct request from Miguel Ángel
-                // after real data loss ("all the songs got deleted...
-                // I got the modal... I think that's where they got
-                // deleted"): the automatic sync check on startup (with
-                // its possible full restore from Drive, without asking
-                // in Case 2, or asking in Case 3 but replacing one
-                // ENTIRE copy with another) is removed completely --
-                // "I told you to remove that. Regardless of whether it
-                // was or wasn't the cause of this mismatch." No further
-                // investigation or fixing attempted: the trigger and
-                // dialogs are removed, no exceptions. Settings'
-                // MANUAL backup/restore (`BackupImportRepository.
-                // importDestructively()`, H06) is a separate mechanism
-                // and hasn't been touched.
+                // S068 -- rediseño explícito de Miguel Ángel tras S066
+                // (retirada completa) y la investigación de S067 (causa
+                // real: pruneEmptyFolders() sin salvaguarda, ya
+                // arreglado). El disparo automático vuelve, pero SIN el
+                // caso que borraba en silencio: ver el kdoc de
+                // AutoSyncUiState en AutoSyncViewModel.kt -- ya NO
+                // existe ningún caso de "la nube manda sin preguntar".
+                // Cualquier discrepancia, sea el mismo dispositivo o
+                // no, pregunta SIEMPRE con el mismo diálogo
+                // (CountMismatch) de más abajo.
+                val autoSyncViewModel: com.miguelaetxio.mimoo.ui.sync.AutoSyncViewModel =
+                    androidx.hilt.navigation.compose.hiltViewModel()
+                val autoSyncState by autoSyncViewModel.uiState.collectAsState()
+                val autoSyncPendingConsent by autoSyncViewModel.pendingConsent.collectAsState()
+
+                val autoSyncConsentLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartIntentSenderForResult(),
+                ) { result ->
+                    autoSyncViewModel.onConsentResolved(this@MainActivity, result.data)
+                }
+
+                LaunchedEffect(Unit) {
+                    if (storageManager.hasRootUri()) {
+                        autoSyncViewModel.startAutoSync(this@MainActivity)
+                    }
+                }
+
+                LaunchedEffect(autoSyncPendingConsent) {
+                    autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
+                }
+
+                // S068 -- único diálogo de discrepancia -- pregunta tal
+                // cual la formuló Miguel Ángel, con las cifras reales de
+                // cada lado para que la decisión sea informada. Nunca
+                // se resuelve solo.
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.CountMismatch)
+                    ?.let { mismatchState ->
+                        val c = mismatchState.comparison
+                        AlertDialog(
+                            onDismissRequest = {},
+                            title = { Text("Diferencia con Drive") },
+                            text = {
+                                Text(
+                                    "En Drive tienes ${c.remoteTrackCount} pistas, en este " +
+                                        "dispositivo ${c.localTrackCount} -- favoritos, Drive: " +
+                                        "${c.remoteAllFavoritesCount}, aquí: " +
+                                        "${c.localAllFavoritesCount}. ¿Con cuál te quedas?"
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(onClick = autoSyncViewModel::confirmCloudWins) {
+                                    Text("Con la de Drive")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = autoSyncViewModel::confirmLocalWins) {
+                                    Text("Con la de este dispositivo")
+                                }
+                            },
+                        )
+                    }
+
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Done)
+                    ?.message?.let { message ->
+                        AlertDialog(
+                            onDismissRequest = autoSyncViewModel::dismiss,
+                            title = { Text("Sincronizado con Drive") },
+                            text = { Text(message) },
+                            confirmButton = {
+                                TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
+                            },
+                        )
+                    }
+
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Error)?.let { errorState ->
+                    AlertDialog(
+                        onDismissRequest = autoSyncViewModel::dismiss,
+                        title = { Text("No se pudo sincronizar con Drive") },
+                        text = { Text(errorState.message) },
+                        confirmButton = {
+                            TextButton(onClick = autoSyncViewModel::dismiss) { Text("Vale") }
+                        },
+                    )
+                }
 
                 // H10 (S011) -- archivo .txt recibido vía ACTION_VIEW
                 // (handleShareFileIntent). LaunchedEffect reacciona en

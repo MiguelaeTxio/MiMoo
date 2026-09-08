@@ -33,65 +33,71 @@ import javax.inject.Inject
 private const val TAG = "MiMoo-AutoSync-Pull"
 
 /**
- * H07 PARTE 1 (redefinición S008, regla de negocio completa de
- * Miguel Ángel). Al arrancar la app, exactamente uno de estos tres
- * casos:
+ * S068 -- rediseño explícito de Miguel Ángel tras la pérdida real de
+ * archivos investigada en S067 ("¿por qué no teníamos esos 1.300
+ * temas en Drive?" -- respuesta: Drive nunca ha sido copia de los
+ * audios, solo de la lista de qué tenías descargado). Reemplaza por
+ * completo el diseño de tres casos de S008/H07 PARTE 1 -- ya NO
+ * existe ningún caso que se resuelva solo, sin preguntar:
  *
  * 1. **No hay copia en Drive todavía** -- este dispositivo crea la
- *    copia (con su identidad y la hora), sin preguntar nada.
- * 2. **Hay copia, y la hizo ESTE MISMO dispositivo** -- deberían
- *    coincidir. Si no coinciden, el disco local se desincronizó por
- *    su cuenta (archivos tocados a mano, etc.) -- la nube SIEMPRE
- *    manda en este caso, sin preguntar: se restaura y se avisa
- *    ([RestoredFromCloud]).
- * 3. **Hay copia, y la hizo OTRO dispositivo** -- aquí sí se
- *    pregunta explícitamente ([ConflictOtherDevice]): "¿se han
- *    añadido o eliminado pistas desde otro dispositivo?". Responder
- *    que sí sustituye local por la nube; responder que no sustituye
- *    la nube por local.
+ *    copia, sin preguntar nada (no hay nada que decidir).
+ * 2. **Hay copia y coincide con lo local** -- nada que hacer.
+ * 3. **Hay copia y NO coincide** -- sea el mismo dispositivo o no
+ *    ([CountMismatch]), se pregunta SIEMPRE, con la misma pregunta
+ *    tal cual la formuló Miguel Ángel: "En Drive tienes menos/más
+ *    pistas que en local, ¿con cuál te quedas?". Ya no existe
+ *    ninguna versión de esto que "la nube manda sin preguntar" --
+ *    ese caso (antes exclusivo de "mismo dispositivo") fue
+ *    exactamente el que borró 69 temas en silencio real, sin avisar,
+ *    el 2026-09-07.
  *
- * Todo-o-nada: a diferencia del primer diseño (S008, primera vuelta,
- * `MirrorDiff` con altas/bajas independientes), aquí una de las dos
- * copias completas sustituye siempre a la otra entera
- * (`BackupImportRepository.importDestructively()`, ya construido para
- * H06) -- nunca una fusión parcial.
+ * Todo-o-nada: una de las dos copias completas sustituye siempre a la
+ * otra entera (`BackupImportRepository.importDestructively()` para
+ * H06 manual; `applyCloudWinsTargeted()`/`pushAsNewEnvelope()` aquí) --
+ * nunca una fusión parcial.
  * ---
- * H07 PART 1 (S008 redefinition, Miguel Ángel's full business rule).
- * On app startup, exactly one of these three cases:
+ * S068 -- explicit redesign from Miguel Ángel after the real file loss
+ * investigated in S067 ("why didn't we have those 1,300 tracks in
+ * Drive?" -- answer: Drive was never a copy of the audio files, only
+ * of the list of what you had downloaded). Fully replaces S008/H07
+ * PART 1's three-case design -- there is NO LONGER any case that
+ * resolves itself without asking:
  *
- * 1. **There's no copy on Drive yet** -- this device creates the
- *    copy (with its identity and the time), without asking anything.
- * 2. **There's a copy, and THIS SAME device made it** -- they should
- *    match. If they don't, the local disk got out of sync on its own
- *    (files touched by hand, etc.) -- the cloud ALWAYS wins in this
- *    case, no asking: it gets restored and a notice is shown
- *    ([RestoredFromCloud]).
- * 3. **There's a copy, and ANOTHER device made it** -- here it DOES
- *    ask explicitly ([ConflictOtherDevice]): "were tracks added or
- *    removed from another device?". Answering yes replaces local
- *    with the cloud copy; answering no replaces the cloud copy with
- *    local.
+ * 1. **There's no copy on Drive yet** -- this device creates the copy,
+ *    without asking anything (nothing to decide).
+ * 2. **There's a copy and it matches local** -- nothing to do.
+ * 3. **There's a copy and it does NOT match** -- whether it's the same
+ *    device or not ([CountMismatch]), it ALWAYS asks, with the same
+ *    question exactly as Miguel Ángel phrased it: "Drive has
+ *    fewer/more tracks than local, which do you want to keep?". There
+ *    is no longer any version of this where "the cloud wins without
+ *    asking" -- that case (previously exclusive to "same device") was
+ *    exactly what silently deleted 69 tracks with no warning on
+ *    2026-09-07.
  *
- * All-or-nothing: unlike the first design (S008, first round,
- * `MirrorDiff` with independent additions/deletions), here one of the
- * two full copies always replaces the other entirely
- * (`BackupImportRepository.importDestructively()`, already built for
- * H06) -- never a partial merge.
+ * All-or-nothing: one of the two full copies always replaces the other
+ * entirely (`BackupImportRepository.importDestructively()` for manual
+ * H06; `applyCloudWinsTargeted()`/`pushAsNewEnvelope()` here) -- never
+ * a partial merge.
  */
 sealed class AutoSyncUiState {
     object Idle : AutoSyncUiState()
     object Checking : AutoSyncUiState()
 
-    /** Caso 2: mismo dispositivo desincronizado -- la nube ya se restauró, solo se informa. */
-    data class RestoredFromCloud(val comparison: BundleComparison) : AutoSyncUiState()
-
-    /** Caso 3: copia de otro dispositivo -- pendiente de que Miguel Ángel responda sí/no. */
-    data class ConflictOtherDevice(
+    /**
+     * S068 -- único caso de discrepancia que existe ahora; sustituye a
+     * los antiguos RestoredFromCloud (Caso 2, silencioso) y
+     * ConflictOtherDevice (Caso 3). Se llega aquí SIEMPRE que
+     * `!comparison.identical`, sea el mismo dispositivo o no --
+     * pendiente de que Miguel Ángel responda con cuál se queda.
+     */
+    data class CountMismatch(
         val envelope: SyncEnvelope,
         val comparison: BundleComparison,
     ) : AutoSyncUiState()
 
-    /** Nada que hacer (copias idénticas), o resolución ya aplicada tras el caso 3. */
+    /** Nada que hacer (copias idénticas), o resolución ya aplicada tras CountMismatch. */
     data class Done(val message: String? = null) : AutoSyncUiState()
 
     data class Error(val message: String) : AutoSyncUiState()
@@ -231,18 +237,13 @@ class AutoSyncViewModel @Inject constructor(
             return
         }
 
-        if (envelope.deviceId == deviceIdentityManager.deviceId) {
-            // Caso 2: mismo dispositivo, desincronizado -- la nube manda siempre, sin preguntar.
-            restoreFromCloud(envelope.bundle)
-            verifyDiskAndReconcile()
-            _uiState.value = AutoSyncUiState.RestoredFromCloud(comparison)
-        } else {
-            // Caso 3: otro dispositivo -- se pregunta antes de tocar
-            // nada (la verificación de disco se hace después de
-            // resolver, en confirmCloudWins()/confirmLocalWins()).
-            pendingAccessToken = accessToken
-            _uiState.value = AutoSyncUiState.ConflictOtherDevice(envelope, comparison)
-        }
+        // S068 -- petición explícita de Miguel Ángel: se pregunta
+        // SIEMPRE que no coincida, sea el mismo dispositivo o no --
+        // ya no existe ningún caso de "la nube manda sin preguntar".
+        // La verificación de disco se hace después de resolver, en
+        // confirmCloudWins()/confirmLocalWins().
+        pendingAccessToken = accessToken
+        _uiState.value = AutoSyncUiState.CountMismatch(envelope, comparison)
     }
 
     /**
@@ -329,8 +330,8 @@ class AutoSyncViewModel @Inject constructor(
     }
 
     /**
-     * Caso 3, respuesta "sí, se añadieron/borraron pistas en otro
-     * dispositivo" -- la nube sustituye a local.
+     * S068 -- respuesta "con la de Drive" -- la nube sustituye a
+     * local.
      *
      * Fallo real detectado en logs de Miguel Ángel (2026-07-14): esta
      * función lanzaba la llamada de red sin `try/catch`, a diferencia
@@ -362,7 +363,7 @@ class AutoSyncViewModel @Inject constructor(
      * instantly and a second tap can't fire another call.
      */
     fun confirmCloudWins() {
-        val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
+        val state = _uiState.value as? AutoSyncUiState.CountMismatch ?: return
         _uiState.value = AutoSyncUiState.Checking
         viewModelScope.launch {
             try {
@@ -416,12 +417,12 @@ class AutoSyncViewModel @Inject constructor(
     }
 
     /**
-     * Caso 3, respuesta "no" -- local sustituye a la nube (y se
-     * sube). Mismo fix que `confirmCloudWins()` -- ver comentario ahí
-     * para el diagnóstico completo (2026-07-14).
+     * S068 -- respuesta "con la de este dispositivo" -- local sustituye
+     * a la nube (y se sube). Mismo fix que `confirmCloudWins()` -- ver
+     * comentario ahí para el diagnóstico completo (2026-07-14).
      */
     fun confirmLocalWins() {
-        val state = _uiState.value as? AutoSyncUiState.ConflictOtherDevice ?: return
+        val state = _uiState.value as? AutoSyncUiState.CountMismatch ?: return
         val accessToken = pendingAccessToken ?: return
         _uiState.value = AutoSyncUiState.Checking
         viewModelScope.launch {
