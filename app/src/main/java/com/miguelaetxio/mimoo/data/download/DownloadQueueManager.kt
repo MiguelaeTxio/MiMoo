@@ -5,6 +5,7 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -160,6 +161,27 @@ class DownloadQueueManager @Inject constructor(
                     album = track.album,
                 )
             }
+        }
+    }
+
+    /**
+     * S082 -- petición explícita de Miguel Ángel: "cuando reconciliamos
+     * una copia de Drive y tenemos descargas deberíamos limpiar las
+     * descargas tb, pq lo que queremos es traer la copia de Drive."
+     * Cancela toda descarga QUEUED/DOWNLOADING en curso (WorkManager +
+     * Room) antes de aplicar una copia de Drive -- lo que interesa en
+     * ese momento es la copia que va a llegar, no lo que ya estuviera
+     * en cola de antes (que puede no encajar con lo que trae Drive, o
+     * ser justo lo que se quiere descartar si se eligió "quedarme con
+     * Drive"). Se resetea a PENDING en vez de dejarlas a medias --
+     * `applyCloudWinsTargeted()`/`restoreFromCloud()` reencolan
+     * después exactamente lo que haga falta según el sobre de Drive.
+     */
+    suspend fun cancelAllDownloads() {
+        val active = repository.getActiveDownloadsOnce()
+        active.forEach { track ->
+            workManager.cancelAllWorkByTag(track.youtubeId)
+            repository.updateDownloadStatus(track.youtubeId, DownloadStatus.PENDING)
         }
     }
 }

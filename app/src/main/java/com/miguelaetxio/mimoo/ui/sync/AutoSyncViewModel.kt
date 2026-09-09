@@ -437,6 +437,11 @@ class AutoSyncViewModel @Inject constructor(
      * re-downloaded.
      */
     private suspend fun restoreFromCloud(bundle: BackupBundle) {
+        // S082 -- petición explícita de Miguel Ángel: limpiar las
+        // descargas en curso antes de traer la copia de Drive -- lo
+        // que interesa ahora es lo que trae Drive, no lo que ya
+        // estuviera en cola de antes.
+        downloadQueueManager.cancelAllDownloads()
         val result = importRepository.applyCloudWinsTargeted(bundle)
         val step = "restoreFromCloud() -- encolando ${result.importedTracks.size} descarga(s)..."
         Log.d(TAG, step)
