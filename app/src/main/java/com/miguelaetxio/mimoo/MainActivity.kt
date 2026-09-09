@@ -491,16 +491,26 @@ class MainActivity : ComponentActivity() {
                 // cual la formuló Miguel Ángel, con las cifras reales de
                 // cada lado para que la decisión sea informada. Nunca
                 // se resuelve solo.
+                // S079 -- petición explícita de Miguel Ángel: "ahora
+                // Drive no distingue dispositivos y no avisa de que la
+                // copia de Drive del otro dispositivo difiere" -- al
+                // unificar los tres casos en uno solo que siempre
+                // pregunta (S068), se perdió por el camino el aviso de
+                // QUÉ dispositivo hizo esa copia de Drive. Es un dato
+                // puramente informativo (no cambia si se pregunta o
+                // no, eso ya es siempre) -- se añade de vuelta.
                 (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.CountMismatch)
                     ?.let { mismatchState ->
                         val c = mismatchState.comparison
+                        val deviceLabel = mismatchState.envelope.deviceLabel
                         AlertDialog(
                             onDismissRequest = {},
                             title = { Text("Diferencia con Drive") },
                             text = {
                                 Text(
-                                    "En Drive tienes ${c.remoteTrackCount} pistas, en este " +
-                                        "dispositivo ${c.localTrackCount} -- favoritos, Drive: " +
+                                    "La última copia de Drive la hizo $deviceLabel: tiene " +
+                                        "${c.remoteTrackCount} pistas; en este dispositivo " +
+                                        "ahora hay ${c.localTrackCount} -- favoritos, Drive: " +
                                         "${c.remoteAllFavoritesCount}, aquí: " +
                                         "${c.localAllFavoritesCount}. ¿Con cuál te quedas?"
                                 )
