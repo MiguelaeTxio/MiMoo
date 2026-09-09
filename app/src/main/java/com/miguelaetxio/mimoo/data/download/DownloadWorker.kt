@@ -320,7 +320,13 @@ class DownloadWorker @AssistedInject constructor(
                 return@withContext Result.failure()
             }
 
-        repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
+        // S077 -- el marcado DownloadStatus.DOWNLOADING se movió a
+        // justo antes de runYtDlp() (después de la comprobación de
+        // pausa crítica) para que "Descargando" en la UI signifique
+        // siempre "transfiriendo de verdad ahora mismo", nunca
+        // "esperando a que se reanude la pausa". Ver el comentario
+        // completo junto a esa segunda llamada a
+        // pauseController.awaitUnpaused().
 
         // runBlocking es aceptable aqui: onProgress() se llama de forma
         // sincrona desde dentro de la llamada bloqueante a Chaquopy
@@ -351,6 +357,35 @@ class DownloadWorker @AssistedInject constructor(
         var outputDoc: androidx.documentfile.provider.DocumentFile? = null
 
         return@withContext try {
+            // S077 -- bug real reportado por Miguel Ángel: "el botón
+            // de pausa sirve para entretener a uno pulsándolo pq no
+            // pausa absolutamente nada." Causa real: la comprobación
+            // de S075 solo se hacía UNA vez, al principio de doWork(),
+            // ANTES del semáforo de concurrencia. Con una descarga
+            // masiva ya en marcha, cientos de intentos ya habían
+            // pasado ese punto (la pausa estaba desactivada cuando
+            // arrancaron) y se habían quedado solo esperando su turno
+            // en el semáforo -- que no sabe nada de pausa. Pulsar
+            // pausa después no les afectaba en absoluto: cada uno que
+            // conseguía hueco en el semáforo pasaba derecho a
+            // descargar, sin volver a mirar el interruptor.
+            //
+            // Se comprueba OTRA VEZ aquí, justo antes de la
+            // transferencia real (después de conseguir el permiso del
+            // semáforo, con todo ya preparado) -- este es el punto que
+            // de verdad importa: da igual cuántos intentos lleven ya
+            // esperando desde antes de pulsar pausa, ninguno arranca
+            // una transferencia real mientras esté pausado.
+            pauseController.awaitUnpaused()
+
+            // S077 -- se marca DOWNLOADING aquí, no antes -- este es el
+            // punto en el que de verdad va a empezar a transferir.
+            // Antes se marcaba mucho más arriba (justo tras preparar
+            // ffmpeg), lo que podía dejar a una pista mostrando
+            // "Descargando" en la UI mientras en realidad seguía
+            // esperando a que se levantara la pausa.
+            repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
+
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
             // Paso 1 — descargar al temporal via yt-dlp + Chaquopy + ffmpeg.
             runYtDlp(
