@@ -35,6 +35,15 @@ private const val PUSH_DEBOUNCE_MS = 5_000L
 private const val MAX_PUSH_INTERVAL_MS = 60_000L
 
 /**
+ * S081 -- ver el comentario completo junto a su uso en
+ * pushCurrentState(). Compartido en espíritu con el mismo umbral en
+ * AutoSyncViewModel.runSync() (no hay un sitio común a ambas clases,
+ * así que se repite la constante con el mismo valor y el mismo porqué
+ * en los dos archivos).
+ */
+private const val ACTIVE_DOWNLOADS_SYNC_THRESHOLD = 5
+
+/**
  * S080 -- corrección de diseño explícita de Miguel Ángel sobre S070:
  * "nunca debemos machacar la copia de Drive sin permiso, ni siquiera
  * al añadir, eso es un error mío de diseño." S070 dejaba pasar las
@@ -288,7 +297,24 @@ class AutoSyncPusher @Inject constructor(
             // DOWNLOADING -- en cuanto la cola se vacíe del todo, el
             // siguiente cambio local sí compara y sube/pregunta con
             // total normalidad, con el estado ya asentado de verdad.
-            val hasActiveDownloads = searchResultTrackRepository.getActiveDownloadsOnce().isNotEmpty()
+            // S081 -- bug real reportado por Miguel Ángel: "ahora no
+            // detecta ningún tipo de cambio [...] la funcionalidad
+            // está completamente rota." Causa real: este guardián
+            // (S075) se saltaba la comparación entera con que hubiera
+            // UNA sola pista QUEUED/DOWNLOADING -- y tras todo el lío
+            // de reconciliaciones y descargas interrumpidas de estos
+            // días, es fácil que quede alguna fila suelta atascada en
+            // ese estado para siempre (un WorkRequest huérfano que
+            // nunca se reintenta, etc.). Con solo eso, la comparación
+            // se saltaba SIEMPRE, en ambos sentidos, sin excepción --
+            // exactamente el síntoma descrito. Se sube el umbral a
+            // "más de un puñado" en vez de "cualquiera" -- sigue
+            // evitando la avalancha de preguntas durante una descarga
+            // masiva de verdad (cientos de pistas), pero una o dos
+            // filas sueltas atascadas ya no bloquean la sincronización
+            // para siempre.
+            val hasActiveDownloads = searchResultTrackRepository.getActiveDownloadsOnce().size >
+                ACTIVE_DOWNLOADS_SYNC_THRESHOLD
             if (hasActiveDownloads) {
                 Log.d(TAG, "pushCurrentState() -- descarga masiva en curso, se salta esta subida puntual")
                 return

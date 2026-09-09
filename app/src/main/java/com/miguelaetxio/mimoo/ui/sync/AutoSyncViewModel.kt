@@ -33,6 +33,13 @@ import javax.inject.Inject
 private const val TAG = "MiMoo-AutoSync-Pull"
 
 /**
+ * S081 -- ver el comentario completo junto a su uso en runSync().
+ * Mismo valor y mismo porqué que en AutoSyncPusher.kt (no hay un sitio
+ * común a ambas clases, así que se repite la constante).
+ */
+private const val ACTIVE_DOWNLOADS_SYNC_THRESHOLD = 5
+
+/**
  * S068 -- rediseño explícito de Miguel Ángel tras la pérdida real de
  * archivos investigada en S067 ("¿por qué no teníamos esos 1.300
  * temas en Drive?" -- respuesta: Drive nunca ha sido copia de los
@@ -249,12 +256,21 @@ class AutoSyncViewModel @Inject constructor(
         // pistas que Drive. No es un desajuste real, es una
         // recuperación en curso; preguntar en cada ciclo interrumpía
         // la descarga sin motivo. Se salta el aviso entero (ni se
-        // pregunta ni se toca nada) mientras queden pistas QUEUED o
-        // DOWNLOADING -- en cuanto la cola se vacíe del todo, la
-        // siguiente comprobación sí compara y pregunta con toda
+        // pregunta ni se toca nada) mientras haya una descarga masiva
+        // de verdad en curso -- en cuanto la cola baje de ese umbral,
+        // la siguiente comprobación sí compara y pregunta con toda
         // normalidad, con el estado ya asentado de verdad. Mismo
         // criterio que AutoSyncPusher.pushCurrentState().
-        if (searchResultTrackRepository.getActiveDownloadsOnce().isNotEmpty()) {
+        //
+        // S081 -- bug real reportado por Miguel Ángel: "ahora no
+        // detecta ningún tipo de cambio [...] está completamente
+        // rota." Este guardián se saltaba con que hubiera UNA sola
+        // pista QUEUED/DOWNLOADING -- fácil que quedara alguna fila
+        // suelta atascada así para siempre tras todo el lío de
+        // reconciliaciones de estos días, bloqueando la comparación
+        // SIEMPRE, en ambos sentidos. Umbral subido a "más de un
+        // puñado" -- ver ACTIVE_DOWNLOADS_SYNC_THRESHOLD.
+        if (searchResultTrackRepository.getActiveDownloadsOnce().size > ACTIVE_DOWNLOADS_SYNC_THRESHOLD) {
             Log.d(TAG, "runSync() -- descarga masiva en curso, se salta el aviso de discrepancia")
             _uiState.value = AutoSyncUiState.Done()
             return
