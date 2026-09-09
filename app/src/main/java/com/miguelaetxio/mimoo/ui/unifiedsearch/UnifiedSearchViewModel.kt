@@ -211,7 +211,19 @@ class UnifiedSearchViewModel @Inject constructor(
             // límite por defecto de searchByType() (15 -> 25) solo
             // para esta llamada, sin tocar otros llamantes de
             // ExternalLinkResolver.searchByType() que pudiera haber.
+            //
+            // S084 -- crash real (IllegalArgumentException: "Key
+            // 'playlist-X' was already used"): YouTube puede devolver
+            // la misma playlist/canal repetida dentro de los mismos
+            // resultados de búsqueda (a diferencia de las pistas
+            // dentro de una lista, aquí un duplicado nunca es
+            // legítimo -- es la MISMA playlist, no una repetición a
+            // propósito). La LazyColumn de UnifiedSearchScreen usa
+            // "playlist-${it.id}" como key, y Compose exige claves
+            // únicas -- se deduplica por id antes de devolver la
+            // lista, quedándose con la primera aparición de cada una.
             externalLinkResolver.searchByType(query, type, limit = 25)
+                .distinctBy { it.id }
         } catch (e: Exception) {
             emptyList()
         }

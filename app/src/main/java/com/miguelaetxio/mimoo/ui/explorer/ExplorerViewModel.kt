@@ -376,7 +376,11 @@ class ExplorerViewModel @Inject constructor(
 
     private suspend fun searchType(query: String, type: SearchResultType): List<SearchTypeResult> =
         try {
-            externalLinkResolver.searchByType(query, type)
+            // S084 -- mismo riesgo de clave duplicada que
+            // UnifiedSearchViewModel.searchType() -- ver el comentario
+            // completo ahí. ExplorerScreen.kt usa la misma key
+            // "playlist-${it.id}".
+            externalLinkResolver.searchByType(query, type).distinctBy { it.id }
         } catch (e: Exception) {
             emptyList()
         }
