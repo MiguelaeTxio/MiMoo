@@ -11,6 +11,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -61,6 +62,10 @@ class DownloadWorker @AssistedInject constructor(
     private val storageManager: StorageManager,
     private val autoSyncPusher: AutoSyncPusher,
     private val cookiesManager: CookiesManager,
+    // S074 -- petición explícita de Miguel Ángel: "es mejor descargar
+    // en tandas de X archivos" en vez de todas a la vez. Ver el kdoc
+    // completo de DownloadConcurrencyLimiter.
+    private val concurrencyLimiter: DownloadConcurrencyLimiter,
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -137,6 +142,14 @@ class DownloadWorker @AssistedInject constructor(
      */
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
+        // S074 -- como mucho MAX_CONCURRENT_DOWNLOADS descargas reales
+        // corren a la vez; el resto se queda aquí, suspendido sin
+        // coste, hasta que le toque turno. Los `return@withContext` de
+        // más abajo siguen funcionando igual -- la etiqueta explícita
+        // apunta al withContext de fuera, da igual cuántas lambdas
+        // intermedias haya, y `withPermit()` libera el permiso en su
+        // `finally` aunque se salga por un `return` etiquetado.
+        concurrencyLimiter.semaphore.withPermit {
         val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
             ?: return@withContext Result.failure()
         val title = inputData.getString(KEY_TITLE)
@@ -492,6 +505,7 @@ class DownloadWorker @AssistedInject constructor(
                 Result.failure()
             }
         }
+        } // cierra concurrencyLimiter.semaphore.withPermit -- S074
         }
     }
 
