@@ -35,28 +35,28 @@ private const val PUSH_DEBOUNCE_MS = 5_000L
 private const val MAX_PUSH_INTERVAL_MS = 60_000L
 
 /**
- * S070 -- petición explícita de Miguel Ángel, matiz sobre S069 (que
- * usaba un umbral de "bajada sospechosamente masiva", igual que
- * `LibraryReconciler`): "lo malo sobre todo es perder temas. Si
- * añadimos, y la copia de Drive tiene menos, es pq hemos añadido
- * temas en local, es perfecto [se sube sin preguntar]. Si borramos
- * adrede entonces preguntamos [...] si me pilla dormido, no se
- * machaca nada." Regla final, sin umbral ninguno: **subir nunca
- * pregunta, borrar siempre pregunta** -- "si se añade un archivo se
- * sube y si se borra se pregunta". No hace falta ningún porcentaje:
- * cualquier bajada, por pequeña que sea, es la dirección peligrosa
- * (perder algo) y exige confirmación; cualquier subida es la
- * dirección segura (ganar algo) y no la necesita.
+ * S080 -- corrección de diseño explícita de Miguel Ángel sobre S070:
+ * "nunca debemos machacar la copia de Drive sin permiso, ni siquiera
+ * al añadir, eso es un error mío de diseño." S070 dejaba pasar las
+ * subidas sin preguntar ("dirección segura") -- pero una subida en
+ * NÚMERO puede seguir siendo destructiva en ESTRUCTURA: más pistas en
+ * total, pero como sencillos sueltos en vez de en la lista de
+ * reproducción que Drive ya tenía correctamente organizada (el caso
+ * real que motivó esta corrección, S078) sobrescribiría igualmente esa
+ * organización sin avisar. Regla final: CUALQUIER cambio hacia Drive
+ * -- suba o baje el número de pistas -- pide confirmación antes de
+ * tocar la copia remota. Nunca se sobrescribe sola, en ningún sentido.
  */
 sealed class PushConfirmationState {
     object None : PushConfirmationState()
 
     /**
-     * Pendiente de que Miguel Ángel confirme un borrado antes de
-     * reflejarlo en Drive. Mientras esto esté así, Drive se queda
-     * TAL CUAL estaba -- "si me pilla dormido, no se machaca nada".
+     * Pendiente de que Miguel Ángel confirme un cambio (subida o
+     * bajada) antes de reflejarlo en Drive. Mientras esto esté así,
+     * Drive se queda TAL CUAL estaba -- "si me pilla dormido, no se
+     * machaca nada".
      */
-    data class PendingDeletionConfirm(
+    data class PendingPushConfirm(
         val envelope: SyncEnvelope,
         val accessToken: String,
         val currentRemoteTrackCount: Int,
@@ -324,14 +324,17 @@ class AutoSyncPusher @Inject constructor(
                 cookiesTxtContent = cookiesManager.currentContentOrNull(),
             )
 
-            // S070 -- petición explícita de Miguel Ángel: "subir nunca
-            // pregunta, borrar siempre pregunta". Sin umbral: CUALQUIER
-            // bajada (currentRemoteTrackCount > bundle.tracks.size)
-            // deja Drive TAL CUAL está y espera confirmación -- "si me
-            // pilla dormido, no se machaca nada". Una subida, o que no
-            // se haya podido comparar, se sube directa, como siempre.
-            if (currentRemoteTrackCount != null && bundle.tracks.size < currentRemoteTrackCount) {
-                _pendingConfirmation.value = PushConfirmationState.PendingDeletionConfirm(
+            // S080 -- corrección de diseño explícita de Miguel Ángel:
+            // "nunca debemos machacar la copia de Drive sin permiso,
+            // ni siquiera al añadir". Ya no importa si sube o baja --
+            // CUALQUIER diferencia (currentRemoteTrackCount !=
+            // bundle.tracks.size) deja Drive TAL CUAL está y espera
+            // confirmación. Que no se haya podido comparar (primera
+            // vez, red, formato antiguo) sigue sin bloquear el caso
+            // normal -- se sube directo, como siempre, porque ahí no
+            // hay ninguna copia previa que se pueda machacar.
+            if (currentRemoteTrackCount != null && bundle.tracks.size != currentRemoteTrackCount) {
+                _pendingConfirmation.value = PushConfirmationState.PendingPushConfirm(
                     envelope = envelope,
                     accessToken = outcome.accessToken,
                     currentRemoteTrackCount = currentRemoteTrackCount,
@@ -355,40 +358,37 @@ class AutoSyncPusher @Inject constructor(
     }
 
     /**
-     * S070 -- Miguel Ángel confirma que el borrado fue suyo, adrede --
-     * "he borrado yo, digo sí y borra". Sube ahora mismo el sobre que
-     * se había dejado en espera, reflejando el borrado también en
-     * Drive.
+     * S080 -- Miguel Ángel confirma el cambio (suba o baje el número
+     * de pistas) -- sube ahora mismo el sobre que se había dejado en
+     * espera, reflejándolo en Drive.
      */
-    fun confirmPushDeletion(context: Context) {
-        val state = _pendingConfirmation.value as? PushConfirmationState.PendingDeletionConfirm ?: return
+    fun confirmPush(context: Context) {
+        val state = _pendingConfirmation.value as? PushConfirmationState.PendingPushConfirm ?: return
         _pendingConfirmation.value = PushConfirmationState.None
         val appContext = context.applicationContext
         pushScope.launch {
             pushMutex.withLock {
                 try {
                     driveRepository.pushSyncState(state.accessToken, backupRepository.toSyncJson(state.envelope))
-                    val msg = "confirmPushDeletion() -- borrado confirmado, Drive actualizado a " +
+                    val msg = "confirmPush() -- cambio confirmado, Drive actualizado a " +
                         "${state.newTrackCount} pista(s)"
                     Log.d(TAG, msg)
                     BackupDebugLogger.log(appContext, storageManager, msg)
                 } catch (e: Exception) {
-                    Log.w(TAG, "confirmPushDeletion() -- fallo subiendo el borrado confirmado", e)
+                    Log.w(TAG, "confirmPush() -- fallo subiendo el cambio confirmado", e)
                 }
             }
         }
     }
 
     /**
-     * S070 -- Miguel Ángel descarta el aviso sin confirmar el borrado
-     * -- Drive se queda tal cual estaba, sin tocar nada. Si el borrado
-     * fue de verdad accidental (una tarjeta inestable, no una acción
-     * suya), la próxima sincronización de arranque
-     * (`AutoSyncViewModel`) lo detectará como discrepancia y
-     * preguntará de nuevo, con la copia buena de Drive todavía intacta
-     * para poder restaurarla.
+     * S080 -- Miguel Ángel descarta el aviso sin confirmar el cambio
+     * -- Drive se queda tal cual estaba, sin tocar nada. Si el cambio
+     * local era genuino (nuevas pistas, un borrado adrede), quedará
+     * pendiente hasta que lo confirme explícitamente -- nunca se
+     * refleja en Drive por su cuenta.
      */
-    fun dismissPushDeletion() {
+    fun dismissPush() {
         _pendingConfirmation.value = PushConfirmationState.None
     }
 }

@@ -551,39 +551,42 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // S070 -- petición explícita de Miguel Ángel: "subir
-                // nunca pregunta, borrar siempre pregunta [...] si me
-                // pilla dormido, no se machaca nada". Este diálogo NO
-                // viene de AutoSyncViewModel (ese es solo la
-                // comprobación de arranque) -- viene de AutoSyncPusher,
-                // que dispara esto en CUALQUIER momento que una
-                // mutación local (borrar pista/álbum/artista/lista,
-                // etc.) deje el recuento por debajo de lo que ya hay en
-                // Drive. Mientras no se responda, Drive se queda tal
-                // cual estaba.
+                // S080 -- corrección de diseño explícita de Miguel
+                // Ángel: "nunca debemos machacar la copia de Drive sin
+                // permiso, ni siquiera al añadir, eso es un error mío
+                // de diseño." Ya no distingue subida/bajada -- este
+                // diálogo NO viene de AutoSyncViewModel (ese es solo
+                // la comprobación de arranque) -- viene de
+                // AutoSyncPusher, que dispara esto en CUALQUIER
+                // momento que una mutación local (añadir o borrar
+                // pista/álbum/artista/lista, etc.) deje el recuento
+                // distinto de lo que ya hay en Drive. Mientras no se
+                // responda, Drive se queda tal cual estaba.
                 val pushPendingConfirmation by autoSyncPusher.pendingConfirmation.collectAsState()
-                (pushPendingConfirmation as? com.miguelaetxio.mimoo.data.backup.PushConfirmationState.PendingDeletionConfirm)
+                (pushPendingConfirmation as? com.miguelaetxio.mimoo.data.backup.PushConfirmationState.PendingPushConfirm)
                     ?.let { pending ->
+                        val isAddition = pending.newTrackCount > pending.currentRemoteTrackCount
                         AlertDialog(
                             onDismissRequest = {},
-                            title = { Text("¿Borrar también en Drive?") },
+                            title = { Text("¿Actualizar Drive?") },
                             text = {
                                 Text(
                                     "Tu copia de Drive tiene ${pending.currentRemoteTrackCount} " +
                                         "pistas; en este dispositivo ahora hay " +
-                                        "${pending.newTrackCount}. ¿Confirmas que has borrado tú " +
-                                        "y quieres que se refleje también en Drive?"
+                                        "${pending.newTrackCount}. ¿Confirmas que quieres que se " +
+                                        (if (isAddition) "añada" else "refleje el borrado") +
+                                        " también en Drive?"
                                 )
                             },
                             confirmButton = {
                                 TextButton(
-                                    onClick = { autoSyncPusher.confirmPushDeletion(this@MainActivity) },
+                                    onClick = { autoSyncPusher.confirmPush(this@MainActivity) },
                                 ) {
-                                    Text("Sí, borrar en Drive")
+                                    Text("Sí, actualizar Drive")
                                 }
                             },
                             dismissButton = {
-                                TextButton(onClick = autoSyncPusher::dismissPushDeletion) {
+                                TextButton(onClick = autoSyncPusher::dismissPush) {
                                     Text("No, dejar Drive como está")
                                 }
                             },
