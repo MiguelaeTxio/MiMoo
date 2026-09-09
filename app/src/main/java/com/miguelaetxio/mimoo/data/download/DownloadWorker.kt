@@ -146,6 +146,29 @@ class DownloadWorker @AssistedInject constructor(
      */
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
+        val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
+            ?: return@withContext Result.failure()
+
+        // S076 -- bug real reportado por Miguel Ángel: "Descargando
+        // (167)" con el limite de concurrencia y la pausa ya puestos
+        // (S074/S075), sin que ninguno de los dos pareciera hacer
+        // nada. Causa real: si un Worker anterior murió a media
+        // ejecución (p.ej. al instalar la propia actualización de la
+        // app, que reinicia el proceso) DESPUÉS de marcar DOWNLOADING
+        // pero ANTES de terminar, esa fila se quedaba con ese estado
+        // para siempre -- nada la bajaba de nuevo a QUEUED. Cuando
+        // WorkManager reintentaba esa misma pista con el código YA
+        // corregido, el nuevo doWork() esperaba correctamente su
+        // turno en el semáforo/la pausa SIN tocar el estado mientras
+        // esperaba -- así que la fila seguía mostrando "Descargando"
+        // en la UI aunque de verdad solo estuviera en cola, dando la
+        // falsa impresión de que ninguna de las dos salvaguardas
+        // funcionaba. Se marca QUEUED aquí, ANTES de esperar turno --
+        // así el estado real (esperando) coincide siempre con lo que
+        // ve Miguel Ángel en pantalla, se reinicie lo que se reinicie
+        // a media descarga.
+        repository.updateDownloadStatus(youtubeId, DownloadStatus.QUEUED)
+
         // S074 -- como mucho MAX_CONCURRENT_DOWNLOADS descargas reales
         // corren a la vez; el resto se queda aquí, suspendido sin
         // coste, hasta que le toque turno. Los `return@withContext` de
@@ -163,8 +186,6 @@ class DownloadWorker @AssistedInject constructor(
         // está pausado).
         pauseController.awaitUnpaused()
         concurrencyLimiter.semaphore.withPermit {
-        val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
-            ?: return@withContext Result.failure()
         val title = inputData.getString(KEY_TITLE)
             ?: return@withContext Result.failure()
         val artist = inputData.getString(KEY_ARTIST)
