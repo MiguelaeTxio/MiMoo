@@ -41,6 +41,10 @@ data class DownloadsUiState(
     // ni aquí ni en ImportLinkScreen/AlbumSearchScreen había forma de
     // saber que algo había fallado en silencio.
     val failed: List<SearchResultTrack> = emptyList(),
+    // S083 -- petición explícita de Miguel Ángel: modal de seguridad
+    // antes de borrar TODAS las descargas fallidas de golpe -- acción
+    // irreversible, no se dispara directo al pulsar el botón.
+    val showDeleteAllFailedConfirm: Boolean = false,
 )
 
 /**
@@ -207,6 +211,29 @@ class DownloadsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.delete(track)
         }
+    }
+
+    /**
+     * S083 -- petición explícita de Miguel Ángel: "además del botón
+     * reintentar todas deberíamos incluir uno de borrar todas con un
+     * modal de seguridad". Solo abre el modal -- el borrado real
+     * ocurre en confirmDeleteAllFailed().
+     */
+    fun requestDeleteAllFailed() {
+        _uiState.value = _uiState.value.copy(showDeleteAllFailedConfirm = true)
+    }
+
+    /** S083 -- confirmado en el modal -- borra TODAS las descargas fallidas de golpe, sin vuelta atrás. */
+    fun confirmDeleteAllFailed() {
+        _uiState.value = _uiState.value.copy(showDeleteAllFailedConfirm = false)
+        viewModelScope.launch {
+            downloadQueueManager.deleteAllFailedDownloads()
+        }
+    }
+
+    /** S083 -- descartado el modal sin confirmar -- no se borra nada. */
+    fun dismissDeleteAllFailedConfirm() {
+        _uiState.value = _uiState.value.copy(showDeleteAllFailedConfirm = false)
     }
 
     /**

@@ -9,6 +9,7 @@ import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -177,11 +178,51 @@ class DownloadQueueManager @Inject constructor(
      * `applyCloudWinsTargeted()`/`restoreFromCloud()` reencolan
      * después exactamente lo que haga falta según el sobre de Drive.
      */
+    /**
+     * S082/S083 -- petición explícita de Miguel Ángel: "cuando
+     * reconciliamos una copia de Drive y tenemos descargas deberíamos
+     * limpiar las descargas tb" -- y, tras verlo en uso real: "estas
+     * son descargas fallidas, no las ha borrado al traer la copia de
+     * drive". Causa real de ese hueco: la primera versión (S082) solo
+     * miraba `getActiveDownloadsOnce()` (QUEUED/DOWNLOADING) -- las
+     * que ya habían fallado del todo (ERROR) son un estado aparte, sin
+     * cubrir. Ahora también se limpian esas -- lo que interesa al
+     * traer una copia de Drive es partir de cero, sea cual sea el
+     * estado en el que se quedaran las descargas de antes. Se
+     * resetea a PENDING en vez de borrar la fila directamente --
+     * `applyCloudWinsTargeted()`/`restoreFromCloud()`, que se llama
+     * justo después, ya decide de verdad qué filas sobreviven según
+     * el sobre de Drive (borra las que no estén en él).
+     */
     suspend fun cancelAllDownloads() {
         val active = repository.getActiveDownloadsOnce()
         active.forEach { track ->
             workManager.cancelAllWorkByTag(track.youtubeId)
             repository.updateDownloadStatus(track.youtubeId, DownloadStatus.PENDING)
+        }
+        val failed = repository.getByStatus(DownloadStatus.ERROR).first()
+        failed.forEach { track ->
+            workManager.cancelAllWorkByTag(track.youtubeId)
+            repository.updateDownloadStatus(track.youtubeId, DownloadStatus.PENDING)
+        }
+    }
+
+    /**
+     * S083 -- petición explícita de Miguel Ángel: botón "Borrar todas"
+     * junto a "Reintentar todas" en la sección "Con error" de
+     * Descargas. A diferencia de `cancelAllDownloads()` (pensado para
+     * antes de traer una copia de Drive, deja las filas en PENDING
+     * para que la reconciliación decida su suerte), esto es una acción
+     * manual y definitiva: borra la fila entera de Room, no solo el
+     * estado. No hay archivo que borrar (una fila ERROR nunca llegó a
+     * tener uno) -- ver `LibraryViewModel.deleteTrack()` para el caso
+     * de una pista DONE con archivo real, que sí necesita ese paso.
+     */
+    suspend fun deleteAllFailedDownloads() {
+        val failed = repository.getByStatus(DownloadStatus.ERROR).first()
+        failed.forEach { track ->
+            workManager.cancelAllWorkByTag(track.youtubeId)
+            repository.delete(track)
         }
     }
 }

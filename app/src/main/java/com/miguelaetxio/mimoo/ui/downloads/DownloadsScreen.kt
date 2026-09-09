@@ -185,6 +185,18 @@ fun DownloadsScreen(
                         ) {
                             Text("Reintentar todas")
                         }
+                        Spacer(Modifier.width(4.dp))
+                        // S083 -- petición explícita de Miguel Ángel:
+                        // "además del botón reintentar todas deberíamos
+                        // incluir uno de borrar todas con un modal de
+                        // seguridad". Solo abre el modal aquí -- ver el
+                        // AlertDialog de más abajo para el borrado real.
+                        TextButton(
+                            onClick = viewModel::requestDeleteAllFailed,
+                            modifier = Modifier.glassChip(),
+                        ) {
+                            Text("Borrar todas", color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
                 items(uiState.failed, key = { "e_${it.youtubeId}" }) { track ->
@@ -223,6 +235,33 @@ fun DownloadsScreen(
             onCancelConfirm = viewModel::cancelConfirmation,
             onConfirm = { viewModel.confirmAlternative(activity) },
             onDismiss = viewModel::dismissAlternativeSearch,
+        )
+    }
+
+    // S083 -- petición explícita de Miguel Ángel: "un modal de
+    // seguridad (esto borrará definitivamente las descargas y no se
+    // podrá deshacer, continuar/cancelar)" antes de borrar TODAS las
+    // descargas fallidas de golpe.
+    if (uiState.showDeleteAllFailedConfirm) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDeleteAllFailedConfirm,
+            title = { Text("¿Borrar todas las descargas fallidas?") },
+            text = {
+                Text(
+                    "Esto borrará definitivamente las ${uiState.failed.size} descarga(s) " +
+                        "con error y no se podrá deshacer. ¿Continuar?"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmDeleteAllFailed) {
+                    Text("Continuar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissDeleteAllFailedConfirm) {
+                    Text("Cancelar")
+                }
+            },
         )
     }
 }
