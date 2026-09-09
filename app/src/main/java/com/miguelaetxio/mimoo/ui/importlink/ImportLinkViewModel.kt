@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
+import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
@@ -511,7 +512,23 @@ class ImportLinkViewModel @Inject constructor(
         val sourceUrl = state.url.trim().takeIf { it.isNotBlank() }
 
         viewModelScope.launch {
+            // S078 -- bug real reportado por Miguel Ángel: al importar
+            // (o reimportar) un enlace, esta reconstrucción siempre
+            // creaba una SearchResultTrack DESDE CERO, sin pasar
+            // downloadStatus/filePath/downloadProgress -- usando los
+            // valores por defecto de la entidad (PENDING, sin archivo).
+            // cacheSearchResults() hace un INSERT OR REPLACE, así que
+            // si la pista YA estaba DONE con un archivo real, esta
+            // reconstrucción se lo borraba de un plumazo, sin tocar el
+            // archivo físico (que se queda huérfano en disco) --  y el
+            // bucle de más abajo la volvía a encolar para descarga,
+            // gastando ancho de banda para volver a bajar algo que ya
+            // se tenía. Se preserva el estado de descarga de la fila
+            // existente (si la hay) -- solo los metadatos (título,
+            // artista, álbum, miniatura...) se actualizan con lo
+            // recién resuelto.
             val tracks = selected.map { track ->
+                val existing = searchResultTrackRepository.getById(track.youtubeId)
                 SearchResultTrack(
                     youtubeId = track.youtubeId,
                     title = YoutubeTitleCleaner.clean(track.title),
@@ -529,17 +546,33 @@ class ImportLinkViewModel @Inject constructor(
                     trackPosition = state.tracks.indexOfFirst {
                         it.youtubeId == track.youtubeId
                     }.takeIf { it >= 0 },
+                    // S078 -- preservados de la fila existente si la
+                    // hay; valores por defecto de la entidad (PENDING,
+                    // sin archivo) solo para una pista genuinamente
+                    // nueva.
+                    downloadStatus = existing?.downloadStatus ?: DownloadStatus.PENDING,
+                    filePath = existing?.filePath,
+                    downloadProgress = existing?.downloadProgress ?: 0,
                 )
             }
             searchResultTrackRepository.cacheSearchResults(tracks)
             tracks.forEach { track ->
-                downloadQueueManager.enqueue(
-                    youtubeId = track.youtubeId,
-                    title = track.title,
-                    artist = track.artist ?: track.channelTitle,
-                    album = track.album,
-                    trackPosition = track.trackPosition,
-                )
+                // S078 -- no tiene sentido reencolar (ni gastar ancho
+                // de banda redescargando) una pista que ya está
+                // DONE con un archivo real -- ver el comentario
+                // completo más arriba, junto a la reconstrucción de
+                // `tracks`.
+                val alreadyDownloaded = track.downloadStatus == DownloadStatus.DONE &&
+                    track.filePath != null
+                if (!alreadyDownloaded) {
+                    downloadQueueManager.enqueue(
+                        youtubeId = track.youtubeId,
+                        title = track.title,
+                        artist = track.artist ?: track.channelTitle,
+                        album = track.album,
+                        trackPosition = track.trackPosition,
+                    )
+                }
             }
             // S056 -- petición explícita de Miguel Ángel tras S055: una
             // playlist normal (no álbum oficial) no debe quedar como
