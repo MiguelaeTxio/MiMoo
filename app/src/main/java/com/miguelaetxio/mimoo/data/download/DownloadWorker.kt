@@ -66,6 +66,10 @@ class DownloadWorker @AssistedInject constructor(
     // en tandas de X archivos" en vez de todas a la vez. Ver el kdoc
     // completo de DownloadConcurrencyLimiter.
     private val concurrencyLimiter: DownloadConcurrencyLimiter,
+    // S075 -- petición explícita de Miguel Ángel: botón de pausa para
+    // liberar ancho de banda a demanda. Ver el kdoc completo de
+    // DownloadPauseController.
+    private val pauseController: DownloadPauseController,
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -149,6 +153,15 @@ class DownloadWorker @AssistedInject constructor(
         // apunta al withContext de fuera, da igual cuántas lambdas
         // intermedias haya, y `withPermit()` libera el permiso en su
         // `finally` aunque se salga por un `return` etiquetado.
+        // S075 -- botón de pausa: se queda suspendido aquí, sin coste
+        // (ni CPU ni red), hasta que Miguel Ángel reanude las
+        // descargas desde Descargas. ANTES del semáforo de
+        // concurrencia a propósito -- así una descarga pausada no
+        // ocupa ninguno de los MAX_CONCURRENT_DOWNLOADS huecos
+        // mientras espera; son conceptos independientes (pausa =
+        // interruptor general, semáforo = cuántas a la vez cuando NO
+        // está pausado).
+        pauseController.awaitUnpaused()
         concurrencyLimiter.semaphore.withPermit {
         val youtubeId = inputData.getString(KEY_YOUTUBE_ID)
             ?: return@withContext Result.failure()

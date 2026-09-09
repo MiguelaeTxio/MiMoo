@@ -50,11 +50,19 @@ fun DownloadsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val alternativeSearchState by viewModel.alternativeSearchState.collectAsState()
+    val isPaused by viewModel.isPaused.collectAsState()
     val activity = LocalContext.current as Activity
     val isEmpty = uiState.downloading.isEmpty() &&
         uiState.queued.isEmpty() &&
         uiState.recentlyCompleted.isEmpty() &&
         uiState.failed.isEmpty()
+    // S075 -- petición explícita de Miguel Ángel: "un botón para
+    // pausar las descargas por si necesitamos ancho de banda" --
+    // concretamente, para poder descargar la propia actualización de
+    // la app sin que las descargas en curso se coman toda la
+    // conexión. Solo tiene sentido mostrarlo si hay algo activo
+    // (descargando o en cola) que pausar/reanudar.
+    val hasActiveDownloads = uiState.downloading.isNotEmpty() || uiState.queued.isNotEmpty()
 
     Scaffold(
         topBar = {
@@ -68,6 +76,25 @@ fun DownloadsScreen(
                     Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
                         IconButton(onClick = onOpenDrawer) {
                             Icon(Icons.Filled.Menu, contentDescription = "Menú")
+                        }
+                    }
+                },
+                actions = {
+                    if (hasActiveDownloads) {
+                        Box(modifier = Modifier.padding(4.dp).glassChip(shape = androidx.compose.foundation.shape.CircleShape)) {
+                            IconButton(onClick = viewModel::togglePaused) {
+                                if (isPaused) {
+                                    Icon(
+                                        androidx.compose.material.icons.Icons.Filled.PlayArrow,
+                                        contentDescription = "Reanudar descargas",
+                                    )
+                                } else {
+                                    Icon(
+                                        androidx.compose.material.icons.Icons.Filled.Pause,
+                                        contentDescription = "Pausar descargas",
+                                    )
+                                }
+                            }
                         }
                     }
                 },
@@ -91,6 +118,24 @@ fun DownloadsScreen(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(vertical = 8.dp),
         ) {
+            if (isPaused) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .glassChip(interactive = false),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "Descargas en pausa -- toca ▶ arriba para reanudar",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+            }
+
             if (uiState.downloading.isNotEmpty()) {
                 item {
                     SectionHeader(

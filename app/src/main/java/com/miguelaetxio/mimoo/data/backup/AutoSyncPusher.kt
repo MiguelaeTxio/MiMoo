@@ -135,6 +135,12 @@ class AutoSyncPusher @Inject constructor(
     private val deviceIdentityManager: DeviceIdentityManager,
     private val storageManager: StorageManager,
     private val cookiesManager: CookiesManager,
+    // S075 -- petición explícita de Miguel Ángel: durante una
+    // descarga masiva en curso, "local < Drive" es esperado y
+    // transitorio (aún no ha terminado de recuperar), no un borrado --
+    // ver el kdoc de pushCurrentState() más abajo.
+    private val searchResultTrackRepository:
+        com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
 ) {
     /**
      * `context` puede ser una `Activity` (pantallas normales) o el
@@ -269,6 +275,25 @@ class AutoSyncPusher @Inject constructor(
 
     private suspend fun pushCurrentState(context: Context) {
         try {
+            // S075 -- bug real reportado por Miguel Ángel: durante una
+            // descarga masiva (una lista de 400+ temas recuperándose
+            // tras S067/S068), el diálogo "¿Borrar también en Drive?"
+            // saltaba una y otra vez, cada vez que el amortiguador de
+            // más arriba dejaba pasar un push -- porque local, TODAVÍA
+            // a mitad de recuperar, siempre tenía MENOS pistas que
+            // Drive. No es un borrado, es una recuperación en curso;
+            // preguntar en cada ciclo interrumpía la descarga sin
+            // motivo real. Se salta la comprobación entera (ni se
+            // compara ni se sube) mientras queden pistas QUEUED o
+            // DOWNLOADING -- en cuanto la cola se vacíe del todo, el
+            // siguiente cambio local sí compara y sube/pregunta con
+            // total normalidad, con el estado ya asentado de verdad.
+            val hasActiveDownloads = searchResultTrackRepository.getActiveDownloadsOnce().isNotEmpty()
+            if (hasActiveDownloads) {
+                Log.d(TAG, "pushCurrentState() -- descarga masiva en curso, se salta esta subida puntual")
+                return
+            }
+
             val outcome = authorizationHelper.requestAuthorization(context)
             if (outcome !is DriveAuthorizationOutcome.Authorized) {
                 Log.d(TAG, "pushCurrentState() -- hace falta consentimiento, se salta esta subida puntual")

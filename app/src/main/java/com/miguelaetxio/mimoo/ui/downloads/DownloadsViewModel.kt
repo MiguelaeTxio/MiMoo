@@ -95,6 +95,9 @@ class DownloadsViewModel @Inject constructor(
     private val externalLinkResolver: ExternalLinkResolver,
     private val trackAlternativeRepository: TrackAlternativeRepository,
     private val autoSyncPusher: AutoSyncPusher,
+    // S075 -- petición explícita de Miguel Ángel: botón de pausa de
+    // descargas en la propia pantalla de Descargas.
+    private val pauseController: com.miguelaetxio.mimoo.data.download.DownloadPauseController,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
@@ -102,6 +105,13 @@ class DownloadsViewModel @Inject constructor(
 
     private val _alternativeSearchState = MutableStateFlow(AlternativeSearchUiState())
     val alternativeSearchState: StateFlow<AlternativeSearchUiState> = _alternativeSearchState.asStateFlow()
+
+    /** S075 -- expuesto tal cual desde el controlador compartido -- pausar/reanudar afecta a todas las descargas del proceso. */
+    val isPaused: StateFlow<Boolean> = pauseController.isPaused
+
+    fun togglePaused() {
+        pauseController.setPaused(!pauseController.isPaused.value)
+    }
 
     init {
         viewModelScope.launch {

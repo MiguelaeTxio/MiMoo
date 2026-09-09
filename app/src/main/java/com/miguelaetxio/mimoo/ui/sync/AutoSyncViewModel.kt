@@ -115,6 +115,10 @@ class AutoSyncViewModel @Inject constructor(
     private val deviceIdentityManager: DeviceIdentityManager,
     private val storageManager: StorageManager,
     private val cookiesManager: CookiesManager,
+    // S075 -- mismo motivo que AutoSyncPusher: durante una descarga
+    // masiva en curso, "local < Drive" es esperado y transitorio, no
+    // un borrado -- ver runSync() más abajo.
+    private val searchResultTrackRepository: com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
     @ApplicationContext private val applicationContext: Context,
 ) : ViewModel() {
 
@@ -233,6 +237,25 @@ class AutoSyncViewModel @Inject constructor(
             // deleted a file by hand with a file explorer without
             // touching Room at all).
             verifyDiskAndReconcile()
+            _uiState.value = AutoSyncUiState.Done()
+            return
+        }
+
+        // S075 -- bug real reportado por Miguel Ángel: durante una
+        // descarga masiva en curso, este diálogo saltaba una y otra
+        // vez cada vez que se recomprobaba (rotación de pantalla,
+        // app llevada a segundo plano y recuperada, etc.) -- porque
+        // local, TODAVÍA a mitad de recuperar, siempre tenía menos
+        // pistas que Drive. No es un desajuste real, es una
+        // recuperación en curso; preguntar en cada ciclo interrumpía
+        // la descarga sin motivo. Se salta el aviso entero (ni se
+        // pregunta ni se toca nada) mientras queden pistas QUEUED o
+        // DOWNLOADING -- en cuanto la cola se vacíe del todo, la
+        // siguiente comprobación sí compara y pregunta con toda
+        // normalidad, con el estado ya asentado de verdad. Mismo
+        // criterio que AutoSyncPusher.pushCurrentState().
+        if (searchResultTrackRepository.getActiveDownloadsOnce().isNotEmpty()) {
+            Log.d(TAG, "runSync() -- descarga masiva en curso, se salta el aviso de discrepancia")
             _uiState.value = AutoSyncUiState.Done()
             return
         }
