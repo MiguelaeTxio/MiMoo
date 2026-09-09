@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FindReplace
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -85,12 +87,12 @@ fun DownloadsScreen(
                             IconButton(onClick = viewModel::togglePaused) {
                                 if (isPaused) {
                                     Icon(
-                                        androidx.compose.material.icons.Icons.Filled.PlayArrow,
+                                        Icons.Filled.PlayArrow,
                                         contentDescription = "Reanudar descargas",
                                     )
                                 } else {
                                     Icon(
-                                        androidx.compose.material.icons.Icons.Filled.Pause,
+                                        Icons.Filled.Pause,
                                         contentDescription = "Pausar descargas",
                                     )
                                 }
