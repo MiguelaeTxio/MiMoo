@@ -1291,6 +1291,23 @@ class RadioRepository @Inject constructor(
     ): RadioAnchor? {
         if (sourceArtist.isBlank() || isPlaceholderArtist(sourceArtist)) {
             log("resolveAnchor('$sourceArtist') -- origen vacío o placeholder, se descarta sin buscar")
+            // S085 -- bug real reportado por Miguel Ángel (una lista
+            // con temas en streaming, con artist="Various Artists", se
+            // quedaba sin Radio de continuación): este return no
+            // resetea `lastFailureWasTransient` -- se queda con lo que
+            // dejara la ÚLTIMA llamada real a resolveAnchor() (que
+            // pudo ser un fallo de red genuino, minutos antes). El
+            // llamante (resolveAnchorWithFallbacks(), ver S024 ahí)
+            // interpreta entonces este rechazo por placeholder como si
+            // hubiera fallado por red, y decide "no bajar de peldaño,
+            // reintentar" en vez de pasar al siguiente método (partir
+            // el título) -- Radio se queda parada del todo
+            // (backlog: 0) sin ninguna llamada de red de por medio.
+            // Aquí no ha habido ningún intento -- ni éxito ni fallo de
+            // red -- así que se resetea explícitamente a false para
+            // que el llamante lo lea como lo que es: "sin dato, prueba
+            // la siguiente fuente ya mismo".
+            lastFailureWasTransient = false
             return null
         }
 
@@ -2095,7 +2112,15 @@ class RadioRepository @Inject constructor(
      * resolveAnchor(), que sí necesita reducir a uno solo).
      */
     suspend fun lookupArtistProfile(artistName: String): ArtistProfile? {
-        if (artistName.isBlank() || isPlaceholderArtist(artistName)) return null
+        // S085 -- mismo motivo que resolveAnchor() -- ver el comentario
+        // completo ahí. Un rechazo por placeholder no es un fallo de
+        // red; se resetea para que un llamante que compruebe
+        // lastFailureWasTransient después de esto no herede el valor
+        // de una llamada anterior sin relación.
+        if (artistName.isBlank() || isPlaceholderArtist(artistName)) {
+            lastFailureWasTransient = false
+            return null
+        }
         return try {
             // S023 -- mismo arreglo que en resolveAnchor(): se
             // comprueba que el candidato devuelto SEA el artista
