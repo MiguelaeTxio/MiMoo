@@ -283,11 +283,27 @@ class PlaylistRepository @Inject constructor(
         val remaining = orderedTracks.subList(firstIndex + 1, orderedTracks.size)
         if (remaining.isNotEmpty()) {
             resolveScope.launch {
-                val items = remaining.mapNotNull { track ->
-                    resolveTrackToQueueItem(track, playerManager, streamResolver)
-                }
-                if (items.isNotEmpty()) {
-                    withContext(Dispatchers.Main) { playerManager.addToQueue(items) }
+                // S087 -- bug real reportado por Miguel Ángel: "pongo la
+                // lista de reproducción y un solo tema en la cola...
+                // una lista con muchísimos temas." Causa real: esto
+                // resolvía TODAS las pistas restantes, una detrás de
+                // otra (streamResolver.resolveAudioStreamUrl() es una
+                // llamada de red por pista), y solo llamaba a
+                // addToQueue() UNA VEZ, con todo junto, al final del
+                // todo. Con una lista de cientos/miles de temas, eso
+                // podía tardar minutos u horas antes de que apareciera
+                // nada más en la cola -- exactamente el síntoma
+                // descrito, sin que la Radio tuviera nada que ver.
+                // Ahora cada pista se añade a la cola EN CUANTO se
+                // resuelve, una a una, en vez de esperar a que termine
+                // la lista entera para añadirlas todas de golpe -- la
+                // cola crece visiblemente mientras sigue resolviendo,
+                // en vez de parecer atascada en un solo tema.
+                remaining.forEach { track ->
+                    val item = resolveTrackToQueueItem(track, playerManager, streamResolver)
+                    if (item != null) {
+                        withContext(Dispatchers.Main) { playerManager.addToQueue(listOf(item)) }
+                    }
                 }
             }
         }
