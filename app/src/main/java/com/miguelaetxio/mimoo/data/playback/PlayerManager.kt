@@ -1357,6 +1357,28 @@ class PlayerManager @Inject constructor(
         set(value) { mimooutcastSessionFlag.active = value }
 
     /**
+     * S086 -- petición explícita de Miguel Ángel, decisión final tras
+     * el bug real de la Radio parándose en aleatorio con temas
+     * "Various Artists" de una lista en streaming: "la radio la vamos
+     * a anular cuando se reproduce una lista. Anulada por completo."
+     * En vez de perseguir cada resquicio por el que la Radio podía
+     * colarse pese al bloqueo de aleatorio (S050) -- el chequeo de
+     * `isFromRadio == true` en el disparo anticipado, por ejemplo,
+     * saltaba ESE bloqueo por completo -- se corta de raíz: mientras
+     * esto sea `true`, `topUpRadioQueueIfNeeded()` no hace nada, sea
+     * cual sea el modo aleatorio/cíclico o cualquier otra condición.
+     *
+     * Se pone a `true` SOLO desde `playQueue(..., isPlaylist = true)`
+     * (usado en exclusiva por
+     * `PlaylistRepository.playPlaylistById()`), y a `false` en
+     * cualquier otro arranque de reproducción "desde cero" (álbum,
+     * artista, favoritos, Radio manual, emisora en directo...) -- así
+     * no se queda pegado a `true` si se pasa de reproducir una lista a
+     * cualquier otra cosa sin pasar por clearQueue().
+     */
+    private var currentQueueIsPlaylist: Boolean = false
+
+    /**
      * H15 (miMooutCast), S032 -- `resolveYoutubeCandidate()` es
      * compartida por Radio y miMooutCast; sus propias trazas deben ir
      * al archivo de quien la está usando de verdad, nunca mezclarse.
@@ -1869,6 +1891,22 @@ class PlayerManager @Inject constructor(
     private var radioDiscoLookupFailedTransiently = false
 
     private fun topUpRadioQueueIfNeeded() {
+        // S086 -- petición explícita de Miguel Ángel, decisión final:
+        // "la radio la vamos a anular cuando se reproduce una lista.
+        // Anulada por completo." Chequeo único, al principio de todo,
+        // antes que cualquier otra condición -- así ningún resquicio
+        // (el bypass de `isFromRadio == true` en el disparo anticipado
+        // que ignoraba el bloqueo de aleatorio de S050, cualquier otro
+        // que pudiera aparecer) puede saltárselo. Ver el kdoc completo
+        // de `currentQueueIsPlaylist`.
+        if (currentQueueIsPlaylist) {
+            RadioDebugLogger.log(
+                appContext, storageManager,
+                "topUpRadioQueueIfNeeded() -- ANULADO: la cola actual es una lista de " +
+                    "reproducción, la Radio no continúa nada aquí",
+            )
+            return
+        }
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
         if (isRadioTopUpRunning) return
         // H15 (miMooutCast), S032 -- ver el kdoc de `clearQueue(stayStopped)`.
@@ -5349,8 +5387,18 @@ class PlayerManager @Inject constructor(
         }
     }
 
-    fun playQueue(items: List<QueueItem>, startIndex: Int = 0) {
+    /**
+     * S086 -- `isPlaylist = true` SOLO desde
+     * `PlaylistRepository.playPlaylistById()` -- ver el kdoc completo
+     * de `currentQueueIsPlaylist`. Por defecto `false`: cualquier otro
+     * llamante existente (álbum, artista, favoritos...) sigue
+     * limpiando el estado de "estoy reproduciendo una lista" de una
+     * sesión anterior sin tener que tocar ni una línea de su propia
+     * llamada.
+     */
+    fun playQueue(items: List<QueueItem>, startIndex: Int = 0, isPlaylist: Boolean = false) {
         if (items.isEmpty()) return
+        currentQueueIsPlaylist = isPlaylist
         // H15 (miMooutCast), S032 -- ver el kdoc de `initialSearchJob`.
         // Si esta llamada viene DEL PROPIO `startRadioFromManualAnchor()`
         // tras encontrar la primera pista, `initialSearchJob` ya está

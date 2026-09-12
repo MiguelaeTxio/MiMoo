@@ -273,7 +273,12 @@ class PlaylistRepository @Inject constructor(
             return PlaylistPlayResult(started = false, resolutionFailures = resolutionFailures)
         }
 
-        playerManager.playQueue(listOf(firstItem))
+        // S086 -- petición explícita de Miguel Ángel: "la radio la
+        // vamos a anular cuando se reproduce una lista. Anulada por
+        // completo." isPlaylist=true es lo único que dispara ese
+        // bloqueo total en topUpRadioQueueIfNeeded() -- ver su kdoc
+        // completo junto a PlayerManager.currentQueueIsPlaylist.
+        playerManager.playQueue(listOf(firstItem), isPlaylist = true)
 
         val remaining = orderedTracks.subList(firstIndex + 1, orderedTracks.size)
         if (remaining.isNotEmpty()) {
