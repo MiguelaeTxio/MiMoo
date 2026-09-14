@@ -5797,7 +5797,25 @@ class PlayerManager @Inject constructor(
 
     fun pause() = player.pause()
 
-    fun resume() = player.play()
+    /**
+     * S088 -- bug real reportado por Miguel Ángel: "cuando me quedo
+     * sin cobertura el tema que llega a cortarse se queda que no me
+     * deja pasar al siguiente y ni siquiera reanudarlo." Causa real:
+     * `resume()` llamaba a `player.play()` a secas. Cuando un error de
+     * reproducción real (p.ej. la pista en streaming se corta por
+     * falta de red) mete al player en `Player.STATE_IDLE`, Media3
+     * exige `prepare()` antes de que `play()` haga absolutamente nada
+     * -- sin eso, tocar "reanudar" no tenía ningún efecto, dejando el
+     * reproductor completamente bloqueado hasta cerrar y reabrir la
+     * app. Mismo arreglo defensivo que ya se aplicó en S010 para el
+     * botón "Siguiente" (ver el kdoc de `topUpRadioQueueIfNeeded()`) --
+     * `prepare()` es seguro de llamar aunque el player ya esté
+     * preparado, no reinicia nada si no hace falta.
+     */
+    fun resume() {
+        player.prepare()
+        player.play()
+    }
 
     /**
      * Cíclico: al llegar al final de la cola, vuelve a empezar por la
