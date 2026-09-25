@@ -512,15 +512,6 @@ class PlayerManager @Inject constructor(
         )
         .build()
 
-    /**
-     * Nivelación de audio en tiempo real (Opción A cerrada con Miguel
-     * Ángel, 2026-08-23) -- ver AudioNormalizer.kt para el detalle
-     * completo. Se engancha/reengancha en cuanto ExoPlayer notifica su
-     * audioSessionId real (init{}, más abajo) y se libera en
-     * release().
-     */
-    private val audioNormalizer = AudioNormalizer()
-
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
 
@@ -595,23 +586,16 @@ class PlayerManager @Inject constructor(
     private var pausedByCallState = false
 
     init {
-        // Nivelación de audio (2026-08-23) -- Media3 1.10.1 ya no
-        // ofrece el audioSessionId real de forma inmediata al crear el
-        // player (ver release notes de Media3); se engancha el efecto
-        // en cuanto AnalyticsListener lo notifica, y se reengancha si
-        // cambia (p.ej. tras un error de audio que fuerza un nuevo
-        // AudioTrack). Ver AudioNormalizer.kt. S048 -- el refuerzo de
-        // volumen configurable que vivía aquí (LoudnessEnhancer) se ha
-        // eliminado por completo, decisión explícita de Miguel Ángel
-        // tras persistir el bug en dispositivo real.
-        player.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
-            override fun onAudioSessionIdChanged(
-                eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
-                audioSessionId: Int,
-            ) {
-                audioNormalizer.attach(audioSessionId)
-            }
-        })
+        // S037 -- petición explícita de Miguel Ángel: la nivelación de
+        // audio en tiempo real (Opción A de 2026-08-23, DynamicsProcessing
+        // en AudioNormalizer.kt, ya eliminado) se ha quitado por
+        // completo. En la práctica el compresor de banda ancha subía
+        // el volumen en los valles de UN MISMO tema -- "cargándose los
+        // temas" -- sin conseguir que sonaran todos al mismo volumen
+        // entre sí, que era el objetivo real (eso exigiría analizar y
+        // guardar la ganancia de cada pista por adelantado, la Opción B
+        // ya descartada en su día). Mejor dejar que cada tema conserve
+        // sus propios altibajos de volumen.
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 // Bug real reportado por Miguel Ángel (2026-08-24):
@@ -6084,7 +6068,6 @@ class PlayerManager @Inject constructor(
 
     fun release() {
         managerScope.cancel()
-        audioNormalizer.release()
         try {
             telephonyCallStateListener?.let { listener ->
                 val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)

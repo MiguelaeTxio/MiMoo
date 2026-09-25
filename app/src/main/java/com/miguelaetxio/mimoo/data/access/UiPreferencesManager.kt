@@ -99,11 +99,15 @@ class UiPreferencesManager @Inject constructor(
         // configurable aquí) se ha eliminado por completo, decisión
         // explícita de Miguel Ángel: el bug real (no aplicaba a tope
         // hasta tocar el control) persistía en dispositivo real
-        // incluso tras el intento de arreglo de esta misma sesión. Ver
-        // AudioNormalizer.kt. Se deja el nombre de la clave antigua
-        // fuera del código -- SharedPreferences puede seguir teniendo
-        // el valor guardado de sesiones previas, pero ya no lo lee
-        // nadie.
+        // incluso tras el intento de arreglo de esta misma sesión. Se
+        // deja el nombre de la clave antigua fuera del código --
+        // SharedPreferences puede seguir teniendo el valor guardado de
+        // sesiones previas, pero ya no lo lee nadie.
+        // S037 -- la nivelación de audio en tiempo real que sustituyó
+        // al refuerzo (AudioNormalizer.kt, DynamicsProcessing) también
+        // se ha quitado por completo, misma decisión de Miguel Ángel:
+        // en la práctica subía el volumen en los valles de un mismo
+        // tema sin igualar el volumen entre temas distintos.
     }
 
     private val prefs by lazy {
