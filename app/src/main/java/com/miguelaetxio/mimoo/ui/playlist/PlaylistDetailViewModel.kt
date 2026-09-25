@@ -1,14 +1,17 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
 import android.app.Activity
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
 import com.miguelaetxio.mimoo.data.backup.MutationOutcome
 import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
+import com.miguelaetxio.mimoo.data.local.repository.PlaylistTrackInput
 import com.miguelaetxio.mimoo.data.playback.PlayerManager
 import com.miguelaetxio.mimoo.data.playback.StreamResolver
+import com.miguelaetxio.mimoo.util.SearchNormalizer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +25,13 @@ data class PlaylistDetailUiState(
     val resolveError: String? = null,
     // H07 PARTE 1 -- aviso cuando quitar una pista se rechaza por falta de conexión.
     val syncBlockedMessage: String? = null,
+    // S037 (H04) -- edit mode, always active on entering the list.
+    // ---
+    // S037 (H04) -- edición, activa siempre al entrar en la lista.
+    val filterQuery: String = "",
+    val visibleTracks: List<SearchResultTrack> = emptyList(),
+    val selectedIds: Set<String> = emptySet(),
+    val playError: String? = null,
 )
 
 /**
@@ -81,7 +91,13 @@ class PlaylistDetailViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             repository.getTracksForPlaylist(playlistId).collect { tracks ->
-                _uiState.value = _uiState.value.copy(tracks = tracks)
+                val current = _uiState.value
+                val ids = tracks.map { it.youtubeId }.toSet()
+                _uiState.value = current.copy(
+                    tracks = tracks,
+                    visibleTracks = applyFilter(tracks, current.filterQuery),
+                    selectedIds = current.selectedIds.intersect(ids),
+                )
             }
         }
     }
@@ -97,6 +113,112 @@ class PlaylistDetailViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * S037 (H04) -- text filter over the list. Matches when the query
+     * appears in the file name or in any metadata of the track (title,
+     * artist, album), accent/case/punctuation-insensitive via
+     * SearchNormalizer. Channel names are never used (binding rule:
+     * `channelTitle` is ignored everywhere). Explicit request from
+     * Miguel Ángel: "si busco loquillo me presenta una lista con todos
+     * los temas donde aparece loquillo en el nombre del archivo o en
+     * cualquier metadato".
+     * ---
+     * S037 (H04) -- filtro de texto sobre la lista. Coincide si el texto
+     * aparece en el nombre del archivo o en cualquier metadato de la
+     * pista (título, artista, álbum), sin distinguir acentos,
+     * mayúsculas ni puntuación (SearchNormalizer). Nunca usa el nombre
+     * del canal (regla vinculante: `channelTitle` se ignora en todo).
+     */
+    fun onFilterChanged(query: String) {
+        _uiState.value = _uiState.value.copy(
+            filterQuery = query,
+            visibleTracks = applyFilter(_uiState.value.tracks, query),
+        )
+    }
+
+    private fun applyFilter(tracks: List<SearchResultTrack>, query: String): List<SearchResultTrack> {
+        val needle = SearchNormalizer.normalize(query)
+        if (needle.isEmpty()) return tracks
+        return tracks.filter { track ->
+            val fileName = track.filePath?.let { Uri.decode(it).substringAfterLast('/') }
+            listOfNotNull(track.title, track.artist, track.album, fileName)
+                .any { SearchNormalizer.normalize(it).contains(needle) }
+        }
+    }
+
+    /**
+     * S037 (H04) -- checkbox selection of one row.
+     * ---
+     * S037 (H04) -- selección por casillero de una fila.
+     */
+    fun toggleSelection(youtubeId: String) {
+        val current = _uiState.value.selectedIds
+        _uiState.value = _uiState.value.copy(
+            selectedIds = if (youtubeId in current) current - youtubeId else current + youtubeId,
+        )
+    }
+
+    /**
+     * S037 (H04) -- removes every selected track from THIS list only
+     * (the downloaded file stays in the library), in one connectivity
+     * check, same H07 rule as the single remove.
+     * ---
+     * S037 (H04) -- quita todas las pistas seleccionadas SOLO de esta
+     * lista (el archivo descargado sigue en la biblioteca), con una
+     * única comprobación de conexión, misma regla H07 que el borrado
+     * individual.
+     */
+    fun removeSelected(activity: Activity) {
+        val ids = _uiState.value.selectedIds
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            val outcome = autoSyncPusher.executeIfConnected(activity) {
+                ids.forEach { repository.removeTrackFromPlaylist(playlistId, it) }
+            }
+            if (outcome is MutationOutcome.NoConnection) {
+                _uiState.value = _uiState.value.copy(
+                    syncBlockedMessage = "Sin conexión: no se pueden quitar las pistas ahora mismo."
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(selectedIds = emptySet())
+            }
+        }
+    }
+
+    /**
+     * S037 (H04) -- selected tracks in list order, as input for the
+     * shared AddToPlaylistDialog ("Copiar en").
+     * ---
+     * S037 (H04) -- pistas seleccionadas en el orden de la lista, como
+     * entrada del diálogo compartido AddToPlaylistDialog ("Copiar en").
+     */
+    fun selectedTrackInputs(): List<PlaylistTrackInput> {
+        val ids = _uiState.value.selectedIds
+        return _uiState.value.tracks
+            .filter { it.youtubeId in ids }
+            .map { PlaylistTrackInput(youtubeId = it.youtubeId, title = it.title, artist = it.artist) }
+    }
+
+    /**
+     * S037 (H04) -- per-row play: plays that track on its own.
+     * ---
+     * S037 (H04) -- play por fila: reproduce ese tema por sí solo.
+     */
+    fun playTrack(track: SearchResultTrack) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isResolving = true, playError = null)
+            val started = repository.playSingleTrack(track, playerManager, streamResolver)
+            _uiState.value = _uiState.value.copy(
+                isResolving = false,
+                playError = if (started) null else "No se pudo reproducir \"${track.title}\".",
+            )
+        }
+    }
+
+    fun dismissPlayError() {
+        _uiState.value = _uiState.value.copy(playError = null)
     }
 
     /** Descarta el aviso de mutación bloqueada por falta de conexión (H07 PARTE 1). */

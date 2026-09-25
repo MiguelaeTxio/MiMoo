@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -31,6 +32,10 @@ fun PlaylistDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val activity = LocalContext.current as Activity
     val snackbarHostState = remember { SnackbarHostState() }
+    // S037 (H04) -- "Copiar en" dialog for the selected tracks.
+    // ---
+    // S037 (H04) -- diálogo "Copiar en" para las pistas seleccionadas.
+    var showCopyDialog by remember { mutableStateOf(false) }
 
     // H07 PARTE 1 -- aviso cuando quitar una pista se rechaza por falta de conexión.
     LaunchedEffect(uiState.syncBlockedMessage) {
@@ -131,9 +136,63 @@ fun PlaylistDetailScreen(
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // S037 (H04) -- the list is editable as soon as it opens
+            // (Miguel Ángel: "se activa al entrar en la lista"): text
+            // filter, checkbox selection, and a bar with "Copiar en" /
+            // "Eliminar" while something is selected.
+            // ---
+            // S037 (H04) -- la lista es editable nada más abrirse
+            // (Miguel Ángel: "se activa al entrar en la lista"): filtro
+            // de texto, selección por casilleros y una barra con
+            // "Copiar en" / "Eliminar" mientras haya algo seleccionado.
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            OutlinedTextField(
+                value = uiState.filterQuery,
+                onValueChange = viewModel::onFilterChanged,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                placeholder = { Text("Filtrar por nombre de archivo o metadatos") },
+            )
+            if (uiState.selectedIds.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .glassChip(interactive = false)
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "${uiState.selectedIds.size} seleccionada(s)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = { showCopyDialog = true }) {
+                        Text("Copiar en")
+                    }
+                    TextButton(onClick = { viewModel.removeSelected(activity) }) {
+                        Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+            if (uiState.visibleTracks.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "Ningún tema coincide con el filtro.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 itemsIndexed(
-                    uiState.tracks,
+                    uiState.visibleTracks,
                     // S072 -- bug real reportado por Miguel Ángel:
                     // IllegalArgumentException "Key ... was already
                     // used" al desplazar una lista. Causa real: desde
@@ -146,18 +205,50 @@ fun PlaylistDetailScreen(
                     // para que cada FILA sea única, aunque el tema se
                     // repita.
                     key = { index, track -> "${track.youtubeId}_$index" },
-                ) { index, track ->
+                ) { _, track ->
+                    // S037 -- with the filter on, the row's position in
+                    // the FULL list is what reordering must use.
+                    // ---
+                    // S037 -- con el filtro activo, reordenar debe usar
+                    // la posición de la fila en la lista COMPLETA.
+                    val fullIndex = uiState.tracks.indexOfFirst { it.youtubeId == track.youtubeId }
                     PlaylistDetailTrackRow(
                         track = track,
-                        isFirst = index == 0,
-                        isLast = index == uiState.tracks.lastIndex,
-                        onMoveUp = { viewModel.moveTrack(index, -1) },
-                        onMoveDown = { viewModel.moveTrack(index, 1) },
+                        isSelected = track.youtubeId in uiState.selectedIds,
+                        isFirst = fullIndex == 0,
+                        isLast = fullIndex == uiState.tracks.lastIndex,
+                        onToggleSelected = { viewModel.toggleSelection(track.youtubeId) },
+                        onPlay = { viewModel.playTrack(track) },
+                        onMoveUp = { viewModel.moveTrack(fullIndex, -1) },
+                        onMoveDown = { viewModel.moveTrack(fullIndex, 1) },
                         onRemove = { viewModel.removeTrack(activity, track.youtubeId) },
                     )
                 }
             }
+            }
         }
+    }
+
+    if (showCopyDialog) {
+        val selected = viewModel.selectedTrackInputs()
+        AddToPlaylistDialog(
+            tracks = selected,
+            onDismiss = { showCopyDialog = false },
+            titleOverride = if (selected.size > 1) "Copiar ${selected.size} pistas en" else "Copiar en",
+        )
+    }
+
+    uiState.playError?.let { message ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissPlayError,
+            title = { Text("No se pudo reproducir") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissPlayError) {
+                    Text("Entendido")
+                }
+            },
+        )
     }
 
     uiState.resolveError?.let { message ->
@@ -177,8 +268,11 @@ fun PlaylistDetailScreen(
 @Composable
 private fun PlaylistDetailTrackRow(
     track: SearchResultTrack,
+    isSelected: Boolean,
     isFirst: Boolean,
     isLast: Boolean,
+    onToggleSelected: () -> Unit,
+    onPlay: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onRemove: () -> Unit,
@@ -191,6 +285,7 @@ private fun PlaylistDetailTrackRow(
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Checkbox(checked = isSelected, onCheckedChange = { onToggleSelected() })
         Column {
             IconButton(onClick = onMoveUp, enabled = !isFirst) {
                 Icon(
@@ -207,11 +302,18 @@ private fun PlaylistDetailTrackRow(
         }
         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
             Text(track.title, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                track.artist ?: track.channelTitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            // S037 -- no channelTitle fallback: binding rule, channel
+            // names never appear in any display.
+            // ---
+            // S037 -- sin respaldo en channelTitle: regla vinculante, el
+            // nombre del canal no aparece en ninguna vista.
+            track.artist?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (track.filePath == null) {
                 Text(
                     "Sin descargar — se reproducirá en streaming",
@@ -219,6 +321,12 @@ private fun PlaylistDetailTrackRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        IconButton(onClick = onPlay) {
+            Icon(
+                Icons.Filled.PlayArrow,
+                contentDescription = "Reproducir este tema",
+            )
         }
         IconButton(onClick = onRemove) {
             Icon(

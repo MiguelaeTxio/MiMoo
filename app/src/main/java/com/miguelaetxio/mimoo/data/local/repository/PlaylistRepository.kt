@@ -315,6 +315,31 @@ class PlaylistRepository @Inject constructor(
         return PlaylistPlayResult(started = true, resolutionFailures = resolutionFailures)
     }
 
+    /**
+     * S037 (H04) -- plays ONE track of a playlist on its own (per-row
+     * play button in the playlist detail, explicit request from Miguel
+     * Ángel: "escuchar un tema determinado de forma singular"). Reuses
+     * resolveTrackToQueueItem() so local vs streaming is decided exactly
+     * as when playing the whole list. Returns false if the track could
+     * not be resolved.
+     * ---
+     * S037 (H04) -- reproduce UNA pista de una lista por sí sola (botón
+     * de play por fila del detalle de lista, petición explícita de
+     * Miguel Ángel: "escuchar un tema determinado de forma singular").
+     * Reutiliza resolveTrackToQueueItem() para decidir local o streaming
+     * exactamente igual que al reproducir la lista entera. Devuelve
+     * false si la pista no se pudo resolver.
+     */
+    suspend fun playSingleTrack(
+        track: SearchResultTrack,
+        playerManager: PlayerManager,
+        streamResolver: StreamResolver,
+    ): Boolean {
+        val item = resolveTrackToQueueItem(track, playerManager, streamResolver) ?: return false
+        playerManager.playQueue(listOf(item))
+        return true
+    }
+
     /** S062 -- decide local-vs-streaming para UNA pista; extraído de playPlaylistById() para poder resolver pista a pista en vez de la lista entera de golpe. */
     private suspend fun resolveTrackToQueueItem(
         track: SearchResultTrack,

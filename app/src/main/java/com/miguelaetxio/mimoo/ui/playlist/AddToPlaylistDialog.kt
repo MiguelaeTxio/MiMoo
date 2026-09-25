@@ -49,11 +49,17 @@ fun AddToPlaylistDialog(
     tracks: List<PlaylistTrackInput>,
     onDismiss: () -> Unit,
     viewModel: AddToPlaylistDialogViewModel = hiltViewModel(),
+    // S037 (H04) -- optional title override: the playlist detail opens
+    // this same dialog as "Copiar en" (Miguel Ángel's own label).
+    // ---
+    // S037 (H04) -- título opcional: el detalle de lista abre este mismo
+    // diálogo como "Copiar en" (etiqueta elegida por Miguel Ángel).
+    titleOverride: String? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val activity = LocalContext.current as Activity
     var newPlaylistName by remember { mutableStateOf("") }
-    val title = if (tracks.size > 1) {
+    val title = titleOverride ?: if (tracks.size > 1) {
         "Añadir ${tracks.size} pistas a lista"
     } else {
         "Añadir a lista"
