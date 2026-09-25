@@ -46,6 +46,8 @@ sealed class BackupUiState {
     /** Backups disponibles en Drive, listados tras pulsar "Importar" -- la UI muestra esta lista para elegir uno. */
     data class BackupsListed(val backups: List<DriveBackupFile>) : BackupUiState()
     data class ImportSuccess(val trackCount: Int) : BackupUiState()
+    /** S037 -- debug logs uploaded to "MiMoo - Intercambio Claude". */
+    data class LogsUploaded(val fileCount: Int) : BackupUiState()
     data class Error(val message: String) : BackupUiState()
 }
 
@@ -107,6 +109,8 @@ class SettingsViewModel @Inject constructor(
     private val mimooutcastDecadeDatabaseBuilder: com.miguelaetxio.mimoo.data.playback.MimooutcastDecadeDatabaseBuilder,
     // S034 -- registro de enlaces rotos de la semilla bundleada, ver su kdoc completo.
     private val mimooutcastBrokenLinksLogger: com.miguelaetxio.mimoo.data.playback.MimooutcastBrokenLinksLogger,
+    // S037 -- "Subir logs a Drive", see DebugLogCollector kdoc.
+    private val debugLogCollector: com.miguelaetxio.mimoo.data.backup.DebugLogCollector,
 ) : ViewModel() {
 
     // -----------------------------------------------------------------
@@ -691,12 +695,19 @@ class SettingsViewModel @Inject constructor(
         object Export : PendingAction()
         object ListBackups : PendingAction()
         data class ImportBackup(val backup: DriveBackupFile) : PendingAction()
+        object UploadLogs : PendingAction()
     }
 
     private var pendingAction: PendingAction? = null
 
     fun onExportClicked(activity: Activity) {
         pendingAction = PendingAction.Export
+        beginAuthorization(activity)
+    }
+
+    /** S037 -- uploads every diagnostic log to Drive for Claude to read. */
+    fun onUploadLogsClicked(activity: Activity) {
+        pendingAction = PendingAction.UploadLogs
         beginAuthorization(activity)
     }
 
@@ -797,6 +808,7 @@ class SettingsViewModel @Inject constructor(
                 is PendingAction.Export -> exportNow(activity, accessToken)
                 is PendingAction.ListBackups -> listBackupsNow(activity, accessToken)
                 is PendingAction.ImportBackup -> importNow(activity, accessToken, action.backup)
+                is PendingAction.UploadLogs -> uploadLogsNow(activity, accessToken)
             }
             Log.d(TAG, "runPendingAction() -- $action terminado con éxito")
             BackupDebugLogger.log(activity, storageManager, "runPendingAction() -- $action terminado con éxito")
@@ -823,6 +835,15 @@ class SettingsViewModel @Inject constructor(
         Log.d(TAG, step3)
         BackupDebugLogger.log(activity, storageManager, step3)
         _uiState.value = BackupUiState.ExportSuccess(uploaded.name)
+    }
+
+    private suspend fun uploadLogsNow(activity: Activity, accessToken: String) {
+        val bundle = debugLogCollector.collect()
+        val step1 = "uploadLogsNow() -- ${bundle.files.size} archivos recogidos, ${bundle.missing.size} no encontrados. Subiendo a Drive..."
+        Log.d(TAG, step1)
+        BackupDebugLogger.log(activity, storageManager, step1)
+        driveRepository.uploadDebugLogs(accessToken, bundle.files)
+        _uiState.value = BackupUiState.LogsUploaded(bundle.files.size)
     }
 
     private suspend fun listBackupsNow(activity: Activity, accessToken: String) {

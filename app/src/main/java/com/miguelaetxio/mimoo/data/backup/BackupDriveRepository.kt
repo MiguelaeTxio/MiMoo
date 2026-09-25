@@ -33,6 +33,15 @@ private const val JSON_MEDIA_TYPE = "application/json; charset=utf-8"
 private const val SYNC_FOLDER_NAME = "MiMoo Sync"
 private const val SYNC_FILE_NAME = "mimoo_sync_state.json"
 
+/**
+ * S037 -- exchange folder shared with Claude (platform relay
+ * convention, com-actions-relay: "{PROJECT_ID} - Intercambio Claude").
+ * Debug logs are uploaded here with fixed names, overwritten in place.
+ */
+private const val EXCHANGE_FOLDER_NAME = "MiMoo - Intercambio Claude"
+private const val TEXT_MIME_TYPE = "text/plain"
+private const val TEXT_MEDIA_TYPE = "text/plain; charset=utf-8"
+
 /** Un backup listado desde Drive -- lo que PASO 4 (pantalla Importar) necesita mostrar. */
 data class DriveBackupFile(
     val id: String,
@@ -243,6 +252,45 @@ class BackupDriveRepository @Inject constructor(
         val folderId = ensureSyncFolder(accessToken)
         val existing = findSyncFile(accessToken, folderId) ?: return null
         return downloadBackupJson(accessToken, existing.id)
+    }
+
+    // ==================== S037 — Subida de logs de diagnóstico ====================
+
+    /** "MiMoo - Intercambio Claude" folder -- same pattern as ensureSyncFolder(). */
+    private suspend fun ensureExchangeFolder(accessToken: String): String {
+        val query = "mimeType = '$FOLDER_MIME_TYPE' and name = '$EXCHANGE_FOLDER_NAME' and trashed = false"
+        val existing = driveApi.listFiles(bearer(accessToken), query = query, fields = "files(id,name)")
+        existing.files.firstOrNull()?.let { return it.id }
+
+        val created = driveApi.createFileMetadata(
+            bearer(accessToken),
+            DriveFileCreateDto(name = EXCHANGE_FOLDER_NAME, mimeType = FOLDER_MIME_TYPE),
+        )
+        return created.id
+    }
+
+    /**
+     * Uploads every collected log to the exchange folder, in list
+     * order, overwriting each fixed-name file in place (same approach
+     * as pushSyncState()) so the folder always holds exactly the latest
+     * upload -- no timestamped copies piling up. The caller puts the
+     * manifest last, so it is written only after every log succeeded.
+     */
+    suspend fun uploadDebugLogs(accessToken: String, files: List<DebugLogFile>) {
+        val folderId = ensureExchangeFolder(accessToken)
+        files.forEach { file ->
+            val query = "'$folderId' in parents and name = '${file.name}' and trashed = false"
+            val existing = driveApi.listFiles(bearer(accessToken), query = query, fields = "files(id,name)")
+            val fileId = existing.files.firstOrNull()?.id ?: driveApi.createFileMetadata(
+                bearer(accessToken),
+                DriveFileCreateDto(name = file.name, parents = listOf(folderId), mimeType = TEXT_MIME_TYPE),
+            ).id
+            val body = file.content.toRequestBody(TEXT_MEDIA_TYPE.toMediaType())
+            driveUploadApi.uploadMediaContent(bearerToken = bearer(accessToken), fileId = fileId, content = body)
+            val msg = "uploadDebugLogs() -- '${file.name}' subido (id=$fileId, ${file.content.length} chars)"
+            Log.d(TAG, msg)
+            BackupDebugLogger.log(context, storageManager, msg)
+        }
     }
 
     private fun timestampForFileName(): String {

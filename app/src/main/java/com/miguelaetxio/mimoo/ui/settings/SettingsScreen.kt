@@ -222,6 +222,10 @@ fun SettingsScreen(
                 snackbarHostState.showSnackbar(
                     "Repositorio importado: ${state.trackCount} pistas puestas a descargar."
                 )
+            is BackupUiState.LogsUploaded ->
+                snackbarHostState.showSnackbar(
+                    "Logs subidos a Drive: ${state.fileCount} archivos"
+                )
             is BackupUiState.Error ->
                 snackbarHostState.showSnackbar("Error: ${state.message}")
             else -> Unit
@@ -826,6 +830,37 @@ fun SettingsScreen(
                             }
                         }
                     }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // S037 -- one-tap upload of every diagnostic log to the
+            // "MiMoo - Intercambio Claude" Drive folder, so Claude reads
+            // them directly instead of each .txt being shared by hand.
+            SettingsAccordionSection(
+                title = "Logs de diagnóstico",
+                expanded = expandedSection == "logs_diagnostico",
+                onToggle = {
+                    expandedSection = if (expandedSection == "logs_diagnostico") null else "logs_diagnostico"
+                },
+            ) {
+                Text(
+                    "Sube todos los logs de diagnóstico de la app a la carpeta " +
+                        "\"MiMoo - Intercambio Claude\" de tu Google Drive. Cada subida " +
+                        "sustituye a la anterior. Nunca sube tus cookies de YouTube.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { viewModel.onUploadLogsClicked(activity) },
+                    enabled = !isWorking,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Subir logs a Drive")
                 }
             }
 
