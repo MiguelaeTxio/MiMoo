@@ -152,3 +152,24 @@ Decisiones de Miguel Ángel en S037, palabras suyas:
 Suposición declarada en S037, pendiente de que Miguel Ángel la
 confirme o corrija: "eliminar" quita el tema de la lista y no borra el
 archivo descargado de la biblioteca.
+
+### Construido en S037 (commit `32ae04b`, build verde)
+
+- Filtro de texto sobre nombre de archivo y metadatos (título, artista,
+  álbum) con `SearchNormalizer`. Nunca usa `channelTitle`.
+- Casillero por fila y barra "N seleccionada(s)" con **"Copiar en"**
+  (reutiliza `AddToPlaylistDialog` con título propio y su regla S073:
+  si alguna pista ya está en la lista destino, avisa y no copia nada) y
+  **"Eliminar"** (quita solo de la lista; confirmado en el código que
+  `removeTrackFromPlaylist()` borra el cross-ref, no el archivo).
+- Botón de play por fila, siempre visible, que reproduce ese tema solo
+  (`PlaylistRepository.playSingleTrack()`).
+- Hecho del código que respalda el enfoque de Miguel Ángel: la clave
+  primaria de `PlaylistTrackCrossRef` es `(playlistId, youtubeId)`, así
+  que una lista nunca contiene el mismo `youtubeId` dos veces; los
+  "duplicados" reales son versiones distintas del mismo tema, que es
+  justo lo que el filtro de texto deja a la vista.
+- De paso: la fila dejaba ver `channelTitle` cuando faltaba el artista,
+  incumpliendo la regla vinculante del canal. Corregido.
+
+Pendiente: verificación en dispositivo real por Miguel Ángel.
