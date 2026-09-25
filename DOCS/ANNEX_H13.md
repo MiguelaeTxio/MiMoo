@@ -335,3 +335,33 @@ la misma pantalla:
 Punto técnico de partida: `PlayerManager` tiene `currentQueueIsPlaylist`
 (S036), pero no guarda el nombre ni el id de la lista o el álbum de
 origen de la cola actual. Hace falta añadir ese dato para mostrarlo.
+
+### Construido en S037 (commit `6360a2b`, build verde)
+
+**Corrección de lo anotado arriba en esta misma sesión:** el rediseño
+en dos filas + compartir que pedía la nota de cierre de S035 **ya
+estaba construido** (comentario `S048` de la serie de código en
+`PlayerBar.kt`): fila 1 con el transporte (aleatorio, anterior,
+play/pausa, siguiente, cíclico) y botón de contraer fijo; fila 2 con
+like/dislike/añadir a lista/descargar/compartir más el menú de tres
+puntos. La nota de `ANNEX_H12.md` estaba desfasada. No se ha tocado.
+
+Lo nuevo:
+
+1. **"Quitar de la cola"** en la fila 2, junto a "Añadir a lista" (su
+   grupo). Solo con más de un tema en cola, misma regla que
+   siguiente/aleatorio/cíclico. Reutiliza `PlayerManager.removeFromQueue()`,
+   el mismo de `QueueScreen`: sigue sonando el tema que ocupa su lugar.
+2. **Origen de lo que suena**, en el bloque de metadatos del
+   reproductor expandido (línea propia bajo el artista) y en la línea
+   de artista de la mini-barra (`artista · origen`), para que se vea
+   en todo momento:
+   - "Lista: {nombre}" al reproducir una lista: `QueueItem.originLabel`
+     fijado por pista en `PlaylistRepository.playPlaylistById()`.
+   - Si no, deducido de la propia pista: "Álbum: X" si tiene álbum,
+     "Sencillo" si no.
+   - Nada para emisoras en directo ni streams sin pista de biblioteca.
+   - Por pista y no por cola, para que siga siendo correcto aunque la
+     cola mezcle fuentes (la Radio añadiendo temas detrás de un sencillo).
+
+Pendiente: verificación en dispositivo real por Miguel Ángel.
