@@ -442,6 +442,19 @@ class PlayerBarViewModel @Inject constructor(
 
     fun playPrevious() = playerManager.playPrevious()
 
+    /**
+     * S037 (H13) -- removes the playing track from the running queue
+     * (explicit request from Miguel Ángel). Reuses
+     * PlayerManager.removeFromQueue(), the same one QueueScreen uses:
+     * playback continues with the track that takes its place.
+     * ---
+     * S037 (H13) -- quita de la cola en ejecución el tema que suena
+     * (petición explícita de Miguel Ángel). Reutiliza
+     * PlayerManager.removeFromQueue(), el mismo que usa QueueScreen:
+     * la reproducción sigue con el tema que ocupa su lugar.
+     */
+    fun removeCurrentFromQueue() = playerManager.removeFromQueue(state.value.queueIndex)
+
     /** H07 PARTE 3. */
     fun toggleRepeat() = playerManager.toggleRepeatMode()
 

@@ -256,12 +256,20 @@ class PlaylistRepository @Inject constructor(
         }
         if (filteredTracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
         val orderedTracks = if (shuffle) filteredTracks.shuffled() else filteredTracks
+        // S037 (H13) -- every item of this queue carries the list name,
+        // shown by the player (QueueItem.originLabel).
+        // ---
+        // S037 (H13) -- cada pista de esta cola lleva el nombre de la
+        // lista, que muestra el reproductor (QueueItem.originLabel).
+        val originLabel = dao.getAllPlaylistsOnce().firstOrNull { it.id == playlistId }
+            ?.let { "Lista: ${it.name}" }
 
         var resolutionFailures = 0
         var firstItem: QueueItem? = null
         var firstIndex = -1
         for ((index, track) in orderedTracks.withIndex()) {
             val item = resolveTrackToQueueItem(track, playerManager, streamResolver)
+                ?.copy(originLabel = originLabel)
             if (item != null) {
                 firstItem = item
                 firstIndex = index
@@ -301,6 +309,7 @@ class PlaylistRepository @Inject constructor(
                 // en vez de parecer atascada en un solo tema.
                 remaining.forEach { track ->
                     val item = resolveTrackToQueueItem(track, playerManager, streamResolver)
+                        ?.copy(originLabel = originLabel)
                     if (item != null) {
                         withContext(Dispatchers.Main) { playerManager.addToQueue(listOf(item)) }
                     }

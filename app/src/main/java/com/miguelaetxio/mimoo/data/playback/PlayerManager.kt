@@ -209,6 +209,25 @@ data class QueueItem(
      * con la URL caducada) y el refresco también falla.
      */
     val refreshAttempted: Boolean = false,
+    /**
+     * S037 (H13) -- explicit origin shown in the player ("Lista:
+     * {name}"), set per item so the label stays right even when the
+     * queue mixes sources (Radio appending after a single, etc.). Only
+     * playlist playback sets it today; null means the UI derives the
+     * origin from the track itself (album -> "Álbum: X", otherwise
+     * "Sencillo"). Explicit request from Miguel Ángel: "el nombre de la
+     * lista que se está ejecutando debe aparecer en algún sitio para
+     * que en todo momento se sepa qué está sonando, a qué lista o álbum
+     * o si es un sencillo".
+     * ---
+     * S037 (H13) -- origen explícito que muestra el reproductor
+     * ("Lista: {nombre}"), por pista, para que la etiqueta siga siendo
+     * correcta aunque la cola mezcle fuentes (la Radio añadiendo detrás
+     * de un sencillo, etc.). Hoy solo lo fija la reproducción de listas;
+     * null significa que la UI deduce el origen de la propia pista
+     * (álbum -> "Álbum: X", si no "Sencillo").
+     */
+    val originLabel: String? = null,
 )
 
 data class PlaybackState(
@@ -236,6 +255,12 @@ data class PlaybackState(
      * karaoke.
      */
     val currentIsRadioStation: Boolean = false,
+    /**
+     * S037 (H13) -- `QueueItem.originLabel` of the current track.
+     * ---
+     * S037 (H13) -- `QueueItem.originLabel` de la pista actual.
+     */
+    val currentOriginLabel: String? = null,
     val positionMs: Long = 0L,
     val durationMs: Long = 0L,
     val isLocal: Boolean = false,
@@ -4131,6 +4156,7 @@ class PlayerManager @Inject constructor(
             currentArtist = item?.artist,
             currentChannelTitle = item?.channelTitle,
             currentIsRadioStation = item?.isRadioStation ?: false,
+            currentOriginLabel = item?.originLabel,
             isLocal = item?.isLocal ?: false,
             queueIndex = if (queueItems.isEmpty()) -1 else index,
             queueSize = queueItems.size,

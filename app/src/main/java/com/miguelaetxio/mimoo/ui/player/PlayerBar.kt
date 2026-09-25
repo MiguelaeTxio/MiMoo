@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.PlaylistRemove
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shuffle
@@ -387,11 +388,30 @@ fun PlayerBar(
     // en las pieles con textura, en vez de `colorScheme.background`
     // (transparente a propósito, para dejar ver la foto real). Sin
     // cambio visual en MSX (mismo azul en los dos).
+    // S037 (H13) -- origin label: explicit one from the queue item
+    // (playlists), otherwise derived from the track itself -- album ->
+    // "Álbum: X", else "Sencillo". Nothing for live radio stations or
+    // streams without a library track behind them.
+    // ---
+    // S037 (H13) -- etiqueta de origen: la explícita de la pista de la
+    // cola (listas) o, si no, la deducida de la propia pista -- álbum ->
+    // "Álbum: X", si no "Sencillo". Nada para emisoras en directo ni
+    // streams sin pista de biblioteca detrás.
+    val originLabel: String? = when {
+        state.currentIsRadioStation -> null
+        state.currentOriginLabel != null -> state.currentOriginLabel
+        state.currentYoutubeId == null -> null
+        menuAlbum != null -> "Álbum: $menuAlbum"
+        else -> "Sencillo"
+    }
     Surface(color = MaterialTheme.colorScheme.background, tonalElevation = 4.dp) {
         if (!isExpanded) {
             PlayerBarCollapsed(
                 title = title,
-                artist = state.currentArtist,
+                artist = listOfNotNull(
+                    state.currentArtist?.takeIf { it.isNotBlank() },
+                    originLabel,
+                ).joinToString(" · ").ifEmpty { null },
                 coverArtUrl = coverArtUrl,
                 isPlaying = state.isPlaying,
                 showDislikeButton = state.currentYoutubeId != null,
@@ -612,6 +632,24 @@ fun PlayerBar(
                     }
                 }
 
+                // S037 (H13) -- "quitar de la lista que se está
+                // ejecutando el tema correspondiente", in its group:
+                // next to "Añadir a lista". Only with more than one
+                // track queued, same rule as next/shuffle/repeat.
+                // ---
+                // S037 (H13) -- "quitar de la lista que se está
+                // ejecutando el tema correspondiente", en su grupo:
+                // junto a "Añadir a lista". Solo con más de un tema en
+                // cola, misma regla que siguiente/aleatorio/cíclico.
+                if (state.queueSize > 1) {
+                    GlassIconButton(onClick = viewModel::removeCurrentFromQueue) {
+                        Icon(
+                            Icons.Filled.PlaylistRemove,
+                            contentDescription = "Quitar de la cola",
+                        )
+                    }
+                }
+
                 // S011 -- botón de descarga (petición explícita de
                 // Miguel Ángel, junto con el de la notificación -- ver
                 // MiMooPlaybackService para el límite real de huecos
@@ -809,6 +847,19 @@ fun PlayerBar(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    // S037 (H13) -- origin of what is playing.
+                    // ---
+                    // S037 (H13) -- origen de lo que suena.
+                    if (originLabel != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = originLabel,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
