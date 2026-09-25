@@ -3280,6 +3280,45 @@ cualquier pista nueva como candidata a sembrar una sesión de Radio,
 (`220b7c8`, solo Android 10+). Un build roto por un `--` dentro de un
 comentario XML, corregido en el commit siguiente (`a1229df`).
 
+## COMPLETADAS EN S036 (durante la sesión de H12 EN PROGRESO -- mantenimiento transversal, sin PCH)
+
+Hito PAUSADO desde S028, sin retomar su hoja de ruta pendiente (ver
+más abajo, intacta) -- dos bugs reales encontrados y corregidos por el
+camino durante una sesión centrada en sincronización/descargas. Se
+documenta aquí por indicación explícita de Miguel Ángel al cierre
+("todo lo que se ha hecho se fija en su hito correspondiente").
+
+**Radio anulada por completo al reproducir una lista (S085, S086):**
+bug real reportado por Miguel Ángel -- una lista con temas en
+streaming (`artist="Various Artists"`) se quedaba sin continuación de
+Radio al terminar, incluso en modo aleatorio (donde debía estar
+bloqueada desde S050). Causa raíz encontrada en dos capas:
+1. `RadioRepository.resolveAnchor()` rechaza correctamente un artista
+   placeholder sin llamar a la red, pero no reseteaba
+   `lastFailureWasTransient` -- se quedaba con el valor de la ÚLTIMA
+   llamada real (un fallo de red genuino, minutos antes), y
+   `resolveAnchorWithFallbacks()` (regla de S024: "un fallo de red no
+   autoriza a bajar de peldaño") lo interpretaba como fallo de red y
+   decidía reintentar en vez de probar el siguiente método. Corregido
+   reseteando la bandera explícitamente en ese rechazo.
+2. Encontrado además que el bloqueo de aleatorio de S050 tenía un
+   resquicio real: el disparo anticipado saltaba ese bloqueo por
+   completo si `currentItem?.isFromRadio == true`. En vez de perseguir
+   cada resquicio, decisión final de Miguel Ángel: "la radio la vamos
+   a anular cuando se reproduce una lista. Anulada por completo."
+   Nuevo `PlayerManager.currentQueueIsPlaylist` -- `true` solo desde
+   `playQueue(..., isPlaylist = true)` (usado en exclusiva por
+   `PlaylistRepository.playPlaylistById()`), comprobado antes que
+   cualquier otra condición en `topUpRadioQueueIfNeeded()`.
+
+**Crash real de playlist duplicada en resultados de búsqueda (S084):**
+`IllegalArgumentException` ("Key 'playlist-X' was already used") --
+YouTube puede devolver la misma playlist/canal repetida dentro de los
+mismos resultados. A diferencia de una pista repetida dentro de una
+lista (donde puede ser legítimo), aquí nunca lo es. Corregido
+deduplicando por `id` (`.distinctBy { it.id }`) en
+`UnifiedSearchViewModel.searchType()` y `ExplorerViewModel.searchType()`.
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H08
 
 ### 1. Favoritos -- funcionalidad dispersa, sin estructurar. Orden textual de Miguel Ángel para empezar la próxima sesión

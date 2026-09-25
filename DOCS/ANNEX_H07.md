@@ -587,24 +587,106 @@ que sí lleva su gemelo de Sencillos. Corregido (commit `661d7b5`,
 verificado en build verde) -- no forma parte del alcance de H07, se
 deja anotado aquí solo por trazabilidad de la sesión.
 
+## COMPLETADAS EN S036 (durante la sesión de H12 EN PROGRESO -- mantenimiento transversal, sin PCH)
+
+Sesión larga y transversal (H12 se mantuvo EN PROGRESO todo el rato --
+nada de esta sesión tocó H12; se documenta aquí por indicación
+explícita de Miguel Ángel al cierre: "todo lo que se ha hecho se fija
+en su hito correspondiente"). Arrancó investigando una pérdida real de
+~1300 pistas y evolucionó en un rediseño completo de la sincronización
+automática y varios bugs reales de descarga/reproducción encontrados
+por el camino. Numeración `S0XX` de los comentarios de código real
+en cada commit -- referenciada aquí tal cual, sin renumerar.
+
+**Investigación de la pérdida real de datos (S067):** confirmado con
+capturas de pantalla del explorador de archivos que los archivos de
+audio se habían borrado de verdad de la tarjeta SD, no solo la
+referencia en Room. Causa real encontrada en
+`LibraryReconciler.pruneEmptyFolders()`: comprobaba
+`sub.exists() && sub.canRead()` antes de fiarse de
+`sub.listFiles().isEmpty()`, pero son llamadas SAF independientes -- un
+fallo puntual del proveedor podía dejar pasar las dos primeras y aun
+así hacer que `listFiles()` devolviera vacío por error, no porque la
+carpeta estuviera vacía de verdad. A diferencia de `verifyDiskState()`,
+esta función no tenía ningún límite de "esto es sospechosamente
+masivo, no toco nada". Corregido con doble comprobación real (dos
+lecturas con una espera entre medias) y un tope duro de 5 carpetas
+borradas por `rescan()`.
+
+**Rediseño completo de `AutoSyncUiState`/`AutoSyncViewModel` (S068,
+S079, S081):** el diseño de tres casos (S008/H07 PARTE 1 original,
+donde "mismo dispositivo desincronizado" restauraba desde Drive SIN
+PREGUNTAR) se sustituye por un único caso (`CountMismatch`) que
+SIEMPRE pregunta, sea el mismo dispositivo o no -- el caso silencioso
+era exactamente el que borró 69 temas sin avisar el 2026-09-07.
+S079 restituye en el diálogo qué dispositivo hizo la última copia de
+Drive (dato informativo que se había perdido al unificar). S081
+corrige un bug real y grave: el guardián que evita preguntar durante
+una descarga masiva en curso se saltaba la comparación con que
+hubiera UNA sola pista `QUEUED`/`DOWNLOADING` (`isNotEmpty()`, no un
+umbral) -- una sola fila atascada de sesiones anteriores bloqueaba la
+sincronización POR COMPLETO, en ambos sentidos, para siempre. Corregido
+con `ACTIVE_DOWNLOADS_SYNC_THRESHOLD = 5`.
+
+**`AutoSyncPusher` -- nunca sobrescribir Drive sin permiso (S069,
+S070, S075, S080, S082):** evolución en varios pasos hasta la regla
+final, corrección de diseño explícita de Miguel Ángel: "nunca debemos
+machacar la copia de Drive sin permiso, ni siquiera al añadir, eso es
+un error mío de diseño". `pushCurrentState()` ahora pide confirmación
+(`PushConfirmationState.PendingPushConfirm`, diálogo "¿Actualizar
+Drive?") ante CUALQUIER diferencia de recuento, suba o baje -- nunca
+se sobrescribe sola en ningún sentido. Se salta la comparación entera
+mientras haya una descarga masiva de verdad en curso (mismo umbral que
+S081). `DownloadQueueManager.cancelAllDownloads()` (S082, ampliado en
+S083 para incluir también las que ya habían fallado con `ERROR`, no
+solo `QUEUED`/`DOWNLOADING`) limpia las descargas en curso antes de
+aplicar una copia de Drive elegida por el usuario.
+
+**Diagnóstico manual de descargas sin archivo real (S071):** nueva
+sección en Ajustes ("Diagnóstico de descargas") -- función de solo
+lectura `LibraryReconciler.findTracksWithMissingFiles()` que lista con
+NOMBRE (no solo un número) las pistas marcadas `DONE` sin archivo real,
+con botón para volver a descargarlas todas sin tocar ninguna lista de
+reproducción.
+
+**Botón "Borrar todas" para descargas fallidas (S083):** junto a
+"Reintentar todas" en la sección "Con error" de Descargas, con modal
+de seguridad ("esto borrará definitivamente... no se podrá deshacer,
+continuar/cancelar") antes del borrado real e irreversible.
+
+**Bug real al (re)importar un enlace (S078):** `ImportLinkViewModel.
+importSelected()` reconstruía cada `SearchResultTrack` desde cero al
+importar, sin preservar `downloadStatus`/`filePath` -- si la pista ya
+estaba `DONE`, el `INSERT OR REPLACE` de `cacheSearchResults()` la
+dejaba en `PENDING` sin archivo (el archivo físico quedaba huérfano en
+disco), y el bucle de encolado la volvía a descargar sin comprobar
+nada. Corregido preservando el estado existente y saltando el
+reencolado de lo que ya está `DONE` con archivo real -- reimportar el
+enlace de una lista que perdió su `Playlist`/`PlaylistTrackCrossRef`
+(por el borrado/reconstrucción de listas del propio S067) ya es seguro:
+no vuelve a descargar nada que ya se tuviera.
+
+**`resume()` no reanudaba tras un error de red real (S088):**
+`PlayerManager.resume()` llamaba a `player.play()` a secas -- cuando
+un error real de reproducción (streaming cortado por falta de
+cobertura) mete al player en `Player.STATE_IDLE`, Media3 exige
+`prepare()` antes de que `play()` haga nada. Corregido con
+`prepare()` + `play()`, mismo patrón defensivo que ya llevaba el botón
+"Siguiente" desde S010.
+
 ## Hoja de Ruta para la Siguiente Sesión que retome H07
 
-1. **PASO 5 (verificación en dispositivo real)** -- único punto
-   técnico que queda abierto de la réplica total: con dos dispositivos
-   (teléfono + tablet), marcar favorito de radio, suscribirte a un
-   canal, y cambiar el ajuste de cristal en uno; sincronizar (abrir la
-   app) y confirmar que todo aparece en el otro sin duplicar ni perder
-   nada. Probar también el caso "sin conexión" (debe rechazar la
-   mutación con el aviso de Snackbar, no aplicarla en local).
-2. Confirmar de paso que el fix de `SocketTimeoutException` en el
-   diálogo de conflicto de sync (commit `4784c9d`, S011) sigue sin
-   reventar -- pendiente de confirmación explícita de Miguel Ángel
-   desde que se corrigió.
-3. Si aparece algún bug real de dispositivo, diagnosticar leyendo el
-   log real (`sync_debug.txt`/`BackupDebugLogger`) antes de suponer
-   causa -- mismo criterio que siempre.
+1. Verificación en dispositivo real de todo el rediseño de
+   sincronización de S036 (diálogo único de discrepancia, "¿Actualizar
+   Drive?" en ambos sentidos, umbral de 5 descargas activas, limpieza
+   de descargas al reconciliar) -- no se ha podido verificar nada de
+   esto en este entorno (sin dispositivo).
+2. Sigue pendiente el PASO 5 de S015 (verificación con dos
+   dispositivos reales) y la confirmación de S011 -- ver historial más
+   arriba, sin novedad esta sesión.
 
 ## Fuera de Alcance de Este Hito
+
 
 
 

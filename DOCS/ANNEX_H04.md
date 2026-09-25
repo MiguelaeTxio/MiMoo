@@ -63,6 +63,37 @@ fallaron.
 
 ---
 
+## Nota de sesión S036 (durante la sesión de H12 EN PROGRESO -- mantenimiento transversal, sin PCH)
+
+Se documenta aquí por indicación explícita de Miguel Ángel al cierre
+("todo lo que se ha hecho se fija en su hito correspondiente"), sin
+tocar el estado del hito (PASO 6 sigue pendiente, sin novedad al
+respecto esta sesión).
+
+**Crash real de clave duplicada (S072):** `IllegalArgumentException`
+al desplazar el detalle de una lista -- `PlaylistDetailScreen.kt` usa
+`itemsIndexed` pero la `key` solo usaba `track.youtubeId`, descartando
+el índice. Desde que se permite añadir el mismo tema dos veces a una
+lista (confirmación de duplicados), dos filas con el mismo tema
+acababan con la misma clave. Corregido incluyendo el índice en la key.
+
+**Simplificación del aviso de tema duplicado (S073):** petición
+explícita de Miguel Ángel ("no nos compliquemos la vida") -- el flujo
+"¿añadir de todas formas?" (con opción de forzar el añadido) se
+sustituye por un aviso puramente informativo de un solo botón, que
+además cierra los dos diálogos de golpe (el aviso Y el selector de
+listas de debajo) en vez de dejar el segundo abierto pidiendo un
+cierre aparte.
+
+**Bug real: la cola solo mostraba un tema de listas muy grandes
+(S087):** `PlaylistRepository.playPlaylistById()` resolvía TODAS las
+pistas restantes de la lista una detrás de otra (llamada de red por
+pista para las que están en streaming) y solo llamaba a `addToQueue()`
+UNA VEZ, con todas juntas, al terminar de resolverlas todas -- con una
+lista de cientos/miles de temas eso podía tardar minutos u horas antes
+de que apareciera nada más allá del primer tema. Corregido añadiendo
+cada pista a la cola en cuanto se resuelve, una a una.
+
 ## Estado
 
 **PASOS 1-5 completos.**
