@@ -57,6 +57,38 @@ puntos cerrados en S034. Hoja de ruta ejecutable completa en
 `DOCS/ANNEX_H12.md`, sección "Hoja de Ruta para la Siguiente Sesión
 que retome H12".
 
+## S037 -- las tres peticiones de arriba, cerradas
+
+Las tres peticiones de "EMPEZAR POR AQUÍ" se diseñaron y construyeron
+en S037, todas con build verde: comparativa de skills (aplicadas las
+seis, ver `com-actions-relay` §7 para el nuevo relevo dispositivo →
+Drive), edición de listas (`DOCS/ANNEX_H04.md`) y quitar de la cola +
+origen de lo que suena (`DOCS/ANNEX_H13.md`). Todas pendientes de
+verificación en dispositivo real, igual que lo que ya estaba pendiente
+de H12 desde S034.
+
+De paso, en S037 se corrigió también un bug real de compartir listas
+(las pistas en streaming desaparecían de la lista compartida) y se
+añadió el botón "Descargar lista entera" -- ver `DOCS/ANNEX_H10.md` y
+`DOCS/ANNEX_H04.md`.
+
+**Botón "Subir logs a Drive" (H10/relevo) verificado en uso real**: en
+la misma sesión S037, Miguel Ángel lo pulsó y el modelo leyó los 8
+archivos desde "MiMoo - Intercambio Claude" sin problema -- mecanismo
+confirmado, misma cuenta de Google en el móvil y en el conector del
+chat.
+
+**Crash real encontrado y corregido a partir de esos logs**
+(`crash_log.txt`): `ForegroundServiceStartNotAllowedException` al
+colgar una llamada con MiMoo en segundo plano --
+`handleTelephonyCallStateChanged()` reanuda con `player.play()`, y el
+propio `onIsPlayingChanged()` intentaba re-promocionar el servicio a
+primer plano; Android 12+ lo rechaza sin actividad visible en ese
+instante y tiraba abajo toda la app. Corregido con try/catch (mismo
+criterio que `onPhoneStatePermissionGranted()` de la misma clase).
+Commit `6cd186b`, build verde. **Pendiente de confirmar** que no
+vuelve a ocurrir con una llamada real y la app en segundo plano.
+
 ## Sesión larguísima y transversal en S036 (H07/H02/H04/H08 + varios)
 
 Mismo criterio que S033/S034/S035: incidencias reales sobre código de
