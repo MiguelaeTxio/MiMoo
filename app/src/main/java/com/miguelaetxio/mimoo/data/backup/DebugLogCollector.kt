@@ -16,10 +16,20 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** One diagnostic file read from the device, ready to upload. */
+/**
+ * One diagnostic file read from the device, ready to upload.
+ * ---
+ * Un archivo de diagnóstico leído del dispositivo, listo para subir.
+ */
 data class DebugLogFile(val name: String, val content: String)
 
-/** Result of a collection pass: files found (manifest last) and names not present on the device. */
+/**
+ * Result of a collection pass: files found (manifest last) and names
+ * not present on the device.
+ * ---
+ * Resultado de una recogida: archivos encontrados (el manifiesto el
+ * último) y nombres que no existen en el dispositivo.
+ */
 data class DebugLogBundle(val files: List<DebugLogFile>, val missing: List<String>)
 
 /**
@@ -38,6 +48,23 @@ data class DebugLogBundle(val files: List<DebugLogFile>, val missing: List<Strin
  * A manifest with the upload timestamp is appended LAST, so its
  * presence and time mark a completed upload: that is how Claude tells
  * a fresh upload from a stale one.
+ * ---
+ * S037 -- recoge todos los logs de diagnóstico que escribe la app
+ * para subirlos de un toque a la carpeta de Drive "MiMoo - Intercambio
+ * Claude" (convención de relevo de la plataforma, com-actions-relay).
+ * Miguel Ángel pulsa el botón y dice "listo"; Claude lee los archivos
+ * con su propio conector de Drive en vez de que Miguel Ángel comparta
+ * cada .txt a mano.
+ *
+ * Lista cerrada a propósito, nunca "todo .txt de la raíz SAF": la raíz
+ * también guarda `youtube_cookies.txt`, una credencial que no debe
+ * salir nunca del dispositivo.
+ *
+ * Cada logger escribe en la raíz SAF y cae a `filesDir` si no hay raíz
+ * elegida -- aquí se leen en ese mismo orden. Se añade AL FINAL un
+ * manifiesto con la hora de subida: su presencia y su hora marcan una
+ * subida completa, y es lo que usa Claude para distinguir una subida
+ * reciente de una vieja.
  */
 @Singleton
 class DebugLogCollector @Inject constructor(

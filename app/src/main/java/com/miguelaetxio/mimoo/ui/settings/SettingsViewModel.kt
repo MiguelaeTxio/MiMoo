@@ -46,7 +46,11 @@ sealed class BackupUiState {
     /** Backups disponibles en Drive, listados tras pulsar "Importar" -- la UI muestra esta lista para elegir uno. */
     data class BackupsListed(val backups: List<DriveBackupFile>) : BackupUiState()
     data class ImportSuccess(val trackCount: Int) : BackupUiState()
-    /** S037 -- debug logs uploaded to "MiMoo - Intercambio Claude". */
+    /**
+     * S037 -- debug logs uploaded to "MiMoo - Intercambio Claude".
+     * ---
+     * S037 -- logs de diagnóstico subidos a "MiMoo - Intercambio Claude".
+     */
     data class LogsUploaded(val fileCount: Int) : BackupUiState()
     data class Error(val message: String) : BackupUiState()
 }
@@ -110,6 +114,8 @@ class SettingsViewModel @Inject constructor(
     // S034 -- registro de enlaces rotos de la semilla bundleada, ver su kdoc completo.
     private val mimooutcastBrokenLinksLogger: com.miguelaetxio.mimoo.data.playback.MimooutcastBrokenLinksLogger,
     // S037 -- "Subir logs a Drive", see DebugLogCollector kdoc.
+    // ---
+    // S037 -- "Subir logs a Drive", ver el kdoc de DebugLogCollector.
     private val debugLogCollector: com.miguelaetxio.mimoo.data.backup.DebugLogCollector,
 ) : ViewModel() {
 
@@ -705,7 +711,12 @@ class SettingsViewModel @Inject constructor(
         beginAuthorization(activity)
     }
 
-    /** S037 -- uploads every diagnostic log to Drive for Claude to read. */
+    /**
+     * S037 -- uploads every diagnostic log to Drive for Claude to read.
+     * ---
+     * S037 -- sube todos los logs de diagnóstico a Drive para que los
+     * lea Claude.
+     */
     fun onUploadLogsClicked(activity: Activity) {
         pendingAction = PendingAction.UploadLogs
         beginAuthorization(activity)

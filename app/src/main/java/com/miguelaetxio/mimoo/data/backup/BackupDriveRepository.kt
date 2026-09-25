@@ -37,6 +37,11 @@ private const val SYNC_FILE_NAME = "mimoo_sync_state.json"
  * S037 -- exchange folder shared with Claude (platform relay
  * convention, com-actions-relay: "{PROJECT_ID} - Intercambio Claude").
  * Debug logs are uploaded here with fixed names, overwritten in place.
+ * ---
+ * S037 -- carpeta de intercambio compartida con Claude (convención de
+ * relevo de la plataforma, com-actions-relay: "{PROJECT_ID} -
+ * Intercambio Claude"). Los logs se suben aquí con nombre fijo,
+ * sobrescritos en su sitio.
  */
 private const val EXCHANGE_FOLDER_NAME = "MiMoo - Intercambio Claude"
 private const val TEXT_MIME_TYPE = "text/plain"
@@ -256,7 +261,13 @@ class BackupDriveRepository @Inject constructor(
 
     // ==================== S037 — Subida de logs de diagnóstico ====================
 
-    /** "MiMoo - Intercambio Claude" folder -- same pattern as ensureSyncFolder(). */
+    /**
+     * "MiMoo - Intercambio Claude" folder -- same pattern as
+     * ensureSyncFolder().
+     * ---
+     * Carpeta "MiMoo - Intercambio Claude" -- mismo patrón que
+     * ensureSyncFolder().
+     */
     private suspend fun ensureExchangeFolder(accessToken: String): String {
         val query = "mimeType = '$FOLDER_MIME_TYPE' and name = '$EXCHANGE_FOLDER_NAME' and trashed = false"
         val existing = driveApi.listFiles(bearer(accessToken), query = query, fields = "files(id,name)")
@@ -275,6 +286,13 @@ class BackupDriveRepository @Inject constructor(
      * as pushSyncState()) so the folder always holds exactly the latest
      * upload -- no timestamped copies piling up. The caller puts the
      * manifest last, so it is written only after every log succeeded.
+     * ---
+     * Sube todos los logs recogidos a la carpeta de intercambio, en el
+     * orden de la lista, sobrescribiendo cada archivo de nombre fijo en
+     * su sitio (mismo enfoque que pushSyncState()), de modo que la
+     * carpeta contiene siempre exactamente la última subida, sin copias
+     * con fecha acumulándose. Quien llama pone el manifiesto el último,
+     * así que solo se escribe si todos los logs anteriores subieron.
      */
     suspend fun uploadDebugLogs(accessToken: String, files: List<DebugLogFile>) {
         val folderId = ensureExchangeFolder(accessToken)

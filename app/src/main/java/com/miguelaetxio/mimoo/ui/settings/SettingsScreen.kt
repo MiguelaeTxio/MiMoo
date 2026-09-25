@@ -838,6 +838,11 @@ fun SettingsScreen(
             // S037 -- one-tap upload of every diagnostic log to the
             // "MiMoo - Intercambio Claude" Drive folder, so Claude reads
             // them directly instead of each .txt being shared by hand.
+            // ---
+            // S037 -- subida de un toque de todos los logs de
+            // diagnóstico a la carpeta de Drive "MiMoo - Intercambio
+            // Claude", para que Claude los lea directamente en vez de
+            // compartir cada .txt a mano.
             SettingsAccordionSection(
                 title = "Logs de diagnóstico",
                 expanded = expandedSection == "logs_diagnostico",
