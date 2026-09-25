@@ -17,7 +17,9 @@ de reinstalar nada en el cliente.*
 | `ROUTER_PATH` (única fuente de verdad del hito EN PROGRESO) | `DOCS/ANNEX_ROUTER.md` |
 | `ANNEX_PATH_PATTERN` | `DOCS/ANNEX_H{NN}.md` |
 | `RESUMPTION_POINT_PATH` | `DOCS/RESUMPTION_POINT.md` |
-| `APK_DEPLOY_PATH` (PythonAnywhere, gestionado por el workflow) | `/home/MiguelAeTxio/ANDROID/MiMoo/apk/MiMoo.apk` |
+| `APK_DEPLOY_PATH` (PythonAnywhere, gestionado por el workflow; corregido S037 contra `build-and-deploy.yml`, que manda) | `/home/MiguelAeTxio/ANDROID/MiMoo/apk/miMoo.apk` |
+| `DRIVE_EXCHANGE_FOLDER` (logs del dispositivo, botón "Subir logs a Drive", ver `com-actions-relay` §7) | `MiMoo - Intercambio Claude` |
+| `DRIVE_LOGS_MANIFEST` (se lee primero; su hora `Subida:` detecta una subida vieja) | `mimoo_logs_manifest.txt` |
 
 ## Secrets de GitHub Actions (no vive el valor aquí, solo el nombre)
 
