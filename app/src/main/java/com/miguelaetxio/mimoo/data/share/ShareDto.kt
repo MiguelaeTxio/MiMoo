@@ -47,6 +47,24 @@ data class ShareBundle(
     val scopeLabel: String,
     val sharedAt: Long,
     val bundle: BackupBundle,
+    /**
+     * S037 (H10) -- true for a shared PLAYLIST: the receiver gets the
+     * whole list as streaming and nothing is queued for download;
+     * tracks the receiver already has locally stay local. Decision by
+     * Miguel Ángel: "ella recibe la lista, y será todo streaming,
+     * excepto lo que ella ya tenga en local". Files shared before S037
+     * lack the field and Gson reads it as false, keeping the old
+     * download behaviour for every other share level.
+     * ---
+     * S037 (H10) -- true para una LISTA compartida: el receptor recibe
+     * la lista entera en streaming y no se encola ninguna descarga; lo
+     * que el receptor ya tenga en local sigue en local. Decisión de
+     * Miguel Ángel: "ella recibe la lista, y será todo streaming,
+     * excepto lo que ella ya tenga en local". Los archivos compartidos
+     * antes de S037 no traen el campo y Gson lo lee como false, así que
+     * el resto de niveles conserva la descarga de siempre.
+     */
+    val streamOnly: Boolean = false,
 ) {
     companion object {
         const val CURRENT_VERSION = 1

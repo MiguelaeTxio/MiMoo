@@ -9,6 +9,8 @@ import com.google.gson.JsonSyntaxException
 import com.miguelaetxio.mimoo.data.backup.BackupBundle
 import com.miguelaetxio.mimoo.data.backup.BackupRepository
 import com.miguelaetxio.mimoo.data.backup.UiSettingsBackupDto
+import com.miguelaetxio.mimoo.data.backup.isSyntheticLocalTrack
+import com.miguelaetxio.mimoo.data.backup.toBackupDto
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,6 +71,12 @@ const val SHARE_FILE_MARKER = "MIMOO-SHARE-V1:"
 class ShareCodeRepository @Inject constructor(
     private val backupRepository: BackupRepository,
     @ApplicationContext private val context: Context,
+    // S037 (H10) -- the shared playlist now carries ALL its tracks,
+    // not only the downloaded ones.
+    // ---
+    // S037 (H10) -- la lista compartida lleva ahora TODAS sus pistas,
+    // no solo las descargadas.
+    private val playlistRepository: com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository,
 ) {
     private val gson: Gson = GsonBuilder().create()
 
@@ -199,27 +207,47 @@ class ShareCodeRepository @Inject constructor(
     /** Niveles 7 y 8: Listas de reproducción / Lista de reproducción -- una playlist concreta, con su orden real. */
     suspend fun buildPlaylistShareFile(playlistId: Long): Uri {
         val full = backupRepository.buildCurrentBundle()
-        val playlistDto = full.playlists.firstOrNull { it.originalId == playlistId }
+        val basePlaylistDto = full.playlists.firstOrNull { it.originalId == playlistId }
             ?: return writeShareFile(
                 ShareBundle(
-                    scopeLabel = "Lista de reproducción (vacía o sin pistas descargadas)",
+                    scopeLabel = "Lista de reproducción (vacía)",
                     sharedAt = System.currentTimeMillis(),
                     bundle = full.copy(tracks = emptyList(), favoriteAlbums = emptyList(), playlists = emptyList())
                         .strippedForSharing(),
                 ),
                 fileNameHint = "lista",
             )
-        val trackIds = playlistDto.trackYoutubeIdsInOrder.toSet()
+        // S037 (H10) -- real bug: the list was built from
+        // buildCurrentBundle(), which since S008 only carries DONE
+        // tracks, so every streaming track silently vanished from the
+        // shared list. Now every track of the list travels, in order;
+        // only synthetic local rows (a pasted file with no YouTube
+        // video behind it) are left out, since the receiver could never
+        // play them.
+        // ---
+        // S037 (H10) -- bug real: la lista se construía desde
+        // buildCurrentBundle(), que desde S008 solo lleva pistas DONE,
+        // así que todos los temas en streaming desaparecían en silencio
+        // de la lista compartida. Ahora viajan todas las pistas de la
+        // lista, en orden; solo se excluyen las filas locales
+        // sintéticas (un archivo pegado sin vídeo de YouTube detrás),
+        // que el receptor nunca podría reproducir.
+        val playlistTracks = playlistRepository.getTracksForPlaylistOnce(playlistId)
+            .filterNot { it.isSyntheticLocalTrack() }
+        val playlistDto = basePlaylistDto.copy(
+            trackYoutubeIdsInOrder = playlistTracks.map { it.youtubeId },
+        )
         val scoped = full.copy(
-            tracks = full.tracks.filter { it.youtubeId in trackIds },
+            tracks = playlistTracks.map { it.toBackupDto() },
             favoriteAlbums = emptyList(),
             playlists = listOf(playlistDto),
         ).strippedForSharing()
         return writeShareFile(
             ShareBundle(
-                scopeLabel = "Lista de reproducción: ${playlistDto.name} (${scoped.tracks.size} pistas)",
+                scopeLabel = "Lista de reproducción: ${playlistDto.name} (${scoped.tracks.size} pistas, en streaming)",
                 sharedAt = System.currentTimeMillis(),
                 bundle = scoped,
+                streamOnly = true,
             ),
             fileNameHint = playlistDto.name,
         )

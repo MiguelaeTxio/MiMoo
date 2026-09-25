@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.miguelaetxio.mimoo.data.backup.AutoSyncPusher
+import com.miguelaetxio.mimoo.data.backup.isSyntheticLocalTrack
 import com.miguelaetxio.mimoo.data.local.entity.Playlist
 import com.miguelaetxio.mimoo.data.local.repository.FavoritePlaylistRepository
 import com.miguelaetxio.mimoo.data.local.repository.PlaylistRepository
@@ -19,6 +20,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private val ALREADY_HANDLED_STATUSES = setOf(
+    com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DONE,
+    com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.QUEUED,
+    com.miguelaetxio.mimoo.data.local.entity.DownloadStatus.DOWNLOADING,
+)
 
 data class PlaylistsUiState(
     val playlists: List<Playlist> = emptyList(),
@@ -72,6 +79,10 @@ class PlaylistsViewModel @Inject constructor(
     // igual que ya hace PlaylistDetailViewModel.
     private val playerManager: PlayerManager,
     private val streamResolver: StreamResolver,
+    // S037 (H04) -- "Descargar lista" from the playlists list.
+    // ---
+    // S037 (H04) -- "Descargar lista" desde el listado de listas.
+    private val downloadQueueManager: com.miguelaetxio.mimoo.data.download.DownloadQueueManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlaylistsUiState())
@@ -128,6 +139,48 @@ class PlaylistsViewModel @Inject constructor(
                 streamResolver = streamResolver,
             )
             _uiState.value = _uiState.value.copy(resolvingPlaylistId = null)
+        }
+    }
+
+    /**
+     * S037 (H04) -- queues for download every track of the list that is
+     * not downloaded yet (explicit request from Miguel Ángel: a button
+     * to download a whole list, for every list, in the playlists list
+     * view). Tracks already downloaded, queued or downloading are
+     * skipped; synthetic local rows have no YouTube video to fetch.
+     * Uses the same DownloadQueueManager.enqueue() as every other
+     * user-requested download.
+     * ---
+     * S037 (H04) -- encola para descarga todas las pistas de la lista
+     * que aún no estén descargadas (petición explícita de Miguel Ángel:
+     * un botón para descargar una lista entera, para todas las listas,
+     * en el listado de listas). Se saltan las ya descargadas, en cola o
+     * descargándose; las filas locales sintéticas no tienen vídeo de
+     * YouTube que bajar. Usa el mismo DownloadQueueManager.enqueue()
+     * que cualquier otra descarga pedida por el usuario.
+     */
+    fun downloadPlaylist(playlistId: Long, playlistName: String) {
+        viewModelScope.launch {
+            val pending = repository.getTracksForPlaylistOnce(playlistId).filter { track ->
+                track.downloadStatus !in ALREADY_HANDLED_STATUSES &&
+                    !track.isSyntheticLocalTrack()
+            }
+            pending.forEach { track ->
+                downloadQueueManager.enqueue(
+                    youtubeId = track.youtubeId,
+                    title = track.title,
+                    artist = track.artist ?: track.channelTitle,
+                    album = track.album,
+                    trackPosition = track.trackPosition,
+                )
+            }
+            _uiState.value = _uiState.value.copy(
+                syncBlockedMessage = if (pending.isEmpty()) {
+                    "\"$playlistName\": no queda nada por descargar."
+                } else {
+                    "\"$playlistName\": ${pending.size} tema(s) puestos a descargar."
+                },
+            )
         }
     }
 

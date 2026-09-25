@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
@@ -155,6 +156,7 @@ fun PlaylistsScreen(
                                 onPlay = { viewModel.playPlaylist(playlist.id) },
                                 onPlayShuffled = { viewModel.playPlaylistShuffled(playlist.id) },
                                 onToggleFavorite = { viewModel.toggleFavoritePlaylist(activity, playlist.id) },
+                                onDownload = { viewModel.downloadPlaylist(playlist.id, playlist.name) },
                                 onRename = { playlistPendingRename = playlist },
                                 onDelete = { playlistPendingDelete = playlist },
                             )
@@ -227,6 +229,7 @@ private fun PlaylistRow(
     onPlay: () -> Unit,
     onPlayShuffled: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onDownload: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -283,6 +286,9 @@ private fun PlaylistRow(
                     contentDescription = if (isFavorite) "Quitar de favoritos" else "Marcar como favorita",
                     tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                 )
+            }
+            IconButton(onClick = onDownload) {
+                Icon(Icons.Filled.Download, contentDescription = "Descargar lista entera")
             }
             IconButton(onClick = onRename) {
                 Icon(Icons.Filled.Edit, contentDescription = "Renombrar")

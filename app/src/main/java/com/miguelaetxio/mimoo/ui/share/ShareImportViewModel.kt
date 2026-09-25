@@ -80,7 +80,13 @@ class ShareImportViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = importRepository.importSharedBundle(state.shareBundle.bundle)
-                result.importedTracks.forEach { track ->
+                // S037 (H10) -- shared playlist: everything stays in
+                // streaming, nothing is queued (see ShareBundle.streamOnly).
+                // ---
+                // S037 (H10) -- lista compartida: todo queda en
+                // streaming, no se encola nada (ver ShareBundle.streamOnly).
+                val toDownload = if (state.shareBundle.streamOnly) emptyList() else result.importedTracks
+                toDownload.forEach { track ->
                     downloadQueueManager.enqueue(
                         youtubeId = track.youtubeId,
                         title = track.title,
@@ -92,11 +98,11 @@ class ShareImportViewModel @Inject constructor(
                 Log.d(
                     TAG,
                     "confirmImport() -- OK, ${state.shareBundle.bundle.tracks.size} pista(s) del código, " +
-                        "${result.importedTracks.size} descarga(s) nueva(s) encolada(s)",
+                        "${toDownload.size} descarga(s) nueva(s) encolada(s)",
                 )
                 _uiState.value = ShareImportUiState.Done(
                     trackCount = state.shareBundle.bundle.tracks.size,
-                    newDownloadsCount = result.importedTracks.size,
+                    newDownloadsCount = toDownload.size,
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "confirmImport() FALLÓ", e)
