@@ -311,3 +311,27 @@ primera línea del mensaje como un comando. Corregido con
 (`d177cbc` -> `d2fef5c`), mismo árbol de archivos. Para futuras
 sesiones: mensaje de commit multilínea siempre desde fichero, nunca
 heredoc encadenado.
+
+---
+
+## Ampliación de alcance -- asignada en S037 (2026-09-25)
+
+Dos peticiones de Miguel Ángel asignadas a este hito en S037 y
+confirmadas por él (*"Correcto"*), para diseñarlas juntas porque tocan
+la misma pantalla:
+
+1. **Cola en ejecución y origen de lo que suena** (cierre de S036):
+   *"En el exoplayer añadir en su grupo correspondiente un botón para
+   quitar de la lista que se está ejecutando el tema correspondiente,
+   el nombre de la lista que se está ejecutando debe aparecer en algún
+   sitio para que en todo momento se sepa que está sonando, a que
+   lista o álbum o si es un sencillo."*
+2. **Rediseño de la interfaz del ExoPlayer** (cierre de S035,
+   registrado en `DOCS/ANNEX_H12.md`): *"tenemos muchos controles, hay
+   que añadir compartir el tema que se está tocando, habría que poner
+   una fila con los controles de reproducción y otra fila con
+   like/dislike/add2list/download/share."*
+
+Punto técnico de partida: `PlayerManager` tiene `currentQueueIsPlaylist`
+(S036), pero no guarda el nombre ni el id de la lista o el álbum de
+origen de la cola actual. Hace falta añadir ese dato para mostrarlo.

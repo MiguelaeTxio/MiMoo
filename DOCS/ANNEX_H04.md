@@ -115,3 +115,40 @@ y confirmar que ambos tipos suenan.
   subir/bajar).
 - Compartir o exportar playlists.
 - Playlists inteligentes/automáticas (por género, más escuchadas, etc.).
+
+---
+
+## Ampliación de alcance -- diseño cerrado en S037 (2026-09-25)
+
+Petición de Miguel Ángel al cierre de S036, asignada a este hito en
+S037: *"En la vista de las listas permitir editar las listas para
+buscar duplicados con un filtro y poder eliminar pistas a discreción,
+poder añadir temas de una lista a otra lista, y todo con selección por
+casilleros."*
+
+Decisiones de Miguel Ángel en S037, palabras suyas:
+
+1. **Activación de la edición:** *"Se activa al entrar en la lista."*
+   El detalle de una lista es editable desde que se abre, sin botón
+   intermedio de "modo edición".
+2. **Filtro de búsqueda (sustituye a la detección automática de
+   duplicados):** *"Si busco `loquillo` me presenta una lista con
+   todos los temas dónde aparece `loquillo` en el nombre del archivo o
+   en cualquier metadato, luego se seleccionan o no los temas a
+   eliminar."* El filtro compara el texto contra el nombre del archivo
+   y contra cualquier metadato de la pista. Los duplicados los detecta
+   Miguel Ángel a ojo sobre la lista filtrada.
+3. **Botón de play por fila:** *"Deben tener el botón del play para
+   poder escuchar un tema determinado de forma singular, este botón de
+   play debe aparecer en cada entrada de la lista cuando se entra a
+   ella, no solamente en el modo de edición."* Reproduce ese tema
+   suelto, no la lista a partir de él.
+4. **Acción entre listas:** la acción se llama **"Copiar en"**
+   (*"`Añadir` -> `Copiar en`"*). Copia los temas seleccionados a otra
+   lista; la lista de origen no cambia.
+5. **Selección por casilleros** para las dos acciones masivas:
+   eliminar y "Copiar en".
+
+Suposición declarada en S037, pendiente de que Miguel Ángel la
+confirme o corrija: "eliminar" quita el tema de la lista y no borra el
+archivo descargado de la biblioteca.
