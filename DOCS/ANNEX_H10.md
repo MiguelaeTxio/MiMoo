@@ -167,3 +167,34 @@ pendiente de una prueba real end-to-end.
    que se confirme que es un problema real.
 
 ---
+
+---
+
+## S037 (2026-09-25) -- Compartir lista: la lista entera, en streaming (commit `ca429f7`)
+
+**Bug real encontrado al preguntar Miguel Ángel cómo se comporta una
+lista compartida con temas locales y en streaming:**
+`buildPlaylistShareFile()` construía la lista desde
+`BackupRepository.buildCurrentBundle()`, que desde S008 solo lleva
+pistas `DONE`. Los temas en streaming desaparecían en silencio de la
+lista compartida, y el receptor ponía a descargar lo que sí llegaba.
+
+**Decisión de Miguel Ángel:** *"ella recibe la lista, y será todo
+streaming, excepto lo que ella ya tenga en local, si es que tiene
+algo."*
+
+Construido:
+- Viajan todas las pistas de la lista, en orden. Solo se excluyen las
+  filas locales sintéticas (`local:`), que no tienen vídeo de YouTube.
+- `ShareBundle.streamOnly = true` en las listas compartidas: el
+  receptor no encola ninguna descarga. Las filas nuevas entran como
+  streaming (`PENDING`, sin `filePath`), y las que ya tenía descargadas
+  conservan su archivo local, porque `importSharedBundle()` nunca toca
+  `filePath`/`downloadStatus` de una fila existente.
+- Los archivos compartidos antes de S037 no traen el campo y conservan
+  la descarga de siempre. El resto de niveles de compartición no cambia.
+
+Para descargarla después, el receptor usa el botón "Descargar lista
+entera" del listado de listas (ver `DOCS/ANNEX_H04.md`, S037).
+
+Pendiente: verificación en dispositivo real con un segundo teléfono.

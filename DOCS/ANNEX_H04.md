@@ -173,3 +173,16 @@ archivo descargado de la biblioteca.
   incumpliendo la regla vinculante del canal. Corregido.
 
 Pendiente: verificación en dispositivo real por Miguel Ángel.
+
+### Botón "Descargar lista entera" -- S037 (commit `ca429f7`, build verde)
+
+Petición de Miguel Ángel: *"habría que dotar al sistema de un botón en
+la lista para descargarla entera, este botón no es solo para las
+recibidas, es para todas y es en la vista de listado de listas."*
+Icono de descarga en cada fila del listado de listas. Encola con
+`DownloadQueueManager.enqueue()` las pistas no descargadas, ni en
+cola, ni descargándose, y avisa de cuántas ha puesto a descargar (o de
+que no queda nada). Complementa el cambio de H10 de S037: una lista
+recibida llega en streaming y se descarga con este botón si se quiere.
+
+Pendiente: verificación en dispositivo real.
