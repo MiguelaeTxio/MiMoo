@@ -681,11 +681,52 @@ class PlayerManager @Inject constructor(
                 // crash_log.txt. ContextCompat.startForegroundService
                 // is idempotent -- calling it with the service already
                 // running does nothing harmful.
+                // S037 -- bug real reportado por Miguel Ángel, con
+                // crash_log.txt: colgar una llamada con MiMoo en
+                // segundo plano volvía a lanzar player.play() desde
+                // handleTelephonyCallStateChanged() (un callback de
+                // telefonía, no una Activity visible), y este mismo
+                // onIsPlayingChanged() intentaba re-promocionar el
+                // servicio a primer plano -- Android 12+ (S)
+                // rechaza startForegroundService() sin actividad en
+                // primer plano en ese instante y lanza
+                // ForegroundServiceStartNotAllowedException, tirando
+                // abajo la app entera. Mismo criterio defensivo que
+                // onPhoneStatePermissionGranted() de esta clase: si
+                // falla, el ExoPlayer del singleton sigue sonando
+                // igualmente (es el propio player.play() quien ya lo
+                // reanudó), solo sin re-promocionar el servicio en
+                // ese instante -- nunca debe romper la reproducción.
+                // ---
+                // S037 -- real bug reported by Miguel Ángel, with
+                // crash_log.txt: ending a call with MiMoo backgrounded
+                // fired player.play() again from
+                // handleTelephonyCallStateChanged() (a telephony
+                // callback, not a visible Activity), and this same
+                // onIsPlayingChanged() tried to re-promote the service
+                // to foreground -- Android 12+ (S) rejects
+                // startForegroundService() with no foreground activity
+                // at that instant and throws
+                // ForegroundServiceStartNotAllowedException, crashing
+                // the whole app. Same defensive pattern as this
+                // class's own onPhoneStatePermissionGranted(): on
+                // failure, the singleton's ExoPlayer keeps playing
+                // regardless (player.play() itself already resumed
+                // it), just without re-promoting the service at that
+                // instant -- this must never break playback.
                 if (isPlaying) {
-                    ContextCompat.startForegroundService(
-                        appContext,
-                        Intent(appContext, MiMooPlaybackService::class.java),
-                    )
+                    try {
+                        ContextCompat.startForegroundService(
+                            appContext,
+                            Intent(appContext, MiMooPlaybackService::class.java),
+                        )
+                    } catch (e: Exception) {
+                        NotificationDebugLogger.log(
+                            appContext, storageManager,
+                            "onIsPlayingChanged() -- startForegroundService() rechazado: " +
+                                "${e::class.java.simpleName}: ${e.message}",
+                        )
+                    }
                 }
             }
 
