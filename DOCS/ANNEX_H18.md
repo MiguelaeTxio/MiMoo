@@ -243,3 +243,26 @@ dispositivo real:
 Cualquier incidencia real detectada en dispositivo es una incidencia
 real que retoma H18 puntualmente (PCH), no algo que quede "a medias"
 de S032.
+
+---
+
+## AMPLIACIÓN EN S089
+
+Petición explícita de Miguel Ángel, trabajo transversal sin PCH (H12
+seguía EN PROGRESO durante toda la sesión, sin tocarse): además del
+play que ya ejecuta un tema suelto de forma individual en el detalle
+de una lista o de un álbum (pieza ya existente desde S037/H12), un
+segundo botón "reproducir a partir de aquí" -- ese tema y los que le
+siguen en el orden real de la lista/álbum, no solo él solo.
+
+Construido en las cuatro filas de tema afectadas (no las de Favoritos,
+que ya tenían su propia matriz de play cerrada en S032 -- esto es
+sobre el DETALLE de una lista o álbum, un nivel más abajo):
+`PlaylistDetailScreen`/`PlaylistDetailViewModel` (delega en
+`PlaylistRepository.playPlaylistByIdFrom()`, nuevo, nunca mezcla y cae
+al principio de la lista si el tema de partida ya no está por Lista
+Negra) y `AlbumScreen`/`AlbumViewModel` (`playAlbumFrom()`, filtra por
+posición sobre la misma resolución local/streaming que `playAlbum()`).
+Ambos arranques progresivos/de resolución se extrajeron a una función
+compartida en cada fichero para no duplicar lógica ya existente. Build
+verde. Sin verificar en dispositivo real todavía.
