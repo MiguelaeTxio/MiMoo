@@ -57,6 +57,24 @@ puntos cerrados en S034. Hoja de ruta ejecutable completa en
 `DOCS/ANNEX_H12.md`, sección "Hoja de Ruta para la Siguiente Sesión
 que retome H12".
 
+## S089 -- H18, ampliación construida en otra conversación en paralelo
+
+Trabajo real, en `main`, verificado de forma independiente por esta
+sesión antes de anotarlo (no construido en esta conversación):
+commits `991ccb4` (código) y `467e85d` (documentación), build verde
+confirmado en GitHub Actions para ambos. Detalle completo en
+`DOCS/ANNEX_H18.md`, sección "AMPLIACIÓN EN S089".
+
+Petición explícita de Miguel Ángel, trabajo transversal sin PCH (H12
+seguía EN PROGRESO durante toda la sesión, sin tocarse): un segundo
+botón "reproducir a partir de aquí" junto al play individual ya
+existente, en las filas de tema del detalle de una lista
+(`PlaylistDetailScreen`, `PlaylistRepository.playPlaylistByIdFrom()`,
+nuevo) y de un álbum (`AlbumScreen`, `AlbumViewModel.playAlbumFrom()`),
+reutilizando en ambos casos la resolución local/streaming ya
+existente sin duplicarla. Sin verificar en dispositivo real todavía --
+mismo estado pendiente que el resto de H18.
+
 ## S037 -- las tres peticiones de arriba, cerradas
 
 Las tres peticiones de "EMPEZAR POR AQUÍ" se diseñaron y construyeron
