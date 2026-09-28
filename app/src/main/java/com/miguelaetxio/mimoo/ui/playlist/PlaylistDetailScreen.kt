@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Share
@@ -219,6 +220,7 @@ fun PlaylistDetailScreen(
                         isLast = fullIndex == uiState.tracks.lastIndex,
                         onToggleSelected = { viewModel.toggleSelection(track.youtubeId) },
                         onPlay = { viewModel.playTrack(track) },
+                        onPlayFrom = { viewModel.playFrom(track) },
                         onMoveUp = { viewModel.moveTrack(fullIndex, -1) },
                         onMoveDown = { viewModel.moveTrack(fullIndex, 1) },
                         onRemove = { viewModel.removeTrack(activity, track.youtubeId) },
@@ -273,6 +275,7 @@ private fun PlaylistDetailTrackRow(
     isLast: Boolean,
     onToggleSelected: () -> Unit,
     onPlay: () -> Unit,
+    onPlayFrom: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onRemove: () -> Unit,
@@ -326,6 +329,12 @@ private fun PlaylistDetailTrackRow(
             Icon(
                 Icons.Filled.PlayArrow,
                 contentDescription = "Reproducir este tema",
+            )
+        }
+        IconButton(onClick = onPlayFrom) {
+            Icon(
+                Icons.Filled.PlaylistPlay,
+                contentDescription = "Reproducir a partir de aquí",
             )
         }
         IconButton(onClick = onRemove) {

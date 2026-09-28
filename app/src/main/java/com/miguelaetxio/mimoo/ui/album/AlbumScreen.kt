@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -148,6 +149,7 @@ fun AlbumScreen(
                                 downloadStatus = uiState.localTracksByPosition[match.position - 1]
                                     ?.downloadStatus,
                                 onPlay = { viewModel.playTrack(match) },
+                                onPlayFrom = { viewModel.playAlbumFrom(match.position) },
                                 onDownload = { viewModel.downloadTrack(match) },
                                 onOpenSong = { onOpenSong(match.mbTitle) },
                             )
@@ -200,6 +202,7 @@ private fun AlbumTrackRow(
     match: AlbumTrackMatch,
     downloadStatus: DownloadStatus?,
     onPlay: () -> Unit,
+    onPlayFrom: () -> Unit,
     onDownload: () -> Unit,
     onOpenSong: () -> Unit,
 ) {
@@ -228,6 +231,9 @@ private fun AlbumTrackRow(
         if (match.matchedTrack != null || downloadStatus == DownloadStatus.DONE) {
             IconButton(onClick = onPlay) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = "Reproducir")
+            }
+            IconButton(onClick = onPlayFrom) {
+                Icon(Icons.Filled.PlaylistPlay, contentDescription = "Reproducir a partir de aquí")
             }
             when (downloadStatus) {
                 DownloadStatus.PENDING, DownloadStatus.QUEUED, DownloadStatus.DOWNLOADING -> {

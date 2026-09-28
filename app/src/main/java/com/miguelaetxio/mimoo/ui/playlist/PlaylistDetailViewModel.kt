@@ -217,6 +217,35 @@ class PlaylistDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * S089 (H18) -- "reproducir a partir de aquí": ese tema y los que
+     * le siguen en el orden guardado de la lista, petición explícita de
+     * Miguel Ángel además del play individual de arriba. Delega en
+     * PlaylistRepository.playPlaylistByIdFrom() (mismo arranque
+     * progresivo que playAll()); usa resolveError, no playError --
+     * es una reproducción de cola, no de un tema suelto.
+     */
+    fun playFrom(track: SearchResultTrack) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isResolving = true, resolveError = null)
+            val result = repository.playPlaylistByIdFrom(
+                playlistId = playlistId,
+                startTrackId = track.youtubeId,
+                playerManager = playerManager,
+                streamResolver = streamResolver,
+            )
+            _uiState.value = _uiState.value.copy(
+                isResolving = false,
+                resolveError = if (result.resolutionFailures > 0) {
+                    "No se pudieron resolver ${result.resolutionFailures} pista(s); " +
+                        "se reproduce el resto."
+                } else {
+                    null
+                },
+            )
+        }
+    }
+
     fun dismissPlayError() {
         _uiState.value = _uiState.value.copy(playError = null)
     }

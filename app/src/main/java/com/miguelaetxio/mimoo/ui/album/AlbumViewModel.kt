@@ -317,9 +317,25 @@ class AlbumViewModel @Inject constructor(
      * (insertion, never replaces the session queue).
      */
     fun playAlbum() {
+        playAlbumTracks(_uiState.value.matches)
+    }
+
+    /**
+     * S089 (H18) -- "reproducir a partir de aquí": esa pista y las que
+     * le siguen en el orden real del álbum (petición explícita de
+     * Miguel Ángel, misma pieza que en las listas de reproducción).
+     * Reutiliza playAlbumTracks() con el subconjunto de matches desde
+     * esa posición -- ninguna decisión de resolución nueva, solo qué
+     * pistas entran.
+     */
+    fun playAlbumFrom(fromPosition: Int) {
+        playAlbumTracks(_uiState.value.matches.filter { it.position >= fromPosition })
+    }
+
+    /** S089 (H18) -- extraído de playAlbum() para poder reutilizarlo también desde playAlbumFrom() sin duplicar la resolución local/streaming. */
+    private fun playAlbumTracks(matches: List<AlbumTrackMatch>) {
         val candidate = _uiState.value.candidate
         val artist = candidate?.artist ?: artistName
-        val matches = _uiState.value.matches
         val localByPosition = _uiState.value.localTracksByPosition
         if (matches.isEmpty()) return
 

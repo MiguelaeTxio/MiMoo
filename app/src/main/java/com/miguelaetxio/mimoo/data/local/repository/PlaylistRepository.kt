@@ -256,14 +256,65 @@ class PlaylistRepository @Inject constructor(
         }
         if (filteredTracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
         val orderedTracks = if (shuffle) filteredTracks.shuffled() else filteredTracks
-        // S037 (H13) -- every item of this queue carries the list name,
-        // shown by the player (QueueItem.originLabel).
-        // ---
-        // S037 (H13) -- cada pista de esta cola lleva el nombre de la
-        // lista, que muestra el reproductor (QueueItem.originLabel).
-        val originLabel = dao.getAllPlaylistsOnce().firstOrNull { it.id == playlistId }
-            ?.let { "Lista: ${it.name}" }
+        val originLabel = playlistOriginLabel(playlistId)
+        return playOrderedTracks(orderedTracks, originLabel, playerManager, streamResolver)
+    }
 
+    /**
+     * "Reproducir a partir de aquí" (H18, S089) -- petición explícita
+     * de Miguel Ángel: además del play que ejecuta un tema suelto de la
+     * lista (`playSingleTrack()`), un play que ejecute ESE tema y los
+     * que le siguen en el orden guardado de la lista. Nunca se mezcla
+     * (no tendría sentido "a partir de aquí" sobre un orden aleatorio):
+     * si `startTrackId` no aparece entre las pistas (p. ej. estaba en
+     * la Lista Negra y quedó filtrada), se reproduce la lista entera
+     * desde el principio en vez de no hacer nada.
+     * ---
+     * "Play from here" (H18, S089) -- explicit request from Miguel
+     * Ángel: besides the play that runs one loose track of the list
+     * (`playSingleTrack()`), a play that runs THAT track and the ones
+     * that follow it in the list's saved order. Never shuffled ("from
+     * here" wouldn't make sense over a random order): if `startTrackId`
+     * isn't among the tracks (e.g. it was blacklisted and got filtered
+     * out), the whole list plays from the start instead of doing
+     * nothing.
+     */
+    suspend fun playPlaylistByIdFrom(
+        playlistId: Long,
+        startTrackId: String,
+        playerManager: PlayerManager,
+        streamResolver: StreamResolver,
+    ): PlaylistPlayResult {
+        val dislikedKeys = dislikedTrackRepository.normalizedKeysSnapshot()
+        val filteredTracks = dao.getTracksForPlaylistOnce(playlistId).filterNot { track ->
+            DislikedTrackRepository.key(track.artist ?: track.channelTitle ?: "", track.title) in dislikedKeys
+        }
+        if (filteredTracks.isEmpty()) return PlaylistPlayResult(started = false, resolutionFailures = 0)
+        val startIndex = filteredTracks.indexOfFirst { it.youtubeId == startTrackId }.let { if (it == -1) 0 else it }
+        val orderedTracks = filteredTracks.subList(startIndex, filteredTracks.size)
+        val originLabel = playlistOriginLabel(playlistId)
+        return playOrderedTracks(orderedTracks, originLabel, playerManager, streamResolver)
+    }
+
+    /** S089 (H18) -- extraído de playPlaylistById()/playPlaylistByIdFrom(), evita resolver el nombre de la lista dos veces. */
+    private suspend fun playlistOriginLabel(playlistId: Long): String? =
+        dao.getAllPlaylistsOnce().firstOrNull { it.id == playlistId }?.let { "Lista: ${it.name}" }
+
+    /**
+     * S089 (H18) -- arranque progresivo extraído de playPlaylistById()
+     * (S062) para poder reutilizarlo tal cual desde
+     * playPlaylistByIdFrom() sin duplicar la lógica de resolución de
+     * streaming ni el patrón "primera pista ya, resto en segundo
+     * plano". orderedTracks ya viene en el orden final que se va a
+     * reproducir (mezclado o no, completo o a partir de una posición) --
+     * esta función no toma más decisiones de orden.
+     */
+    private suspend fun playOrderedTracks(
+        orderedTracks: List<SearchResultTrack>,
+        originLabel: String?,
+        playerManager: PlayerManager,
+        streamResolver: StreamResolver,
+    ): PlaylistPlayResult {
         var resolutionFailures = 0
         var firstItem: QueueItem? = null
         var firstIndex = -1
