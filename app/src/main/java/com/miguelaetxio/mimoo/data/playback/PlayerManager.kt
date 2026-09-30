@@ -585,6 +585,32 @@ class PlayerManager @Inject constructor(
      */
     private var pausedByCallState = false
 
+    /**
+     * S037 -- true while MiMooPlaybackService is alive (set by its own
+     * onCreate()/onDestroy(), both on the main thread, same as every
+     * caller here). Gates the startForegroundService() call above: it
+     * is only needed to actually (re)start the service, never to ping
+     * one that is already running.
+     * ---
+     * S037 -- true mientras MiMooPlaybackService está vivo (lo fija su
+     * propio onCreate()/onDestroy(), ambos en el hilo principal, igual
+     * que todo lo demás aquí). Sirve de compuerta para la llamada a
+     * startForegroundService() de arriba: solo hace falta para
+     * arrancar de verdad el servicio, nunca para hacer ping a uno que
+     * ya está en marcha.
+     */
+    private var isServiceAlive = false
+
+    /** Llamado por MiMooPlaybackService.onCreate(). */
+    fun markServiceAlive() {
+        isServiceAlive = true
+    }
+
+    /** Llamado por MiMooPlaybackService.onDestroy(). */
+    fun markServiceDestroyed() {
+        isServiceAlive = false
+    }
+
     init {
         // S037 -- petición explícita de Miguel Ángel: la nivelación de
         // audio en tiempo real (Opción A de 2026-08-23, DynamicsProcessing
@@ -644,61 +670,71 @@ class PlayerManager @Inject constructor(
                 // `false` para siempre, así que nadie volvía a
                 // intentar reanudar nunca más. Quitada por completo.
                 _state.value = _state.value.copy(isPlaying = isPlaying)
-                // Arranca (o promociona a primer plano) el servicio de
-                // reproducción en cuanto empieza a sonar algo -- bug
-                // real reportado por Miguel Ángel (2026-07-04): sin
-                // esto, el ExoPlayer vivía solo en un singleton sin
-                // ningún servicio en primer plano, y el sistema podía
-                // (y lo hizo) matar el proceso entero al cerrar otra
-                // app y reclamar memoria, sin dejar ningún rastro en
-                // crash_log.txt. ContextCompat.startForegroundService
-                // es idempotente -- llamarlo con el servicio ya
-                // arrancado no hace nada malo.
+                // S037 -- bug real reportado por Miguel Ángel: colgar
+                // una llamada con MiMoo sonando en segundo plano dejaba
+                // la app "cerrada" al terminar. Investigado con
+                // notification_debug.txt real: el servicio NUNCA se
+                // destruía durante la llamada (ninguna línea onDestroy()
+                // entre el onCreate() de esa sesión y horas después,
+                // misma instancia de ExoPlayer todo el rato) -- así que
+                // la vieja suposición de este bloque ("llamar a
+                // startForegroundService() con el servicio ya arrancado
+                // es idempotente, no hace nada malo") era la raíz real
+                // del bug, no una mitigación válida: Android 12+ (S)
+                // evalúa la restricción de fondo en la LLAMADA misma,
+                // no en si el servicio de destino ya existe, así que
+                // repetirla desde un callback de telefonía (sin
+                // Activity visible) la rechazaba igual --
+                // ForegroundServiceStartNotAllowedException-- aunque el
+                // servicio siguiera vivo y en primer plano todo el
+                // tiempo. El try/catch de esa misma sesión evitaba el
+                // crash, pero player.play() ya había reanudado el
+                // ExoPlayer sin que la reanudación tuviera ningún
+                // efecto real -- exactamente lo que Miguel Ángel
+                // describió como "la aplicación está cerrada".
+                //
+                // Arreglo real: solo llamar a startForegroundService()
+                // cuando el servicio NO está ya vivo (isServiceAlive,
+                // fijado por MiMooPlaybackService.onCreate()/onDestroy()
+                // más abajo). Si sigue vivo -- que es exactamente el
+                // caso de colgar una llamada -- no hace falta ninguna
+                // llamada al framework de servicios: el servicio ya
+                // tiene la notificación puesta y la MediaSession
+                // conectada, y basta con que el propio player() ya
+                // reanudado (arriba) la actualice sola.
                 // ---
-                // Starts (or promotes to foreground) the playback
-                // service as soon as something starts playing -- real
-                // bug reported by Miguel Ángel (2026-07-04): without
-                // this, the ExoPlayer lived alone in a singleton with
-                // no foreground service at all, and the system could
-                // (and did) kill the entire process when another app
-                // closed and memory was reclaimed, leaving no trace in
-                // crash_log.txt. ContextCompat.startForegroundService
-                // is idempotent -- calling it with the service already
-                // running does nothing harmful.
-                // S037 -- bug real reportado por Miguel Ángel, con
-                // crash_log.txt: colgar una llamada con MiMoo en
-                // segundo plano volvía a lanzar player.play() desde
-                // handleTelephonyCallStateChanged() (un callback de
-                // telefonía, no una Activity visible), y este mismo
-                // onIsPlayingChanged() intentaba re-promocionar el
-                // servicio a primer plano -- Android 12+ (S)
-                // rechaza startForegroundService() sin actividad en
-                // primer plano en ese instante y lanza
-                // ForegroundServiceStartNotAllowedException, tirando
-                // abajo la app entera. Mismo criterio defensivo que
-                // onPhoneStatePermissionGranted() de esta clase: si
-                // falla, el ExoPlayer del singleton sigue sonando
-                // igualmente (es el propio player.play() quien ya lo
-                // reanudó), solo sin re-promocionar el servicio en
-                // ese instante -- nunca debe romper la reproducción.
-                // ---
-                // S037 -- real bug reported by Miguel Ángel, with
-                // crash_log.txt: ending a call with MiMoo backgrounded
-                // fired player.play() again from
-                // handleTelephonyCallStateChanged() (a telephony
-                // callback, not a visible Activity), and this same
-                // onIsPlayingChanged() tried to re-promote the service
-                // to foreground -- Android 12+ (S) rejects
-                // startForegroundService() with no foreground activity
-                // at that instant and throws
-                // ForegroundServiceStartNotAllowedException, crashing
-                // the whole app. Same defensive pattern as this
-                // class's own onPhoneStatePermissionGranted(): on
-                // failure, the singleton's ExoPlayer keeps playing
-                // regardless (player.play() itself already resumed
-                // it), just without re-promoting the service at that
-                // instant -- this must never break playback.
-                if (isPlaying) {
+                // S037 -- real bug reported by Miguel Ángel: ending a
+                // call with MiMoo playing in the background left the
+                // app "closed" afterward. Investigated with real
+                // notification_debug.txt: the service was NEVER
+                // destroyed during the call (no onDestroy() line
+                // between that session's onCreate() and hours later,
+                // same ExoPlayer instance throughout) -- so this
+                // block's old assumption ("calling
+                // startForegroundService() with the service already
+                // running is idempotent, does nothing harmful") was the
+                // actual root cause, not a valid mitigation: Android
+                // 12+ (S) evaluates the background-start restriction on
+                // the CALL itself, not on whether the target service
+                // already exists, so repeating it from a telephony
+                // callback (no visible Activity) got rejected just the
+                // same -- ForegroundServiceStartNotAllowedException --
+                // even though the service had been alive and foreground
+                // the whole time. That same session's try/catch avoided
+                // the crash, but player.play() had already resumed the
+                // ExoPlayer with the resume having no real effect --
+                // exactly what Miguel Ángel described as "the app is
+                // closed".
+                //
+                // Real fix: only call startForegroundService() when the
+                // service is NOT already alive (isServiceAlive, set by
+                // MiMooPlaybackService.onCreate()/onDestroy() below). If
+                // it's still alive -- exactly the hang-up-a-call case --
+                // no service-framework call is needed at all: the
+                // service already has its notification up and the
+                // MediaSession connected, and the player itself (already
+                // resumed above) updates it on its own.
+                if (isPlaying && !isServiceAlive) {
                     try {
                         ContextCompat.startForegroundService(
                             appContext,

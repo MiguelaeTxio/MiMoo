@@ -353,6 +353,9 @@ class MiMooPlaybackService : MediaSessionService() {
             .setSessionActivity(sessionActivityPendingIntent)
             .setCallback(sessionCallback)
             .build()
+        // S037 -- ver el kdoc real junto a isServiceAlive en
+        // PlayerManager.kt.
+        playerManager.markServiceAlive()
         NotificationDebugLogger.log(
             this, storageManager,
             "onCreate() -- MediaSession creada, player=${playerManager.player}",
@@ -602,6 +605,9 @@ class MiMooPlaybackService : MediaSessionService() {
      */
     override fun onDestroy() {
         NotificationDebugLogger.log(this, storageManager, "onDestroy()")
+        // S037 -- ver el kdoc real junto a isServiceAlive en
+        // PlayerManager.kt.
+        playerManager.markServiceDestroyed()
         serviceScope.cancel()
         debugController?.release()
         debugController = null
