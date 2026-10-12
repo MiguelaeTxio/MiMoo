@@ -326,10 +326,26 @@ class SettingsViewModel @Inject constructor(
     fun checkMissingFiles() {
         viewModelScope.launch {
             _isCheckingMissingFiles.value = true
-            _missingFileTracks.value = libraryReconciler.findTracksWithMissingFiles()
+            // S037 -- sin esto, con la carpeta inaccesible la comprobación
+            // devolvía lista vacía y la pantalla decía "ninguna pista sin
+            // archivo": un "todo bien" falso.
+            // ---
+            // S037 -- without this, with the folder unreachable the check
+            // returned an empty list and the screen said "no track
+            // missing": a false "all fine".
+            if (libraryReconciler.isLibraryFolderAvailable()) {
+                _folderUnavailableForCheck.value = false
+                _missingFileTracks.value = libraryReconciler.findTracksWithMissingFiles()
+            } else {
+                _missingFileTracks.value = null
+                _folderUnavailableForCheck.value = true
+            }
             _isCheckingMissingFiles.value = false
         }
     }
+
+    private val _folderUnavailableForCheck = MutableStateFlow(false)
+    val folderUnavailableForCheck: StateFlow<Boolean> = _folderUnavailableForCheck.asStateFlow()
 
     /**
      * S071 -- vuelve a poner PENDING las pistas de la última
@@ -342,16 +358,7 @@ class SettingsViewModel @Inject constructor(
     fun requeueMissingFiles() {
         val tracks = _missingFileTracks.value ?: return
         viewModelScope.launch {
-            tracks.forEach { track ->
-                searchResultTrackRepository.clearDownload(track.youtubeId)
-                downloadQueueManager.enqueue(
-                    youtubeId = track.youtubeId,
-                    title = track.title,
-                    artist = track.artist ?: track.channelTitle,
-                    album = track.album,
-                    trackPosition = track.trackPosition,
-                )
-            }
+            downloadQueueManager.enqueueMissingBatch(tracks)
             _missingFileTracks.value = null
         }
     }

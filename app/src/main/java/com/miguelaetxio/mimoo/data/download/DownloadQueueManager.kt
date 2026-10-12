@@ -6,6 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.miguelaetxio.mimoo.data.local.entity.DownloadStatus
+import com.miguelaetxio.mimoo.data.local.entity.SearchResultTrack
 import com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -99,6 +100,38 @@ class DownloadQueueManager @Inject constructor(
             .build()
 
         workManager.enqueue(request)
+    }
+
+    /**
+     * Re-queues many already-known tracks whose file is gone: ONE Room
+     * write (in chunks) and ONE WorkManager enqueue, instead of
+     * [enqueue] per track. Looping [enqueue] thousands of times made the
+     * app crash (S037, 3017 tracks).
+     * ---
+     * Reencola muchas pistas ya conocidas cuyo archivo ha desaparecido:
+     * UNA escritura en Room (por trozos) y UN encolado en WorkManager,
+     * en vez de [enqueue] por pista. Repetir [enqueue] miles de veces
+     * hizo petar la app (S037, 3017 pistas).
+     */
+    suspend fun enqueueMissingBatch(tracks: List<SearchResultTrack>) {
+        if (tracks.isEmpty()) return
+        repository.requeueMissingBatch(tracks.map { it.youtubeId })
+        val requests = tracks.map { track ->
+            val inputData = Data.Builder()
+                .putString(DownloadWorker.KEY_YOUTUBE_ID, track.youtubeId)
+                .putString(DownloadWorker.KEY_TITLE, track.title)
+                .putString(DownloadWorker.KEY_ARTIST, track.artist ?: track.channelTitle)
+                .putString(DownloadWorker.KEY_ALBUM, track.album)
+                .apply {
+                    track.trackPosition?.let { putInt(DownloadWorker.KEY_TRACK_POSITION, it) }
+                }
+                .build()
+            OneTimeWorkRequestBuilder<DownloadWorker>()
+                .setInputData(inputData)
+                .addTag(track.youtubeId)
+                .build()
+        }
+        workManager.enqueue(requests)
     }
 
     /**

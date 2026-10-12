@@ -191,6 +191,25 @@ interface SearchResultTrackDao {
     suspend fun markQueued(youtubeId: String)
 
     /**
+     * Marks many tracks QUEUED at once and clears their file path, in a
+     * single write. Looping `clearDownload()` + `markQueued()` per row
+     * fired thousands of table invalidations in a row (real crash, S037:
+     * the DONE lists re-queried ~3000 rows each time).
+     * ---
+     * Marca muchas pistas como QUEUED a la vez y borra su ruta de
+     * archivo, en una sola escritura. Repetir `clearDownload()` +
+     * `markQueued()` fila a fila disparaba miles de invalidaciones de
+     * tabla seguidas (crash real, S037: las listas DONE relanzaban su
+     * consulta de ~3000 filas cada vez).
+     */
+    @Query(
+        "UPDATE search_result_tracks " +
+        "SET filePath = NULL, downloadStatus = 'QUEUED', downloadProgress = 0 " +
+        "WHERE youtubeId IN (:youtubeIds)"
+    )
+    suspend fun requeueMissingBatch(youtubeIds: List<String>)
+
+    /**
      * Partial update: persists the real download percentage (0-100)
      * during DOWNLOADING, reported by yt-dlp's progress_hooks via
      * Chaquopy (ver DownloadWorker). Throttled at the call site, no

@@ -123,6 +123,17 @@ class SearchResultTrackRepository @Inject constructor(
     suspend fun markQueued(youtubeId: String) = dao.markQueued(youtubeId)
 
     /**
+     * Batch version of `clearDownload()` + `markQueued()`: chunks of 500
+     * ids per statement (SQLite variable limit).
+     * ---
+     * Versión por lotes de `clearDownload()` + `markQueued()`: trozos
+     * de 500 ids por sentencia (límite de variables de SQLite).
+     */
+    suspend fun requeueMissingBatch(youtubeIds: List<String>) {
+        youtubeIds.chunked(500).forEach { dao.requeueMissingBatch(it) }
+    }
+
+    /**
      * S025 -- igual que markQueued(), pero a prueba de pistas que nunca
      * llegaron a tener fila en Room. Fallo reportado por Miguel Ángel:
      * *"el botón de descargar del reproductor no descarga. Pulsas y no

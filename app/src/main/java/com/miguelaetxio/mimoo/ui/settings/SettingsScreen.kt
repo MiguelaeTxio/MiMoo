@@ -69,6 +69,13 @@ import com.miguelaetxio.mimoo.ui.theme.glassChip
 import com.miguelaetxio.mimoo.ui.theme.AppSkin
 
 /**
+ * Maximum failures listed in the "Carpeta cambiada" dialog.
+ * ---
+ * Máximo de fallos listados en el diálogo "Carpeta cambiada".
+ */
+private const val MAX_FAILURES_SHOWN = 50
+
+/**
  * Pantalla "Ajustes" (H06 PASO 3 exportar + PASO 4 importar). Punto
  * de entrada elegido con Miguel Ángel (S006): aquí viven
  * Exportar/Importar repositorio, en vez de un ítem suelto en el menú
@@ -764,6 +771,7 @@ fun SettingsScreen(
             // una copia local más reciente.
             val missingFileTracks by viewModel.missingFileTracks.collectAsState()
             val isCheckingMissingFiles by viewModel.isCheckingMissingFiles.collectAsState()
+            val folderUnavailableForCheck by viewModel.folderUnavailableForCheck.collectAsState()
             SettingsAccordionSection(
                 title = "Diagnóstico de descargas",
                 expanded = expandedSection == "diagnostico_descargas",
@@ -790,6 +798,15 @@ fun SettingsScreen(
                     }
                     Text("Comprobar descargas")
                 }
+                if (folderUnavailableForCheck) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "No encuentro la carpeta de la biblioteca (¿tarjeta no montada o " +
+                            "cambiada?). No puedo comprobar las descargas.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
                 missingFileTracks?.let { tracks ->
                     Spacer(Modifier.height(12.dp))
                     if (tracks.isEmpty()) {
@@ -810,12 +827,18 @@ fun SettingsScreen(
                                 .heightIn(max = 240.dp)
                                 .verticalScroll(rememberScrollState()),
                         ) {
-                            tracks.forEach { track ->
+                            tracks.take(MAX_FAILURES_SHOWN).forEach { track ->
                                 Text(
                                     "• ${track.title}" +
                                         (track.artist ?: track.channelTitle)?.let { " -- $it" }.orEmpty(),
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.padding(vertical = 2.dp),
+                                )
+                            }
+                            if (tracks.size > MAX_FAILURES_SHOWN) {
+                                Text(
+                                    "…y ${tracks.size - MAX_FAILURES_SHOWN} más.",
+                                    style = MaterialTheme.typography.bodySmall,
                                 )
                             }
                         }
@@ -1149,7 +1172,14 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                                 Spacer(Modifier.height(8.dp))
-                                folderState.failures.forEach { failure ->
+                                // S037 -- con miles de fallos, componer todas las
+                                // filas de golpe congelaba la app ("no responde"):
+                                // se muestran solo las primeras; el resto, en el informe.
+                                // ---
+                                // S037 -- with thousands of failures, composing every row
+                                // at once froze the app ("not responding"): only the first
+                                // ones are shown; the rest are in the report file.
+                                folderState.failures.take(MAX_FAILURES_SHOWN).forEach { failure ->
                                     Text(
                                         "• ${failure.label}",
                                         style = MaterialTheme.typography.bodySmall,
@@ -1160,6 +1190,12 @@ fun SettingsScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                     Spacer(Modifier.height(6.dp))
+                                }
+                                if (folderState.failures.size > MAX_FAILURES_SHOWN) {
+                                    Text(
+                                        "…y ${folderState.failures.size - MAX_FAILURES_SHOWN} más.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
                                 }
                                 Spacer(Modifier.height(4.dp))
                                 Text(

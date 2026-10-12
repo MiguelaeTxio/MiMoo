@@ -363,16 +363,7 @@ class AutoSyncViewModel @Inject constructor(
         val pending = _bulkMissingTracks.value ?: return
         _bulkMissingTracks.value = null
         viewModelScope.launch {
-            pending.missing.forEach { track ->
-                searchResultTrackRepository.clearDownload(track.youtubeId)
-                downloadQueueManager.enqueue(
-                    youtubeId = track.youtubeId,
-                    title = track.title,
-                    artist = track.artist ?: track.channelTitle,
-                    album = track.album,
-                    trackPosition = track.trackPosition,
-                )
-            }
+            downloadQueueManager.enqueueMissingBatch(pending.missing)
             BackupDebugLogger.log(
                 applicationContext,
                 storageManager,

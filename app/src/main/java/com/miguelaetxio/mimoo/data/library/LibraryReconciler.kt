@@ -543,6 +543,23 @@ class LibraryReconciler @Inject constructor(
     }
 
     /**
+     * Whether the library folder answers (exists and is readable). `true`
+     * when no root is configured (internal storage).
+     * ---
+     * Si la carpeta de la biblioteca responde (existe y se puede leer).
+     * `true` si no hay raíz configurada (almacenamiento interno).
+     */
+    suspend fun isLibraryFolderAvailable(): Boolean = withContext(Dispatchers.IO) {
+        val rootUri = storageManager.getRootUri() ?: return@withContext true
+        try {
+            val root = DocumentFile.fromTreeUri(context, rootUri)
+            root != null && root.exists() && root.canRead()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
      * S071 -- petición explícita de Miguel Ángel tras investigar la
      * pérdida real de S067: quiere saber EXACTAMENTE qué pistas se
      * quedaron sin archivo real, no solo un número -- tiene otro
