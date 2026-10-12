@@ -128,6 +128,31 @@ data class RescanResult(
 )
 
 /**
+ * Result of [LibraryReconciler.verifyDiskState].
+ * ---
+ * Resultado de [LibraryReconciler.verifyDiskState].
+ */
+sealed class DiskVerification {
+    /** Rows whose file was gone, already marked PENDING. / Filas sin archivo, ya marcadas PENDING. */
+    data class Reset(val missing: List<SearchResultTrack>) : DiskVerification()
+
+    /**
+     * Check skipped (migration running or library folder not responding);
+     * Room untouched. / Comprobación omitida; Room intacto.
+     */
+    data class Skipped(val reason: String) : DiskVerification()
+
+    /**
+     * Too many tracks missing at once (S022 safeguard): Room untouched, the
+     * caller must ask the user before re-queuing anything.
+     * ---
+     * Faltan demasiadas pistas de golpe (salvaguarda S022): Room intacto,
+     * quien llama debe preguntar al usuario antes de reencolar nada.
+     */
+    data class BulkMissing(val missing: List<SearchResultTrack>, val totalDone: Int) : DiskVerification()
+}
+
+/**
  * Reconciles the SAF storage folder against Room (PASO 10, H03): any
  * {Artista}/{Álbum}/Título.opus file with no matching filePath in the
  * database is registered as a new, synthetic entry. Recovers from
@@ -419,7 +444,7 @@ class LibraryReconciler @Inject constructor(
      * never downloads the files it discovers), that's the caller's
      * responsibility.
      */
-    suspend fun verifyDiskState(): List<SearchResultTrack> = withContext(Dispatchers.IO) {
+    suspend fun verifyDiskState(): DiskVerification = withContext(Dispatchers.IO) {
         // ─────────────────────────────────────────────────────────────
         // SALVAGUARDAS S022 -- fallo real reportado por Miguel Ángel:
         // *"al cambiar de carpeta, el guardián detecta el cambio de
@@ -449,7 +474,7 @@ class LibraryReconciler @Inject constructor(
         //    el traslado hay archivos legítimamente en tránsito.
         if (LibraryMigrator.isMigrating) {
             Log.w(TAG, "verifyDiskState() omitido: traslado de biblioteca en curso")
-            return@withContext emptyList()
+            return@withContext DiskVerification.Skipped("traslado de biblioteca en curso")
         }
 
         // 2. La raíz tiene que responder antes de creer nada de lo que
@@ -469,7 +494,9 @@ class LibraryReconciler @Inject constructor(
                     "verifyDiskState() omitido: la carpeta de la biblioteca no " +
                         "responde (¿tarjeta no montada?)",
                 )
-                return@withContext emptyList()
+                return@withContext DiskVerification.Skipped(
+                    "la carpeta de la biblioteca no responde (¿tarjeta no montada?)"
+                )
             }
         }
 
@@ -501,11 +528,18 @@ class LibraryReconciler @Inject constructor(
                     "pistas sin archivo. Se asume carpeta no disponible, NO se " +
                     "reencola nada.",
             )
-            return@withContext emptyList()
+            // Mismo criterio de siempre (no tocar Room ante la duda),
+            // pero ya NO en silencio: se devuelve la lista para que
+            // quien llama pregunte al usuario.
+            // ---
+            // Same rule as ever (leave Room alone when in doubt), but
+            // no longer silent: the list is returned so the caller can
+            // ask the user.
+            return@withContext DiskVerification.BulkMissing(missing, doneTracks.size)
         }
 
         missing.forEach { track -> repository.clearDownload(track.youtubeId) }
-        missing
+        DiskVerification.Reset(missing)
     }
 
     /**

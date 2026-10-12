@@ -21,6 +21,7 @@ import com.miguelaetxio.mimoo.data.backup.SyncEnvelope
 import com.miguelaetxio.mimoo.data.download.CookiesManager
 import com.miguelaetxio.mimoo.data.download.DownloadQueueManager
 import com.miguelaetxio.mimoo.data.download.StorageManager
+import com.miguelaetxio.mimoo.data.library.DiskVerification
 import com.miguelaetxio.mimoo.data.library.LibraryReconciler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -339,22 +340,86 @@ class AutoSyncViewModel @Inject constructor(
         }
     }
 
-    private suspend fun verifyDiskAndReconcile() {
-        val missing = libraryReconciler.verifyDiskState()
-        missing.forEach { track ->
-            downloadQueueManager.enqueue(
-                youtubeId = track.youtubeId,
-                title = track.title,
-                artist = track.artist ?: track.channelTitle,
-                album = track.album,
-                trackPosition = track.trackPosition,
+    /**
+     * Tracks missing in bulk (S022 safeguard tripped): shown as a dialog
+     * asking whether to download them again. Independent of [uiState] so
+     * the sync result never overwrites it.
+     * ---
+     * Pistas que faltan en masa (salvaguarda S022 activada): se muestra
+     * un diálogo preguntando si se descargan de nuevo. Independiente de
+     * [uiState] para que el resultado de la sincronización no lo pise.
+     */
+    private val _bulkMissingTracks = MutableStateFlow<DiskVerification.BulkMissing?>(null)
+    val bulkMissingTracks: StateFlow<DiskVerification.BulkMissing?> = _bulkMissingTracks.asStateFlow()
+
+    /**
+     * The user accepted: mark every missing track PENDING and enqueue it
+     * for download again.
+     * ---
+     * El usuario aceptó: marca cada pista que falta como PENDING y la
+     * encola para descargarla de nuevo.
+     */
+    fun confirmRedownloadMissing() {
+        val pending = _bulkMissingTracks.value ?: return
+        _bulkMissingTracks.value = null
+        viewModelScope.launch {
+            pending.missing.forEach { track ->
+                searchResultTrackRepository.clearDownload(track.youtubeId)
+                downloadQueueManager.enqueue(
+                    youtubeId = track.youtubeId,
+                    title = track.title,
+                    artist = track.artist ?: track.channelTitle,
+                    album = track.album,
+                    trackPosition = track.trackPosition,
+                )
+            }
+            BackupDebugLogger.log(
+                applicationContext,
+                storageManager,
+                "confirmRedownloadMissing() -- ${pending.missing.size} pista(s) reencoladas " +
+                    "por decisión del usuario",
             )
         }
-        if (missing.isNotEmpty()) {
-            val msg = "verifyDiskAndReconcile() -- ${missing.size} pista(s) DONE sin " +
-                "archivo real, reencoladas"
-            Log.d(TAG, msg)
-            BackupDebugLogger.log(applicationContext, storageManager, msg)
+    }
+
+    /** The user declined: Room stays as it was. / El usuario rechazó: Room se queda como estaba. */
+    fun dismissRedownloadMissing() {
+        _bulkMissingTracks.value = null
+    }
+
+    private suspend fun verifyDiskAndReconcile() {
+        when (val verification = libraryReconciler.verifyDiskState()) {
+            is DiskVerification.Reset -> {
+                val missing = verification.missing
+                missing.forEach { track ->
+                    downloadQueueManager.enqueue(
+                        youtubeId = track.youtubeId,
+                        title = track.title,
+                        artist = track.artist ?: track.channelTitle,
+                        album = track.album,
+                        trackPosition = track.trackPosition,
+                    )
+                }
+                if (missing.isNotEmpty()) {
+                    val msg = "verifyDiskAndReconcile() -- ${missing.size} pista(s) DONE sin " +
+                        "archivo real, reencoladas"
+                    Log.d(TAG, msg)
+                    BackupDebugLogger.log(applicationContext, storageManager, msg)
+                }
+            }
+            is DiskVerification.Skipped -> {
+                val msg = "verifyDiskAndReconcile() -- comprobación omitida: ${verification.reason}"
+                Log.w(TAG, msg)
+                BackupDebugLogger.log(applicationContext, storageManager, msg)
+            }
+            is DiskVerification.BulkMissing -> {
+                val msg = "verifyDiskAndReconcile() -- ${verification.missing.size} de " +
+                    "${verification.totalDone} pistas sin archivo (salvaguarda S022): " +
+                    "se pregunta al usuario, no se reencola nada"
+                Log.w(TAG, msg)
+                BackupDebugLogger.log(applicationContext, storageManager, msg)
+                _bulkMissingTracks.value = verification
+            }
         }
 
         storageManager.getRootUri()?.let { rootUri ->

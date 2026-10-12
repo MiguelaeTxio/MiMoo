@@ -528,6 +528,36 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                // Salvaguarda S022 -- faltan muchas pistas de golpe: antes se
+                // abortaba en silencio; ahora se pregunta.
+                // ---
+                // S022 safeguard -- many tracks missing at once: used to
+                // abort silently; now it asks.
+                val bulkMissing by autoSyncViewModel.bulkMissingTracks.collectAsState()
+                bulkMissing?.let { pending ->
+                    AlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("Faltan archivos de la biblioteca") },
+                        text = {
+                            Text(
+                                "${pending.missing.size} de ${pending.totalDone} pistas están " +
+                                    "marcadas como descargadas pero no tienen archivo en la " +
+                                    "carpeta actual. ¿Quieres volver a descargarlas?"
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = autoSyncViewModel::confirmRedownloadMissing) {
+                                Text("Descargar de nuevo")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = autoSyncViewModel::dismissRedownloadMissing) {
+                                Text("Ahora no")
+                            }
+                        },
+                    )
+                }
+
                 (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Done)
                     ?.message?.let { message ->
                         AlertDialog(
