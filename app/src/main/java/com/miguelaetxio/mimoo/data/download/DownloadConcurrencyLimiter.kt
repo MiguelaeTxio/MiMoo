@@ -64,4 +64,11 @@ class DownloadConcurrencyLimiter @Inject constructor() {
     }
 
     val semaphore = Semaphore(MAX_CONCURRENT_DOWNLOADS)
+
+    /**
+     * Transfers actually running right now (diagnostic only, S037).
+     * ---
+     * Transferencias corriendo realmente ahora (solo diagnóstico, S037).
+     */
+    val activeTransfers = java.util.concurrent.atomic.AtomicInteger(0)
 }

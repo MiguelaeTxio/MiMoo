@@ -355,6 +355,7 @@ class DownloadWorker @AssistedInject constructor(
         // partial SAF file orphaned on disk forever (real "espurios"
         // vector reported by Miguel Ángel, 2026-07-04).
         var outputDoc: androidx.documentfile.provider.DocumentFile? = null
+        var transferStarted = false
 
         return@withContext try {
             // S077 -- bug real reportado por Miguel Ángel: "el botón
@@ -384,6 +385,13 @@ class DownloadWorker @AssistedInject constructor(
             // ffmpeg), lo que podía dejar a una pista mostrando
             // "Descargando" en la UI mientras en realidad seguía
             // esperando a que se levantara la pausa.
+            transferStarted = true
+            DownloadDebugLogger.log(
+                applicationContext,
+                "INICIO $youtubeId intento=$runAttemptCount " +
+                    "activas=${concurrencyLimiter.activeTransfers.incrementAndGet()} " +
+                    "permisosLibres=${concurrencyLimiter.semaphore.availablePermits}",
+            )
             repository.updateDownloadStatus(youtubeId, DownloadStatus.DOWNLOADING)
 
             // Step 1 — download to temp via yt-dlp + Chaquopy + ffmpeg.
@@ -450,6 +458,10 @@ class DownloadWorker @AssistedInject constructor(
                 Result.retry()
             }
         } catch (e: Exception) {
+            DownloadDebugLogger.log(
+                applicationContext,
+                "FALLO $youtubeId ${e::class.java.simpleName}: ${e.message}",
+            )
             // Clean up temp files.
             // Limpiar archivos temporales.
             File("${tempBase.absolutePath}.opus").delete()
@@ -572,6 +584,13 @@ class DownloadWorker @AssistedInject constructor(
             } else {
                 repository.updateDownloadStatus(youtubeId, DownloadStatus.ERROR)
                 Result.failure()
+            }
+        } finally {
+            if (transferStarted) {
+                DownloadDebugLogger.log(
+                    applicationContext,
+                    "FIN $youtubeId activas=${concurrencyLimiter.activeTransfers.decrementAndGet()}",
+                )
             }
         }
         } // cierra concurrencyLimiter.semaphore.withPermit -- S074

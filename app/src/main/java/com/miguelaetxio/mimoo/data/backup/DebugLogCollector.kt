@@ -133,6 +133,7 @@ class DebugLogCollector @Inject constructor(
             "crash_log.txt",
             "debug_error.txt",
             "backup_debug.txt",
+            "download_debug.txt",
             "notification_debug.txt",
             "radio_debug.txt",
             "radio_relacionados_debug.txt",
