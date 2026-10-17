@@ -32,6 +32,7 @@ import javax.inject.Singleton
 @Singleton
 class PlaybackStatsRecorder @Inject constructor(
     private val dao: PlayEventDao,
+    private val statsSyncManager: StatsSyncManager,
 ) {
     companion object {
         const val MIN_LISTEN_MS = 30_000L
@@ -63,6 +64,13 @@ class PlaybackStatsRecorder @Inject constructor(
     // Solo se toca desde el hilo de escritura único.
     // Only touched from the single writer thread.
     private val rowIds = HashMap<Long, Long>()
+
+    init {
+        scope.launch {
+            dao.closeAllOpen()
+            statsSyncManager.requestSync()
+        }
+    }
 
     fun onItemChanged(item: QueueItem?, isPlayingNow: Boolean, mimooutcastActive: Boolean) {
         finish(tracked)
@@ -124,15 +132,19 @@ class PlaybackStatsRecorder @Inject constructor(
             youtubeId = t.youtubeId,
             originLabel = t.originLabel,
             listenedMs = ms,
+            closed = if (final) 1 else 0,
         )
         scope.launch {
             val id = rowIds[token]
             if (id == null) {
                 rowIds[token] = dao.insert(event)
             } else {
-                dao.updateListened(id, ms)
+                dao.updateListened(id, ms, if (final) 1 else 0)
             }
-            if (final) rowIds.remove(token)
+            if (final) {
+                rowIds.remove(token)
+                statsSyncManager.requestSync()
+            }
         }
     }
 }

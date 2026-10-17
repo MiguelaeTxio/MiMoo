@@ -507,4 +507,19 @@ data class SyncEnvelope(
      * device-to-device channel over his own Drive.
      */
     val cookiesTxtContent: String? = null,
+    /**
+     * Totales de uso (pantalla Estadísticas). Apartado propio del
+     * sobre, NUNCA dentro de `bundle` (que viaja por exportación manual
+     * y códigos de compartición) y fuera de la comparación de pistas:
+     * cada dispositivo solo le SUMA sus escuchas nuevas, ver
+     * `StatsSyncManager`. Las subidas de pistas/listas lo conservan tal
+     * como está en Drive.
+     * ---
+     * Usage totals (Statistics screen). Its own section of the
+     * envelope, NEVER inside `bundle` (which travels through manual
+     * export and share codes) and outside the track comparison: each
+     * device only ADDS its new listens to it, see `StatsSyncManager`.
+     * Track/list uploads keep it as it is in Drive.
+     */
+    val stats: com.miguelaetxio.mimoo.data.stats.StatsBlock? = null,
 )

@@ -150,6 +150,8 @@ class AutoSyncPusher @Inject constructor(
     // ver el kdoc de pushCurrentState() más abajo.
     private val searchResultTrackRepository:
         com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
+    private val statsSyncManager: com.miguelaetxio.mimoo.data.stats.StatsSyncManager,
+    syncLock: SyncLock,
 ) {
     /**
      * `context` puede ser una `Activity` (pantallas normales) o el
@@ -175,7 +177,7 @@ class AutoSyncPusher @Inject constructor(
      * tener cada uno su copia completa del bundle serializado en el
      * heap al mismo tiempo.
      */
-    private val pushMutex = Mutex()
+    private val pushMutex = syncLock.mutex
 
     private var pendingPush: Job? = null
 
@@ -374,7 +376,7 @@ class AutoSyncPusher @Inject constructor(
                 return
             }
 
-            driveRepository.pushSyncState(outcome.accessToken, backupRepository.toSyncJson(envelope))
+            statsSyncManager.pushPreservingStats(outcome.accessToken, envelope)
             val msg = "pushCurrentState() -- copia de respaldo automática actualizada tras cambio local"
             Log.d(TAG, msg)
             BackupDebugLogger.log(context, storageManager, msg)
@@ -395,7 +397,7 @@ class AutoSyncPusher @Inject constructor(
         pushScope.launch {
             pushMutex.withLock {
                 try {
-                    driveRepository.pushSyncState(state.accessToken, backupRepository.toSyncJson(state.envelope))
+                    statsSyncManager.pushPreservingStats(state.accessToken, state.envelope)
                     val msg = "confirmPush() -- cambio confirmado, Drive actualizado a " +
                         "${state.newTrackCount} pista(s)"
                     Log.d(TAG, msg)

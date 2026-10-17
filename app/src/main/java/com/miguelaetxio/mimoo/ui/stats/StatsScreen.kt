@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.miguelaetxio.mimoo.data.local.dao.TopLabelRow
+import com.miguelaetxio.mimoo.data.stats.TopLabelRow
 import com.miguelaetxio.mimoo.ui.library.displayArtistName
 import com.miguelaetxio.mimoo.ui.theme.glassChip
 import java.text.DateFormat

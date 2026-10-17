@@ -53,7 +53,7 @@ import com.miguelaetxio.mimoo.data.local.entity.PlayEvent
         ArtistImage::class,
         PlayEvent::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -604,6 +604,21 @@ abstract class AppDatabase : RoomDatabase() {
                         "`youtubeId` TEXT, " +
                         "`originLabel` TEXT, " +
                         "`listenedMs` INTEGER NOT NULL)"
+                )
+            }
+        }
+
+        /**
+         * Estadísticas compartidas: las escuchas pasan a ser una cola de
+         * subida a Drive; `closed` marca las que ya terminaron.
+         * ---
+         * Shared statistics: listens become an upload queue to Drive;
+         * `closed` marks the ones that already ended.
+         */
+        val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE `play_events` ADD COLUMN `closed` INTEGER NOT NULL DEFAULT 0"
                 )
             }
         }

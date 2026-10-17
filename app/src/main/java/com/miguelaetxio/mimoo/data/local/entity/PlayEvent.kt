@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -18,7 +19,9 @@ import androidx.room.PrimaryKey
 enum class PlayKind { LOCAL, STREAMING, RADIO, MIMOOUTCAST, STATION }
 
 /**
- * Una escucha registrada. Solo se crea cuando la pista (o emisora) ha
+ * Una escucha pendiente de subir a Drive. Tras sumarse a los totales de
+ * Drive (StatsSyncManager) la fila se borra: el dispositivo no guarda
+ * historial. Solo se crea cuando la pista (o emisora) ha
  * sonado al menos PlaybackStatsRecorder.MIN_LISTEN_MS; después, la
  * misma fila va acumulando listenedMs mientras siga sonando esa pista.
  * kind se guarda como el nombre de PlayKind.
@@ -38,4 +41,9 @@ data class PlayEvent(
     val youtubeId: String?,
     val originLabel: String?,
     val listenedMs: Long,
+    // 0 mientras la pista sigue sonando; 1 cuando ya terminó y la
+    // escucha está lista para sumarse a los totales de Drive.
+    // 0 while the track is still playing; 1 once it ended and the
+    // listen is ready to be added to Drive's totals.
+    @ColumnInfo(defaultValue = "0") val closed: Int = 0,
 )

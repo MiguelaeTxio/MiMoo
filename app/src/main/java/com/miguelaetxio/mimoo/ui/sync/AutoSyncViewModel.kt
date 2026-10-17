@@ -127,6 +127,7 @@ class AutoSyncViewModel @Inject constructor(
     // masiva en curso, "local < Drive" es esperado y transitorio, no
     // un borrado -- ver runSync() más abajo.
     private val searchResultTrackRepository: com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
+    private val statsSyncManager: com.miguelaetxio.mimoo.data.stats.StatsSyncManager,
     @ApplicationContext private val applicationContext: Context,
 ) : ViewModel() {
 
@@ -176,6 +177,15 @@ class AutoSyncViewModel @Inject constructor(
     }
 
     private suspend fun runSync(accessToken: String) {
+        // Estadísticas: apartado independiente del resto de la
+        // sincronización; un fallo aquí nunca debe impedirla.
+        // Statistics: section independent from the rest of the sync;
+        // a failure here must never prevent it.
+        try {
+            statsSyncManager.syncNow(accessToken)
+        } catch (e: Exception) {
+            Log.w(TAG, "runSync() -- sincronización de estadísticas fallida", e)
+        }
         val remoteJson = driveRepository.pullSyncState(accessToken)
         if (remoteJson == null) {
             // Caso 1: no hay copia todavía -- se crea, sin preguntar nada.
@@ -554,6 +564,6 @@ class AutoSyncViewModel @Inject constructor(
             bundle = bundle,
             cookiesTxtContent = cookiesManager.currentContentOrNull(),
         )
-        driveRepository.pushSyncState(accessToken, backupRepository.toSyncJson(envelope))
+        statsSyncManager.pushPreservingStats(accessToken, envelope)
     }
 }
