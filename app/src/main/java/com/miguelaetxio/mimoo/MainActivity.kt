@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -40,7 +41,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -504,7 +504,7 @@ class MainActivity : ComponentActivity() {
                     ?.let { mismatchState ->
                         val c = mismatchState.comparison
                         val deviceLabel = mismatchState.envelope.deviceLabel
-                        AlertDialog(
+                        MiMooAlertDialog(
                             onDismissRequest = {},
                             title = { Text("Diferencia con Drive") },
                             text = {
@@ -536,7 +536,7 @@ class MainActivity : ComponentActivity() {
                 // abort silently; now it asks.
                 val bulkMissing by autoSyncViewModel.bulkMissingTracks.collectAsState()
                 bulkMissing?.let { pending ->
-                    AlertDialog(
+                    MiMooAlertDialog(
                         onDismissRequest = {},
                         title = { Text("Faltan archivos de la biblioteca") },
                         text = {
@@ -561,7 +561,7 @@ class MainActivity : ComponentActivity() {
 
                 (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Done)
                     ?.message?.let { message ->
-                        AlertDialog(
+                        MiMooAlertDialog(
                             onDismissRequest = autoSyncViewModel::dismiss,
                             title = { Text("Sincronizado con Drive") },
                             text = { Text(message) },
@@ -572,7 +572,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                 (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.Error)?.let { errorState ->
-                    AlertDialog(
+                    MiMooAlertDialog(
                         onDismissRequest = autoSyncViewModel::dismiss,
                         title = { Text("No se pudo sincronizar con Drive") },
                         text = { Text(errorState.message) },
@@ -597,7 +597,7 @@ class MainActivity : ComponentActivity() {
                 (pushPendingConfirmation as? com.miguelaetxio.mimoo.data.backup.PushConfirmationState.PendingPushConfirm)
                     ?.let { pending ->
                         val isAddition = pending.newTrackCount > pending.currentRemoteTrackCount
-                        AlertDialog(
+                        MiMooAlertDialog(
                             onDismissRequest = {},
                             title = { Text("¿Actualizar Drive?") },
                             text = {
@@ -644,7 +644,7 @@ class MainActivity : ComponentActivity() {
                 (shareImportState as? com.miguelaetxio.mimoo.ui.share.ShareImportUiState.Confirm)
                     ?.let { confirmState ->
                         val b = confirmState.shareBundle.bundle
-                        AlertDialog(
+                        MiMooAlertDialog(
                             onDismissRequest = shareImportViewModel::dismiss,
                             title = { Text("Contenido compartido") },
                             text = {
@@ -669,7 +669,7 @@ class MainActivity : ComponentActivity() {
 
                 (shareImportState as? com.miguelaetxio.mimoo.ui.share.ShareImportUiState.Done)
                     ?.let { doneState ->
-                        AlertDialog(
+                        MiMooAlertDialog(
                             onDismissRequest = shareImportViewModel::dismiss,
                             title = { Text("Contenido importado") },
                             text = {
@@ -686,7 +686,7 @@ class MainActivity : ComponentActivity() {
 
                 (shareImportState as? com.miguelaetxio.mimoo.ui.share.ShareImportUiState.Error)
                     ?.let { errorState ->
-                        AlertDialog(
+                        MiMooAlertDialog(
                             onDismissRequest = shareImportViewModel::dismiss,
                             title = { Text("No se pudo importar") },
                             text = { Text(errorState.message) },
@@ -961,7 +961,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         if (showStorageExplanation) {
-                            AlertDialog(
+                            MiMooAlertDialog(
                                 onDismissRequest = { },
                                 title = { Text("Carpeta de descargas") },
                                 text = {

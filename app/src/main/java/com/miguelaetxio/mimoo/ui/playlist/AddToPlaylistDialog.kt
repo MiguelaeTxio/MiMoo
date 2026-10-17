@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -65,7 +66,7 @@ fun AddToPlaylistDialog(
         "Añadir a lista"
     }
 
-    AlertDialog(
+    MiMooAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -175,7 +176,7 @@ fun AddToPlaylistDialog(
             "${confirmation.duplicateCount} de estas pistas ya están en " +
                 "\"${confirmation.playlistName}\", no se añaden."
         }
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = {
                 viewModel.dismissDuplicateConfirmation()
                 onDismiss()

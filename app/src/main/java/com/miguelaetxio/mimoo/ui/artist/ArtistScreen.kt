@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.artist
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -243,7 +244,7 @@ private fun ArtistDisambiguationDialog(
     candidates: List<MusicBrainzArtistSummary>,
     onChoose: (MusicBrainzArtistSummary) -> Unit,
 ) {
-    AlertDialog(
+    MiMooAlertDialog(
         onDismissRequest = { /* Bloqueante: hay que elegir uno para continuar. */ },
         title = { Text("Varios artistas con este nombre") },
         text = {

@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.library
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -424,7 +425,7 @@ fun LibraryScreen(
     }
 
     trackPendingDelete?.let { track ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { trackPendingDelete = null },
             title = { Text("Borrar descarga") },
             text = {
@@ -450,7 +451,7 @@ fun LibraryScreen(
     }
 
     albumPendingDelete?.let { (artist, album) ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { albumPendingDelete = null },
             title = { Text("Borrar álbum") },
             text = {
@@ -489,7 +490,7 @@ fun LibraryScreen(
     }
 
     artistPendingDelete?.let { artist ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { artistPendingDelete = null },
             title = { Text("Borrar artista") },
             text = {
@@ -527,7 +528,7 @@ fun LibraryScreen(
     }
 
     uiState.editMetadataError?.let { message ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissEditMetadataError,
             title = { Text("No se pudo guardar") },
             text = { Text(message) },
@@ -1662,7 +1663,7 @@ private fun EditAlbumDialog(
     var artistField by remember(artist, album) { mutableStateOf(artist) }
     var albumField by remember(artist, album) { mutableStateOf(album) }
 
-    AlertDialog(
+    MiMooAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Editar álbum") },
         text = {
@@ -1725,7 +1726,7 @@ private fun EditMetadataDialog(
     }
     var album by remember(track.youtubeId) { mutableStateOf(track.album ?: "") }
 
-    AlertDialog(
+    MiMooAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Editar metadatos") },
         text = {

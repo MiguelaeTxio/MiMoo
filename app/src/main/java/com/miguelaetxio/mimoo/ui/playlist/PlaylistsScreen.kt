@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -192,7 +193,7 @@ fun PlaylistsScreen(
     }
 
     playlistPendingDelete?.let { playlist ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { playlistPendingDelete = null },
             title = { Text("Borrar lista") },
             text = {
@@ -363,7 +364,7 @@ private fun NamePlaylistDialog(
 ) {
     var name by remember { mutableStateOf(initialName) }
 
-    AlertDialog(
+    MiMooAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {

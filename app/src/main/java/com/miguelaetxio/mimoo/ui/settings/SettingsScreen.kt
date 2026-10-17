@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.settings
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,7 +33,6 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -1043,7 +1043,7 @@ fun SettingsScreen(
             // AlertDialog de Material 3 pone los botones en fila y con
             // tres no caben legibles en pantalla de móvil.
             pendingNewLibraryRoot?.let { newRoot ->
-                AlertDialog(
+                MiMooAlertDialog(
                     onDismissRequest = { pendingNewLibraryRoot = null },
                     title = { Text("Cambiar carpeta de la biblioteca") },
                     text = {
@@ -1092,7 +1092,7 @@ fun SettingsScreen(
             when (val folderState = libraryFolderState) {
                 is SettingsViewModel.LibraryFolderState.Idle -> Unit
 
-                is SettingsViewModel.LibraryFolderState.Migrating -> AlertDialog(
+                is SettingsViewModel.LibraryFolderState.Migrating -> MiMooAlertDialog(
                     // Sin onDismissRequest efectivo: mover archivos a
                     // medias y volver a tocar la app sería la vía más
                     // fácil de dejar la biblioteca en un estado raro.
@@ -1133,7 +1133,7 @@ fun SettingsScreen(
                     confirmButton = {},
                 )
 
-                is SettingsViewModel.LibraryFolderState.Done -> AlertDialog(
+                is SettingsViewModel.LibraryFolderState.Done -> MiMooAlertDialog(
                     onDismissRequest = viewModel::dismissLibraryFolderState,
                     title = { Text("Carpeta cambiada") },
                     text = {
@@ -1215,7 +1215,7 @@ fun SettingsScreen(
                     },
                 )
 
-                is SettingsViewModel.LibraryFolderState.Error -> AlertDialog(
+                is SettingsViewModel.LibraryFolderState.Error -> MiMooAlertDialog(
                     onDismissRequest = viewModel::dismissLibraryFolderState,
                     title = { Text("No se pudo cambiar la carpeta") },
                     text = { Text(folderState.message) },
@@ -1404,7 +1404,7 @@ fun SettingsScreen(
     // Drive".
     val listedState = uiState as? BackupUiState.BackupsListed
     if (listedState != null) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissMessage,
             title = { Text("Elige un backup") },
             text = {
@@ -1452,7 +1452,7 @@ fun SettingsScreen(
     // repositorio local del dispositivo y lo sustituye. Nunca se
     // ejecuta directamente al tocar un ítem de la lista.
     backupPendingConfirmation?.let { backup ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { backupPendingConfirmation = null },
             title = { Text("¿Sustituir tu repositorio?") },
             text = {
@@ -1492,7 +1492,7 @@ fun SettingsScreen(
     // same way a Drive import does, so it needs the same explicit
     // warning.
     filePendingConfirmation?.let { (displayName, json) ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { filePendingConfirmation = null },
             title = { Text("¿Sustituir tu repositorio?") },
             text = {
@@ -1522,7 +1522,7 @@ fun SettingsScreen(
     }
 
     fileImportError?.let { message ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { fileImportError = null },
             title = { Text("No se pudo leer el archivo") },
             text = { Text(message) },

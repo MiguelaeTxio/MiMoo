@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.queue
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -119,7 +120,7 @@ fun QueueScreen(
     }
 
     if (showClearConfirm) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { showClearConfirm = false },
             title = { Text("Vaciar cola") },
             text = {

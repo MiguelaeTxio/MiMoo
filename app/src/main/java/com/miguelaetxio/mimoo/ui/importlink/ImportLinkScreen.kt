@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.importlink
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -320,7 +321,7 @@ fun ImportLinkScreen(
     }
 
     if (showMetadataDialog) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { showMetadataDialog = false },
             title = { Text("Confirmar artista y álbum") },
             text = {
@@ -373,7 +374,7 @@ fun ImportLinkScreen(
     }
 
     uiState.importedCount?.let { count ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = {},
             title = { Text("Importado") },
             text = {

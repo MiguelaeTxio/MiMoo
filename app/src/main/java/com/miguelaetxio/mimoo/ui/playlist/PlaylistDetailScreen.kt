@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.playlist
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -241,7 +242,7 @@ fun PlaylistDetailScreen(
     }
 
     uiState.playError?.let { message ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissPlayError,
             title = { Text("No se pudo reproducir") },
             text = { Text(message) },
@@ -254,7 +255,7 @@ fun PlaylistDetailScreen(
     }
 
     uiState.resolveError?.let { message ->
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissResolveError,
             title = { Text("Reproducción parcial") },
             text = { Text(message) },

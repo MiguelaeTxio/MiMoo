@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.player
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -175,7 +176,7 @@ fun PlayerBar(
     // todo que meter un vídeo sin verificar. Ver
     // PlayerManager.resolveYoutubeCandidate()/dismissRadioNetworkLost().
     if (state.radioNetworkLost) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { },
             title = { Text("Radio detenida") },
             text = {
@@ -201,7 +202,7 @@ fun PlayerBar(
     // vez de dejar sonar el silencio.
     val exhaustedAnchor = state.miMooutCastAnchorExhausted
     if (exhaustedAnchor != null) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = { },
             title = { Text("Sin más música") },
             text = {
@@ -226,7 +227,7 @@ fun PlayerBar(
     if (radioArtistPromptTitle != null) {
         var artistInput by remember(radioArtistPromptTitle) { mutableStateOf("") }
         var songInput by remember(radioArtistPromptTitle) { mutableStateOf("") }
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissRadioArtistPrompt,
             title = { Text("¿Quién es el artista?") },
             text = {
@@ -287,7 +288,7 @@ fun PlayerBar(
             mutableStateOf(prefilledTitle ?: streamArtistPromptTitle)
         }
         val isInforming = !prefilledArtist.isNullOrBlank()
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissStreamArtistPrompt,
             title = { Text("¿Quién es el artista?") },
             text = {
@@ -340,7 +341,7 @@ fun PlayerBar(
     // S029", punto 4. Mismo criterio que los otros diálogos de esta
     // pantalla: va ANTES del `return` de más abajo.
     if (dislikeChoiceVisible) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissDislikeChoice,
             title = { Text("No me gusta") },
             text = { Text("¿El rechazo es del artista o solo de este tema?") },

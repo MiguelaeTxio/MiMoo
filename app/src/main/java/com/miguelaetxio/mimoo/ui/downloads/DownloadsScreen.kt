@@ -1,5 +1,6 @@
 package com.miguelaetxio.mimoo.ui.downloads
 
+import com.miguelaetxio.mimoo.ui.common.MiMooAlertDialog
 import android.app.Activity
 
 import androidx.compose.foundation.clickable
@@ -243,7 +244,7 @@ fun DownloadsScreen(
     // podrá deshacer, continuar/cancelar)" antes de borrar TODAS las
     // descargas fallidas de golpe.
     if (uiState.showDeleteAllFailedConfirm) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = viewModel::dismissDeleteAllFailedConfirm,
             title = { Text("¿Borrar todas las descargas fallidas?") },
             text = {
@@ -511,7 +512,7 @@ private fun AlternativeSearchDialog(
     val pending = state.pendingConfirmation
 
     if (pending != null) {
-        AlertDialog(
+        MiMooAlertDialog(
             onDismissRequest = onCancelConfirm,
             title = { Text("Confirmar sustitución") },
             text = {
@@ -543,7 +544,7 @@ private fun AlternativeSearchDialog(
         return
     }
 
-    AlertDialog(
+    MiMooAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Buscar alternativa") },
         text = {
