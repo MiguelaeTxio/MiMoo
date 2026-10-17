@@ -129,7 +129,8 @@ def wikitext(title):
 
 CELL_SPLIT = re.compile(r"\|\||\n\s*\|(?!\})")
 LINK = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]")
-QUOTED = re.compile(r"[«\"“'']([^»\"”'']{2,60})[»\"”'']")
+# El apostrofo NO delimita: "Can't Cry Anymore" quedaba cortado en "Can".
+QUOTED = re.compile(r"[«\"“]([^»\"”]{2,60})[»\"”]")
 
 
 def clean(value):
