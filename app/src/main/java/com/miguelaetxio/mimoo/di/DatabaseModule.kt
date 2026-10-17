@@ -15,6 +15,7 @@ import com.miguelaetxio.mimoo.data.local.dao.FavoritePlaylistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.LyricsCacheDao
+import com.miguelaetxio.mimoo.data.local.dao.PlayEventDao
 import com.miguelaetxio.mimoo.data.local.dao.ArtistImageDao
 import dagger.Module
 import dagger.Provides
@@ -52,6 +53,7 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_14_15,
                 AppDatabase.MIGRATION_15_16,
                 AppDatabase.MIGRATION_16_17,
+                AppDatabase.MIGRATION_17_18,
             )
             .build()
 
@@ -124,4 +126,9 @@ object DatabaseModule {
     @Provides
     fun provideLyricsCacheDao(db: AppDatabase): LyricsCacheDao =
         db.lyricsCacheDao()
+
+    /** Estadísticas de uso -- mismo patrón que el resto de DAOs de este módulo. */
+    @Provides
+    fun providePlayEventDao(db: AppDatabase): PlayEventDao =
+        db.playEventDao()
 }

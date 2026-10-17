@@ -18,6 +18,7 @@ import com.miguelaetxio.mimoo.data.local.dao.DislikedArtistDao
 import com.miguelaetxio.mimoo.data.local.dao.DislikedTrackDao
 import com.miguelaetxio.mimoo.data.local.dao.LyricsCacheDao
 import com.miguelaetxio.mimoo.data.local.dao.ArtistImageDao
+import com.miguelaetxio.mimoo.data.local.dao.PlayEventDao
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteAlbum
 import com.miguelaetxio.mimoo.data.local.entity.FavoriteRadioStation
 import com.miguelaetxio.mimoo.data.local.entity.ChannelSubscription
@@ -32,6 +33,7 @@ import com.miguelaetxio.mimoo.data.local.entity.DislikedArtist
 import com.miguelaetxio.mimoo.data.local.entity.DislikedTrack
 import com.miguelaetxio.mimoo.data.local.entity.LyricsCache
 import com.miguelaetxio.mimoo.data.local.entity.ArtistImage
+import com.miguelaetxio.mimoo.data.local.entity.PlayEvent
 
 @Database(
     entities = [
@@ -49,8 +51,9 @@ import com.miguelaetxio.mimoo.data.local.entity.ArtistImage
         DislikedTrack::class,
         LyricsCache::class,
         ArtistImage::class,
+        PlayEvent::class,
     ],
-    version = 17,
+    version = 18,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -68,6 +71,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dislikedTrackDao(): DislikedTrackDao
     abstract fun lyricsCacheDao(): LyricsCacheDao
     abstract fun artistImageDao(): ArtistImageDao
+    abstract fun playEventDao(): PlayEventDao
 
     companion object {
         /**
@@ -577,6 +581,29 @@ abstract class AppDatabase : RoomDatabase() {
                         "`imageUrl` TEXT, " +
                         "`resolvedAt` INTEGER NOT NULL, " +
                         "PRIMARY KEY(`artist`))"
+                )
+            }
+        }
+
+        /**
+         * Estadísticas de uso: tabla de escuchas (PlayEvent). Sin datos
+         * previos -- el historial empieza a contarse desde esta versión.
+         * ---
+         * Usage statistics: listens table (PlayEvent). No earlier data --
+         * history starts counting from this version.
+         */
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `play_events` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`playedAt` INTEGER NOT NULL, " +
+                        "`kind` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`artist` TEXT, " +
+                        "`youtubeId` TEXT, " +
+                        "`originLabel` TEXT, " +
+                        "`listenedMs` INTEGER NOT NULL)"
                 )
             }
         }

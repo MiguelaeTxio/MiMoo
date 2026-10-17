@@ -311,4 +311,28 @@ interface SearchResultTrackDao {
         "WHERE artist = :artist AND album = :album"
     )
     suspend fun clearCoverArtForAlbum(artist: String, album: String)
+
+    /**
+     * Estadísticas de uso: pistas por estado de descarga, separando los
+     * archivos que ya estaban en la carpeta (filas sintéticas "local:")
+     * de los descargados por MiMoo.
+     * ---
+     * Usage statistics: tracks per download status, separating files
+     * that were already in the folder ("local:" synthetic rows) from
+     * those MiMoo downloaded.
+     */
+    @Query(
+        "SELECT downloadStatus AS status, " +
+            "CASE WHEN youtubeId LIKE 'local:%' THEN 1 ELSE 0 END AS isLocalFile, " +
+            "COUNT(*) AS tracks, COALESCE(SUM(durationSeconds), 0) AS seconds " +
+            "FROM search_result_tracks GROUP BY downloadStatus, isLocalFile"
+    )
+    fun observeDownloadSummary(): kotlinx.coroutines.flow.Flow<List<DownloadSummaryRow>>
 }
+
+data class DownloadSummaryRow(
+    val status: String,
+    val isLocalFile: Int,
+    val tracks: Int,
+    val seconds: Long,
+)

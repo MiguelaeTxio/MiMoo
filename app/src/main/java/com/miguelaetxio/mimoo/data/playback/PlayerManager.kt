@@ -467,6 +467,9 @@ class PlayerManager @Inject constructor(
     // de depuración entre Radio y miMooutCast en las funciones que
     // ambos comparten. Ver el kdoc de MiMooutcastSessionFlag.
     private val mimooutcastSessionFlag: MiMooutcastSessionFlag,
+    // Estadísticas de uso: registro de escuchas (pantalla Estadísticas).
+    // Usage statistics: listen log (Statistics screen).
+    private val playbackStatsRecorder: com.miguelaetxio.mimoo.data.stats.PlaybackStatsRecorder,
 ) {
 
     /**
@@ -624,6 +627,7 @@ class PlayerManager @Inject constructor(
         // sus propios altibajos de volumen.
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
+                playbackStatsRecorder.onPlayingChanged(isPlaying)
                 // Bug real reportado por Miguel Ángel (2026-08-24):
                 // "a veces reanuda antes [de que acabe la llamada] y lo
                 // hace durante la llamada". Causa real: no hay ningún
@@ -769,6 +773,11 @@ class PlayerManager @Inject constructor(
             // from this same class.
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 syncStateFromPlayer()
+                playbackStatsRecorder.onItemChanged(
+                    item = if (mediaItem == null) null else queueItems.getOrNull(player.currentMediaItemIndex),
+                    isPlayingNow = player.isPlaying,
+                    mimooutcastActive = manualAnchorActive,
+                )
                 // H08 PARTE 2 (S009, corrección tras prueba real --
                 // el autoplay seguía sin funcionar). Se repone en dos
                 // casos, no solo uno:
