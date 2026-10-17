@@ -1,1 +1,681 @@
-[]
+[
+  {
+    "artist": "Ludwig van Beethoven",
+    "song": "Symphony No. 5 in C minor, Op. 67",
+    "youtube_id": "wsz2KRqpMhI",
+    "title": "Ludwig Van Beethoven: Symphony No. 5, Op. 67",
+    "duration_seconds": 422
+  },
+  {
+    "artist": "Ludwig van Beethoven",
+    "song": "Piano Sonata No. 14 'Moonlight'",
+    "youtube_id": "B2LcJTqwVug",
+    "title": "Ludwig Van Beethoven - Piano Sonata No.14 \"Moonlight Sonata\"",
+    "duration_seconds": 393
+  },
+  {
+    "artist": "Ludwig van Beethoven",
+    "song": "Für Elise",
+    "youtube_id": "q9bU12gXUyM",
+    "title": "Beethoven - Für Elise (Piano Version)",
+    "duration_seconds": 173
+  },
+  {
+    "artist": "Wolfgang Amadeus Mozart",
+    "song": "Eine kleine Nachtmusik",
+    "youtube_id": "oy2zDJPIgwc",
+    "title": "Eine Kleine Nachtmusik - Mozart",
+    "duration_seconds": 348
+  },
+  {
+    "artist": "Wolfgang Amadeus Mozart",
+    "song": "Requiem in D minor, K. 626",
+    "youtube_id": "qiMcXzfm9Mg",
+    "title": "Mozart- Requiem In D Minor, K 626 - Requiem",
+    "duration_seconds": 417
+  },
+  {
+    "artist": "Wolfgang Amadeus Mozart",
+    "song": "Symphony No. 40 in G minor",
+    "youtube_id": "0sGqkMU-mGQ",
+    "title": "Mozart: Symphony No. 40 / Rattle · Berliner Philharmoniker",
+    "duration_seconds": 187
+  },
+  {
+    "artist": "Wolfgang Amadeus Mozart",
+    "song": "Piano Sonata No. 11 'Alla Turca'",
+    "youtube_id": "n2Tru4Qa3pc",
+    "title": "YUNDI plays Mozart: Piano Sonata No. 11 in A Major, K. 331 \"Alla Turca\": III. Rondo alla Turca",
+    "duration_seconds": 204
+  },
+  {
+    "artist": "Wolfgang Amadeus Mozart",
+    "song": "The Magic Flute: Der Hölle Rache",
+    "youtube_id": "YuBeBjqKSGQ",
+    "title": "The Magic Flute – Queen of the Night aria (Mozart; Diana Damrau, The Royal Opera)",
+    "duration_seconds": 181
+  },
+  {
+    "artist": "Johann Sebastian Bach",
+    "song": "Toccata and Fugue in D minor",
+    "youtube_id": "erXG9vnN-GI",
+    "title": "J.S. Bach : Toccata and Fugue in D minor BWV 565 / Liene Andreta Kalnciema live at Riga Cathedral",
+    "duration_seconds": 557
+  },
+  {
+    "artist": "Johann Sebastian Bach",
+    "song": "Air on the G String",
+    "youtube_id": "1PkD47rNkfY",
+    "title": "Bach: Air on the G String (Orchestral Suite No. 3)",
+    "duration_seconds": 363
+  },
+  {
+    "artist": "Johann Sebastian Bach",
+    "song": "Brandenburg Concerto No. 3",
+    "youtube_id": "Czsd13Mmcg0",
+    "title": "Bach: Brandenburg Concerto No. 3 | Claudio Abbado & the Orchestra Mozart",
+    "duration_seconds": 627
+  },
+  {
+    "artist": "Johann Sebastian Bach",
+    "song": "Cello Suite No. 1 in G major, Prelude",
+    "youtube_id": "1prweT95Mo0",
+    "title": "Yo-Yo Ma - Bach: Cello Suite No. 1 in G Major, Prélude (Official Video)",
+    "duration_seconds": 196
+  },
+  {
+    "artist": "Johann Sebastian Bach",
+    "song": "Mass in B minor",
+    "youtube_id": "pu19NNXBVQg",
+    "title": "J. S. Bach: Mass in B minor (Gloria) - BBC Proms 2012",
+    "duration_seconds": 113
+  },
+  {
+    "artist": "Antonio Vivaldi",
+    "song": "The Four Seasons: Spring",
+    "youtube_id": "mFWQgxXM_b8",
+    "title": "Spring. Antonio Vivaldi",
+    "duration_seconds": 223
+  },
+  {
+    "artist": "Antonio Vivaldi",
+    "song": "The Four Seasons: Winter",
+    "youtube_id": "ZPdk5GaIDjo",
+    "title": "Vivaldi Four Seasons: Winter (L'Inverno), original version. Freivogel & Voices of Music  RV 297 4K",
+    "duration_seconds": 567
+  },
+  {
+    "artist": "Antonio Vivaldi",
+    "song": "Gloria in D major, RV 589",
+    "youtube_id": "aVAvs4hNkN8",
+    "title": "Vivaldi - Gloria in D Major, RV 589",
+    "duration_seconds": 555
+  },
+  {
+    "artist": "George Frideric Handel",
+    "song": "Messiah: Hallelujah",
+    "youtube_id": "IUZEtVbJT5c",
+    "title": "Royal Choral Society: 'Hallelujah Chorus' from Handel's Messiah",
+    "duration_seconds": 263
+  },
+  {
+    "artist": "George Frideric Handel",
+    "song": "Water Music: Alla Hornpipe",
+    "youtube_id": "1h4mAceHmrI",
+    "title": "Handel Water Music: Hornpipe; the FestspielOrchester Göttingen, Laurence Cummings, director 4K",
+    "duration_seconds": 189
+  },
+  {
+    "artist": "George Frideric Handel",
+    "song": "Sarabande in D minor",
+    "youtube_id": "xOLQd_pUbxs",
+    "title": "Handel Sarabande in D Minor HWV 437 (La Folia), Voices of Music, 4K Ultra High Definition video",
+    "duration_seconds": 198
+  },
+  {
+    "artist": "Johann Pachelbel",
+    "song": "Canon in D major",
+    "youtube_id": "NlprozGcs80",
+    "title": "Pachelbel - Canon In D Major. Best version.",
+    "duration_seconds": 377
+  },
+  {
+    "artist": "Frédéric Chopin",
+    "song": "Nocturne Op. 9 No. 2",
+    "youtube_id": "9E6b3swbnWg",
+    "title": "Chopin - Nocturne op.9 No.2",
+    "duration_seconds": 270
+  },
+  {
+    "artist": "Frédéric Chopin",
+    "song": "Étude Op. 10 No. 12 'Revolutionary'",
+    "youtube_id": "g1uLrHq9TDg",
+    "title": "Chopin - Revolutionary Etude (Op. 10 No. 12)",
+    "duration_seconds": 182
+  },
+  {
+    "artist": "Frédéric Chopin",
+    "song": "Ballade No. 1 in G minor",
+    "youtube_id": "Zj_psrTUW_w",
+    "title": "Chopin - Ballade No. 1 in G Minor (1M special)",
+    "duration_seconds": 586
+  },
+  {
+    "artist": "Frédéric Chopin",
+    "song": "Prelude Op. 28 No. 15 'Raindrop'",
+    "youtube_id": "6OFHXmiZP38",
+    "title": "Frédéric Chopin's \"Raindrop\" Prelude, Op 28, No. 15",
+    "duration_seconds": 387
+  },
+  {
+    "artist": "Pyotr Ilyich Tchaikovsky",
+    "song": "Swan Lake: Scène",
+    "youtube_id": "S76CGGPqI3s",
+    "title": "Tchaikovsky - Swan Lake - Scene - Part 1/8",
+    "duration_seconds": 188
+  },
+  {
+    "artist": "Pyotr Ilyich Tchaikovsky",
+    "song": "The Nutcracker: Waltz of the Flowers",
+    "youtube_id": "QxHkLdQy5f0",
+    "title": "Tchaikovsky - Waltz of the Flowers",
+    "duration_seconds": 451
+  },
+  {
+    "artist": "Pyotr Ilyich Tchaikovsky",
+    "song": "1812 Overture",
+    "youtube_id": "Bim8FwmIUFQ",
+    "title": "Tchaikovsky: Overture 1812, Op. 49: Overture 1812 - Finale",
+    "duration_seconds": 252
+  },
+  {
+    "artist": "Pyotr Ilyich Tchaikovsky",
+    "song": "Piano Concerto No. 1 in B-flat minor",
+    "youtube_id": "BWerj8FcprM",
+    "title": "Tchaikovsky - Piano Concerto 1 (B Flat Minor)",
+    "duration_seconds": 551
+  },
+  {
+    "artist": "Claude Debussy",
+    "song": "Clair de Lune",
+    "youtube_id": "-Bxpm0EmOMU",
+    "title": "Debussy: Clair de lune | Menahem Pressler, piano",
+    "duration_seconds": 327
+  },
+  {
+    "artist": "Claude Debussy",
+    "song": "Prélude à l'après-midi d'un faune",
+    "youtube_id": "Y9iDOt2WbjY",
+    "title": "Debussy: Prélude à l’après-midi d’un faune ∙ hr-Sinfonieorchester ∙ Andrés Orozco-Estrada",
+    "duration_seconds": 706
+  },
+  {
+    "artist": "Claude Debussy",
+    "song": "Arabesque No. 1",
+    "youtube_id": "cVYH-7QGE-A",
+    "title": "Debussy - Arabesque No. 1",
+    "duration_seconds": 315
+  },
+  {
+    "artist": "Maurice Ravel",
+    "song": "Boléro",
+    "youtube_id": "r30D3SW4OVw",
+    "title": "Maurice Ravel - Bolero",
+    "duration_seconds": 890
+  },
+  {
+    "artist": "Maurice Ravel",
+    "song": "Pavane pour une infante défunte",
+    "youtube_id": "UIXe7H52UkA",
+    "title": "Seong-Jin Cho - Ravel: Pavane Pour Une Infante Défunte",
+    "duration_seconds": 407
+  },
+  {
+    "artist": "Erik Satie",
+    "song": "Gymnopédie No. 1",
+    "youtube_id": "S-Xm7s9eGxU",
+    "title": "Erik Satie - Gymnopédie No.1",
+    "duration_seconds": 217
+  },
+  {
+    "artist": "Antonín Dvořák",
+    "song": "Symphony No. 9 'From the New World'",
+    "youtube_id": "P_1N6_O254g",
+    "title": "Dvořák: Symphony No. 9 \"From the New World\" / Karajan - Berliner Philharmoniker",
+    "duration_seconds": 185
+  },
+  {
+    "artist": "Antonín Dvořák",
+    "song": "Humoresque No. 7",
+    "youtube_id": "2B9kZ2jguwk",
+    "title": "Augustin Hadelich – Dvořák: Humoresque No. 7 in G-Flat Major (Arr. Kreisler for Violin & Piano)",
+    "duration_seconds": 226
+  },
+  {
+    "artist": "Edvard Grieg",
+    "song": "Peer Gynt: In the Hall of the Mountain King",
+    "youtube_id": "OqvHWUZZdP0",
+    "title": "Edvard Grieg: In the Hall of the Mountain King // Nicolò Foron & London Symphony Orchestra",
+    "duration_seconds": 149
+  },
+  {
+    "artist": "Jean Sibelius",
+    "song": "Finlandia, Op. 26",
+    "youtube_id": "qOSaT6U4e-8",
+    "title": "Sibelius - Finlandia op. 26 (Opening of the new Helsinki music hall)",
+    "duration_seconds": 523
+  },
+  {
+    "artist": "Gustav Mahler",
+    "song": "Symphony No. 5: Adagietto",
+    "youtube_id": "Bj6KLv7kv2Q",
+    "title": "Gustav Mahler - Adagietto | Leonard Bernstein (4K)",
+    "duration_seconds": 728
+  },
+  {
+    "artist": "Johannes Brahms",
+    "song": "Hungarian Dance No. 5",
+    "youtube_id": "3X9LvC9WkkQ",
+    "title": "Johannes Brahms - Hungarian Dance No. 5",
+    "duration_seconds": 202
+  },
+  {
+    "artist": "Johannes Brahms",
+    "song": "Symphony No. 1 in C minor",
+    "youtube_id": "MIvEyGm7AKc",
+    "title": "Brahms: Symphony No. 1 in C Minor, Op. 68: I. Un poco sostenuto – Allegro",
+    "duration_seconds": 802
+  },
+  {
+    "artist": "Johannes Brahms",
+    "song": "Wiegenlied 'Lullaby'",
+    "youtube_id": "t894eGoymio",
+    "title": "Johannes Brahms - Lullaby",
+    "duration_seconds": 182
+  },
+  {
+    "artist": "Franz Schubert",
+    "song": "Ave Maria, D. 839",
+    "youtube_id": "2H5rusicEnc",
+    "title": "Schubert - Ave Maria",
+    "duration_seconds": 376
+  },
+  {
+    "artist": "Franz Schubert",
+    "song": "Symphony No. 8 'Unfinished'",
+    "youtube_id": "5zNI5FgGzjA",
+    "title": "Schubert: Symphony No. 8 in B Minor, D. 759 \"Unfinished\": I. Allegro moderato",
+    "duration_seconds": 689
+  },
+  {
+    "artist": "Franz Schubert",
+    "song": "Der Erlkönig",
+    "youtube_id": "JS91p-vmSf0",
+    "title": "Franz Schubert: Erlkönig",
+    "duration_seconds": 271
+  },
+  {
+    "artist": "Franz Liszt",
+    "song": "Hungarian Rhapsody No. 2",
+    "youtube_id": "LdH1hSWGFGU",
+    "title": "Valentina Lisitsa plays Liszt's Hungarian Rhapsody No. 2",
+    "duration_seconds": 586
+  },
+  {
+    "artist": "Franz Liszt",
+    "song": "Liebestraum No. 3",
+    "youtube_id": "MBOa-2b4uQQ",
+    "title": "Liszt - Liebestraum No. 3 (Love Dream)",
+    "duration_seconds": 290
+  },
+  {
+    "artist": "Richard Wagner",
+    "song": "Ride of the Valkyries",
+    "youtube_id": "GGU1P6lBW6Q",
+    "title": "Richard Wagner - Ride of The Valkyries",
+    "duration_seconds": 301
+  },
+  {
+    "artist": "Richard Wagner",
+    "song": "Tristan und Isolde: Prelude",
+    "youtube_id": "J-qoaioG2UA",
+    "title": "Richard Wagner - \"Tristan und Isolde\", Prelude",
+    "duration_seconds": 659
+  },
+  {
+    "artist": "Giuseppe Verdi",
+    "song": "La traviata: Libiamo ne' lieti calici",
+    "youtube_id": "QQqjlcyDz6c",
+    "title": "Giuseppe Verdi, La traviata - Libiam ne’ lieti calici (Harding/ Lombardi/ De Tommaso)",
+    "duration_seconds": 235
+  },
+  {
+    "artist": "Giuseppe Verdi",
+    "song": "Nabucco: Va, pensiero",
+    "youtube_id": "aiSSz0snWzA",
+    "title": "Giuseppe Verdi, Và pensiero (Nabucco)",
+    "duration_seconds": 307
+  },
+  {
+    "artist": "Giuseppe Verdi",
+    "song": "Requiem: Dies irae",
+    "youtube_id": "X6cogix3cwQ",
+    "title": "Verdi’s Requiem: “Dies irae”",
+    "duration_seconds": 126
+  },
+  {
+    "artist": "Giacomo Puccini",
+    "song": "Turandot: Nessun dorma",
+    "youtube_id": "lPPuINOnG7A",
+    "title": "Giacomo Puccini: Turandot Act III, \"Nessun Dorma\"",
+    "duration_seconds": 186
+  },
+  {
+    "artist": "Giacomo Puccini",
+    "song": "Gianni Schicchi: O mio babbino caro",
+    "youtube_id": "LDGzsRAXMdQ",
+    "title": "Maria Callas – Puccini: Gianni Schicchi: “O mio babbino caro”",
+    "duration_seconds": 158
+  },
+  {
+    "artist": "Georges Bizet",
+    "song": "Carmen: Habanera",
+    "youtube_id": "EcFJTc28soQ",
+    "title": "Georges Bizet - Habanera from ''Carmen Suite No.2''",
+    "duration_seconds": 132
+  },
+  {
+    "artist": "Gioachino Rossini",
+    "song": "The Barber of Seville: Largo al factotum",
+    "youtube_id": "yLFdeIV_YPo",
+    "title": "Figaro/Largo Al Factotum --- GIOACCHINO ROSSINI",
+    "duration_seconds": 312
+  },
+  {
+    "artist": "Gioachino Rossini",
+    "song": "William Tell Overture",
+    "youtube_id": "c7O91GDWGPU",
+    "title": "Rossini: William Tell Overture: Final",
+    "duration_seconds": 204
+  },
+  {
+    "artist": "Camille Saint-Saëns",
+    "song": "The Carnival of the Animals: The Swan",
+    "youtube_id": "b44-5M4e9nI",
+    "title": "Saint-Saens - The Swan (Le Cygne) from Carnival of the Animals",
+    "duration_seconds": 208
+  },
+  {
+    "artist": "Camille Saint-Saëns",
+    "song": "Danse macabre",
+    "youtube_id": "YyknBTm_YyM",
+    "title": "Camille Saint-Saëns - Danse Macabre",
+    "duration_seconds": 430
+  },
+  {
+    "artist": "Modest Mussorgsky",
+    "song": "Pictures at an Exhibition: The Great Gate of Kiev",
+    "youtube_id": "Itdm46ZVLfA",
+    "title": "Mussorgsky - The Great Gate At Kiev - Pictures At An Exhibition",
+    "duration_seconds": 351
+  },
+  {
+    "artist": "Modest Mussorgsky",
+    "song": "Night on Bald Mountain",
+    "youtube_id": "iCEDfZgDPS8",
+    "title": "Mussorgsky - Night on Bald Mountain",
+    "duration_seconds": 581
+  },
+  {
+    "artist": "Nikolai Rimsky-Korsakov",
+    "song": "Flight of the Bumblebee",
+    "youtube_id": "aYAJopwEYv8",
+    "title": "Rimsky Korsakov - Flight of the Bumblebee",
+    "duration_seconds": 206
+  },
+  {
+    "artist": "Sergei Rachmaninoff",
+    "song": "Piano Concerto No. 2 in C minor",
+    "youtube_id": "HfPE3cgYyco",
+    "title": "Rachmaninoff: Piano Concerto No. 2 in C Minor, Op. 18: II. Adagio sostenuto",
+    "duration_seconds": 735
+  },
+  {
+    "artist": "Sergei Rachmaninoff",
+    "song": "Prelude in C-sharp minor",
+    "youtube_id": "SCm9O2KNEX4",
+    "title": "Evgeny Kissin   Rachmaninoff Prelude Op 3 No 2 in C Sharp minor",
+    "duration_seconds": 294
+  },
+  {
+    "artist": "Igor Stravinsky",
+    "song": "The Rite of Spring",
+    "youtube_id": "gqJdR8_cw18",
+    "title": "Stravinsky: The Rite of Spring",
+    "duration_seconds": 296
+  },
+  {
+    "artist": "Igor Stravinsky",
+    "song": "The Firebird: Infernal Dance",
+    "youtube_id": "jmRU6cJeVDs",
+    "title": "Stravinsky: Infernal Dance from The Firebird // Sir Simon Rattle & London Symphony Orchestra",
+    "duration_seconds": 280
+  },
+  {
+    "artist": "Sergei Prokofiev",
+    "song": "Romeo and Juliet: Dance of the Knights",
+    "youtube_id": "Z_hOR50u7ek",
+    "title": "Prokofiev: Romeo and Juliet, No 13 Dance of the Knights (Valery Gergiev, LSO)",
+    "duration_seconds": 329
+  },
+  {
+    "artist": "Sergei Prokofiev",
+    "song": "Peter and the Wolf",
+    "youtube_id": "ctsWdUaHsHM",
+    "title": "Prokofiev - Peter and the Wolf March",
+    "duration_seconds": 247
+  },
+  {
+    "artist": "Dmitri Shostakovich",
+    "song": "Symphony No. 5 in D minor",
+    "youtube_id": "T1h1NJMKtnc",
+    "title": "Dmitri Shostakovich - Symphony No. 5 - Finale",
+    "duration_seconds": 694
+  },
+  {
+    "artist": "Dmitri Shostakovich",
+    "song": "Waltz No. 2",
+    "youtube_id": "mmCnQDUSO4I",
+    "title": "Dmitri Shostakovich - Waltz No. 2",
+    "duration_seconds": 231
+  },
+  {
+    "artist": "Carl Orff",
+    "song": "Carmina Burana: O Fortuna",
+    "youtube_id": "GXFSK0ogeg4",
+    "title": "Carl Orff - O Fortuna ~ Carmina Burana",
+    "duration_seconds": 322
+  },
+  {
+    "artist": "Gustav Holst",
+    "song": "The Planets: Mars",
+    "youtube_id": "cXOanvv4plU",
+    "title": "Holst: The Planets, 'Mars' - BBC Proms",
+    "duration_seconds": 418
+  },
+  {
+    "artist": "Edward Elgar",
+    "song": "Enigma Variations: Nimrod",
+    "youtube_id": "7iM5dymBBI4",
+    "title": "Edward Elgar - Enigma Variations, Op.36: IX. (Nimrod)",
+    "duration_seconds": 248
+  },
+  {
+    "artist": "Edward Elgar",
+    "song": "Pomp and Circumstance March No. 1",
+    "youtube_id": "Spx4kmY67Wc",
+    "title": "Elgar:  Pomp and Circumstance March No 1 in D major, 'Land of Hope and Glory' (Prom 75)",
+    "duration_seconds": 522
+  },
+  {
+    "artist": "Ralph Vaughan Williams",
+    "song": "The Lark Ascending",
+    "youtube_id": "ZR2JlDnT2l8",
+    "title": "Vaughan Williams ~ The Lark Ascending",
+    "duration_seconds": 895
+  },
+  {
+    "artist": "Manuel de Falla",
+    "song": "El amor brujo: Danza ritual del fuego",
+    "youtube_id": "auRUxPPqDcQ",
+    "title": "Barenboim - \"El amor brujo\" (Danza ritual del fuego) Falla",
+    "duration_seconds": 353
+  },
+  {
+    "artist": "Isaac Albéniz",
+    "song": "Suite española: Asturias",
+    "youtube_id": "GY5y4Rp3tU8",
+    "title": "John Williams: Isaac Albeniz - Asturias (Leyenda) Part 7/9",
+    "duration_seconds": 366
+  },
+  {
+    "artist": "Enrique Granados",
+    "song": "Goyescas: Quejas o la maja y el ruiseñor",
+    "youtube_id": "7naaVPKatOo",
+    "title": "Granados - Goyesca No. 4 'Quejas o la Maja y el Ruiseñor' (Prats) Audio + Sheet music",
+    "duration_seconds": 373
+  },
+  {
+    "artist": "Joaquín Rodrigo",
+    "song": "Concierto de Aranjuez: Adagio",
+    "youtube_id": "Idsb6gk6j_U",
+    "title": "Concierto de Aranjuez. II Adagio. Joaquín Rodrigo. Pablo Saínz Villegas/Carlos Kalmar/ORTVE.",
+    "duration_seconds": 747
+  },
+  {
+    "artist": "Francisco Tárrega",
+    "song": "Recuerdos de la Alhambra",
+    "youtube_id": "fwjX-m4LkYk",
+    "title": "Ana Vidovic plays Recuerdos de la Alhambra by Francisco Tárrega on a Jim Redgate classical guitar",
+    "duration_seconds": 311
+  },
+  {
+    "artist": "Tomaso Albinoni",
+    "song": "Adagio in G minor",
+    "youtube_id": "XMbvcp480Y4",
+    "title": "Adagio in G Minor (Albinoni)",
+    "duration_seconds": 537
+  },
+  {
+    "artist": "Gregorio Allegri",
+    "song": "Miserere mei, Deus",
+    "youtube_id": "H3v9unphfi0",
+    "title": "Miserere mei, Deus - Allegri - Tenebrae conducted by Nigel Short",
+    "duration_seconds": 330
+  },
+  {
+    "artist": "Thomas Tallis",
+    "song": "Spem in alium",
+    "youtube_id": "iT-ZAAi4UQQ",
+    "title": "Spem In Alium (Thomas Tallis) - Tallis Scholars",
+    "duration_seconds": 581
+  },
+  {
+    "artist": "Henry Purcell",
+    "song": "Dido and Aeneas: Dido's Lament",
+    "youtube_id": "-H--Z9UzQYE",
+    "title": "Henry Purcell: Dido's Lament (Dido and Aeneas); Anna Dennis, soprano, with Voices of Music 4K UHD",
+    "duration_seconds": 268
+  },
+  {
+    "artist": "Domenico Scarlatti",
+    "song": "Sonata in D minor, K. 141",
+    "youtube_id": "Gh9WX7TKfkI",
+    "title": "Scarlatti, Sonate K.141 - Martha Argerich",
+    "duration_seconds": 205
+  },
+  {
+    "artist": "Joseph Haydn",
+    "song": "Symphony No. 94 'Surprise'",
+    "youtube_id": "tF5kr251BRs",
+    "title": "Franz Joseph Haydn - \"Surprise\" (Symphony no. 94)",
+    "duration_seconds": 373
+  },
+  {
+    "artist": "Joseph Haydn",
+    "song": "String Quartet Op. 76 No. 3 'Emperor'",
+    "youtube_id": "mBmCcSz6HWw",
+    "title": "Haydn String Quartet No. 62, Op. 76 No. 3 \"Emperor\" (2nd mov) Veridis Quartet (Live performance)",
+    "duration_seconds": 446
+  },
+  {
+    "artist": "Felix Mendelssohn",
+    "song": "A Midsummer Night's Dream: Wedding March",
+    "youtube_id": "rIM5cWB2wmM",
+    "title": "F.Mendelssohn. A Midsummer Night's Dream. Wedding March",
+    "duration_seconds": 339
+  },
+  {
+    "artist": "Felix Mendelssohn",
+    "song": "Violin Concerto in E minor",
+    "youtube_id": "vzbC39utkTw",
+    "title": "Mendelssohn Violin Concerto E Minor OP.64 - 1st mov. - Hilary Hahn - Sheet Music Play Along",
+    "duration_seconds": 834
+  },
+  {
+    "artist": "Robert Schumann",
+    "song": "Kinderszenen: Träumerei",
+    "youtube_id": "6z82w0l6kwE",
+    "title": "Schumann - Träumerei, \"Kinderszenen\" No. 7, Scenes from Childhood | Vladimir Horowitz",
+    "duration_seconds": 154
+  },
+  {
+    "artist": "Bedřich Smetana",
+    "song": "Má vlast: Vltava",
+    "youtube_id": "uI8iTETiSqU",
+    "title": "BEDŘICH SMETANA - VLTAVA",
+    "duration_seconds": 705
+  },
+  {
+    "artist": "Aram Khachaturian",
+    "song": "Spartacus: Adagio",
+    "youtube_id": "fnFeXa0nGao",
+    "title": "Aram Khachaturian — \"Adagio of Spartacus and Phrygia\" from the ballet Spartacus",
+    "duration_seconds": 603
+  },
+  {
+    "artist": "Samuel Barber",
+    "song": "Adagio for Strings",
+    "youtube_id": "WAoLJ8GbA4Y",
+    "title": "Vienna Philharmonic & Gustavo Dudamel – Barber: Adagio for Strings, Op.11 (SNC 2019)",
+    "duration_seconds": 542
+  },
+  {
+    "artist": "Arvo Pärt",
+    "song": "Spiegel im Spiegel",
+    "youtube_id": "TJ6Mzvh3XCc",
+    "title": "Arvo Pärt- Spiegel im Spiegel",
+    "duration_seconds": 611
+  },
+  {
+    "artist": "Philip Glass",
+    "song": "Glassworks: Opening",
+    "youtube_id": "-nBE9U7q1Uc",
+    "title": "Philip Glass - Opening (Official Video)",
+    "duration_seconds": 438
+  },
+  {
+    "artist": "George Gershwin",
+    "song": "Rhapsody in Blue",
+    "youtube_id": "cH2PH0auTUU",
+    "title": "George Gershwin - Rhapsody in Blue - Leonard Bernstein, New York Philharmonic (1976)",
+    "duration_seconds": 1023
+  },
+  {
+    "artist": "Johann Strauss II",
+    "song": "The Blue Danube",
+    "youtube_id": "_CTYymbbEL4",
+    "title": "Johann Strauss II - The Blue Danube Waltz",
+    "duration_seconds": 660
+  }
+]
