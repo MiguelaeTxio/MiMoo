@@ -195,11 +195,16 @@ fun MimooutcastScreen(
                 // Petición explícita de Miguel Ángel (2026-08-06): capa
                 // opaca, no un overlay translúcido -- que no se mezcle
                 // con las chapitas de debajo mientras se resuelve.
+                // BUG REAL (captura de Miguel Ángel, 2026-10-17): aquí se
+                // usaba `background`, que en las pieles de textura es
+                // Color.Transparent -- y Transparent.copy(alpha=0.94)
+                // es NEGRO al 94 %, con letra oscura encima. `surface`
+                // es opaco en las 4 pieles.
                 if (uiState.loadingLabel != null) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.94f)),
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
