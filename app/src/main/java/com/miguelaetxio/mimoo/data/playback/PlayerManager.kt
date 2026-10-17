@@ -4195,6 +4195,15 @@ class PlayerManager @Inject constructor(
             sharedResolveLog(
                 "resolveYoutubeCandidate(ancla='$anchorArtistName', query='$query') -> añadido: '${track.title}'",
             )
+            // Datos del log de Miguel Ángel (2026-10-15): "Wilfred y la Ganga -
+            // La abuela" sonó 8 veces en una sesión. El tema se registraba
+            // solo con el título del VÍDEO ('*MI ABUELA* - ...'), pero el
+            // diccionario lo comprueba con SU título ('La abuela'): claves
+            // distintas, nunca excluido. Se registra también la clave del
+            // título del diccionario.
+            if (songTitle != null) {
+                radioUsedSongs.add(knownHitsRepository.songKey(artist, songTitle))
+            }
             QueueItem(
                 uri = streamUrl,
                 title = track.title,
