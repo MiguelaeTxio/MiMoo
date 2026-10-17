@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -882,6 +883,17 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     navController.navigate(
                                         Screen.Downloads.route,
+                                    ) { launchSingleTop = true }
+                                    scope.launch { drawerState.close() }
+                                },
+                            )
+                            CompactDrawerItem(
+                                label = "Estadísticas",
+                                icon = Icons.Filled.BarChart,
+                                selected = currentRoute == Screen.Stats.route,
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.Stats.route,
                                     ) { launchSingleTop = true }
                                     scope.launch { drawerState.close() }
                                 },
