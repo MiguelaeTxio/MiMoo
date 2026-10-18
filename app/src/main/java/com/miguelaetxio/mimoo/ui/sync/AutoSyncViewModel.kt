@@ -109,6 +109,15 @@ sealed class AutoSyncUiState {
     data class Done(val message: String? = null) : AutoSyncUiState()
 
     data class Error(val message: String) : AutoSyncUiState()
+
+    /**
+     * El usuario denegó (o cerró) la petición de permiso de Drive. Se
+     * muestra un diálogo Aceptar/Denegar; Aceptar vuelve a pedir el permiso.
+     * ---
+     * The user denied (or closed) the Drive permission request. An
+     * Accept/Deny dialog is shown; Accept asks for the permission again.
+     */
+    object ConsentDenied : AutoSyncUiState()
 }
 
 @HiltViewModel
@@ -137,6 +146,11 @@ class AutoSyncViewModel @Inject constructor(
     private val _pendingConsent = MutableStateFlow<IntentSenderRequest?>(null)
     val pendingConsent: StateFlow<IntentSenderRequest?> = _pendingConsent.asStateFlow()
 
+    /** Una sincronización de estadísticas en segundo plano no tuvo permiso de Drive. */
+    val statsConsentRequired: StateFlow<Boolean> = statsSyncManager.consentRequired
+
+    fun clearStatsConsentRequired() = statsSyncManager.clearConsentRequired()
+
     /** Access token ya conseguido, guardado solo mientras se espera la respuesta del caso 3. */
     private var pendingAccessToken: String? = null
 
@@ -164,16 +178,43 @@ class AutoSyncViewModel @Inject constructor(
     fun onConsentResolved(activity: Activity, resultData: Intent?) {
         _pendingConsent.value = null
         viewModelScope.launch {
+            val token = try {
+                authorizationHelper.extractAccessTokenFromResolution(activity, resultData)
+            } catch (e: Exception) {
+                Log.w(TAG, "onConsentResolved() -- permiso de Drive denegado", e)
+                BackupDebugLogger.log(
+                    applicationContext,
+                    storageManager,
+                    "onConsentResolved() -- permiso de Drive denegado: ${e.message}",
+                )
+                _uiState.value = AutoSyncUiState.ConsentDenied
+                return@launch
+            }
             try {
-                val token = authorizationHelper.extractAccessTokenFromResolution(activity, resultData)
                 runSync(token)
             } catch (e: Exception) {
-                Log.w(TAG, "onConsentResolved() -- fallo extrayendo el token", e)
+                Log.w(TAG, "onConsentResolved() -- fallo sincronizando", e)
                 _uiState.value = AutoSyncUiState.Error(
-                    e.message ?: "Google no concedió el acceso a Drive."
+                    e.message ?: "No se pudo sincronizar con Drive."
                 )
             }
         }
+    }
+
+    /**
+     * Vuelve a pedir el permiso de Drive (botón Aceptar del diálogo de
+     * permiso denegado, o aviso de que las estadísticas no tienen permiso).
+     * No pisa un diálogo de decisión pendiente (CountMismatch).
+     * ---
+     * Asks for the Drive permission again (Accept button of the denied
+     * permission dialog, or notice that statistics lack permission).
+     * Does not override a pending decision dialog (CountMismatch).
+     */
+    fun retryAuthorization(activity: Activity) {
+        val s = _uiState.value
+        if (s is AutoSyncUiState.CountMismatch || s is AutoSyncUiState.Checking) return
+        _uiState.value = AutoSyncUiState.Idle
+        startAutoSync(activity)
     }
 
     private suspend fun runSync(accessToken: String) {

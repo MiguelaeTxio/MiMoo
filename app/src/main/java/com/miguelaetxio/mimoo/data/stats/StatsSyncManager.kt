@@ -60,6 +60,22 @@ class StatsSyncManager @Inject constructor(
     private var lastSyncAt = 0L
 
     /**
+     * true cuando una sincronización en segundo plano necesitó el permiso
+     * de Drive y no pudo pedirlo (requiere pantalla). La UI lo recoge,
+     * muestra el diálogo y lo pone a false.
+     * ---
+     * true when a background sync needed the Drive permission and could
+     * not ask for it (needs a screen). The UI picks it up, shows the
+     * dialog and sets it back to false.
+     */
+    private val _consentRequired = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val consentRequired: kotlinx.coroutines.flow.StateFlow<Boolean> = _consentRequired
+
+    fun clearConsentRequired() {
+        _consentRequired.value = false
+    }
+
+    /**
      * Pide una sincronización de estadísticas. Sin `immediate`, espera
      * al menos 1 minuto y no sincroniza más de una vez cada 10 minutos
      * (la subida lleva el archivo de sincronización entero). Ya hay una
@@ -86,6 +102,7 @@ class StatsSyncManager @Inject constructor(
                 if (outcome is DriveAuthorizationOutcome.Authorized) {
                     syncNow(outcome.accessToken)
                 } else {
+                    _consentRequired.value = true
                     // Antes este caso era mudo: sin autorización no se
                     // lee ni se sube nada y no quedaba rastro en el log.
                     log("requestSync() -- sin autorización de Drive (${outcome::class.java.simpleName}), no se leen las estadísticas")

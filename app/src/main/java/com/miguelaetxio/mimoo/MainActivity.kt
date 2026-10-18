@@ -488,6 +488,41 @@ class MainActivity : ComponentActivity() {
                     autoSyncPendingConsent?.let { autoSyncConsentLauncher.launch(it) }
                 }
 
+                // Una sincronización de estadísticas en segundo plano se
+                // quedó sin permiso de Drive: se vuelve a pedir desde aquí
+                // (requiere pantalla).
+                val statsConsentRequired by autoSyncViewModel.statsConsentRequired.collectAsState()
+                LaunchedEffect(statsConsentRequired) {
+                    if (statsConsentRequired) {
+                        autoSyncViewModel.clearStatsConsentRequired()
+                        autoSyncViewModel.retryAuthorization(this@MainActivity)
+                    }
+                }
+
+                // Permiso de Drive denegado: siempre se avisa, con Aceptar
+                // (volver a pedirlo) o Denegar.
+                (autoSyncState as? com.miguelaetxio.mimoo.ui.sync.AutoSyncUiState.ConsentDenied)?.let {
+                    MiMooAlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("Drive necesita tu permiso") },
+                        text = {
+                            Text(
+                                "Sin el permiso de Drive no se sincronizan las estadísticas, " +
+                                    "las listas ni las descargas entre tus dispositivos. " +
+                                    "¿Quieres concederlo?"
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { autoSyncViewModel.retryAuthorization(this@MainActivity) }) {
+                                Text("Aceptar")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = autoSyncViewModel::dismiss) { Text("Denegar") }
+                        },
+                    )
+                }
+
                 // S068 -- único diálogo de discrepancia -- pregunta tal
                 // cual la formuló Miguel Ángel, con las cifras reales de
                 // cada lado para que la decisión sea informada. Nunca
