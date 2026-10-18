@@ -6141,6 +6141,103 @@ class PlayerManager @Inject constructor(
         player.release()
     }
 
+    // ------------------------------------------------------------
+    // Persistencia de la cola (Miguel Ángel, 2026-10-18): "abro la
+    // aplicación, pongo una lista, voy en el coche, paro, entro en un
+    // comercio, vuelvo y otra vez tengo que poner la lista". Del log:
+    // MediaSession.onCreate() de nuevo con el mismo player a las 10:21
+    // y a las 11:09, y ningún onDestroy() -- el proceso muere en
+    // pausa y la cola solo vivía en memoria. Ahora se guarda en disco
+    // (con un pequeño retardo para no escribir en cada cambio) y se
+    // restaura en pausa al arrancar el proceso.
+    // ---
+    // Queue persistence: the queue used to live only in memory, so a
+    // process kill while paused lost it. It is now saved (debounced)
+    // and restored paused on process start.
+    // ------------------------------------------------------------
+    private val queueStateStore = QueueStateStore(appContext)
+    private var queueSaveJob: Job? = null
+    private var queueRestoreDone = false
+
+    private fun snapshotQueueForSave(): SavedQueue? {
+        if (!queueRestoreDone) return null
+        if (queueItems.isEmpty()) return null
+        val index = player.currentMediaItemIndex.coerceIn(0, queueItems.lastIndex)
+        val current = queueItems[index]
+        return SavedQueue(
+            items = queueItems.toList(),
+            index = index,
+            positionMs = if (current.isRadioStation) 0L else player.currentPosition.coerceAtLeast(0L),
+            shuffle = player.shuffleModeEnabled,
+            repeatMode = player.repeatMode,
+        )
+    }
+
+    private fun scheduleQueueSave() {
+        queueSaveJob?.cancel()
+        queueSaveJob = managerScope.launch {
+            kotlinx.coroutines.delay(1_500)
+            val snapshot = withContext(Dispatchers.Main) { snapshotQueueForSave() }
+            if (snapshot != null) {
+                queueStateStore.save(snapshot)
+            } else if (queueRestoreDone) {
+                queueStateStore.clear()
+            }
+        }
+    }
+
+    private fun restoreSavedQueue() {
+        managerScope.launch {
+            val saved = queueStateStore.load()
+            withContext(Dispatchers.Main) {
+                try {
+                    if (saved != null && saved.items.isNotEmpty() &&
+                        queueItems.isEmpty() && player.mediaItemCount == 0
+                    ) {
+                        queueItems.addAll(saved.items)
+                        val index = saved.index.coerceIn(0, saved.items.lastIndex)
+                        val resumeAt = if (saved.items[index].isRadioStation) 0L else saved.positionMs
+                        player.setMediaItems(saved.items.map { toMediaItem(it) }, index, resumeAt)
+                        player.shuffleModeEnabled = saved.shuffle
+                        player.repeatMode = saved.repeatMode
+                        player.playWhenReady = false
+                        player.prepare()
+                        syncStateFromPlayer()
+                    }
+                } catch (e: Exception) {
+                    queueItems.clear()
+                    player.clearMediaItems()
+                } finally {
+                    queueRestoreDone = true
+                }
+            }
+        }
+    }
+
+    init {
+        restoreSavedQueue()
+        player.addListener(object : Player.Listener {
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                scheduleQueueSave()
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                scheduleQueueSave()
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                scheduleQueueSave()
+            }
+        })
+        managerScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(15_000)
+                val playing = withContext(Dispatchers.Main) { player.isPlaying }
+                if (playing) scheduleQueueSave()
+            }
+        }
+    }
+
     private companion object {
         /**
          * S022 -- ventana, en canciones, dentro de la cual un mismo

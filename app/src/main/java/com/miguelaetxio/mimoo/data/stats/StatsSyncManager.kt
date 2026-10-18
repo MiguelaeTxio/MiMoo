@@ -85,6 +85,10 @@ class StatsSyncManager @Inject constructor(
                 val outcome = authorizationHelper.requestAuthorization(context)
                 if (outcome is DriveAuthorizationOutcome.Authorized) {
                     syncNow(outcome.accessToken)
+                } else {
+                    // Antes este caso era mudo: sin autorización no se
+                    // lee ni se sube nada y no quedaba rastro en el log.
+                    log("requestSync() -- sin autorización de Drive (${outcome::class.java.simpleName}), no se leen las estadísticas")
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "requestSync() -- fallo, se reintentará en la próxima ocasión", e)
@@ -95,9 +99,18 @@ class StatsSyncManager @Inject constructor(
     suspend fun syncNow(accessToken: String) = syncLock.mutex.withLock {
         try {
             val closed = playEventDao.getClosedEvents()
-            val json = driveRepository.pullSyncState(accessToken) ?: return@withLock
+            val json = driveRepository.pullSyncState(accessToken)
+            if (json == null) {
+                log("syncNow() -- Drive no devolvió el archivo de sincronización")
+                return@withLock
+            }
             val envelope = backupRepository.fromSyncJson(json)
             val base = statsRepository.carry(envelope.stats)
+            log(
+                "syncNow() -- Drive ${if (envelope.stats == null) "SIN" else "con"} bloque de estadísticas " +
+                    "(${envelope.stats?.byKind?.values?.sumOf { it.plays } ?: 0} escuchas), " +
+                    "pendientes locales=${closed.size}",
+            )
 
             if (closed.isEmpty()) {
                 if (envelope.stats != null) {
