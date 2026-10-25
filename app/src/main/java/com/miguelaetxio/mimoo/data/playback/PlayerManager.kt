@@ -5350,18 +5350,30 @@ class PlayerManager @Inject constructor(
         }
         val structuredArtist = artist?.takeIf { it.isNotBlank() }
         if (structuredArtist != null) {
-            pendingStreamPlayback = QueueItem(
-                streamUrl,
-                title,
-                false,
-                structuredArtist,
-                youtubeId = youtubeId,
-                artworkUri = artworkUri,
+            // El artista ya viene de la búsqueda/pantalla desde la que se
+            // pulsó reproducir: no se vuelve a preguntar (petición de
+            // Miguel Ángel, 2026-10-25). El modal "¿Quién es el artista?"
+            // queda solo para cuando NO hay artista.
+            val cleanTitle = com.miguelaetxio.mimoo.util.SearchNormalizer
+                .cleanSongTitle(title, structuredArtist)
+                .ifBlank { title }
+            StreamingDebugLogger.log(
+                appContext,
+                "play() streaming -- artista conocido='$structuredArtist' título='$cleanTitle' " +
+                    "(original='$title'), sin modal",
             )
-            _state.value = _state.value.copy(
-                streamArtistPromptVideoTitle = title,
-                streamArtistPromptPrefilledArtist = structuredArtist,
-                streamArtistPromptPrefilledTitle = title,
+            playQueue(
+                listOf(
+                    QueueItem(
+                        streamUrl,
+                        cleanTitle,
+                        false,
+                        structuredArtist,
+                        youtubeId = youtubeId,
+                        artworkUri = artworkUri,
+                    ),
+                ),
+                startIndex = 0,
             )
             return
         }
