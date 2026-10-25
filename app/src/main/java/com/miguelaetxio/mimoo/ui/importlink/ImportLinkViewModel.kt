@@ -99,6 +99,7 @@ class ImportLinkViewModel @Inject constructor(
     // de MiMoo de verdad con el título de la playlist, ver
     // importSelected().
     private val playlistRepository: PlaylistRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImportLinkUiState())
@@ -380,6 +381,10 @@ class ImportLinkViewModel @Inject constructor(
                 errorMessage = null,
             )
             try {
+                com.miguelaetxio.mimoo.data.playback.StreamingDebugLogger.log(
+                    appContext,
+                    "playSelected() -- ${selected.size} pista(s) seleccionadas del enlace importado",
+                )
                 val items = selected.mapNotNull { track ->
                     val streamUrl = streamResolver.resolveAudioStreamUrl(
                         "https://youtu.be/${track.youtubeId}",
@@ -405,6 +410,10 @@ class ImportLinkViewModel @Inject constructor(
                         artworkUri = track.thumbnailUrl,
                     )
                 }
+                com.miguelaetxio.mimoo.data.playback.StreamingDebugLogger.log(
+                    appContext,
+                    "playSelected() -- ${items.size} de ${selected.size} pista(s) identificadas, a la cola",
+                )
                 playerManager.playQueue(items)
                 _uiState.value = _uiState.value.copy(
                     isResolvingQueue = false,
@@ -416,6 +425,10 @@ class ImportLinkViewModel @Inject constructor(
                     },
                 )
             } catch (e: Exception) {
+                com.miguelaetxio.mimoo.data.playback.StreamingDebugLogger.log(
+                    appContext,
+                    "playSelected() FALLÓ -- ${e.javaClass.simpleName}: ${e.message?.take(400)}",
+                )
                 _uiState.value = _uiState.value.copy(
                     isResolvingQueue = false,
                     errorMessage = e.message ?: "Error al resolver el stream",

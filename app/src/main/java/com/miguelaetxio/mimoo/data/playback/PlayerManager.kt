@@ -1232,6 +1232,22 @@ class PlayerManager @Inject constructor(
                         "isFromRadio=${failedItem?.isFromRadio} -- " +
                         "${error.errorCodeName}: ${error.message}",
                 )
+                run {
+                    var cause: Throwable? = error.cause
+                    val chain = StringBuilder()
+                    var depth = 0
+                    while (cause != null && depth < 4) {
+                        chain.append(" <- ${cause.javaClass.simpleName}: ${cause.message?.take(200)}")
+                        cause = cause.cause
+                        depth++
+                    }
+                    StreamingDebugLogger.log(
+                        appContext,
+                        "onPlayerError() pista='${failedItem?.title}' youtubeId=${failedItem?.youtubeId} " +
+                            "host=${runCatching { java.net.URI(failedItem?.uri.toString()).host }.getOrNull()} " +
+                            "refreshAttempted=${failedItem?.refreshAttempted} -- ${error.errorCodeName}$chain",
+                    )
+                }
                 // S038 -- ver el kdoc real de `QueueItem.refreshAttempted`.
                 // ERROR_CODE_IO_BAD_HTTP_STATUS con un youtubeId conocido
                 // es la señal de una URL de streaming caducada (cola
@@ -1261,11 +1277,16 @@ class PlayerManager @Inject constructor(
                                 sharedResolveLog(
                                     "onPlayerError() -- URL caducada, refrescada con éxito: '${failedItem.title}'",
                                 )
+                                StreamingDebugLogger.log(appContext, "URL refrescada para '${failedItem.title}'")
                                 player.prepare()
                                 player.play()
                             } else {
                                 sharedResolveLog(
                                     "onPlayerError() -- refresco de URL falló también: '${failedItem.title}', se descarta",
+                                )
+                                StreamingDebugLogger.log(
+                                    appContext,
+                                    "refresco de URL falló: '${failedItem.title}' (nueva URL=${refreshedUri != null}), se descarta",
                                 )
                                 skipPastError(failedItem)
                             }

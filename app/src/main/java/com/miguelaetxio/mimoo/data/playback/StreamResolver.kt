@@ -21,6 +21,7 @@ import javax.inject.Singleton
 @Singleton
 class StreamResolver @Inject constructor(
     private val cookiesManager: CookiesManager,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) {
 
     /**
@@ -33,10 +34,27 @@ class StreamResolver @Inject constructor(
      */
     suspend fun resolveAudioStreamUrl(youtubeUrl: String): String =
         withContext(Dispatchers.IO) {
-            val py = Python.getInstance()
-            val resolverModule = py.getModule("resolver")
-            resolverModule
-                .callAttr("resolve_audio_stream_url", youtubeUrl, cookiesManager.cookiesFilePathOrNull())
-                .toString()
+            val started = System.currentTimeMillis()
+            try {
+                val py = Python.getInstance()
+                val resolverModule = py.getModule("resolver")
+                val url = resolverModule
+                    .callAttr("resolve_audio_stream_url", youtubeUrl, cookiesManager.cookiesFilePathOrNull())
+                    .toString()
+                StreamingDebugLogger.log(
+                    context,
+                    "resolveAudioStreamUrl($youtubeUrl) OK en ${System.currentTimeMillis() - started} ms " +
+                        "host=${runCatching { java.net.URI(url).host }.getOrNull()}",
+                )
+                url
+            } catch (e: Exception) {
+                StreamingDebugLogger.log(
+                    context,
+                    "resolveAudioStreamUrl($youtubeUrl) FALLÓ en ${System.currentTimeMillis() - started} ms " +
+                        "cookies=${cookiesManager.cookiesFilePathOrNull() != null} -- " +
+                        "${e.javaClass.simpleName}: ${e.message?.take(400)}",
+                )
+                throw e
+            }
         }
 }

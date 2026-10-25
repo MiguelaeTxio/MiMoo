@@ -135,6 +135,7 @@ class DebugLogCollector @Inject constructor(
             "backup_debug.txt",
             "download_debug.txt",
             "dialog_debug.txt",
+            "streaming_debug.txt",
             "notification_debug.txt",
             "radio_debug.txt",
             "radio_relacionados_debug.txt",
