@@ -408,6 +408,7 @@ class ImportLinkViewModel @Inject constructor(
                         structuredArtist = null,
                         youtubeId = track.youtubeId,
                         artworkUri = track.thumbnailUrl,
+                        channelArtist = track.channelTitle,
                     )
                 }
                 com.miguelaetxio.mimoo.data.playback.StreamingDebugLogger.log(

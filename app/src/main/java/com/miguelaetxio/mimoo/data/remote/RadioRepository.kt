@@ -2427,6 +2427,35 @@ class RadioRepository @Inject constructor(
      */
     data class TitleIdentification(val artist: String, val song: String?)
 
+    /**
+     * ¿Existe en MusicBrainz un artista con exactamente este nombre?
+     * `true`/`false` si MusicBrainz respondió; `null` si no se pudo
+     * consultar (error de red o 503) -- quien llama decide qué hacer.
+     * Se usa con el nombre del canal de enlaces importados de YouTube
+     * Music, cuyo título no trae el artista.
+     * ---
+     * Does MusicBrainz have an artist with exactly this name?
+     * `true`/`false` if MusicBrainz answered; `null` if it could not be
+     * queried (network error or 503) -- the caller decides what to do.
+     */
+    suspend fun isKnownArtistName(name: String): Boolean? {
+        if (name.isBlank()) return false
+        return try {
+            val hits = musicBrainzApiService
+                .searchArtists(query = buildArtistQuery(name), limit = ANCHOR_SEARCH_LIMIT)
+                .artists
+            val known = pickAnchorArtist(name, hits, quiet = true) != null
+            log("isKnownArtistName('$name') -> $known")
+            known
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            noteFailure(e)
+            log("isKnownArtistName('$name') -- ${e::class.java.simpleName}, no se pudo comprobar")
+            null
+        }
+    }
+
     suspend fun identifyFromTitleWords(rawTitle: String?): TitleIdentification? {
         if (rawTitle.isNullOrBlank()) return null
         // Se quitan paréntesis y corchetes ("(Official Video)",

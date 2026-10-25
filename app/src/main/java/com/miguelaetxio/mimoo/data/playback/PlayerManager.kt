@@ -5482,6 +5482,7 @@ class PlayerManager @Inject constructor(
         structuredArtist: String?,
         youtubeId: String?,
         artworkUri: String?,
+        channelArtist: String? = null,
     ): QueueItem? {
         val structured = structuredArtist?.takeIf { it.isNotBlank() }
         if (structured != null) {
@@ -5493,6 +5494,31 @@ class PlayerManager @Inject constructor(
                 youtubeId = youtubeId,
                 artworkUri = artworkUri,
             )
+        }
+        // Enlaces de YouTube Music: el título ("Get Lucky (Radio Edit)")
+        // no trae el artista, que es el canal ("Daft Punk"). Adivinarlo
+        // con las primeras palabras del título daba "Get" / "Instant".
+        // Si el título no es del tipo "Artista - Tema" y el canal es un
+        // artista que existe en MusicBrainz (o MusicBrainz no responde),
+        // se usa el canal. Si MusicBrainz dice que NO existe, se cae a
+        // la cascada de siempre.
+        val channel = channelArtist?.trim()?.takeIf { it.isNotBlank() }
+        if (channel != null && !videoTitle.contains(" - ")) {
+            val known = radioRepository.isKnownArtistName(channel)
+            StreamingDebugLogger.log(
+                appContext,
+                "resolveStreamItem('$videoTitle') canal='$channel' conocido=$known",
+            )
+            if (known != false) {
+                return QueueItem(
+                    streamUrl,
+                    videoTitle,
+                    false,
+                    channel,
+                    youtubeId = youtubeId,
+                    artworkUri = artworkUri,
+                )
+            }
         }
         val identified = try {
             radioRepository.identifyFromTitleWords(videoTitle)
