@@ -5354,9 +5354,14 @@ class PlayerManager @Inject constructor(
             // pulsó reproducir: no se vuelve a preguntar (petición de
             // Miguel Ángel, 2026-10-25). El modal "¿Quién es el artista?"
             // queda solo para cuando NO hay artista.
-            val cleanTitle = com.miguelaetxio.mimoo.util.SearchNormalizer
-                .cleanSongTitle(title, structuredArtist)
-                .ifBlank { title }
+            // Solo se quita el prefijo "Artista - " si coincide con el
+            // artista; el resto del título se deja tal cual.
+            val cleanTitle = title.split(" - ", " – ", " — ", limit = 2).let { parts ->
+                val normalize = com.miguelaetxio.mimoo.util.SearchNormalizer::normalizeArtistName
+                if (parts.size == 2 && normalize(parts[0]).replace(" ", "") ==
+                    normalize(structuredArtist).replace(" ", "") && parts[1].isNotBlank()
+                ) parts[1].trim() else title
+            }
             StreamingDebugLogger.log(
                 appContext,
                 "play() streaming -- artista conocido='$structuredArtist' título='$cleanTitle' " +
