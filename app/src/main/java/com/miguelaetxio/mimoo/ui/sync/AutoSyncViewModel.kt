@@ -137,8 +137,22 @@ class AutoSyncViewModel @Inject constructor(
     // un borrado -- ver runSync() más abajo.
     private val searchResultTrackRepository: com.miguelaetxio.mimoo.data.local.repository.SearchResultTrackRepository,
     private val statsSyncManager: com.miguelaetxio.mimoo.data.stats.StatsSyncManager,
+    // S037 -- sin cobertura Drive no se pregunta nada: ver isOffline().
+    private val networkChecker: com.miguelaetxio.mimoo.data.backup.NetworkConnectivityChecker,
     @ApplicationContext private val applicationContext: Context,
 ) : ViewModel() {
+
+    /**
+     * Sin red (o fallo de red) la sincronización se omite en silencio:
+     * ni diálogo de permiso ni de error, porque no es un problema de
+     * permisos ni algo que el usuario pueda resolver. Se reintentará
+     * en el próximo arranque o cuando vuelva la cobertura.
+     * ---
+     * Without network (or on a network failure) sync is skipped
+     * silently: no permission or error dialog.
+     */
+    private fun isOffline(e: Exception? = null): Boolean =
+        !networkChecker.isConnected() || e is java.io.IOException
 
     private val _uiState = MutableStateFlow<AutoSyncUiState>(AutoSyncUiState.Idle)
     val uiState: StateFlow<AutoSyncUiState> = _uiState.asStateFlow()
@@ -157,6 +171,10 @@ class AutoSyncViewModel @Inject constructor(
     /** Llamado una vez al arrancar MainActivity, si ya hay carpeta SAF elegida. */
     fun startAutoSync(activity: Activity) {
         if (_uiState.value != AutoSyncUiState.Idle) return
+        if (isOffline()) {
+            Log.i(TAG, "startAutoSync() -- sin red, se omite en silencio")
+            return
+        }
         _uiState.value = AutoSyncUiState.Checking
         viewModelScope.launch {
             try {
@@ -167,9 +185,13 @@ class AutoSyncViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "startAutoSync() -- fallo pidiendo autorización", e)
-                _uiState.value = AutoSyncUiState.Error(
-                    e.message ?: "No se pudo comprobar la sincronización con Drive."
-                )
+                _uiState.value = if (isOffline(e)) {
+                    AutoSyncUiState.Idle
+                } else {
+                    AutoSyncUiState.Error(
+                        e.message ?: "No se pudo comprobar la sincronización con Drive."
+                    )
+                }
             }
         }
     }
@@ -187,16 +209,19 @@ class AutoSyncViewModel @Inject constructor(
                     storageManager,
                     "onConsentResolved() -- permiso de Drive denegado: ${e.message}",
                 )
-                _uiState.value = AutoSyncUiState.ConsentDenied
+                // Sin red el fallo del consentimiento no es un "no": no se pregunta.
+                _uiState.value = if (isOffline(e)) AutoSyncUiState.Idle else AutoSyncUiState.ConsentDenied
                 return@launch
             }
             try {
                 runSync(token)
             } catch (e: Exception) {
                 Log.w(TAG, "onConsentResolved() -- fallo sincronizando", e)
-                _uiState.value = AutoSyncUiState.Error(
-                    e.message ?: "No se pudo sincronizar con Drive."
-                )
+                _uiState.value = if (isOffline(e)) {
+                    AutoSyncUiState.Idle
+                } else {
+                    AutoSyncUiState.Error(e.message ?: "No se pudo sincronizar con Drive.")
+                }
             }
         }
     }
@@ -213,6 +238,11 @@ class AutoSyncViewModel @Inject constructor(
     fun retryAuthorization(activity: Activity) {
         val s = _uiState.value
         if (s is AutoSyncUiState.CountMismatch || s is AutoSyncUiState.Checking) return
+        if (isOffline()) {
+            // Sin red no se vuelve a preguntar: se descarta el aviso.
+            _uiState.value = AutoSyncUiState.Idle
+            return
+        }
         _uiState.value = AutoSyncUiState.Idle
         startAutoSync(activity)
     }
