@@ -227,6 +227,21 @@ class MiMooPlaybackService : MediaSessionService() {
                 .build()
         }
 
+        // S037 -- registra qué app externa (p. ej. el asistente de Google) manda órdenes al reproductor.
+        override fun onPlayerCommandRequest(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            playerCommand: Int,
+        ): Int {
+            if (controller.packageName != packageName) {
+                StreamingDebugLogger.log(
+                    this@MiMooPlaybackService,
+                    "sesión: orden $playerCommand de package=${controller.packageName}",
+                )
+            }
+            return super.onPlayerCommandRequest(session, controller, playerCommand)
+        }
+
         override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
             super.onPostConnect(session, controller)
             val current = playerManager.state.value

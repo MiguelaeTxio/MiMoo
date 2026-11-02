@@ -626,6 +626,20 @@ class PlayerManager @Inject constructor(
         // ya descartada en su día). Mejor dejar que cada tema conserve
         // sus propios altibajos de volumen.
         player.addListener(object : Player.Listener {
+            // S037 -- quién pausa/reanuda y por qué (asistente de voz, foco, ruido, usuario).
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                StreamingDebugLogger.log(
+                    appContext,
+                    "reproductor: playWhenReady=$playWhenReady motivo=$reason " +
+                        "(1=usuario/app 2=foco 3=auricular 4=remoto 5=fin 6=salida suprimida) " +
+                        "pausedByCallState=$pausedByCallState",
+                )
+            }
+
+            override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
+                StreamingDebugLogger.log(appContext, "reproductor: supresión=$playbackSuppressionReason")
+            }
+
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 playbackStatsRecorder.onPlayingChanged(isPlaying)
                 // Bug real reportado por Miguel Ángel (2026-08-24):
