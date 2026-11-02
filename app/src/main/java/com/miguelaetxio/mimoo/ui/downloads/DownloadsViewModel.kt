@@ -102,7 +102,23 @@ class DownloadsViewModel @Inject constructor(
     // S075 -- petición explícita de Miguel Ángel: botón de pausa de
     // descargas en la propia pantalla de Descargas.
     private val pauseController: com.miguelaetxio.mimoo.data.download.DownloadPauseController,
+    // S037 -- petición de Miguel Ángel: las descargadas deben poder reproducirse desde esta lista.
+    private val playerManager: com.miguelaetxio.mimoo.data.playback.PlayerManager,
 ) : ViewModel() {
+
+    /** Reproduce una descarga completada desde su archivo local. */
+    fun playCompleted(track: SearchResultTrack) {
+        val path = track.filePath ?: return
+        playerManager.play(
+            path,
+            track.title,
+            isLocal = true,
+            artist = track.artist ?: track.channelTitle,
+            youtubeId = track.youtubeId,
+            channelTitle = track.channelTitle,
+            artworkUri = track.coverArtUrl ?: track.thumbnailUrl,
+        )
+    }
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
     val uiState: StateFlow<DownloadsUiState> = _uiState.asStateFlow()

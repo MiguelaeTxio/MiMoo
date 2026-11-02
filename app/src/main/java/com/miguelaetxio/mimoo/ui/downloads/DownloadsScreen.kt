@@ -218,7 +218,7 @@ fun DownloadsScreen(
                     uiState.recentlyCompleted,
                     key = { "c_${it.youtubeId}" },
                 ) { track ->
-                    CompletedRow(track)
+                    CompletedRow(track, onPlay = { viewModel.playCompleted(track) })
                 }
             }
         }
@@ -415,12 +415,13 @@ private fun FailedRow(
 
 /** S011 -- cristal decorativo, mismo criterio que las otras filas de estado. */
 @Composable
-private fun CompletedRow(track: SearchResultTrack) {
+private fun CompletedRow(track: SearchResultTrack, onPlay: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .glassChip(interactive = false)
+            .clickable(enabled = track.filePath != null, onClick = onPlay)
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
