@@ -773,6 +773,15 @@ class PlayerManager @Inject constructor(
             // from this same class.
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 syncStateFromPlayer()
+                // S037 -- diagnóstico de "repite temas en aleatorio": sin log
+                // no se puede probar si el reproductor repite o si es la cola.
+                StreamingDebugLogger.log(
+                    appContext,
+                    "cola: transición reason=$reason idx=${player.currentMediaItemIndex}/${queueItems.size} " +
+                        "shuffle=${player.shuffleModeEnabled} repeat=${player.repeatMode} " +
+                        "id=${queueItems.getOrNull(player.currentMediaItemIndex)?.youtubeId} " +
+                        "título='${queueItems.getOrNull(player.currentMediaItemIndex)?.title}'",
+                )
                 playbackStatsRecorder.onItemChanged(
                     item = if (mediaItem == null) null else queueItems.getOrNull(player.currentMediaItemIndex),
                     isPlayingNow = player.isPlaying,
@@ -6124,7 +6133,10 @@ class PlayerManager @Inject constructor(
      * la llamada telefónica, así que no le pasa lo mismo.
      */
     fun onPhoneStatePermissionGranted() {
-        if (telephonyCallStateListener != null) return
+        if (telephonyCallStateListener != null) {
+            StreamingDebugLogger.log(appContext, "llamada: listener ya registrado")
+            return
+        }
         try {
             val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
                 as? android.telephony.TelephonyManager ?: return
@@ -6149,7 +6161,9 @@ class PlayerManager @Inject constructor(
                 telephonyManager.listen(listener, android.telephony.PhoneStateListener.LISTEN_CALL_STATE)
                 telephonyCallStateListener = listener
             }
+            StreamingDebugLogger.log(appContext, "llamada: listener de telefonía registrado")
         } catch (e: Exception) {
+            StreamingDebugLogger.log(appContext, "llamada: FALLÓ registrar listener -- ${e.javaClass.simpleName}: ${e.message}")
             // Nunca dejar que esto rompa nada -- S046, ya no hay
             // ningún mecanismo de respaldo (el AudioFocusRequest se
             // quitó por completo): si esto falla, MiMoo simplemente
@@ -6161,6 +6175,11 @@ class PlayerManager @Inject constructor(
     }
 
     private fun handleTelephonyCallStateChanged(state: Int) {
+        StreamingDebugLogger.log(
+            appContext,
+            "llamada: estado=$state isPlaying=${player.isPlaying} playbackState=${player.playbackState} " +
+                "playWhenReady=${player.playWhenReady} pausedByCallState=$pausedByCallState",
+        )
         when (state) {
             android.telephony.TelephonyManager.CALL_STATE_RINGING,
             android.telephony.TelephonyManager.CALL_STATE_OFFHOOK -> {
@@ -6179,6 +6198,12 @@ class PlayerManager @Inject constructor(
                 if (pausedByCallState) {
                     pausedByCallState = false
                     player.play()
+                    StreamingDebugLogger.log(
+                        appContext,
+                        "llamada: reanudado -- isPlaying=${player.isPlaying} playbackState=${player.playbackState}",
+                    )
+                } else {
+                    StreamingDebugLogger.log(appContext, "llamada: IDLE sin pausa nuestra, no se reanuda")
                 }
             }
         }
