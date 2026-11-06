@@ -254,6 +254,32 @@ class RadioRepository @Inject constructor(
         if (transient) consecutiveTransientFailures++
     }
 
+    /**
+     * S037 -- true si el último fallo fue de red Y el teléfono no tiene
+     * internet de verdad ahora mismo. Lo usa miMooutCast para esperar a
+     * que vuelva la red en vez de avanzar el offset en cada fallo
+     * (sin esto el offset llegaba a 414.000 sin cobertura).
+     */
+    suspend fun isOfflineNow(): Boolean =
+        lastFailureWasTransient && !networkConnectivityChecker.hasRealInternetAccess()
+
+    /**
+     * S037 -- MusicBrainz responde HTTP 400 cuando el offset pasa de su
+     * límite de paginación; se trata como "pasado del final" (vuelta al
+     * principio), igual que una página vacía.
+     */
+    private suspend fun <T> fetchWrappingOffset(offset: Int, fetch: suspend (Int) -> T): T =
+        try {
+            fetch(offset)
+        } catch (e: retrofit2.HttpException) {
+            if (e.code() == 400 && offset > 0) {
+                log("offset $offset rechazado por MusicBrainz (HTTP 400); se reintenta desde el principio")
+                fetch(0)
+            } else {
+                throw e
+            }
+        }
+
     private fun noteSuccess() {
         consecutiveTransientFailures = 0
         lastFailureWasTransient = false
@@ -2039,7 +2065,7 @@ class RadioRepository @Inject constructor(
                 limit = ANCHOR_SEARCH_LIMIT,
                 offset = o,
             )
-            var response = fetch(offset)
+            var response = fetchWrappingOffset(offset, ::fetch)
             // H15 (miMooutCast), S032 -- vuelta al principio si el
             // offset se pasó del final, mismo patrón que ya existía en
             // `findCandidates()` (S024). Orden de Miguel Ángel: *"pero
@@ -2225,7 +2251,7 @@ class RadioRepository @Inject constructor(
             .map { it.name }
             .filter { it.lowercase() !in excludeLower && !isPlaceholderArtist(it) }
 
-        var found = fetch(randomOffset)
+        var found = fetchWrappingOffset(randomOffset, ::fetch)
         // S024 -- el offset aleatorio se pasa de largo cuando el
         // conjunto es pequeño, y ahí devuelve vacío. Verificado en log
         // real con ancla 'Radio Futura' (rock/ES/1980): la misma

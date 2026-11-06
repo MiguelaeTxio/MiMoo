@@ -5113,6 +5113,7 @@ class PlayerManager @Inject constructor(
                 // el offset no tiene efecto real -- `randomHit()` no
                 // pagina -- pero tampoco hace daño, así que se deja
                 // igual para no bifurcar la lógica de reintento.)
+                if (waitIfOffline()) continue
                 miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
                 continue
             }
@@ -5197,8 +5198,21 @@ class PlayerManager @Inject constructor(
             // próxima vuelta de topUpRadioQueueIfNeeded()) no vuelva a
             // caer en la misma región estrecha del catálogo una y otra
             // vez.
+            if (waitIfOffline()) continue
             miMooutCastOffset += MIMOOUTCAST_PAGE_SIZE
         }
+    }
+
+    /**
+     * S037 -- sin internet no se avanza el offset ni se martillea
+     * MusicBrainz: se espera a que vuelva la red (sin tope de
+     * intentos, solo espera) y se reintenta la MISMA página.
+     */
+    private suspend fun waitIfOffline(): Boolean {
+        if (!radioRepository.isOfflineNow()) return false
+        StreamingDebugLogger.log(appContext, "miMooutCast: sin internet, espera 5 s sin avanzar offset=$miMooutCastOffset")
+        kotlinx.coroutines.delay(5_000)
+        return true
     }
 
     fun playRadioStation(streamUrl: String, title: String, artworkUri: String? = null) {
