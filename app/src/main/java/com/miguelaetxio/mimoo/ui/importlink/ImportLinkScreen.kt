@@ -243,13 +243,30 @@ fun ImportLinkScreen(
                         )
                         Text(
                             "${uiState.selectedYoutubeIds.size} de " +
-                                "${uiState.tracks.size} seleccionadas",
+                                "${uiState.tracks.size} seleccionadas" +
+                                if (uiState.batchMode) " · ${uiState.linkCount} enlaces" else "",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
 
+                Spacer(Modifier.height(4.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = viewModel::addAnotherLink,
+                        enabled = !uiState.isResolving,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(if (uiState.batchMode) "Añadir otro más" else "Añadir otro enlace")
+                    }
+                    if (uiState.batchMode) {
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = viewModel::resetAll) {
+                            Text("Empezar de nuevo")
+                        }
+                    }
+                }
                 Spacer(Modifier.height(4.dp))
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(uiState.tracks, key = { it.youtubeId }) { track ->

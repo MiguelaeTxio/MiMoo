@@ -59,6 +59,13 @@ data class ImportLinkUiState(
     val coverArtUrl: String? = null,
     // Resolviendo streams para reproducir sin descargar (playSelected) --
     // separado de isResolving (que es la resolucion inicial del enlace).
+    // S037 -- varios enlaces a la vez: tras "Añadir otro enlace" las
+    // pistas de cada enlace se acumulan en `tracks` en vez de
+    // sustituirse. `linkCount` cuenta los enlaces ya resueltos;
+    // `sourceUrlByYoutubeId` conserva el enlace de origen de cada pista.
+    val batchMode: Boolean = false,
+    val linkCount: Int = 0,
+    val sourceUrlByYoutubeId: Map<String, String> = emptyMap(),
     val isResolvingQueue: Boolean = false,
 )
 
@@ -139,7 +146,37 @@ class ImportLinkViewModel @Inject constructor(
      * por primera vez.
      */
     fun clearUrl() {
+        // En modo varios enlaces el aspa solo borra el texto: no se
+        // pierde lo ya acumulado (para eso está resetAll()).
+        _uiState.value = if (_uiState.value.batchMode) {
+            _uiState.value.copy(url = "", errorMessage = null)
+        } else {
+            ImportLinkUiState()
+        }
+    }
+
+    /** Vacía todo, también la lista acumulada de varios enlaces. */
+    fun resetAll() {
         _uiState.value = ImportLinkUiState()
+    }
+
+    /**
+     * S037 -- petición de Miguel Ángel: importar varios enlaces de
+     * golpe. Deja las pistas ya resueltas, vacía el campo para pegar
+     * el siguiente enlace y pasa a modo acumulación.
+     */
+    fun addAnotherLink() {
+        val state = _uiState.value
+        if (state.tracks.isEmpty() || state.isResolving) return
+        _uiState.value = state.copy(
+            url = "",
+            errorMessage = null,
+            batchMode = true,
+            isPlaylist = true,
+            isOfficialAlbum = false,
+            resolvedTitle = "Lista importada",
+            coverArtUrl = null,
+        )
     }
 
     fun resolveLink() {
@@ -147,14 +184,19 @@ class ImportLinkViewModel @Inject constructor(
         if (url.isBlank()) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isResolving = true,
-                errorMessage = null,
-                resolvedTitle = null,
-                tracks = emptyList(),
-                selectedYoutubeIds = emptySet(),
-                importedCount = null,
-            )
+            val batch = _uiState.value.batchMode
+            _uiState.value = if (batch) {
+                _uiState.value.copy(isResolving = true, errorMessage = null, importedCount = null)
+            } else {
+                _uiState.value.copy(
+                    isResolving = true,
+                    errorMessage = null,
+                    resolvedTitle = null,
+                    tracks = emptyList(),
+                    selectedYoutubeIds = emptySet(),
+                    importedCount = null,
+                )
+            }
             try {
                 val result = externalLinkResolver.resolveLink(url)
                 if (result.tracks.isEmpty()) {
@@ -163,6 +205,21 @@ class ImportLinkViewModel @Inject constructor(
                         errorMessage = "El enlace no tiene ninguna pista " +
                             "reproducible (puede ser contenido bloqueado " +
                             "o no disponible).",
+                    )
+                    return@launch
+                }
+                if (batch) {
+                    val current = _uiState.value
+                    val known = current.tracks.map { it.youtubeId }.toSet()
+                    val added = result.tracks.filter { it.youtubeId !in known }
+                    _uiState.value = current.copy(
+                        isResolving = false,
+                        tracks = current.tracks + added,
+                        selectedYoutubeIds = current.selectedYoutubeIds + added.map { it.youtubeId },
+                        linkCount = current.linkCount + 1,
+                        sourceUrlByYoutubeId = current.sourceUrlByYoutubeId +
+                            added.associate { it.youtubeId to url },
+                        errorMessage = if (added.isEmpty()) "Ese enlace no aporta pistas nuevas." else null,
                     )
                     return@launch
                 }
@@ -182,6 +239,8 @@ class ImportLinkViewModel @Inject constructor(
                     // marcar una a una las que sí (caso común: quiere
                     // el album entero).
                     selectedYoutubeIds = result.tracks.map { it.youtubeId }.toSet(),
+                    linkCount = 1,
+                    sourceUrlByYoutubeId = result.tracks.associate { it.youtubeId to url },
                 )
                 if (isPlaylist) {
                     resolveCoverArt(cleanedTitle, result.tracks.map { it.channelTitle })
@@ -551,7 +610,7 @@ class ImportLinkViewModel @Inject constructor(
                     thumbnailUrl = track.thumbnailUrl,
                     artist = artist,
                     album = album,
-                    sourceUrl = sourceUrl,
+                    sourceUrl = state.sourceUrlByYoutubeId[track.youtubeId] ?: sourceUrl,
                     // Posición real dentro de la lista RESUELTA
                     // (state.tracks), no del subconjunto seleccionado
                     // -- así, si el usuario deselecciona una pista, el
