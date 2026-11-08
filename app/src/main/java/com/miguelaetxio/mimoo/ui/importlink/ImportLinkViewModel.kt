@@ -656,7 +656,8 @@ class ImportLinkViewModel @Inject constructor(
             // si el usuario escribió a mano un álbum (albumOverride) --
             // eso significa que prefirió tratarlo como álbum.
             val userChoseAlbumOverride = !albumOverride?.trim().isNullOrBlank()
-            if (state.isPlaylist && !state.isOfficialAlbum && !userChoseAlbumOverride) {
+            // S037 -- varios enlaces = sencillos sueltos: nunca se crea lista.
+            if (state.isPlaylist && !state.isOfficialAlbum && !userChoseAlbumOverride && !state.batchMode) {
                 val playlistName = state.resolvedTitle?.takeIf { it.isNotBlank() }
                     ?: "Lista importada"
                 val playlistId = playlistRepository.createPlaylist(playlistName)
