@@ -50,7 +50,10 @@ class AppUpdateViewModel @Inject constructor(
             ) {
                 is UpdateCheckResult.UpToDate -> UpdateUiState.UpToDate
                 is UpdateCheckResult.UpdateAvailable ->
-                    UpdateUiState.UpdateAvailable(result.manifest)
+                    // Ya descargada -> directo a instalar.
+                    appUpdateRepository.downloadedApkUri(result.manifest)
+                        ?.let { UpdateUiState.ReadyToInstall(it) }
+                        ?: UpdateUiState.UpdateAvailable(result.manifest)
                 is UpdateCheckResult.Error -> UpdateUiState.Error(result.message)
             }
         }

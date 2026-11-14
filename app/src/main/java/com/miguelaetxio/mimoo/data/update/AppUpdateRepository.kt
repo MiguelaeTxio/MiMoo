@@ -86,19 +86,51 @@ class AppUpdateRepository @Inject constructor(
      * GitHub Release asset, but the UI should treat it as
      * "indeterminate progress" if it happens).
      */
+    /**
+     * S037 -- petición de Miguel Ángel: si la última versión ya está
+     * descargada, pasar directo a instalar en vez de volver a bajarla
+     * (antes, salir y volver a buscar actualizaciones repetía la
+     * descarga). Devuelve la Uri solo si el archivo existe, se puede
+     * leer como APK y su versionCode es el del manifiesto.
+     */
+    suspend fun downloadedApkUri(manifest: UpdateManifest): Uri? = withContext(Dispatchers.IO) {
+        val apkFile = apkFileFor(manifest)
+        if (!apkFile.isFile || apkFile.length() == 0L) return@withContext null
+        val info = try {
+            context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)
+        } catch (e: Exception) {
+            null
+        }
+        val code = info?.let {
+            if (android.os.Build.VERSION.SDK_INT >= 28) it.longVersionCode else @Suppress("DEPRECATION") it.versionCode.toLong()
+        }
+        if (code != manifest.versionCode.toLong()) {
+            apkFile.delete()
+            return@withContext null
+        }
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)
+    }
+
+    private fun apkFileFor(manifest: UpdateManifest): File =
+        File(File(context.cacheDir, "apk_updates").apply { mkdirs() }, "MiMoo-update-${manifest.versionCode}.apk")
+
     suspend fun downloadApk(
         manifest: UpdateManifest,
         onProgress: (bytesDownloaded: Long, totalBytes: Long) -> Unit,
     ): Uri = withContext(Dispatchers.IO) {
-        val updatesDir = File(context.cacheDir, "apk_updates").apply { mkdirs() }
-        val apkFile = File(updatesDir, "MiMoo-update.apk")
+        downloadedApkUri(manifest)?.let { return@withContext it }
+        val apkFile = apkFileFor(manifest)
+        // Se descarga a un .part y solo se renombra al terminar entera:
+        // una descarga cortada nunca se confunde con una completa.
+        val partFile = File(apkFile.parentFile, apkFile.name + ".part")
+        apkFile.parentFile?.listFiles()?.forEach { if (it != apkFile && it != partFile) it.delete() }
 
         val body = appUpdateApiService.downloadApk(manifest.apkUrl)
         val totalBytes = body.contentLength()
         var bytesDownloaded = 0L
 
         body.byteStream().use { input ->
-            apkFile.outputStream().use { output ->
+            partFile.outputStream().use { output ->
                 val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
                 var bytesRead: Int
                 while (input.read(buffer).also { bytesRead = it } != -1) {
@@ -108,6 +140,13 @@ class AppUpdateRepository @Inject constructor(
                 }
             }
         }
+
+        if (totalBytes > 0 && bytesDownloaded != totalBytes) {
+            partFile.delete()
+            throw java.io.IOException("Descarga incompleta ($bytesDownloaded de $totalBytes bytes).")
+        }
+        apkFile.delete()
+        if (!partFile.renameTo(apkFile)) throw java.io.IOException("No se pudo guardar la actualización.")
 
         FileProvider.getUriForFile(
             context,
