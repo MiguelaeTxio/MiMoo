@@ -56,13 +56,19 @@ class LyricsRepository @Inject constructor(
     private fun log(line: String) = LyricsDebugLogger.log(appContext, storageManager, line)
 
     /**
-     * Resuelve la letra de artista+título, sirviendo de caché si ya se
-     * consultó antes. `album`/`durationSeconds` son opcionales y
-     * afinan la coincidencia exacta de `GET /api/get` cuando se
-     * conocen (p.ej. desde el tema en curso del ExoPlayer), pero NO
-     * entran en la clave de caché -- la clave es solo artista+título
-     * normalizados (mismo criterio que DislikedTrack: la letra de un
-     * tema no cambia entre ediciones/álbumes).
+     * S037 -- diagnosticado con letras_debug.txt (2026-11-14): "nunca
+     * encuentra letra, por famosa que sea". Tres causas reales:
+     * 1. Pistas importadas de recopilatorios llegan con artista
+     *    "Various Artists" y el título "Pink Floyd - Another Brick...":
+     *    lrclib /get exige coincidencia exacta y respondía 404.
+     *    Ahora se separa "Artista - Título" cuando el crédito es
+     *    genérico.
+     * 2. Un 404 de /get no es el final: se prueba /search (tolerante).
+     * 3. Cualquier excepción (503 incluido) se cacheaba como "sin letra
+     *    confirmada" para siempre. Ahora solo se cachea una respuesta
+     *    real de lrclib; los fallos de red/servidor no se cachean.
+     * ---
+     * Fetches lyrics (cache first, then lrclib.net /get, then /search).
      */
     suspend fun getLyrics(
         artist: String,
@@ -70,47 +76,68 @@ class LyricsRepository @Inject constructor(
         album: String? = null,
         durationSeconds: Int? = null,
     ): LyricsResult = withContext(Dispatchers.IO) {
-        val artistKey = SearchNormalizer.normalizeArtistName(artist)
-        val titleKey = SearchNormalizer.songTitleKey(title, artist)
+        val (queryArtist, queryTitle) = splitGenericCredit(artist, title)
+        val artistKey = SearchNormalizer.normalizeArtistName(queryArtist)
+        val titleKey = SearchNormalizer.songTitleKey(queryTitle, queryArtist)
 
-        dao.get(artistKey, titleKey)?.let { cached ->
-            log(
-                "getLyrics(artist='$artist', title='$title') -- CACHÉ: " +
-                    if (cached.hasLyrics) {
-                        if (cached.syncedLyrics != null) "sincronizada" else "plana"
-                    } else {
-                        "sin letra (confirmado previamente)"
-                    },
-            )
-            return@withContext LyricsResult(
-                artist = cached.artist,
-                title = cached.title,
-                plainLyrics = cached.plainLyrics,
-                syncedLyrics = cached.syncedLyrics,
-            )
-        }
+        dao.get(artistKey, titleKey)
+            // Los "sin letra" anteriores a la corrección salían de
+            // consultas mal formadas o de fallos de red cacheados: se
+            // ignoran y se vuelve a consultar.
+            ?.takeIf { it.hasLyrics || it.cachedAt >= NEGATIVE_CACHE_VALID_FROM }
+            ?.let { cached ->
+                log(
+                    "getLyrics(artist='$artist', title='$title') -- CACHÉ: " +
+                        if (cached.hasLyrics) {
+                            if (cached.syncedLyrics != null) "sincronizada" else "plana"
+                        } else {
+                            "sin letra (confirmado previamente)"
+                        },
+                )
+                return@withContext LyricsResult(
+                    artist = cached.artist,
+                    title = cached.title,
+                    plainLyrics = cached.plainLyrics,
+                    syncedLyrics = cached.syncedLyrics,
+                )
+            }
 
-        log("getLyrics(artist='$artist', title='$title', album=$album, durationSeconds=$durationSeconds) -- sin caché, consultando lrclib.net")
+        log(
+            "getLyrics(artist='$artist', title='$title') -- sin caché, consultando lrclib.net " +
+                "como artista='$queryArtist' título='$queryTitle' album=$album durationSeconds=$durationSeconds",
+        )
 
-        val remote: LrcLibLyricsResult? = try {
+        var transientFailure = false
+        var remote: LrcLibLyricsResult? = try {
             api.getLyrics(
-                trackName = title,
-                artistName = artist,
+                trackName = queryTitle,
+                artistName = queryArtist,
                 albumName = album,
                 durationSeconds = durationSeconds,
             )
-        } catch (e: Exception) {
-            // 404 (HttpException) cuando lrclib.net no tiene coincidencia
-            // exacta, o cualquier otro fallo de red -- se trata igual
-            // que "sin letra" y se cachea como tal para no repetir la
-            // consulta en cada reproducción del mismo tema. Un fallo de
-            // red puntual se corrige solo en la siguiente consulta si
-            // Miguel Ángel vuelve a pedir el mismo tema con conexión.
-            log(
-                "getLyrics(artist='$artist', title='$title') -- EXCEPCIÓN: " +
-                    "${e::class.java.simpleName}: ${e.message}",
-            )
+        } catch (e: retrofit2.HttpException) {
+            if (e.code() != 404) transientFailure = true
+            log("getLyrics -- /get HTTP ${e.code()}")
             null
+        } catch (e: Exception) {
+            transientFailure = true
+            log("getLyrics -- /get EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+            null
+        }
+
+        if (remote == null && !transientFailure) {
+            remote = try {
+                val found = pickBestSearchResult(
+                    api.searchLyrics(trackName = queryTitle, artistName = queryArtist),
+                    durationSeconds,
+                )
+                log("getLyrics -- /search ${if (found != null) "id=${found.id}" else "sin resultados útiles"}")
+                found
+            } catch (e: Exception) {
+                transientFailure = true
+                log("getLyrics -- /search EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
+                null
+            }
         }
 
         val plainLyrics = remote?.plainLyrics?.takeIf { it.isNotBlank() }
@@ -119,34 +146,79 @@ class LyricsRepository @Inject constructor(
         log(
             "getLyrics(artist='$artist', title='$title') -- RESULTADO: " +
                 when {
-                    remote == null -> "sin respuesta (excepción ya registrada arriba)"
-                    syncedLyrics != null -> "sincronizada (lrclib id=${remote.id})"
-                    plainLyrics != null -> "plana, sin sincronizar (lrclib id=${remote.id})"
-                    remote.instrumental -> "instrumental (lrclib id=${remote.id}, sin letra)"
-                    else -> "respuesta sin ninguna letra (lrclib id=${remote.id})"
-                } + " -- cacheada",
+                    transientFailure -> "fallo de red/servidor -- NO se cachea"
+                    remote == null -> "sin letra en lrclib -- cacheada"
+                    syncedLyrics != null -> "sincronizada (lrclib id=${remote.id}) -- cacheada"
+                    plainLyrics != null -> "plana, sin sincronizar (lrclib id=${remote.id}) -- cacheada"
+                    remote.instrumental -> "instrumental (lrclib id=${remote.id}, sin letra) -- cacheada"
+                    else -> "respuesta sin ninguna letra (lrclib id=${remote.id}) -- cacheada"
+                },
         )
 
-        dao.insert(
-            LyricsCache(
-                artistKey = artistKey,
-                titleKey = titleKey,
-                artist = artist,
-                title = title,
-                plainLyrics = plainLyrics,
-                syncedLyrics = syncedLyrics,
-                hasLyrics = plainLyrics != null || syncedLyrics != null,
-                cachedAt = System.currentTimeMillis(),
+        if (!transientFailure) {
+            dao.insert(
+                LyricsCache(
+                    artistKey = artistKey,
+                    titleKey = titleKey,
+                    artist = queryArtist,
+                    title = queryTitle,
+                    plainLyrics = plainLyrics,
+                    syncedLyrics = syncedLyrics,
+                    hasLyrics = plainLyrics != null || syncedLyrics != null,
+                    cachedAt = System.currentTimeMillis(),
+                )
             )
-        )
+        }
 
         LyricsResult(
-            artist = artist,
-            title = title,
+            artist = queryArtist,
+            title = queryTitle,
             plainLyrics = plainLyrics,
             syncedLyrics = syncedLyrics,
         )
     }
+
+    /**
+     * "Various Artists" / "Artista desconocido" + "Grupo - Canción" ->
+     * ("Grupo", "Canción"). Con un artista real no se toca nada.
+     */
+    private fun splitGenericCredit(artist: String, title: String): Pair<String, String> {
+        val generic = artist.isBlank() ||
+            SearchNormalizer.normalizeArtistName(artist) in GENERIC_CREDITS
+        if (!generic) return artist to title
+        val idx = listOf(" - ", " – ", " — ")
+            .map { title.indexOf(it) to it.length }
+            .filter { it.first > 0 }
+            .minByOrNull { it.first }
+            ?: return artist to title
+        val left = title.substring(0, idx.first).trim()
+        val right = title.substring(idx.first + idx.second).trim()
+        if (left.isEmpty() || right.isEmpty()) return artist to title
+        return left to SearchNormalizer.cleanSongTitle(right, left)
+    }
+
+    /** Mejor resultado de /search: con letra, de duración parecida y sincronizado si se puede. */
+    private fun pickBestSearchResult(
+        results: List<LrcLibLyricsResult>,
+        durationSeconds: Int?,
+    ): LrcLibLyricsResult? {
+        val withLyrics = results.filter {
+            !it.instrumental && (!it.plainLyrics.isNullOrBlank() || !it.syncedLyrics.isNullOrBlank())
+        }
+        if (withLyrics.isEmpty()) return null
+        if (durationSeconds == null) {
+            return withLyrics.firstOrNull { !it.syncedLyrics.isNullOrBlank() } ?: withLyrics.first()
+        }
+        val close = withLyrics.filter { r ->
+            r.duration != null && kotlin.math.abs(r.duration - durationSeconds) <= 10
+        }
+        close.firstOrNull { !it.syncedLyrics.isNullOrBlank() }?.let { return it }
+        close.firstOrNull()?.let { return it }
+        // Duración distinta: la letra plana sirve, la sincronizada no (iría desfasada).
+        return withLyrics.firstOrNull { !it.plainLyrics.isNullOrBlank() }
+            ?.copy(syncedLyrics = null)
+    }
+
 
     /**
      * Búsqueda libre contra lrclib.net (punto 5 del anexo, pantalla del
@@ -166,5 +238,12 @@ class LyricsRepository @Inject constructor(
             log("searchLyrics(query='$query') -- EXCEPCIÓN: ${e::class.java.simpleName}: ${e.message}")
             emptyList()
         }
+    }
+
+    private companion object {
+        val GENERIC_CREDITS = setOf("various artists", "varios artistas", "artista desconocido")
+
+        /** 2026-11-14 12:00 UTC: los "sin letra" anteriores se consideran envenenados. */
+        const val NEGATIVE_CACHE_VALID_FROM = 1_794_657_600_000L
     }
 }
