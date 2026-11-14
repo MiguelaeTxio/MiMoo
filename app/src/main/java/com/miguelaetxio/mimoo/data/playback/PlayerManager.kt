@@ -513,12 +513,39 @@ class PlayerManager @Inject constructor(
             androidx.media3.common.AudioAttributes.DEFAULT,
             /* handleAudioFocus = */ false,
         )
-        // S037 -- petición de Miguel Ángel: al desconectarse el
-        // dispositivo Bluetooth (coche, auriculares) la música debe
-        // PARARSE, no seguir por el altavoz del móvil. Es independiente
-        // del foco de audio (handleAudioFocus sigue en false).
-        .setHandleAudioBecomingNoisy(true)
         .build()
+
+    /**
+     * S037 -- petición de Miguel Ángel: cuando se DESCONECTA el último
+     * dispositivo externo (Bluetooth, cable) y la música pasaría a sonar
+     * por el altavoz del móvil, se pausa. Cambiar de un dispositivo a
+     * otro (auriculares -> coche) no pausa: mientras quede otra salida
+     * externa conectada, sigue sonando.
+     */
+    private val audioDeviceCallback = object : android.media.AudioDeviceCallback() {
+        override fun onAudioDevicesRemoved(removedDevices: Array<out android.media.AudioDeviceInfo>) {
+            val removedExternal = removedDevices.any { isExternalOutput(it) }
+            if (!removedExternal || !player.playWhenReady) return
+            val remaining = connectedExternalOutputs()
+            StreamingDebugLogger.log(
+                appContext,
+                "salida de audio desconectada -- quedan externas=$remaining isPlaying=${player.isPlaying}",
+            )
+            if (remaining.isEmpty()) {
+                player.pause()
+                StreamingDebugLogger.log(appContext, "salida de audio: pausado para no sonar por el altavoz del móvil")
+            }
+        }
+    }
+
+    init {
+        try {
+            val am = appContext.getSystemService(android.content.Context.AUDIO_SERVICE) as? android.media.AudioManager
+            am?.registerAudioDeviceCallback(audioDeviceCallback, android.os.Handler(android.os.Looper.getMainLooper()))
+        } catch (e: Exception) {
+            StreamingDebugLogger.log(appContext, "salida de audio: FALLÓ registrar callback -- ${e.message}")
+        }
+    }
 
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state
@@ -6207,6 +6234,16 @@ class PlayerManager @Inject constructor(
         }
     }
 
+    private fun isExternalOutput(d: android.media.AudioDeviceInfo): Boolean = when (d.type) {
+        android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+        android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+        android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET,
+        android.media.AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+        android.media.AudioDeviceInfo.TYPE_USB_HEADSET,
+        android.media.AudioDeviceInfo.TYPE_USB_DEVICE -> true
+        else -> android.os.Build.VERSION.SDK_INT >= 31 && d.type == android.media.AudioDeviceInfo.TYPE_BLE_HEADSET
+    }
+
     /** Salidas de audio externas (Bluetooth, cable, USB) de antes de la llamada. */
     private var outputsBeforeCall: Set<String> = emptySet()
 
@@ -6221,6 +6258,7 @@ class PlayerManager @Inject constructor(
             ?: return emptySet()
         val result = mutableSetOf<String>()
         for (d in am.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)) {
+            if (!isExternalOutput(d)) continue
             when (d.type) {
                 android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
                 android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> result += "bt:" + (
@@ -6273,10 +6311,12 @@ class PlayerManager @Inject constructor(
                         // volver de llamada (SCO) a música (A2DP): se
                         // reconsulta una vez antes de dar el dispositivo por
                         // desconectado.
-                        var missing = before - connectedExternalOutputs()
+                        // Solo se bloquea si había salida externa y ya no queda
+                        // ninguna (cambiar de dispositivo no cuenta).
+                        var missing = if (connectedExternalOutputs().isEmpty()) before else emptySet()
                         if (missing.isNotEmpty()) {
                             kotlinx.coroutines.delay(2_000)
-                            missing = before - connectedExternalOutputs()
+                            missing = if (connectedExternalOutputs().isEmpty()) before else emptySet()
                         }
                         kotlinx.coroutines.withContext(Dispatchers.Main) {
                             if (missing.isNotEmpty()) {
@@ -6302,6 +6342,11 @@ class PlayerManager @Inject constructor(
 
     fun release() {
         managerScope.cancel()
+        try {
+            (appContext.getSystemService(android.content.Context.AUDIO_SERVICE) as? android.media.AudioManager)
+                ?.unregisterAudioDeviceCallback(audioDeviceCallback)
+        } catch (_: Exception) {
+        }
         try {
             telephonyCallStateListener?.let { listener ->
                 val telephonyManager = appContext.getSystemService(android.content.Context.TELEPHONY_SERVICE)
