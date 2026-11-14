@@ -513,6 +513,11 @@ class PlayerManager @Inject constructor(
             androidx.media3.common.AudioAttributes.DEFAULT,
             /* handleAudioFocus = */ false,
         )
+        // S037 -- petición de Miguel Ángel: al desconectarse el
+        // dispositivo Bluetooth (coche, auriculares) la música debe
+        // PARARSE, no seguir por el altavoz del móvil. Es independiente
+        // del foco de audio (handleAudioFocus sigue en false).
+        .setHandleAudioBecomingNoisy(true)
         .build()
 
     private val _state = MutableStateFlow(PlaybackState())
@@ -6202,6 +6207,37 @@ class PlayerManager @Inject constructor(
         }
     }
 
+    /** Salidas de audio externas (Bluetooth, cable, USB) de antes de la llamada. */
+    private var outputsBeforeCall: Set<String> = emptySet()
+
+    /**
+     * Identificadores de las salidas externas conectadas ahora. Los
+     * Bluetooth se identifican por dirección (A2DP y SCO del mismo
+     * aparato cuentan como uno: durante la llamada el audio cambia de
+     * perfil).
+     */
+    private fun connectedExternalOutputs(): Set<String> {
+        val am = appContext.getSystemService(android.content.Context.AUDIO_SERVICE) as? android.media.AudioManager
+            ?: return emptySet()
+        val result = mutableSetOf<String>()
+        for (d in am.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)) {
+            when (d.type) {
+                android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+                android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> result += "bt:" + (
+                    if (android.os.Build.VERSION.SDK_INT >= 28) d.address else d.productName.toString()
+                )
+                android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET,
+                android.media.AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+                android.media.AudioDeviceInfo.TYPE_USB_HEADSET,
+                android.media.AudioDeviceInfo.TYPE_USB_DEVICE -> result += "cable:${d.type}:${d.productName}"
+                else -> if (android.os.Build.VERSION.SDK_INT >= 31 &&
+                    d.type == android.media.AudioDeviceInfo.TYPE_BLE_HEADSET
+                ) result += "ble:${d.address}"
+            }
+        }
+        return result
+    }
+
     private fun handleTelephonyCallStateChanged(state: Int) {
         StreamingDebugLogger.log(
             appContext,
@@ -6219,17 +6255,44 @@ class PlayerManager @Inject constructor(
                 // estaba sonando, por la misma robustez de fondo (que
                 // el estado quede consistente pase lo que pase).
                 val wasPlaying = player.isPlaying
+                // Solo se fotografía la primera vez (RINGING -> OFFHOOK
+                // no debe sobrescribir los dispositivos de antes de la llamada).
+                if (!pausedByCallState) {
+                    outputsBeforeCall = connectedExternalOutputs()
+                    StreamingDebugLogger.log(appContext, "llamada: salidas externas antes=$outputsBeforeCall")
+                }
                 pausedByCallState = true
                 if (wasPlaying) player.pause()
             }
             android.telephony.TelephonyManager.CALL_STATE_IDLE -> {
                 if (pausedByCallState) {
                     pausedByCallState = false
-                    player.play()
-                    StreamingDebugLogger.log(
-                        appContext,
-                        "llamada: reanudado -- isPlaying=${player.isPlaying} playbackState=${player.playbackState}",
-                    )
+                    val before = outputsBeforeCall
+                    managerScope.launch {
+                        // Al colgar, el audio Bluetooth tarda un instante en
+                        // volver de llamada (SCO) a música (A2DP): se
+                        // reconsulta una vez antes de dar el dispositivo por
+                        // desconectado.
+                        var missing = before - connectedExternalOutputs()
+                        if (missing.isNotEmpty()) {
+                            kotlinx.coroutines.delay(2_000)
+                            missing = before - connectedExternalOutputs()
+                        }
+                        kotlinx.coroutines.withContext(Dispatchers.Main) {
+                            if (missing.isNotEmpty()) {
+                                StreamingDebugLogger.log(
+                                    appContext,
+                                    "llamada: NO se reanuda -- el dispositivo de salida cambió/desconectó: $missing",
+                                )
+                            } else {
+                                player.play()
+                                StreamingDebugLogger.log(
+                                    appContext,
+                                    "llamada: reanudado -- isPlaying=${player.isPlaying} playbackState=${player.playbackState}",
+                                )
+                            }
+                        }
+                    }
                 } else {
                     StreamingDebugLogger.log(appContext, "llamada: IDLE sin pausa nuestra, no se reanuda")
                 }
