@@ -199,8 +199,11 @@ class PlayerBarViewModel @Inject constructor(
         }
     }
 
+    private var lyricsFetchedForId: String? = null
+
     private fun fetchLyricsForCurrentTrack() {
         val current = state.value
+        lyricsFetchedForId = current.currentYoutubeId
         val artist = current.currentArtist ?: _menuArtist.value
         val rawTitle = current.currentTitle
         if (artist.isNullOrBlank() || rawTitle.isNullOrBlank()) {
@@ -349,7 +352,13 @@ class PlayerBarViewModel @Inject constructor(
                     // H17 (S031) -- si el panel de karaoke está abierto,
                     // la letra se refresca sola al cambiar de pista, en
                     // vez de quedarse mostrando la del tema anterior.
-                    if (_lyricsPanelVisible.value) {
+                    // S037 -- solo si la pista cambió de verdad: esta
+                    // colección se repite con cada actualización de la
+                    // fila (progreso de descarga, carátula...) y en los
+                    // logs se vieron ~100 consultas de la misma letra.
+                    if (_lyricsPanelVisible.value &&
+                        state.value.currentYoutubeId != lyricsFetchedForId
+                    ) {
                         _lyricsResult.value = null
                         fetchLyricsForCurrentTrack()
                     }
