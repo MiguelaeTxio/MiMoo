@@ -6285,22 +6285,18 @@ class PlayerManager @Inject constructor(
         when (state) {
             android.telephony.TelephonyManager.CALL_STATE_RINGING,
             android.telephony.TelephonyManager.CALL_STATE_OFFHOOK -> {
-                // S046 -- el mecanismo de AudioFocusRequest que
-                // motivaba este comentario (el "GAIN espurio de mitad
-                // de llamada") se ha quitado por completo -- ver el
-                // kdoc real junto a `pausedByCallState`. Se sigue
-                // marcando siempre, sin depender de si en ese instante
-                // estaba sonando, por la misma robustez de fondo (que
-                // el estado quede consistente pase lo que pase).
-                val wasPlaying = player.isPlaying
-                // Solo se fotografía la primera vez (RINGING -> OFFHOOK
-                // no debe sobrescribir los dispositivos de antes de la llamada).
-                if (!pausedByCallState) {
+                // S037 -- bug real (logs 2026-11-15 20:16): con la música
+                // YA parada, la llamada marcaba pausedByCallState y al
+                // colgar se ponía a sonar. Ahora solo se marca (y luego se
+                // reanuda) si MiMoo estaba sonando de verdad. El segundo
+                // evento de la misma llamada (RINGING -> OFFHOOK) no
+                // cambia nada: pausedByCallState ya vale lo que tocaba.
+                if (!pausedByCallState && player.playWhenReady) {
                     outputsBeforeCall = connectedExternalOutputs()
                     StreamingDebugLogger.log(appContext, "llamada: salidas externas antes=$outputsBeforeCall")
+                    pausedByCallState = true
+                    player.pause()
                 }
-                pausedByCallState = true
-                if (wasPlaying) player.pause()
             }
             android.telephony.TelephonyManager.CALL_STATE_IDLE -> {
                 if (pausedByCallState) {
