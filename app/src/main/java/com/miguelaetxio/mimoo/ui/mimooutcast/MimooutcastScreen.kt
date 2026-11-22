@@ -70,6 +70,32 @@ fun MimooutcastScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // H15 (miMooutCast), S032 -- botón TRANSVERSAL, encima de
+            // las pestañas para que afecte a las tres por igual (no es
+            // parte de ninguna pestaña concreta). Orden de Miguel
+            // Ángel, ver el kdoc de `MimooutcastUiState.requireKnownInSpain`.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .glassChip()
+                    .clickable(onClick = viewModel::toggleRequireKnownInSpain)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Conocido en España", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Compara cada candidato contra los éxitos en España. Actívalo en " +
+                            "décadas/géneros amplios; desactívalo en géneros de nicho para " +
+                            "tener candidatos.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = uiState.requireKnownInSpain, onCheckedChange = { viewModel.toggleRequireKnownInSpain() })
+            }
+
             TabRow(selectedTabIndex = uiState.tab.ordinal) {
                 Tab(
                     selected = uiState.tab == MimooutcastTab.GENEROS,

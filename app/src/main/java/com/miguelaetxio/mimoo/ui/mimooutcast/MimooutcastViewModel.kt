@@ -7,6 +7,7 @@ import com.miguelaetxio.mimoo.data.remote.GenreTree
 import com.miguelaetxio.mimoo.data.remote.MimooutcastCatalog
 import com.miguelaetxio.mimoo.data.remote.MimooutcastGenre
 import com.miguelaetxio.mimoo.data.remote.OriginGroup
+import com.miguelaetxio.mimoo.data.remote.RadioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,7 +60,7 @@ data class MimooutcastUiState(
  */
 @HiltViewModel
 class MimooutcastViewModel @Inject constructor(
-    private val stationRepository: com.miguelaetxio.mimoo.data.remote.MimooutcastStationRepository,
+    private val radioRepository: RadioRepository,
     private val playerManager: PlayerManager,
     private val genreTree: GenreTree,
 ) : ViewModel() {
@@ -216,8 +217,11 @@ class MimooutcastViewModel @Inject constructor(
         searchCancelledByUser = false
         _uiState.value = _uiState.value.copy(loadingLabel = label, noResultsFor = null)
         searchJob = viewModelScope.launch {
-            val stations = stationRepository.findStations(genre, decadeBegin, originGroup)
-            val started = playerManager.startStationRadio(stations, "miMooutCast: $label")
+            val anchor = radioRepository.manualAnchor(genre, decadeBegin, originGroup)
+            val started = playerManager.startRadioFromManualAnchor(
+                anchor, "miMooutCast: $label",
+                requireKnownInSpain = _uiState.value.requireKnownInSpain,
+            )
             _uiState.value = _uiState.value.copy(
                 loadingLabel = null,
                 noResultsFor = if (started || searchCancelledByUser) null else label,
