@@ -4638,6 +4638,13 @@ class PlayerManager @Inject constructor(
         rememberMiMooutCastArtist(first.artist)
         radioUsedSongs.add(knownHitsRepository.songKey(first.artist, first.title))
         withContext(Dispatchers.Main) {
+            // Causa real, log de Miguel Ángel 2026-11-22 (Clásica/Bach):
+            // con "repetir toda la lista" ya activo de antes (repeat=2 en
+            // todo el log), `topUpRadioQueueIfNeeded()` sale en silencio
+            // (exige REPEAT_MODE_OFF) y miMooutCast se quedaba con UN solo
+            // tema para siempre. Una radio no tiene "repetir lista": se
+            // apaga al arrancar, igual que ya hace el loop de apertura.
+            player.repeatMode = Player.REPEAT_MODE_OFF
             playQueue(listOf(first))
         }
         topUpRadioQueueIfNeeded()
