@@ -4653,6 +4653,35 @@ class PlayerManager @Inject constructor(
      * sin esto último, el loop (`REPEAT_MODE_ONE`) se quedaría sonando
      * para siempre, ya que nunca llegaría una pista real que lo corte.
      */
+    /**
+     * miMooutCast estilo Shoutcast: encola emisoras reales ya
+     * emitiendo (ver `MimooutcastStationRepository`). Si una falla,
+     * `onPlayerError()`/`skipPastError()` salta a la siguiente. No
+     * corta lo que suena hasta que la primera emisora esté lista
+     * (`playQueue()` la inserta tras la pista actual y salta a ella).
+     * Devuelve `false` si no hay ninguna emisora.
+     */
+    fun startStationRadio(stations: List<com.miguelaetxio.mimoo.data.remote.dto.RadioStation>, label: String): Boolean {
+        if (stations.isEmpty()) return false
+        cancelMimooutcastSearch()
+        manualAnchorActive = false
+        StreamingDebugLogger.log(appContext, "miMooutCast emisoras: $label -> ${stations.size} emisoras")
+        playQueue(
+            stations.map {
+                QueueItem(
+                    uri = it.urlResolved,
+                    title = it.name,
+                    isLocal = false,
+                    artist = null,
+                    isRadioStation = true,
+                    artworkUri = it.favicon?.takeIf { f -> f.isNotBlank() },
+                )
+            },
+            startIndex = 0,
+        )
+        return true
+    }
+
     fun cancelMimooutcastSearch() {
         initialSearchJob?.cancel()
         initialSearchJob = null
