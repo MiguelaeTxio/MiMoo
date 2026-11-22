@@ -296,6 +296,18 @@ fun SettingsScreen(
                 .padding(16.dp),
         ) {
             SettingsAccordionSection(
+                title = "Actualizaciones",
+                expanded = expandedSection == "actualizaciones",
+                onToggle = {
+                    expandedSection = if (expandedSection == "actualizaciones") null else "actualizaciones"
+                },
+            ) {
+                UpdateCheckSection()
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            SettingsAccordionSection(
                 title = "Repositorio de música",
                 expanded = expandedSection == "repositorio",
                 onToggle = {
@@ -1385,17 +1397,7 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
 
-            SettingsAccordionSection(
-                title = "Actualizaciones",
-                expanded = expandedSection == "actualizaciones",
-                onToggle = {
-                    expandedSection = if (expandedSection == "actualizaciones") null else "actualizaciones"
-                },
-            ) {
-                UpdateCheckSection()
-            }
         }
     }
 
