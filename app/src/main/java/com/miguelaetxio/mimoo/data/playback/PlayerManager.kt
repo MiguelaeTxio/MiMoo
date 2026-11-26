@@ -664,7 +664,7 @@ class PlayerManager @Inject constructor(
                     appContext,
                     "reproductor: playWhenReady=$playWhenReady motivo=$reason " +
                         "(1=usuario/app 2=foco 3=auricular 4=remoto 5=fin 6=salida suprimida) " +
-                        "pausedByCallState=$pausedByCallState",
+                        "pausedByCallState=$pausedByCallState hilo=${Thread.currentThread().name}",
                 )
             }
 

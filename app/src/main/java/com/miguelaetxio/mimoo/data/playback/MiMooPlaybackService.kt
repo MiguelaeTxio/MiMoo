@@ -242,6 +242,28 @@ class MiMooPlaybackService : MediaSessionService() {
             return super.onPlayerCommandRequest(session, controller, playerCommand)
         }
 
+        // S037 -- logs 2026-11-26: tras reanudar al colgar, algo pausa la música 1,35 s
+        // después sin pasar por onPlayerCommandRequest externo. Se registra el botón
+        // multimedia (auricular/coche) y quién lo manda, para ver si es eso.
+        override fun onMediaButtonEvent(
+            session: MediaSession,
+            controllerInfo: MediaSession.ControllerInfo,
+            intent: Intent,
+        ): Boolean {
+            val key = if (Build.VERSION.SDK_INT >= 33) {
+                intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, android.view.KeyEvent::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra<android.view.KeyEvent>(Intent.EXTRA_KEY_EVENT)
+            }
+            StreamingDebugLogger.log(
+                this@MiMooPlaybackService,
+                "sesión: botón multimedia keyCode=${key?.keyCode} action=${key?.action} " +
+                    "package=${controllerInfo.packageName}",
+            )
+            return super.onMediaButtonEvent(session, controllerInfo, intent)
+        }
+
         override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
             super.onPostConnect(session, controller)
             val current = playerManager.state.value
